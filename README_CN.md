@@ -1,7 +1,7 @@
 ﻿# Celeste 速通辅助工具
 
 ## 下载
-[GitHub](https://github.com/DemoJameson/CelesteSpeedrunTool/releases) 和 [GameBanana](https://gamebanana.com/tools/6597)
+[GitHub](https://github.com/DemoJameson/CelesteSpeedrunTool/releases) 或者 [GameBanana](https://gamebanana.com/tools/6597)
 
 ## 功能
 1. 通过自定义的按键快速保存恢复玩家与房间快照
@@ -15,9 +15,9 @@
 
 ## 预览
 
-![preview1_cn](.\Preview\preview1_cn.png)
+![preview1_cn](./Preview/preview1_cn.png)
 
-![preview1_cn](.\Preview\preview2_cn.png)
+![preview2_cn](./Preview/preview2_cn.png)
 
 ## 致谢
 [Matt Makes Games Inc.](http://www.mattmakesgames.com/) —— 感谢他们开发出了 [Celeste](http://www.celestegame.com/) 这款我最爱的平台跳跃游戏

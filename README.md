@@ -22,8 +22,10 @@
 
 ## Credits
 
-[Matt Makes Games Inc.](http://www.mattmakesgames.com/) —— Thanks to them for developing [Celeste](http://www.celestegame.com/), my favorite platform game.
-[Everest](https://everestapi.github.io/) —— Celeste Mod loader, without it there is no this Mod
-[Ahorn](https://github.com/CelestialCartographers/Ahorn) —— Very convenient for finding the name of an entity
-[FMOD](https://www.fmod.com/) —— Provides Celeste audio project
-西瓜 —— Helped me test
+- [Matt Makes Games Inc.](http://www.mattmakesgames.com/) —— Thanks to them for developing [Celeste](http://www.celestegame.com/), my favorite platform game.
+- [Everest](https://everestapi.github.io/) —— Celeste Mod loader, without it there is no this Mod
+
+- [Ahorn](https://github.com/CelestialCartographers/Ahorn) —— Very convenient for finding the name of an entity
+
+- [FMOD](https://www.fmod.com/) —— Provides Celeste audio project
+- 西瓜 —— Helped me test

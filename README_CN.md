@@ -20,8 +20,10 @@
 ![preview2_cn](./Preview/preview2_cn.png)
 
 ## 致谢
-[Matt Makes Games Inc.](http://www.mattmakesgames.com/) —— 感谢他们开发出了 [Celeste](http://www.celestegame.com/) 这款我最爱的平台跳跃游戏
-[Everest](https://everestapi.github.io/) —— Celeste Mod 加载器，没有它就没有这个 Mod
-[Ahorn](https://github.com/CelestialCartographers/Ahorn) —— 用来查找 Entity 的名字
-[FMOD](https://www.fmod.com/) —— 提供了 Celeste 的音频工程，处理音频时可以预先试听
-西瓜 —— 帮助我测试
+- [Matt Makes Games Inc.](http://www.mattmakesgames.com/) —— 感谢他们开发出了 [Celeste](http://www.celestegame.com/) 这款我最爱的平台跳跃游戏
+- [Everest](https://everestapi.github.io/) —— Celeste Mod 加载器，没有它就没有这个 Mod
+- [Ahorn](https://github.com/CelestialCartographers/Ahorn) —— 用来查找 Entity 的名字
+
+- [FMOD](https://www.fmod.com/) —— 提供了 Celeste 的音频工程，处理音频时可以预先试听
+
+- 西瓜 —— 帮助我测试

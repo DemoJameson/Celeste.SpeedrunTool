@@ -7,8 +7,8 @@
 
 ## Features
 
-1. Quickly save player and room snapshots with custom buttons.
-2. Automatically load snapshots after death.
+1. Quickly save player and room snapshot with custom buttons.
+2. Automatically load snapshot after death.
 3. Speed up the respawn process.
 4. Add a timer for a single room which support recording the best time and timing between the 7th chapter flags
 5. Remove the postcard and chapter completion scene.

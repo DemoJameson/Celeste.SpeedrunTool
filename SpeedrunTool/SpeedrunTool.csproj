@@ -59,6 +59,7 @@
     <Compile Include="SaveLoad\Actions\BounceBlockAction.cs" />
     <Compile Include="SaveLoad\Actions\BumperAction.cs" />
     <Compile Include="SaveLoad\Actions\CloudAction.cs" />
+    <Compile Include="SaveLoad\Actions\ClutterSwitchAction.cs" />
     <Compile Include="SaveLoad\Actions\CrumblePlatformAction.cs" />
     <Compile Include="SaveLoad\Actions\CrushBlockAction.cs" />
     <Compile Include="SaveLoad\Actions\DashBlockAction.cs" />

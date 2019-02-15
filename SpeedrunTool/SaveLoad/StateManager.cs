@@ -16,6 +16,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             new BounceBlockAction(),
             new BumperAction(),
             new CloudAction(),
+            new ClutterSwitchAction(),
             new CrumblePlatformAction(),
             new CrushBlockAction(),
             new CrystalStaticSpinnerAction(),

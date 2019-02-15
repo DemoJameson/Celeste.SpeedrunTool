@@ -34,7 +34,7 @@ ALL=ALL
 # ================================== Mod Options Menu ==================================
 SPEEDRUN_TOOL=         Speedrun Tool
 ENABLED=               Enabled
-AUTO_LOAD_AFTER_DEATH= Auto Load After Death
+AUTO_LOAD_AFTER_DEATH= Auto Load State After Death
 RESPAWN_SPEED=         Respawn Speed
 SKIP_CHAPTER_SCENE=    Skip Chapter Scene
 ROOM_TIMER=            Room Timer

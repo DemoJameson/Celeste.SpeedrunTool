@@ -6,9 +6,11 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
 {
+    // TODO: 7E 中与移动平台相连的时候，保存后无法关联移动平台
     public class DustRotateSpinnerAction : AbstractEntityAction
     {
-        private Dictionary<EntityID, DustRotateSpinner> _savedDustRotateSpinners = new Dictionary<EntityID, DustRotateSpinner>();
+        private Dictionary<EntityID, DustRotateSpinner> _savedDustRotateSpinners =
+            new Dictionary<EntityID, DustRotateSpinner>();
 
         public override void OnQuickSave(Level level)
         {
@@ -30,10 +32,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
             }
         }
 
-        private IEnumerator RestoreRotationPercent(DustRotateSpinner self, DustRotateSpinner savedDustRotateSpinner)
+        private IEnumerator RestoreRotationPercent(DustRotateSpinner self, DustRotateSpinner saved)
         {
-            FieldInfo property = typeof(RotateSpinner).GetField("rotationPercent", BindingFlags.NonPublic | BindingFlags.Instance);
-            property.SetValue(self, property.GetValue(savedDustRotateSpinner));   
+            FieldInfo fieldInfo =
+                typeof(RotateSpinner).GetField("rotationPercent", BindingFlags.NonPublic | BindingFlags.Instance);
+            fieldInfo.SetValue(self, fieldInfo.GetValue(saved));
             yield break;
         }
 

@@ -95,9 +95,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             LoadButton = new VirtualButton(0.08f);
             LoadButton.Nodes.Add(new VirtualButton.KeyboardKey(_settings.KeyboardQuickLoad));
             SaveButton.Nodes.Add(new VirtualButton.PadButton(Input.Gamepad, _settings.ControllerQuickLoad));
-            
+
             ClearButton = new VirtualButton(0.08f);
-            ClearButton.Nodes.AddRange(_settings.KeyboardQuickClears.Select(keys => new VirtualButton.KeyboardKey(keys)));
+            ClearButton.Nodes.AddRange(
+                _settings.KeyboardQuickClears.Select(keys => new VirtualButton.KeyboardKey(keys)));
             ClearButton.Nodes.Add(new VirtualButton.PadButton(Input.Gamepad, _settings.ControllerQuickClear));
         }
 
@@ -113,7 +114,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
                 !self.SkippingCutscene && player != null && !player.Dead)
             {
                 int state = player.StateMachine.State;
-                List<int> disableState = new List<int>
+                List<int> disabledSaveState = new List<int>
                 {
                     Player.StReflectionFall,
                     Player.StTempleFall,
@@ -124,7 +125,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
                     Player.StIntroWakeUp
                 };
 
-                if (!disableState.Contains(state))
+                if (!disabledSaveState.Contains(state))
                 {
                     QuickSave(self, player);
                     return;
@@ -136,7 +137,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
                 QuickLoad();
                 return;
             }
-            
+
             if (ClearButton.Pressed && !self.Paused)
             {
                 Clear();
@@ -281,8 +282,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             {
                 level.Frozen = false;
             }
+
             On.Celeste.Player.Die -= DisableDie;
-            
+
             _session = null;
             _player = null;
             _camera = null;

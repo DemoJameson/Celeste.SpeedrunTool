@@ -1,13 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
-using On.Celeste.Pico8;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
 {
     public class BadelineBoostAction : AbstractEntityAction
     {
         private Dictionary<EntityID, Vector2[]> _savedNodes = new Dictionary<EntityID, Vector2[]>();
+//        private long _lastPlayTime;
 
         public override void OnQuickSave(Level level)
         {
@@ -53,6 +53,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
             }
         }
 
+        private static void FixMultipleTriggers(On.Celeste.BadelineBoost.orig_OnPlayer orig, BadelineBoost self, Player player)
+        {
+            if (player.SceneAs<Level>().Frozen)
+                return;
+            
+            orig(self, player);
+        }
+
         public override void OnClear()
         {
             _savedNodes.Clear();
@@ -62,12 +70,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
         {
             On.Celeste.BadelineBoost.ctor_EntityData_Vector2 += AttachEntityId;
             On.Celeste.BadelineBoost.ctor_Vector2Array_bool += RestoreBadelineBoostState;
+            On.Celeste.BadelineBoost.OnPlayer += FixMultipleTriggers;
         }
 
         public override void OnUnload()
         {
             On.Celeste.BadelineBoost.ctor_EntityData_Vector2 -= AttachEntityId;
             On.Celeste.BadelineBoost.ctor_Vector2Array_bool -= RestoreBadelineBoostState;
+            On.Celeste.BadelineBoost.OnPlayer -= FixMultipleTriggers;
         }
 
         public override void OnInit()

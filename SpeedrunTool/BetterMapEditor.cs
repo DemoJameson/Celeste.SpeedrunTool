@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
 using Celeste.Editor;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
@@ -12,7 +14,7 @@ namespace Celeste.Mod.SpeedrunTool
         private BetterMapEditor() { }
         public static BetterMapEditor Instance { get; } = new BetterMapEditor();
         // @formatter:on 
-        
+
         private const string StartChasingLevel = "3";
 
         // 3A 杂乱房间部分的光线调暗
@@ -40,32 +42,81 @@ namespace Celeste.Mod.SpeedrunTool
             // 8B
             "9Ha-03", "9Ha-04", "9Ha-05", "9Hb-02", "9Hb-03", "9Hc-01", "9Hc-06"
         };
-        
+
+        private long _zoomWaitFrames;
         public VirtualButton OpenDebugButton;
 
         public void Load()
         {
             On.Celeste.Editor.MapEditor.LoadLevel += MapEditorOnLoadLevel;
-            On.Celeste.Level.Update += ProcessHotKey;
+            On.Celeste.Editor.MapEditor.Update += MakeControllerWork;
+            On.Celeste.Level.Update += AddedOpenDebugMapButton;
         }
 
         public void Unload()
         {
             On.Celeste.Editor.MapEditor.LoadLevel -= MapEditorOnLoadLevel;
-            On.Celeste.Level.Update -= ProcessHotKey;
+            On.Celeste.Editor.MapEditor.Update -= MakeControllerWork;
+            On.Celeste.Level.Update -= AddedOpenDebugMapButton;
         }
 
         public void Init()
         {
-            
             OpenDebugButton = new VirtualButton(0.08f);
             if (SpeedrunToolModule.Settings.ControllerOpenDebugMap != null)
             {
-                OpenDebugButton.Nodes.Add(new VirtualButton.PadButton(Input.Gamepad, (Buttons) SpeedrunToolModule.Settings.ControllerOpenDebugMap));
+                OpenDebugButton.Nodes.Add(new VirtualButton.PadButton(Input.Gamepad,
+                    (Buttons) SpeedrunToolModule.Settings.ControllerOpenDebugMap));
             }
         }
 
-        private void ProcessHotKey(On.Celeste.Level.orig_Update orig, Level self)
+
+        private void MakeControllerWork(On.Celeste.Editor.MapEditor.orig_Update orig, Editor.MapEditor self)
+        {
+            _zoomWaitFrames--;
+            orig(self);
+
+            // pressed confirm button teleport to the select room
+            if (Input.MenuConfirm.Pressed)
+            {
+                Vector2 mousePosition = (Vector2) self.GetPrivateField("mousePosition");
+                LevelTemplate level =
+                    self.GetPrivateMethod("TestCheck").Invoke(self, new object[] {mousePosition}) as LevelTemplate;
+                if (level != null)
+                {
+                    if (level.Type == LevelTemplateType.Filler)
+                        return;
+                    
+                    self.GetPrivateMethod("LoadLevel").Invoke(self, new object[] {level, mousePosition * 8f});
+                }
+            }
+
+            // right stick zoom the map
+            GamePadState currentState = MInput.GamePads[Input.Gamepad].CurrentState;
+            Camera camera = typeof(MapEditor).GetField("Camera", BindingFlags.Static | BindingFlags.NonPublic)
+                ?.GetValue(null) as Camera;
+            if (_zoomWaitFrames < 0 && Math.Abs(currentState.ThumbSticks.Right.X) >= 0.5f)
+            {
+                if (camera != null)
+                {
+                    float newZoom = camera.Zoom + Math.Sign(currentState.ThumbSticks.Right.X) * 1f;
+                    if (newZoom >= 1f)
+                    {
+                        camera.Zoom = newZoom;
+                        _zoomWaitFrames = 5;
+                    }
+                }
+            }
+
+            // move faster when zoom out
+            if (camera != null && camera.Zoom < 6f)
+            {
+                camera.Position += new Vector2(Input.MoveX.Value, Input.MoveY.Value) * 300f * Engine.DeltaTime *
+                                   ((float) Math.Pow(1.3, 6 - camera.Zoom) - 1);
+            }
+        }
+
+        private void AddedOpenDebugMapButton(On.Celeste.Level.orig_Update orig, Level self)
         {
             orig(self);
 
@@ -75,9 +126,9 @@ namespace Celeste.Mod.SpeedrunTool
             }
         }
 
-        private void MapEditorOnLoadLevel(On.Celeste.Editor.MapEditor.orig_LoadLevel orig, Editor.MapEditor self, LevelTemplate level, Vector2 at)
+        private void MapEditorOnLoadLevel(On.Celeste.Editor.MapEditor.orig_LoadLevel orig, Editor.MapEditor self,
+            LevelTemplate level, Vector2 at)
         {
-            
             On.Celeste.LevelLoader.ctor += FixTeleportProblems;
             orig(self, level, at);
             On.Celeste.LevelLoader.ctor -= FixTeleportProblems;

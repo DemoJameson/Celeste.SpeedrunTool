@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool
@@ -14,12 +15,14 @@ namespace Celeste.Mod.SpeedrunTool
         private readonly RoomTimerData _nextRoomTimerData = new RoomTimerData(RoomTimerType.NextRoom);
 
         public SpeedrunType? OriginalSpeedrunType;
+        public VirtualButton ResetRoomPbButton;
 
         public void Load()
         {
             On.Celeste.SpeedrunTimerDisplay.Render += Render;
             On.Celeste.MenuOptions.SetSpeedrunClock += SaveOriginalSpeedrunClock;
             On.Celeste.Level.Update += Timing;
+            On.Celeste.Level.Update += AddResetButton;
             On.Celeste.Level.NextLevel += UpdateTimerStateOnNextLevel;
             On.Celeste.Session.SetFlag += UpdateTimerStateOnTouchFlag;
             On.Celeste.LevelLoader.ctor += ResetTime;
@@ -28,6 +31,15 @@ namespace Celeste.Mod.SpeedrunTool
         public void Init()
         {
             OriginalSpeedrunType = Settings.Instance.SpeedrunClock;
+            
+            ResetRoomPbButton = new VirtualButton(0.08f);
+            SpeedrunToolModuleSettings settings = SpeedrunToolModule.Settings;
+            ResetRoomPbButton.Nodes.Add(new VirtualButton.KeyboardKey(settings.KeyboardResetRoomPb));
+            if (settings.ControllerResetRoomPb != null)
+            {
+                ResetRoomPbButton.Nodes.Add(new VirtualButton.PadButton(Input.Gamepad,
+                    (Buttons) settings.ControllerResetRoomPb));
+            }
         }
 
         public void Unload()
@@ -38,6 +50,16 @@ namespace Celeste.Mod.SpeedrunTool
             On.Celeste.Level.NextLevel -= UpdateTimerStateOnNextLevel;
             On.Celeste.Session.SetFlag -= UpdateTimerStateOnTouchFlag;
             On.Celeste.LevelLoader.ctor -= ResetTime;
+        }
+
+        private void AddResetButton(On.Celeste.Level.orig_Update orig, Level self)
+        {
+            orig(self);
+
+            if (ResetRoomPbButton.Pressed && !self.Paused)
+            {
+                ClearPbTimes();
+            }
         }
 
         public void ClearPbTimes()

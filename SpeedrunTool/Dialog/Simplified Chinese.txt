@@ -59,7 +59,7 @@ DIALOG_CLEAR=
     清除状态~
 DIALOG_NOT_SAVED=
     [MADELINE left upset]
-    尚未保存状态。
+    请先保存状态。
     
 # ================================== Button Config ==================================
 OPEN_DEBUG_MAP= 打开地图 

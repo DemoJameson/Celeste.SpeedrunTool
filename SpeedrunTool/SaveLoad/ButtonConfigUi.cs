@@ -82,6 +82,17 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
                     () =>
                         Remap(Mappings.OpenDebugMap)));
             }
+            if (_settings.ControllerResetRoomPb == null)
+            {
+                Add(new Setting(Dialog.Clean("RESET_ROOM_PB"), Keys.None).Pressed(() =>
+                    Remap(Mappings.ResetRoomPb)));
+            }
+            else
+            {
+                Add(new Setting(Dialog.Clean("RESET_ROOM_PB"), (Buttons) _settings.ControllerResetRoomPb).Pressed(
+                    () =>
+                        Remap(Mappings.ResetRoomPb)));
+            }
 
             Add(new SubHeader(Dialog.Clean("KEYBOARD")));
             Add(new Setting(Dialog.Clean("SAVE"), _settings.KeyboardQuickSave).Pressed(() =>
@@ -92,6 +103,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
                 Remap(Mappings.Clear, true)));
             Add(new Setting(Dialog.Clean("OPEN_DEBUG_MAP"), _settings.KeyboardOpenDebugMap).Pressed(() =>
                 Remap(Mappings.OpenDebugMap, true)));
+            Add(new Setting(Dialog.Clean("RESET_ROOM_PB"), _settings.KeyboardResetRoomPb).Pressed(() =>
+                Remap(Mappings.ResetRoomPb, true)));
 
             Add(new SubHeader(""));
             Button button = new Button(Dialog.Clean("KEY_CONFIG_RESET"))
@@ -117,14 +130,19 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             _settings.ControllerQuickLoad = Buttons.RightStick;
             _settings.ControllerQuickClear = Buttons.Back;
             _settings.ControllerOpenDebugMap = null;
+            _settings.ControllerResetRoomPb = null;
+            
             _settings.KeyboardQuickSave = Keys.F7;
             _settings.KeyboardQuickLoad = Keys.F8;
             _settings.KeyboardQuickClear = FixedClearKeys.ToList();
             _settings.KeyboardOpenDebugMap = FixedOpenDebugMapKeys.ToList();
+            _settings.KeyboardResetRoomPb = Keys.F9;
+            
             UpdateSaveButton();
             UpdateLoadButton();
             UpdateClearButton();
             UpdateOpenDebugMapButton();
+            UpdateResetRoomPbButton();
         }
 
 
@@ -163,6 +181,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
                     _settings.KeyboardOpenDebugMap.Add(key);
                     UpdateOpenDebugMapButton();
                     break;
+                case Mappings.ResetRoomPb:
+                    _settings.KeyboardResetRoomPb = key;
+                    UpdateResetRoomPbButton();
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -191,6 +213,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
                 case Mappings.OpenDebugMap:
                     _settings.ControllerOpenDebugMap = button;
                     UpdateOpenDebugMapButton();
+                    break;
+                case Mappings.ResetRoomPb:
+                    _settings.ControllerResetRoomPb = button;
+                    UpdateResetRoomPbButton();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -231,6 +257,17 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             if (_settings.ControllerOpenDebugMap != null)
             {
                 nodes.Add(new VirtualButton.PadButton(Input.Gamepad, (Buttons) _settings.ControllerOpenDebugMap));
+            }
+        }
+        
+        private void UpdateResetRoomPbButton()
+        {
+            List<VirtualButton.Node> nodes = RoomTimerManager.Instance.ResetRoomPbButton.Nodes;
+            nodes.Clear();
+            nodes.Add(new VirtualButton.KeyboardKey(_settings.KeyboardResetRoomPb));
+            if (_settings.ControllerResetRoomPb != null)
+            {
+                nodes.Add(new VirtualButton.PadButton(Input.Gamepad, (Buttons) _settings.ControllerResetRoomPb));
             }
         }
 
@@ -320,6 +357,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
                     return Dialog.Clean("CLEAR");
                 case Mappings.OpenDebugMap:
                     return Dialog.Clean("OPEN_DEBUG_MAP");
+                case Mappings.ResetRoomPb:
+                    return Dialog.Clean("RESET_ROOM_PB");
                 default:
                     return "Unknown";
             }
@@ -330,7 +369,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             Save,
             Load,
             Clear,
-            OpenDebugMap
+            OpenDebugMap,
+            ResetRoomPb
         }
     }
 }

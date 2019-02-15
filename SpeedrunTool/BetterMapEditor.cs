@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Celeste.Editor;
 using Microsoft.Xna.Framework;
@@ -62,11 +63,14 @@ namespace Celeste.Mod.SpeedrunTool
 
         public void Init()
         {
+            SpeedrunToolModuleSettings settings = SpeedrunToolModule.Settings;
             OpenDebugButton = new VirtualButton(0.08f);
-            if (SpeedrunToolModule.Settings.ControllerOpenDebugMap != null)
+            OpenDebugButton.Nodes.AddRange(
+                settings.KeyboardOpenDebugMap.Select(keys => new VirtualButton.KeyboardKey(keys)));
+            if (settings.ControllerOpenDebugMap != null)
             {
                 OpenDebugButton.Nodes.Add(new VirtualButton.PadButton(Input.Gamepad,
-                    (Buttons) SpeedrunToolModule.Settings.ControllerOpenDebugMap));
+                    (Buttons) settings.ControllerOpenDebugMap));
             }
         }
 
@@ -86,7 +90,7 @@ namespace Celeste.Mod.SpeedrunTool
                 {
                     if (level.Type == LevelTemplateType.Filler)
                         return;
-                    
+
                     self.GetPrivateMethod("LoadLevel").Invoke(self, new object[] {level, mousePosition * 8f});
                 }
             }

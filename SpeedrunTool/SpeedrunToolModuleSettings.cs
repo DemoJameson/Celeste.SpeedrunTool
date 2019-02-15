@@ -39,13 +39,15 @@ namespace Celeste.Mod.SpeedrunTool
         [SettingIgnore] public Buttons ControllerQuickSave { get; set; } = Buttons.LeftStick;
         [SettingIgnore] public Buttons ControllerQuickLoad { get; set; } = Buttons.RightStick;
         [SettingIgnore] public Buttons ControllerQuickClear { get; set; } = Buttons.Back;
-        [SettingIgnore] public Buttons? ControllerOpenDebugMap { get; set; } = null;
+        [SettingIgnore] public Buttons? ControllerOpenDebugMap { get; set; }
+        [SettingIgnore] public Buttons? ControllerResetRoomPb { get; set; }
 
         [SettingIgnore] public Keys KeyboardQuickSave { get; set; } = Keys.F7;
         [SettingIgnore] public Keys KeyboardQuickLoad { get; set; } = Keys.F8;
         [SettingIgnore] public List<Keys> KeyboardOpenDebugMap { get; set; } = ButtonConfigUi.FixedOpenDebugMapKeys.ToList();
         
         [SettingIgnore] public List<Keys> KeyboardQuickClear { get; set; } = ButtonConfigUi.FixedClearKeys.ToList();
+        [SettingIgnore] public Keys KeyboardResetRoomPb { get; set; } = Keys.F9;
 
         [YamlIgnore] public string ButtonConfig { get; set; } = "";
 

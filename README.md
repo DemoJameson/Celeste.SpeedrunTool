@@ -7,12 +7,11 @@
 
 ## Features
 
-1. Quickly save player and room snapshot with custom buttons.
-2. Automatically load snapshot after death.
-3. Speed up the respawn process.
-4. Add a timer for a single room which supports recording the best time and timing between the 7th chapter flags
-5. Remove the postcard and chapter completion scene.
-6. Fixed some problems after teleporting via the map editor. For example, 2A could not dreamdash and activated badeline, 3A huge mess hall was too bright, and the 8th chapter was in the wrong fire state.
+- Create Save States* to practice certain segments of the room, automatically loaded after death. Customizable keyboard / controller shortcut for saving and loading. 
+- Faster respawn time.
+- Room timer compatible with Summit flags. Personal best is recorded.
+- Removes cutscenes when loading and finishing a chapter.
+- Debug mode F6 teleport bug-fix – Dream blocks and Badeline not activating in Old Site, incorrect ice / fire state in Core, Celestial Resort storage hall being strangely lit, etc.
 
 ## Previews
 
@@ -20,12 +19,11 @@
 
 ![preview2](./Preview/preview2.png)
 
-## Credits
+## Acknowledgements
 
-- [Matt Makes Games Inc.](http://www.mattmakesgames.com/) —— Thanks to them for developing [Celeste](http://www.celestegame.com/), my favorite platform game.
-- [Everest](https://everestapi.github.io/) —— Celeste Mod loader, without it there is no this Mod
-
-- [Ahorn](https://github.com/CelestialCartographers/Ahorn) —— Very convenient for finding the name of an entity
-
-- [FMOD](https://www.fmod.com/) —— Provides Celeste audio project
-- 西瓜 —— Helped me test
+- A huge shout-out to [Matt Makes Games Inc.](http://www.mattmakesgames.com/) for designing Celeste, it has been my favorite platformer ever since.
+- [Everest](https://everestapi.github.io/) – Celeste Mod Loader and modding API, making this Mod a reality.
+- [Ahorn](https://github.com/CelestialCartographers/Ahorn) – Map maker and level editor, useful for identifying different entities in the game.
+- [FMOD](https://www.fmod.com/) – Curated library of high quality sound effects for games and released Celeste complete audio project.
+- [西瓜](https://space.bilibili.com/18705633) – Mod tester.
+- [rjdimo](https://steamcommunity.com/id/rjdimo/) – Shameless self-promoting translator of this readme file.

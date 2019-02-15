@@ -22,8 +22,7 @@
 ## 致谢
 - [Matt Makes Games Inc.](http://www.mattmakesgames.com/) —— 感谢他们开发出了 [Celeste](http://www.celestegame.com/) 这款我最爱的平台跳跃游戏
 - [Everest](https://everestapi.github.io/) —— Celeste Mod 加载器，没有它就没有这个 Mod
-- [Ahorn](https://github.com/CelestialCartographers/Ahorn) —— 用来查找 Entity 的名字
-
+- [Ahorn](https://github.com/CelestialCartographers/Ahorn) —— 用来查找物体在游戏代码里的命名
 - [FMOD](https://www.fmod.com/) —— 提供了 Celeste 的音频工程，处理音频时可以预先试听
-
-- 西瓜 —— 帮助我测试
+- [西瓜](https://space.bilibili.com/18705633) —— 协助测试
+- [rjdimo](https://space.bilibili.com/11670105) —— 上门推销将本说明翻译成了英文

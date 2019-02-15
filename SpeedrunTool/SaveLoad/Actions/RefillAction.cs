@@ -44,8 +44,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
         private static IEnumerator ConsumeRefill(Refill self)
         {
             Player player = self.Scene.Tracker.GetEntity<Player>();
-            self.Add(new Coroutine((IEnumerator) self.GetPrivateMethod("RefillRoutine")
-                .Invoke(self, new object[] {player})));
+            self.Add(new Coroutine((IEnumerator) self.InvokePrivateMethod("RefillRoutine", player)));
             yield return null;
         }
 

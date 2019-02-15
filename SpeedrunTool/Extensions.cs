@@ -68,6 +68,12 @@ namespace Celeste.Mod.SpeedrunTool
             return obj.GetType().GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic);
         }
 
+        public static object InvokePrivateMethod(this object obj, string methodName, params object[] parameters)
+        {
+            return obj.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic)
+                ?.Invoke(obj, parameters);
+        }
+        
         public static void AddToTracker(this Type type)
         {
             if (!Tracker.StoredEntityTypes.Contains(type)) Tracker.StoredEntityTypes.Add(type);

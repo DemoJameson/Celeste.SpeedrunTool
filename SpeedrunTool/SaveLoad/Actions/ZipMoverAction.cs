@@ -105,7 +105,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
                         self.SetPrivateField("percent", Ease.SineIn(goProgress));
                         float percent = (float) self.GetPrivateField("percent");
                         Vector2 to = Vector2.Lerp(currentPosition, target, percent);
-                        self.GetPrivateMethod("ScrapeParticlesCheck").Invoke(self, new object[] {to});
+                        self.InvokePrivateMethod("ScrapeParticlesCheck", to);
                         if (self.Scene.OnInterval(0.1f))
                         {
                             object pathRenderer = self.GetPrivateField("pathRenderer");

@@ -95,13 +95,13 @@ namespace Celeste.Mod.SpeedrunTool
             {
                 Vector2 mousePosition = (Vector2) self.GetPrivateField("mousePosition");
                 LevelTemplate level =
-                    self.GetPrivateMethod("TestCheck").Invoke(self, new object[] {mousePosition}) as LevelTemplate;
+                    self.InvokePrivateMethod("TestCheck", mousePosition) as LevelTemplate;
                 if (level != null)
                 {
                     if (level.Type == LevelTemplateType.Filler)
                         return;
 
-                    self.GetPrivateMethod("LoadLevel").Invoke(self, new object[] {level, mousePosition * 8f});
+                    self.InvokePrivateMethod("LoadLevel", level, mousePosition * 8f);
                 }
             }
 

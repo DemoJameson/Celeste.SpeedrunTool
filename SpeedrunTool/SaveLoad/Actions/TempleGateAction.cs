@@ -44,7 +44,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
             else if ((bool) self.GetPrivateField("open"))
             {
                 MuteAudio("event:/game/05_mirror_temple/gate_main_close");
-                self.GetPrivateMethod("SetHeight").Invoke(self, new object[] {self.GetPrivateField("closedHeight")});
+                self.InvokePrivateMethod("SetHeight", self.GetPrivateField("closedHeight"));
             }
         }
 

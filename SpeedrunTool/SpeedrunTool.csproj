@@ -98,7 +98,7 @@
     <Compile Include="SaveLoad\ButtonConfigUi.cs" />
     <Compile Include="SaveLoad\Component\RemoveSelfComponent.cs" />
     <Compile Include="SaveLoad\Component\RestorePositionComponent.cs" />
-    <Compile Include="SaveLoad\SnapshotManager.cs" />
+    <Compile Include="SaveLoad\StateManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="BetterMapEditor.cs" />
     <Compile Include="RoomTimerManager.cs" />

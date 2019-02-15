@@ -178,8 +178,7 @@ namespace Celeste.Mod.SpeedrunTool
             long difference = time - pbTime;
 
             TimeSpan timeSpan = TimeSpan.FromTicks(Math.Abs(difference));
-            string result = " ";
-            result += difference >= 0 ? "+" : "-";
+            string result = difference >= 0 ? "+" : "-";
             result += (int) timeSpan.TotalSeconds + timeSpan.ToString("\\.ff");
             return result;
         }
@@ -304,8 +303,8 @@ namespace Celeste.Mod.SpeedrunTool
         public void ResetTime()
         {
             _pbTimeKey = "";
-            Time = 0;
             _timerState = IsNextRoomType ? TimerState.WaitToStart : TimerState.Timing;
+            Time = 0;
             LastPbTime = 0;
         }
 

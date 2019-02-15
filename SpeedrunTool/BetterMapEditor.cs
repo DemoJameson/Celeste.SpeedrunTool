@@ -52,6 +52,7 @@ namespace Celeste.Mod.SpeedrunTool
             On.Celeste.Editor.MapEditor.LoadLevel += MapEditorOnLoadLevel;
             On.Celeste.Editor.MapEditor.Update += MakeControllerWork;
             On.Celeste.Level.Update += AddedOpenDebugMapButton;
+            On.Celeste.WindController.SetAmbienceStrength += FixWindSoundNotPlay;
         }
 
         public void Unload()
@@ -72,6 +73,15 @@ namespace Celeste.Mod.SpeedrunTool
                 OpenDebugButton.Nodes.Add(new VirtualButton.PadButton(Input.Gamepad,
                     (Buttons) settings.ControllerOpenDebugMap));
             }
+        }
+
+        private void FixWindSoundNotPlay(On.Celeste.WindController.orig_SetAmbienceStrength orig, WindController self, bool strong)
+        {
+            if (Audio.CurrentAmbienceEventInstance == null)
+            {
+                Audio.SetAmbience("event:/env/amb/04_main");
+            }
+            orig(self, strong);
         }
 
 

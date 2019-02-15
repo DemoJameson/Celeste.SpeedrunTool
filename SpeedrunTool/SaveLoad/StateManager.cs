@@ -132,16 +132,23 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
                 }
             }
 
-            if (LoadButton.Pressed && !self.Paused && IsSaved)
+            if (LoadButton.Pressed && !self.Paused)
             {
-                QuickLoad();
+                if (IsSaved)
+                {
+                    QuickLoad();
+                }
+                else
+                {
+                    self.Add(new MiniTextbox("DIALOG_NOT_SAVED")); 
+                }
                 return;
             }
 
             if (ClearButton.Pressed && !self.Paused)
             {
                 Clear();
-                self.Add(new MiniTextbox("CLEAR_TEXT"));
+                self.Add(new MiniTextbox("DIALOG_CLEAR"));
                 return;
             }
 

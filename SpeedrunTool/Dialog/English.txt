@@ -51,9 +51,16 @@ CURRENT_ROOM= Current Room
 # ================================== Save Load Snapshot ==================================
 CONTROLLER= Controller
 KEYBOARD=   Keyboard
-SAVE=       Save Snapshot
-LOAD=       Load Snapshot
-CLEAR=      Clear Snapshot
-CLEAR_TEXT=
+SAVE=       Save State
+LOAD=       Load State
+CLEAR=      Clear State
+DIALOG_CLEAR=
     [MADELINE left normal]
-    Clear the snapshot~
+    Cleared the state~
+DIALOG_NOT_SAVED=
+    [MADELINE left upset]
+    Not saved state yet.
+
+# ================================== Button Config ==================================
+OPEN_DEBUG_MAP= Open Debug Map
+RESET_ROOM_PB=  Reset Room PB

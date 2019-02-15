@@ -51,9 +51,16 @@ CURRENT_ROOM= 当前房间
 # ================================== Save Load Snapshot ==================================
 CONTROLLER= 手柄
 KEYBOARD=   键盘
-SAVE=       保存快照
-LOAD=       加载快照
-CLEAR=      清除快照
-CLEAR_TEXT=
+SAVE=       保存状态
+LOAD=       加载状态
+CLEAR=      清除状态
+DIALOG_CLEAR=
     [MADELINE left normal]
-    清除快照~
+    清除状态~
+DIALOG_NOT_SAVED=
+    [MADELINE left upset]
+    尚未保存状态。
+    
+# ================================== Button Config ==================================
+OPEN_DEBUG_MAP= 打开地图 
+RESET_ROOM_PB=  重置房间记录

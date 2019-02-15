@@ -21,14 +21,17 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             Buttons.RightTrigger,
             Buttons.LeftStick,
             Buttons.RightStick,
-            Buttons.Back,
+            Buttons.Back
         };
-        
-        // F1 ~ F6 Clear Save
-        public static readonly IEnumerable<Keys> ClearKeys = new List<Keys>
+
+        public static readonly IEnumerable<Keys> FixedClearKeys = new List<Keys>
         {
             Keys.F3,
-            Keys.F4,
+            Keys.F6
+        };
+        
+        public static readonly IEnumerable<Keys> FixedOpenDebugMapKeys = new List<Keys>
+        {
             Keys.F6
         };
 
@@ -68,14 +71,27 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
                 Remap(Mappings.Load)));
             Add(new Setting(Dialog.Clean("CLEAR"), _settings.ControllerQuickClear).Pressed(() =>
                 Remap(Mappings.Clear)));
+            if (_settings.ControllerOpenDebugMap == null)
+            {
+                Add(new Setting(Dialog.Clean("OPEN_DEBUG_MAP"), Keys.None).Pressed(() =>
+                    Remap(Mappings.OpenDebugMap)));
+            }
+            else
+            {
+                Add(new Setting(Dialog.Clean("OPEN_DEBUG_MAP"), (Buttons) _settings.ControllerOpenDebugMap).Pressed(
+                    () =>
+                        Remap(Mappings.OpenDebugMap)));
+            }
 
             Add(new SubHeader(Dialog.Clean("KEYBOARD")));
             Add(new Setting(Dialog.Clean("SAVE"), _settings.KeyboardQuickSave).Pressed(() =>
                 Remap(Mappings.Save, true)));
             Add(new Setting(Dialog.Clean("LOAD"), _settings.KeyboardQuickLoad).Pressed(() =>
                 Remap(Mappings.Load, true)));
-            Add(new Setting(Dialog.Clean("CLEAR"), _settings.KeyboardQuickClears).Pressed(() =>
+            Add(new Setting(Dialog.Clean("CLEAR"), _settings.KeyboardQuickClear).Pressed(() =>
                 Remap(Mappings.Clear, true)));
+            Add(new Setting(Dialog.Clean("OPEN_DEBUG_MAP"), _settings.KeyboardOpenDebugMap).Pressed(() =>
+                Remap(Mappings.OpenDebugMap, true)));
 
             Add(new SubHeader(""));
             Button button = new Button(Dialog.Clean("KEY_CONFIG_RESET"))
@@ -84,30 +100,33 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
                 AlwaysCenter = true,
                 OnPressed = () =>
                 {
-                    SetDefaultKeyboardControls();
+                    SetDefaultButtons();
                     Reload(Selection);
                 }
             };
             Add(button);
-            
+
             if (index < 0)
                 return;
             Selection = index;
         }
 
-        private void SetDefaultKeyboardControls()
+        private void SetDefaultButtons()
         {
             _settings.ControllerQuickSave = Buttons.LeftStick;
             _settings.ControllerQuickLoad = Buttons.RightStick;
             _settings.ControllerQuickClear = Buttons.Back;
+            _settings.ControllerOpenDebugMap = null;
             _settings.KeyboardQuickSave = Keys.F7;
             _settings.KeyboardQuickLoad = Keys.F8;
-            _settings.KeyboardQuickClears = ClearKeys.ToList();
+            _settings.KeyboardQuickClear = FixedClearKeys.ToList();
+            _settings.KeyboardOpenDebugMap = FixedOpenDebugMapKeys.ToList();
             UpdateSaveButton();
             UpdateLoadButton();
             UpdateClearButton();
+            UpdateOpenDebugMapButton();
         }
-            
+
 
         private void Remap(Mappings mapping, bool remappingKeyboard = false)
         {
@@ -133,10 +152,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
                     UpdateLoadButton();
                     break;
                 case Mappings.Clear:
-                    _settings.KeyboardQuickClears.Clear();
-                    _settings.KeyboardQuickClears.AddRange(ClearKeys);
-                    _settings.KeyboardQuickClears.Add(key);
+                    _settings.KeyboardQuickClear.Clear();
+                    _settings.KeyboardQuickClear.AddRange(FixedClearKeys);
+                    _settings.KeyboardQuickClear.Add(key);
                     UpdateClearButton();
+                    break;
+                case Mappings.OpenDebugMap:
+                    _settings.KeyboardOpenDebugMap.Clear();
+                    _settings.KeyboardOpenDebugMap.AddRange(FixedOpenDebugMapKeys);
+                    _settings.KeyboardOpenDebugMap.Add(key);
+                    UpdateOpenDebugMapButton();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -163,6 +188,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
                     _settings.ControllerQuickClear = button;
                     UpdateClearButton();
                     break;
+                case Mappings.OpenDebugMap:
+                    _settings.ControllerOpenDebugMap = button;
+                    UpdateOpenDebugMapButton();
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -185,13 +214,24 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             nodes.Add(new VirtualButton.KeyboardKey(_settings.KeyboardQuickLoad));
             nodes.Add(new VirtualButton.PadButton(Input.Gamepad, _settings.ControllerQuickLoad));
         }
-        
+
         private void UpdateClearButton()
         {
             List<VirtualButton.Node> nodes = SaveLoadManager.Instance.ClearButton.Nodes;
             nodes.Clear();
-            nodes.AddRange(_settings.KeyboardQuickClears.Select(clearKey => new VirtualButton.KeyboardKey(clearKey)));
+            nodes.AddRange(_settings.KeyboardQuickClear.Select(clearKey => new VirtualButton.KeyboardKey(clearKey)));
             nodes.Add(new VirtualButton.PadButton(Input.Gamepad, _settings.ControllerQuickClear));
+        }
+
+        private void UpdateOpenDebugMapButton()
+        {
+            List<VirtualButton.Node> nodes = BetterMapEditor.Instance.OpenDebugButton.Nodes;
+            nodes.Clear();
+            nodes.AddRange(_settings.KeyboardOpenDebugMap.Select(clearKey => new VirtualButton.KeyboardKey(clearKey)));
+            if (_settings.ControllerOpenDebugMap != null)
+            {
+                nodes.Add(new VirtualButton.PadButton(Input.Gamepad, (Buttons) _settings.ControllerOpenDebugMap));
+            }
         }
 
         public override void Update()
@@ -267,7 +307,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
                     Color.White * Ease.CubeIn(_remappingEase));
             }
         }
-        
+
         private string Label(Mappings mapping)
         {
             switch (mapping)
@@ -278,6 +318,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
                     return Dialog.Clean("LOAD");
                 case Mappings.Clear:
                     return Dialog.Clean("CLEAR");
+                case Mappings.OpenDebugMap:
+                    return Dialog.Clean("OPEN_DEBUG_MAP");
                 default:
                     return "Unknown";
             }
@@ -287,7 +329,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
         {
             Save,
             Load,
-            Clear
+            Clear,
+            OpenDebugMap
         }
     }
 }

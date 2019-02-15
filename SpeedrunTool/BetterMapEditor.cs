@@ -1,12 +1,18 @@
 ﻿using System.Collections.Generic;
-using Celeste.Mod.SpeedrunTool.SaveLoad;
+using Celeste.Editor;
 using Microsoft.Xna.Framework;
-using LevelTemplate = Celeste.Editor.LevelTemplate;
+using Microsoft.Xna.Framework.Input;
+using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool
 {
     public class BetterMapEditor
     {
+        // @formatter:off
+        private BetterMapEditor() { }
+        public static BetterMapEditor Instance { get; } = new BetterMapEditor();
+        // @formatter:on 
+        
         private const string StartChasingLevel = "3";
 
         // 3A 杂乱房间部分的光线调暗
@@ -34,15 +40,39 @@ namespace Celeste.Mod.SpeedrunTool
             // 8B
             "9Ha-03", "9Ha-04", "9Ha-05", "9Hb-02", "9Hb-03", "9Hc-01", "9Hc-06"
         };
+        
+        public VirtualButton OpenDebugButton;
 
         public void Load()
         {
             On.Celeste.Editor.MapEditor.LoadLevel += MapEditorOnLoadLevel;
+            On.Celeste.Level.Update += ProcessHotKey;
         }
 
         public void Unload()
         {
             On.Celeste.Editor.MapEditor.LoadLevel -= MapEditorOnLoadLevel;
+            On.Celeste.Level.Update -= ProcessHotKey;
+        }
+
+        public void Init()
+        {
+            
+            OpenDebugButton = new VirtualButton(0.08f);
+            if (SpeedrunToolModule.Settings.ControllerOpenDebugMap != null)
+            {
+                OpenDebugButton.Nodes.Add(new VirtualButton.PadButton(Input.Gamepad, (Buttons) SpeedrunToolModule.Settings.ControllerOpenDebugMap));
+            }
+        }
+
+        private void ProcessHotKey(On.Celeste.Level.orig_Update orig, Level self)
+        {
+            orig(self);
+
+            if (OpenDebugButton.Pressed && !self.Paused)
+            {
+                Engine.Commands.FunctionKeyActions[5]();
+            }
         }
 
         private void MapEditorOnLoadLevel(On.Celeste.Editor.MapEditor.orig_LoadLevel orig, Editor.MapEditor self, LevelTemplate level, Vector2 at)

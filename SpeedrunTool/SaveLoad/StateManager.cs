@@ -70,6 +70,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
         public VirtualButton SaveButton;
         public VirtualButton LoadButton;
         public VirtualButton ClearButton;
+
         private bool IsSaved => _session != null && _player != null && _camera != null;
 
         public void Load()
@@ -94,11 +95,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
 
             LoadButton = new VirtualButton(0.08f);
             LoadButton.Nodes.Add(new VirtualButton.KeyboardKey(_settings.KeyboardQuickLoad));
-            SaveButton.Nodes.Add(new VirtualButton.PadButton(Input.Gamepad, _settings.ControllerQuickLoad));
+            LoadButton.Nodes.Add(new VirtualButton.PadButton(Input.Gamepad, _settings.ControllerQuickLoad));
 
             ClearButton = new VirtualButton(0.08f);
             ClearButton.Nodes.AddRange(
-                _settings.KeyboardQuickClears.Select(keys => new VirtualButton.KeyboardKey(keys)));
+                _settings.KeyboardQuickClear.Select(keys => new VirtualButton.KeyboardKey(keys)));
             ClearButton.Nodes.Add(new VirtualButton.PadButton(Input.Gamepad, _settings.ControllerQuickClear));
         }
 
@@ -140,8 +141,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
                 }
                 else
                 {
-                    self.Add(new MiniTextbox("DIALOG_NOT_SAVED")); 
+                    self.Add(new MiniTextbox("DIALOG_NOT_SAVED"));
                 }
+
                 return;
             }
 

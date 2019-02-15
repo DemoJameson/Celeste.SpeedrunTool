@@ -1,6 +1,5 @@
 ﻿using System;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
-using Celeste.Mod.SpeedrunTool.SaveLoad.Actions;
 using Microsoft.Xna.Framework;
 using On.Monocle;
 
@@ -11,8 +10,6 @@ namespace Celeste.Mod.SpeedrunTool
     {
         public static SpeedrunToolModule Instance;
         //public static ExampleSaveData SaveData => (ExampleSaveData)Instance._SaveData;
-
-        private readonly BetterMapEditor _betterMapEditor = new BetterMapEditor();
 
         public SpeedrunToolModule()
         {
@@ -30,7 +27,7 @@ namespace Celeste.Mod.SpeedrunTool
         // Load runs before Celeste itself has initialized properly.
         public override void Load()
         {
-            _betterMapEditor.Load();
+            BetterMapEditor.Instance.Load();
             SaveLoadManager.Instance.Load();
             RoomTimerManager.Instance.Load();
             On.Celeste.PlayerDeadBody.End += QuickLoadWhenDeath;
@@ -42,7 +39,7 @@ namespace Celeste.Mod.SpeedrunTool
         // Unload the entirety of your mod's content, remove any event listeners and undo all hooks.
         public override void Unload()
         {
-            _betterMapEditor.Unload();
+            BetterMapEditor.Instance.Unload();
             SaveLoadManager.Instance.Unload();
             RoomTimerManager.Instance.Unload();
             On.Celeste.PlayerDeadBody.End -= QuickLoadWhenDeath;
@@ -54,6 +51,7 @@ namespace Celeste.Mod.SpeedrunTool
         // Optional, initialize anything after Celeste has initialized itself properly.
         public override void Initialize()
         {
+            BetterMapEditor.Instance.Init();
             SaveLoadManager.Instance.Init();
             RoomTimerManager.Instance.Init();
         }

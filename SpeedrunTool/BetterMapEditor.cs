@@ -160,6 +160,7 @@ namespace Celeste.Mod.SpeedrunTool
                 // 根据 BadelineOldsite 的代码得知设置这两个 Flag 后才会启动追逐
                 if (_dreamDashRooms.IndexOf(session.Level) >= _dreamDashRooms.IndexOf(StartChasingLevel))
                     session.SetFlag(CS02_BadelineIntro.Flag);
+                
                 session.LevelFlags.Add(StartChasingLevel);
             }
         }

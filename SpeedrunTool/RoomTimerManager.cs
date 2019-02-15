@@ -172,7 +172,7 @@ namespace Celeste.Mod.SpeedrunTool
             {
                 string comparePbString = ComparePb(roomTimerData.Time, roomTimerData.LastPbTime);
                 DrawTime(
-                    new Vector2(x + timeMarginLeft + SpeedrunTimerDisplay.GetTimeWidth(roomTimeString), self.Y + 36f),
+                    new Vector2(x + timeMarginLeft + SpeedrunTimerDisplay.GetTimeWidth(roomTimeString) + 10, self.Y + 36f),
                     comparePbString, 0.5f, true,
                     roomTimerData.IsCompleted, roomTimerData.BeatBestTime);
             }
@@ -201,7 +201,7 @@ namespace Celeste.Mod.SpeedrunTool
 
             TimeSpan timeSpan = TimeSpan.FromTicks(Math.Abs(difference));
             string result = difference >= 0 ? "+" : "-";
-            result += (int) timeSpan.TotalSeconds + timeSpan.ToString("\\.ff");
+            result += (int) timeSpan.TotalSeconds + timeSpan.ToString("\\.fff");
             return result;
         }
 

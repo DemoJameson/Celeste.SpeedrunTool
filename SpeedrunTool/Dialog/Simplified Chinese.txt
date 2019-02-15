@@ -34,7 +34,7 @@ ALL=全部
 # ================================== Mod Options Menu ==================================
 SPEEDRUN_TOOL=         速通辅助工具
 ENABLED=               开关
-AUTO_LOAD_AFTER_DEATH= 死亡后自动加载快照
+AUTO_LOAD_AFTER_DEATH= 死亡后自动加载状态
 RESPAWN_SPEED=         复活速度
 SKIP_CHAPTER_SCENE=    跳过章节场景
 ROOM_TIMER=            计时器

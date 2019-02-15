@@ -1,6 +1,8 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.Xna.Framework;
+using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
 {
@@ -24,9 +26,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
             if (IsLoadStart && _savedDustRotateSpinners.ContainsKey(entityId))
             {
                 DustRotateSpinner savedDustRotateSpinner = _savedDustRotateSpinners[entityId];
-                FieldInfo property = typeof(RotateSpinner).GetField("rotationPercent", BindingFlags.NonPublic | BindingFlags.Instance);
-                property.SetValue(self, property.GetValue(savedDustRotateSpinner));               
+                self.Add(new Coroutine(RestoreRotationPercent(self, savedDustRotateSpinner)));
             }
+        }
+
+        private IEnumerator RestoreRotationPercent(DustRotateSpinner self, DustRotateSpinner savedDustRotateSpinner)
+        {
+            FieldInfo property = typeof(RotateSpinner).GetField("rotationPercent", BindingFlags.NonPublic | BindingFlags.Instance);
+            property.SetValue(self, property.GetValue(savedDustRotateSpinner));   
+            yield break;
         }
 
         public override void OnClear()

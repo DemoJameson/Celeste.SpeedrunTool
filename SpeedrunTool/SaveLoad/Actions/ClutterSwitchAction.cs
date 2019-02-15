@@ -46,10 +46,5 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
         {
             typeof(ClutterSwitch).AddToTracker();
         }
-
-        public override void OnUpdateEntitiesWhenFreeze(Level level)
-        {
-            level.UpdateEntities<ClutterSwitch>();
-        }
     }
 }

@@ -11,6 +11,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
         private readonly List<AbstractEntityAction> _entityActions = new List<AbstractEntityAction>
         {
             new BadelineBoostAction(),
+            new BadelineOldsiteAction(),
             new BladeRotateSpinnerAction(),
             new BladeTrackSpinnerAction(),
             new BounceBlockAction(),

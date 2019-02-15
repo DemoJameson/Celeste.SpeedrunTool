@@ -48,7 +48,7 @@ COMPLETE= 结尾
 NEXT_ROOM=    下个房间
 CURRENT_ROOM= 当前房间
 
-# ================================== Save Load Snapshot ==================================
+# ================================== Save Load State ==================================
 CONTROLLER= 手柄
 KEYBOARD=   键盘
 SAVE=       保存状态

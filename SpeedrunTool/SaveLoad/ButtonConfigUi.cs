@@ -32,6 +32,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             Keys.F6
         };
 
+        private SpeedrunToolModuleSettings _settings => SpeedrunToolModule.Settings;
+
         private bool _closing;
         private float _inputDelay;
         private bool _remapping;
@@ -60,26 +62,52 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             Add(new Header(Dialog.Clean("BUTTON_CONFIG")));
 
             Add(new SubHeader(Dialog.Clean("CONTROLLER")));
-            Add(new Setting(Dialog.Clean("SAVE"), SpeedrunToolModule.Settings.ControllerQuickSave).Pressed(() =>
+            Add(new Setting(Dialog.Clean("SAVE"), _settings.ControllerQuickSave).Pressed(() =>
                 Remap(Mappings.Save)));
-            Add(new Setting(Dialog.Clean("LOAD"), SpeedrunToolModule.Settings.ControllerQuickLoad).Pressed(() =>
+            Add(new Setting(Dialog.Clean("LOAD"), _settings.ControllerQuickLoad).Pressed(() =>
                 Remap(Mappings.Load)));
-            Add(new Setting(Dialog.Clean("CLEAR"), SpeedrunToolModule.Settings.ControllerQuickClear).Pressed(() =>
+            Add(new Setting(Dialog.Clean("CLEAR"), _settings.ControllerQuickClear).Pressed(() =>
                 Remap(Mappings.Clear)));
 
             Add(new SubHeader(Dialog.Clean("KEYBOARD")));
-            Add(new Setting(Dialog.Clean("SAVE"), SpeedrunToolModule.Settings.KeyboardQuickSave).Pressed(() =>
+            Add(new Setting(Dialog.Clean("SAVE"), _settings.KeyboardQuickSave).Pressed(() =>
                 Remap(Mappings.Save, true)));
-            Add(new Setting(Dialog.Clean("LOAD"), SpeedrunToolModule.Settings.KeyboardQuickLoad).Pressed(() =>
+            Add(new Setting(Dialog.Clean("LOAD"), _settings.KeyboardQuickLoad).Pressed(() =>
                 Remap(Mappings.Load, true)));
-            Add(new Setting(Dialog.Clean("CLEAR"), SpeedrunToolModule.Settings.KeyboardQuickClears).Pressed(() =>
+            Add(new Setting(Dialog.Clean("CLEAR"), _settings.KeyboardQuickClears).Pressed(() =>
                 Remap(Mappings.Clear, true)));
 
             Add(new SubHeader(""));
+            Button button = new Button(Dialog.Clean("KEY_CONFIG_RESET"))
+            {
+                IncludeWidthInMeasurement = false,
+                AlwaysCenter = true,
+                OnPressed = () =>
+                {
+                    SetDefaultKeyboardControls();
+                    Reload(Selection);
+                }
+            };
+            Add(button);
+            
             if (index < 0)
                 return;
             Selection = index;
         }
+
+        private void SetDefaultKeyboardControls()
+        {
+            _settings.ControllerQuickSave = Buttons.LeftStick;
+            _settings.ControllerQuickLoad = Buttons.RightStick;
+            _settings.ControllerQuickClear = Buttons.Back;
+            _settings.KeyboardQuickSave = Keys.F7;
+            _settings.KeyboardQuickLoad = Keys.F8;
+            _settings.KeyboardQuickClears = ClearKeys.ToList();
+            UpdateSaveButton();
+            UpdateLoadButton();
+            UpdateClearButton();
+        }
+            
 
         private void Remap(Mappings mapping, bool remappingKeyboard = false)
         {
@@ -97,17 +125,17 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             switch (_remappingButton)
             {
                 case Mappings.Save:
-                    SpeedrunToolModule.Settings.KeyboardQuickSave = key;
+                    _settings.KeyboardQuickSave = key;
                     UpdateSaveButton();
                     break;
                 case Mappings.Load:
-                    SpeedrunToolModule.Settings.KeyboardQuickLoad = key;
+                    _settings.KeyboardQuickLoad = key;
                     UpdateLoadButton();
                     break;
                 case Mappings.Clear:
-                    SpeedrunToolModule.Settings.KeyboardQuickClears.Clear();
-                    SpeedrunToolModule.Settings.KeyboardQuickClears.AddRange(ClearKeys);
-                    SpeedrunToolModule.Settings.KeyboardQuickClears.Add(key);
+                    _settings.KeyboardQuickClears.Clear();
+                    _settings.KeyboardQuickClears.AddRange(ClearKeys);
+                    _settings.KeyboardQuickClears.Add(key);
                     UpdateClearButton();
                     break;
                 default:
@@ -124,15 +152,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             switch (_remappingButton)
             {
                 case Mappings.Save:
-                    SpeedrunToolModule.Settings.ControllerQuickSave = button;
+                    _settings.ControllerQuickSave = button;
                     UpdateSaveButton();
                     break;
                 case Mappings.Load:
-                    SpeedrunToolModule.Settings.ControllerQuickLoad = button;
+                    _settings.ControllerQuickLoad = button;
                     UpdateLoadButton();
                     break;
                 case Mappings.Clear:
-                    SpeedrunToolModule.Settings.ControllerQuickClear = button;
+                    _settings.ControllerQuickClear = button;
                     UpdateClearButton();
                     break;
                 default:
@@ -142,28 +170,28 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             Reload(Selection);
         }
 
-        private static void UpdateSaveButton()
+        private void UpdateSaveButton()
         {
             List<VirtualButton.Node> nodes = SaveLoadManager.Instance.SaveButton.Nodes;
             nodes.Clear();
-            nodes.Add(new VirtualButton.KeyboardKey(SpeedrunToolModule.Settings.KeyboardQuickSave));
-            nodes.Add(new VirtualButton.PadButton(Input.Gamepad, SpeedrunToolModule.Settings.ControllerQuickSave));
+            nodes.Add(new VirtualButton.KeyboardKey(_settings.KeyboardQuickSave));
+            nodes.Add(new VirtualButton.PadButton(Input.Gamepad, _settings.ControllerQuickSave));
         }
 
-        private static void UpdateLoadButton()
+        private void UpdateLoadButton()
         {
             List<VirtualButton.Node> nodes = SaveLoadManager.Instance.LoadButton.Nodes;
             nodes.Clear();
-            nodes.Add(new VirtualButton.KeyboardKey(SpeedrunToolModule.Settings.KeyboardQuickLoad));
-            nodes.Add(new VirtualButton.PadButton(Input.Gamepad, SpeedrunToolModule.Settings.ControllerQuickLoad));
+            nodes.Add(new VirtualButton.KeyboardKey(_settings.KeyboardQuickLoad));
+            nodes.Add(new VirtualButton.PadButton(Input.Gamepad, _settings.ControllerQuickLoad));
         }
         
-        private static void UpdateClearButton()
+        private void UpdateClearButton()
         {
             List<VirtualButton.Node> nodes = SaveLoadManager.Instance.ClearButton.Nodes;
             nodes.Clear();
-            nodes.AddRange(SpeedrunToolModule.Settings.KeyboardQuickClears.Select(clearKey => new VirtualButton.KeyboardKey(clearKey)));
-            nodes.Add(new VirtualButton.PadButton(Input.Gamepad, SpeedrunToolModule.Settings.ControllerQuickClear));
+            nodes.AddRange(_settings.KeyboardQuickClears.Select(clearKey => new VirtualButton.KeyboardKey(clearKey)));
+            nodes.Add(new VirtualButton.PadButton(Input.Gamepad, _settings.ControllerQuickClear));
         }
 
         public override void Update()

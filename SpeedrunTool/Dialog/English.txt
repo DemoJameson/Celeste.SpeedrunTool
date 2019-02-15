@@ -48,7 +48,7 @@ COMPLETE= Complete
 NEXT_ROOM=    Next Room
 CURRENT_ROOM= Current Room
 
-# ================================== Save Load Snapshot ==================================
+# ================================== Save Load State ==================================
 CONTROLLER= Controller
 KEYBOARD=   Keyboard
 SAVE=       Save State

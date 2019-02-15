@@ -119,7 +119,7 @@ namespace Celeste.Mod.SpeedrunTool
             catch (ArgumentException e)
             {
                 e.LogDetailed();
-                return GetEnumFromName<T>(Enum.GetNames(typeof(T))[0]);
+                return (T) Enum.Parse(typeof(T), Enum.GetNames(typeof(T))[0]);
             }
         }
     }

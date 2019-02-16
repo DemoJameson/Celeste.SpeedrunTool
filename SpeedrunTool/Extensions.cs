@@ -152,7 +152,7 @@ namespace Celeste.Mod.SpeedrunTool
             foreach (T entity in tracker.GetCastEntities<T>())
             {
                 EntityID entityId = entity.GetEntityId();
-                if (result.ContainsKey(entityId))
+                if (entityId.Equals(default(EntityID)) || result.ContainsKey(entityId))
                     continue;
 
                 result[entityId] = entity;

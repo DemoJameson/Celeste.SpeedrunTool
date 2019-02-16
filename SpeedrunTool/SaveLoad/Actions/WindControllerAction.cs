@@ -15,8 +15,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
         {
             if (_savedWindController != null)
             {
-                level.Wind = (Vector2) _savedWindController.GetPrivateField("targetSpeed");
-                
+                Vector2 targetSpeed = (Vector2) _savedWindController.GetPrivateField("targetSpeed");
+                if (targetSpeed.Y == 0f)
+                {
+                    level.Wind = targetSpeed;
+                }
                 WindController windController = level.Tracker.GetEntity<WindController>();
                 WindController.Patterns pattern = (WindController.Patterns) _savedWindController.GetPrivateField("pattern");
                 if (windController == null)

@@ -89,6 +89,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
 
         public void Init()
         {
+            // enter debug map auto clear state
+            Engine.Commands.FunctionKeyActions[5] += Clear;
+            
             _entityActions.ForEach(action => action.OnInit());
 
             SaveButton = new VirtualButton(0.08f);
@@ -242,7 +245,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             if (player == null)
             {
                 level.Frozen = false;
-                level.PauseLock = false;
             }
             else if (player.StateMachine.State != Player.StNormal)
             {

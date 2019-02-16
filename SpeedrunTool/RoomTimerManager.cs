@@ -95,7 +95,7 @@ namespace Celeste.Mod.SpeedrunTool
         {
             origSetFlag(session, flag, setTo);
 
-            // 似乎通过地图选择旗子作为传送点会预设旗子，所以从第二面碰到旗子开始才改变计时状态
+            // 似乎通过地图选择旗子作为传送点会预设旗子，所以从第二面碰到的旗子开始才改变计时状态
             // F1 F2 F3 因为有保存旗子状态所以不受影响
             if (flag.StartsWith(FlagPrefix) && setTo && session.Flags.Count(input => input.StartsWith(FlagPrefix)) >= 2)
                 UpdateTimerState();

@@ -12,7 +12,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
         {
             new BadelineBoostAction(),
             new BadelineOldsiteAction(),
-            new BladeRotateSpinnerAction(),
             new BladeTrackSpinnerAction(),
             new BounceBlockAction(),
             new BumperAction(),
@@ -25,7 +24,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             new DreamBlockAction(),
             new DustStaticSpinnerAction(),
             new DashSwitchAction(),
-            new DustRotateSpinnerAction(),
             new DustTrackSpinnerAction(),
             new FallingBlockAction(),
             new FinalBossMovingBlockAction(),
@@ -39,6 +37,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             new ReflectionTentaclesAction(),
             new RefillAction(),
             new RisingLavaAction(),
+            new RotateSpinnerAction(),
             new SandwichLavaAction(),
             new SeekerAction(),
             new SinkingPlatformAction(),

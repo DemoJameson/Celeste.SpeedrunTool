@@ -66,7 +66,7 @@
     <Compile Include="SaveLoad\Actions\DashBlockAction.cs" />
     <Compile Include="SaveLoad\Actions\DashSwitchAction.cs" />
     <Compile Include="SaveLoad\Actions\DreamBlockAction.cs" />
-    <Compile Include="SaveLoad\Actions\DustRotateSpinnerAction.cs" />
+    <Compile Include="SaveLoad\Actions\RotateSpinnerAction.cs" />
     <Compile Include="SaveLoad\Actions\DustStaticSpinnerAction.cs" />
     <Compile Include="SaveLoad\Actions\DustTrackSpinnerAction.cs" />
     <Compile Include="SaveLoad\Actions\ExitBlockAction.cs" />
@@ -80,7 +80,6 @@
     <Compile Include="SaveLoad\Actions\MovingPlatformAction.cs" />
     <Compile Include="SaveLoad\Actions\RefillAction.cs" />
     <Compile Include="SaveLoad\Actions\ReflectionTentaclesAction.cs" />
-    <Compile Include="SaveLoad\Actions\BladeRotateSpinnerAction.cs" />
     <Compile Include="SaveLoad\Actions\RisingLavaAction.cs" />
     <Compile Include="SaveLoad\Actions\SandwichLavaAction.cs" />
     <Compile Include="SaveLoad\Actions\SeekerAction.cs" />

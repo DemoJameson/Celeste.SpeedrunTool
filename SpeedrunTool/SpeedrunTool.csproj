@@ -84,6 +84,7 @@
     <Compile Include="SaveLoad\Actions\SandwichLavaAction.cs" />
     <Compile Include="SaveLoad\Actions\SeekerAction.cs" />
     <Compile Include="SaveLoad\Actions\SinkingPlatformAction.cs" />
+    <Compile Include="SaveLoad\Actions\SnowBallAction.cs" />
     <Compile Include="SaveLoad\Actions\SpikesAction.cs" />
     <Compile Include="SaveLoad\Actions\CrystalStaticSpinnerAction.cs" />
     <Compile Include="SaveLoad\Actions\SpringAction.cs" />

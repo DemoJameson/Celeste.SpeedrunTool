@@ -41,6 +41,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             new SandwichLavaAction(),
             new SeekerAction(),
             new SinkingPlatformAction(),
+            new SnowballAction(),
             new SpikesAction(),
             new SpringAction(),
             new SwapBlockAction(),

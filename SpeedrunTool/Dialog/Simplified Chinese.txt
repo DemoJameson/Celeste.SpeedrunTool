@@ -47,7 +47,7 @@ COMPLETE= 结尾
 # ================================== Room Timer Options ==================================
 NEXT_ROOM=       下个房间
 CURRENT_ROOM=    当前房间
-NUMBER_OF_ROOMS= 计时的房间数
+NUMBER_OF_ROOMS= 计时房间数
 
 # ================================== Save Load State ==================================
 CONTROLLER= 手柄

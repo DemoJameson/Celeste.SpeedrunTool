@@ -16,7 +16,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
             if (_savedWindController != null)
             {
                 Vector2 targetSpeed = (Vector2) _savedWindController.GetPrivateField("targetSpeed");
-                if (targetSpeed.Y == 0f)
+                if (targetSpeed.X > 0f)
                 {
                     level.Wind = targetSpeed;
                 }

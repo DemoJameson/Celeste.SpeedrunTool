@@ -303,6 +303,7 @@ namespace Celeste.Mod.SpeedrunTool
                         return int.Parse(flagName);
                     }).FirstOrDefault();
                 _pbTimeKey += closestFlag;
+                _pbTimeKey += _numberOfRooms;
             }
 
             Time += TimeSpan.FromSeconds(Engine.RawDeltaTime).Ticks;

@@ -191,6 +191,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             _player = player;
             _camera = level.Camera;
 
+            // 防止被恢复了位置的熔岩烫死
             On.Celeste.Player.Die += DisableDie;
             Engine.Scene = new LevelLoader(level.Session, level.Session.RespawnPoint);
         }
@@ -227,6 +228,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             if (player.StateMachine.State == Player.StIntroRespawn)
             {
                 level.Frozen = true;
+                level.PauseLock = true;
                 _loadState = LoadState.LoadFrozen;
             }
             else
@@ -240,6 +242,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             if (player == null)
             {
                 level.Frozen = false;
+                level.PauseLock = false;
             }
             else if (player.StateMachine.State != Player.StNormal)
             {
@@ -263,6 +266,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             }
 
             level.Frozen = false;
+            level.PauseLock = false;
 
             _loadState = LoadState.LoadComplete;
             On.Celeste.Player.Die -= DisableDie;

@@ -31,7 +31,7 @@ namespace Celeste.Mod.SpeedrunTool
         public void Init()
         {
             OriginalSpeedrunType = Settings.Instance.SpeedrunClock;
-            
+
             ResetRoomPbButton = new VirtualButton(0.08f);
             SpeedrunToolModuleSettings settings = SpeedrunToolModule.Settings;
             ResetRoomPbButton.Nodes.Add(new VirtualButton.KeyboardKey(settings.KeyboardResetRoomPb));
@@ -172,7 +172,8 @@ namespace Celeste.Mod.SpeedrunTool
             {
                 string comparePbString = ComparePb(roomTimerData.Time, roomTimerData.LastPbTime);
                 DrawTime(
-                    new Vector2(x + timeMarginLeft + SpeedrunTimerDisplay.GetTimeWidth(roomTimeString) + 10, self.Y + 36f),
+                    new Vector2(x + timeMarginLeft + SpeedrunTimerDisplay.GetTimeWidth(roomTimeString) + 10,
+                        self.Y + 36f),
                     comparePbString, 0.5f, true,
                     roomTimerData.IsCompleted, roomTimerData.BeatBestTime);
             }
@@ -272,6 +273,7 @@ namespace Celeste.Mod.SpeedrunTool
 
         public long Time;
         private TimerState _timerState;
+        private int _numberOfRooms;
 
         public RoomTimerData(RoomTimerType roomTimerType)
         {
@@ -312,12 +314,21 @@ namespace Celeste.Mod.SpeedrunTool
             {
                 case TimerState.WaitToStart:
                     _timerState = TimerState.Timing;
+                    _numberOfRooms = SpeedrunToolModule.Settings.NumberOfRooms;
                     break;
                 case TimerState.Timing:
-                    _timerState = TimerState.Completed;
-                    LastPbTime = _pbTimes.GetValueOrDefault(_pbTimeKey, 0);
-                    if (Time < LastPbTime || LastPbTime == 0)
-                        _pbTimes[_pbTimeKey] = Time;
+                    if (_numberOfRooms <= 1)
+                    {
+                        _timerState = TimerState.Completed;
+                        LastPbTime = _pbTimes.GetValueOrDefault(_pbTimeKey, 0);
+                        if (Time < LastPbTime || LastPbTime == 0)
+                            _pbTimes[_pbTimeKey] = Time;
+                    }
+                    else
+                    {
+                        _numberOfRooms--;
+                    }
+
                     break;
             }
         }
@@ -326,6 +337,7 @@ namespace Celeste.Mod.SpeedrunTool
         {
             _pbTimeKey = "";
             _timerState = IsNextRoomType ? TimerState.WaitToStart : TimerState.Timing;
+            _numberOfRooms = SpeedrunToolModule.Settings.NumberOfRooms;
             Time = 0;
             LastPbTime = 0;
         }

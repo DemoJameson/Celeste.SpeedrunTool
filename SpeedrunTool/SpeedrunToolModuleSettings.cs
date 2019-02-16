@@ -35,6 +35,10 @@ namespace Celeste.Mod.SpeedrunTool
 
         public string RoomTimer { get; set; } = RoomTimerStrings.First();
         [YamlIgnore] [SettingIgnore] public RoomTimerType RoomTimerType => GetEnumFromName<RoomTimerType>(RoomTimer);
+        
+        [SettingRange(1,99)]
+        [SettingName("NUMBER_OF_ROOMS")]
+        public int NumberOfRooms { get; set; } = 1;
 
         [SettingIgnore] public Buttons ControllerQuickSave { get; set; } = Buttons.LeftStick;
         [SettingIgnore] public Buttons ControllerQuickLoad { get; set; } = Buttons.RightStick;
@@ -107,10 +111,7 @@ namespace Celeste.Mod.SpeedrunTool
         private static List<string> GetEnumNames<T>() where T : struct, IConvertible
         {
             return new List<string>(Enum.GetNames(typeof(T))
-                .Select(name =>
-                {
-                    return Regex.Replace(name, @"([a-z])([A-Z])", "$1_$2").ToUpper();
-                }));
+                .Select(name => Regex.Replace(name, @"([a-z])([A-Z])", "$1_$2").ToUpper()));
         }
 
         private static T GetEnumFromName<T>(string name) where T : struct, IConvertible
@@ -140,7 +141,7 @@ namespace Celeste.Mod.SpeedrunTool
     public enum RoomTimerType
     {
         OFF,
-        CurrentRoom,
-        NextRoom
+        NextRoom,
+        CurrentRoom
     }
 }

@@ -45,8 +45,9 @@ INTRO=    Intro
 COMPLETE= Complete
 
 # ================================== Room Timer Options ==================================
-NEXT_ROOM=    Next Room
-CURRENT_ROOM= Current Room
+NEXT_ROOM=       Next Room
+CURRENT_ROOM=    Current Room
+NUMBER_OF_ROOMS= Number of Timed Rooms 
 
 # ================================== Save Load State ==================================
 CONTROLLER= Controller

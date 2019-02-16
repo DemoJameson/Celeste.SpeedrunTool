@@ -37,7 +37,7 @@ ENABLED=               开关
 AUTO_LOAD_AFTER_DEATH= 死亡后自动加载状态
 RESPAWN_SPEED=         复活速度
 SKIP_CHAPTER_SCENE=    跳过章节场景
-ROOM_TIMER=            计时器
+ROOM_TIMER=            房间计时器
 BUTTON_CONFIG=         按键设置
 
 # ================================== Skip Chapter Scene Options ==================================
@@ -45,8 +45,9 @@ INTRO=    开头
 COMPLETE= 结尾
 
 # ================================== Room Timer Options ==================================
-NEXT_ROOM=    下个房间
-CURRENT_ROOM= 当前房间
+NEXT_ROOM=       下个房间
+CURRENT_ROOM=    当前房间
+NUMBER_OF_ROOMS= 计时的房间数
 
 # ================================== Save Load State ==================================
 CONTROLLER= 手柄

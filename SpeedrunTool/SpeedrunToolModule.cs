@@ -74,7 +74,10 @@ namespace Celeste.Mod.SpeedrunTool
         private static void QuickLoadWhenDeath(On.Celeste.PlayerDeadBody.orig_End orig, PlayerDeadBody self)
         {
             orig(self);
-            if (Settings.Enabled && Settings.AutoLoadAfterDeath) SaveLoadManager.Instance.QuickLoad();
+            if (Settings.Enabled && Settings.AutoLoadAfterDeath)
+            {
+                SaveLoadManager.Instance.QuickLoad();
+            }
         }
 
         private static void SkipChapterIntro(On.Celeste.LevelEnter.orig_Go orig, Session session, bool data)

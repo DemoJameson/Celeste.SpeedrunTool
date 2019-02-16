@@ -17,13 +17,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
             On.Celeste.TempleCrackedBlock.orig_ctor_EntityID_EntityData_Vector2 orig, TempleCrackedBlock self,
             EntityID eid, EntityData data, Vector2 offset)
         {
-            self.SetEntityId(eid);
+            EntityID entityId = data.ToEntityId();
+            self.SetEntityId(entityId);
             orig(self, eid, data, offset);
             
             if (IsLoadStart)
             {
-                if (_saveEntities.ContainsKey(eid))
-                    self.Position = _saveEntities[eid].Position;
+                if (_saveEntities.ContainsKey(entityId))
+                    self.Position = _saveEntities[entityId].Position;
                 else
                     self.Add(new RemoveSelfComponent());
             }

@@ -55,12 +55,14 @@ namespace Celeste.Mod.SpeedrunTool
 
         public static object GetPrivateProperty(this object obj, string name)
         {
-            return obj.GetType().GetProperty(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)?.GetValue(obj);
+            return obj.GetType().GetProperty(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                ?.GetValue(obj);
         }
 
         public static void SetPrivateProperty(this object obj, string name, object value)
         {
-            obj.GetType().GetProperty(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)?.SetValue(obj, value);
+            obj.GetType().GetProperty(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                ?.SetValue(obj, value);
         }
 
         public static MethodInfo GetPrivateMethod(this object obj, string name)
@@ -73,7 +75,7 @@ namespace Celeste.Mod.SpeedrunTool
             return obj.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic)
                 ?.Invoke(obj, parameters);
         }
-        
+
         public static void AddToTracker(this Type type)
         {
             if (!Tracker.StoredEntityTypes.Contains(type)) Tracker.StoredEntityTypes.Add(type);
@@ -94,7 +96,8 @@ namespace Celeste.Mod.SpeedrunTool
             if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Invalid name");
             name = name.Trim();
 
-            IDictionary<string, object> values = (IDictionary<string, object>) extendedData.GetValue(o, CreateDictionary);
+            IDictionary<string, object> values =
+                (IDictionary<string, object>) extendedData.GetValue(o, CreateDictionary);
 
             if (value != null)
                 values[name] = value;
@@ -107,7 +110,8 @@ namespace Celeste.Mod.SpeedrunTool
             if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Invalid name");
             name = name.Trim();
 
-            IDictionary<string, object> values = (IDictionary<string, object>) extendedData.GetValue(o, CreateDictionary);
+            IDictionary<string, object> values =
+                (IDictionary<string, object>) extendedData.GetValue(o, CreateDictionary);
 
             if (values.ContainsKey(name))
                 return (T) values[name];
@@ -132,7 +136,9 @@ namespace Celeste.Mod.SpeedrunTool
 
         public static EntityID ToEntityId(this EntityData entityData)
         {
-            return new EntityID(entityData.Level.Name, entityData.ID);
+            // 因为 ID 有可能重复，所以加上起点坐标的信息
+            return new EntityID(entityData.Level.Name + entityData.Name,
+                (int) (entityData.ID + entityData.Position.X * 173 + entityData.Position.Y * 173));
         }
 
         public static IEnumerable<T> GetCastEntities<T>(this Tracker tracker) where T : Entity
@@ -142,19 +148,20 @@ namespace Celeste.Mod.SpeedrunTool
 
         public static Dictionary<EntityID, T> GetDictionary<T>(this Tracker tracker) where T : Entity
         {
-            Dictionary<EntityID,T> result = new Dictionary<EntityID, T>();
+            Dictionary<EntityID, T> result = new Dictionary<EntityID, T>();
             foreach (T entity in tracker.GetCastEntities<T>())
             {
                 EntityID entityId = entity.GetEntityId();
-                if(result.ContainsKey(entityId))
+                if (result.ContainsKey(entityId))
                     continue;
-                
+
                 result[entityId] = entity;
             }
+
             return result;
         }
-        
-        public static void UpdateEntities<T>(this Level level) where T:Entity
+
+        public static void UpdateEntities<T>(this Level level) where T : Entity
         {
             level.Tracker.GetEntities<T>().ForEach(entity => entity.Update());
         }

@@ -17,13 +17,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
             DashBlock self, EntityData data,
             Vector2 offset, EntityID id)
         {
-            self.SetEntityId(id);
+            EntityID entityId = data.ToEntityId();
+            self.SetEntityId(entityId);
             orig(self, data, offset, id);
 
             if (IsLoadStart)
             {
-                if (_savedDashBlocks.ContainsKey(id))
-                    self.Position = _savedDashBlocks[id].Position;
+                if (_savedDashBlocks.ContainsKey(entityId))
+                    self.Position = _savedDashBlocks[entityId].Position;
                 else
                     self.Add(new RemoveSelfComponent());
             }

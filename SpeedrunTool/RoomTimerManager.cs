@@ -200,6 +200,9 @@ namespace Celeste.Mod.SpeedrunTool
 
             long difference = time - pbTime;
 
+            if (difference == 0)
+                return "+0.0";    
+
             TimeSpan timeSpan = TimeSpan.FromTicks(Math.Abs(difference));
             string result = difference >= 0 ? "+" : "-";
             result += (int) timeSpan.TotalSeconds + timeSpan.ToString("\\.fff");
@@ -286,7 +289,7 @@ namespace Celeste.Mod.SpeedrunTool
         public long PbTime => _pbTimes.GetValueOrDefault(_pbTimeKey, 0);
         public string PbTimeString => FormatTime(PbTime, true);
         public bool IsCompleted => _timerState == TimerState.Completed;
-        public bool BeatBestTime => _timerState == TimerState.Completed && Time == PbTime;
+        public bool BeatBestTime => _timerState == TimerState.Completed && Time < PbTime;
 
         public void Timing(Session session)
         {

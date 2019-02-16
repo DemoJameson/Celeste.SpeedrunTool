@@ -128,6 +128,9 @@ namespace Celeste.Mod.SpeedrunTool
             SpeedrunToolModuleSettings settings = SpeedrunToolModule.Settings;
             if (!settings.Enabled || settings.RoomTimerType == RoomTimerType.OFF)
             {
+                if (OriginalSpeedrunType != null)
+                    Settings.Instance.SpeedrunClock = (SpeedrunType) OriginalSpeedrunType;
+                
                 orig(self);
                 return;
             }
@@ -201,7 +204,7 @@ namespace Celeste.Mod.SpeedrunTool
             long difference = time - pbTime;
 
             if (difference == 0)
-                return "+0.0";    
+                return "+0.0";
 
             TimeSpan timeSpan = TimeSpan.FromTicks(Math.Abs(difference));
             string result = difference >= 0 ? "+" : "-";

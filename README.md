@@ -28,5 +28,5 @@
 - [Everest](https://everestapi.github.io/) – Celeste Mod Loader and modding API, making this Mod a reality.
 - [Ahorn](https://github.com/CelestialCartographers/Ahorn) – Map maker and level editor, useful for identifying different entities in the game.
 - [FMOD](https://www.fmod.com/) – Curated library of high-quality sound effects for games, used to acquire Celeste audio project
-- [西瓜](https://space.bilibili.com/18705633) – Mod tester.
+- [西瓜](https://space.bilibili.com/18705633), [buhbai](https://www.speedrun.com/user/buhbai), [Evansfight](https://www.speedrun.com/user/Evansfight), [Lev067](https://www.speedrun.com/user/Lev067), [sonicyellow](https://www.speedrun.com/user/sonicyellow) – Mod tester.
 - [rjdimo](https://steamcommunity.com/id/rjdimo/) – Shameless self-promoting translator of this readme file.

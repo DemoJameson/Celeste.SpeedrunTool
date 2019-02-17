@@ -19,21 +19,21 @@ namespace Celeste.Mod.SpeedrunTool
 
         private const string StartChasingLevel = "3";
 
+        // LevelName
+        private readonly List<string> _dreamDashRooms = new List<string>
+        {
+            "2", "1", // TODO 根据复活点判读
+            "d1", "d2", "d4", "d5", "d9", "3x",
+            "3", "4", "5", "6", "7", "8", "9", "9b", "10",
+            "11", "12b", "12c", "12d", "12", "13"
+        };
+        
         // 3A 杂乱房间部分的光线调暗
         private readonly List<string> _darkRooms = new List<string>
         {
             "09-b", "08-x", "10-x", "11-x", "11-y", "12-y", "11-z", "10-z",
             "10-y", "11-a", "12-x", "13-x", "13-a", "13-b", "12-b", "11-b",
             "10-c", "10-d", "11-d", "12-d", "12-c", "11-c"
-        };
-
-        // LevelName
-        private readonly List<string> _dreamDashRooms = new List<string>
-        {
-            "d1", "d2", "d4", "d5", "d9", "3x",
-            "3", "4", "5", "6", "7", "8", "9", "9b", "10",
-            "11", "12b", "12c", "12d", "12", "13",
-            "2", "1" // TODO 根据复活点判读
         };
 
         private readonly List<string> _iceRooms = new List<string>

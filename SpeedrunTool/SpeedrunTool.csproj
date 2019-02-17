@@ -57,6 +57,7 @@
     <Compile Include="SaveLoad\Actions\AbstractEntityAction.cs" />
     <Compile Include="SaveLoad\Actions\BadelineBoostAction.cs" />
     <Compile Include="SaveLoad\Actions\BadelineOldsiteAction.cs" />
+    <Compile Include="SaveLoad\Actions\BoosterAction.cs" />
     <Compile Include="SaveLoad\Actions\BounceBlockAction.cs" />
     <Compile Include="SaveLoad\Actions\BumperAction.cs" />
     <Compile Include="SaveLoad\Actions\CloudAction.cs" />

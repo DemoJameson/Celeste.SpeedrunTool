@@ -18,10 +18,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
             _savedTrackSpinners = entities.Cast<TrackSpinner>().ToDictionary(entity => entity.GetEntityId());
         }
 
-        private void RestoreTrackSpinnerPosition(On.Celeste.TrackSpinner.orig_ctor orig, TrackSpinner self, EntityData data,
+        private void RestoreTrackSpinnerPosition(On.Celeste.TrackSpinner.orig_ctor orig, TrackSpinner self,
+            EntityData data,
             Vector2 offset)
         {
-
             EntityID entityId = data.ToEntityId();
             self.SetEntityId(entityId);
             orig(self, data, offset);
@@ -29,7 +29,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
             if (IsLoadStart && _savedTrackSpinners.ContainsKey(entityId))
             {
                 TrackSpinner savedTrackSpinner = _savedTrackSpinners[entityId];
-                PropertyInfo property = typeof(TrackSpinner).GetProperty("Percent", BindingFlags.Public | BindingFlags.Instance);
+                PropertyInfo property =
+                    typeof(TrackSpinner).GetProperty("Percent", BindingFlags.Public | BindingFlags.Instance);
                 property.SetValue(self, savedTrackSpinner.Percent);
                 self.Up = savedTrackSpinner.Up;
                 self.Moving = savedTrackSpinner.Moving;

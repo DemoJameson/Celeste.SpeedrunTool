@@ -6,6 +6,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
     public abstract class AbstractEntityAction
     {
         protected static bool IsLoadStart => StateManager.Instance.IsLoadStart;
+        protected static bool IsFrozen => StateManager.Instance.IsLoadFrozen;
         protected static bool IsLoading => StateManager.Instance.IsLoadFrozen || StateManager.Instance.IsLoading;
         protected static bool IsLoadComplete => StateManager.Instance.IsLoadComplete;
 

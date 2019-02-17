@@ -18,6 +18,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
         {
             new BadelineBoostAction(),
             new BadelineOldsiteAction(),
+            new BoosterAction(),
             new BounceBlockAction(),
             new BumperAction(),
             new CloudAction(),
@@ -29,7 +30,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             new DreamBlockAction(),
             new DustStaticSpinnerAction(),
             new DashSwitchAction(),
-            new TrackSpinnerAction(),
             new FallingBlockAction(),
             new FinalBossMovingBlockAction(),
             new FinalBossAction(),
@@ -55,6 +55,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             new TempleGateAction(),
             new TheoCrystalAction(),
             new TouchSwitchAction(),
+            new TrackSpinnerAction(),
             new TriggerSpikesAction(),
             new WindControllerAction(),
             new ZipMoverAction()
@@ -62,7 +63,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
 
         private Session _session;
         private Camera _camera;
-        private Player _player;
+        public Player SavedPlayer;
         private Session.CoreModes _sessionCoreModeBackup;
 
         public const float FrozenTime = 34 * 0.017f;
@@ -73,7 +74,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
         private LoadState _loadState = LoadState.None;
 
 
-        private bool IsSaved => _session != null && _player != null && _camera != null;
+        private bool IsSaved => _session != null && SavedPlayer != null && _camera != null;
 
         public void Load()
         {
@@ -182,7 +183,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             _session = level.Session.DeepClone();
             _session.CoreMode = level.CoreMode;
             level.Session.CoreMode = level.CoreMode;
-            _player = player;
+            SavedPlayer = player;
             _camera = level.Camera;
 
             // 防止被恢复了位置的熔岩烫死
@@ -205,13 +206,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
 
         private void QuickLoadStart(Level level, Player player)
         {
-            player.JustRespawned = _player.JustRespawned;
-            player.Position = _player.Position;
-            player.CameraAnchor = _player.CameraAnchor;
-            player.CameraAnchorLerp = _player.CameraAnchorLerp;
-            player.CameraAnchorIgnoreX = _player.CameraAnchorIgnoreX;
-            player.CameraAnchorIgnoreY = _player.CameraAnchorIgnoreY;
-            player.Dashes = _player.Dashes;
+            player.JustRespawned = SavedPlayer.JustRespawned;
+            player.Position = SavedPlayer.Position;
+            player.CameraAnchor = SavedPlayer.CameraAnchor;
+            player.CameraAnchorLerp = SavedPlayer.CameraAnchorLerp;
+            player.CameraAnchorIgnoreX = SavedPlayer.CameraAnchorIgnoreX;
+            player.CameraAnchorIgnoreY = SavedPlayer.CameraAnchorIgnoreY;
+            player.Dashes = SavedPlayer.Dashes;
 
             level.Camera.CopyFrom(_camera);
             level.CoreMode = _session.CoreMode;
@@ -248,11 +249,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
         // 等待人物重生完毕后设置各项状态
         private void QuickLoading(Level level, Player player)
         {
-            player.Facing = _player.Facing;
-            player.Ducking = _player.Ducking;
-            player.Speed = _player.Speed;
-            player.Stamina = _player.Stamina;
-            if (_player.StateMachine.State == Player.StStarFly)
+            player.Facing = SavedPlayer.Facing;
+            player.Ducking = SavedPlayer.Ducking;
+            player.Speed = SavedPlayer.Speed;
+            player.Stamina = SavedPlayer.Stamina;
+            if (SavedPlayer.StateMachine.State == Player.StStarFly)
             {
                 player.StateMachine.State = Player.StStarFly;
                 On.Celeste.Player.StarFlyUpdate += RestoreStarFlyTimer;
@@ -271,7 +272,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
 
             if (!(bool) self.GetPrivateField("starFlyTransforming"))
             {
-                self.CopyPrivateField("starFlyTimer", _player);
+                self.CopyPrivateField("starFlyTimer", SavedPlayer);
                 On.Celeste.Player.StarFlyUpdate -= RestoreStarFlyTimer;
             }
 
@@ -294,7 +295,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             On.Celeste.Player.Die -= DisableDie;
 
             _session = null;
-            _player = null;
+            SavedPlayer = null;
             _camera = null;
             _loadState = LoadState.None;
 

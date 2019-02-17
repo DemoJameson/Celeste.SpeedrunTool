@@ -22,7 +22,7 @@ namespace Celeste.Mod.SpeedrunTool
         private readonly List<string> _dreamDashRooms = new List<string>
         {
             "0", "1", "2",
-            "d1", "d2", "d3", "d4", "d6", "d5", "d9", "3x",
+            "d0", "d1", "d2", "d3", "d4", "d6", "d5", "d9", "3x",
             "3", "4", "5", "6", "7", "8", "9", "9b", "10",
             "11", "12b", "12c", "12d", "12", "13"
         };
@@ -33,6 +33,13 @@ namespace Celeste.Mod.SpeedrunTool
             new Vector2(632, 144),
             new Vector2(648, 144),
             new Vector2(800, 168),
+            new Vector2(792, 248),
+            new Vector2(648, 272),
+            new Vector2(648, 512),
+            new Vector2(952, 328),
+            new Vector2(952, 520),
+            new Vector2(648, 704),
+            new Vector2(952, 712),
             new Vector2(952, 160),
             new Vector2(968, 160),
             new Vector2(1608, 720),

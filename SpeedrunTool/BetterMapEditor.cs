@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Reflection;
 using Celeste.Editor;
-using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Monocle;
@@ -76,7 +75,7 @@ namespace Celeste.Mod.SpeedrunTool
 
         public static void Init()
         {
-            ButtonConfig.UpdateOpenDebugMapButton();
+            ButtonConfigUi.UpdateOpenDebugMapButton();
         }
 
         private static void FixWindSoundNotPlay(On.Celeste.WindController.orig_SetAmbienceStrength orig,
@@ -147,7 +146,7 @@ namespace Celeste.Mod.SpeedrunTool
         {
             orig(self);
 
-            if (ButtonConfig.OpenDebugButton.Value.Pressed && !self.Paused)
+            if (ButtonConfigUi.OpenDebugButton.Value.Pressed && !self.Paused)
             {
                 Engine.Commands.FunctionKeyActions[5]();
             }

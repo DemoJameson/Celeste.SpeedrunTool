@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework;
 using Monocle;
 
@@ -36,7 +35,7 @@ namespace Celeste.Mod.SpeedrunTool
         public void Init()
         {
             OriginalSpeedrunType = Settings.Instance.SpeedrunClock;
-            ButtonConfig.UpdateResetRoomPbButton();
+            ButtonConfigUi.UpdateResetRoomPbButton();
         }
 
         public void Unload()
@@ -53,7 +52,7 @@ namespace Celeste.Mod.SpeedrunTool
         {
             orig(self);
 
-            if (ButtonConfig.ResetRoomPbButton.Value.Pressed && !self.Paused)
+            if (ButtonConfigUi.ResetRoomPbButton.Value.Pressed && !self.Paused)
             {
                 ClearPbTimes();
             }

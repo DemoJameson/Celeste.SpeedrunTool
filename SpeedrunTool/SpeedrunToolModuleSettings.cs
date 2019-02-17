@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework.Input;
 using Monocle;
 using YamlDotNet.Serialization;
@@ -46,12 +45,11 @@ namespace Celeste.Mod.SpeedrunTool
         [SettingIgnore] public Buttons? ControllerOpenDebugMap { get; set; }
         [SettingIgnore] public Buttons? ControllerResetRoomPb { get; set; }
 
-        [SettingIgnore] public Keys KeyboardQuickSave { get; set; } = Keys.F7;
-        [SettingIgnore] public Keys KeyboardQuickLoad { get; set; } = Keys.F8;
-        [SettingIgnore] public List<Keys> KeyboardOpenDebugMap { get; set; } = SaveLoad.ButtonConfig.FixedOpenDebugMapKeys.ToList();
-        
-        [SettingIgnore] public List<Keys> KeyboardQuickClear { get; set; } = SaveLoad.ButtonConfig.FixedClearKeys.ToList();
-        [SettingIgnore] public Keys KeyboardResetRoomPb { get; set; } = Keys.F9;
+        [SettingIgnore] public Keys KeyboardQuickSave { get; set; } = ButtonConfigUi.DefaultKeyboardSave;
+        [SettingIgnore] public Keys KeyboardQuickLoad { get; set; } = ButtonConfigUi.DefaultKeyboardLoad;
+        [SettingIgnore] public List<Keys> KeyboardQuickClear { get; set; } = ButtonConfigUi.FixedClearKeys.ToList();
+        [SettingIgnore] public List<Keys> KeyboardOpenDebugMap { get; set; } = ButtonConfigUi.FixedOpenDebugMapKeys.ToList();
+        [SettingIgnore] public Keys KeyboardResetRoomPb { get; set; } = ButtonConfigUi.DefaultKeyboardResetPb;
 
         [YamlIgnore] public string ButtonConfig { get; set; } = "";
 
@@ -102,8 +100,8 @@ namespace Celeste.Mod.SpeedrunTool
             textMenu.Add(new TextMenu.Button(Dialog.Clean("BUTTON_CONFIG")).Pressed(() =>
             {
                 textMenu.Focused = false;
-                ButtonConfig buttonConfig = new ButtonConfig {OnClose = () => textMenu.Focused = true};
-                Engine.Scene.Add(buttonConfig);
+                ButtonConfigUi buttonConfigUi = new ButtonConfigUi {OnClose = () => textMenu.Focused = true};
+                Engine.Scene.Add(buttonConfigUi);
                 Engine.Scene.OnEndOfFrame += (Action) (() => Engine.Scene.Entities.UpdateLists());
             }));
         }

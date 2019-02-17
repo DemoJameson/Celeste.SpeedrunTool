@@ -5,9 +5,9 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Monocle;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad
+namespace Celeste.Mod.SpeedrunTool
 {
-    public class ButtonConfig : TextMenu
+    public class ButtonConfigUi : TextMenu
     {
         private static readonly List<Buttons> AllButtons = new List<Buttons>
         {
@@ -24,18 +24,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             Buttons.Back
         };
 
-        public static readonly IEnumerable<Keys> FixedClearKeys = new List<Keys>
-        {
-            Keys.F3,
-            Keys.F6
-        };
+        public const Keys DefaultKeyboardSave = Keys.F7;
+        public const Keys DefaultKeyboardLoad = Keys.F8;
+        public const Keys DefaultKeyboardResetPb = Keys.F9;
+        public static readonly Keys[] FixedClearKeys = {Keys.F3, Keys.F6};
+        public static readonly Keys[] FixedOpenDebugMapKeys = {Keys.F6};
 
-        public static readonly IEnumerable<Keys> FixedOpenDebugMapKeys = new List<Keys>
-        {
-            Keys.F6
-        };
-        
-        
 
         private static VirtualButton CreateVirtualButton()
         {
@@ -47,8 +41,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
         public static readonly Lazy<VirtualButton> ClearButton = new Lazy<VirtualButton>(CreateVirtualButton);
         public static readonly Lazy<VirtualButton> OpenDebugButton = new Lazy<VirtualButton>(CreateVirtualButton);
         public static readonly Lazy<VirtualButton> ResetRoomPbButton = new Lazy<VirtualButton>(CreateVirtualButton);
-        
-        private static  SpeedrunToolModuleSettings Settings => SpeedrunToolModule.Settings;
+
+        private static SpeedrunToolModuleSettings Settings => SpeedrunToolModule.Settings;
 
         private bool _closing;
         private float _inputDelay;
@@ -58,7 +52,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
         private bool _remappingKeyboard;
         private float _timeout;
 
-        public ButtonConfig()
+        public ButtonConfigUi()
         {
             Reload();
             OnESC = OnCancel = () =>
@@ -174,11 +168,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             Settings.ControllerOpenDebugMap = null;
             Settings.ControllerResetRoomPb = null;
 
-            Settings.KeyboardQuickSave = Keys.F7;
-            Settings.KeyboardQuickLoad = Keys.F8;
+            Settings.KeyboardQuickSave = DefaultKeyboardSave;
+            Settings.KeyboardQuickLoad = DefaultKeyboardLoad;
             Settings.KeyboardQuickClear = FixedClearKeys.ToList();
             Settings.KeyboardOpenDebugMap = FixedOpenDebugMapKeys.ToList();
-            Settings.KeyboardResetRoomPb = Keys.F9;
+            Settings.KeyboardResetRoomPb = DefaultKeyboardResetPb;
 
             UpdateSaveButton();
             UpdateLoadButton();

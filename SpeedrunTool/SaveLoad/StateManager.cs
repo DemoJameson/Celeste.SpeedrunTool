@@ -94,9 +94,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             
             _entityActions.ForEach(action => action.OnInit());
 
-            ButtonConfig.UpdateSaveButton();
-            ButtonConfig.UpdateLoadButton();
-            ButtonConfig.UpdateClearButton();
+            ButtonConfigUi.UpdateSaveButton();
+            ButtonConfigUi.UpdateLoadButton();
+            ButtonConfigUi.UpdateClearButton();
         }
 
         private void LevelOnUpdate(On.Celeste.Level.orig_Update orig, Level self)
@@ -107,7 +107,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
 
             Player player = self.Tracker.GetEntity<Player>();
 
-            if (ButtonConfig.SaveButton.Value.Pressed && !self.Paused && !self.Transitioning && !self.PauseLock && !self.InCutscene &&
+            if (ButtonConfigUi.SaveButton.Value.Pressed && !self.Paused && !self.Transitioning && !self.PauseLock && !self.InCutscene &&
                 !self.SkippingCutscene && player != null && !player.Dead)
             {
                 int state = player.StateMachine.State;
@@ -129,7 +129,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
                 }
             }
 
-            if (ButtonConfig.LoadButton.Value.Pressed && !self.Paused)
+            if (ButtonConfigUi.LoadButton.Value.Pressed && !self.Paused)
             {
                 if (IsSaved)
                 {
@@ -143,7 +143,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
                 return;
             }
 
-            if (ButtonConfig.ClearButton.Value.Pressed && !self.Paused)
+            if (ButtonConfigUi.ClearButton.Value.Pressed && !self.Paused)
             {
                 Clear();
                 self.Add(new MiniTextbox("DIALOG_CLEAR"));

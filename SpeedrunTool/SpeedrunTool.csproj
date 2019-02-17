@@ -53,6 +53,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ButtonConfigUi.cs" />
     <Compile Include="SaveLoad\Actions\AbstractEntityAction.cs" />
     <Compile Include="SaveLoad\Actions\BadelineBoostAction.cs" />
     <Compile Include="SaveLoad\Actions\BadelineOldsiteAction.cs" />
@@ -97,7 +98,6 @@
     <Compile Include="SaveLoad\Actions\TriggerSpikesAction.cs" />
     <Compile Include="SaveLoad\Actions\WindControllerAction.cs" />
     <Compile Include="SaveLoad\Actions\ZipMoverAction.cs" />
-    <Compile Include="SaveLoad\ButtonConfig.cs" />
     <Compile Include="SaveLoad\Component\RemoveSelfComponent.cs" />
     <Compile Include="SaveLoad\Component\RestorePositionComponent.cs" />
     <Compile Include="SaveLoad\StateManager.cs" />

@@ -97,7 +97,7 @@
     <Compile Include="SaveLoad\Actions\TriggerSpikesAction.cs" />
     <Compile Include="SaveLoad\Actions\WindControllerAction.cs" />
     <Compile Include="SaveLoad\Actions\ZipMoverAction.cs" />
-    <Compile Include="SaveLoad\ButtonConfigUi.cs" />
+    <Compile Include="SaveLoad\ButtonConfig.cs" />
     <Compile Include="SaveLoad\Component\RemoveSelfComponent.cs" />
     <Compile Include="SaveLoad\Component\RestorePositionComponent.cs" />
     <Compile Include="SaveLoad\StateManager.cs" />

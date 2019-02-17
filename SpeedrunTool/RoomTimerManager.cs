@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool
@@ -15,7 +15,6 @@ namespace Celeste.Mod.SpeedrunTool
         private readonly RoomTimerData _nextRoomTimerData = new RoomTimerData(RoomTimerType.NextRoom);
 
         public SpeedrunType? OriginalSpeedrunType;
-        public VirtualButton ResetRoomPbButton;
 
         public void Load()
         {
@@ -31,15 +30,7 @@ namespace Celeste.Mod.SpeedrunTool
         public void Init()
         {
             OriginalSpeedrunType = Settings.Instance.SpeedrunClock;
-
-            ResetRoomPbButton = new VirtualButton(0.08f);
-            SpeedrunToolModuleSettings settings = SpeedrunToolModule.Settings;
-            ResetRoomPbButton.Nodes.Add(new VirtualButton.KeyboardKey(settings.KeyboardResetRoomPb));
-            if (settings.ControllerResetRoomPb != null)
-            {
-                ResetRoomPbButton.Nodes.Add(new VirtualButton.PadButton(Input.Gamepad,
-                    (Buttons) settings.ControllerResetRoomPb));
-            }
+            ButtonConfig.UpdateResetRoomPbButton();
         }
 
         public void Unload()
@@ -56,7 +47,7 @@ namespace Celeste.Mod.SpeedrunTool
         {
             orig(self);
 
-            if (ResetRoomPbButton.Pressed && !self.Paused)
+            if (ButtonConfig.ResetRoomPbButton.Value.Pressed && !self.Paused)
             {
                 ClearPbTimes();
             }

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using Celeste.Editor;
+using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Monocle;
@@ -12,8 +12,9 @@ namespace Celeste.Mod.SpeedrunTool
     public class BetterMapEditor
     {
         // @formatter:off
+        private static readonly Lazy<BetterMapEditor> Lazy = new Lazy<BetterMapEditor>(() => new BetterMapEditor());
+        public static BetterMapEditor Instance => Lazy.Value;
         private BetterMapEditor() { }
-        public static BetterMapEditor Instance { get; } = new BetterMapEditor();
         // @formatter:on 
 
         private const string StartChasingLevel = "3";
@@ -45,7 +46,6 @@ namespace Celeste.Mod.SpeedrunTool
         };
 
         private long _zoomWaitFrames;
-        public VirtualButton OpenDebugButton;
 
         public void Load()
         {
@@ -64,23 +64,17 @@ namespace Celeste.Mod.SpeedrunTool
 
         public void Init()
         {
-            SpeedrunToolModuleSettings settings = SpeedrunToolModule.Settings;
-            OpenDebugButton = new VirtualButton(0.08f);
-            OpenDebugButton.Nodes.AddRange(
-                settings.KeyboardOpenDebugMap.Select(keys => new VirtualButton.KeyboardKey(keys)));
-            if (settings.ControllerOpenDebugMap != null)
-            {
-                OpenDebugButton.Nodes.Add(new VirtualButton.PadButton(Input.Gamepad,
-                    (Buttons) settings.ControllerOpenDebugMap));
-            }
+            ButtonConfig.UpdateOpenDebugMapButton();
         }
 
-        private void FixWindSoundNotPlay(On.Celeste.WindController.orig_SetAmbienceStrength orig, WindController self, bool strong)
+        private void FixWindSoundNotPlay(On.Celeste.WindController.orig_SetAmbienceStrength orig, WindController self,
+            bool strong)
         {
             if (Audio.CurrentAmbienceEventInstance == null)
             {
                 Audio.SetAmbience("event:/env/amb/04_main");
             }
+
             orig(self, strong);
         }
 
@@ -130,11 +124,11 @@ namespace Celeste.Mod.SpeedrunTool
             }
         }
 
-        private void AddedOpenDebugMapButton(On.Celeste.Level.orig_Update orig, Level self)
+        private static void AddedOpenDebugMapButton(On.Celeste.Level.orig_Update orig, Level self)
         {
             orig(self);
 
-            if (OpenDebugButton.Pressed && !self.Paused)
+            if (ButtonConfig.OpenDebugButton.Value.Pressed && !self.Paused)
             {
                 Engine.Commands.FunctionKeyActions[5]();
             }
@@ -170,7 +164,7 @@ namespace Celeste.Mod.SpeedrunTool
                 // 根据 BadelineOldsite 的代码得知设置这两个 Flag 后才会启动追逐
                 if (_dreamDashRooms.IndexOf(session.Level) >= _dreamDashRooms.IndexOf(StartChasingLevel))
                     session.SetFlag(CS02_BadelineIntro.Flag);
-                
+
                 session.LevelFlags.Add(StartChasingLevel);
             }
         }

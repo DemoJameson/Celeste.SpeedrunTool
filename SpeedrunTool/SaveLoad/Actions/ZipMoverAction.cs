@@ -44,7 +44,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
         {
             if (!SpeedrunToolModule.Settings.Enabled)
                 yield return orig(self);
-                
+
             Vector2 start = (Vector2) self.GetPrivateField("start");
             Vector2 target = (Vector2) self.GetPrivateField("target");
             SoundSource soundSource = self.GetPrivateField("sfx") as SoundSource;
@@ -54,6 +54,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
             float goProgress = 0f;
             float backProgress = 0f;
             int audioTime = 0;
+            float startShakeTimer = 0f;
+            float topShakeTimer = 0f;
 
             EntityID entityId = self.GetEntityId();
             if (IsLoadStart && _savedZipMovers.ContainsKey(entityId))
@@ -62,27 +64,44 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
                 goProgress = savedZipMover.GetExtendedDataValue<float>(nameof(goProgress));
                 backProgress = savedZipMover.GetExtendedDataValue<float>(nameof(backProgress));
                 audioTime = savedZipMover.GetExtendedDataValue<int>(nameof(audioTime));
+                startShakeTimer = savedZipMover.GetExtendedDataValue<float>(nameof(startShakeTimer));
+                topShakeTimer = savedZipMover.GetExtendedDataValue<float>(nameof(topShakeTimer));
+                self.SetExtendedDataValue(nameof(goProgress), goProgress);
+                self.SetExtendedDataValue(nameof(backProgress), backProgress);
+                self.SetExtendedDataValue(nameof(audioTime), audioTime);
+                self.SetExtendedDataValue(nameof(startShakeTimer), startShakeTimer);
+                self.SetExtendedDataValue(nameof(topShakeTimer), topShakeTimer);
+                Logger.Log("goProgress", goProgress.ToString());
+                Logger.Log("backProgress", backProgress.ToString());
+                Logger.Log("audioTime", audioTime.ToString());
+                Logger.Log("startShakeTimer", startShakeTimer.ToString());
+                Logger.Log("topShakeTimer", topShakeTimer.ToString());
             }
 
             while (true)
             {
-                while (!self.HasPlayerRider() && currentPosition == start || IsLoadStart || IsLoading)
+                while (!self.HasPlayerRider() && currentPosition == start || IsLoadStart || IsFrozen || IsLoading)
                     yield return null;
 
-                DateTime startTime = DateTime.Now;
+                DateTime startTime = DateTime.Now.Add(TimeSpan.FromMilliseconds(-audioTime));
+
                 soundSource.Play("event:/game/01_forsaken_city/zip_mover");
-                if (audioTime > 0 && goProgress >= 1)
+                soundSource.SetTime(audioTime);
+
+                if (startShakeTimer < 0.1)
                 {
-                    soundSource.SetTime(audioTime);
-                }
-                else
-                {
-                    goProgress = 0;
+                    Input.Rumble(RumbleStrength.Medium, RumbleLength.Short);
+                    self.StartShaking(0.1f - startShakeTimer);
                 }
 
-                Input.Rumble(RumbleStrength.Medium, RumbleLength.Short);
-                self.StartShaking(0.1f);
-                yield return 0.1f;
+                while (startShakeTimer < 0.1 + 0.016)
+                {
+                    yield return null;
+                    startShakeTimer += Engine.DeltaTime;
+                    self.SetExtendedDataValue(nameof(startShakeTimer), startShakeTimer);
+                    audioTime = (int) (DateTime.Now - startTime).TotalMilliseconds;
+                    self.SetExtendedDataValue(nameof(audioTime), audioTime);
+                }
 
                 if (goProgress < 1)
                 {
@@ -94,13 +113,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
                 }
 
                 self.StopPlayerRunIntoAnimation = false;
+
                 while (goProgress < 1.0)
                 {
                     yield return null;
 
                     goProgress = Calc.Approach(goProgress, 1f, 2f * Engine.DeltaTime);
                     self.SetExtendedDataValue(nameof(goProgress), goProgress);
-                    audioTime = (int) (DateTime.Now - startTime).TotalMilliseconds - 100;
+                    audioTime = (int) (DateTime.Now - startTime).TotalMilliseconds;
                     self.SetExtendedDataValue(nameof(audioTime), audioTime);
 
                     self.SetPrivateField("percent", Ease.SineIn(goProgress));
@@ -116,22 +136,34 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
                     self.MoveTo(to);
                 }
 
-                self.StartShaking(0.2f);
-                Input.Rumble(RumbleStrength.Strong, RumbleLength.Medium);
-                self.SceneAs<Level>().Shake();
-                self.StopPlayerRunIntoAnimation = true;
+                if (topShakeTimer < 0.2)
+                {
+                    self.StartShaking(0.2f - topShakeTimer);
+                    Input.Rumble(RumbleStrength.Strong, RumbleLength.Medium);
+                    self.SceneAs<Level>().Shake();
+                }
 
-                yield return 0.5f;
+                self.StopPlayerRunIntoAnimation = true;
+                
+                while (topShakeTimer < 0.5 + 0.016)
+                {
+                    yield return null;
+                    topShakeTimer += Engine.DeltaTime;
+                    self.SetExtendedDataValue(nameof(topShakeTimer), topShakeTimer);
+                    audioTime = (int) (DateTime.Now - startTime).TotalMilliseconds;
+                    self.SetExtendedDataValue(nameof(audioTime), audioTime);
+                }
 
                 self.StopPlayerRunIntoAnimation = false;
                 streetlight.SetAnimationFrame(2);
+
                 while (backProgress < 1.0)
                 {
                     yield return null;
 
                     backProgress = Calc.Approach(backProgress, 1f, 0.5f * Engine.DeltaTime);
                     self.SetExtendedDataValue(nameof(backProgress), backProgress);
-                    audioTime = (int) (DateTime.Now - startTime).TotalMilliseconds - 600;
+                    audioTime = (int) (DateTime.Now - startTime).TotalMilliseconds;
                     self.SetExtendedDataValue(nameof(audioTime), audioTime);
 
                     self.SetPrivateField("percent", 1f - Ease.SineIn(backProgress));
@@ -148,9 +180,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
                 goProgress = 0.0f;
                 backProgress = 0.0f;
                 audioTime = 0;
+                startShakeTimer = 0f;
+                topShakeTimer = 0f;
+
                 self.SetExtendedDataValue(nameof(goProgress), goProgress);
                 self.SetExtendedDataValue(nameof(backProgress), backProgress);
                 self.SetExtendedDataValue(nameof(audioTime), audioTime);
+                self.SetExtendedDataValue(nameof(startShakeTimer), startShakeTimer);
+                self.SetExtendedDataValue(nameof(topShakeTimer), topShakeTimer);
 
                 yield return 0.5f;
             }

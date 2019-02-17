@@ -27,7 +27,7 @@ namespace Celeste.Mod.SpeedrunTool
             "3", "4", "5", "6", "7", "8", "9", "9b", "10",
             "11", "12b", "12c", "12d", "12", "13"
         };
-        
+
         // 3A 杂乱房间部分的光线调暗
         private readonly List<string> _darkRooms = new List<string>
         {
@@ -62,12 +62,12 @@ namespace Celeste.Mod.SpeedrunTool
             On.Celeste.Level.Update -= AddedOpenDebugMapButton;
         }
 
-        public void Init()
+        public static void Init()
         {
             ButtonConfig.UpdateOpenDebugMapButton();
         }
 
-        private void FixWindSoundNotPlay(On.Celeste.WindController.orig_SetAmbienceStrength orig, WindController self,
+        private static void FixWindSoundNotPlay(On.Celeste.WindController.orig_SetAmbienceStrength orig, WindController self,
             bool strong)
         {
             if (Audio.CurrentAmbienceEventInstance == null)
@@ -103,16 +103,22 @@ namespace Celeste.Mod.SpeedrunTool
             GamePadState currentState = MInput.GamePads[Input.Gamepad].CurrentState;
             Camera camera = typeof(MapEditor).GetField("Camera", BindingFlags.Static | BindingFlags.NonPublic)
                 ?.GetValue(null) as Camera;
-            if (_zoomWaitFrames < 0 && Math.Abs(currentState.ThumbSticks.Right.X) >= 0.5f)
+            if (_zoomWaitFrames < 0 && camera != null)
             {
-                if (camera != null)
+                float newZoom = 0f;
+                if (Math.Abs(currentState.ThumbSticks.Right.X) >= 0.5f)
                 {
-                    float newZoom = camera.Zoom + Math.Sign(currentState.ThumbSticks.Right.X) * 1f;
-                    if (newZoom >= 1f)
-                    {
-                        camera.Zoom = newZoom;
-                        _zoomWaitFrames = 5;
-                    }
+                    newZoom = camera.Zoom + Math.Sign(currentState.ThumbSticks.Right.X) * 1f;
+                }
+                else if(Math.Abs(currentState.ThumbSticks.Right.Y) >= 0.5f)
+                {
+                    newZoom = camera.Zoom + Math.Sign(currentState.ThumbSticks.Right.Y) * 1f;
+                }
+                
+                if (newZoom >= 1f)
+                {
+                    camera.Zoom = newZoom;
+                    _zoomWaitFrames = 5;
                 }
             }
 

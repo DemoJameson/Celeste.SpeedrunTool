@@ -6,19 +6,18 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad
 {
-    public sealed class SaveLoadManager
+    public sealed class StateManager
     {
         // @formatter:off
-        private static readonly Lazy<SaveLoadManager> Lazy = new Lazy<SaveLoadManager>(() => new SaveLoadManager());
-        public static SaveLoadManager Instance => Lazy.Value;
-        private SaveLoadManager() { }
+        private static readonly Lazy<StateManager> Lazy = new Lazy<StateManager>(() => new StateManager());
+        public static StateManager Instance => Lazy.Value;
+        private StateManager() { }
         // @formatter:on
         
         private readonly List<AbstractEntityAction> _entityActions = new List<AbstractEntityAction>
         {
             new BadelineBoostAction(),
             new BadelineOldsiteAction(),
-            new BladeTrackSpinnerAction(),
             new BounceBlockAction(),
             new BumperAction(),
             new CloudAction(),
@@ -30,7 +29,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             new DreamBlockAction(),
             new DustStaticSpinnerAction(),
             new DashSwitchAction(),
-            new DustTrackSpinnerAction(),
+            new TrackSpinnerAction(),
             new FallingBlockAction(),
             new FinalBossMovingBlockAction(),
             new FinalBossAction(),
@@ -66,6 +65,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
         private Player _player;
         private Session.CoreModes _sessionCoreModeBackup;
 
+        public const float FrozenTime = 34 * 0.017f;
         public bool IsLoadStart => _loadState == LoadState.LoadStart;
         public bool IsLoadFrozen => _loadState == LoadState.LoadFrozen;
         public bool IsLoading => _loadState == LoadState.Loading;

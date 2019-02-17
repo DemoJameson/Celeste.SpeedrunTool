@@ -31,7 +31,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
                     if (!savedRefill.Collidable)
                     {
                         self.Collidable = false;
-                        float respawnTimer = (float) savedRefill.GetPrivateField("respawnTimer") + 0.35f;
+                        float respawnTimer = (float) savedRefill.GetPrivateField("respawnTimer") + StateManager.FrozenTime;
                         self.SetPrivateField("respawnTimer", respawnTimer);
                         self.Add(new Coroutine(ConsumeRefill(self)));
                     }

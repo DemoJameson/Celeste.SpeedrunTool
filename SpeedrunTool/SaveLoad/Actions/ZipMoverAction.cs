@@ -42,121 +42,117 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
 
         private IEnumerator ZipMoverOnSequence(On.Celeste.ZipMover.orig_Sequence orig, ZipMover self)
         {
-            if (SpeedrunToolModule.Settings.Enabled)
+            if (!SpeedrunToolModule.Settings.Enabled)
+                yield return orig(self);
+                
+            Vector2 start = (Vector2) self.GetPrivateField("start");
+            Vector2 target = (Vector2) self.GetPrivateField("target");
+            SoundSource soundSource = self.GetPrivateField("sfx") as SoundSource;
+            Sprite streetlight = self.GetPrivateField("streetlight") as Sprite;
+
+            Vector2 currentPosition = self.Position;
+            float goProgress = 0f;
+            float backProgress = 0f;
+            int audioTime = 0;
+
+            EntityID entityId = self.GetEntityId();
+            if (IsLoadStart && _savedZipMovers.ContainsKey(entityId))
             {
-                Vector2 start = (Vector2) self.GetPrivateField("start");
-                Vector2 target = (Vector2) self.GetPrivateField("target");
-                SoundSource soundSource = self.GetPrivateField("sfx") as SoundSource;
-                Sprite streetlight = self.GetPrivateField("streetlight") as Sprite;
+                ZipMover savedZipMover = _savedZipMovers[entityId];
+                goProgress = savedZipMover.GetExtendedDataValue<float>(nameof(goProgress));
+                backProgress = savedZipMover.GetExtendedDataValue<float>(nameof(backProgress));
+                audioTime = savedZipMover.GetExtendedDataValue<int>(nameof(audioTime));
+            }
 
-                Vector2 currentPosition = self.Position;
-                float goProgress = 0f;
-                float backProgress = 0f;
-                int audioTime = 0;
+            while (true)
+            {
+                while (!self.HasPlayerRider() && currentPosition == start || IsLoadStart || IsLoading)
+                    yield return null;
 
-                EntityID entityId = self.GetEntityId();
-                if (IsLoadStart && _savedZipMovers.ContainsKey(entityId))
+                DateTime startTime = DateTime.Now;
+                soundSource.Play("event:/game/01_forsaken_city/zip_mover");
+                if (audioTime > 0 && goProgress >= 1)
                 {
-                    ZipMover savedZipMover = _savedZipMovers[entityId];
-                    goProgress = savedZipMover.GetExtendedDataValue<float>(nameof(goProgress));
-                    backProgress = savedZipMover.GetExtendedDataValue<float>(nameof(backProgress));
-                    audioTime = savedZipMover.GetExtendedDataValue<int>(nameof(audioTime));
+                    soundSource.SetTime(audioTime);
+                }
+                else
+                {
+                    goProgress = 0;
                 }
 
-                while (true)
+                Input.Rumble(RumbleStrength.Medium, RumbleLength.Short);
+                self.StartShaking(0.1f);
+                yield return 0.1f;
+
+                if (goProgress < 1)
                 {
-                    while (!self.HasPlayerRider() && currentPosition == start|| IsLoadStart || IsLoading)
-                        yield return null;
-
-                    DateTime startTime = DateTime.Now;
-                    soundSource.Play("event:/game/01_forsaken_city/zip_mover");
-                    if (audioTime > 0 && goProgress >= 1)
-                    {
-                        soundSource.SetTime(audioTime);
-                    }
-                    else
-                    {
-                        goProgress = 0;
-                    }
-
-                    Input.Rumble(RumbleStrength.Medium, RumbleLength.Short);
-                    self.StartShaking(0.1f);
-                    yield return 0.1f;
-
-                    if (goProgress < 1)
-                    {
-                        streetlight.SetAnimationFrame(3);
-                    }
-                    else
-                    {
-                        streetlight.SetAnimationFrame(2);
-                    }
-
-                    self.StopPlayerRunIntoAnimation = false;
-                    while (goProgress < 1.0)
-                    {
-                        yield return null;
-
-                        goProgress = Calc.Approach(goProgress, 1f, 2f * Engine.DeltaTime);
-                        self.SetExtendedDataValue(nameof(goProgress), goProgress);
-                        audioTime = (int) (DateTime.Now - startTime).TotalMilliseconds - 100;
-                        self.SetExtendedDataValue(nameof(audioTime), audioTime);
-
-                        self.SetPrivateField("percent", Ease.SineIn(goProgress));
-                        float percent = (float) self.GetPrivateField("percent");
-                        Vector2 to = Vector2.Lerp(currentPosition, target, percent);
-                        self.InvokePrivateMethod("ScrapeParticlesCheck", to);
-                        if (self.Scene.OnInterval(0.1f))
-                        {
-                            object pathRenderer = self.GetPrivateField("pathRenderer");
-                            pathRenderer.GetType().GetMethod("CreateSparks").Invoke(pathRenderer, new object[] { });
-                        }
-
-                        self.MoveTo(to);
-                    }
-
-                    self.StartShaking(0.2f);
-                    Input.Rumble(RumbleStrength.Strong, RumbleLength.Medium);
-                    self.SceneAs<Level>().Shake();
-                    self.StopPlayerRunIntoAnimation = true;
-
-                    yield return 0.5f;
-
-                    self.StopPlayerRunIntoAnimation = false;
+                    streetlight.SetAnimationFrame(3);
+                }
+                else
+                {
                     streetlight.SetAnimationFrame(2);
-                    while (backProgress < 1.0)
-                    {
-                        yield return null;
+                }
 
-                        backProgress = Calc.Approach(backProgress, 1f, 0.5f * Engine.DeltaTime);
-                        self.SetExtendedDataValue(nameof(backProgress), backProgress);
-                        audioTime = (int) (DateTime.Now - startTime).TotalMilliseconds - 600;
-                        self.SetExtendedDataValue(nameof(audioTime), audioTime);
+                self.StopPlayerRunIntoAnimation = false;
+                while (goProgress < 1.0)
+                {
+                    yield return null;
 
-                        self.SetPrivateField("percent", 1f - Ease.SineIn(backProgress));
-                        Vector2 to = Vector2.Lerp(target, start, Ease.SineIn(backProgress));
-                        self.MoveTo(to);
-                    }
-
-                    self.StopPlayerRunIntoAnimation = true;
-                    self.StartShaking(0.2f);
-                    streetlight.SetAnimationFrame(1);
-
-                    // reset
-                    currentPosition = start;
-                    goProgress = 0.0f;
-                    backProgress = 0.0f;
-                    audioTime = 0;
+                    goProgress = Calc.Approach(goProgress, 1f, 2f * Engine.DeltaTime);
                     self.SetExtendedDataValue(nameof(goProgress), goProgress);
-                    self.SetExtendedDataValue(nameof(backProgress), backProgress);
+                    audioTime = (int) (DateTime.Now - startTime).TotalMilliseconds - 100;
                     self.SetExtendedDataValue(nameof(audioTime), audioTime);
 
-                    yield return 0.5f;
+                    self.SetPrivateField("percent", Ease.SineIn(goProgress));
+                    float percent = (float) self.GetPrivateField("percent");
+                    Vector2 to = Vector2.Lerp(currentPosition, target, percent);
+                    self.InvokePrivateMethod("ScrapeParticlesCheck", to);
+                    if (self.Scene.OnInterval(0.1f))
+                    {
+                        object pathRenderer = self.GetPrivateField("pathRenderer");
+                        pathRenderer.GetType().GetMethod("CreateSparks").Invoke(pathRenderer, new object[] { });
+                    }
+
+                    self.MoveTo(to);
                 }
-            }
-            else
-            {
-                yield return orig(self);
+
+                self.StartShaking(0.2f);
+                Input.Rumble(RumbleStrength.Strong, RumbleLength.Medium);
+                self.SceneAs<Level>().Shake();
+                self.StopPlayerRunIntoAnimation = true;
+
+                yield return 0.5f;
+
+                self.StopPlayerRunIntoAnimation = false;
+                streetlight.SetAnimationFrame(2);
+                while (backProgress < 1.0)
+                {
+                    yield return null;
+
+                    backProgress = Calc.Approach(backProgress, 1f, 0.5f * Engine.DeltaTime);
+                    self.SetExtendedDataValue(nameof(backProgress), backProgress);
+                    audioTime = (int) (DateTime.Now - startTime).TotalMilliseconds - 600;
+                    self.SetExtendedDataValue(nameof(audioTime), audioTime);
+
+                    self.SetPrivateField("percent", 1f - Ease.SineIn(backProgress));
+                    Vector2 to = Vector2.Lerp(target, start, Ease.SineIn(backProgress));
+                    self.MoveTo(to);
+                }
+
+                self.StopPlayerRunIntoAnimation = true;
+                self.StartShaking(0.2f);
+                streetlight.SetAnimationFrame(1);
+
+                // reset
+                currentPosition = start;
+                goProgress = 0.0f;
+                backProgress = 0.0f;
+                audioTime = 0;
+                self.SetExtendedDataValue(nameof(goProgress), goProgress);
+                self.SetExtendedDataValue(nameof(backProgress), backProgress);
+                self.SetExtendedDataValue(nameof(audioTime), audioTime);
+
+                yield return 0.5f;
             }
         }
 

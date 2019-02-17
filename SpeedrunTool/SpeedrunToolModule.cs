@@ -28,7 +28,7 @@ namespace Celeste.Mod.SpeedrunTool
         public override void Load()
         {
             BetterMapEditor.Instance.Load();
-            SaveLoadManager.Instance.Load();
+            StateManager.Instance.Load();
             RoomTimerManager.Instance.Load();
             On.Celeste.PlayerDeadBody.End += QuickLoadWhenDeath;
             On.Celeste.LevelEnter.Go += SkipChapterIntro;
@@ -40,7 +40,7 @@ namespace Celeste.Mod.SpeedrunTool
         public override void Unload()
         {
             BetterMapEditor.Instance.Unload();
-            SaveLoadManager.Instance.Unload();
+            StateManager.Instance.Unload();
             RoomTimerManager.Instance.Unload();
             On.Celeste.PlayerDeadBody.End -= QuickLoadWhenDeath;
             On.Celeste.LevelEnter.Go -= SkipChapterIntro;
@@ -52,7 +52,7 @@ namespace Celeste.Mod.SpeedrunTool
         public override void Initialize()
         {
             BetterMapEditor.Init();
-            SaveLoadManager.Instance.Init();
+            StateManager.Instance.Init();
             RoomTimerManager.Instance.Init();
         }
 
@@ -76,7 +76,7 @@ namespace Celeste.Mod.SpeedrunTool
             orig(self);
             if (Settings.Enabled && Settings.AutoLoadAfterDeath)
             {
-                SaveLoadManager.Instance.QuickLoad();
+                StateManager.Instance.QuickLoad();
             }
         }
 

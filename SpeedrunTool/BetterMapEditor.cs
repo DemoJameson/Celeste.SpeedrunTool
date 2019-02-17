@@ -22,10 +22,22 @@ namespace Celeste.Mod.SpeedrunTool
         // LevelName
         private readonly List<string> _dreamDashRooms = new List<string>
         {
-            "2", "1", // TODO 根据复活点判读
-            "d1", "d2", "d4", "d5", "d9", "3x",
+            "0", "1", "2",
+            "d1", "d2", "d3", "d4", "d6", "d5", "d9", "3x",
             "3", "4", "5", "6", "7", "8", "9", "9b", "10",
             "11", "12b", "12c", "12d", "12", "13"
+        };
+
+        private readonly List<Vector2> _excludeDreamRespawnPoints = new List<Vector2>
+        {
+            new Vector2(288, 152),
+            new Vector2(632, 144),
+            new Vector2(648, 144),
+            new Vector2(800, 168),
+            new Vector2(952, 160),
+            new Vector2(968, 160),
+            new Vector2(1608, 720),
+            new Vector2(1616, 600)
         };
 
         // 3A 杂乱房间部分的光线调暗
@@ -67,7 +79,8 @@ namespace Celeste.Mod.SpeedrunTool
             ButtonConfig.UpdateOpenDebugMapButton();
         }
 
-        private static void FixWindSoundNotPlay(On.Celeste.WindController.orig_SetAmbienceStrength orig, WindController self,
+        private static void FixWindSoundNotPlay(On.Celeste.WindController.orig_SetAmbienceStrength orig,
+            WindController self,
             bool strong)
         {
             if (Audio.CurrentAmbienceEventInstance == null)
@@ -110,11 +123,11 @@ namespace Celeste.Mod.SpeedrunTool
                 {
                     newZoom = camera.Zoom + Math.Sign(currentState.ThumbSticks.Right.X) * 1f;
                 }
-                else if(Math.Abs(currentState.ThumbSticks.Right.Y) >= 0.5f)
+                else if (Math.Abs(currentState.ThumbSticks.Right.Y) >= 0.5f)
                 {
                     newZoom = camera.Zoom + Math.Sign(currentState.ThumbSticks.Right.Y) * 1f;
                 }
-                
+
                 if (newZoom >= 1f)
                 {
                     camera.Zoom = newZoom;
@@ -151,9 +164,11 @@ namespace Celeste.Mod.SpeedrunTool
         private void FixTeleportProblems(On.Celeste.LevelLoader.orig_ctor orig, LevelLoader self, Session session,
             Vector2? startPosition)
         {
-            if (session.StartCheckpoint == null)
+            if (session.StartCheckpoint == null && startPosition != null)
             {
-                FixBadelineChase(session);
+                Vector2 spawnPoint = session.GetSpawnPoint((Vector2) startPosition);
+
+                FixBadelineChase(session, spawnPoint);
                 FixHugeMessRoomLight(session);
                 FixCoreMode(session);
             }
@@ -161,8 +176,12 @@ namespace Celeste.Mod.SpeedrunTool
             orig(self, session, startPosition);
         }
 
-        private void FixBadelineChase(Session session)
+        private void FixBadelineChase(Session session, Vector2 spawnPoint)
         {
+            // Logger.Log("Exclude Respawn Point", $"new Vector2({spawnPoint.X}, {spawnPoint.Y}),");
+            if (_excludeDreamRespawnPoints.Contains(spawnPoint))
+                return;
+
             if (session.Area.ToString() == "2" && _dreamDashRooms.Contains(session.Level))
             {
                 session.Inventory.DreamDash = true;

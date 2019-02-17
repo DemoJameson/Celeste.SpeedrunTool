@@ -138,7 +138,7 @@ namespace Celeste.Mod.SpeedrunTool
         {
             // 因为 ID 有可能重复，所以加上起点坐标的信息
             return new EntityID(entityData.Level.Name + entityData.Name,
-                (int) (entityData.ID + entityData.Position.X * 173 + entityData.Position.Y * 173));
+                entityData.ID + entityData.Position.GetHashCode());
         }
 
         public static IEnumerable<T> GetCastEntities<T>(this Tracker tracker) where T : Entity

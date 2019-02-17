@@ -38,6 +38,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
             sine.SetPrivateProperty("Counter", savedSine.Counter);
         }
 
+        private void WindAttackTriggerOnOnEnter(On.Celeste.WindAttackTrigger.orig_OnEnter orig, WindAttackTrigger self, Player player)
+        {
+            if (IsLoading && _savedSnowball != null)
+                return;
+            
+            orig(self, player);
+        }
+
         public override void OnClear()
         {
             _savedSnowball = null;
@@ -45,9 +53,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
 
         public override void OnLoad()
         {
+            On.Celeste.WindAttackTrigger.OnEnter += WindAttackTriggerOnOnEnter;
         }
 
         public override void OnUnload()
+        {
+            On.Celeste.WindAttackTrigger.OnEnter -= WindAttackTriggerOnOnEnter;
+        }
+
+        public override void OnInit()
         {
         }
     }

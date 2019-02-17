@@ -9,6 +9,12 @@ namespace Celeste.Mod.SpeedrunTool
 {
     public sealed class RoomTimerManager
     {
+        // @formatter:off
+        private static readonly Lazy<RoomTimerManager> Lazy = new Lazy<RoomTimerManager>(() => new RoomTimerManager());
+        public static RoomTimerManager Instance => Lazy.Value;
+        private RoomTimerManager() { }
+        // @formatter:on
+        
         public const string FlagPrefix = "summit_checkpoint_";
         private readonly RoomTimerData _currentRoomTimerData = new RoomTimerData(RoomTimerType.CurrentRoom);
 
@@ -254,11 +260,6 @@ namespace Celeste.Mod.SpeedrunTool
                 x += num2;
             }
         }
-
-        // @formatter:off
-        private RoomTimerManager() { }
-        public static RoomTimerManager Instance { get; } = new RoomTimerManager();
-        // @formatter:on
     }
 
     internal class RoomTimerData

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Actions;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -7,6 +8,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
 {
     public sealed class SaveLoadManager
     {
+        // @formatter:off
+        private static readonly Lazy<SaveLoadManager> Lazy = new Lazy<SaveLoadManager>(() => new SaveLoadManager());
+        public static SaveLoadManager Instance => Lazy.Value;
+        private SaveLoadManager() { }
+        // @formatter:on
+        
         private readonly List<AbstractEntityAction> _entityActions = new List<AbstractEntityAction>
         {
             new BadelineBoostAction(),
@@ -53,9 +60,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             new WindControllerAction(),
             new ZipMoverAction()
         };
-
-
-        private readonly SpeedrunToolModuleSettings _settings = SpeedrunToolModule.Settings;
 
         private Session _session;
         private Camera _camera;
@@ -296,11 +300,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
 
             _entityActions.ForEach(action => action.OnClear());
         }
-
-        // @formatter:off
-        private SaveLoadManager() { }
-        public static SaveLoadManager Instance { get; } = new SaveLoadManager();
-        // @formatter:on
     }
 
     public enum LoadState

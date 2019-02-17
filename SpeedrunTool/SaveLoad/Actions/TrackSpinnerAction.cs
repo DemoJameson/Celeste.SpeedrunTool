@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -31,7 +32,22 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
                 PropertyInfo property = typeof(TrackSpinner).GetProperty("Percent", BindingFlags.Public | BindingFlags.Instance);
                 property.SetValue(self, savedTrackSpinner.Percent);
                 self.Up = savedTrackSpinner.Up;
+                self.Moving = savedTrackSpinner.Moving;
+                self.PauseTimer = savedTrackSpinner.PauseTimer;
+
+                if (self is DustTrackSpinner)
+                {
+                    self.Add(new Coroutine(RestoreEyeDirection(self, savedTrackSpinner)));
+                }
             }
+        }
+
+        private static IEnumerator RestoreEyeDirection(TrackSpinner self, TrackSpinner saved)
+        {
+            DustGraphic dustGraphic = self.GetPrivateField("dusty") as DustGraphic;
+            DustGraphic savedDustGraphic = saved.GetPrivateField("dusty") as DustGraphic;
+            dustGraphic.EyeDirection = savedDustGraphic.EyeDirection;
+            yield break;
         }
 
         public override void OnClear()

@@ -71,11 +71,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
                 self.SetExtendedDataValue(nameof(audioTime), audioTime);
                 self.SetExtendedDataValue(nameof(startShakeTimer), startShakeTimer);
                 self.SetExtendedDataValue(nameof(topShakeTimer), topShakeTimer);
-                Logger.Log("goProgress", goProgress.ToString());
-                Logger.Log("backProgress", backProgress.ToString());
-                Logger.Log("audioTime", audioTime.ToString());
-                Logger.Log("startShakeTimer", startShakeTimer.ToString());
-                Logger.Log("topShakeTimer", topShakeTimer.ToString());
             }
 
             while (true)

@@ -4,18 +4,15 @@ using Celeste.Mod.SpeedrunTool.SaveLoad.Actions;
 using Microsoft.Xna.Framework;
 using Monocle;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad
-{
-    public sealed class StateManager
-    {
+namespace Celeste.Mod.SpeedrunTool.SaveLoad {
+    public sealed class StateManager {
         // @formatter:off
         private static readonly Lazy<StateManager> Lazy = new Lazy<StateManager>(() => new StateManager());
         public static StateManager Instance => Lazy.Value;
         private StateManager() { }
         // @formatter:on
-        
-        private readonly List<AbstractEntityAction> _entityActions = new List<AbstractEntityAction>
-        {
+
+        private readonly List<AbstractEntityAction> _entityActions = new List<AbstractEntityAction> {
             new BadelineBoostAction(),
             new BadelineOldsiteAction(),
             new BoosterAction(),
@@ -76,23 +73,20 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
 
         private bool IsSaved => _session != null && SavedPlayer != null && _camera != null;
 
-        public void Load()
-        {
+        public void Load() {
             On.Celeste.Level.Update += LevelOnUpdate;
             _entityActions.ForEach(action => action.OnLoad());
         }
 
-        public void Unload()
-        {
+        public void Unload() {
             On.Celeste.Level.Update -= LevelOnUpdate;
             _entityActions.ForEach(action => action.OnUnload());
         }
 
-        public void Init()
-        {
+        public void Init() {
             // enter debug map auto clear state
             Engine.Commands.FunctionKeyActions[5] += Clear;
-            
+
             _entityActions.ForEach(action => action.OnInit());
 
             ButtonConfigUi.UpdateSaveButton();
@@ -100,8 +94,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             ButtonConfigUi.UpdateClearButton();
         }
 
-        private void LevelOnUpdate(On.Celeste.Level.orig_Update orig, Level self)
-        {
+        private void LevelOnUpdate(On.Celeste.Level.orig_Update orig, Level self) {
             orig(self);
             if (!SpeedrunToolModule.Settings.Enabled)
                 return;
@@ -109,11 +102,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             Player player = self.Tracker.GetEntity<Player>();
 
             if (ButtonConfigUi.SaveButton.Value.Pressed && !self.Paused && !self.Transitioning && !self.PauseLock && !self.InCutscene &&
-                !self.SkippingCutscene && player != null && !player.Dead)
-            {
+                !self.SkippingCutscene && player != null && !player.Dead) {
                 int state = player.StateMachine.State;
-                List<int> disabledSaveState = new List<int>
-                {
+                List<int> disabledSaveState = new List<int> {
                     Player.StReflectionFall,
                     Player.StTempleFall,
                     Player.StCassetteFly,
@@ -123,29 +114,24 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
                     Player.StIntroWakeUp
                 };
 
-                if (!disabledSaveState.Contains(state))
-                {
+                if (!disabledSaveState.Contains(state)) {
                     QuickSave(self, player);
                     return;
                 }
             }
 
-            if (ButtonConfigUi.LoadButton.Value.Pressed && !self.Paused)
-            {
-                if (IsSaved)
-                {
+            if (ButtonConfigUi.LoadButton.Value.Pressed && !self.Paused) {
+                if (IsSaved) {
                     QuickLoad();
                 }
-                else
-                {
+                else {
                     self.Add(new MiniTextbox("DIALOG_NOT_SAVED"));
                 }
 
                 return;
             }
 
-            if (ButtonConfigUi.ClearButton.Value.Pressed && !self.Paused)
-            {
+            if (ButtonConfigUi.ClearButton.Value.Pressed && !self.Paused) {
                 Clear();
                 self.Add(new MiniTextbox("DIALOG_CLEAR"));
                 return;
@@ -171,8 +157,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
                 Clear();
         }
 
-        private void QuickSave(Level level, Player player)
-        {
+        private void QuickSave(Level level, Player player) {
             Clear();
 
             _loadState = LoadState.LoadStart;
@@ -191,8 +176,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             Engine.Scene = new LevelLoader(level.Session, level.Session.RespawnPoint);
         }
 
-        public void QuickLoad()
-        {
+        public void QuickLoad() {
             if (!IsSaved) return;
 
             _loadState = LoadState.LoadStart;
@@ -204,8 +188,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             Engine.Scene = new LevelLoader(sessionCopy, sessionCopy.RespawnPoint);
         }
 
-        private void QuickLoadStart(Level level, Player player)
-        {
+        private void QuickLoadStart(Level level, Player player) {
             player.JustRespawned = SavedPlayer.JustRespawned;
             player.Position = SavedPlayer.Position;
             player.CameraAnchor = SavedPlayer.CameraAnchor;
@@ -220,26 +203,21 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
 
             _entityActions.ForEach(action => action.OnQuickLoadStart(level));
 
-            if (player.StateMachine.State == Player.StIntroRespawn)
-            {
+            if (player.StateMachine.State == Player.StIntroRespawn) {
                 level.Frozen = true;
                 level.PauseLock = true;
                 _loadState = LoadState.LoadFrozen;
             }
-            else
-            {
+            else {
                 _loadState = LoadState.Loading;
             }
         }
 
-        private void UpdateEntitiesWhenFreeze(Level level, Player player)
-        {
-            if (player == null)
-            {
+        private void UpdateEntitiesWhenFreeze(Level level, Player player) {
+            if (player == null) {
                 level.Frozen = false;
             }
-            else if (player.StateMachine.State != Player.StNormal)
-            {
+            else if (player.StateMachine.State != Player.StNormal) {
                 player.Update();
 
                 _entityActions.ForEach(action => action.OnUpdateEntitiesWhenFreeze(level));
@@ -247,14 +225,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
         }
 
         // 等待人物重生完毕后设置各项状态
-        private void QuickLoading(Level level, Player player)
-        {
+        private void QuickLoading(Level level, Player player) {
             player.Facing = SavedPlayer.Facing;
             player.Ducking = SavedPlayer.Ducking;
             player.Speed = SavedPlayer.Speed;
             player.Stamina = SavedPlayer.Stamina;
-            if (SavedPlayer.StateMachine.State == Player.StStarFly)
-            {
+            if (SavedPlayer.StateMachine.State == Player.StStarFly) {
                 player.StateMachine.State = Player.StStarFly;
                 On.Celeste.Player.StarFlyUpdate += RestoreStarFlyTimer;
             }
@@ -266,12 +242,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
             On.Celeste.Player.Die -= DisableDie;
         }
 
-        private int RestoreStarFlyTimer(On.Celeste.Player.orig_StarFlyUpdate orig, Player self)
-        {
+        private int RestoreStarFlyTimer(On.Celeste.Player.orig_StarFlyUpdate orig, Player self) {
             int result = orig(self);
 
-            if (!(bool) self.GetPrivateField("starFlyTransforming"))
-            {
+            if (!(bool) self.GetPrivateField("starFlyTransforming")) {
                 self.CopyPrivateField("starFlyTimer", SavedPlayer);
                 On.Celeste.Player.StarFlyUpdate -= RestoreStarFlyTimer;
             }
@@ -280,15 +254,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
         }
 
         private PlayerDeadBody DisableDie(On.Celeste.Player.orig_Die orig, Player self, Vector2 direction,
-            bool evenIfInvincible, bool registerDeathInStats)
-        {
+            bool evenIfInvincible, bool registerDeathInStats) {
             return null;
         }
 
-        private void Clear()
-        {
-            if (Engine.Scene is Level level)
-            {
+        private void Clear() {
+            if (Engine.Scene is Level level) {
                 level.Frozen = false;
             }
 
@@ -303,8 +274,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad
         }
     }
 
-    public enum LoadState
-    {
+    public enum LoadState {
         None,
         LoadStart,
         LoadFrozen,

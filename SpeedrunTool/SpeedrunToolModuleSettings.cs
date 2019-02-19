@@ -6,11 +6,9 @@ using Microsoft.Xna.Framework.Input;
 using Monocle;
 using YamlDotNet.Serialization;
 
-namespace Celeste.Mod.SpeedrunTool
-{
+namespace Celeste.Mod.SpeedrunTool {
     [SettingName("SPEEDRUN_TOOL")]
-    public class SpeedrunToolModuleSettings : EverestModuleSettings
-    {
+    public class SpeedrunToolModuleSettings : EverestModuleSettings {
         private static readonly List<string> RespawnSpeedStrings =
             Enumerable.Range(1, 9).Select(intValue => intValue + "00%").ToList();
 
@@ -28,19 +26,17 @@ namespace Celeste.Mod.SpeedrunTool
 
         public string SkipScene { get; set; } = SkipSceneStrings.Last();
 
-        [YamlIgnore]
-        [SettingIgnore]
-        public SkipSceneOption SkipSceneOption => GetEnumFromName<SkipSceneOption>(SkipScene);
+        [YamlIgnore] [SettingIgnore] public SkipSceneOption SkipSceneOption => GetEnumFromName<SkipSceneOption>(SkipScene);
 
         public string RoomTimer { get; set; } = RoomTimerStrings.First();
         [YamlIgnore] [SettingIgnore] public RoomTimerType RoomTimerType => GetEnumFromName<RoomTimerType>(RoomTimer);
-        
-        [SettingRange(1,99)]
+
+        [SettingRange(1, 99)]
         [SettingName("NUMBER_OF_ROOMS")]
         public int NumberOfRooms { get; set; } = 1;
 
-        [SettingIgnore] public Buttons? ControllerQuickSave { get; set; } 
-        [SettingIgnore] public Buttons? ControllerQuickLoad { get; set; } 
+        [SettingIgnore] public Buttons? ControllerQuickSave { get; set; }
+        [SettingIgnore] public Buttons? ControllerQuickLoad { get; set; }
         [SettingIgnore] public Buttons? ControllerQuickClear { get; set; }
         [SettingIgnore] public Buttons? ControllerOpenDebugMap { get; set; }
         [SettingIgnore] public Buttons? ControllerResetRoomPb { get; set; }
@@ -53,8 +49,7 @@ namespace Celeste.Mod.SpeedrunTool
 
         [YamlIgnore] public string ButtonConfig { get; set; } = "";
 
-        public void CreateRespawnSpeedEntry(TextMenu textMenu, bool inGame)
-        {
+        public void CreateRespawnSpeedEntry(TextMenu textMenu, bool inGame) {
             textMenu.Add(
                 new TextMenu.Slider(Dialog.Clean("RESPAWN_SPEED"),
                     index => RespawnSpeedStrings[index],
@@ -64,8 +59,7 @@ namespace Celeste.Mod.SpeedrunTool
                 ).Change(index => RespawnSpeed = RespawnSpeedStrings[index]));
         }
 
-        public void CreateSkipSceneEntry(TextMenu textMenu, bool inGame)
-        {
+        public void CreateSkipSceneEntry(TextMenu textMenu, bool inGame) {
             textMenu.Add(
                 new TextMenu.Slider(Dialog.Clean("SKIP_CHAPTER_SCENE"),
                     index => Dialog.Clean(SkipSceneStrings[index]),
@@ -75,16 +69,14 @@ namespace Celeste.Mod.SpeedrunTool
                 ).Change(index => SkipScene = SkipSceneStrings[index]));
         }
 
-        public void CreateRoomTimerEntry(TextMenu textMenu, bool inGame)
-        {
+        public void CreateRoomTimerEntry(TextMenu textMenu, bool inGame) {
             textMenu.Add(
                 new TextMenu.Slider(Dialog.Clean("ROOM_TIMER"),
                     index => Dialog.Clean(RoomTimerStrings[index]),
                     0,
                     RoomTimerStrings.Count - 1,
                     Math.Max(0, RoomTimerStrings.IndexOf(RoomTimer))
-                ).Change(index =>
-                {
+                ).Change(index => {
                     RoomTimer = RoomTimerStrings[index];
 
                     if (RoomTimerType != RoomTimerType.OFF) return;
@@ -95,10 +87,8 @@ namespace Celeste.Mod.SpeedrunTool
                 }));
         }
 
-        public void CreateButtonConfigEntry(TextMenu textMenu, bool inGame)
-        {
-            textMenu.Add(new TextMenu.Button(Dialog.Clean("BUTTON_CONFIG")).Pressed(() =>
-            {
+        public void CreateButtonConfigEntry(TextMenu textMenu, bool inGame) {
+            textMenu.Add(new TextMenu.Button(Dialog.Clean("BUTTON_CONFIG")).Pressed(() => {
                 textMenu.Focused = false;
                 ButtonConfigUi buttonConfigUi = new ButtonConfigUi {OnClose = () => textMenu.Focused = true};
                 Engine.Scene.Add(buttonConfigUi);
@@ -106,21 +96,17 @@ namespace Celeste.Mod.SpeedrunTool
             }));
         }
 
-        private static List<string> GetEnumNames<T>() where T : struct, IConvertible
-        {
+        private static List<string> GetEnumNames<T>() where T : struct, IConvertible {
             return new List<string>(Enum.GetNames(typeof(T))
                 .Select(name => Regex.Replace(name, @"([a-z])([A-Z])", "$1_$2").ToUpper()));
         }
 
-        private static T GetEnumFromName<T>(string name) where T : struct, IConvertible
-        {
-            try
-            {
+        private static T GetEnumFromName<T>(string name) where T : struct, IConvertible {
+            try {
                 string enumName = Enum.GetNames(typeof(T))[GetEnumNames<T>().IndexOf(name)];
                 return (T) Enum.Parse(typeof(T), enumName);
             }
-            catch (ArgumentException e)
-            {
+            catch (ArgumentException e) {
                 e.LogDetailed();
                 return (T) Enum.Parse(typeof(T), Enum.GetNames(typeof(T))[0]);
             }
@@ -128,16 +114,14 @@ namespace Celeste.Mod.SpeedrunTool
     }
 
     [Flags]
-    public enum SkipSceneOption
-    {
+    public enum SkipSceneOption {
         OFF = 0,
         Intro = 1,
         Complete = 2,
         ALL = Intro | Complete
     }
 
-    public enum RoomTimerType
-    {
+    public enum RoomTimerType {
         OFF,
         NextRoom,
         CurrentRoom

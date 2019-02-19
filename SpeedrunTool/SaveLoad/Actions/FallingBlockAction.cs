@@ -2,46 +2,38 @@ using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
-{
-    public class FallingBlockAction : AbstractEntityAction
-    {
+namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
+    public class FallingBlockAction : AbstractEntityAction {
         private Dictionary<EntityID, FallingBlock> _fallingBlocks = new Dictionary<EntityID, FallingBlock>();
 
-        public override void OnQuickSave(Level level)
-        {
+        public override void OnQuickSave(Level level) {
             _fallingBlocks = level.Tracker.GetDictionary<FallingBlock>();
         }
 
-        public override void OnClear()
-        {
+        public override void OnClear() {
             _fallingBlocks.Clear();
         }
 
         private void OnFallingBlockOnCtorVector2CharIntIntBoolBoolBool(
             On.Celeste.FallingBlock.orig_ctor_Vector2_char_int_int_bool_bool_bool orig, FallingBlock self,
-            Vector2 position, char tile, int width, int height, bool boss, bool behind, bool fall)
-        {
+            Vector2 position, char tile, int width, int height, bool boss, bool behind, bool fall) {
             orig(self, position, tile, width, height, boss, behind, fall);
 
             EntityID entityId = self.GetEntityId();
-            if (!entityId.Equals(default(EntityID)))
-            {
+            if (!entityId.Equals(default(EntityID))) {
                 RestoreState(self, entityId);
             }
         }
 
         private void OnFallingBlockOnCtorEntityDataVector2(On.Celeste.FallingBlock.orig_ctor_EntityData_Vector2 orig,
-            FallingBlock self, EntityData data, Vector2 offset)
-        {
+            FallingBlock self, EntityData data, Vector2 offset) {
             EntityID entityId = data.ToEntityId();
             self.SetEntityId(entityId);
             orig(self, data, offset);
         }
 
         private FallingBlock FallingBlockOnCreateFinalBossBlock(On.Celeste.FallingBlock.orig_CreateFinalBossBlock orig,
-            EntityData data, Vector2 offset)
-        {
+            EntityData data, Vector2 offset) {
             FallingBlock self = orig(data, offset);
             EntityID entityId = data.ToEntityId();
             self.SetEntityId(entityId);
@@ -51,29 +43,23 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
             return self;
         }
 
-        private void RestoreState(FallingBlock self, EntityID entityId)
-        {
-            if (IsLoadStart)
-            {
-                if (_fallingBlocks.ContainsKey(entityId))
-                {
+        private void RestoreState(FallingBlock self, EntityID entityId) {
+            if (IsLoadStart) {
+                if (_fallingBlocks.ContainsKey(entityId)) {
                     FallingBlock fallingBlock = _fallingBlocks[entityId];
                     self.Position = fallingBlock.Position;
-                    if (fallingBlock.HasStartedFalling && !OnGround(fallingBlock))
-                    {
+                    if (fallingBlock.HasStartedFalling && !OnGround(fallingBlock)) {
                         On.Celeste.FallingBlock.ShakeSfx += DisableShakeSfx;
                         self.Triggered = true;
                     }
                 }
-                else
-                {
+                else {
                     self.Add(new RemoveSelfComponent());
                 }
             }
         }
 
-        private static bool OnGround(FallingBlock fallingBlock, int downCheck = 1)
-        {
+        private static bool OnGround(FallingBlock fallingBlock, int downCheck = 1) {
             if (fallingBlock.CollideCheck<Solid>(fallingBlock.Position + Vector2.UnitY * downCheck))
                 return true;
 
@@ -81,34 +67,29 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
                 fallingBlock.Position + Vector2.UnitY * downCheck);
         }
 
-        private static void DisableShakeSfx(On.Celeste.FallingBlock.orig_ShakeSfx orig, FallingBlock self)
-        {
+        private static void DisableShakeSfx(On.Celeste.FallingBlock.orig_ShakeSfx orig, FallingBlock self) {
             On.Celeste.FallingBlock.ShakeSfx -= DisableShakeSfx;
         }
 
-        public override void OnLoad()
-        {
+        public override void OnLoad() {
             On.Celeste.FallingBlock.CreateFinalBossBlock += FallingBlockOnCreateFinalBossBlock;
             On.Celeste.FallingBlock.ctor_EntityData_Vector2 += OnFallingBlockOnCtorEntityDataVector2;
             On.Celeste.FallingBlock.ctor_Vector2_char_int_int_bool_bool_bool +=
                 OnFallingBlockOnCtorVector2CharIntIntBoolBoolBool;
         }
 
-        public override void OnUnload()
-        {
+        public override void OnUnload() {
             On.Celeste.FallingBlock.CreateFinalBossBlock -= FallingBlockOnCreateFinalBossBlock;
             On.Celeste.FallingBlock.ctor_EntityData_Vector2 -= OnFallingBlockOnCtorEntityDataVector2;
             On.Celeste.FallingBlock.ctor_Vector2_char_int_int_bool_bool_bool -=
                 OnFallingBlockOnCtorVector2CharIntIntBoolBoolBool;
         }
 
-        public override void OnInit()
-        {
+        public override void OnInit() {
             typeof(FallingBlock).AddToTracker();
         }
 
-        public override void OnUpdateEntitiesWhenFreeze(Level level)
-        {
+        public override void OnUpdateEntitiesWhenFreeze(Level level) {
             level.UpdateEntities<FallingBlock>();
         }
     }

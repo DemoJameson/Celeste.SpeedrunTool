@@ -7,27 +7,22 @@ using Monocle;
 using On.Celeste.Pico8;
 using On.FMOD;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
-{
-    public class FinalBossAction : AbstractEntityAction
-    {
+namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
+    public class FinalBossAction : AbstractEntityAction {
         private Dictionary<EntityID, FinalBoss> _savedFinalBosses = new Dictionary<EntityID, FinalBoss>();
 
-        public override void OnQuickSave(Level level)
-        {
+        public override void OnQuickSave(Level level) {
             _savedFinalBosses = level.Tracker.GetDictionary<FinalBoss>();
         }
 
         private void RestoreFinalBossState(On.Celeste.FinalBoss.orig_ctor_EntityData_Vector2 orig, FinalBoss self,
             EntityData data,
-            Vector2 offset)
-        {
+            Vector2 offset) {
             orig(self, data, offset);
             EntityID entityId = data.ToEntityId();
             self.SetEntityId(entityId);
 
-            if (IsLoadStart && _savedFinalBosses.ContainsKey(entityId))
-            {
+            if (IsLoadStart && _savedFinalBosses.ContainsKey(entityId)) {
                 FinalBoss savedFinalBoss = _savedFinalBosses[entityId];
 
                 int nodeIndex = (int) savedFinalBoss.GetPrivateField("nodeIndex");
@@ -36,13 +31,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
 
                 self.Position = nodes[nodeIndex];
 
-                if (data.Int("patternIndex") == 0 && nodeIndex >= 1)
-                {
+                if (data.Int("patternIndex") == 0 && nodeIndex >= 1) {
                     self.SetPrivateField("patternIndex", 1);
                 }
 
-                if (startHit)
-                {
+                if (startHit) {
                     nodeIndex--;
                 }
 
@@ -51,49 +44,40 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
             }
         }
 
-        public override void OnClear()
-        {
+        public override void OnClear() {
             _savedFinalBosses.Clear();
         }
 
-        public override void OnLoad()
-        {
+        public override void OnLoad() {
             On.Celeste.FinalBoss.ctor_EntityData_Vector2 += RestoreFinalBossState;
         }
 
-        public override void OnUnload()
-        {
+        public override void OnUnload() {
             On.Celeste.FinalBoss.ctor_EntityData_Vector2 -= RestoreFinalBossState;
         }
 
-        private class RestoreFinalBossStateComponent : Monocle.Component
-        {
+        private class RestoreFinalBossStateComponent : Monocle.Component {
             private readonly FinalBoss _savedFinalBoss;
 
-            public RestoreFinalBossStateComponent(FinalBoss savedFinalBoss) : base(true, false)
-            {
+            public RestoreFinalBossStateComponent(FinalBoss savedFinalBoss) : base(true, false) {
                 _savedFinalBoss = savedFinalBoss;
             }
 
-            public override void Update()
-            {
+            public override void Update() {
                 List<Entity> fallingBlocks = Entity.GetPrivateField("fallingBlocks") as List<Entity>;
                 List<Entity> savedFallingBlocks = _savedFinalBoss.GetPrivateField("fallingBlocks") as List<Entity>;
 
-                if (fallingBlocks == null || savedFallingBlocks == null)
-                {
+                if (fallingBlocks == null || savedFallingBlocks == null) {
                     RemoveSelf();
                     return;
                 }
 
-                if (fallingBlocks.Count == 0)
-                {
+                if (fallingBlocks.Count == 0) {
                     RemoveSelf();
                     return;
                 }
-                
-                if (fallingBlocks.Count != savedFallingBlocks.Count)
-                {
+
+                if (fallingBlocks.Count != savedFallingBlocks.Count) {
                     fallingBlocks.RemoveAll(entity =>
                         savedFallingBlocks.All(savedEntity => savedEntity.Position != entity.Position));
                     RemoveSelf();

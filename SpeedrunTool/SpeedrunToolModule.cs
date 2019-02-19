@@ -3,16 +3,13 @@ using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework;
 using On.Monocle;
 
-namespace Celeste.Mod.SpeedrunTool
-{
+namespace Celeste.Mod.SpeedrunTool {
     // ReSharper disable once ClassNeverInstantiated.Global
-    public class SpeedrunToolModule : EverestModule
-    {
+    public class SpeedrunToolModule : EverestModule {
         public static SpeedrunToolModule Instance;
         //public static ExampleSaveData SaveData => (ExampleSaveData)Instance._SaveData;
 
-        public SpeedrunToolModule()
-        {
+        public SpeedrunToolModule() {
             Instance = this;
         }
 
@@ -25,8 +22,7 @@ namespace Celeste.Mod.SpeedrunTool
 
         // Set up any hooks, event handlers and your mod in general here.
         // Load runs before Celeste itself has initialized properly.
-        public override void Load()
-        {
+        public override void Load() {
             BetterMapEditor.Instance.Load();
             StateManager.Instance.Load();
             RoomTimerManager.Instance.Load();
@@ -37,8 +33,7 @@ namespace Celeste.Mod.SpeedrunTool
         }
 
         // Unload the entirety of your mod's content, remove any event listeners and undo all hooks.
-        public override void Unload()
-        {
+        public override void Unload() {
             BetterMapEditor.Instance.Unload();
             StateManager.Instance.Unload();
             RoomTimerManager.Instance.Unload();
@@ -49,15 +44,13 @@ namespace Celeste.Mod.SpeedrunTool
         }
 
         // Optional, initialize anything after Celeste has initialized itself properly.
-        public override void Initialize()
-        {
+        public override void Initialize() {
             BetterMapEditor.Init();
             StateManager.Instance.Init();
             RoomTimerManager.Instance.Init();
         }
 
-        private static void RespawnSpeed(Engine.orig_Update orig, Monocle.Engine self, GameTime time)
-        {
+        private static void RespawnSpeed(Engine.orig_Update orig, Monocle.Engine self, GameTime time) {
             orig(self, time);
 
             if (!Settings.Enabled) return;
@@ -71,19 +64,15 @@ namespace Celeste.Mod.SpeedrunTool
                     orig(self, time);
         }
 
-        private static void QuickLoadWhenDeath(On.Celeste.PlayerDeadBody.orig_End orig, PlayerDeadBody self)
-        {
+        private static void QuickLoadWhenDeath(On.Celeste.PlayerDeadBody.orig_End orig, PlayerDeadBody self) {
             orig(self);
-            if (Settings.Enabled && Settings.AutoLoadAfterDeath)
-            {
+            if (Settings.Enabled && Settings.AutoLoadAfterDeath) {
                 StateManager.Instance.QuickLoad();
             }
         }
 
-        private static void SkipChapterIntro(On.Celeste.LevelEnter.orig_Go orig, Session session, bool data)
-        {
-            if (!Settings.Enabled)
-            {
+        private static void SkipChapterIntro(On.Celeste.LevelEnter.orig_Go orig, Session session, bool data) {
+            if (!Settings.Enabled) {
                 orig(session, data);
                 return;
             }
@@ -93,10 +82,8 @@ namespace Celeste.Mod.SpeedrunTool
         }
 
         private static void SkipChapterComplete(On.Celeste.LevelExit.orig_ctor orig, LevelExit self,
-            LevelExit.Mode mode, Session session, HiresSnow snow)
-        {
-            if (!Settings.Enabled)
-            {
+            LevelExit.Mode mode, Session session, HiresSnow snow) {
+            if (!Settings.Enabled) {
                 orig(self, mode, session, snow);
                 return;
             }

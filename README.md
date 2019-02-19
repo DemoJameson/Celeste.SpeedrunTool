@@ -11,10 +11,10 @@
 - Faster respawn time.
 - Room timer compatible with Summit flags. Personal best is recorded.
 - Removes cutscenes when loading and finishing a chapter.
-- Controller support for debug map: use confirm to teleport, right analog to zoom out.
-- Debug mode F6 teleport bug-fix – Dream blocks and Badeline not activating in Old Site, incorrect ice / fire state in Core, Celestial Resort huge mess hall being strangely lit, wind sound not play in Summit 2000m.
+- Controller support for debug map: use confirm to teleport, right analog to zoom.
+- Debug mode F6 teleport bug-fix – Dream blocks and Badeline not activating in Old Site, incorrect ice/fire state in Core, Celestial Resort huge mess hall being strangely lit, wind sound does not play in Summit 2000m.
 
-\* Records the position and velocity of most object and recreates the whole scene from scratch, may not be 100% accurate. 
+\* Records the position and velocity of most objects and recreates the whole scene from scratch, may not be 100% accurate. 
 
 ## Previews
 

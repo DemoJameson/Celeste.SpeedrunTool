@@ -17,7 +17,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
             {
                 Snowball snowball = new Snowball();
                 On.Celeste.Snowball.Added += SnowballOnAdded;
-                Engine.Scene.Add(snowball);
+                level.Add(snowball);
             }
         }
 

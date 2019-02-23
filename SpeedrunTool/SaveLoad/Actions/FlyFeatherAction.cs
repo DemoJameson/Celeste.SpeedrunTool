@@ -28,10 +28,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
             Vector2 position, bool shielded, bool singleUse)
         {
             orig(self, position, shielded, singleUse);
-            if (self.GetEntityId().Equals(default(EntityID)))
+            if (self.GetEntityId().Equals(default(EntityID)) && Engine.Scene is Level level)
             {
-                EntityID entityId = new EntityID((Engine.Scene as Level).Session.Level,
-                    position.GetHashCode() + shielded.GetHashCode() + singleUse.GetHashCode());
+                EntityID entityId = new EntityID(level.Session.Level, position.GetHashCode() + shielded.GetHashCode() + singleUse.GetHashCode());
                 self.SetEntityId(entityId);
 
                 RestoreState(self, entityId);

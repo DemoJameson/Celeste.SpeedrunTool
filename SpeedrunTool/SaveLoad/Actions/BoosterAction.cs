@@ -3,42 +3,32 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Monocle;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
-{
-    public class BoosterAction : AbstractEntityAction
-    {
-        private Dictionary<EntityID, Booster> _savedBoosters = new Dictionary<EntityID, Booster>();
+namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
+    public class BoosterAction : AbstractEntityAction {
+        private Dictionary<EntityID, Booster> savedBoosters = new Dictionary<EntityID, Booster>();
 
-        public override void OnQuickSave(Level level)
-        {
-            _savedBoosters = level.Tracker.GetDictionary<Booster>();
+        public override void OnQuickSave(Level level) {
+            savedBoosters = level.Tracker.GetDictionary<Booster>();
         }
 
         private void RestoreBoosterPosition(On.Celeste.Booster.orig_ctor_EntityData_Vector2 orig,
             Booster self, EntityData data,
-            Vector2 offset)
-        {
+            Vector2 offset) {
             EntityID entityId = data.ToEntityId();
             self.SetEntityId(entityId);
             orig(self, data, offset);
 
-            if (IsLoadStart && _savedBoosters.ContainsKey(entityId))
-            {
-                Booster savedBooster = _savedBoosters[entityId];
+            if (IsLoadStart && savedBoosters.ContainsKey(entityId)) {
+                Booster savedBooster = savedBoosters[entityId];
 
                 if ((bool) savedBooster.GetPrivateField("boostingPlayer"))
-                {
                     self.Add(new Coroutine(BoostPlayer(self, savedBooster)));
-                }
-                else if((float)savedBooster.GetPrivateField("respawnTimer")> 0f)
-                {
+                else if ((float) savedBooster.GetPrivateField("respawnTimer") > 0f)
                     self.Add(new Coroutine(WaitToRespawn(self, savedBooster)));
-                }
             }
         }
 
-        private IEnumerator BoostPlayer(Booster self, Booster savedBooster)
-        {
+        private IEnumerator BoostPlayer(Booster self, Booster savedBooster) {
             self.Center = StateManager.Instance.SavedPlayer.Center;
 
             while (!IsLoadComplete)
@@ -49,8 +39,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
             self.Center = savedBooster.Center;
         }
 
-        private IEnumerator WaitToRespawn(Booster self, Booster savedBooster)
-        {
+        private IEnumerator WaitToRespawn(Booster self, Booster savedBooster) {
             self.CopyPrivateField("respawnTimer", savedBooster);
             Sprite sprite = self.GetPrivateField("sprite") as Sprite;
             sprite.Visible = false;
@@ -59,32 +48,27 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
             yield break;
         }
 
-        private void BoosterOnOnPlayer(On.Celeste.Booster.orig_OnPlayer orig, Booster self, Player player)
-        {
+        private void BoosterOnOnPlayer(On.Celeste.Booster.orig_OnPlayer orig, Booster self, Player player) {
             if (self.SceneAs<Level>().Frozen)
                 return;
 
             orig(self, player);
         }
 
-        public override void OnClear()
-        {
-            _savedBoosters.Clear();
+        public override void OnClear() {
+            savedBoosters.Clear();
         }
 
-        public override void OnLoad()
-        {
+        public override void OnLoad() {
             On.Celeste.Booster.ctor_EntityData_Vector2 += RestoreBoosterPosition;
             On.Celeste.Booster.OnPlayer += BoosterOnOnPlayer;
         }
 
-        public override void OnUnload()
-        {
+        public override void OnUnload() {
             On.Celeste.Booster.ctor_EntityData_Vector2 -= RestoreBoosterPosition;
         }
 
-        public override void OnInit()
-        {
+        public override void OnInit() {
             typeof(Booster).AddToTracker();
         }
     }

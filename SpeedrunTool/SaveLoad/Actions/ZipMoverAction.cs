@@ -4,44 +4,35 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Monocle;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
-{
-    public class ZipMoverAction : AbstractEntityAction
-    {
-        private Dictionary<EntityID, ZipMover> _savedZipMovers = new Dictionary<EntityID, ZipMover>();
+namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
+    public class ZipMoverAction : AbstractEntityAction {
+        private Dictionary<EntityID, ZipMover> savedZipMovers = new Dictionary<EntityID, ZipMover>();
 
-        public override void OnQuickSave(Level level)
-        {
-            _savedZipMovers = level.Tracker.GetDictionary<ZipMover>();
+        public override void OnQuickSave(Level level) {
+            savedZipMovers = level.Tracker.GetDictionary<ZipMover>();
         }
 
         private void RestoreZipMoverPosition(On.Celeste.ZipMover.orig_ctor_EntityData_Vector2 orig, ZipMover self,
             EntityData data,
-            Vector2 offset)
-        {
+            Vector2 offset) {
             EntityID entityId = data.ToEntityId();
             self.SetEntityId(entityId);
             orig(self, data, offset);
 
-            if (IsLoadStart && _savedZipMovers.ContainsKey(entityId))
-            {
-                self.Position = _savedZipMovers[entityId].Position;
-            }
+            if (IsLoadStart && savedZipMovers.ContainsKey(entityId))
+                self.Position = savedZipMovers[entityId].Position;
         }
 
-        public override void OnClear()
-        {
-            _savedZipMovers.Clear();
+        public override void OnClear() {
+            savedZipMovers.Clear();
         }
 
-        public override void OnLoad()
-        {
+        public override void OnLoad() {
             On.Celeste.ZipMover.ctor_EntityData_Vector2 += RestoreZipMoverPosition;
             On.Celeste.ZipMover.Sequence += ZipMoverOnSequence;
         }
 
-        private IEnumerator ZipMoverOnSequence(On.Celeste.ZipMover.orig_Sequence orig, ZipMover self)
-        {
+        private IEnumerator ZipMoverOnSequence(On.Celeste.ZipMover.orig_Sequence orig, ZipMover self) {
             if (!SpeedrunToolModule.Settings.Enabled)
                 yield return orig(self);
 
@@ -58,9 +49,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
             float topShakeTimer = 0f;
 
             EntityID entityId = self.GetEntityId();
-            if (IsLoadStart && _savedZipMovers.ContainsKey(entityId))
-            {
-                ZipMover savedZipMover = _savedZipMovers[entityId];
+            if (IsLoadStart && savedZipMovers.ContainsKey(entityId)) {
+                ZipMover savedZipMover = savedZipMovers[entityId];
                 goProgress = savedZipMover.GetExtendedDataValue<float>(nameof(goProgress));
                 backProgress = savedZipMover.GetExtendedDataValue<float>(nameof(backProgress));
                 audioTime = savedZipMover.GetExtendedDataValue<int>(nameof(audioTime));
@@ -73,8 +63,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
                 self.SetExtendedDataValue(nameof(topShakeTimer), topShakeTimer);
             }
 
-            while (true)
-            {
+            while (true) {
                 while (!self.HasPlayerRider() && currentPosition == start || IsLoadStart || IsFrozen || IsLoading)
                     yield return null;
 
@@ -83,14 +72,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
                 soundSource.Play("event:/game/01_forsaken_city/zip_mover");
                 soundSource.SetTime(audioTime);
 
-                if (startShakeTimer < 0.1)
-                {
+                if (startShakeTimer < 0.1) {
                     Input.Rumble(RumbleStrength.Medium, RumbleLength.Short);
                     self.StartShaking(0.1f - startShakeTimer);
                 }
 
-                while (startShakeTimer < 0.1 + 0.016)
-                {
+                while (startShakeTimer < 0.1 + 0.016) {
                     yield return null;
                     startShakeTimer += Engine.DeltaTime;
                     self.SetExtendedDataValue(nameof(startShakeTimer), startShakeTimer);
@@ -99,18 +86,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
                 }
 
                 if (goProgress < 1)
-                {
                     streetlight.SetAnimationFrame(3);
-                }
                 else
-                {
                     streetlight.SetAnimationFrame(2);
-                }
 
                 self.StopPlayerRunIntoAnimation = false;
 
-                while (goProgress < 1.0)
-                {
+                while (goProgress < 1.0) {
                     yield return null;
 
                     goProgress = Calc.Approach(goProgress, 1f, 2f * Engine.DeltaTime);
@@ -122,8 +104,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
                     float percent = (float) self.GetPrivateField("percent");
                     Vector2 to = Vector2.Lerp(currentPosition, target, percent);
                     self.InvokePrivateMethod("ScrapeParticlesCheck", to);
-                    if (self.Scene.OnInterval(0.1f))
-                    {
+                    if (self.Scene.OnInterval(0.1f)) {
                         object pathRenderer = self.GetPrivateField("pathRenderer");
                         pathRenderer.GetType().GetMethod("CreateSparks").Invoke(pathRenderer, new object[] { });
                     }
@@ -131,17 +112,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
                     self.MoveTo(to);
                 }
 
-                if (topShakeTimer < 0.2)
-                {
+                if (topShakeTimer < 0.2) {
                     self.StartShaking(0.2f - topShakeTimer);
                     Input.Rumble(RumbleStrength.Strong, RumbleLength.Medium);
                     self.SceneAs<Level>().Shake();
                 }
 
                 self.StopPlayerRunIntoAnimation = true;
-                
-                while (topShakeTimer < 0.5 + 0.016)
-                {
+
+                while (topShakeTimer < 0.5 + 0.016) {
                     yield return null;
                     topShakeTimer += Engine.DeltaTime;
                     self.SetExtendedDataValue(nameof(topShakeTimer), topShakeTimer);
@@ -152,8 +131,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
                 self.StopPlayerRunIntoAnimation = false;
                 streetlight.SetAnimationFrame(2);
 
-                while (backProgress < 1.0)
-                {
+                while (backProgress < 1.0) {
                     yield return null;
 
                     backProgress = Calc.Approach(backProgress, 1f, 0.5f * Engine.DeltaTime);
@@ -188,12 +166,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
             }
         }
 
-        public override void OnUnload()
-        {
+        public override void OnUnload() {
             On.Celeste.ZipMover.ctor_EntityData_Vector2 -= RestoreZipMoverPosition;
             On.Celeste.ZipMover.Sequence -= ZipMoverOnSequence;
         }
 
-        public override void OnInit() => typeof(ZipMover).AddToTracker();
+        public override void OnInit() {
+            typeof(ZipMover).AddToTracker();
+        }
     }
 }

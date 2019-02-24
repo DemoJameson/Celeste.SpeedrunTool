@@ -5,12 +5,13 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Monocle;
 
-namespace Celeste.Mod.SpeedrunTool
-{
-    public class ButtonConfigUi : TextMenu
-    {
-        private static readonly List<Buttons> AllButtons = new List<Buttons>
-        {
+namespace Celeste.Mod.SpeedrunTool {
+    public class ButtonConfigUi : TextMenu {
+        public const Keys DefaultKeyboardSave = Keys.F7;
+        public const Keys DefaultKeyboardLoad = Keys.F8;
+        public const Keys DefaultKeyboardResetPb = Keys.F9;
+
+        private static readonly List<Buttons> AllButtons = new List<Buttons> {
             Buttons.A,
             Buttons.B,
             Buttons.X,
@@ -24,17 +25,8 @@ namespace Celeste.Mod.SpeedrunTool
             Buttons.Back
         };
 
-        public const Keys DefaultKeyboardSave = Keys.F7;
-        public const Keys DefaultKeyboardLoad = Keys.F8;
-        public const Keys DefaultKeyboardResetPb = Keys.F9;
         public static readonly Keys[] FixedClearKeys = {Keys.F3, Keys.F6};
         public static readonly Keys[] FixedOpenDebugMapKeys = {Keys.F6};
-
-
-        private static VirtualButton CreateVirtualButton()
-        {
-            return new VirtualButton(0.08f);
-        }
 
         public static readonly Lazy<VirtualButton> SaveButton = new Lazy<VirtualButton>(CreateVirtualButton);
         public static readonly Lazy<VirtualButton> LoadButton = new Lazy<VirtualButton>(CreateVirtualButton);
@@ -42,31 +34,33 @@ namespace Celeste.Mod.SpeedrunTool
         public static readonly Lazy<VirtualButton> OpenDebugButton = new Lazy<VirtualButton>(CreateVirtualButton);
         public static readonly Lazy<VirtualButton> ResetRoomPbButton = new Lazy<VirtualButton>(CreateVirtualButton);
 
-        private static SpeedrunToolModuleSettings Settings => SpeedrunToolModule.Settings;
+        private bool closing;
+        private float inputDelay;
+        private bool remapping;
+        private Mappings remappingButton;
+        private float remappingEase;
+        private bool remappingKeyboard;
+        private float timeout;
 
-        private bool _closing;
-        private float _inputDelay;
-        private bool _remapping;
-        private Mappings _remappingButton;
-        private float _remappingEase;
-        private bool _remappingKeyboard;
-        private float _timeout;
-
-        public ButtonConfigUi()
-        {
+        public ButtonConfigUi() {
             Reload();
-            OnESC = OnCancel = () =>
-            {
+            OnESC = OnCancel = () => {
                 Focused = false;
-                _closing = true;
+                closing = true;
             };
             MinWidth = 600f;
             Position.Y = ScrollTargetY;
             Alpha = 0.0f;
         }
 
-        private void Reload(int index = -1)
-        {
+        private static SpeedrunToolModuleSettings Settings => SpeedrunToolModule.Settings;
+
+
+        private static VirtualButton CreateVirtualButton() {
+            return new VirtualButton(0.08f);
+        }
+
+        private void Reload(int index = -1) {
             Clear();
 
             Add(new Header(Dialog.Clean("BUTTON_CONFIG")));
@@ -74,61 +68,41 @@ namespace Celeste.Mod.SpeedrunTool
             Add(new SubHeader(Dialog.Clean("CONTROLLER")));
 
             if (Settings.ControllerQuickSave == null)
-            {
                 Add(new Setting(Dialog.Clean("SAVE"), Keys.None).Pressed(() =>
                     Remap(Mappings.Save)));
-            }
             else
-            {
                 Add(new Setting(Dialog.Clean("SAVE"), (Buttons) Settings.ControllerQuickSave).Pressed(() =>
                     Remap(Mappings.Save)));
-            }
 
             if (Settings.ControllerQuickLoad == null)
-            {
                 Add(new Setting(Dialog.Clean("LOAD"), Keys.None).Pressed(() =>
                     Remap(Mappings.Load)));
-            }
             else
-            {
                 Add(new Setting(Dialog.Clean("LOAD"), (Buttons) Settings.ControllerQuickLoad).Pressed(() =>
                     Remap(Mappings.Load)));
-            }
 
             if (Settings.ControllerQuickClear == null)
-            {
                 Add(new Setting(Dialog.Clean("CLEAR"), Keys.None).Pressed(() =>
                     Remap(Mappings.Clear)));
-            }
             else
-            {
                 Add(new Setting(Dialog.Clean("CLEAR"), (Buttons) Settings.ControllerQuickClear).Pressed(() =>
                     Remap(Mappings.Clear)));
-            }
 
             if (Settings.ControllerOpenDebugMap == null)
-            {
                 Add(new Setting(Dialog.Clean("OPEN_DEBUG_MAP"), Keys.None).Pressed(() =>
                     Remap(Mappings.OpenDebugMap)));
-            }
             else
-            {
                 Add(new Setting(Dialog.Clean("OPEN_DEBUG_MAP"), (Buttons) Settings.ControllerOpenDebugMap).Pressed(
                     () =>
                         Remap(Mappings.OpenDebugMap)));
-            }
 
             if (Settings.ControllerResetRoomPb == null)
-            {
                 Add(new Setting(Dialog.Clean("RESET_ROOM_PB"), Keys.None).Pressed(() =>
                     Remap(Mappings.ResetRoomPb)));
-            }
             else
-            {
                 Add(new Setting(Dialog.Clean("RESET_ROOM_PB"), (Buttons) Settings.ControllerResetRoomPb).Pressed(
                     () =>
                         Remap(Mappings.ResetRoomPb)));
-            }
 
             Add(new SubHeader(Dialog.Clean("KEYBOARD")));
             Add(new Setting(Dialog.Clean("SAVE"), Settings.KeyboardQuickSave).Pressed(() =>
@@ -143,12 +117,10 @@ namespace Celeste.Mod.SpeedrunTool
                 Remap(Mappings.ResetRoomPb, true)));
 
             Add(new SubHeader(""));
-            Button button = new Button(Dialog.Clean("KEY_CONFIG_RESET"))
-            {
+            Button button = new Button(Dialog.Clean("KEY_CONFIG_RESET")) {
                 IncludeWidthInMeasurement = false,
                 AlwaysCenter = true,
-                OnPressed = () =>
-                {
+                OnPressed = () => {
                     SetDefaultButtons();
                     Reload(Selection);
                 }
@@ -160,8 +132,7 @@ namespace Celeste.Mod.SpeedrunTool
             Selection = index;
         }
 
-        private void SetDefaultButtons()
-        {
+        private void SetDefaultButtons() {
             Settings.ControllerQuickSave = null;
             Settings.ControllerQuickLoad = null;
             Settings.ControllerQuickClear = null;
@@ -182,21 +153,18 @@ namespace Celeste.Mod.SpeedrunTool
         }
 
 
-        private void Remap(Mappings mapping, bool remappingKeyboard = false)
-        {
-            _remapping = true;
-            _remappingKeyboard = remappingKeyboard;
-            _remappingButton = mapping;
-            _timeout = 5f;
+        private void Remap(Mappings mapping, bool remappingKeyboard = false) {
+            remapping = true;
+            this.remappingKeyboard = remappingKeyboard;
+            remappingButton = mapping;
+            timeout = 5f;
             Focused = false;
         }
 
-        private void SetRemap(Keys key)
-        {
-            _remapping = false;
-            _inputDelay = 0.25f;
-            switch (_remappingButton)
-            {
+        private void SetRemap(Keys key) {
+            remapping = false;
+            inputDelay = 0.25f;
+            switch (remappingButton) {
                 case Mappings.Save:
                     Settings.KeyboardQuickSave = key;
                     UpdateSaveButton();
@@ -228,12 +196,10 @@ namespace Celeste.Mod.SpeedrunTool
             Reload(Selection);
         }
 
-        private void SetRemap(Buttons button)
-        {
-            _remapping = false;
-            _inputDelay = 0.25f;
-            switch (_remappingButton)
-            {
+        private void SetRemap(Buttons button) {
+            remapping = false;
+            inputDelay = 0.25f;
+            switch (remappingButton) {
                 case Mappings.Save:
                     Settings.ControllerQuickSave = button;
                     UpdateSaveButton();
@@ -261,8 +227,7 @@ namespace Celeste.Mod.SpeedrunTool
             Reload(Selection);
         }
 
-        public static void UpdateSaveButton()
-        {
+        public static void UpdateSaveButton() {
             List<VirtualButton.Node> nodes = SaveButton.Value.Nodes;
             nodes.Clear();
             nodes.Add(new VirtualButton.KeyboardKey(Settings.KeyboardQuickSave));
@@ -271,8 +236,7 @@ namespace Celeste.Mod.SpeedrunTool
                 nodes.Add(new VirtualButton.PadButton(Input.Gamepad, (Buttons) Settings.ControllerQuickSave));
         }
 
-        public static void UpdateLoadButton()
-        {
+        public static void UpdateLoadButton() {
             List<VirtualButton.Node> nodes = LoadButton.Value.Nodes;
             nodes.Clear();
             nodes.Add(new VirtualButton.KeyboardKey(Settings.KeyboardQuickLoad));
@@ -281,8 +245,7 @@ namespace Celeste.Mod.SpeedrunTool
                 nodes.Add(new VirtualButton.PadButton(Input.Gamepad, (Buttons) Settings.ControllerQuickLoad));
         }
 
-        public static void UpdateClearButton()
-        {
+        public static void UpdateClearButton() {
             List<VirtualButton.Node> nodes = ClearButton.Value.Nodes;
             nodes.Clear();
             nodes.AddRange(Settings.KeyboardQuickClear.Select(clearKey => new VirtualButton.KeyboardKey(clearKey)));
@@ -291,106 +254,88 @@ namespace Celeste.Mod.SpeedrunTool
                 nodes.Add(new VirtualButton.PadButton(Input.Gamepad, (Buttons) Settings.ControllerQuickClear));
         }
 
-        public static void UpdateOpenDebugMapButton()
-        {
+        public static void UpdateOpenDebugMapButton() {
             List<VirtualButton.Node> nodes = OpenDebugButton.Value.Nodes;
             nodes.Clear();
             nodes.AddRange(Settings.KeyboardOpenDebugMap.Select(clearKey => new VirtualButton.KeyboardKey(clearKey)));
             if (Settings.ControllerOpenDebugMap != null)
-            {
                 nodes.Add(new VirtualButton.PadButton(Input.Gamepad, (Buttons) Settings.ControllerOpenDebugMap));
-            }
         }
 
-        public static void UpdateResetRoomPbButton()
-        {
+        public static void UpdateResetRoomPbButton() {
             List<VirtualButton.Node> nodes = ResetRoomPbButton.Value.Nodes;
             nodes.Clear();
             nodes.Add(new VirtualButton.KeyboardKey(Settings.KeyboardResetRoomPb));
             if (Settings.ControllerResetRoomPb != null)
-            {
                 nodes.Add(new VirtualButton.PadButton(Input.Gamepad, (Buttons) Settings.ControllerResetRoomPb));
-            }
         }
 
-        public override void Update()
-        {
+        public override void Update() {
             base.Update();
-            if (_inputDelay > 0.0 && !_remapping)
-            {
-                _inputDelay -= Engine.DeltaTime;
-                if (_inputDelay <= 0.0)
+            if (inputDelay > 0.0 && !remapping) {
+                inputDelay -= Engine.DeltaTime;
+                if (inputDelay <= 0.0)
                     Focused = true;
             }
 
-            _remappingEase = Calc.Approach(_remappingEase, _remapping ? 1f : 0.0f, Engine.DeltaTime * 4f);
-            if (_remappingEase > 0.5 && _remapping)
-            {
-                if (Input.ESC.Pressed || Input.MenuCancel || _timeout <= 0.0)
-                {
-                    _remapping = false;
+            remappingEase = Calc.Approach(remappingEase, remapping ? 1f : 0.0f, Engine.DeltaTime * 4f);
+            if (remappingEase > 0.5 && remapping) {
+                if (Input.ESC.Pressed || Input.MenuCancel || timeout <= 0.0) {
+                    remapping = false;
                     Focused = true;
                 }
-                else if (_remappingKeyboard)
-                {
+                else if (remappingKeyboard) {
                     Keys[] pressedKeys = MInput.Keyboard.CurrentState.GetPressedKeys();
                     if (pressedKeys != null && pressedKeys.Length != 0 &&
                         MInput.Keyboard.Pressed(pressedKeys[pressedKeys.Length - 1]))
                         SetRemap(pressedKeys[pressedKeys.Length - 1]);
                 }
-                else
-                {
+                else {
                     GamePadState currentState = MInput.GamePads[Input.Gamepad].CurrentState;
                     GamePadState previousState = MInput.GamePads[Input.Gamepad].PreviousState;
-                    foreach (Buttons buttons in AllButtons)
-                    {
+                    foreach (Buttons buttons in AllButtons) {
                         if (!currentState.IsButtonDown(buttons) || previousState.IsButtonDown(buttons)) continue;
                         SetRemap(buttons);
                         break;
                     }
                 }
 
-                _timeout -= Engine.DeltaTime;
+                timeout -= Engine.DeltaTime;
             }
 
-            Alpha = Calc.Approach(Alpha, _closing ? 0.0f : 1f, Engine.DeltaTime * 8f);
-            if (!_closing || Alpha > 0.0)
+            Alpha = Calc.Approach(Alpha, closing ? 0.0f : 1f, Engine.DeltaTime * 8f);
+            if (!closing || Alpha > 0.0)
                 return;
             Close();
         }
 
-        public override void Render()
-        {
+        public override void Render() {
             Draw.Rect(-10f, -10f, 1940f, 1100f, Color.Black * Ease.CubeOut(Alpha));
             base.Render();
-            if (_remappingEase <= 0.0)
+            if (remappingEase <= 0.0)
                 return;
-            Draw.Rect(-10f, -10f, 1940f, 1100f, Color.Black * 0.95f * Ease.CubeInOut(_remappingEase));
+            Draw.Rect(-10f, -10f, 1940f, 1100f, Color.Black * 0.95f * Ease.CubeInOut(remappingEase));
             Vector2 position = new Vector2(1920f, 1080f) * 0.5f;
 
-            if (_remappingKeyboard || Input.GuiInputController())
-            {
+            if (remappingKeyboard || Input.GuiInputController()) {
                 ActiveFont.Draw(
-                    _remappingKeyboard ? Dialog.Get("KEY_CONFIG_CHANGING") : Dialog.Get("BTN_CONFIG_CHANGING"),
+                    remappingKeyboard ? Dialog.Get("KEY_CONFIG_CHANGING") : Dialog.Get("BTN_CONFIG_CHANGING"),
                     position + new Vector2(0.0f, -8f),
                     new Vector2(0.5f, 1f),
                     Vector2.One * 0.7f,
-                    Color.LightGray * Ease.CubeIn(_remappingEase));
-                ActiveFont.Draw(Label(_remappingButton),
+                    Color.LightGray * Ease.CubeIn(remappingEase));
+                ActiveFont.Draw(Label(remappingButton),
                     position + new Vector2(0.0f, 8f), new Vector2(0.5f, 0.0f), Vector2.One * 2f,
-                    Color.White * Ease.CubeIn(_remappingEase));
+                    Color.White * Ease.CubeIn(remappingEase));
             }
-            else
-            {
+            else {
                 ActiveFont.Draw(Dialog.Clean("BTN_CONFIG_NOCONTROLLER"), position, new Vector2(0.5f, 0.5f), Vector2.One,
-                    Color.White * Ease.CubeIn(_remappingEase));
+                    Color.White * Ease.CubeIn(remappingEase));
             }
         }
 
-        private string Label(Mappings mapping)
-        {
-            switch (mapping)
-            {
+        private string Label(Mappings mapping) {
+            switch (mapping) {
                 case Mappings.Save:
                     return Dialog.Clean("SAVE");
                 case Mappings.Load:
@@ -406,8 +351,7 @@ namespace Celeste.Mod.SpeedrunTool
             }
         }
 
-        private enum Mappings
-        {
+        private enum Mappings {
             Save,
             Load,
             Clear,

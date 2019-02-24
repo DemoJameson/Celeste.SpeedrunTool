@@ -2,28 +2,23 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Monocle;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
-{
-    public class MovingPlatformAction : AbstractEntityAction
-    {
-        private Dictionary<EntityID, MovingPlatform> _savedMovingPlatforms = new Dictionary<EntityID, MovingPlatform>();
+namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
+    public class MovingPlatformAction : AbstractEntityAction {
+        private Dictionary<EntityID, MovingPlatform> savedMovingPlatforms = new Dictionary<EntityID, MovingPlatform>();
 
-        public override void OnQuickSave(Level level)
-        {
-            _savedMovingPlatforms = level.Tracker.GetDictionary<MovingPlatform>();
+        public override void OnQuickSave(Level level) {
+            savedMovingPlatforms = level.Tracker.GetDictionary<MovingPlatform>();
         }
 
         private void ResotreMovingPlatformPosition(On.Celeste.MovingPlatform.orig_ctor_EntityData_Vector2 orig,
             MovingPlatform self, EntityData data,
-            Vector2 offset)
-        {
+            Vector2 offset) {
             EntityID entityId = data.ToEntityId();
             self.SetEntityId(entityId);
             orig(self, data, offset);
 
-            if (IsLoadStart && _savedMovingPlatforms.ContainsKey(entityId))
-            {
-                MovingPlatform savedMovingPlatform = _savedMovingPlatforms[entityId];
+            if (IsLoadStart && savedMovingPlatforms.ContainsKey(entityId)) {
+                MovingPlatform savedMovingPlatform = savedMovingPlatforms[entityId];
                 self.Position = savedMovingPlatform.Position;
                 Tween tween = self.Get<Tween>();
                 Tween savedTween = savedMovingPlatform.Get<Tween>();
@@ -31,24 +26,20 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions
             }
         }
 
-        public override void OnClear()
-        {
-            _savedMovingPlatforms.Clear();
+        public override void OnClear() {
+            savedMovingPlatforms.Clear();
         }
 
 
-        public override void OnLoad()
-        {
+        public override void OnLoad() {
             On.Celeste.MovingPlatform.ctor_EntityData_Vector2 += ResotreMovingPlatformPosition;
         }
 
-        public override void OnUnload()
-        {
+        public override void OnUnload() {
             On.Celeste.MovingPlatform.ctor_EntityData_Vector2 -= ResotreMovingPlatformPosition;
         }
 
-        public override void OnInit()
-        {
+        public override void OnInit() {
             typeof(MovingPlatform).AddToTracker();
         }
     }

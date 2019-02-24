@@ -151,5 +151,13 @@ namespace Celeste.Mod.SpeedrunTool {
             tween.SetPrivateProperty("TimeLeft", otherTween.TimeLeft);
             tween.SetPrivateProperty("Reverse", otherTween.Reverse);
         }
+
+        public static void AddRange<T>(this Dictionary<EntityID, T> dict, IEnumerable<T> entities) where T : Entity {
+            foreach (T entity in entities) {
+                EntityID entityId = entity.GetEntityId();
+                if (!dict.ContainsKey(entityId))
+                    dict[entityId] = entity;
+            }
+        }
     }
 }

@@ -7,12 +7,12 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class TrackSpinnerAction : AbstractEntityAction {
-        private Dictionary<EntityID, TrackSpinner> savedTrackSpinners = new Dictionary<EntityID, TrackSpinner>();
+        private readonly Dictionary<EntityID, TrackSpinner> savedTrackSpinners = new Dictionary<EntityID, TrackSpinner>();
 
         public override void OnQuickSave(Level level) {
             List<Entity> entities = level.Tracker.GetEntities<BladeTrackSpinner>();
             entities.AddRange(level.Tracker.GetEntities<DustTrackSpinner>());
-            savedTrackSpinners = entities.Cast<TrackSpinner>().ToDictionary(entity => entity.GetEntityId());
+            savedTrackSpinners.AddRange(entities.Cast<TrackSpinner>());
         }
 
         private void RestoreTrackSpinnerPosition(On.Celeste.TrackSpinner.orig_ctor orig, TrackSpinner self,

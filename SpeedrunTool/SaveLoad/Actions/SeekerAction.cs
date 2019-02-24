@@ -1,17 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class SeekerAction : AbstractEntityAction {
-        private Dictionary<EntityID, Seeker> savedSeekers = new Dictionary<EntityID, Seeker>();
+        private readonly Dictionary<EntityID, Seeker> savedSeekers = new Dictionary<EntityID, Seeker>();
 
         public override void OnQuickSave(Level level) {
-            savedSeekers = level.Tracker.GetCastEntities<Seeker>()
-                .ToDictionary(entity => entity.GetEntityId());
+            savedSeekers.AddRange(level.Tracker.GetCastEntities<Seeker>());
         }
 
         private void RestoreSeekerPosition(On.Celeste.Seeker.orig_ctor_EntityData_Vector2 orig, Seeker self,

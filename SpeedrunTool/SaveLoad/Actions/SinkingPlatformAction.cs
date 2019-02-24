@@ -1,16 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class SinkingPlatformAction : AbstractEntityAction {
-        private Dictionary<EntityID, SinkingPlatform> sinkingPlatforms = new Dictionary<EntityID, SinkingPlatform>();
+        private readonly Dictionary<EntityID, SinkingPlatform> sinkingPlatforms = new Dictionary<EntityID, SinkingPlatform>();
 
         public override void OnQuickSave(Level level) {
-            sinkingPlatforms = level.Tracker.GetCastEntities<SinkingPlatform>()
-                .ToDictionary(platform => platform.GetEntityId());
+            sinkingPlatforms.AddRange(level.Tracker.GetCastEntities<SinkingPlatform>());
         }
 
         private void RestoreSinkingPlatformPosition(On.Celeste.SinkingPlatform.orig_ctor_EntityData_Vector2 orig,

@@ -127,7 +127,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             if (ButtonConfigUi.ClearButton.Value.Pressed && !self.Paused) {
                 Clear();
-                self.Add(new MiniTextbox("DIALOG_CLEAR"));
+                if (!self.Frozen)
+                    self.Add(new MiniTextbox("DIALOG_CLEAR"));
                 return;
             }
 

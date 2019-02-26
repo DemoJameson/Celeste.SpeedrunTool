@@ -28,8 +28,10 @@ namespace Celeste.Mod.SpeedrunTool {
         (this IDictionary<TKey, TValue> dictionary,
             TKey key,
             TValue defaultValue) {
-            if (dictionary.ContainsKey(key))
+            if (dictionary.ContainsKey(key)) {
                 return dictionary[key];
+            }
+
             return defaultValue;
         }
 
@@ -65,11 +67,16 @@ namespace Celeste.Mod.SpeedrunTool {
         }
 
         public static void AddToTracker(this Type type) {
-            if (!Tracker.StoredEntityTypes.Contains(type)) Tracker.StoredEntityTypes.Add(type);
+            if (!Tracker.StoredEntityTypes.Contains(type)) {
+                Tracker.StoredEntityTypes.Add(type);
+            }
 
-            if (!Tracker.TrackedEntityTypes.ContainsKey(type))
+            if (!Tracker.TrackedEntityTypes.ContainsKey(type)) {
                 Tracker.TrackedEntityTypes[type] = new List<Type> {type};
-            else if (!Tracker.TrackedEntityTypes[type].Contains(type)) Tracker.TrackedEntityTypes[type].Add(type);
+            }
+            else if (!Tracker.TrackedEntityTypes[type].Contains(type)) {
+                Tracker.TrackedEntityTypes[type].Add(type);
+            }
         }
 
         // from https://stackoverflow.com/a/17264480
@@ -78,27 +85,36 @@ namespace Celeste.Mod.SpeedrunTool {
         }
 
         public static void SetExtendedDataValue(this object o, string name, object value) {
-            if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Invalid name");
+            if (string.IsNullOrWhiteSpace(name)) {
+                throw new ArgumentException("Invalid name");
+            }
+
             name = name.Trim();
 
             IDictionary<string, object> values =
                 (IDictionary<string, object>) ExtendedData.GetValue(o, CreateDictionary);
 
-            if (value != null)
+            if (value != null) {
                 values[name] = value;
-            else
+            }
+            else {
                 values.Remove(name);
+            }
         }
 
         public static T GetExtendedDataValue<T>(this object o, string name) {
-            if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Invalid name");
+            if (string.IsNullOrWhiteSpace(name)) {
+                throw new ArgumentException("Invalid name");
+            }
+
             name = name.Trim();
 
             IDictionary<string, object> values =
                 (IDictionary<string, object>) ExtendedData.GetValue(o, CreateDictionary);
 
-            if (values.ContainsKey(name))
+            if (values.ContainsKey(name)) {
                 return (T) values[name];
+            }
 
             return default(T);
         }
@@ -129,8 +145,9 @@ namespace Celeste.Mod.SpeedrunTool {
             Dictionary<EntityID, T> result = new Dictionary<EntityID, T>();
             foreach (T entity in tracker.GetCastEntities<T>()) {
                 EntityID entityId = entity.GetEntityId();
-                if (entityId.Equals(default(EntityID)) || result.ContainsKey(entityId))
+                if (entityId.Equals(default(EntityID)) || result.ContainsKey(entityId)) {
                     continue;
+                }
 
                 result[entityId] = entity;
             }
@@ -155,8 +172,9 @@ namespace Celeste.Mod.SpeedrunTool {
         public static void AddRange<T>(this Dictionary<EntityID, T> dict, IEnumerable<T> entities) where T : Entity {
             foreach (T entity in entities) {
                 EntityID entityId = entity.GetEntityId();
-                if (!dict.ContainsKey(entityId))
+                if (!dict.ContainsKey(entityId)) {
                     dict[entityId] = entity;
+                }
             }
         }
     }

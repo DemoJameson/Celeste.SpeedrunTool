@@ -24,8 +24,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             if (IsLoadStart && movingBlocks.ContainsKey(entityId)) {
                 self.Position = movingBlocks[entityId].Position;
 
-                if ((int) movingBlocks[entityId].GetPrivateField("state") == 1)
+                if ((int) movingBlocks[entityId].GetPrivateField("state") == 1) {
                     self.Add(new Coroutine(TriggerBlock(self)));
+                }
             }
         }
 

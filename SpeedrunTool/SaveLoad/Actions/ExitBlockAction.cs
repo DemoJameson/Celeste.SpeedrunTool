@@ -34,8 +34,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private void OnExitBlockOnUpdate(On.Celeste.ExitBlock.orig_Update orig, ExitBlock self) {
-            if (IsLoadStart)
+            if (IsLoadStart) {
                 return;
+            }
 
             orig(self);
         }

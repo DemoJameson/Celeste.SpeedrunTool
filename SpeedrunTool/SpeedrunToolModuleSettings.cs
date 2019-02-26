@@ -5,11 +5,11 @@ using System.Text.RegularExpressions;
 using Microsoft.Xna.Framework.Input;
 using Monocle;
 using YamlDotNet.Serialization;
-
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
 namespace Celeste.Mod.SpeedrunTool {
     [SettingName(DialogIds.SpeedrunTool)]
     public class SpeedrunToolModuleSettings : EverestModuleSettings {
-
         private static readonly List<string> RespawnSpeedStrings =
             Enumerable.Range(1, 9).Select(intValue => intValue + "00%").ToList();
 
@@ -19,27 +19,27 @@ namespace Celeste.Mod.SpeedrunTool {
 
         [SettingName(DialogIds.Enabled)] public bool Enabled { get; set; } = true;
 
-        [SettingName(DialogIds.AutoLoadAfterDeath)] public bool AutoLoadAfterDeath { get; set; } = true;
+        [SettingName(DialogIds.AutoLoadAfterDeath)]
+        public bool AutoLoadAfterDeath { get; set; } = true;
 
-        // ReSharper disable MemberCanBePrivate.Global
+        [YamlIgnore] [SettingIgnore] public RoomTimerType RoomTimerType => GetEnumFromName<RoomTimerType>(RoomTimer);
+        
         public string RespawnSpeed { get; set; } = RespawnSpeedStrings.First();
 
         [YamlIgnore] [SettingIgnore] public int RespawnSpeedInt => RespawnSpeedStrings.IndexOf(RespawnSpeed) + 1;
 
         public string SkipScene { get; set; } = SkipSceneStrings.Last();
 
-        [YamlIgnore]
-        [SettingIgnore]
-        public SkipSceneOption SkipSceneOption => GetEnumFromName<SkipSceneOption>(SkipScene);
+        [YamlIgnore] [SettingIgnore] public SkipSceneOption SkipSceneOption => GetEnumFromName<SkipSceneOption>(SkipScene);
 
         public string RoomTimer { get; set; } = RoomTimerStrings.First();
-        // ReSharper restore MemberCanBePrivate.Global
-        
-        [YamlIgnore] [SettingIgnore] public RoomTimerType RoomTimerType => GetEnumFromName<RoomTimerType>(RoomTimer);
 
         [SettingRange(1, 99)]
         [SettingName(DialogIds.NumberOfRooms)]
         public int NumberOfRooms { get; set; } = 1;
+        
+        // ReSharper disable once UnusedMember.Global
+        [YamlIgnore] public string ButtonConfig { get; set; } = "";
 
         [SettingIgnore] public Buttons? ControllerQuickSave { get; set; }
         [SettingIgnore] public Buttons? ControllerQuickLoad { get; set; }
@@ -50,14 +50,9 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingIgnore] public Keys KeyboardQuickSave { get; set; } = ButtonConfigUi.DefaultKeyboardSave;
         [SettingIgnore] public Keys KeyboardQuickLoad { get; set; } = ButtonConfigUi.DefaultKeyboardLoad;
         [SettingIgnore] public List<Keys> KeyboardQuickClear { get; set; } = ButtonConfigUi.FixedClearKeys.ToList();
-
-        [SettingIgnore]
-        public List<Keys> KeyboardOpenDebugMap { get; set; } = ButtonConfigUi.FixedOpenDebugMapKeys.ToList();
-
+        [SettingIgnore] public List<Keys> KeyboardOpenDebugMap { get; set; } = ButtonConfigUi.FixedOpenDebugMapKeys.ToList();
         [SettingIgnore] public Keys KeyboardResetRoomPb { get; set; } = ButtonConfigUi.DefaultKeyboardResetPb;
 
-        // ReSharper disable once UnusedMember.Global
-        [YamlIgnore] public string ButtonConfig { get; set; } = "";
 
         // ReSharper disable once UnusedMember.Global
         public void CreateRespawnSpeedEntry(TextMenu textMenu, bool inGame) {
@@ -92,11 +87,15 @@ namespace Celeste.Mod.SpeedrunTool {
                 ).Change(index => {
                     RoomTimer = RoomTimerStrings[index];
 
-                    if (RoomTimerType != RoomTimerType.Off) return;
+                    if (RoomTimerType != RoomTimerType.Off) {
+                        return;
+                    }
+
                     RoomTimerManager.Instance.ClearPbTimes();
                     SpeedrunType? speedrunType = RoomTimerManager.Instance.OriginalSpeedrunType;
-                    if (speedrunType != null)
+                    if (speedrunType != null) {
                         Settings.Instance.SpeedrunClock = (SpeedrunType) speedrunType;
+                    }
                 }));
         }
 

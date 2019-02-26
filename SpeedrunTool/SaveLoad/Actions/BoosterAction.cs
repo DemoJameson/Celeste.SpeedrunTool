@@ -21,18 +21,21 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             if (IsLoadStart && savedBoosters.ContainsKey(entityId)) {
                 Booster savedBooster = savedBoosters[entityId];
 
-                if ((bool) savedBooster.GetPrivateField("boostingPlayer"))
+                if ((bool) savedBooster.GetPrivateField("boostingPlayer")) {
                     self.Add(new Coroutine(BoostPlayer(self, savedBooster)));
-                else if ((float) savedBooster.GetPrivateField("respawnTimer") > 0f)
+                }
+                else if ((float) savedBooster.GetPrivateField("respawnTimer") > 0f) {
                     self.Add(new Coroutine(WaitToRespawn(self, savedBooster)));
+                }
             }
         }
 
         private IEnumerator BoostPlayer(Booster self, Booster savedBooster) {
             self.Center = StateManager.Instance.SavedPlayer.Center;
 
-            while (!IsLoadComplete)
+            while (!IsLoadComplete) {
                 yield return null;
+            }
 
             Player player = self.SceneAs<Level>().Tracker.GetEntity<Player>();
             self.InvokePrivateMethod("OnPlayer", player);
@@ -49,8 +52,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private void BoosterOnOnPlayer(On.Celeste.Booster.orig_OnPlayer orig, Booster self, Player player) {
-            if (self.SceneAs<Level>().Frozen)
+            if (self.SceneAs<Level>().Frozen) {
                 return;
+            }
 
             orig(self, player);
         }

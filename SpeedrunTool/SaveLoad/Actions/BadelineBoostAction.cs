@@ -29,10 +29,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             if (IsLoadStart) {
                 if (savedNodes.ContainsKey(entityId)) {
                     Vector2[] savedNodes = this.savedNodes[entityId];
-                    if (savedNodes.Length == 0)
+                    if (savedNodes.Length == 0) {
                         orig(self, nodes.Skip(nodes.Length - 1).ToArray(), false);
-                    else
+                    }
+                    else {
                         orig(self, savedNodes, savedNodes.Length != 1);
+                    }
                 }
                 else {
                     orig(self, nodes.Skip(nodes.Length - 1).ToArray(), false);
@@ -45,8 +47,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         private static void FixMultipleTriggers(On.Celeste.BadelineBoost.orig_OnPlayer orig, BadelineBoost self,
             Player player) {
-            if (player.SceneAs<Level>().Frozen)
+            if (player.SceneAs<Level>().Frozen) {
                 return;
+            }
 
             orig(self, player);
         }

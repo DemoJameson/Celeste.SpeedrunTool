@@ -18,10 +18,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             orig(self, data, offset, orientation);
 
             if (IsLoadStart) {
-                if (springs.ContainsKey(entityId))
+                if (springs.ContainsKey(entityId)) {
                     self.Position = springs[entityId].Position;
-                else
+                }
+                else {
                     self.Add(new RemoveSelfComponent());
+                }
             }
         }
 

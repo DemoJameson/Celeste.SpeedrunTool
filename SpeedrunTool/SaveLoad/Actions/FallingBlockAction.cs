@@ -20,7 +20,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             orig(self, position, tile, width, height, boss, behind, fall);
 
             EntityID entityId = self.GetEntityId();
-            if (!entityId.Equals(default(EntityID))) RestoreState(self, entityId);
+            if (!entityId.Equals(default(EntityID))) {
+                RestoreState(self, entityId);
+            }
         }
 
         private void OnFallingBlockOnCtorEntityDataVector2(On.Celeste.FallingBlock.orig_ctor_EntityData_Vector2 orig,
@@ -58,8 +60,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private static bool OnGround(FallingBlock fallingBlock, int downCheck = 1) {
-            if (fallingBlock.CollideCheck<Solid>(fallingBlock.Position + Vector2.UnitY * downCheck))
+            if (fallingBlock.CollideCheck<Solid>(fallingBlock.Position + Vector2.UnitY * downCheck)) {
                 return true;
+            }
 
             return fallingBlock.CollideCheckOutside<JumpThru>(
                 fallingBlock.Position + Vector2.UnitY * downCheck);

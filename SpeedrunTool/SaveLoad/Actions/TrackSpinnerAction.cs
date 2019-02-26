@@ -31,7 +31,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 self.Moving = savedTrackSpinner.Moving;
                 self.PauseTimer = savedTrackSpinner.PauseTimer;
 
-                if (self is DustTrackSpinner) self.Add(new Coroutine(RestoreEyeDirection(self, savedTrackSpinner)));
+                if (self is DustTrackSpinner) {
+                    self.Add(new Coroutine(RestoreEyeDirection(self, savedTrackSpinner)));
+                }
             }
         }
 

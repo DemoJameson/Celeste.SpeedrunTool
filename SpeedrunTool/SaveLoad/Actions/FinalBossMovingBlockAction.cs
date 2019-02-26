@@ -54,7 +54,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 FinalBoss finalBoss = Scene.Tracker.GetEntity<FinalBoss>();
                 int nodeIndex = (int) finalBoss.GetPrivateField("nodeIndex");
                 FinalBossMovingBlock finalBossMovingBlock = EntityAs<FinalBossMovingBlock>();
-                if (finalBossMovingBlock.BossNodeIndex == nodeIndex) finalBossMovingBlock.StartMoving(0);
+                if (finalBossMovingBlock.BossNodeIndex == nodeIndex) {
+                    finalBossMovingBlock.StartMoving(0);
+                }
 
                 RemoveSelf();
             }

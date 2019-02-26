@@ -53,20 +53,29 @@ namespace Celeste.Mod.SpeedrunTool {
         private static void RespawnSpeed(Engine.orig_Update orig, Monocle.Engine self, GameTime time) {
             orig(self, time);
 
-            if (!Settings.Enabled) return;
-            if (!(Monocle.Engine.Scene is Level level)) return;
+            if (!Settings.Enabled) {
+                return;
+            }
+
+            if (!(Monocle.Engine.Scene is Level level)) {
+                return;
+            }
 
             Player player = level.Tracker.GetEntity<Player>();
 
             // level 场景中 player == null 代表人物死亡
-            if (player != null && player.StateMachine.State == Player.StIntroRespawn || player == null)
-                for (int i = 1; i < Settings.RespawnSpeedInt; i++)
+            if (player != null && player.StateMachine.State == Player.StIntroRespawn || player == null) {
+                for (int i = 1; i < Settings.RespawnSpeedInt; i++) {
                     orig(self, time);
+                }
+            }
         }
 
         private static void QuickLoadWhenDeath(On.Celeste.PlayerDeadBody.orig_End orig, PlayerDeadBody self) {
             orig(self);
-            if (Settings.Enabled && Settings.AutoLoadAfterDeath) StateManager.Instance.QuickLoad();
+            if (Settings.Enabled && Settings.AutoLoadAfterDeath) {
+                StateManager.Instance.QuickLoad();
+            }
         }
 
         private static void SkipChapterIntro(On.Celeste.LevelEnter.orig_Go orig, Session session, bool data) {
@@ -87,7 +96,9 @@ namespace Celeste.Mod.SpeedrunTool {
             }
 
             bool skipComplete = (Settings.SkipSceneOption & SkipSceneOption.Complete) != 0;
-            if (skipComplete && mode == LevelExit.Mode.Completed) mode = LevelExit.Mode.CompletedInterlude;
+            if (skipComplete && mode == LevelExit.Mode.Completed) {
+                mode = LevelExit.Mode.CompletedInterlude;
+            }
 
             orig(self, mode, session, snow);
         }

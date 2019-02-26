@@ -21,7 +21,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             orig(self, scene);
 
-            if (savedSnowball == null) return;
+            if (savedSnowball == null) {
+                return;
+            }
 
             self.Position = savedSnowball.Position;
             self.Collidable = self.Visible = savedSnowball.Collidable;
@@ -34,8 +36,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         private void WindAttackTriggerOnOnEnter(On.Celeste.WindAttackTrigger.orig_OnEnter orig, WindAttackTrigger self,
             Player player) {
-            if (IsFrozen && savedSnowball != null)
+            if (IsFrozen && savedSnowball != null) {
                 return;
+            }
 
             orig(self, player);
         }

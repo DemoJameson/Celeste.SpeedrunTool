@@ -19,15 +19,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             EntityID entityId = data.ToEntityId();
             self.SetEntityId(entityId);
 
-            if (IsLoadStart && savedTempleGates.ContainsKey(entityId)) self.Add(new Coroutine(SetState(self)));
+            if (IsLoadStart && savedTempleGates.ContainsKey(entityId)) {
+                self.Add(new Coroutine(SetState(self)));
+            }
         }
 
         private IEnumerator SetState(TempleGate self) {
             yield return null;
             TempleGate saved = savedTempleGates[self.GetEntityId()];
             if ((bool) saved.GetPrivateField("open")) {
-                if (self.Type == TempleGate.Types.TouchSwitches)
+                if (self.Type == TempleGate.Types.TouchSwitches) {
                     MuteAudio("event:/game/05_mirror_temple/gate_main_open");
+                }
 
                 self.StartOpen();
             }

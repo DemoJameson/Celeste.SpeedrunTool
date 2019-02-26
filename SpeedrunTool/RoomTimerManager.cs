@@ -40,7 +40,9 @@ namespace Celeste.Mod.SpeedrunTool {
         private void AddResetButton(On.Celeste.Level.orig_Update orig, Level self) {
             orig(self);
 
-            if (ButtonConfigUi.ResetRoomPbButton.Value.Pressed && !self.Paused) ClearPbTimes();
+            if (ButtonConfigUi.ResetRoomPbButton.Value.Pressed && !self.Paused) {
+                ClearPbTimes();
+            }
         }
 
         public void ClearPbTimes() {
@@ -72,8 +74,9 @@ namespace Celeste.Mod.SpeedrunTool {
 
             // 似乎通过地图选择旗子作为传送点会预设旗子，所以从第二面碰到的旗子开始才改变计时状态
             // F1 F2 F3 因为有保存旗子状态所以不受影响
-            if (flag.StartsWith(FlagPrefix) && setTo && session.Flags.Count(input => input.StartsWith(FlagPrefix)) >= 2)
+            if (flag.StartsWith(FlagPrefix) && setTo && session.Flags.Count(input => input.StartsWith(FlagPrefix)) >= 2) {
                 UpdateTimerState();
+            }
         }
 
         private void UpdateTimerState() {
@@ -98,8 +101,9 @@ namespace Celeste.Mod.SpeedrunTool {
         private void Render(On.Celeste.SpeedrunTimerDisplay.orig_Render orig, SpeedrunTimerDisplay self) {
             SpeedrunToolModuleSettings settings = SpeedrunToolModule.Settings;
             if (!settings.Enabled || settings.RoomTimerType == RoomTimerType.Off) {
-                if (OriginalSpeedrunType != null)
+                if (OriginalSpeedrunType != null) {
                     Settings.Instance.SpeedrunClock = (SpeedrunType) OriginalSpeedrunType;
+                }
 
                 orig(self);
                 return;
@@ -133,7 +137,9 @@ namespace Celeste.Mod.SpeedrunTool {
             float roomTimeScale = 1f;
             if (roomTimerData.IsCompleted) {
                 Wiggler wiggler = (Wiggler) self.GetPrivateField("wiggler");
-                if (wiggler != null) roomTimeScale = 1f + wiggler.Value * 0.15f;
+                if (wiggler != null) {
+                    roomTimeScale = 1f + wiggler.Value * 0.15f;
+                }
             }
 
             SpeedrunTimerDisplay.DrawTime(new Vector2(x + timeMarginLeft, self.Y + 44f), roomTimeString, roomTimeScale,
@@ -164,13 +170,15 @@ namespace Celeste.Mod.SpeedrunTool {
         }
 
         private static string ComparePb(long time, long pbTime) {
-            if (pbTime == 0)
+            if (pbTime == 0) {
                 return "";
+            }
 
             long difference = time - pbTime;
 
-            if (difference == 0)
+            if (difference == 0) {
                 return "+0.0";
+            }
 
             TimeSpan timeSpan = TimeSpan.FromTicks(Math.Abs(difference));
             string result = difference >= 0 ? "+" : "-";
@@ -186,8 +194,9 @@ namespace Celeste.Mod.SpeedrunTool {
                 Dialog.Languages["english"].Font.Get(Dialog.Languages["english"].FontFaceSize);
             for (int index = 0; index < 10; ++index) {
                 float x1 = pixelFontSize.Measure(index.ToString()).X;
-                if ((double) x1 > numberWidth)
+                if ((double) x1 > numberWidth) {
                     numberWidth = x1;
+                }
             }
 
             spacerWidth = pixelFontSize.Measure('.').X;
@@ -234,12 +243,12 @@ namespace Celeste.Mod.SpeedrunTool {
     internal class RoomTimerData {
         private readonly Dictionary<string, long> pbTimes = new Dictionary<string, long>();
         private readonly RoomTimerType roomTimerType;
+        public long LastPbTime;
         private int numberOfRooms;
         private string pbTimeKey = "";
-        private TimerState timerState;
-        public long LastPbTime;
 
         public long Time;
+        private TimerState timerState;
 
         public RoomTimerData(RoomTimerType roomTimerType) {
             this.roomTimerType = roomTimerType;
@@ -254,8 +263,9 @@ namespace Celeste.Mod.SpeedrunTool {
         public bool BeatBestTime => timerState == TimerState.Completed && (Time < LastPbTime || LastPbTime == 0);
 
         public void Timing(Session session) {
-            if (timerState != TimerState.Timing)
+            if (timerState != TimerState.Timing) {
                 return;
+            }
 
             if (pbTimeKey == "") {
                 pbTimeKey = session.Area + session.Level;
@@ -281,8 +291,9 @@ namespace Celeste.Mod.SpeedrunTool {
                     if (numberOfRooms <= 1) {
                         timerState = TimerState.Completed;
                         LastPbTime = pbTimes.GetValueOrDefault(pbTimeKey, 0);
-                        if (Time < LastPbTime || LastPbTime == 0)
+                        if (Time < LastPbTime || LastPbTime == 0) {
                             pbTimes[pbTimeKey] = Time;
+                        }
                     }
                     else {
                         numberOfRooms--;
@@ -306,8 +317,9 @@ namespace Celeste.Mod.SpeedrunTool {
         }
 
         private static string FormatTime(long time, bool isPbTime) {
-            if (time == 0 && isPbTime)
+            if (time == 0 && isPbTime) {
                 return "";
+            }
 
             TimeSpan timeSpan = TimeSpan.FromTicks(time);
             return (int) timeSpan.TotalSeconds + timeSpan.ToString("\\.fff");

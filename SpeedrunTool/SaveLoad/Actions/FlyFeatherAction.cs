@@ -40,8 +40,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     float respawnTimer = (float) savedFlyFeather.GetPrivateField("respawnTimer") + 0.4f;
                     (self.GetPrivateField("sprite") as Sprite).Visible = false;
 
-                    if ((bool) self.GetPrivateField("singleUse"))
+                    if ((bool) self.GetPrivateField("singleUse")) {
                         return;
+                    }
 
                     self.SetPrivateField("respawnTimer", respawnTimer);
                     (self.GetPrivateField("outline") as Image).Visible = true;

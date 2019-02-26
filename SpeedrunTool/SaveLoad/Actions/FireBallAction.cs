@@ -42,8 +42,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             bool randomizeFrame) {
             orig(self, id, restart, randomizeFrame);
 
-            if (id == "ice" && !restart && randomizeFrame && self.Entity is FireBall iceBall && iceBall.Collidable)
+            if (id == "ice" && !restart && randomizeFrame && self.Entity is FireBall iceBall && iceBall.Collidable) {
                 iceBall.Visible = true;
+            }
         }
 
 

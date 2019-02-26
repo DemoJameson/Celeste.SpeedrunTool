@@ -16,8 +16,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             self.SetEntityId(entityId);
             orig(self, data, offset);
 
-            if (IsLoadStart && savedSwitchGates.ContainsKey(entityId))
+            if (IsLoadStart && savedSwitchGates.ContainsKey(entityId)) {
                 self.Position = savedSwitchGates[entityId].Position;
+            }
         }
 
         public override void OnClear() {

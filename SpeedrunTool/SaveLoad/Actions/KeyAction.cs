@@ -14,7 +14,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             EntityID entityId) {
             orig(self, player, entityId);
 
-            if (IsLoadStart && savedKeys.ContainsKey(entityId)) self.Position = savedKeys[entityId].Position;
+            if (IsLoadStart && savedKeys.ContainsKey(entityId)) {
+                self.Position = savedKeys[entityId].Position;
+            }
         }
 
         public override void OnClear() {

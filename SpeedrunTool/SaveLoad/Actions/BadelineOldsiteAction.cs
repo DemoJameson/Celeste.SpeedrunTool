@@ -17,8 +17,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             self.SetEntityId(entityId);
             orig(self, data, offset, index);
 
-            if (IsLoadStart && savedBadelineOldsites.ContainsKey(entityId))
+            if (IsLoadStart && savedBadelineOldsites.ContainsKey(entityId)) {
                 self.Position = savedBadelineOldsites[entityId].Position;
+            }
         }
 
         public override void OnClear() {

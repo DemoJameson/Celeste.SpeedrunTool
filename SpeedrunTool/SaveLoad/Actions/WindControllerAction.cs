@@ -12,19 +12,23 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         public override void OnQuickLoadStart(Level level) {
-            if (savedWindController == null)
+            if (savedWindController == null) {
                 return;
+            }
 
-            if (Math.Abs(levelWind.X) > 0)
+            if (Math.Abs(levelWind.X) > 0) {
                 level.Wind = levelWind;
+            }
 
             WindController windController = level.Tracker.GetEntity<WindController>();
             WindController.Patterns savedPattern =
                 (WindController.Patterns) savedWindController.GetPrivateField("pattern");
-            if (windController == null)
+            if (windController == null) {
                 level.Add(new WindController(savedPattern));
-            else
+            }
+            else {
                 windController.SetPattern(savedPattern);
+            }
         }
 
         public override void OnClear() {

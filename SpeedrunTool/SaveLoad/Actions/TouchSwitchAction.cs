@@ -17,7 +17,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             TouchSwitch savedTouchSwitch =
                 activatedTouchSwitches.FirstOrDefault(touchSwitch => touchSwitch.Position == position);
 
-            if (IsLoadStart && savedTouchSwitch != null) self.Add(new TurnOnSwitchComponent());
+            if (IsLoadStart && savedTouchSwitch != null) {
+                self.Add(new TurnOnSwitchComponent());
+            }
         }
 
         public override void OnClear() {

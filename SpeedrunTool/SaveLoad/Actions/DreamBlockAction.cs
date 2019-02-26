@@ -22,9 +22,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 DreamBlock savedDreamBlock = savedDreamBlocks[entityId];
                 self.Position = savedDreamBlock.Position;
                 Tween savedTween = savedDreamBlock.Get<Tween>();
-                if (savedTween != null)
+                if (savedTween != null) {
                     self.Add(new Coroutine(RestorePosition(self, savedTween, data.Position + offset,
                         data.FirstNodeNullable(offset).Value)));
+                }
             }
         }
 
@@ -33,14 +34,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             self.Remove(tween);
 
             float duration = Vector2.Distance(start, end) / 12f;
-            if ((bool) self.GetPrivateField("fastMoving"))
+            if ((bool) self.GetPrivateField("fastMoving")) {
                 duration /= 3f;
+            }
+
             Tween newTween = Tween.Create(Tween.TweenMode.YoyoLooping, Ease.SineInOut, duration, true);
             newTween.OnUpdate = t => {
-                if (self.Collidable)
+                if (self.Collidable) {
                     self.MoveTo(Vector2.Lerp(start, end, t.Eased));
-                else
+                }
+                else {
                     self.MoveToNaive(Vector2.Lerp(start, end, t.Eased));
+                }
             };
 
             newTween.CopyFrom(savedTween);

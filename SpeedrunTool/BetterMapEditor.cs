@@ -75,7 +75,9 @@ namespace Celeste.Mod.SpeedrunTool {
         private static void FixWindSoundNotPlay(On.Celeste.WindController.orig_SetAmbienceStrength orig,
             WindController self,
             bool strong) {
-            if (Audio.CurrentAmbienceEventInstance == null) Audio.SetAmbience("event:/env/amb/04_main");
+            if (Audio.CurrentAmbienceEventInstance == null) {
+                Audio.SetAmbience("event:/env/amb/04_main");
+            }
 
             orig(self, strong);
         }
@@ -91,8 +93,9 @@ namespace Celeste.Mod.SpeedrunTool {
                 LevelTemplate level =
                     self.InvokePrivateMethod("TestCheck", mousePosition) as LevelTemplate;
                 if (level != null) {
-                    if (level.Type == LevelTemplateType.Filler)
+                    if (level.Type == LevelTemplateType.Filler) {
                         return;
+                    }
 
                     self.InvokePrivateMethod("LoadLevel", level, mousePosition * 8f);
                 }
@@ -104,10 +107,12 @@ namespace Celeste.Mod.SpeedrunTool {
                 ?.GetValue(null) as Camera;
             if (zoomWaitFrames < 0 && camera != null) {
                 float newZoom = 0f;
-                if (Math.Abs(currentState.ThumbSticks.Right.X) >= 0.5f)
+                if (Math.Abs(currentState.ThumbSticks.Right.X) >= 0.5f) {
                     newZoom = camera.Zoom + Math.Sign(currentState.ThumbSticks.Right.X) * 1f;
-                else if (Math.Abs(currentState.ThumbSticks.Right.Y) >= 0.5f)
+                }
+                else if (Math.Abs(currentState.ThumbSticks.Right.Y) >= 0.5f) {
                     newZoom = camera.Zoom + Math.Sign(currentState.ThumbSticks.Right.Y) * 1f;
+                }
 
                 if (newZoom >= 1f) {
                     camera.Zoom = newZoom;
@@ -116,15 +121,18 @@ namespace Celeste.Mod.SpeedrunTool {
             }
 
             // move faster when zoom out
-            if (camera != null && camera.Zoom < 6f)
+            if (camera != null && camera.Zoom < 6f) {
                 camera.Position += new Vector2(Input.MoveX.Value, Input.MoveY.Value) * 300f * Engine.DeltaTime *
                                    ((float) Math.Pow(1.3, 6 - camera.Zoom) - 1);
+            }
         }
 
         private static void AddedOpenDebugMapButton(On.Celeste.Level.orig_Update orig, Level self) {
             orig(self);
 
-            if (ButtonConfigUi.OpenDebugButton.Value.Pressed && !self.Paused) Engine.Commands.FunctionKeyActions[5]();
+            if (ButtonConfigUi.OpenDebugButton.Value.Pressed && !self.Paused) {
+                Engine.Commands.FunctionKeyActions[5]();
+            }
         }
 
         private void MapEditorOnLoadLevel(MapEditor.orig_LoadLevel orig, Editor.MapEditor self,
@@ -149,26 +157,32 @@ namespace Celeste.Mod.SpeedrunTool {
 
         private void FixBadelineChase(Session session, Vector2 spawnPoint) {
             // Logger.Log("Exclude Respawn Point", $"new Vector2({spawnPoint.X}, {spawnPoint.Y}),");
-            if (excludeDreamRespawnPoints.Contains(spawnPoint))
+            if (excludeDreamRespawnPoints.Contains(spawnPoint)) {
                 return;
+            }
 
             if (session.Area.ToString() == "2" && dreamDashRooms.Contains(session.Level)) {
                 session.Inventory.DreamDash = true;
 
                 // 根据 BadelineOldsite 的代码得知设置这两个 Flag 后才会启动追逐
-                if (dreamDashRooms.IndexOf(session.Level) >= dreamDashRooms.IndexOf(StartChasingLevel))
+                if (dreamDashRooms.IndexOf(session.Level) >= dreamDashRooms.IndexOf(StartChasingLevel)) {
                     session.SetFlag(CS02_BadelineIntro.Flag);
+                }
 
                 session.LevelFlags.Add(StartChasingLevel);
             }
         }
 
         private void FixHugeMessRoomLight(Session session) {
-            if (session.Area.ToString() == "3" && darkRooms.Contains(session.Level)) session.LightingAlphaAdd = 0.15f;
+            if (session.Area.ToString() == "3" && darkRooms.Contains(session.Level)) {
+                session.LightingAlphaAdd = 0.15f;
+            }
         }
 
         private void FixCoreMode(Session session) {
-            if (iceRooms.Contains(session.Area + session.Level)) session.CoreMode = Session.CoreModes.Cold;
+            if (iceRooms.Contains(session.Area + session.Level)) {
+                session.CoreMode = Session.CoreModes.Cold;
+            }
         }
 
         // @formatter:off

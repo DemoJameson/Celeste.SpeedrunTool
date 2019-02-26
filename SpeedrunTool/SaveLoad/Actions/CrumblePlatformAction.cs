@@ -20,7 +20,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             self.SetEntityId(entityId);
             orig(self, data, offset);
 
-            if (IsLoadStart && savedCrumblePlatforms.ContainsKey(entityId)) self.SetExtendedDataValue("IsFade", true);
+            if (IsLoadStart && savedCrumblePlatforms.ContainsKey(entityId)) {
+                self.SetExtendedDataValue("IsFade", true);
+            }
         }
 
         private static Player SolidOnGetPlayerOnTop(On.Celeste.Solid.orig_GetPlayerOnTop orig, Solid self) {

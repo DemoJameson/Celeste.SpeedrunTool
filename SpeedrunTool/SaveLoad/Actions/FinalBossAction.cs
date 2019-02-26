@@ -27,9 +27,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
                 self.Position = nodes[nodeIndex];
 
-                if (data.Int("patternIndex") == 0 && nodeIndex >= 1) self.SetPrivateField("patternIndex", 1);
+                if (data.Int("patternIndex") == 0 && nodeIndex >= 1) {
+                    self.SetPrivateField("patternIndex", 1);
+                }
 
-                if (startHit) nodeIndex--;
+                if (startHit) {
+                    nodeIndex--;
+                }
 
                 self.SetPrivateField("nodeIndex", nodeIndex);
                 self.Add(new RestoreFinalBossStateComponent(savedFinalBoss));

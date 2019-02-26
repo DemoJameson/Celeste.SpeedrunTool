@@ -33,7 +33,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private IEnumerator SetStateMachine(Seeker self, Seeker savedSeeker) {
             StateMachine stateMachine = self.GetPrivateField("State") as StateMachine;
             int savedState = (savedSeeker.GetPrivateField("State") as StateMachine).State;
-            if (savedState == 6) MuteAudio("event:/game/general/thing_booped");
+            if (savedState == 6) {
+                MuteAudio("event:/game/general/thing_booped");
+            }
 
             stateMachine.State = (savedSeeker.GetPrivateField("State") as StateMachine).State;
             yield return null;

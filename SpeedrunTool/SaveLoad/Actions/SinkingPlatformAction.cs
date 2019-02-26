@@ -17,7 +17,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             self.SetEntityId(entityId);
             orig(self, data, offset);
 
-            if (IsLoadStart && sinkingPlatforms.ContainsKey(entityId)) self.Add(new Coroutine(SetPosition(self)));
+            if (IsLoadStart && sinkingPlatforms.ContainsKey(entityId)) {
+                self.Add(new Coroutine(SetPosition(self)));
+            }
         }
 
         private IEnumerator SetPosition(SinkingPlatform sinkingPlatform) {

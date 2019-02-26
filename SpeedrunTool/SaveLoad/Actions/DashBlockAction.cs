@@ -18,10 +18,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             orig(self, data, offset, id);
 
             if (IsLoadStart) {
-                if (savedDashBlocks.ContainsKey(entityId))
+                if (savedDashBlocks.ContainsKey(entityId)) {
                     self.Position = savedDashBlocks[entityId].Position;
-                else
+                }
+                else {
                     self.Add(new RemoveSelfComponent());
+                }
             }
         }
 

@@ -18,10 +18,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             orig(self, eid, data, offset);
 
             if (IsLoadStart) {
-                if (saveEntities.ContainsKey(entityId))
+                if (saveEntities.ContainsKey(entityId)) {
                     self.Position = saveEntities[entityId].Position;
-                else
+                }
+                else {
                     self.Add(new RemoveSelfComponent());
+                }
             }
         }
 

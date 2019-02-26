@@ -11,7 +11,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 .Where(dashSwitch => !dashSwitch.Collidable).Select(
                     entity => entity.GetPrivateProperty("FlagName") as string);
 
-            foreach (string flagName in pressedDashSwitches) level.Session.SetFlag(flagName);
+            foreach (string flagName in pressedDashSwitches) {
+                level.Session.SetFlag(flagName);
+            }
         }
 
         private DashSwitch RestoreDashSwitchState(On.Celeste.DashSwitch.orig_Create origCreate, EntityData data,
@@ -22,7 +24,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (IsLoadStart) {
                 string flagName = DashSwitch.GetFlagName(entityId);
-                if (pressedDashSwitches.Contains(flagName)) dashSwitch.SetPrivateField("persistent", true);
+                if (pressedDashSwitches.Contains(flagName)) {
+                    dashSwitch.SetPrivateField("persistent", true);
+                }
             }
 
             return dashSwitch;

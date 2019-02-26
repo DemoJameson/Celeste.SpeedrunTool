@@ -56,10 +56,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private Camera camera;
         private LoadState loadState = LoadState.None;
+        public Player SavedPlayer;
 
         private Session session;
         private Session.CoreModes sessionCoreModeBackup;
-        public Player SavedPlayer;
         public bool IsLoadStart => loadState == LoadState.LoadStart;
         public bool IsLoadFrozen => loadState == LoadState.LoadFrozen;
         public bool IsLoading => loadState == LoadState.Loading;
@@ -91,8 +91,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private void LevelOnUpdate(On.Celeste.Level.orig_Update orig, Level self) {
             orig(self);
-            if (!SpeedrunToolModule.Settings.Enabled)
+            if (!SpeedrunToolModule.Settings.Enabled) {
                 return;
+            }
 
             Player player = self.Tracker.GetEntity<Player>();
 
@@ -117,39 +118,46 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             if (ButtonConfigUi.LoadButton.Value.Pressed && !self.Paused) {
-                if (IsSaved)
+                if (IsSaved) {
                     QuickLoad();
-                else
+                }
+                else {
                     self.Add(new MiniTextbox(DialogIds.DialogNotSaved));
+                }
 
                 return;
             }
 
             if (ButtonConfigUi.ClearButton.Value.Pressed && !self.Paused) {
                 Clear();
-                if (!self.Frozen)
+                if (!self.Frozen) {
                     self.Add(new MiniTextbox(DialogIds.DialogClear));
+                }
+
                 return;
             }
 
             // 尽快设置人物的位置与镜头，然后冻结游戏等待人物复活
-            if (IsSaved && IsLoadStart && player != null)
+            if (IsSaved && IsLoadStart && player != null) {
                 QuickLoadStart(self, player);
+            }
 
             // 冻结时允许人物复活
-            if (IsSaved && IsLoadFrozen)
+            if (IsSaved && IsLoadFrozen) {
                 UpdateEntitiesWhenFreeze(self, player);
+            }
 
             // 人物复活完毕后设置人物相关属性
             if (IsSaved && (IsLoading || IsLoadFrozen) && player != null &&
-                player.StateMachine.State == Player.StNormal)
+                player.StateMachine.State == Player.StNormal) {
                 QuickLoading(self, player);
-
+            }
 
             // 章节切换时清除保存的状态
             if (IsSaved && (session.Area.ID != self.Session.Area.ID ||
-                            session.Area.Mode != self.Session.Area.Mode))
+                            session.Area.Mode != self.Session.Area.Mode)) {
                 Clear();
+            }
         }
 
         private void QuickSave(Level level, Player player) {
@@ -172,7 +180,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         public void QuickLoad() {
-            if (!IsSaved) return;
+            if (!IsSaved) {
+                return;
+            }
 
             loadState = LoadState.LoadStart;
 
@@ -254,7 +264,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private void Clear() {
-            if (Engine.Scene is Level level) level.Frozen = false;
+            if (Engine.Scene is Level level) {
+                level.Frozen = false;
+            }
 
             On.Celeste.Player.Die -= DisableDie;
 

@@ -19,8 +19,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             self.SetEntityId(entityId);
             orig(self, data, offset);
 
-            if (IsLoadStart && savedZipMovers.ContainsKey(entityId))
+            if (IsLoadStart && savedZipMovers.ContainsKey(entityId)) {
                 self.Position = savedZipMovers[entityId].Position;
+            }
         }
 
         public override void OnClear() {
@@ -33,8 +34,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private IEnumerator ZipMoverOnSequence(On.Celeste.ZipMover.orig_Sequence orig, ZipMover self) {
-            if (!SpeedrunToolModule.Settings.Enabled)
+            if (!SpeedrunToolModule.Settings.Enabled) {
                 yield return orig(self);
+            }
 
             Vector2 start = (Vector2) self.GetPrivateField("start");
             Vector2 target = (Vector2) self.GetPrivateField("target");
@@ -64,8 +66,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
 
             while (true) {
-                while (!self.HasPlayerRider() && currentPosition == start || IsLoadStart || IsFrozen || IsLoading)
+                while (!self.HasPlayerRider() && currentPosition == start || IsLoadStart || IsFrozen || IsLoading) {
                     yield return null;
+                }
 
                 DateTime startTime = DateTime.Now.Add(TimeSpan.FromMilliseconds(-audioTime));
 
@@ -85,10 +88,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     self.SetExtendedDataValue(nameof(audioTime), audioTime);
                 }
 
-                if (goProgress < 1)
+                if (goProgress < 1) {
                     streetlight.SetAnimationFrame(3);
-                else
+                }
+                else {
                     streetlight.SetAnimationFrame(2);
+                }
 
                 self.StopPlayerRunIntoAnimation = false;
 

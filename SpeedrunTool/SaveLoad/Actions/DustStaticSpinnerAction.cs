@@ -17,8 +17,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             self.SetEntityId(entityId);
             orig(self, data, offset);
 
-            if (IsLoadStart && savedDustStaticSpinners.ContainsKey(entityId))
+            if (IsLoadStart && savedDustStaticSpinners.ContainsKey(entityId)) {
                 self.Position = savedDustStaticSpinners[entityId].Position;
+            }
         }
 
         public override void OnClear() {

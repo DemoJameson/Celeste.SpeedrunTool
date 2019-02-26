@@ -28,40 +28,40 @@
 	FONT=Noto Sans CJK SC Medium,64
 
 # ================================== Common ==================================
-OFF=关
-ALL=全部
+SPEEDRUN_TOOL_OFF=关
+SPEEDRUN_TOOL_ALL=全部
 
 # ================================== Mod Options Menu ==================================
 SPEEDRUN_TOOL=         速通辅助工具
-ENABLED=               开关
-AUTO_LOAD_AFTER_DEATH= 死亡后自动加载状态
-RESPAWN_SPEED=         复活速度
-SKIP_CHAPTER_SCENE=    跳过章节场景
-ROOM_TIMER=            房间计时器
-BUTTON_CONFIG=         按键设置
+SPEEDRUN_TOOL_ENABLED=               开关
+SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH= 死亡后自动加载状态
+SPEEDRUN_TOOL_RESPAWN_SPEED=         复活速度
+SPEEDRUN_TOOL_SKIP_CHAPTER_SCENE=    跳过章节场景
+SPEEDRUN_TOOL_ROOM_TIMER=            房间计时器
+SPEEDRUN_TOOL_BUTTON_CONFIG=         按键设置
 
 # ================================== Skip Chapter Scene Options ==================================
-INTRO=    开头
-COMPLETE= 结尾
+SPEEDRUN_TOOL_INTRO=    开头
+SPEEDRUN_TOOL_COMPLETE= 结尾
 
 # ================================== Room Timer Options ==================================
-NEXT_ROOM=       下个房间
-CURRENT_ROOM=    当前房间
-NUMBER_OF_ROOMS= 计时房间数
+SPEEDRUN_TOOL_NEXT_ROOM=       下个房间
+SPEEDRUN_TOOL_CURRENT_ROOM=    当前房间
+SPEEDRUN_TOOL_NUMBER_OF_ROOMS= 计时房间数
 
-# ================================== Save Load State ==================================
-CONTROLLER= 手柄
-KEYBOARD=   键盘
-SAVE=       保存状态
-LOAD=       加载状态
-CLEAR=      清除状态
-DIALOG_CLEAR=
+# ================================== State Manager ==================================
+SPEEDRUN_TOOL_CONTROLLER= 手柄
+SPEEDRUN_TOOL_KEYBOARD=   键盘
+SPEEDRUN_TOOL_SAVE=       保存状态
+SPEEDRUN_TOOL_LOAD=       加载状态
+SPEEDRUN_TOOL_CLEAR=      清除状态
+SPEEDRUN_TOOL_DIALOG_CLEAR=
     [MADELINE left normal]
     清除状态~
-DIALOG_NOT_SAVED=
+SPEEDRUN_TOOL_DIALOG_NOT_SAVED=
     [MADELINE left upset]
     请先保存状态。
     
 # ================================== Button Config ==================================
-OPEN_DEBUG_MAP= 打开地图 
-RESET_ROOM_PB=  重置房间记录
+SPEEDRUN_TOOL_OPEN_DEBUG_MAP= 打开地图 
+SPEEDRUN_TOOL_RESET_ROOM_PB=  重置房间记录

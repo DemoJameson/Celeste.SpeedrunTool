@@ -54,6 +54,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ButtonConfigUi.cs" />
+    <Compile Include="DialogIds.cs" />
     <Compile Include="SaveLoad\Actions\AbstractEntityAction.cs" />
     <Compile Include="SaveLoad\Actions\BadelineBoostAction.cs" />
     <Compile Include="SaveLoad\Actions\BadelineOldsiteAction.cs" />

@@ -120,7 +120,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 if (IsSaved)
                     QuickLoad();
                 else
-                    self.Add(new MiniTextbox("DIALOG_NOT_SAVED"));
+                    self.Add(new MiniTextbox(DialogIds.DialogNotSaved));
 
                 return;
             }
@@ -128,7 +128,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (ButtonConfigUi.ClearButton.Value.Pressed && !self.Paused) {
                 Clear();
                 if (!self.Frozen)
-                    self.Add(new MiniTextbox("DIALOG_CLEAR"));
+                    self.Add(new MiniTextbox(DialogIds.DialogClear));
                 return;
             }
 

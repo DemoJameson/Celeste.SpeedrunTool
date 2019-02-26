@@ -7,8 +7,9 @@ using Monocle;
 using YamlDotNet.Serialization;
 
 namespace Celeste.Mod.SpeedrunTool {
-    [SettingName("SPEEDRUN_TOOL")]
+    [SettingName(DialogIds.SpeedrunTool)]
     public class SpeedrunToolModuleSettings : EverestModuleSettings {
+
         private static readonly List<string> RespawnSpeedStrings =
             Enumerable.Range(1, 9).Select(intValue => intValue + "00%").ToList();
 
@@ -16,10 +17,11 @@ namespace Celeste.Mod.SpeedrunTool {
         private static readonly List<string> RoomTimerStrings = GetEnumNames<RoomTimerType>();
 
 
-        [SettingName("ENABLED")] public bool Enabled { get; set; } = true;
+        [SettingName(DialogIds.Enabled)] public bool Enabled { get; set; } = true;
 
-        [SettingName("AUTO_LOAD_AFTER_DEATH")] public bool AutoLoadAfterDeath { get; set; } = true;
+        [SettingName(DialogIds.AutoLoadAfterDeath)] public bool AutoLoadAfterDeath { get; set; } = true;
 
+        // ReSharper disable MemberCanBePrivate.Global
         public string RespawnSpeed { get; set; } = RespawnSpeedStrings.First();
 
         [YamlIgnore] [SettingIgnore] public int RespawnSpeedInt => RespawnSpeedStrings.IndexOf(RespawnSpeed) + 1;
@@ -31,10 +33,12 @@ namespace Celeste.Mod.SpeedrunTool {
         public SkipSceneOption SkipSceneOption => GetEnumFromName<SkipSceneOption>(SkipScene);
 
         public string RoomTimer { get; set; } = RoomTimerStrings.First();
+        // ReSharper restore MemberCanBePrivate.Global
+        
         [YamlIgnore] [SettingIgnore] public RoomTimerType RoomTimerType => GetEnumFromName<RoomTimerType>(RoomTimer);
 
         [SettingRange(1, 99)]
-        [SettingName("NUMBER_OF_ROOMS")]
+        [SettingName(DialogIds.NumberOfRooms)]
         public int NumberOfRooms { get; set; } = 1;
 
         [SettingIgnore] public Buttons? ControllerQuickSave { get; set; }
@@ -52,11 +56,13 @@ namespace Celeste.Mod.SpeedrunTool {
 
         [SettingIgnore] public Keys KeyboardResetRoomPb { get; set; } = ButtonConfigUi.DefaultKeyboardResetPb;
 
+        // ReSharper disable once UnusedMember.Global
         [YamlIgnore] public string ButtonConfig { get; set; } = "";
 
+        // ReSharper disable once UnusedMember.Global
         public void CreateRespawnSpeedEntry(TextMenu textMenu, bool inGame) {
             textMenu.Add(
-                new TextMenu.Slider(Dialog.Clean("RESPAWN_SPEED"),
+                new TextMenu.Slider(Dialog.Clean(DialogIds.RespawnSpeed),
                     index => RespawnSpeedStrings[index],
                     0,
                     RespawnSpeedStrings.Count - 1,
@@ -64,20 +70,22 @@ namespace Celeste.Mod.SpeedrunTool {
                 ).Change(index => RespawnSpeed = RespawnSpeedStrings[index]));
         }
 
+        // ReSharper disable once UnusedMember.Global
         public void CreateSkipSceneEntry(TextMenu textMenu, bool inGame) {
             textMenu.Add(
-                new TextMenu.Slider(Dialog.Clean("SKIP_CHAPTER_SCENE"),
-                    index => Dialog.Clean(SkipSceneStrings[index]),
+                new TextMenu.Slider(Dialog.Clean(DialogIds.SkipChapterScene),
+                    index => Dialog.Clean(DialogIds.Prefix + SkipSceneStrings[index]),
                     0,
                     SkipSceneStrings.Count - 1,
                     Math.Max(0, SkipSceneStrings.IndexOf(SkipScene))
                 ).Change(index => SkipScene = SkipSceneStrings[index]));
         }
 
+        // ReSharper disable once UnusedMember.Global
         public void CreateRoomTimerEntry(TextMenu textMenu, bool inGame) {
             textMenu.Add(
-                new TextMenu.Slider(Dialog.Clean("ROOM_TIMER"),
-                    index => Dialog.Clean(RoomTimerStrings[index]),
+                new TextMenu.Slider(Dialog.Clean(DialogIds.RoomTimer),
+                    index => Dialog.Clean(DialogIds.Prefix + RoomTimerStrings[index]),
                     0,
                     RoomTimerStrings.Count - 1,
                     Math.Max(0, RoomTimerStrings.IndexOf(RoomTimer))
@@ -92,8 +100,9 @@ namespace Celeste.Mod.SpeedrunTool {
                 }));
         }
 
+        // ReSharper disable once UnusedMember.Global
         public void CreateButtonConfigEntry(TextMenu textMenu, bool inGame) {
-            textMenu.Add(new TextMenu.Button(Dialog.Clean("BUTTON_CONFIG")).Pressed(() => {
+            textMenu.Add(new TextMenu.Button(Dialog.Clean(DialogIds.ButtonConfig)).Pressed(() => {
                 textMenu.Focused = false;
                 ButtonConfigUi buttonConfigUi = new ButtonConfigUi {OnClose = () => textMenu.Focused = true};
                 Engine.Scene.Add(buttonConfigUi);
@@ -120,10 +129,12 @@ namespace Celeste.Mod.SpeedrunTool {
 
     [Flags]
     public enum SkipSceneOption {
+        // ReSharper disable UnusedMember.Global
         Off = 0,
         Intro = 1,
         Complete = 2,
         All = Intro | Complete
+        // ReSharper restore UnusedMember.Global
     }
 
     public enum RoomTimerType {

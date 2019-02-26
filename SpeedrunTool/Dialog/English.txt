@@ -28,40 +28,40 @@
 	FONT=Renogare,64
 	
 # ================================== Common ==================================
-OFF=OFF
-ALL=ALL
+SPEEDRUN_TOOL_OFF=OFF
+SPEEDRUN_TOOL_ALL=ALL
 
 # ================================== Mod Options Menu ==================================
 SPEEDRUN_TOOL=         Speedrun Tool
-ENABLED=               Enabled
-AUTO_LOAD_AFTER_DEATH= Auto Load State After Death
-RESPAWN_SPEED=         Respawn Speed
-SKIP_CHAPTER_SCENE=    Skip Chapter Scene
-ROOM_TIMER=            Room Timer
-BUTTON_CONFIG=         Button Config
+SPEEDRUN_TOOL_ENABLED=               Enabled
+SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH= Auto Load State After Death
+SPEEDRUN_TOOL_RESPAWN_SPEED=         Respawn Speed
+SPEEDRUN_TOOL_SKIP_CHAPTER_SCENE=    Skip Chapter Scene
+SPEEDRUN_TOOL_ROOM_TIMER=            Room Timer
+SPEEDRUN_TOOL_BUTTON_CONFIG=         Button Config
 
 # ================================== Skip Chapter Scene Options ==================================
-INTRO=    Intro
-COMPLETE= Complete
+SPEEDRUN_TOOL_INTRO=    Intro
+SPEEDRUN_TOOL_COMPLETE= Complete
 
 # ================================== Room Timer Options ==================================
-NEXT_ROOM=       Next Room
-CURRENT_ROOM=    Current Room
-NUMBER_OF_ROOMS= Number of Timed Rooms 
+SPEEDRUN_TOOL_NEXT_ROOM=       Next Room
+SPEEDRUN_TOOL_CURRENT_ROOM=    Current Room
+SPEEDRUN_TOOL_NUMBER_OF_ROOMS= Number of Timed Rooms 
 
-# ================================== Save Load State ==================================
-CONTROLLER= Controller
-KEYBOARD=   Keyboard
-SAVE=       Save State
-LOAD=       Load State
-CLEAR=      Clear State
-DIALOG_CLEAR=
+# ================================== State Manager ==================================
+SPEEDRUN_TOOL_CONTROLLER= Controller
+SPEEDRUN_TOOL_KEYBOARD=   Keyboard
+SPEEDRUN_TOOL_SAVE=       Save State
+SPEEDRUN_TOOL_LOAD=       Load State
+SPEEDRUN_TOOL_CLEAR=      Clear State
+SPEEDRUN_TOOL_DIALOG_CLEAR=
     [MADELINE left normal]
     Cleared the state~
-DIALOG_NOT_SAVED=
+SPEEDRUN_TOOL_DIALOG_NOT_SAVED=
     [MADELINE left upset]
     Not saved state yet.
 
 # ================================== Button Config ==================================
-OPEN_DEBUG_MAP= Open Debug Map
-RESET_ROOM_PB=  Reset Room PB
+SPEEDRUN_TOOL_OPEN_DEBUG_MAP= Open Debug Map
+SPEEDRUN_TOOL_RESET_ROOM_PB=  Reset Room PB

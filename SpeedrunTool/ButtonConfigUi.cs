@@ -63,61 +63,61 @@ namespace Celeste.Mod.SpeedrunTool {
         private void Reload(int index = -1) {
             Clear();
 
-            Add(new Header(Dialog.Clean("BUTTON_CONFIG")));
+            Add(new Header(Dialog.Clean(DialogIds.ButtonConfig)));
 
-            Add(new SubHeader(Dialog.Clean("CONTROLLER")));
-
+            Add(new SubHeader(Dialog.Clean(DialogIds.Controller)));
+            
             if (Settings.ControllerQuickSave == null)
-                Add(new Setting(Dialog.Clean("SAVE"), Keys.None).Pressed(() =>
+                Add(new Setting(Dialog.Clean(DialogIds.Save), Keys.None).Pressed(() =>
                     Remap(Mappings.Save)));
             else
-                Add(new Setting(Dialog.Clean("SAVE"), (Buttons) Settings.ControllerQuickSave).Pressed(() =>
+                Add(new Setting(Dialog.Clean(DialogIds.Save), (Buttons) Settings.ControllerQuickSave).Pressed(() =>
                     Remap(Mappings.Save)));
 
             if (Settings.ControllerQuickLoad == null)
-                Add(new Setting(Dialog.Clean("LOAD"), Keys.None).Pressed(() =>
+                Add(new Setting(Dialog.Clean(DialogIds.Load), Keys.None).Pressed(() =>
                     Remap(Mappings.Load)));
             else
-                Add(new Setting(Dialog.Clean("LOAD"), (Buttons) Settings.ControllerQuickLoad).Pressed(() =>
+                Add(new Setting(Dialog.Clean(DialogIds.Load), (Buttons) Settings.ControllerQuickLoad).Pressed(() =>
                     Remap(Mappings.Load)));
 
             if (Settings.ControllerQuickClear == null)
-                Add(new Setting(Dialog.Clean("CLEAR"), Keys.None).Pressed(() =>
+                Add(new Setting(Dialog.Clean(DialogIds.Clear), Keys.None).Pressed(() =>
                     Remap(Mappings.Clear)));
             else
-                Add(new Setting(Dialog.Clean("CLEAR"), (Buttons) Settings.ControllerQuickClear).Pressed(() =>
+                Add(new Setting(Dialog.Clean(DialogIds.Clear), (Buttons) Settings.ControllerQuickClear).Pressed(() =>
                     Remap(Mappings.Clear)));
 
             if (Settings.ControllerOpenDebugMap == null)
-                Add(new Setting(Dialog.Clean("OPEN_DEBUG_MAP"), Keys.None).Pressed(() =>
+                Add(new Setting(Dialog.Clean(DialogIds.OpenDebugMap), Keys.None).Pressed(() =>
                     Remap(Mappings.OpenDebugMap)));
             else
-                Add(new Setting(Dialog.Clean("OPEN_DEBUG_MAP"), (Buttons) Settings.ControllerOpenDebugMap).Pressed(
+                Add(new Setting(Dialog.Clean(DialogIds.OpenDebugMap), (Buttons) Settings.ControllerOpenDebugMap).Pressed(
                     () =>
                         Remap(Mappings.OpenDebugMap)));
 
             if (Settings.ControllerResetRoomPb == null)
-                Add(new Setting(Dialog.Clean("RESET_ROOM_PB"), Keys.None).Pressed(() =>
+                Add(new Setting(Dialog.Clean(DialogIds.ResetRoomPb), Keys.None).Pressed(() =>
                     Remap(Mappings.ResetRoomPb)));
             else
-                Add(new Setting(Dialog.Clean("RESET_ROOM_PB"), (Buttons) Settings.ControllerResetRoomPb).Pressed(
+                Add(new Setting(Dialog.Clean(DialogIds.ResetRoomPb), (Buttons) Settings.ControllerResetRoomPb).Pressed(
                     () =>
                         Remap(Mappings.ResetRoomPb)));
 
-            Add(new SubHeader(Dialog.Clean("KEYBOARD")));
-            Add(new Setting(Dialog.Clean("SAVE"), Settings.KeyboardQuickSave).Pressed(() =>
+            Add(new SubHeader(Dialog.Clean(DialogIds.Keyboard)));
+            Add(new Setting(Dialog.Clean(DialogIds.Save), Settings.KeyboardQuickSave).Pressed(() =>
                 Remap(Mappings.Save, true)));
-            Add(new Setting(Dialog.Clean("LOAD"), Settings.KeyboardQuickLoad).Pressed(() =>
+            Add(new Setting(Dialog.Clean(DialogIds.Load), Settings.KeyboardQuickLoad).Pressed(() =>
                 Remap(Mappings.Load, true)));
-            Add(new Setting(Dialog.Clean("CLEAR"), Settings.KeyboardQuickClear).Pressed(() =>
+            Add(new Setting(Dialog.Clean(DialogIds.Clear), Settings.KeyboardQuickClear).Pressed(() =>
                 Remap(Mappings.Clear, true)));
-            Add(new Setting(Dialog.Clean("OPEN_DEBUG_MAP"), Settings.KeyboardOpenDebugMap).Pressed(() =>
+            Add(new Setting(Dialog.Clean(DialogIds.OpenDebugMap), Settings.KeyboardOpenDebugMap).Pressed(() =>
                 Remap(Mappings.OpenDebugMap, true)));
-            Add(new Setting(Dialog.Clean("RESET_ROOM_PB"), Settings.KeyboardResetRoomPb).Pressed(() =>
+            Add(new Setting(Dialog.Clean(DialogIds.ResetRoomPb), Settings.KeyboardResetRoomPb).Pressed(() =>
                 Remap(Mappings.ResetRoomPb, true)));
 
             Add(new SubHeader(""));
-            Button button = new Button(Dialog.Clean("KEY_CONFIG_RESET")) {
+            Button button = new Button(Dialog.Clean(DialogIds.KeyConfigReset)) {
                 IncludeWidthInMeasurement = false,
                 AlwaysCenter = true,
                 OnPressed = () => {
@@ -132,7 +132,7 @@ namespace Celeste.Mod.SpeedrunTool {
             Selection = index;
         }
 
-        private void SetDefaultButtons() {
+        private static void SetDefaultButtons() {
             Settings.ControllerQuickSave = null;
             Settings.ControllerQuickLoad = null;
             Settings.ControllerQuickClear = null;
@@ -319,7 +319,7 @@ namespace Celeste.Mod.SpeedrunTool {
 
             if (remappingKeyboard || Input.GuiInputController()) {
                 ActiveFont.Draw(
-                    remappingKeyboard ? Dialog.Get("KEY_CONFIG_CHANGING") : Dialog.Get("BTN_CONFIG_CHANGING"),
+                    remappingKeyboard ? Dialog.Get(DialogIds.KeyConfigChanging) : Dialog.Get(DialogIds.BtnConfigChanging),
                     position + new Vector2(0.0f, -8f),
                     new Vector2(0.5f, 1f),
                     Vector2.One * 0.7f,
@@ -329,7 +329,7 @@ namespace Celeste.Mod.SpeedrunTool {
                     Color.White * Ease.CubeIn(remappingEase));
             }
             else {
-                ActiveFont.Draw(Dialog.Clean("BTN_CONFIG_NOCONTROLLER"), position, new Vector2(0.5f, 0.5f), Vector2.One,
+                ActiveFont.Draw(Dialog.Clean(DialogIds.BtnConfigNoController), position, new Vector2(0.5f, 0.5f), Vector2.One,
                     Color.White * Ease.CubeIn(remappingEase));
             }
         }
@@ -337,15 +337,15 @@ namespace Celeste.Mod.SpeedrunTool {
         private string Label(Mappings mapping) {
             switch (mapping) {
                 case Mappings.Save:
-                    return Dialog.Clean("SAVE");
+                    return Dialog.Clean(DialogIds.Save);
                 case Mappings.Load:
-                    return Dialog.Clean("LOAD");
+                    return Dialog.Clean(DialogIds.Load);
                 case Mappings.Clear:
-                    return Dialog.Clean("CLEAR");
+                    return Dialog.Clean(DialogIds.Clear);
                 case Mappings.OpenDebugMap:
-                    return Dialog.Clean("OPEN_DEBUG_MAP");
+                    return Dialog.Clean(DialogIds.OpenDebugMap);
                 case Mappings.ResetRoomPb:
-                    return Dialog.Clean("RESET_ROOM_PB");
+                    return Dialog.Clean(DialogIds.ResetRoomPb);
                 default:
                     return "Unknown";
             }

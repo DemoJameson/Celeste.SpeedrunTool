@@ -131,6 +131,7 @@ namespace Celeste.Mod.SpeedrunTool {
             orig(self);
 
             if (ButtonConfigUi.OpenDebugButton.Value.Pressed && !self.Paused) {
+                ButtonConfigUi.OpenDebugButton.Value.ConsumePress();
                 Engine.Commands.FunctionKeyActions[5]();
             }
         }

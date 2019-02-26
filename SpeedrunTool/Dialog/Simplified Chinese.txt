@@ -65,3 +65,4 @@ SPEEDRUN_TOOL_DIALOG_NOT_SAVED=
 # ================================== Button Config ==================================
 SPEEDRUN_TOOL_OPEN_DEBUG_MAP= 打开地图 
 SPEEDRUN_TOOL_RESET_ROOM_PB=  重置房间记录
+SPEEDRUN_TOOL_SET_END_POINT=  设置终点

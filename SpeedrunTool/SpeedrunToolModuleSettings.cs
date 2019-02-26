@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Microsoft.Xna.Framework.Input;
 using Monocle;
 using YamlDotNet.Serialization;
+
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
 namespace Celeste.Mod.SpeedrunTool {
@@ -23,7 +24,7 @@ namespace Celeste.Mod.SpeedrunTool {
         public bool AutoLoadAfterDeath { get; set; } = true;
 
         [YamlIgnore] [SettingIgnore] public RoomTimerType RoomTimerType => GetEnumFromName<RoomTimerType>(RoomTimer);
-        
+
         public string RespawnSpeed { get; set; } = RespawnSpeedStrings.First();
 
         [YamlIgnore] [SettingIgnore] public int RespawnSpeedInt => RespawnSpeedStrings.IndexOf(RespawnSpeed) + 1;
@@ -37,7 +38,7 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingRange(1, 99)]
         [SettingName(DialogIds.NumberOfRooms)]
         public int NumberOfRooms { get; set; } = 1;
-        
+
         // ReSharper disable once UnusedMember.Global
         [YamlIgnore] public string ButtonConfig { get; set; } = "";
 
@@ -46,12 +47,14 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingIgnore] public Buttons? ControllerQuickClear { get; set; }
         [SettingIgnore] public Buttons? ControllerOpenDebugMap { get; set; }
         [SettingIgnore] public Buttons? ControllerResetRoomPb { get; set; }
+        [SettingIgnore] public Buttons? ControllerSetEndPoint { get; set; }
 
         [SettingIgnore] public Keys KeyboardQuickSave { get; set; } = ButtonConfigUi.DefaultKeyboardSave;
         [SettingIgnore] public Keys KeyboardQuickLoad { get; set; } = ButtonConfigUi.DefaultKeyboardLoad;
         [SettingIgnore] public List<Keys> KeyboardQuickClear { get; set; } = ButtonConfigUi.FixedClearKeys.ToList();
         [SettingIgnore] public List<Keys> KeyboardOpenDebugMap { get; set; } = ButtonConfigUi.FixedOpenDebugMapKeys.ToList();
         [SettingIgnore] public Keys KeyboardResetRoomPb { get; set; } = ButtonConfigUi.DefaultKeyboardResetPb;
+        [SettingIgnore] public Keys KeyboardSetEndPoint { get; set; } = ButtonConfigUi.DefaultKeyboardSetEndPoint;
 
 
         // ReSharper disable once UnusedMember.Global
@@ -132,6 +135,7 @@ namespace Celeste.Mod.SpeedrunTool {
         Off = 0,
         Intro = 1,
         Complete = 2,
+
         All = Intro | Complete
         // ReSharper restore UnusedMember.Global
     }

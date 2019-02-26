@@ -100,6 +100,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (ButtonConfigUi.SaveButton.Value.Pressed && !self.Paused && !self.Transitioning && !self.PauseLock &&
                 !self.InCutscene &&
                 !self.SkippingCutscene && player != null && !player.Dead) {
+                
+                ButtonConfigUi.SaveButton.Value.ConsumePress();
                 int state = player.StateMachine.State;
                 List<int> disabledSaveState = new List<int> {
                     Player.StReflectionFall,
@@ -118,6 +120,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             if (ButtonConfigUi.LoadButton.Value.Pressed && !self.Paused) {
+                ButtonConfigUi.LoadButton.Value.ConsumePress();
                 if (IsSaved) {
                     QuickLoad();
                 }
@@ -129,6 +132,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             if (ButtonConfigUi.ClearButton.Value.Pressed && !self.Paused) {
+                ButtonConfigUi.ClearButton.Value.ConsumePress();
                 Clear();
                 if (!self.Frozen) {
                     self.Add(new MiniTextbox(DialogIds.DialogClear));

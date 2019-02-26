@@ -65,3 +65,4 @@ SPEEDRUN_TOOL_DIALOG_NOT_SAVED=
 # ================================== Button Config ==================================
 SPEEDRUN_TOOL_OPEN_DEBUG_MAP= Open Debug Map
 SPEEDRUN_TOOL_RESET_ROOM_PB=  Reset Room PB
+SPEEDRUN_TOOL_SET_END_POINT=  Set End Point

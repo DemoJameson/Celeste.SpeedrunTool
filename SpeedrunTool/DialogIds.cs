@@ -40,5 +40,6 @@ namespace Celeste.Mod.SpeedrunTool {
         // Button Config
         public const string OpenDebugMap = "SPEEDRUN_TOOL_OPEN_DEBUG_MAP";
         public const string ResetRoomPb = "SPEEDRUN_TOOL_RESET_ROOM_PB";
+        public const string SetEndPoint = "SPEEDRUN_TOOL_SET_END_POINT";
     }
 }

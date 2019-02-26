@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using Microsoft.Xna.Framework;
 using Monocle;
 
@@ -8,7 +9,6 @@ namespace Celeste.Mod.SpeedrunTool {
     public sealed class RoomTimerManager {
         public const string FlagPrefix = "summit_checkpoint_";
         private readonly RoomTimerData currentRoomTimerData = new RoomTimerData(RoomTimerType.CurrentRoom);
-
         private readonly RoomTimerData nextRoomTimerData = new RoomTimerData(RoomTimerType.NextRoom);
 
         public SpeedrunType? OriginalSpeedrunType;
@@ -17,7 +17,7 @@ namespace Celeste.Mod.SpeedrunTool {
             On.Celeste.SpeedrunTimerDisplay.Render += Render;
             On.Celeste.MenuOptions.SetSpeedrunClock += SaveOriginalSpeedrunClock;
             On.Celeste.Level.Update += Timing;
-            On.Celeste.Level.Update += AddResetButton;
+            On.Celeste.Level.Update += ProcessButtons;
             On.Celeste.Level.NextLevel += UpdateTimerStateOnNextLevel;
             On.Celeste.Session.SetFlag += UpdateTimerStateOnTouchFlag;
             On.Celeste.LevelLoader.ctor += ResetTime;
@@ -26,6 +26,7 @@ namespace Celeste.Mod.SpeedrunTool {
         public void Init() {
             OriginalSpeedrunType = Settings.Instance.SpeedrunClock;
             ButtonConfigUi.UpdateResetRoomPbButton();
+            ButtonConfigUi.UpdateSetEndPointButton();
         }
 
         public void Unload() {
@@ -37,11 +38,82 @@ namespace Celeste.Mod.SpeedrunTool {
             On.Celeste.LevelLoader.ctor -= ResetTime;
         }
 
-        private void AddResetButton(On.Celeste.Level.orig_Update orig, Level self) {
+        private void ProcessButtons(On.Celeste.Level.orig_Update orig, Level self) {
             orig(self);
 
             if (ButtonConfigUi.ResetRoomPbButton.Value.Pressed && !self.Paused) {
+                ButtonConfigUi.ResetRoomPbButton.Value.ConsumePress();
                 ClearPbTimes();
+            }
+
+            if (ButtonConfigUi.SetEndPointButton.Value.Pressed && !self.Paused) {
+                ButtonConfigUi.SetEndPointButton.Value.ConsumePress();
+                SetEndPoint(self);
+            }
+        }
+
+        private void SetEndPoint(Level level) {
+            if (level.Tracker.GetEntity<Player>() is Player player && !player.Dead) {
+                level.Add(new EndPoint(player));
+            }
+        }
+
+        internal class EndPoint : Entity {
+            private PlayerSprite playerSprite;
+            private PlayerHair playerHair;
+
+            public EndPoint(Player player) {
+                // player.normalHitbox;
+                Collider = new Hitbox(8f, 11f, -4f, -11f);
+                Position = player.Position;
+                Depth = player.Depth + 1;
+
+                playerSprite = new PlayerSprite(player.Sprite.Mode) {
+                    Position = player.Sprite.Position,
+                    Rotation = player.Sprite.Rotation,
+                    HairCount = player.Sprite.HairCount,
+                    Color = player.Sprite.Color,
+                    Scale = player.Sprite.Scale,
+                    Rate = player.Sprite.Rate,
+                    Justify = player.Sprite.Justify
+                };
+                playerSprite.Scale.X = playerSprite.Scale.X * (float) player.Facing;
+
+                playerHair = new PlayerHair(playerSprite) {
+                    Color = player.Hair.Color,
+                    Alpha = player.Hair.Alpha,
+                    Facing = player.Facing,
+                    SimulateMotion = player.Hair.SimulateMotion,
+                    StepYSinePerSegment = player.Hair.StepYSinePerSegment,
+                    Border = player.Hair.Border,
+                    DrawPlayerSpriteOutline = player.Hair.DrawPlayerSpriteOutline
+                };
+                Vector2[] nodes = new Vector2[player.Hair.Nodes.Count];
+                player.Hair.Nodes.CopyTo(nodes);
+                playerHair.Nodes = nodes.ToList();
+
+                Add(playerHair);
+                Add(playerSprite);
+
+                try {
+                    playerSprite.Play(player.Sprite.CurrentAnimationID);
+                    playerSprite.SetAnimationFrame(player.Sprite.CurrentAnimationFrame);
+                }
+                // ReSharper disable once EmptyGeneralCatchClause
+                catch (Exception) { }
+                
+                Add(new PlayerCollider(OnCollidePlayer));
+            }
+
+            private void OnCollidePlayer(Player player) {
+                // TODO: Set End Point WIP
+                Instance.UpdateTimerState();
+            }
+
+            public override void Render() {
+                base.Render();
+                playerHair.Active = false;
+                playerSprite.Active = false;
             }
         }
 
@@ -245,13 +317,13 @@ namespace Celeste.Mod.SpeedrunTool {
     }
 
     internal class RoomTimerData {
+        public long LastPbTime;
+        public long Time;
+
         private readonly Dictionary<string, long> pbTimes = new Dictionary<string, long>();
         private readonly RoomTimerType roomTimerType;
-        public long LastPbTime;
         private int numberOfRooms;
         private string pbTimeKey = "";
-
-        public long Time;
         private TimerState timerState;
 
         public RoomTimerData(RoomTimerType roomTimerType) {
@@ -261,7 +333,7 @@ namespace Celeste.Mod.SpeedrunTool {
 
         private bool IsNextRoomType => roomTimerType == RoomTimerType.NextRoom;
         public string TimeString => FormatTime(Time, false);
-        public long PbTime => pbTimes.GetValueOrDefault(pbTimeKey, 0);
+        private long PbTime => pbTimes.GetValueOrDefault(pbTimeKey, 0);
         public string PbTimeString => FormatTime(PbTime, true);
         public bool IsCompleted => timerState == TimerState.Completed;
         public bool BeatBestTime => timerState == TimerState.Completed && (Time < LastPbTime || LastPbTime == 0);
@@ -304,6 +376,10 @@ namespace Celeste.Mod.SpeedrunTool {
                     }
 
                     break;
+                case TimerState.Completed:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
         }
 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Microsoft.Xna.Framework.Input;
 using Monocle;
 using YamlDotNet.Serialization;
@@ -16,6 +17,7 @@ namespace Celeste.Mod.SpeedrunTool {
 
         private static readonly List<string> SkipSceneStrings = GetEnumNames<SkipSceneOption>();
         private static readonly List<string> RoomTimerStrings = GetEnumNames<RoomTimerType>();
+        private static readonly List<string> EndPointStyleStrings = GetEnumNames<EndPoint.SpriteStyle>();
 
 
         [SettingName(DialogIds.Enabled)] public bool Enabled { get; set; } = true;
@@ -34,10 +36,14 @@ namespace Celeste.Mod.SpeedrunTool {
         [YamlIgnore] [SettingIgnore] public SkipSceneOption SkipSceneOption => GetEnumFromName<SkipSceneOption>(SkipScene);
 
         public string RoomTimer { get; set; } = RoomTimerStrings.First();
+        
+        public string EndPointStyle { get; set; } = EndPointStyleStrings.First();
+        [YamlIgnore] [SettingIgnore] public EndPoint.SpriteStyle EndPointSpriteStyle => GetEnumFromName<EndPoint.SpriteStyle>(EndPointStyle);
 
         [SettingRange(1, 99)]
         [SettingName(DialogIds.NumberOfRooms)]
         public int NumberOfRooms { get; set; } = 1;
+        
 
         // ReSharper disable once UnusedMember.Global
         [YamlIgnore] public string ButtonConfig { get; set; } = "";
@@ -100,6 +106,17 @@ namespace Celeste.Mod.SpeedrunTool {
                         Settings.Instance.SpeedrunClock = (SpeedrunType) speedrunType;
                     }
                 }));
+        }
+        
+        // ReSharper disable once UnusedMember.Global
+        public void CreateEndPointStyleEntry(TextMenu textMenu, bool inGame) {
+            textMenu.Add(
+                new TextMenu.Slider(Dialog.Clean(DialogIds.EndPointStyle),
+                    index => Dialog.Clean(DialogIds.Prefix + EndPointStyleStrings[index]),
+                    0,
+                    EndPointStyleStrings.Count - 1,
+                    Math.Max(0, EndPointStyleStrings.IndexOf(EndPointStyle))
+                ).Change(index => EndPointStyle = EndPointStyleStrings[index]));
         }
 
         // ReSharper disable once UnusedMember.Global

@@ -21,6 +21,7 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string RespawnSpeed = "SPEEDRUN_TOOL_RESPAWN_SPEED";
         public const string SkipChapterScene = "SPEEDRUN_TOOL_SKIP_CHAPTER_SCENE";
         public const string RoomTimer = "SPEEDRUN_TOOL_ROOM_TIMER";
+        public const string EndPointStyle = "SPEEDRUN_TOOL_END_POINT_STYLE";
         public const string NumberOfRooms = "SPEEDRUN_TOOL_NUMBER_OF_ROOMS";
         public const string ButtonConfig = "SPEEDRUN_TOOL_BUTTON_CONFIG";
 
@@ -36,6 +37,20 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string Clear = "SPEEDRUN_TOOL_CLEAR";
         public const string DialogClear = "SPEEDRUN_TOOL_DIALOG_CLEAR";
         public const string DialogNotSaved = "SPEEDRUN_TOOL_DIALOG_NOT_SAVED";
+        
+        // End Point Style
+        public const string Madeline = "SPEEDRUN_TOOL_MADELINE";
+        public const string Badeline = "SPEEDRUN_TOOL_BADELINE";
+        public const string Granny = "SPEEDRUN_TOOL_GRANNY";
+        public const string Theo = "SPEEDRUN_TOOL_THEO";
+        public const string Oshiro = "SPEEDRUN_TOOL_OSHIRO";
+        public const string Bird = "SPEEDRUN_TOOL_BIRD";
+        public const string EyeBat = "SPEEDRUN_TOOL_EYE_BAT";
+        public const string Ogmo = "SPEEDRUN_TOOL_OGMO";
+        public const string Skytorn = "SPEEDRUN_TOOL_SKYTORN";
+        public const string Towerfall = "SPEEDRUN_TOOL_TOWERFALL";
+        public const string Yuri = "SPEEDRUN_TOOL_YURI";
+        public const string Random = "SPEEDRUN_TOOL_RANDOM";
 
         // Button Config
         public const string OpenDebugMap = "SPEEDRUN_TOOL_OPEN_DEBUG_MAP";

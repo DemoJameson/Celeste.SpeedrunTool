@@ -1,23 +1,23 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net.Sockets;
 using Microsoft.Xna.Framework;
 using Monocle;
 
-namespace Celeste.Mod.SpeedrunTool {
-    public sealed class RoomTimerManager {
+namespace Celeste.Mod.SpeedrunTool.RoomTimer {
+    public sealed partial class RoomTimerManager {
         public const string FlagPrefix = "summit_checkpoint_";
         private readonly RoomTimerData currentRoomTimerData = new RoomTimerData(RoomTimerType.CurrentRoom);
         private readonly RoomTimerData nextRoomTimerData = new RoomTimerData(RoomTimerType.NextRoom);
 
         public SpeedrunType? OriginalSpeedrunType;
+        public EndPoint SavedEndPoint;
 
         public void Load() {
             On.Celeste.SpeedrunTimerDisplay.Render += Render;
             On.Celeste.MenuOptions.SetSpeedrunClock += SaveOriginalSpeedrunClock;
             On.Celeste.Level.Update += Timing;
             On.Celeste.Level.Update += ProcessButtons;
+            On.Celeste.Level.LoadLevel += RestoreEndPoint;
             On.Celeste.Level.NextLevel += UpdateTimerStateOnNextLevel;
             On.Celeste.Session.SetFlag += UpdateTimerStateOnTouchFlag;
             On.Celeste.LevelLoader.ctor += ResetTime;
@@ -48,78 +48,34 @@ namespace Celeste.Mod.SpeedrunTool {
 
             if (ButtonConfigUi.SetEndPointButton.Value.Pressed && !self.Paused) {
                 ButtonConfigUi.SetEndPointButton.Value.ConsumePress();
-                SetEndPoint(self);
+                ClearPbTimes();
+                CreateEndPoint(self);
             }
         }
 
-        private void SetEndPoint(Level level) {
+        private void RestoreEndPoint(On.Celeste.Level.orig_LoadLevel orig, Level self, Player.IntroTypes playerIntro,
+            bool isFromLoader) {
+            orig(self, playerIntro, isFromLoader);
+
+            EndPoint end = self.Tracker.GetEntity<EndPoint>();
+            if (end == null && SavedEndPoint != null && self.Session.Level == SavedEndPoint.LevelName) {
+                SavedEndPoint.Collidable = true;
+                self.Add(SavedEndPoint);
+            }
+        }
+
+        private void CreateEndPoint(Level level) {
             if (level.Tracker.GetEntity<Player>() is Player player && !player.Dead) {
-                level.Add(new EndPoint(player));
-            }
-        }
-
-        internal class EndPoint : Entity {
-            private PlayerSprite playerSprite;
-            private PlayerHair playerHair;
-
-            public EndPoint(Player player) {
-                // player.normalHitbox;
-                Collider = new Hitbox(8f, 11f, -4f, -11f);
-                Position = player.Position;
-                Depth = player.Depth + 1;
-
-                playerSprite = new PlayerSprite(player.Sprite.Mode) {
-                    Position = player.Sprite.Position,
-                    Rotation = player.Sprite.Rotation,
-                    HairCount = player.Sprite.HairCount,
-                    Color = player.Sprite.Color,
-                    Scale = player.Sprite.Scale,
-                    Rate = player.Sprite.Rate,
-                    Justify = player.Sprite.Justify
-                };
-                playerSprite.Scale.X = playerSprite.Scale.X * (float) player.Facing;
-
-                playerHair = new PlayerHair(playerSprite) {
-                    Color = player.Hair.Color,
-                    Alpha = player.Hair.Alpha,
-                    Facing = player.Facing,
-                    SimulateMotion = player.Hair.SimulateMotion,
-                    StepYSinePerSegment = player.Hair.StepYSinePerSegment,
-                    Border = player.Hair.Border,
-                    DrawPlayerSpriteOutline = player.Hair.DrawPlayerSpriteOutline
-                };
-                Vector2[] nodes = new Vector2[player.Hair.Nodes.Count];
-                player.Hair.Nodes.CopyTo(nodes);
-                playerHair.Nodes = nodes.ToList();
-
-                Add(playerHair);
-                Add(playerSprite);
-
-                try {
-                    playerSprite.Play(player.Sprite.CurrentAnimationID);
-                    playerSprite.SetAnimationFrame(player.Sprite.CurrentAnimationFrame);
-                }
-                // ReSharper disable once EmptyGeneralCatchClause
-                catch (Exception) { }
-                
-                Add(new PlayerCollider(OnCollidePlayer));
-            }
-
-            private void OnCollidePlayer(Player player) {
-                // TODO: Set End Point WIP
-                Instance.UpdateTimerState();
-            }
-
-            public override void Render() {
-                base.Render();
-                playerHair.Active = false;
-                playerSprite.Active = false;
+                SavedEndPoint?.RemoveSelf();
+                level.Add(SavedEndPoint = new EndPoint(player, SpeedrunToolModule.Settings.EndPointSpriteStyle));
             }
         }
 
         public void ClearPbTimes() {
             nextRoomTimerData.Clear();
             currentRoomTimerData.Clear();
+            SavedEndPoint?.RemoveSelf();
+            SavedEndPoint = null;
         }
 
         private void Timing(On.Celeste.Level.orig_Update orig, Level self) {
@@ -146,18 +102,19 @@ namespace Celeste.Mod.SpeedrunTool {
 
             // 似乎通过地图选择旗子作为传送点会预设旗子，所以从第二面碰到的旗子开始才改变计时状态
             // F1 F2 F3 因为有保存旗子状态所以不受影响
-            if (flag.StartsWith(FlagPrefix) && setTo && session.Flags.Count(input => input.StartsWith(FlagPrefix)) >= 2) {
+            if (flag.StartsWith(FlagPrefix) && setTo &&
+                session.Flags.Count(input => input.StartsWith(FlagPrefix)) >= 2) {
                 UpdateTimerState();
             }
         }
 
-        private void UpdateTimerState() {
+        public void UpdateTimerState(bool endPoint = false) {
             switch (SpeedrunToolModule.Settings.RoomTimerType) {
                 case RoomTimerType.NextRoom:
-                    nextRoomTimerData.UpdateTimerState();
+                    nextRoomTimerData.UpdateTimerState(endPoint);
                     break;
                 case RoomTimerType.CurrentRoom:
-                    currentRoomTimerData.UpdateTimerState();
+                    currentRoomTimerData.UpdateTimerState(endPoint);
                     break;
                 case RoomTimerType.Off:
                     break;
@@ -314,96 +271,6 @@ namespace Celeste.Mod.SpeedrunTool {
         public static RoomTimerManager Instance => Lazy.Value;
         private RoomTimerManager() { }
         // @formatter:on
-    }
-
-    internal class RoomTimerData {
-        public long LastPbTime;
-        public long Time;
-
-        private readonly Dictionary<string, long> pbTimes = new Dictionary<string, long>();
-        private readonly RoomTimerType roomTimerType;
-        private int numberOfRooms;
-        private string pbTimeKey = "";
-        private TimerState timerState;
-
-        public RoomTimerData(RoomTimerType roomTimerType) {
-            this.roomTimerType = roomTimerType;
-            ResetTime();
-        }
-
-        private bool IsNextRoomType => roomTimerType == RoomTimerType.NextRoom;
-        public string TimeString => FormatTime(Time, false);
-        private long PbTime => pbTimes.GetValueOrDefault(pbTimeKey, 0);
-        public string PbTimeString => FormatTime(PbTime, true);
-        public bool IsCompleted => timerState == TimerState.Completed;
-        public bool BeatBestTime => timerState == TimerState.Completed && (Time < LastPbTime || LastPbTime == 0);
-
-        public void Timing(Session session) {
-            if (timerState != TimerState.Timing) {
-                return;
-            }
-
-            if (pbTimeKey == "") {
-                pbTimeKey = session.Area + session.Level;
-                string closestFlag = session.Flags.Where(flagName => flagName.StartsWith(RoomTimerManager.FlagPrefix))
-                    .OrderBy(flagName => {
-                        flagName = flagName.Replace(RoomTimerManager.FlagPrefix, "");
-                        return int.Parse(flagName);
-                    }).FirstOrDefault();
-                pbTimeKey += closestFlag;
-                pbTimeKey += numberOfRooms;
-            }
-
-            Time += TimeSpan.FromSeconds(Engine.RawDeltaTime).Ticks;
-        }
-
-        public void UpdateTimerState() {
-            switch (timerState) {
-                case TimerState.WaitToStart:
-                    timerState = TimerState.Timing;
-                    numberOfRooms = SpeedrunToolModule.Settings.NumberOfRooms;
-                    break;
-                case TimerState.Timing:
-                    if (numberOfRooms <= 1) {
-                        timerState = TimerState.Completed;
-                        LastPbTime = pbTimes.GetValueOrDefault(pbTimeKey, 0);
-                        if (Time < LastPbTime || LastPbTime == 0) {
-                            pbTimes[pbTimeKey] = Time;
-                        }
-                    }
-                    else {
-                        numberOfRooms--;
-                    }
-
-                    break;
-                case TimerState.Completed:
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-        }
-
-        public void ResetTime() {
-            pbTimeKey = "";
-            timerState = IsNextRoomType ? TimerState.WaitToStart : TimerState.Timing;
-            numberOfRooms = SpeedrunToolModule.Settings.NumberOfRooms;
-            Time = 0;
-            LastPbTime = 0;
-        }
-
-        public void Clear() {
-            ResetTime();
-            pbTimes.Clear();
-        }
-
-        private static string FormatTime(long time, bool isPbTime) {
-            if (time == 0 && isPbTime) {
-                return "";
-            }
-
-            TimeSpan timeSpan = TimeSpan.FromTicks(time);
-            return (int) timeSpan.TotalSeconds + timeSpan.ToString("\\.fff");
-        }
     }
 
     internal enum TimerState {

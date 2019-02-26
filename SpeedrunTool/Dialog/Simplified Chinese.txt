@@ -38,6 +38,7 @@ SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH= 死亡后自动加载状态
 SPEEDRUN_TOOL_RESPAWN_SPEED=         复活速度
 SPEEDRUN_TOOL_SKIP_CHAPTER_SCENE=    跳过章节场景
 SPEEDRUN_TOOL_ROOM_TIMER=            房间计时器
+SPEEDRUN_TOOL_END_POINT_TYPE=        终点样式
 SPEEDRUN_TOOL_BUTTON_CONFIG=         按键设置
 
 # ================================== Skip Chapter Scene Options ==================================
@@ -62,6 +63,20 @@ SPEEDRUN_TOOL_DIALOG_NOT_SAVED=
     [MADELINE left upset]
     请先保存状态。
     
+# ================================== End Point Style ==================================
+SPEEDRUN_TOOL_MADELINE= Madeline
+SPEEDRUN_TOOL_BADELINE= Badeline
+SPEEDRUN_TOOL_GRANNY=   Granny
+SPEEDRUN_TOOL_THEO=     Theo
+SPEEDRUN_TOOL_OSHIRO=   Oshiro
+SPEEDRUN_TOOL_BIRD=     Bird
+SPEEDRUN_TOOL_EYE_BAT=  Eye Bat
+SPEEDRUN_TOOL_OGMO=     Ogmo
+SPEEDRUN_TOOL_SKYTORN=  Skytorn
+SPEEDRUN_TOOL_TOWERFALL=TowerFall
+SPEEDRUN_TOOL_YURI=     Yuri
+SPEEDRUN_TOOL_RANDOM=   随机
+
 # ================================== Button Config ==================================
 SPEEDRUN_TOOL_OPEN_DEBUG_MAP= 打开地图 
 SPEEDRUN_TOOL_RESET_ROOM_PB=  重置房间记录

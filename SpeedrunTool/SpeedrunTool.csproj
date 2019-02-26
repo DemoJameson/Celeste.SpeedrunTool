@@ -55,6 +55,9 @@
   <ItemGroup>
     <Compile Include="ButtonConfigUi.cs" />
     <Compile Include="DialogIds.cs" />
+    <Compile Include="RoomTimer\EndPoint.cs" />
+    <Compile Include="RoomTimer\RoomTimerData.cs" />
+    <Compile Include="RoomTimer\RoomTimerManager.cs" />
     <Compile Include="SaveLoad\Actions\AbstractEntityAction.cs" />
     <Compile Include="SaveLoad\Actions\BadelineBoostAction.cs" />
     <Compile Include="SaveLoad\Actions\BadelineOldsiteAction.cs" />
@@ -104,7 +107,6 @@
     <Compile Include="SaveLoad\StateManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="BetterMapEditor.cs" />
-    <Compile Include="RoomTimerManager.cs" />
     <Compile Include="SpeedrunToolModule.cs" />
     <Compile Include="SpeedrunToolModuleSettings.cs" />
     <Compile Include="Extensions.cs" />

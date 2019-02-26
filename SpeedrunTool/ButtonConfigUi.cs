@@ -64,57 +64,16 @@ namespace Celeste.Mod.SpeedrunTool {
             Clear();
 
             Add(new Header(Dialog.Clean(DialogIds.ButtonConfig)));
-
             Add(new SubHeader(Dialog.Clean(DialogIds.Controller)));
 
-            if (Settings.ControllerQuickSave == null) {
-                Add(new Setting(Dialog.Clean(DialogIds.Save), Keys.None).Pressed(() =>
-                    Remap(Mappings.Save)));
-            }
-            else {
-                Add(new Setting(Dialog.Clean(DialogIds.Save), (Buttons) Settings.ControllerQuickSave).Pressed(() =>
-                    Remap(Mappings.Save)));
-            }
-
-            if (Settings.ControllerQuickLoad == null) {
-                Add(new Setting(Dialog.Clean(DialogIds.Load), Keys.None).Pressed(() =>
-                    Remap(Mappings.Load)));
-            }
-            else {
-                Add(new Setting(Dialog.Clean(DialogIds.Load), (Buttons) Settings.ControllerQuickLoad).Pressed(() =>
-                    Remap(Mappings.Load)));
-            }
-
-            if (Settings.ControllerQuickClear == null) {
-                Add(new Setting(Dialog.Clean(DialogIds.Clear), Keys.None).Pressed(() =>
-                    Remap(Mappings.Clear)));
-            }
-            else {
-                Add(new Setting(Dialog.Clean(DialogIds.Clear), (Buttons) Settings.ControllerQuickClear).Pressed(() =>
-                    Remap(Mappings.Clear)));
-            }
-
-            if (Settings.ControllerOpenDebugMap == null) {
-                Add(new Setting(Dialog.Clean(DialogIds.OpenDebugMap), Keys.None).Pressed(() =>
-                    Remap(Mappings.OpenDebugMap)));
-            }
-            else {
-                Add(new Setting(Dialog.Clean(DialogIds.OpenDebugMap), (Buttons) Settings.ControllerOpenDebugMap).Pressed(
-                    () =>
-                        Remap(Mappings.OpenDebugMap)));
-            }
-
-            if (Settings.ControllerResetRoomPb == null) {
-                Add(new Setting(Dialog.Clean(DialogIds.ResetRoomPb), Keys.None).Pressed(() =>
-                    Remap(Mappings.ResetRoomPb)));
-            }
-            else {
-                Add(new Setting(Dialog.Clean(DialogIds.ResetRoomPb), (Buttons) Settings.ControllerResetRoomPb).Pressed(
-                    () =>
-                        Remap(Mappings.ResetRoomPb)));
-            }
+            AddControllerSetting(Mappings.Save, Settings.ControllerQuickSave);
+            AddControllerSetting(Mappings.Load, Settings.ControllerQuickLoad);
+            AddControllerSetting(Mappings.Clear, Settings.ControllerQuickClear);
+            AddControllerSetting(Mappings.OpenDebugMap, Settings.ControllerOpenDebugMap);
+            AddControllerSetting(Mappings.ResetRoomPb, Settings.ControllerResetRoomPb);
 
             Add(new SubHeader(Dialog.Clean(DialogIds.Keyboard)));
+            
             Add(new Setting(Dialog.Clean(DialogIds.Save), Settings.KeyboardQuickSave).Pressed(() =>
                 Remap(Mappings.Save, true)));
             Add(new Setting(Dialog.Clean(DialogIds.Load), Settings.KeyboardQuickLoad).Pressed(() =>
@@ -142,6 +101,15 @@ namespace Celeste.Mod.SpeedrunTool {
             }
 
             Selection = index;
+        }
+
+        private void AddControllerSetting(Mappings mappingType, Buttons? button) {
+            Add(new Setting(Label(mappingType), Keys.None).With(setting => {
+                    if (button != null) {
+                        setting.Set(new List<Buttons> {(Buttons) button});
+                    }
+                }
+            ).Pressed(() => Remap(mappingType)));
         }
 
         private static void SetDefaultButtons() {

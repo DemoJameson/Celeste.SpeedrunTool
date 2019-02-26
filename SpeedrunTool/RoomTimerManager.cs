@@ -87,6 +87,10 @@ namespace Celeste.Mod.SpeedrunTool {
                 case RoomTimerType.CurrentRoom:
                     currentRoomTimerData.UpdateTimerState();
                     break;
+                case RoomTimerType.Off:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
         }
 

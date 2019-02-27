@@ -25,8 +25,10 @@ namespace Celeste.Mod.SpeedrunTool {
         // Load runs before Celeste itself has initialized properly.
         public override void Load() {
             BetterMapEditor.Instance.Load();
-            StateManager.Instance.Load();
             RoomTimerManager.Instance.Load();
+            StateManager.Instance.Load();
+            TrailManagerFix.Load();
+            
             On.Celeste.PlayerDeadBody.End += QuickLoadWhenDeath;
             On.Celeste.LevelEnter.Go += SkipChapterIntro;
             On.Celeste.LevelExit.ctor += SkipChapterComplete;
@@ -36,8 +38,10 @@ namespace Celeste.Mod.SpeedrunTool {
         // Unload the entirety of your mod's content, remove any event listeners and undo all hooks.
         public override void Unload() {
             BetterMapEditor.Instance.Unload();
-            StateManager.Instance.Unload();
             RoomTimerManager.Instance.Unload();
+            StateManager.Instance.Unload();
+            TrailManagerFix.Unload();
+            
             On.Celeste.PlayerDeadBody.End -= QuickLoadWhenDeath;
             On.Celeste.LevelEnter.Go -= SkipChapterIntro;
             On.Celeste.LevelExit.ctor -= SkipChapterComplete;

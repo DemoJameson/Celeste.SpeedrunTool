@@ -110,6 +110,7 @@
     <Compile Include="SpeedrunToolModule.cs" />
     <Compile Include="SpeedrunToolModuleSettings.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="TrailManagerFix.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="everest.yaml">

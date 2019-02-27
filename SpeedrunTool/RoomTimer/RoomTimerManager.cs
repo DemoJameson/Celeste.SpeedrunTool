@@ -59,8 +59,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
 
             EndPoint end = self.Tracker.GetEntity<EndPoint>();
             if (end == null && SavedEndPoint != null && self.Session.Level == SavedEndPoint.LevelName) {
-                SavedEndPoint.Collidable = true;
-                self.Add(SavedEndPoint);
+                SavedEndPoint.ReAdded(self);
             }
         }
 

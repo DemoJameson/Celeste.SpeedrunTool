@@ -52,16 +52,22 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                         timerState = TimerState.Timing;
                         numberOfRooms = SpeedrunToolModule.Settings.NumberOfRooms;
                     }
+
                     break;
                 case TimerState.Timing:
+                    Level level = Engine.Scene as Level;
                     if (numberOfRooms <= 1 && RoomTimerManager.Instance.SavedEndPoint == null
-                        || endPoint && RoomTimerManager.Instance.SavedEndPoint != null) {
+                        || endPoint && RoomTimerManager.Instance.SavedEndPoint != null
+                        ||  level != null && level.Completed) {
                         timerState = TimerState.Completed;
                         LastPbTime = pbTimes.GetValueOrDefault(pbTimeKey, 0);
                         if (Time < LastPbTime || LastPbTime == 0) {
                             pbTimes[pbTimeKey] = Time;
                         }
-                        RoomTimerManager.Instance.SavedEndPoint?.StopTime();
+
+                        if (level != null && !level.Completed) {
+                            RoomTimerManager.Instance.SavedEndPoint?.StopTime();
+                        }
                     }
                     else {
                         numberOfRooms--;

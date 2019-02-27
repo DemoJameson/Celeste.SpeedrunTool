@@ -8,6 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
     public class EndPoint : Entity {
         public enum SpriteStyle {
             Flag,
+            GoldBerry,
             Madeline,
             Badeline,
             Granny,
@@ -23,13 +24,13 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         }
 
         private static readonly Color StarFlyColor = Calc.HexToColor("ffd65c");
+        private readonly Facings facing;
         public readonly string LevelName;
         private readonly Player player;
-        private SpriteStyle spriteStyle;
         public bool Activated;
         private PlayerHair playerHair;
         private PlayerSprite playerSprite;
-        private readonly Facings facing;
+        private SpriteStyle spriteStyle;
 
         public EndPoint(Player player) {
             this.player = player;
@@ -41,6 +42,8 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             Position = player.Position;
             Depth = player.Depth + 1;
             Add(new PlayerCollider(OnCollidePlayer));
+            Add(new BloomPoint(0.5f, 18f));
+            Add(new VertexLight(Color.White, 1f, 24, 48));
 
             // saved madeline sprite
             CreateMadelineSprite();
@@ -65,11 +68,12 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                     CreateMadelineSprite(true);
                     AddMadelineSprite();
                     break;
+                case SpriteStyle.GoldBerry:
                 case SpriteStyle.Granny:
                 case SpriteStyle.Theo:
                 case SpriteStyle.Oshiro:
                 case SpriteStyle.Bird:
-                    CreateNpcSprite();
+                    CreateSpriteFromBank();
                     break;
                 case SpriteStyle.EyeBat:
                 case SpriteStyle.Ogmo:
@@ -216,13 +220,18 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             Add(playerSprite);
         }
 
-        private void CreateNpcSprite() {
+        private void CreateSpriteFromBank() {
             Sprite sprite = GFX.SpriteBank.Create(Enum.GetNames(typeof(SpriteStyle))[(int) spriteStyle].ToLower());
+            sprite.Scale.X *= -(int) facing;
+
             if (spriteStyle == SpriteStyle.Oshiro) {
                 sprite.Position += Vector2.UnitY * 7;
             }
 
-            sprite.Scale.X *= (int) facing;
+            if (spriteStyle == SpriteStyle.GoldBerry) {
+                sprite.Position -= Vector2.UnitY * 10;
+            }
+
             Add(sprite);
         }
 

@@ -64,19 +64,20 @@ SPEEDRUN_TOOL_DIALOG_NOT_SAVED=
     Not saved state yet.
 
 # ================================== End Point Style ==================================
-SPEEDRUN_TOOL_FLAG=     Flag
-SPEEDRUN_TOOL_MADELINE= Madeline
-SPEEDRUN_TOOL_BADELINE= Badeline
-SPEEDRUN_TOOL_GRANNY=   Granny
-SPEEDRUN_TOOL_THEO=     Theo
-SPEEDRUN_TOOL_OSHIRO=   Oshiro
-SPEEDRUN_TOOL_BIRD=     Bird
-SPEEDRUN_TOOL_EYE_BAT=  Eye Bat
-SPEEDRUN_TOOL_OGMO=     Ogmo
-SPEEDRUN_TOOL_SKYTORN=  Skytorn
-SPEEDRUN_TOOL_TOWERFALL=TowerFall
-SPEEDRUN_TOOL_YURI=     Yuri
-SPEEDRUN_TOOL_RANDOM=   Random
+SPEEDRUN_TOOL_FLAG=      Flag
+SPEEDRUN_TOOL_GOLD_BERRY=Gold Berry
+SPEEDRUN_TOOL_MADELINE=  Madeline
+SPEEDRUN_TOOL_BADELINE=  Badeline
+SPEEDRUN_TOOL_GRANNY=    Granny
+SPEEDRUN_TOOL_THEO=      Theo
+SPEEDRUN_TOOL_OSHIRO=    Oshiro
+SPEEDRUN_TOOL_BIRD=      Bird
+SPEEDRUN_TOOL_EYE_BAT=   Eye Bat
+SPEEDRUN_TOOL_OGMO=      Ogmo
+SPEEDRUN_TOOL_SKYTORN=   Skytorn
+SPEEDRUN_TOOL_TOWERFALL= TowerFall
+SPEEDRUN_TOOL_YURI=      Yuri
+SPEEDRUN_TOOL_RANDOM=    Random
 
 # ================================== Button Config ==================================
 SPEEDRUN_TOOL_OPEN_DEBUG_MAP= Open Debug Map

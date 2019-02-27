@@ -40,6 +40,7 @@ namespace Celeste.Mod.SpeedrunTool {
         
         // End Point Style
         public const string Flag = "SPEEDRUN_TOOL_FLAG";
+        public const string GoldBerry = "SPEEDRUN_TOOL_GOLD_BERRY";
         public const string Madeline = "SPEEDRUN_TOOL_MADELINE";
         public const string Badeline = "SPEEDRUN_TOOL_BADELINE";
         public const string Granny = "SPEEDRUN_TOOL_GRANNY";

@@ -66,7 +66,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         private void CreateEndPoint(Level level) {
             if (level.Tracker.GetEntity<Player>() is Player player && !player.Dead) {
                 SavedEndPoint?.RemoveSelf();
-                level.Add(SavedEndPoint = new EndPoint(player, SpeedrunToolModule.Settings.EndPointSpriteStyle));
+                level.Add(SavedEndPoint = new EndPoint(player));
             }
         }
 

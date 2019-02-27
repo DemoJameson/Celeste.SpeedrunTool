@@ -1,8 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net.Sockets;
-using Celeste.Pico8;
 using Microsoft.Xna.Framework;
 using Monocle;
 
@@ -10,13 +7,13 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
     [Tracked]
     public class EndPoint : Entity {
         public enum SpriteStyle {
+            Flag,
             Madeline,
             Badeline,
             Granny,
             Theo,
             Oshiro,
             Bird,
-            Flag,
             EyeBat,
             Ogmo,
             Skytorn,
@@ -28,13 +25,15 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         private static readonly Color StarFlyColor = Calc.HexToColor("ffd65c");
         public readonly string LevelName;
         private readonly Player player;
-        private readonly SpriteStyle spriteStyle;
-        private FlagComponent flagComponent;
+        private SpriteStyle spriteStyle;
+        public bool Activated;
+        private PlayerHair playerHair;
+        private PlayerSprite playerSprite;
+        private readonly Facings facing;
 
-
-        public EndPoint(Player player, SpriteStyle spriteStyle) {
+        public EndPoint(Player player) {
             this.player = player;
-            this.spriteStyle = spriteStyle;
+            facing = player.Facing;
             LevelName = player.SceneAs<Level>().Session.Level;
 
             Collidable = false;
@@ -43,26 +42,34 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             Depth = player.Depth + 1;
             Add(new PlayerCollider(OnCollidePlayer));
 
+            // saved madeline sprite
+            CreateMadelineSprite();
+            SetSprite();
+        }
 
-
+        private void SetSprite() {
+            spriteStyle = SpeedrunToolModule.Settings.EndPointSpriteStyle;
             if (spriteStyle == SpriteStyle.Random) {
-                this.spriteStyle = (SpriteStyle) new Random().Next(Enum.GetNames(typeof(SpriteStyle)).Length - 1);
+                spriteStyle = (SpriteStyle) new Random().Next(Enum.GetNames(typeof(SpriteStyle)).Length - 1);
             }
 
-            switch (this.spriteStyle) {
+            switch (spriteStyle) {
+                case SpriteStyle.Flag:
+                    CreateFlag();
+                    break;
                 case SpriteStyle.Madeline:
                     CreateMadelineSprite();
+                    AddMadelineSprite();
                     break;
                 case SpriteStyle.Badeline:
                     CreateMadelineSprite(true);
+                    AddMadelineSprite();
                     break;
                 case SpriteStyle.Granny:
                 case SpriteStyle.Theo:
                 case SpriteStyle.Oshiro:
                 case SpriteStyle.Bird:
                     CreateNpcSprite();
-                    break;
-                case SpriteStyle.Flag:
                     break;
                 case SpriteStyle.EyeBat:
                 case SpriteStyle.Ogmo:
@@ -74,14 +81,14 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 // ReSharper disable once RedundantCaseLabel
                 case SpriteStyle.Random:
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(spriteStyle), this.spriteStyle, null);
+                    throw new ArgumentOutOfRangeException(nameof(spriteStyle), spriteStyle, null);
             }
-            
-            AddFlag();
         }
 
-        private void AddFlag() {
-            int flagNumber = player.SceneAs<Level>().Session.Area.ID;
+        private void CreateFlag() {
+            AreaKey areaKey = player.SceneAs<Level>().Session.Area;
+            int flagNumber = areaKey.ID;
+            string numberString;
             if (SaveData.Instance.LevelSet == "Celeste") {
                 if (flagNumber == 8) {
                     flagNumber = 0;
@@ -89,15 +96,32 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 else if (flagNumber > 8) {
                     flagNumber--;
                 }
+
+                if (flagNumber == 0) {
+                    numberString = flagNumber.ToString("D2");
+                }
+                else {
+                    numberString = flagNumber.ToString() + (char) ('A' + areaKey.Mode);
+                }
             }
-            
-            Add(flagComponent = new FlagComponent(flagNumber, spriteStyle == SpriteStyle.Flag));
+            else {
+                numberString = flagNumber.ToString("D2");
+            }
+
+            Add(new FlagComponent(numberString, spriteStyle == SpriteStyle.Flag));
+        }
+
+        public void ResetSprite() {
+            Get<Sprite>()?.RemoveSelf();
+            Get<PlayerHair>()?.RemoveSelf();
+            Get<PlayerSprite>()?.RemoveSelf();
+            Get<FlagComponent>()?.RemoveSelf();
+            SetSprite();
         }
 
         public void ReAdded(Level level) {
             Collidable = true;
-            flagComponent.Active = true;
-            flagComponent.Activated = false;
+            Activated = false;
             level.Add(this);
         }
 
@@ -105,8 +129,16 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             RoomTimerManager.Instance.UpdateTimerState(true);
         }
 
+        public void StopTime() {
+            if (!Activated) {
+                Activated = true;
+                SceneAs<Level>().Displacement.AddBurst(TopCenter, 0.5f, 4f, 24f, 0.5f);
+                Scene.Add(new ConfettiRenderer(TopCenter));
+                Audio.Play("event:/game/07_summit/checkpoint_confetti", TopCenter + Vector2.UnitX);
+            }
+        }
+
         private void CreateMadelineSprite(bool badeline = false) {
-            Active = false;
             PlayerSpriteMode mode;
             if (badeline) {
                 mode = PlayerSpriteMode.Badeline;
@@ -116,17 +148,46 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 mode = backpack ? PlayerSpriteMode.Madeline : PlayerSpriteMode.MadelineNoBackpack;
             }
 
-            PlayerSprite playerSprite = new PlayerSprite(mode) {
-                Position = player.Sprite.Position,
-                Rotation = player.Sprite.Rotation,
-                HairCount = player.Sprite.HairCount,
-                Scale = player.Sprite.Scale,
-                Rate = player.Sprite.Rate,
-                Justify = player.Sprite.Justify
+            PlayerSprite origSprite = player.Sprite;
+            if (playerSprite != null) {
+                origSprite = playerSprite;
+            }
+
+            playerSprite = new PlayerSprite(mode) {
+                Position = origSprite.Position,
+                Rotation = origSprite.Rotation,
+                HairCount = origSprite.HairCount,
+                Scale = origSprite.Scale,
+                Rate = origSprite.Rate,
+                Justify = origSprite.Justify
             };
-            playerSprite.Scale.X = playerSprite.Scale.X * (float) player.Facing;
             if (player.StateMachine.State == Player.StStarFly) {
                 playerSprite.Color = StarFlyColor;
+            }
+
+            playerSprite.Scale.X = playerSprite.Scale.Abs().X * (int) facing;
+
+            playerSprite.Active = false;
+            try {
+                if (!string.IsNullOrEmpty(origSprite.CurrentAnimationID)) {
+                    playerSprite.Play(origSprite.CurrentAnimationID);
+                    playerSprite.SetAnimationFrame(origSprite.CurrentAnimationFrame);
+                }
+            }
+            // ReSharper disable once EmptyGeneralCatchClause
+            catch (Exception) { }
+
+            if (playerHair == null) {
+                playerHair = new PlayerHair(playerSprite) {
+                    Alpha = player.Hair.Alpha,
+                    Facing = facing,
+                    Border = player.Hair.Border,
+                    DrawPlayerSpriteOutline = player.Hair.DrawPlayerSpriteOutline
+                };
+                Vector2[] nodes = new Vector2[player.Hair.Nodes.Count];
+                player.Hair.Nodes.CopyTo(nodes);
+                playerHair.Nodes = nodes.ToList();
+                playerHair.Active = false;
             }
 
             Color hairColor = Player.NormalHairColor;
@@ -147,28 +208,12 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 hairColor = StarFlyColor;
             }
 
-            PlayerHair playerHair = new PlayerHair(playerSprite) {
-                Color = hairColor,
-                Alpha = player.Hair.Alpha,
-                Facing = player.Facing,
-                SimulateMotion = player.Hair.SimulateMotion,
-                StepYSinePerSegment = player.Hair.StepYSinePerSegment,
-                Border = player.Hair.Border,
-                DrawPlayerSpriteOutline = player.Hair.DrawPlayerSpriteOutline
-            };
-            Vector2[] nodes = new Vector2[player.Hair.Nodes.Count];
-            player.Hair.Nodes.CopyTo(nodes);
-            playerHair.Nodes = nodes.ToList();
+            playerHair.Color = hairColor;
+        }
 
+        private void AddMadelineSprite() {
             Add(playerHair);
             Add(playerSprite);
-
-            try {
-                playerSprite.Play(player.Sprite.CurrentAnimationID);
-                playerSprite.SetAnimationFrame(player.Sprite.CurrentAnimationFrame);
-            }
-            // ReSharper disable once EmptyGeneralCatchClause
-            catch (Exception) { }
         }
 
         private void CreateNpcSprite() {
@@ -177,7 +222,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 sprite.Position += Vector2.UnitY * 7;
             }
 
-            sprite.Scale.X *= (int) player.Facing;
+            sprite.Scale.X *= (int) facing;
             Add(sprite);
         }
 
@@ -195,79 +240,12 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
 
             sprite.RenderPosition += offset;
 
-            sprite.Scale.X *= (int) player.Facing;
+            sprite.Scale.X *= (int) facing;
             if (spriteStyle == SpriteStyle.Towerfall) {
                 sprite.Scale.X = -sprite.Scale.X;
             }
 
             Add(sprite);
-        }
-    }
-
-    internal class ConfettiRenderer : Entity {
-        private static readonly Color[] ConfettiColors = {
-            Calc.HexToColor("fe2074"),
-            Calc.HexToColor("205efe"),
-            Calc.HexToColor("cefe20")
-        };
-
-        private readonly Particle[] particles = new Particle[30];
-
-        public ConfettiRenderer(Vector2 position)
-            : base(position) {
-            Depth = -10010;
-            for (int index = 0; index < particles.Length; ++index) {
-                particles[index].Position = Position + new Vector2(Calc.Random.Range(-3, 3), Calc.Random.Range(-3, 3));
-                particles[index].Color = Calc.Random.Choose(ConfettiColors);
-                particles[index].Timer = Calc.Random.NextFloat();
-                particles[index].Duration = Calc.Random.Range(2, 4);
-                particles[index].Alpha = 1f;
-                float angleRadians = Calc.Random.Range(-0.5f, 0.5f) - 1.570796f;
-                int num = Calc.Random.Range(140, 220);
-                particles[index].Speed = Calc.AngleToVector(angleRadians, num);
-            }
-        }
-
-        public override void Update() {
-            for (int index = 0; index < particles.Length; ++index) {
-                particles[index].Position += particles[index].Speed * Engine.DeltaTime;
-                particles[index].Speed.X = Calc.Approach(particles[index].Speed.X, 0.0f, 80f * Engine.DeltaTime);
-                particles[index].Speed.Y = Calc.Approach(particles[index].Speed.Y, 20f, 500f * Engine.DeltaTime);
-                particles[index].Timer += Engine.DeltaTime;
-                particles[index].Percent += Engine.DeltaTime / particles[index].Duration;
-                particles[index].Alpha = Calc.ClampedMap(particles[index].Percent, 0.9f, 1f, 1f, 0.0f);
-                if (particles[index].Speed.Y > 0.0) {
-                    particles[index].Approach = Calc.Approach(particles[index].Approach, 5f, Engine.DeltaTime * 16f);
-                }
-            }
-        }
-
-        public override void Render() {
-            for (int index = 0; index < particles.Length; ++index) {
-                Vector2 position = particles[index].Position;
-                float rotation;
-                if (particles[index].Speed.Y < 0.0) {
-                    rotation = particles[index].Speed.Angle();
-                }
-                else {
-                    rotation = (float) Math.Sin(particles[index].Timer * 4.0) * 1f;
-                    position += Calc.AngleToVector(1.570796f + rotation, particles[index].Approach);
-                }
-
-                GFX.Game["particles/confetti"].DrawCentered(position + Vector2.UnitY, Color.Black * (particles[index].Alpha * 0.5f), 1f, rotation);
-                GFX.Game["particles/confetti"].DrawCentered(position, particles[index].Color * particles[index].Alpha, 1f, rotation);
-            }
-        }
-
-        private struct Particle {
-            public Vector2 Position;
-            public Color Color;
-            public Vector2 Speed;
-            public float Timer;
-            public float Percent;
-            public float Duration;
-            public float Alpha;
-            public float Approach;
         }
     }
 }

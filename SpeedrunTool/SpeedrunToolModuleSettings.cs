@@ -19,7 +19,6 @@ namespace Celeste.Mod.SpeedrunTool {
         private static readonly List<string> RoomTimerStrings = GetEnumNames<RoomTimerType>();
         private static readonly List<string> EndPointStyleStrings = GetEnumNames<EndPoint.SpriteStyle>();
 
-
         [SettingName(DialogIds.Enabled)] public bool Enabled { get; set; } = true;
 
         [SettingName(DialogIds.AutoLoadAfterDeath)]
@@ -116,7 +115,10 @@ namespace Celeste.Mod.SpeedrunTool {
                     0,
                     EndPointStyleStrings.Count - 1,
                     Math.Max(0, EndPointStyleStrings.IndexOf(EndPointStyle))
-                ).Change(index => EndPointStyle = EndPointStyleStrings[index]));
+                ).Change(index => {
+                    EndPointStyle = EndPointStyleStrings[index];
+                    RoomTimerManager.Instance.SavedEndPoint?.ResetSprite();
+                }));
         }
 
         // ReSharper disable once UnusedMember.Global

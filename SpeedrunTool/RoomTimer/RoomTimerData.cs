@@ -61,6 +61,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                         if (Time < LastPbTime || LastPbTime == 0) {
                             pbTimes[pbTimeKey] = Time;
                         }
+                        RoomTimerManager.Instance.SavedEndPoint?.StopTime();
                     }
                     else {
                         numberOfRooms--;

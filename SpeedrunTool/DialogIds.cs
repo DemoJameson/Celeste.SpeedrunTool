@@ -39,6 +39,7 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string DialogNotSaved = "SPEEDRUN_TOOL_DIALOG_NOT_SAVED";
         
         // End Point Style
+        public const string Flag = "SPEEDRUN_TOOL_FLAG";
         public const string Madeline = "SPEEDRUN_TOOL_MADELINE";
         public const string Badeline = "SPEEDRUN_TOOL_BADELINE";
         public const string Granny = "SPEEDRUN_TOOL_GRANNY";

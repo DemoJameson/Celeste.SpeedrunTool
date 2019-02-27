@@ -15,7 +15,9 @@ namespace Celeste.Mod.SpeedrunTool {
             TrailManager manager, int index, Vector2 position, Image sprite, PlayerHair hair, Color color,
             float duration, int depth) {
             orig(self, manager, index, position, sprite, hair, color, duration, depth);
-            self.SpriteScale.X = self.SpriteScale.Abs().X * (int) hair.Facing;
+            if (self != null && sprite != null && hair != null) {
+                self.SpriteScale.X = self.SpriteScale.Abs().X * (int) hair.Facing;
+            }
         }
     }
 }

@@ -64,6 +64,7 @@ SPEEDRUN_TOOL_DIALOG_NOT_SAVED=
     Not saved state yet.
 
 # ================================== End Point Style ==================================
+SPEEDRUN_TOOL_FLAG=     Flag
 SPEEDRUN_TOOL_MADELINE= Madeline
 SPEEDRUN_TOOL_BADELINE= Badeline
 SPEEDRUN_TOOL_GRANNY=   Granny

@@ -1,27 +1,21 @@
+using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool {
     public static class TrailManagerFix {
         public static void Load() {
-            On.Celeste.TrailManager.BeforeRender += TrailManagerOnBeforeRender;
+            On.Celeste.TrailManager.Snapshot.Init += SnapshotOnInit;
         }
 
         public static void Unload() {
-            On.Celeste.TrailManager.BeforeRender += TrailManagerOnBeforeRender;
+            On.Celeste.TrailManager.Snapshot.Init -= SnapshotOnInit;
         }
 
-        private static void TrailManagerOnBeforeRender(On.Celeste.TrailManager.orig_BeforeRender orig, TrailManager self) {
-            On.Celeste.PlayerSprite.Render += PlayerSpriteOnRender;
-            orig(self);
-            On.Celeste.PlayerSprite.Render -= PlayerSpriteOnRender;
-        }
-
-        private static void PlayerSpriteOnRender(On.Celeste.PlayerSprite.orig_Render orig, PlayerSprite self) {
-            if (Engine.Scene is Level level && level.Tracker.GetEntity<Player>() is Player player) {
-                self.Scale.X *= (int) player.Facing;
-            }
-
-            orig(self);
+        private static void SnapshotOnInit(On.Celeste.TrailManager.Snapshot.orig_Init orig, TrailManager.Snapshot self,
+            TrailManager manager, int index, Vector2 position, Image sprite, PlayerHair hair, Color color,
+            float duration, int depth) {
+            orig(self, manager, index, position, sprite, hair, color, duration, depth);
+            self.SpriteScale.X = self.SpriteScale.Abs().X * (int) hair.Facing;
         }
     }
 }

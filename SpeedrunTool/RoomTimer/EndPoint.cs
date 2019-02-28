@@ -90,29 +90,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         }
 
         private void CreateFlag() {
-            AreaKey areaKey = player.SceneAs<Level>().Session.Area;
-            int flagNumber = areaKey.ID;
-            string numberString;
-            if (SaveData.Instance.LevelSet == "Celeste") {
-                if (flagNumber == 8) {
-                    flagNumber = 0;
-                }
-                else if (flagNumber > 8) {
-                    flagNumber--;
-                }
-
-                if (flagNumber == 0) {
-                    numberString = flagNumber.ToString("D2");
-                }
-                else {
-                    numberString = flagNumber.ToString() + (char) ('A' + areaKey.Mode);
-                }
-            }
-            else {
-                numberString = flagNumber.ToString("D2");
-            }
-
-            Add(new FlagComponent(numberString, spriteStyle == SpriteStyle.Flag));
+            Add(new FlagComponent(spriteStyle == SpriteStyle.Flag));
         }
 
         public void ResetSprite() {

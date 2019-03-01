@@ -50,7 +50,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
         }
 
-        private void FlyFeatherOnOnPlayer(On.Celeste.FlyFeather.orig_OnPlayer orig, FlyFeather self, Player player) {
+        private static void FlyFeatherOnOnPlayer(On.Celeste.FlyFeather.orig_OnPlayer orig, FlyFeather self, Player player) {
             if (IsFrozen || IsLoadStart) {
                 return;
             }
@@ -71,6 +71,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public override void OnUnload() {
             On.Celeste.FlyFeather.ctor_EntityData_Vector2 -= RestoreFlyFeatherState;
             On.Celeste.FlyFeather.ctor_Vector2_bool_bool -= RestoreFlyFeatherState;
+            On.Celeste.FlyFeather.OnPlayer -= FlyFeatherOnOnPlayer;
         }
 
         public override void OnInit() {

@@ -108,7 +108,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             level.Add(this);
         }
 
-        private void OnCollidePlayer(Player _) {
+        private static void OnCollidePlayer(Player _) {
             if (StateManager.Instance.IsLoadStart || StateManager.Instance.IsLoadFrozen) {
                 return;
             }

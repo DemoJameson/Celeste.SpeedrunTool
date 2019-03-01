@@ -70,6 +70,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.Booster.ctor_EntityData_Vector2 -= RestoreBoosterPosition;
+            On.Celeste.Booster.OnPlayer -= BoosterOnOnPlayer;
         }
 
         public override void OnInit() {

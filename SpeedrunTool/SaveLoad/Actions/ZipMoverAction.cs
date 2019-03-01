@@ -28,11 +28,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             savedZipMovers.Clear();
         }
 
-        public override void OnLoad() {
-            On.Celeste.ZipMover.ctor_EntityData_Vector2 += RestoreZipMoverPosition;
-            On.Celeste.ZipMover.Sequence += ZipMoverOnSequence;
-        }
-
         private IEnumerator ZipMoverOnSequence(On.Celeste.ZipMover.orig_Sequence orig, ZipMover self) {
             if (!SpeedrunToolModule.Enabled) {
                 yield return orig(self);
@@ -169,6 +164,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
                 yield return 0.5f;
             }
+        }
+
+        public override void OnLoad() {
+            On.Celeste.ZipMover.ctor_EntityData_Vector2 += RestoreZipMoverPosition;
+            On.Celeste.ZipMover.Sequence += ZipMoverOnSequence;
         }
 
         public override void OnUnload() {

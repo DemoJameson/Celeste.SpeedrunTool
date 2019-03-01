@@ -11,7 +11,7 @@ using YamlDotNet.Serialization;
 // ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
 namespace Celeste.Mod.SpeedrunTool {
     [SettingName(DialogIds.SpeedrunTool)]
-    public class SpeedrunToolModuleSettings : EverestModuleSettings {
+    public class SpeedrunToolSettings : EverestModuleSettings {
         private static readonly List<string> RespawnSpeedStrings =
             Enumerable.Range(1, 9).Select(intValue => intValue + "00%").ToList();
 

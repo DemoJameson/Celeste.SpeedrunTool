@@ -40,6 +40,9 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
 
         private void ProcessButtons(On.Celeste.Level.orig_Update orig, Level self) {
             orig(self);
+            if (!SpeedrunToolModule.Enabled) {
+                return;
+            }
 
             if (ButtonConfigUi.ResetRoomPbButton.Value.Pressed && !self.Paused) {
                 ButtonConfigUi.ResetRoomPbButton.Value.ConsumePress();
@@ -131,7 +134,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         }
 
         private void Render(On.Celeste.SpeedrunTimerDisplay.orig_Render orig, SpeedrunTimerDisplay self) {
-            SpeedrunToolModuleSettings settings = SpeedrunToolModule.Settings;
+            SpeedrunToolSettings settings = SpeedrunToolModule.Settings;
             if (!settings.Enabled || settings.RoomTimerType == RoomTimerType.Off) {
                 if (OriginalSpeedrunType != null) {
                     Settings.Instance.SpeedrunClock = (SpeedrunType) OriginalSpeedrunType;

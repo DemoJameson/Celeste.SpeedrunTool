@@ -66,6 +66,7 @@ namespace Celeste.Mod.SpeedrunTool {
             MapEditor.LoadLevel -= MapEditorOnLoadLevel;
             MapEditor.Update -= MakeControllerWork;
             On.Celeste.Level.Update -= AddedOpenDebugMapButton;
+            On.Celeste.WindController.SetAmbienceStrength -= FixWindSoundNotPlay;
         }
 
         public static void Init() {
@@ -84,11 +85,16 @@ namespace Celeste.Mod.SpeedrunTool {
 
 
         private void MakeControllerWork(MapEditor.orig_Update orig, Editor.MapEditor self) {
-            zoomWaitFrames--;
             orig(self);
+            if (!SpeedrunToolModule.Enabled) {
+                return;
+            }
+            
+            zoomWaitFrames--;
 
             // pressed confirm button teleport to the select room
             if (Input.MenuConfirm.Pressed) {
+                Input.MenuConfirm.ConsumePress();
                 Vector2 mousePosition = (Vector2) self.GetPrivateField("mousePosition");
                 LevelTemplate level =
                     self.InvokePrivateMethod("TestCheck", mousePosition) as LevelTemplate;
@@ -138,6 +144,10 @@ namespace Celeste.Mod.SpeedrunTool {
 
         private void MapEditorOnLoadLevel(MapEditor.orig_LoadLevel orig, Editor.MapEditor self,
             LevelTemplate level, Vector2 at) {
+            if (!SpeedrunToolModule.Enabled) {
+                return;
+            }
+            
             On.Celeste.LevelLoader.ctor += FixTeleportProblems;
             orig(self, level, at);
             On.Celeste.LevelLoader.ctor -= FixTeleportProblems;

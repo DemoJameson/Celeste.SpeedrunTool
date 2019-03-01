@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Actions;
+using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
@@ -59,6 +60,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private Session session;
         private Session.CoreModes sessionCoreModeBackup;
+        
         public bool IsLoadStart => loadState == LoadState.LoadStart;
         public bool IsLoadFrozen => loadState == LoadState.LoadFrozen;
         public bool IsLoading => loadState == LoadState.Loading;
@@ -88,19 +90,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             ButtonConfigUi.UpdateClearButton();
         }
 
-        private int afterLoadStart = 0;
-        private LoadState nextLoadState;
-
         private void LevelOnUpdate(On.Celeste.Level.orig_Update orig, Level self) {
-            if (!SpeedrunToolModule.Settings.Enabled) {
+            if (!SpeedrunToolModule.Enabled) {
                 orig(self);
                 return;
             }
-            afterLoadStart++;
-
+            orig(self);
+            
             Player player = self.Tracker.GetEntity<Player>();
 
-            if(CheckButtonPressed(self, player)) {
+            if(CheckButton(self, player)) {
                 return;
             }
             
@@ -109,32 +108,27 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                             session.Area.Mode != self.Session.Area.Mode)) {
                 Clear();
             }
-
-            // 尽快设置人物的位置与镜头，然后冻结游戏等待人物复活
-            if (IsSaved && IsLoadStart && player != null && nextLoadState == LoadState.None) {
-                afterLoadStart = 0;
-                QuickLoadStart(self, player);
-            }
-
-            if (afterLoadStart > 0 && IsSaved && IsLoadStart) {
-                NextLoadState(self);
-            }
             
+            // 尽快设置人物的位置与镜头，然后冻结游戏等待人物复活
+            if (IsSaved && IsLoadStart && player != null) {
+                QuickLoadStart(self, player);
+                return;
+            }
+
             // 冻结时允许人物复活
-            if (afterLoadStart > 0 && IsSaved && IsLoadFrozen) {
+            if (IsSaved && IsLoadFrozen) {
                 UpdateEntitiesWhenFreeze(self, player);
             }
 
             // 人物复活完毕后设置人物相关属性
-            if (afterLoadStart > 0 && IsSaved && (IsLoading || IsLoadFrozen) && player != null &&
+            if (IsSaved && (IsLoading || IsLoadFrozen) && player != null && 
                 player.StateMachine.State == Player.StNormal) {
                 QuickLoading(self, player);
             }
 
-            orig(self);
         }
 
-        private bool CheckButtonPressed(Level level, Player player) {
+        private bool CheckButton(Level level, Player player) {
             if (ButtonConfigUi.SaveButton.Value.Pressed && !level.Paused && !level.Transitioning && !level.PauseLock &&
                 !level.InCutscene &&
                 !level.SkippingCutscene && player != null && !player.Dead) {
@@ -194,6 +188,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SavedPlayer = player;
             camera = level.Camera;
 
+            // 防止被恢复了位置的熔岩烫死
+            On.Celeste.Player.Die -= DisableDie;
+            On.Celeste.Player.Die += DisableDie;
             Engine.Scene = new LevelLoader(level.Session, level.Session.RespawnPoint);
         }
 
@@ -203,9 +200,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             loadState = LoadState.LoadStart;
-
             Session sessionCopy = session.DeepClone();
 
+            On.Celeste.Player.Die -= DisableDie;
+            On.Celeste.Player.Die += DisableDie;
             Engine.Scene = new LevelLoader(sessionCopy, sessionCopy.RespawnPoint);
         }
 
@@ -225,22 +223,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             entityActions.ForEach(action => action.OnQuickLoadStart(level));
 
             if (player.StateMachine.State == Player.StIntroRespawn) {
-                nextLoadState = LoadState.LoadFrozen;
-            }
-            else {
-                nextLoadState = LoadState.Loading;
-            }
-        }
-
-
-        private void NextLoadState(Level level) {
-            if (nextLoadState == LoadState.LoadFrozen) {
                 level.Frozen = true;
                 level.PauseLock = true;
+                loadState = LoadState.LoadFrozen;
             }
-
-            loadState = nextLoadState;
-            nextLoadState = LoadState.None;
+            else {
+                loadState = LoadState.Loading;
+            }
         }
 
         private void UpdateEntitiesWhenFreeze(Level level, Player player) {
@@ -269,6 +258,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             level.PauseLock = false;
 
             loadState = LoadState.LoadComplete;
+            On.Celeste.Player.Die -= DisableDie;
         }
 
         private int RestoreStarFlyTimer(On.Celeste.Player.orig_StarFlyUpdate orig, Player self) {
@@ -286,13 +276,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (Engine.Scene is Level level) {
                 level.Frozen = false;
             }
-
+            On.Celeste.Player.Die -= DisableDie;
             session = null;
             SavedPlayer = null;
             camera = null;
             loadState = LoadState.None;
 
             entityActions.ForEach(action => action.OnClear());
+        }
+        
+        private PlayerDeadBody DisableDie(On.Celeste.Player.orig_Die orig, Player self, Vector2 direction,
+            bool evenIfInvincible, bool registerDeathInStats) {
+            return null;
         }
 
         // @formatter:off

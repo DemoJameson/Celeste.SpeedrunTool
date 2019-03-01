@@ -34,7 +34,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private IEnumerator ZipMoverOnSequence(On.Celeste.ZipMover.orig_Sequence orig, ZipMover self) {
-            if (!SpeedrunToolModule.Settings.Enabled) {
+            if (!SpeedrunToolModule.Enabled) {
                 yield return orig(self);
             }
 

@@ -24,8 +24,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     Refill savedRefill = savedRefills[entityId];
                     if (!savedRefill.Collidable) {
                         self.Collidable = false;
-                        float respawnTimer = (float) savedRefill.GetPrivateField("respawnTimer") +
-                                             StateManager.FrozenTime;
+                        float respawnTimer = (float) savedRefill.GetPrivateField("respawnTimer");
                         self.SetPrivateField("respawnTimer", respawnTimer);
                         self.Add(new Coroutine(ConsumeRefill(self)));
                     }
@@ -37,8 +36,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private static IEnumerator ConsumeRefill(Refill self) {
-            Player player = self.Scene.Tracker.GetEntity<Player>();
-            self.Add(new Coroutine((IEnumerator) self.InvokePrivateMethod("RefillRoutine", player)));
+            (self.GetPrivateField("sprite") as Sprite).Visible = false;
+            (self.GetPrivateField("flash") as Sprite).Visible = false;
+            if (!(bool)self.GetPrivateField("oneUse")) {
+                (self.GetPrivateField("outline") as Monocle.Image).Visible = true;
+            }
+            else {
+                self.RemoveSelf();
+            }
+            self.Depth = 8999;
             yield return null;
         }
 
@@ -57,10 +63,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnInit() {
             typeof(Refill).AddToTracker();
-        }
-
-        public override void OnUpdateEntitiesWhenFreeze(Level level) {
-            level.UpdateEntities<Refill>();
         }
     }
 }

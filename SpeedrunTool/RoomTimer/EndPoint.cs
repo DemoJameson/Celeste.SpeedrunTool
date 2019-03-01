@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework;
 using Monocle;
 
@@ -42,8 +43,8 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             Position = player.Position;
             Depth = player.Depth + 1;
             Add(new PlayerCollider(OnCollidePlayer));
-            Add(new BloomPoint(0.5f, 18f));
-            Add(new VertexLight(Color.White, 1f, 24, 48));
+            Add(new BloomPoint(Vector2.UnitY * -8 , 0.5f, 18f));
+            Add(new VertexLight(Vector2.UnitY * -8, Color.White, 1f, 24, 48));
 
             // saved madeline sprite
             CreateMadelineSprite();
@@ -108,6 +109,10 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         }
 
         private void OnCollidePlayer(Player _) {
+            if (StateManager.Instance.IsLoadStart || StateManager.Instance.IsLoadFrozen) {
+                return;
+            }
+            
             RoomTimerManager.Instance.UpdateTimerState(true);
         }
 

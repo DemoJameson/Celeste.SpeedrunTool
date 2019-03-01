@@ -110,7 +110,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="BetterMapEditor.cs" />
     <Compile Include="SpeedrunToolModule.cs" />
-    <Compile Include="SpeedrunToolModuleSettings.cs" />
+    <Compile Include="SpeedrunToolSettings.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="TrailManagerFix.cs" />
   </ItemGroup>

@@ -55,7 +55,7 @@ namespace Celeste.Mod.SpeedrunTool {
             Alpha = 0.0f;
         }
 
-        private static SpeedrunToolModuleSettings Settings => SpeedrunToolModule.Settings;
+        private static SpeedrunToolSettings Settings => SpeedrunToolModule.Settings;
 
         private static VirtualButton CreateVirtualButton() {
             return new VirtualButton(0.08f);

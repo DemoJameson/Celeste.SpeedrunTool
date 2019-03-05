@@ -232,7 +232,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
 
             sprite.RenderPosition += offset;
 
-            sprite.Scale.X *= (int) facing;
+            sprite.Scale.X *= -(int) facing;
             if (spriteStyle == SpriteStyle.Towerfall) {
                 sprite.Scale.X = -sprite.Scale.X;
             }

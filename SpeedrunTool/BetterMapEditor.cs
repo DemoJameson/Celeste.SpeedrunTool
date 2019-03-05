@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using Celeste.Editor;
+using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Monocle;

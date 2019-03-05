@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
 using Monocle;

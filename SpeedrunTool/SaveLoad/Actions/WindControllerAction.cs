@@ -1,4 +1,5 @@
 using System;
+using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {

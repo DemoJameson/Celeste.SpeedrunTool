@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Reflection;
+using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
 
@@ -23,7 +24,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     CrushBlock savedCrushBlock = savedCrushBlocks[entityId];
                     if (self.Position != savedCrushBlock.Position) {
                         self.Position = savedCrushBlock.Position;
-                        self.CopyPrivateField("returnStack", savedCrushBlock);
+                        object returnStack = savedCrushBlock.GetPrivateField("returnStack").Copy();
+                        self.SetPrivateField("returnStack", returnStack);
+//                        self.CopyPrivateField("returnStack", savedCrushBlock);
                         self.Add(new RestoreCrushBlockStateComponent(savedCrushBlock));
                     }
                 }

@@ -55,6 +55,9 @@
   <ItemGroup>
     <Compile Include="ButtonConfigUi.cs" />
     <Compile Include="DialogIds.cs" />
+    <Compile Include="Extensions\CelesteExtensions.cs" />
+    <Compile Include="Extensions\CommonExtensions.cs" />
+    <Compile Include="Extensions\DeepCopyExtensions.cs" />
     <Compile Include="RoomTimer\ConfettiRenderer.cs" />
     <Compile Include="RoomTimer\EndPoint.cs" />
     <Compile Include="RoomTimer\FlagComponent.cs" />
@@ -111,7 +114,6 @@
     <Compile Include="BetterMapEditor.cs" />
     <Compile Include="SpeedrunToolModule.cs" />
     <Compile Include="SpeedrunToolSettings.cs" />
-    <Compile Include="Extensions.cs" />
     <Compile Include="TrailManagerFix.cs" />
   </ItemGroup>
   <ItemGroup>

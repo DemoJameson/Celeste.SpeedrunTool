@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
 using On.Monocle;
 using Coroutine = Monocle.Coroutine;

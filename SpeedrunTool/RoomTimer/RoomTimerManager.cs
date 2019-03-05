@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
 using Monocle;
 

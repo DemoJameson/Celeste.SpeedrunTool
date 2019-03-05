@@ -1,3 +1,4 @@
+using Celeste.Mod.SpeedrunTool.Extensions;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {

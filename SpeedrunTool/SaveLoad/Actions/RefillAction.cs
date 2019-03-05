@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -39,7 +40,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             (self.GetPrivateField("sprite") as Sprite).Visible = false;
             (self.GetPrivateField("flash") as Sprite).Visible = false;
             if (!(bool)self.GetPrivateField("oneUse")) {
-                (self.GetPrivateField("outline") as Monocle.Image).Visible = true;
+                (self.GetPrivateField("outline") as Image).Visible = true;
             }
             else {
                 self.RemoveSelf();

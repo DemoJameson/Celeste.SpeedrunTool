@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Actions;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -122,7 +123,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             // 人物复活完毕后设置人物相关属性
             if (IsSaved && (IsLoading || IsLoadFrozen) && player != null && 
-                player.StateMachine.State == Player.StNormal) {
+                (player.StateMachine.State == Player.StNormal || player.StateMachine.State == Player.StSwim)) {
                 QuickLoading(self, player);
             }
 

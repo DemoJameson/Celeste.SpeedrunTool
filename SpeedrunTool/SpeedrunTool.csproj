@@ -78,6 +78,7 @@
     <Compile Include="SaveLoad\Actions\DreamBlockAction.cs" />
     <Compile Include="SaveLoad\Actions\RotateSpinnerAction.cs" />
     <Compile Include="SaveLoad\Actions\DustStaticSpinnerAction.cs" />
+    <Compile Include="SaveLoad\Actions\StrawberryAction.cs" />
     <Compile Include="SaveLoad\Actions\TrackSpinnerAction.cs" />
     <Compile Include="SaveLoad\Actions\ExitBlockAction.cs" />
     <Compile Include="SaveLoad\Actions\FallingBlockAction.cs" />

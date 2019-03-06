@@ -78,5 +78,13 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 }
             }
         }
+
+        public static Player GetPlayer(this Scene scene) {
+            if (scene is Level level && level.Tracker.GetEntity<Player>() is Player player) {
+                return player;
+            }
+
+            return null;
+        }
     }
 }

@@ -34,8 +34,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
         public static EntityID ToEntityId(this EntityData entityData) {
             // 因为 ID 有可能重复，所以加上起点坐标的信息
-            return new EntityID(entityData.Level.Name + entityData.Name,
-                entityData.ID + entityData.Position.GetHashCode());
+            return new EntityID(entityData.Level.Name, entityData.ID);
         }
 
         public static IEnumerable<T> GetCastEntities<T>(this Tracker tracker) where T : Entity {
@@ -47,6 +46,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             foreach (T entity in tracker.GetCastEntities<T>()) {
                 EntityID entityId = entity.GetEntityId();
                 if (entityId.Equals(default(EntityID)) || result.ContainsKey(entityId)) {
+                    Logger.Log("Speedrun Tool", $"EntityID Duplication: Level Name={entityId.Level}, Position={entity.Position}, Entity Name={entity.GetType().Name}");
                     continue;
                 }
 

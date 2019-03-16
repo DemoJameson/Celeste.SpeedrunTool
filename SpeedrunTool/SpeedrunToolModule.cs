@@ -28,7 +28,6 @@ namespace Celeste.Mod.SpeedrunTool {
             BetterMapEditor.Instance.Load();
             RoomTimerManager.Instance.Load();
             StateManager.Instance.Load();
-            TrailManagerFix.Load();
             
             On.Celeste.PlayerDeadBody.End += QuickLoadWhenDeath;
             On.Celeste.LevelEnter.Go += SkipChapterIntro;
@@ -41,7 +40,6 @@ namespace Celeste.Mod.SpeedrunTool {
             BetterMapEditor.Instance.Unload();
             RoomTimerManager.Instance.Unload();
             StateManager.Instance.Unload();
-            TrailManagerFix.Unload();
             
             On.Celeste.PlayerDeadBody.End -= QuickLoadWhenDeath;
             On.Celeste.LevelEnter.Go -= SkipChapterIntro;

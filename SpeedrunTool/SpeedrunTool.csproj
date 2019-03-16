@@ -115,7 +115,6 @@
     <Compile Include="BetterMapEditor.cs" />
     <Compile Include="SpeedrunToolModule.cs" />
     <Compile Include="SpeedrunToolSettings.cs" />
-    <Compile Include="TrailManagerFix.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="everest.yaml">

@@ -12,6 +12,7 @@ using MapEditor = On.Celeste.Editor.MapEditor;
 namespace Celeste.Mod.SpeedrunTool {
     public class BetterMapEditor {
         private const string StartChasingLevel = "3";
+        private static Session sessionBackup;
 
         // 3A 杂乱房间部分的光线调暗
         private readonly List<string> darkRooms = new List<string> {
@@ -61,6 +62,8 @@ namespace Celeste.Mod.SpeedrunTool {
             MapEditor.Update += MakeControllerWork;
             On.Celeste.Level.Update += AddedOpenDebugMapButton;
             On.Celeste.WindController.SetAmbienceStrength += FixWindSoundNotPlay;
+            MapEditor.ctor += BackupSession;
+            MapEditor.Update += PressCancelToReturnGame;
         }
 
         public void Unload() {
@@ -68,6 +71,26 @@ namespace Celeste.Mod.SpeedrunTool {
             MapEditor.Update -= MakeControllerWork;
             On.Celeste.Level.Update -= AddedOpenDebugMapButton;
             On.Celeste.WindController.SetAmbienceStrength -= FixWindSoundNotPlay;
+        }
+
+        private static void PressCancelToReturnGame(MapEditor.orig_Update orig, Editor.MapEditor self) {
+            if ((Input.ESC.Pressed || Input.MenuCancel.Pressed) && sessionBackup != null) {
+                Input.ESC.ConsumePress();
+                Input.MenuCancel.ConsumePress();
+                Engine.Scene = new LevelLoader(sessionBackup);
+            }
+
+            orig(self);
+        }
+
+        private static void BackupSession(MapEditor.orig_ctor orig, Editor.MapEditor self, AreaKey area, bool reloadMapData) {
+            orig(self, area, reloadMapData);
+            if (Engine.Scene is Level level) {
+                sessionBackup = level.Session;
+            }
+            else {
+                sessionBackup = null;
+            }
         }
 
         public static void Init() {
@@ -83,7 +106,6 @@ namespace Celeste.Mod.SpeedrunTool {
 
             orig(self, strong);
         }
-
 
         private void MakeControllerWork(MapEditor.orig_Update orig, Editor.MapEditor self) {
             orig(self);

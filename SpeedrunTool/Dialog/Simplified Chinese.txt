@@ -38,7 +38,7 @@ SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH= 死亡后自动加载状态
 SPEEDRUN_TOOL_RESPAWN_SPEED=         复活速度
 SPEEDRUN_TOOL_SKIP_CHAPTER_SCENE=    跳过章节场景
 SPEEDRUN_TOOL_ROOM_TIMER=            房间计时器
-SPEEDRUN_TOOL_END_POINT_TYPE=        终点样式
+SPEEDRUN_TOOL_END_POINT_STYLE=       终点样式
 SPEEDRUN_TOOL_BUTTON_CONFIG=         按键设置
 
 # ================================== Skip Chapter Scene Options ==================================

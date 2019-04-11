@@ -35,13 +35,13 @@ namespace Celeste.Mod.SpeedrunTool {
         [YamlIgnore] [SettingIgnore] public SkipSceneOption SkipSceneOption => GetEnumFromName<SkipSceneOption>(SkipScene);
 
         public string RoomTimer { get; set; } = RoomTimerStrings.First();
-        
+       
+        [SettingRange(1, 99)]
+        [SettingName(DialogIds.NumberOfRooms)]
+        public int NumberOfRooms { get; set; } = 1; 
         public string EndPointStyle { get; set; } = EndPointStyleStrings.First();
         [YamlIgnore] [SettingIgnore] public EndPoint.SpriteStyle EndPointSpriteStyle => GetEnumFromName<EndPoint.SpriteStyle>(EndPointStyle);
 
-        [SettingRange(1, 99)]
-        [SettingName(DialogIds.NumberOfRooms)]
-        public int NumberOfRooms { get; set; } = 1;
         
 
         // ReSharper disable once UnusedMember.Global

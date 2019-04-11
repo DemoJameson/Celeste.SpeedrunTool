@@ -71,6 +71,8 @@ namespace Celeste.Mod.SpeedrunTool {
             MapEditor.Update -= MakeControllerWork;
             On.Celeste.Level.Update -= AddedOpenDebugMapButton;
             On.Celeste.WindController.SetAmbienceStrength -= FixWindSoundNotPlay;
+            MapEditor.ctor -= BackupSession;
+            MapEditor.Update -= PressCancelToReturnGame;
         }
 
         private static void PressCancelToReturnGame(MapEditor.orig_Update orig, Editor.MapEditor self) {

@@ -29,7 +29,6 @@ namespace Celeste.Mod.SpeedrunTool {
             RoomTimerManager.Instance.Load();
             StateManager.Instance.Load();
             
-            On.Celeste.PlayerDeadBody.End += QuickLoadWhenDeath;
             On.Celeste.LevelEnter.Go += SkipChapterIntro;
             On.Celeste.LevelExit.ctor += SkipChapterComplete;
             Engine.Update += RespawnSpeed;
@@ -41,7 +40,6 @@ namespace Celeste.Mod.SpeedrunTool {
             RoomTimerManager.Instance.Unload();
             StateManager.Instance.Unload();
             
-            On.Celeste.PlayerDeadBody.End -= QuickLoadWhenDeath;
             On.Celeste.LevelEnter.Go -= SkipChapterIntro;
             On.Celeste.LevelExit.ctor -= SkipChapterComplete;
             Engine.Update -= RespawnSpeed;
@@ -75,12 +73,7 @@ namespace Celeste.Mod.SpeedrunTool {
             }
         }
 
-        private static void QuickLoadWhenDeath(On.Celeste.PlayerDeadBody.orig_End orig, PlayerDeadBody self) {
-            orig(self);
-            if (Settings.Enabled && Settings.AutoLoadAfterDeath) {
-                StateManager.Instance.QuickLoad();
-            }
-        }
+
 
         private static void SkipChapterIntro(On.Celeste.LevelEnter.orig_Go orig, Session session, bool data) {
             if (!Settings.Enabled) {

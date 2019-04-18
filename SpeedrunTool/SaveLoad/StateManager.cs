@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Actions;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -169,6 +170,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (ButtonConfigUi.ClearButton.Value.Pressed && !level.Paused) {
                 ButtonConfigUi.ClearButton.Value.ConsumePress();
                 Clear();
+                RoomTimerManager.Instance.ClearPbTimes();
                 if (!level.Frozen) {
                     level.Add(new MiniTextbox(DialogIds.DialogClear));
                 }

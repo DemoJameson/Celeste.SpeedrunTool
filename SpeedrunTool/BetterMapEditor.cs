@@ -62,7 +62,7 @@ namespace Celeste.Mod.SpeedrunTool {
             MapEditor.Update += MakeControllerWork;
             On.Celeste.Level.Update += AddedOpenDebugMapButton;
             On.Celeste.WindController.SetAmbienceStrength += FixWindSoundNotPlay;
-            MapEditor.ctor += BackupSession;
+            On.Celeste.Level.Update += BackupSession;
             MapEditor.Update += PressCancelToReturnGame;
         }
 
@@ -71,7 +71,7 @@ namespace Celeste.Mod.SpeedrunTool {
             MapEditor.Update -= MakeControllerWork;
             On.Celeste.Level.Update -= AddedOpenDebugMapButton;
             On.Celeste.WindController.SetAmbienceStrength -= FixWindSoundNotPlay;
-            MapEditor.ctor -= BackupSession;
+            On.Celeste.Level.Update -= BackupSession;
             MapEditor.Update -= PressCancelToReturnGame;
         }
 
@@ -85,14 +85,9 @@ namespace Celeste.Mod.SpeedrunTool {
             orig(self);
         }
 
-        private static void BackupSession(MapEditor.orig_ctor orig, Editor.MapEditor self, AreaKey area, bool reloadMapData) {
-            orig(self, area, reloadMapData);
-            if (Engine.Scene is Level level) {
-                sessionBackup = level.Session;
-            }
-            else {
-                sessionBackup = null;
-            }
+        private static void BackupSession(On.Celeste.Level.orig_Update orig, Level self) {
+            orig(self);
+            sessionBackup = self.Session;
         }
 
         public static void Init() {
@@ -114,7 +109,7 @@ namespace Celeste.Mod.SpeedrunTool {
             if (!SpeedrunToolModule.Enabled) {
                 return;
             }
-            
+
             zoomWaitFrames--;
 
             // pressed confirm button teleport to the select room
@@ -172,7 +167,7 @@ namespace Celeste.Mod.SpeedrunTool {
             if (!SpeedrunToolModule.Enabled) {
                 return;
             }
-            
+
             On.Celeste.LevelLoader.ctor += FixTeleportProblems;
             orig(self, level, at);
             On.Celeste.LevelLoader.ctor -= FixTeleportProblems;

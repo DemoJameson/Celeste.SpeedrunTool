@@ -165,6 +165,7 @@ namespace Celeste.Mod.SpeedrunTool {
         private void MapEditorOnLoadLevel(MapEditor.orig_LoadLevel orig, Editor.MapEditor self,
             LevelTemplate level, Vector2 at) {
             if (!SpeedrunToolModule.Enabled) {
+                orig(self, level, at);
                 return;
             }
 

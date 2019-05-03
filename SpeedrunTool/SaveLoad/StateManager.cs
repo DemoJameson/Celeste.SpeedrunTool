@@ -10,6 +10,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class StateManager {
         public const float FrozenTime = 34 * 0.017f;
 
+        // TODO：存档后修改辅助模式设置读档后会崩溃
+        
         private readonly List<AbstractEntityAction> entityActions = new List<AbstractEntityAction> {
             new BadelineBoostAction(),
             new BadelineOldsiteAction(),

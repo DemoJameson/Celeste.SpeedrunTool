@@ -28,6 +28,7 @@ namespace Celeste.Mod.SpeedrunTool {
             BetterMapEditor.Instance.Load();
             RoomTimerManager.Instance.Load();
             StateManager.Instance.Load();
+            DeathStatistics.Load();
             
             On.Celeste.LevelEnter.Go += SkipChapterIntro;
             On.Celeste.LevelExit.ctor += SkipChapterComplete;
@@ -39,6 +40,7 @@ namespace Celeste.Mod.SpeedrunTool {
             BetterMapEditor.Instance.Unload();
             RoomTimerManager.Instance.Unload();
             StateManager.Instance.Unload();
+            DeathStatistics.Unload();
             
             On.Celeste.LevelEnter.Go -= SkipChapterIntro;
             On.Celeste.LevelExit.ctor -= SkipChapterComplete;
@@ -50,6 +52,7 @@ namespace Celeste.Mod.SpeedrunTool {
             BetterMapEditor.Init();
             StateManager.Instance.Init();
             RoomTimerManager.Instance.Init();
+            DeathStatistics.Init();
         }
 
         private static void RespawnSpeed(Engine.orig_Update orig, Monocle.Engine self, GameTime time) {

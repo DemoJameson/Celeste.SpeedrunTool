@@ -54,6 +54,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ButtonConfigUi.cs" />
+    <Compile Include="DeathStatistics.cs" />
     <Compile Include="DialogIds.cs" />
     <Compile Include="Extensions\CelesteExtensions.cs" />
     <Compile Include="Extensions\CommonExtensions.cs" />

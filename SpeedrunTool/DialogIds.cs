@@ -18,6 +18,7 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string SpeedrunTool = "SPEEDRUN_TOOL";
         public const string Enabled = "SPEEDRUN_TOOL_ENABLED";
         public const string AutoLoadAfterDeath = "SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH";
+        public const string DeathStatistics = "SPEEDRUN_TOOL_DEATH_STATISTICS";
         public const string RespawnSpeed = "SPEEDRUN_TOOL_RESPAWN_SPEED";
         public const string SkipChapterScene = "SPEEDRUN_TOOL_SKIP_CHAPTER_SCENE";
         public const string RoomTimer = "SPEEDRUN_TOOL_ROOM_TIMER";

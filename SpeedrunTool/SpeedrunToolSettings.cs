@@ -20,6 +20,9 @@ namespace Celeste.Mod.SpeedrunTool {
         private static readonly List<string> EndPointStyleStrings = GetEnumNames<EndPoint.SpriteStyle>();
 
         [SettingName(DialogIds.Enabled)] public bool Enabled { get; set; } = true;
+        
+        [SettingName(DialogIds.DeathStatistics)]
+        public bool DeathStatistics { get; set; } = false;
 
         [SettingName(DialogIds.AutoLoadAfterDeath)]
         public bool AutoLoadAfterDeath { get; set; } = true;

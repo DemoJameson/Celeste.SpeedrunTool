@@ -10,7 +10,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class StateManager {
         public const float FrozenTime = 34 * 0.017f;
 
-        // TODO：存档后修改辅助模式设置读档后会崩溃
+        // TODO: 5B 镜子处撞击一个开关后存档再撞另外一个开关无法触发剧情
+        // TODO: 死亡黑屏时清除存档有一定几率卡死
         
         private readonly List<AbstractEntityAction> entityActions = new List<AbstractEntityAction> {
             new BadelineBoostAction(),
@@ -221,7 +222,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             player.CameraAnchorLerp = SavedPlayer.CameraAnchorLerp;
             player.CameraAnchorIgnoreX = SavedPlayer.CameraAnchorIgnoreX;
             player.CameraAnchorIgnoreY = SavedPlayer.CameraAnchorIgnoreY;
-            player.Dashes = SavedPlayer.Dashes;
+            player.Dashes = Math.Min(SavedPlayer.Dashes, player.MaxDashes);
 
             level.Camera.CopyFrom(camera);
             level.CoreMode = session.CoreMode;

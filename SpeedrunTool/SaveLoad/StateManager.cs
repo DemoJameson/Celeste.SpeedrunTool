@@ -60,11 +60,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             new ZipMoverAction()
         };
 
-        private Camera camera;
-        private LoadState loadState = LoadState.None;
         public Player SavedPlayer;
+        private Camera savedCamera;
+        private LoadState loadState = LoadState.None;
 
-        private Session session;
+        private Session savedSession;
         private Session.CoreModes sessionCoreModeBackup;
 
         public bool IsLoadStart => loadState == LoadState.LoadStart;
@@ -73,7 +73,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         public bool IsLoadComplete => loadState == LoadState.LoadComplete;
 
 
-        private bool IsSaved => session != null && SavedPlayer != null && camera != null;
+        private bool IsSaved => savedSession != null && SavedPlayer != null && savedCamera != null;
 
         public void Load() {
             On.Celeste.Level.DoScreenWipe += QuickLoadWhenDeath;
@@ -113,8 +113,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             // 章节切换时清除保存的状态
-            if (IsSaved && (session.Area.ID != self.Session.Area.ID ||
-                            session.Area.Mode != self.Session.Area.Mode)) {
+            if (IsSaved && (savedSession.Area.ID != self.Session.Area.ID ||
+                            savedSession.Area.Mode != self.Session.Area.Mode)) {
                 Clear();
             }
 
@@ -190,11 +190,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             entityActions.ForEach(action => action.OnQuickSave(level));
 
             sessionCoreModeBackup = level.Session.CoreMode;
-            session = level.Session.DeepClone();
-            session.CoreMode = level.CoreMode;
+            savedSession = level.Session.DeepClone();
+            savedSession.CoreMode = level.CoreMode;
             level.Session.CoreMode = level.CoreMode;
             SavedPlayer = player;
-            camera = level.Camera;
+            savedCamera = level.Camera;
 
             // 防止被恢复了位置的熔岩烫死
             On.Celeste.Player.Die -= DisableDie;
@@ -209,13 +209,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             loadState = LoadState.LoadStart;
-            Session sessionCopy = session.DeepClone();
+            Session sessionCopy = savedSession.DeepClone();
             On.Celeste.Player.Die -= DisableDie;
             On.Celeste.Player.Die += DisableDie;
             Engine.Scene = new LevelLoader(sessionCopy, sessionCopy.RespawnPoint);
         }
 
         private void QuickLoadStart(Level level, Player player) {
+            level.Session.Inventory = savedSession.Inventory;
+            
             player.JustRespawned = SavedPlayer.JustRespawned;
             player.Position = SavedPlayer.Position;
             player.CameraAnchor = SavedPlayer.CameraAnchor;
@@ -224,8 +226,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             player.CameraAnchorIgnoreY = SavedPlayer.CameraAnchorIgnoreY;
             player.Dashes = Math.Min(SavedPlayer.Dashes, player.MaxDashes);
 
-            level.Camera.CopyFrom(camera);
-            level.CoreMode = session.CoreMode;
+            level.Camera.CopyFrom(savedCamera);
+            level.CoreMode = savedSession.CoreMode;
             level.Session.CoreMode = sessionCoreModeBackup;
 
             entityActions.ForEach(action => action.OnQuickLoadStart(level));
@@ -286,9 +288,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             On.Celeste.Player.Die -= DisableDie;
-            session = null;
+            savedSession = null;
             SavedPlayer = null;
-            camera = null;
+            savedCamera = null;
             loadState = LoadState.None;
 
             entityActions.ForEach(action => action.OnClear());

@@ -170,7 +170,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 return true;
             }
 
-            if (ButtonConfigUi.ClearButton.Value.Pressed && !level.Paused) {
+            if (ButtonConfigUi.ClearButton.Value.Pressed && !level.Paused && IsLoadComplete) {
                 ButtonConfigUi.ClearButton.Value.ConsumePress();
                 Clear();
                 RoomTimerManager.Instance.ClearPbTimes();

@@ -9,8 +9,6 @@ using Monocle;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class StateManager {
         public const float FrozenTime = 34 * 0.017f;
-
-        // TODO: 死亡黑屏时清除存档有一定几率卡死
         
         private readonly List<AbstractEntityAction> entityActions = new List<AbstractEntityAction> {
             new BadelineBoostAction(),
@@ -112,10 +110,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 return;
             }
 
-            // 章节切换时清除保存的状态
+            // 章节切换时清除保存的状态以及房间计时器自定终点
             if (IsSaved && (savedSession.Area.ID != self.Session.Area.ID ||
                             savedSession.Area.Mode != self.Session.Area.Mode)) {
                 Clear();
+                RoomTimerManager.Instance.ClearPbTimes();
             }
 
             // 尽快设置人物的位置与镜头，然后冻结游戏等待人物复活

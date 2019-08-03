@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using Celeste.Editor;
@@ -64,6 +65,7 @@ namespace Celeste.Mod.SpeedrunTool {
             On.Celeste.WindController.SetAmbienceStrength += FixWindSoundNotPlay;
             On.Celeste.Level.Update += BackupSession;
             MapEditor.Update += PressCancelToReturnGame;
+            On.Celeste.OshiroTrigger.ctor += RestoreOshiroTrigger;
         }
 
         public void Unload() {
@@ -73,6 +75,36 @@ namespace Celeste.Mod.SpeedrunTool {
             On.Celeste.WindController.SetAmbienceStrength -= FixWindSoundNotPlay;
             On.Celeste.Level.Update -= BackupSession;
             MapEditor.Update -= PressCancelToReturnGame;
+            On.Celeste.OshiroTrigger.ctor -= RestoreOshiroTrigger;
+        }
+
+        // 修复 3C 第三面最后的传送点 Oshiro 不出现的问题
+        private void RestoreOshiroTrigger(On.Celeste.OshiroTrigger.orig_ctor orig, OshiroTrigger self,
+            EntityData data,
+            Vector2 offset) {
+            orig(self, data, offset);
+
+            Vector2 oshiro3C = new Vector2(1520, -272);
+            Level level = null;
+            if (Engine.Scene is LevelLoader levelLoader) {
+                level = levelLoader.Level;
+            }
+            else if (Engine.Scene is Level) {
+                level = (Level) Engine.Scene;
+            }
+
+            if (level != null && level.Session.Area.ToString() == "3HH" && level.StartPosition != null && level.Session.GetSpawnPoint((Vector2) level.StartPosition) == oshiro3C) {
+                self.Add(new Coroutine(OnEnter(self)));
+            }
+        }
+
+        private IEnumerator OnEnter(OshiroTrigger self) {
+            Player player = self.SceneAs<Level>().GetPlayer();
+            if (player != null) {
+                self.OnEnter(player);
+            }
+
+            yield break;
         }
 
         private static void PressCancelToReturnGame(MapEditor.orig_Update orig, Editor.MapEditor self) {
@@ -179,9 +211,9 @@ namespace Celeste.Mod.SpeedrunTool {
             if (session.StartCheckpoint == null && startPosition != null) {
                 Vector2 spawnPoint = session.GetSpawnPoint((Vector2) startPosition);
 
+                FixCoreMode(session);
                 FixBadelineChase(session, spawnPoint);
                 FixHugeMessRoomLight(session);
-                FixCoreMode(session);
             }
 
             orig(self, session, startPosition);

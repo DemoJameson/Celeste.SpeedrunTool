@@ -33,7 +33,6 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static EntityID ToEntityId(this EntityData entityData) {
-            // 因为 ID 有可能重复，所以加上起点坐标的信息
             return new EntityID(entityData.Level.Name, entityData.ID);
         }
 

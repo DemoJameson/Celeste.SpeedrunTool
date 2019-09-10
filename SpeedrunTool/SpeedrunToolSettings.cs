@@ -144,8 +144,7 @@ namespace Celeste.Mod.SpeedrunTool {
                 string enumName = Enum.GetNames(typeof(T))[GetEnumNames<T>().IndexOf(name)];
                 return (T) Enum.Parse(typeof(T), enumName);
             }
-            catch (ArgumentException e) {
-                e.LogDetailed();
+            catch (ArgumentException) {
                 return (T) Enum.Parse(typeof(T), Enum.GetNames(typeof(T))[0]);
             }
         }

@@ -22,7 +22,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             if (IsLoadStart && savedBoosters.ContainsKey(entityId)) {
                 Booster savedBooster = savedBoosters[entityId];
 
-                if ((bool) savedBooster.GetPrivateField("boostingPlayer")) {
+                if (savedBooster.BoostingPlayer) {
                     self.Add(new Coroutine(BoostPlayer(self, savedBooster)));
                 }
                 else if ((float) savedBooster.GetPrivateField("respawnTimer") > 0f) {

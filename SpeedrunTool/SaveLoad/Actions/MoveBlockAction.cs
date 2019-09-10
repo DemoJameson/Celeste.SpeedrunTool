@@ -32,7 +32,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private static IEnumerator TriggerBlock(MoveBlock self) {
-            self.OnStaticMoverTrigger();
+            self.OnStaticMoverTrigger(null);
             yield break;
         }
 

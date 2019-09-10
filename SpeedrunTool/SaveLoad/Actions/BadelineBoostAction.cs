@@ -2,11 +2,11 @@ using System.Collections.Generic;
 using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
+using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class BadelineBoostAction : AbstractEntityAction {
         private Dictionary<EntityID, Vector2[]> savedNodes = new Dictionary<EntityID, Vector2[]>();
-//        private long _lastPlayTime;
 
         public override void OnQuickSave(Level level) {
             savedNodes = level.Tracker.GetCastEntities<BadelineBoost>().ToDictionary(boost => boost.GetEntityId(),
@@ -24,25 +24,36 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             orig(self, data, offset);
         }
 
-        private void RestoreBadelineBoostState(On.Celeste.BadelineBoost.orig_ctor_Vector2Array_bool orig,
-            BadelineBoost self, Vector2[] nodes, bool lockCamera) {
+        private void RestoreBadelineBoostState(On.Celeste.BadelineBoost.orig_ctor_Vector2Array_bool_bool_bool_bool_bool orig,
+            BadelineBoost self, Vector2[] nodes, bool lockCamera, bool canSkip, bool finalCh9Boost, bool finalCh9GoldenBoost, bool finalCh9Dialog) {
             EntityID entityId = self.GetEntityId();
+            if (entityId.Equals(default(EntityID))) {
+                Level level = null;
+                if (Engine.Scene is Level) {
+                    level = (Level) Engine.Scene;
+                } else if (Engine.Scene is LevelLoader levelLoader) {
+                    level = levelLoader.Level;
+                }
+                entityId = new EntityID(level?.Session.Level, nodes.GetHashCode());
+                self.SetEntityId(entityId);
+            }
+
             if (IsLoadStart) {
                 if (savedNodes.ContainsKey(entityId)) {
                     Vector2[] savedNodes = this.savedNodes[entityId];
                     if (savedNodes.Length == 0) {
-                        orig(self, nodes.Skip(nodes.Length - 1).ToArray(), false);
+                        orig(self, nodes.Skip(nodes.Length - 1).ToArray(), false, canSkip, finalCh9Boost, finalCh9GoldenBoost, finalCh9Dialog);
                     }
                     else {
-                        orig(self, savedNodes, savedNodes.Length != 1);
+                        orig(self, savedNodes, savedNodes.Length != 1, canSkip, finalCh9Boost, finalCh9GoldenBoost, finalCh9Dialog);
                     }
                 }
                 else {
-                    orig(self, nodes.Skip(nodes.Length - 1).ToArray(), false);
+                    orig(self, nodes.Skip(nodes.Length - 1).ToArray(), false, canSkip, finalCh9Boost, finalCh9GoldenBoost, finalCh9Dialog);
                 }
             }
             else {
-                orig(self, nodes, lockCamera);
+                orig(self, nodes, lockCamera, canSkip, finalCh9Boost, finalCh9GoldenBoost, finalCh9Dialog);
             }
         }
 
@@ -61,13 +72,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnLoad() {
             On.Celeste.BadelineBoost.ctor_EntityData_Vector2 += AttachEntityId;
-            On.Celeste.BadelineBoost.ctor_Vector2Array_bool += RestoreBadelineBoostState;
+            On.Celeste.BadelineBoost.ctor_Vector2Array_bool_bool_bool_bool_bool += RestoreBadelineBoostState;
             On.Celeste.BadelineBoost.OnPlayer += FixMultipleTriggers;
         }
 
         public override void OnUnload() {
             On.Celeste.BadelineBoost.ctor_EntityData_Vector2 -= AttachEntityId;
-            On.Celeste.BadelineBoost.ctor_Vector2Array_bool -= RestoreBadelineBoostState;
+            On.Celeste.BadelineBoost.ctor_Vector2Array_bool_bool_bool_bool_bool -= RestoreBadelineBoostState;
             On.Celeste.BadelineBoost.OnPlayer -= FixMultipleTriggers;
         }
 

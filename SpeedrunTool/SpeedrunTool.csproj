@@ -77,6 +77,8 @@
     <Compile Include="SaveLoad\Actions\DashBlockAction.cs" />
     <Compile Include="SaveLoad\Actions\DashSwitchAction.cs" />
     <Compile Include="SaveLoad\Actions\DreamBlockAction.cs" />
+    <Compile Include="SaveLoad\Actions\FloatySpaceBlockAction.cs" />
+    <Compile Include="SaveLoad\Actions\PufferAction.cs" />
     <Compile Include="SaveLoad\Actions\RotateSpinnerAction.cs" />
     <Compile Include="SaveLoad\Actions\DustStaticSpinnerAction.cs" />
     <Compile Include="SaveLoad\Actions\StrawberryAction.cs" />

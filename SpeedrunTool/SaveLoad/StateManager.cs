@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
@@ -29,12 +30,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             new FinalBossMovingBlockAction(),
             new FinalBossAction(),
             new FireBallAction(),
+            new FloatySpaceBlockAction(),
             new FlyFeatherAction(),
             new ExitBlockAction(),
             new KeyAction(),
             new MoveBlockAction(),
             new MovingPlatformAction(),
-            new OshiroTriggerAction(),
+            new PufferAction(),
             new ReflectionTentaclesAction(),
             new RefillAction(),
             new RisingLavaAction(),
@@ -215,6 +217,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             Engine.Scene = new LevelLoader(sessionCopy, sessionCopy.RespawnPoint);
         }
 
+        // 等待人物重生完毕后设置各项状态
         private void QuickLoadStart(Level level, Player player) {
             level.Session.Inventory = savedSession.Inventory;
             
@@ -253,12 +256,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
         }
 
-        // 等待人物重生完毕后设置各项状态
+        private static IEnumerator RestorePlayerDash(Player player, int dashNumber) {
+            player.Dashes = dashNumber;
+            yield break;
+        }
+
         private void QuickLoading(Level level, Player player) {
             player.Facing = SavedPlayer.Facing;
             player.Ducking = SavedPlayer.Ducking;
             player.Speed = SavedPlayer.Speed;
             player.Stamina = SavedPlayer.Stamina;
+            player.Add(new Coroutine(RestorePlayerDash(player, SavedPlayer.Dashes)));
+                
             if (SavedPlayer.StateMachine.State == Player.StStarFly) {
                 player.StateMachine.State = Player.StStarFly;
                 On.Celeste.Player.StarFlyUpdate += RestoreStarFlyTimer;

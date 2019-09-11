@@ -58,7 +58,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             savedDreamBlocks.Clear();
         }
 
-
         public override void OnLoad() {
             On.Celeste.DreamBlock.ctor_EntityData_Vector2 += ResotreDreamBlockPosition;
         }

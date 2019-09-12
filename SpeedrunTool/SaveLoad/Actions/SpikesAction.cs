@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
@@ -20,9 +21,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (IsLoadStart) {
                 if (savedSpikes.ContainsKey(entityId)) {
-                    self.Position = savedSpikes[entityId].Position;
-                    self.Collidable = savedSpikes[entityId].Collidable;
-                    self.Visible = savedSpikes[entityId].Visible;
+                    Spikes savedSpike = savedSpikes[entityId];
+                    if (savedSpike.Get<StaticMover>().Platform is CassetteBlock) {
+                        return;
+                    }
+                    self.Position = savedSpike.Position;
+                    self.Collidable = savedSpike.Collidable;
+                    self.Visible = savedSpike.Visible;
                 }
                 else {
                     self.Add(new RemoveSelfComponent());

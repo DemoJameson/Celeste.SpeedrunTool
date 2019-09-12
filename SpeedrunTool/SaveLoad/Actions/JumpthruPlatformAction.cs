@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
@@ -19,7 +20,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (IsLoadStart && savedJumpthruPlatforms.ContainsKey(entityId)) {
                 JumpthruPlatform savedJumpthruPlatform = savedJumpthruPlatforms[entityId];
-                self.Position = savedJumpthruPlatform.Position;
+                self.Add(new RestorePositionComponent(self, savedJumpthruPlatform));
             }
         }
 

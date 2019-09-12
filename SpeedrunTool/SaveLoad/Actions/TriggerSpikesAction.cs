@@ -20,6 +20,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (IsLoadStart) {
                 if (savedTriggerSpikes.ContainsKey(entityId)) {
+                    TriggerSpikes savedTriggerSpike = savedTriggerSpikes[entityId];
+                    if (savedTriggerSpike.Get<StaticMover>().Platform is CassetteBlock) {
+                        return;
+                    }
                     self.Position = savedTriggerSpikes[entityId].Position;
                     self.Collidable = savedTriggerSpikes[entityId].Collidable;
                     self.Visible = savedTriggerSpikes[entityId].Visible;

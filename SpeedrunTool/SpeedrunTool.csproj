@@ -73,6 +73,7 @@
     <Compile Include="SaveLoad\Actions\CloudAction.cs" />
     <Compile Include="SaveLoad\Actions\ClutterSwitchAction.cs" />
     <Compile Include="SaveLoad\Actions\CrumblePlatformAction.cs" />
+    <Compile Include="SaveLoad\Actions\CrumbleWallOnRumbleAction.cs" />
     <Compile Include="SaveLoad\Actions\CrushBlockAction.cs" />
     <Compile Include="SaveLoad\Actions\DashBlockAction.cs" />
     <Compile Include="SaveLoad\Actions\DashSwitchAction.cs" />

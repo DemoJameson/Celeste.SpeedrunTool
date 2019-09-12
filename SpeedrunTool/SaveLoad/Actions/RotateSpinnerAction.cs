@@ -14,6 +14,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public override void OnQuickSave(Level level) {
             List<Entity> entities = level.Tracker.GetEntities<BladeRotateSpinner>();
             entities.AddRange(level.Tracker.GetEntities<DustRotateSpinner>());
+            entities.AddRange(level.Tracker.GetEntities<StarRotateSpinner>());
             savedRotateSpinners.AddRange(entities.Cast<RotateSpinner>());
         }
 
@@ -55,6 +56,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public override void OnInit() {
             typeof(BladeRotateSpinner).AddToTracker();
             typeof(DustRotateSpinner).AddToTracker();
+            typeof(StarRotateSpinner).AddToTracker();
         }
     }
 }

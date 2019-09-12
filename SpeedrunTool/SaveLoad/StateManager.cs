@@ -11,12 +11,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class StateManager {
         public const float FrozenTime = 34 * 0.017f;
         
-        // TODO 1. 破碎的石块
-        // TODO 2. 太空裸露的漂浮石块
-        // TODO 3. 鸟的还原优化
-        // TODO 4. 节奏块上下刺脱离了
-        // TODO 5. 最后一面有风的时候保存恢复会被压到画面底下
-        // TODO 6. j-00 进入下一面的时候会卡几帧（鸟或 Badeline 残留在画面中）
+        // TODO 1. 鸟的还原优化
+        // TODO 2. j-00 进入下一面的时候会卡几帧（鸟或 Badeline 残留在画面中）
+        // TODO 3. 无法保存从其他房间拿进来的水母
         
         private readonly List<AbstractEntityAction> entityActions = new List<AbstractEntityAction> {
             new BadelineBoostAction(),
@@ -27,6 +24,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             new CloudAction(),
             new ClutterSwitchAction(),
             new CrumblePlatformAction(),
+            new CrumbleWallOnRumbleAction(),
             new CrushBlockAction(),
             new CrystalStaticSpinnerAction(),
             new DashBlockAction(),
@@ -239,9 +237,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             player.CameraAnchorLerp = SavedPlayer.CameraAnchorLerp;
             player.CameraAnchorIgnoreX = SavedPlayer.CameraAnchorIgnoreX;
             player.CameraAnchorIgnoreY = SavedPlayer.CameraAnchorIgnoreY;
-            player.Dashes = Math.Min(SavedPlayer.Dashes, player.MaxDashes);
-
+            player.ForceCameraUpdate = SavedPlayer.ForceCameraUpdate;
+            player.EnforceLevelBounds = SavedPlayer.EnforceLevelBounds;
             level.Camera.CopyFrom(savedCamera);
+            level.CameraLockMode = SavedPlayer.SceneAs<Level>().CameraLockMode;
+            level.CameraOffset = SavedPlayer.SceneAs<Level>().CameraOffset;
+            
+            player.MuffleLanding = SavedPlayer.MuffleLanding;
+            player.Dashes = Math.Min(SavedPlayer.Dashes, player.MaxDashes);
             level.CoreMode = savedSession.CoreMode;
             level.Session.CoreMode = sessionCoreModeBackup;
 

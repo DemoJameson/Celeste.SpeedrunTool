@@ -19,6 +19,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (IsLoadStart && savedFloatySpaceBlocks.ContainsKey(entityId)) {
                 FloatySpaceBlock savedFloatySpaceBlock = savedFloatySpaceBlocks[entityId];
+                self.Position = savedFloatySpaceBlock.Position;
                 self.CopyPrivateField("yLerp", savedFloatySpaceBlock);
                 self.CopyPrivateField("sinkTimer", savedFloatySpaceBlock);
                 self.CopyPrivateField("sineWave", savedFloatySpaceBlock);

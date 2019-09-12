@@ -11,6 +11,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class StateManager {
         public const float FrozenTime = 34 * 0.017f;
         
+        // TODO 1. 破碎的石块
+        // TODO 2. 太空裸露的漂浮石块
+        // TODO 3. 鸟的还原优化
+        // TODO 4. 节奏块上下刺脱离了
+        // TODO 5. 最后一面有风的时候保存恢复会被压到画面底下
+        // TODO 6. j-00 进入下一面的时候会卡几帧（鸟或 Badeline 残留在画面中）
+        
         private readonly List<AbstractEntityAction> entityActions = new List<AbstractEntityAction> {
             new BadelineBoostAction(),
             new BadelineOldsiteAction(),
@@ -30,10 +37,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             new FinalBossMovingBlockAction(),
             new FinalBossAction(),
             new FireBallAction(),
+            new FlingBirdAction(),
             new FloatySpaceBlockAction(),
             new FlyFeatherAction(),
             new ExitBlockAction(),
+            new GliderAction(),
             new KeyAction(),
+            new JumpthruPlatformAction(),
+            new LightningAction(),
+            new LightningBreakerBoxAction(),
             new MoveBlockAction(),
             new MovingPlatformAction(),
             new PufferAction(),

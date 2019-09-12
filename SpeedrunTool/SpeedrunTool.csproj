@@ -77,6 +77,11 @@
     <Compile Include="SaveLoad\Actions\DashBlockAction.cs" />
     <Compile Include="SaveLoad\Actions\DashSwitchAction.cs" />
     <Compile Include="SaveLoad\Actions\DreamBlockAction.cs" />
+    <Compile Include="SaveLoad\Actions\FlingBirdAction.cs" />
+    <Compile Include="SaveLoad\Actions\GliderAction.cs" />
+    <Compile Include="SaveLoad\Actions\JumpthruPlatformAction.cs" />
+    <Compile Include="SaveLoad\Actions\LightningAction.cs" />
+    <Compile Include="SaveLoad\Actions\LightningBreakerBoxAction.cs" />
     <Compile Include="SaveLoad\Actions\OshiroTriggerAction.cs" />
     <Compile Include="SaveLoad\Actions\FloatySpaceBlockAction.cs" />
     <Compile Include="SaveLoad\Actions\PufferAction.cs" />

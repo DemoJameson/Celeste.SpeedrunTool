@@ -32,7 +32,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             self.CopyPrivateField("resetTimer", savedSnowball);
             SineWave sine = self.Get<SineWave>();
             SineWave savedSine = savedSnowball.Get<SineWave>();
-            sine.SetPrivateProperty("Counter", savedSine.Counter);
+            sine.Counter = savedSine.Counter;
         }
 
         private void WindAttackTriggerOnOnEnter(On.Celeste.WindAttackTrigger.orig_OnEnter orig, WindAttackTrigger self,

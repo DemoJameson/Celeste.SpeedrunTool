@@ -1,13 +1,14 @@
 using System.Collections.Generic;
+using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class GliderAction : AbstractEntityAction {
-        private Dictionary<EntityID, Glider> savedGliders = new Dictionary<EntityID, Glider>();
+        private List<Glider> savedGliders = new List<Glider>();
 
         public override void OnQuickSave(Level level) {
-            savedGliders = level.Tracker.GetDictionary<Glider>();
+            savedGliders = level.Tracker.GetCastEntities<Glider>().ToList();
         }
 
         private void RestoreGliderPosition(On.Celeste.Glider.orig_ctor_EntityData_Vector2 orig,
@@ -17,17 +18,35 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             self.SetEntityId(entityId);
             orig(self, data, offset);
 
-            if (IsLoadStart && savedGliders.ContainsKey(entityId)) {
-                Glider savedGlider = savedGliders[entityId];
-                self.Position = savedGlider.Position;
-                self.Speed = savedGlider.Speed;
-                self.CopyPrivateField("prevLiftSpeed", savedGlider);
-                self.CopyPrivateField("noGravityTimer", savedGlider);
-                self.CopyPrivateField("highFrictionTimer", savedGlider);
-                self.CopyPrivateField("bubble", savedGlider);
-                self.CopyPrivateField("destroyed", savedGlider);
-                self.CopyPrivateField("destroyed", savedGlider);
+            if (IsLoadStart && savedGliders.Exists(glider => glider.GetEntityId().Equals(entityId))) {
+                Glider savedGlider = savedGliders.Find(glider => glider.GetEntityId().Equals(entityId));
+                savedGliders.Remove(savedGlider);
+                
+                RestoreState(self, savedGlider);
             }
+        }
+
+        public override void OnQuickLoadStart(Level level) {
+            if (savedGliders.Count == 0) {
+                return;
+            }
+
+            foreach (var savedGlider in savedGliders) {
+                var createdGlider = new Glider(savedGlider.Position, (bool) savedGlider.GetPrivateField("bubble"), (bool) savedGlider.GetPrivateField("tutorial"));
+                createdGlider.SetEntityId(savedGlider.GetEntityId());
+                level.Add(createdGlider);
+                RestoreState(createdGlider, savedGlider);
+            }
+        }
+
+        private static void RestoreState(Glider self, Glider savedGlider) {
+            self.Position = savedGlider.Position;
+            self.Speed = savedGlider.Speed;
+            self.CopyPrivateField("prevLiftSpeed", savedGlider);
+            self.CopyPrivateField("noGravityTimer", savedGlider);
+            self.CopyPrivateField("highFrictionTimer", savedGlider);
+            self.CopyPrivateField("bubble", savedGlider);
+            self.CopyPrivateField("destroyed", savedGlider);
         }
 
         public override void OnClear() {

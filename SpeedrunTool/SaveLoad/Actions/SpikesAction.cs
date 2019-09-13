@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
@@ -22,10 +21,17 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             if (IsLoadStart) {
                 if (savedSpikes.ContainsKey(entityId)) {
                     Spikes savedSpike = savedSpikes[entityId];
-                    if (savedSpike.Get<StaticMover>().Platform is CassetteBlock) {
+                    var platform = savedSpike.Get<StaticMover>()?.Platform;
+                    if (platform is CassetteBlock) {
                         return;
                     }
-                    self.Position = savedSpike.Position;
+
+                    if (platform is FloatySpaceBlock) {
+                        self.Add(new RestorePositionComponent(self, savedSpike));
+                    }
+                    else {
+                        self.Position = savedSpike.Position;
+                    }
                     self.Collidable = savedSpike.Collidable;
                     self.Visible = savedSpike.Visible;
                 }

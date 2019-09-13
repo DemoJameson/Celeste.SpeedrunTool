@@ -21,6 +21,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     self.Position = savedLightningBreakerBox.Position;
                     self.CopyPrivateField("health", savedLightningBreakerBox);
                     self.CopyPrivateField("sink", savedLightningBreakerBox);
+                    SineWave sine = self.Get<SineWave>();
+                    SineWave savedSine = savedLightningBreakerBox.Get<SineWave>();
+                    sine.Counter = savedSine.Counter;
 
                     Sprite sprite = (Sprite) self.GetPrivateField("sprite");
                     int health = (int) savedLightningBreakerBox.GetPrivateField("health");
@@ -32,10 +35,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                         self.Collidable = false;
                         self.Add(new Coroutine(BreakBox(self)));
                     }
-//                    
-//                    SineWave sineWave = (SineWave) self.GetPrivateField("sine");
-//                    SineWave savedSineWave = (SineWave) savedLightningBreakerBox.GetPrivateField("sine");
-//                    sineWave.Counter = savedSineWave.Counter;
                 }
                 else {
                     self.Visible = false;

@@ -11,9 +11,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class StateManager {
         public const float FrozenTime = 34 * 0.017f;
         
-        // TODO 1. 鸟的还原优化
         // TODO 2. j-00 进入下一面的时候会卡几帧（鸟或 Badeline 残留在画面中）
-        // TODO 3. 无法保存从其他房间拿进来的水母
         
         private readonly List<AbstractEntityAction> entityActions = new List<AbstractEntityAction> {
             new BadelineBoostAction(),
@@ -143,7 +141,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             // 人物复活完毕后设置人物相关属性
             if (IsSaved && (IsLoading || IsLoadFrozen) && player != null &&
-                (player.StateMachine.State == Player.StNormal || player.StateMachine.State == Player.StSwim)) {
+                (player.StateMachine.State == Player.StNormal || player.StateMachine.State == Player.StSwim || player.StateMachine.State == Player.StFlingBird)) {
                 QuickLoading(self, player);
             }
         }

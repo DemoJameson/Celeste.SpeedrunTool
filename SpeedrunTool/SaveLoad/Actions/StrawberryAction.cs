@@ -5,7 +5,6 @@ using Microsoft.Xna.Framework;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class StrawberryAction : AbstractEntityAction {
         private readonly Dictionary<EntityID, Strawberry> savedBerries = new Dictionary<EntityID, Strawberry>();
-        private const string EntityDataKey = "EntityDataKey";
 
         public override void OnQuickSave(Level level) {
             if (!(level.Tracker.GetEntity<Player>() is Player player)) {
@@ -21,7 +20,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         private void RestoreStrawberryPosition(On.Celeste.Strawberry.orig_ctor orig, Strawberry self,
             EntityData entityData, Vector2 offset, EntityID entityId) {
-            self.SetExtendedDataValue(EntityDataKey, entityData);
+            self.SetEntityData(entityData);
             orig(self, entityData, offset, entityId);
 
             if (IsLoadStart && savedBerries.ContainsKey(entityId)) {
@@ -44,7 +43,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     restoreBerry = addedBerry;
                 }
                 else {
-                    restoreBerry = new Strawberry(savedBerry.GetExtendedDataValue<EntityData>(EntityDataKey),
+                    restoreBerry = new Strawberry(savedBerry.GetEntityData(),
                         Vector2.Zero, savedBerry.ID);
                     level.Add(restoreBerry);
                 }

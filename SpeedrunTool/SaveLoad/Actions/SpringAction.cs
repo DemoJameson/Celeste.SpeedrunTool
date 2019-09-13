@@ -20,7 +20,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (IsLoadStart) {
                 if (springs.ContainsKey(entityId)) {
-                    self.Position = springs[entityId].Position;
+                    var savedSpring = springs[entityId];
+                    var platform = savedSpring.Get<StaticMover>()?.Platform;
+                    if (platform is FloatySpaceBlock) {
+                        self.Add(new RestorePositionComponent(self, savedSpring));
+                    }
+                    else {
+                        self.Position = savedSpring.Position;
+                    }
                 }
                 else {
                     self.Add(new RemoveSelfComponent());

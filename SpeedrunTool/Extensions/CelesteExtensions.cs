@@ -6,6 +6,7 @@ using Monocle;
 namespace Celeste.Mod.SpeedrunTool.Extensions {
     public static class CelesteExtensions {
         private const string EntityIdKey = "EntityId";
+        private const string EntityDataKey = "EntityDataKey";
 
         public static void AddToTracker(this Type type) {
             if (!Tracker.StoredEntityTypes.Contains(type)) {
@@ -30,6 +31,14 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
         public static EntityID GetEntityId(this Entity entity) {
             return entity.GetExtendedDataValue<EntityID>(EntityIdKey);
+        }
+        
+        public static void SetEntityData(this Entity entity, EntityData entityData) {
+            entity.SetExtendedDataValue(EntityDataKey, entityData);
+        }
+
+        public static EntityData GetEntityData(this Entity entity) {
+            return entity.GetExtendedDataValue<EntityData>(EntityDataKey);
         }
 
         public static EntityID ToEntityId(this EntityData entityData) {

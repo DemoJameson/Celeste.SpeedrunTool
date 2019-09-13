@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
 using Monocle;
 
@@ -27,13 +28,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private void RestoreBadelineBoostState(On.Celeste.BadelineBoost.orig_ctor_Vector2Array_bool_bool_bool_bool_bool orig,
             BadelineBoost self, Vector2[] nodes, bool lockCamera, bool canSkip, bool finalCh9Boost, bool finalCh9GoldenBoost, bool finalCh9Dialog) {
             EntityID entityId = self.GetEntityId();
+            
+            Level level = null;
+            if (Engine.Scene is Level) {
+                level = (Level) Engine.Scene;
+            } else if (Engine.Scene is LevelLoader levelLoader) {
+                level = levelLoader.Level;
+            }
+            
             if (entityId.Equals(default(EntityID))) {
-                Level level = null;
-                if (Engine.Scene is Level) {
-                    level = (Level) Engine.Scene;
-                } else if (Engine.Scene is LevelLoader levelLoader) {
-                    level = levelLoader.Level;
-                }
+
                 entityId = new EntityID(level?.Session.Level, nodes.GetHashCode());
                 self.SetEntityId(entityId);
             }
@@ -51,6 +55,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 else {
                     orig(self, nodes.Skip(nodes.Length - 1).ToArray(), false, canSkip, finalCh9Boost, finalCh9GoldenBoost, finalCh9Dialog);
                 }
+                if (level != null && !level.Bounds.Contains( (int) self.Position.X, (int) self.Position.Y)) {
+                    self.Add(new RemoveSelfComponent());
+                }
+                
             }
             else {
                 orig(self, nodes, lockCamera, canSkip, finalCh9Boost, finalCh9GoldenBoost, finalCh9Dialog);

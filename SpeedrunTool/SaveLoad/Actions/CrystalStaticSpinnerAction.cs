@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
@@ -20,7 +21,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             orig(self, data, offset, color);
 
             if (IsLoadStart && savedSpinners.ContainsKey(entityId)) {
-                self.Position = savedSpinners[entityId].Position;
+                var savedSpinner = savedSpinners[entityId];
+                var platform = savedSpinner.Get<StaticMover>()?.Platform;
+                if (platform is FloatySpaceBlock) {
+                    self.Add(new RestorePositionComponent(self, savedSpinner));
+                }
+                else {
+                    self.Position = savedSpinner.Position;
+                }
             }
         }
 

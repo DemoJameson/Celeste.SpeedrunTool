@@ -24,7 +24,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
                 SineWave sineWave = self.Get<SineWave>();
                 SineWave savedSineWave = savedBumper.Get<SineWave>();
-                sineWave.SetPrivateProperty("Counter", savedSineWave.Counter);
+                sineWave.Counter = savedSineWave.Counter;
 
 
                 Tween savedTween = savedBumper.Get<Tween>();

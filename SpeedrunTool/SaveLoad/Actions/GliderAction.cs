@@ -6,9 +6,11 @@ using Microsoft.Xna.Framework;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class GliderAction : AbstractEntityAction {
         private List<Glider> savedGliders = new List<Glider>();
+        private List<Glider> savedGlidersCopy = new List<Glider>();
 
         public override void OnQuickSave(Level level) {
             savedGliders = level.Tracker.GetCastEntities<Glider>().ToList();
+            savedGlidersCopy = level.Tracker.GetCastEntities<Glider>().ToList();
         }
 
         private void RestoreGliderPosition(On.Celeste.Glider.orig_ctor_EntityData_Vector2 orig,
@@ -20,18 +22,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (IsLoadStart && savedGliders.Exists(glider => glider.GetEntityId().Equals(entityId))) {
                 Glider savedGlider = savedGliders.Find(glider => glider.GetEntityId().Equals(entityId));
-                savedGliders.Remove(savedGlider);
+                savedGlidersCopy.Remove(savedGlider);
                 
                 RestoreState(self, savedGlider);
             }
         }
 
         public override void OnQuickLoadStart(Level level) {
-            if (savedGliders.Count == 0) {
+            if (savedGlidersCopy.Count == 0) {
                 return;
             }
 
-            foreach (var savedGlider in savedGliders) {
+            foreach (var savedGlider in savedGlidersCopy) {
                 var createdGlider = new Glider(savedGlider.Position, (bool) savedGlider.GetPrivateField("bubble"), (bool) savedGlider.GetPrivateField("tutorial"));
                 createdGlider.SetEntityId(savedGlider.GetEntityId());
                 level.Add(createdGlider);
@@ -51,6 +53,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnClear() {
             savedGliders.Clear();
+            savedGlidersCopy.Clear();
         }
 
         public override void OnLoad() {

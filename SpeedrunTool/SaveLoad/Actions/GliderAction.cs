@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
@@ -20,11 +21,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             self.SetEntityId(entityId);
             orig(self, data, offset);
 
-            if (IsLoadStart && savedGliders.Exists(glider => glider.GetEntityId().Equals(entityId))) {
-                Glider savedGlider = savedGliders.Find(glider => glider.GetEntityId().Equals(entityId));
-                savedGlidersCopy.Remove(savedGlider);
+            if (IsLoadStart) {
+                if (savedGliders.Exists(glider => glider.GetEntityId().Equals(entityId))) {
+                    Glider savedGlider = savedGliders.Find(glider => glider.GetEntityId().Equals(entityId));
+                    savedGlidersCopy.Remove(savedGlider);
                 
-                RestoreState(self, savedGlider);
+                    RestoreState(self, savedGlider);
+                }
+                else {
+                    self.Add(new RemoveSelfComponent());
+                }
             }
         }
 
@@ -42,6 +48,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private static void RestoreState(Glider self, Glider savedGlider) {
+            if (!savedGlider.Collidable) {
+                self.Add(new RemoveSelfComponent());
+            }
             self.Position = savedGlider.Position;
             self.Speed = savedGlider.Speed;
             self.CopyPrivateField("prevLiftSpeed", savedGlider);

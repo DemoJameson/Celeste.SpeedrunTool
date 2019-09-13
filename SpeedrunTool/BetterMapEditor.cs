@@ -30,6 +30,15 @@ namespace Celeste.Mod.SpeedrunTool {
             "11", "12b", "12c", "12d", "12", "13"
         };
 
+        private readonly List<Vector2> excludeFarewellCassettePoints = new List<Vector2> {
+            new Vector2(43632, -9976),
+            new Vector2(49448, -10296)
+        };
+
+        private readonly List<string> farewellCassetteRooms = new List<string> {
+            "i-00","i-00b","i-01","i-02","i-03","i-04","i-05","j-00"
+        };
+
         private readonly List<Vector2> excludeDreamRespawnPoints = new List<Vector2> {
             new Vector2(288, 152),
             new Vector2(632, 144),
@@ -66,6 +75,7 @@ namespace Celeste.Mod.SpeedrunTool {
             On.Celeste.Level.Update += BackupSession;
             MapEditor.Update += PressCancelToReturnGame;
             On.Celeste.OshiroTrigger.ctor += RestoreOshiroTrigger;
+            On.Celeste.Commands.CmdLoad += CommandsOnCmdLoad;
         }
 
         public void Unload() {
@@ -76,6 +86,18 @@ namespace Celeste.Mod.SpeedrunTool {
             On.Celeste.Level.Update -= BackupSession;
             MapEditor.Update -= PressCancelToReturnGame;
             On.Celeste.OshiroTrigger.ctor -= RestoreOshiroTrigger;
+            On.Celeste.Commands.CmdLoad -= CommandsOnCmdLoad;
+        }
+
+        private void CommandsOnCmdLoad(On.Celeste.Commands.orig_CmdLoad orig, int id, string level) {
+            if (!SpeedrunToolModule.Enabled) {
+                orig(id, level);
+                return;
+            }
+
+            On.Celeste.LevelLoader.ctor += FixTeleportProblems;
+            orig(id, level);
+            On.Celeste.LevelLoader.ctor -= FixTeleportProblems;
         }
 
         // 修复 3C 第三面最后的传送点 Oshiro 不出现的问题
@@ -93,7 +115,8 @@ namespace Celeste.Mod.SpeedrunTool {
                 level = (Level) Engine.Scene;
             }
 
-            if (level != null && level.Session.Area.ToString() == "3HH" && level.StartPosition != null && level.Session.GetSpawnPoint((Vector2) level.StartPosition) == oshiro3C) {
+            if (level != null && level.Session.Area.ToString() == "3HH" && level.StartPosition != null &&
+                level.Session.GetSpawnPoint((Vector2) level.StartPosition) == oshiro3C) {
                 self.Add(new Coroutine(OnEnter(self)));
             }
         }
@@ -208,15 +231,34 @@ namespace Celeste.Mod.SpeedrunTool {
 
         private void FixTeleportProblems(On.Celeste.LevelLoader.orig_ctor orig, LevelLoader self, Session session,
             Vector2? startPosition) {
-            if (session.StartCheckpoint == null && startPosition != null) {
-                Vector2 spawnPoint = session.GetSpawnPoint((Vector2) startPosition);
+            if (session.StartCheckpoint == null) {
+                Vector2 spawnPoint;
+                if (startPosition != null) {
+                    spawnPoint = session.GetSpawnPoint((Vector2) startPosition);
+                }
+                else {
+                    Rectangle bounds = session.LevelData.Bounds;
+                    spawnPoint = session.GetSpawnPoint(new Vector2(bounds.Left, bounds.Bottom));
+                }
 
                 FixCoreMode(session);
                 FixBadelineChase(session, spawnPoint);
                 FixHugeMessRoomLight(session);
+                FixFarewellCassetteRoomLight(session, spawnPoint);
             }
 
             orig(self, session, startPosition);
+        }
+
+        private void FixFarewellCassetteRoomLight(Session session, Vector2 spawnPoint) {
+//            Logger.Log("Exclude Respawn Point", $"new Vector2({spawnPoint.X}, {spawnPoint.Y}),");
+            if (excludeFarewellCassettePoints.Contains(spawnPoint)) {
+                return;
+            }
+
+            if (session.Area.ToString() == "10" && farewellCassetteRooms.Contains(session.Level)) {
+                session.ColorGrade = "feelingdown";
+            }
         }
 
         private void FixBadelineChase(Session session, Vector2 spawnPoint) {

@@ -89,6 +89,7 @@
     <Compile Include="SaveLoad\Actions\RotateSpinnerAction.cs" />
     <Compile Include="SaveLoad\Actions\DustStaticSpinnerAction.cs" />
     <Compile Include="SaveLoad\Actions\StrawberryAction.cs" />
+    <Compile Include="SaveLoad\Actions\TalkComponentUIAction.cs" />
     <Compile Include="SaveLoad\Actions\TempleMirrorPortalAction.cs" />
     <Compile Include="SaveLoad\Actions\TrackSpinnerAction.cs" />
     <Compile Include="SaveLoad\Actions\ExitBlockAction.cs" />

@@ -9,9 +9,7 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class StateManager {
-        public const float FrozenTime = 34 * 0.017f;
-        
-        // TODO 2. j-00 进入下一面的时候会卡几帧（鸟或 Badeline 残留在画面中）
+        public const float FrozenTime = 34 * 0.017f;       
         
         private readonly List<AbstractEntityAction> entityActions = new List<AbstractEntityAction> {
             new BadelineBoostAction(),
@@ -58,6 +56,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             new StrawberryAction(),
             new SwapBlockAction(),
             new SwitchGateAction(),
+            new TalkComponentUIAction(),
             new TempleCrackedBlockAction(),
             new TempleGateAction(),
             new TempleMirrorPortalAction(),

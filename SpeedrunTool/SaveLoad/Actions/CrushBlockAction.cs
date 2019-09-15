@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
+using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class CrushBlockAction : AbstractEntityAction {
@@ -24,9 +26,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     CrushBlock savedCrushBlock = savedCrushBlocks[entityId];
                     if (self.Position != savedCrushBlock.Position) {
                         self.Position = savedCrushBlock.Position;
+
                         object returnStack = savedCrushBlock.GetPrivateField("returnStack").Copy();
                         self.SetPrivateField("returnStack", returnStack);
-//                        self.CopyPrivateField("returnStack", savedCrushBlock);
                         self.Add(new RestoreCrushBlockStateComponent(savedCrushBlock));
                     }
                 }
@@ -71,6 +73,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             On.Celeste.CrushBlock.Attack += CrushBlockOnAttack;
             On.Celeste.CrushBlock.MoveHCheck += CrushBlockOnMoveHCheck;
             On.Celeste.CrushBlock.MoveVCheck += CrushBlockOnMoveVCheck;
+            On.Celeste.CrushBlock.Update += CrushBlockOnUpdate;
+        }
+
+        private static void CrushBlockOnUpdate(On.Celeste.CrushBlock.orig_Update orig, CrushBlock self) {
+            try {
+                orig(self);
+            }
+            catch (Exception) {
+                ((Sprite) self.GetPrivateField("face")).Play("idle");
+            }
         }
 
         public override void OnUnload() {
@@ -78,6 +90,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             On.Celeste.CrushBlock.Attack -= CrushBlockOnAttack;
             On.Celeste.CrushBlock.MoveHCheck -= CrushBlockOnMoveHCheck;
             On.Celeste.CrushBlock.MoveVCheck -= CrushBlockOnMoveVCheck;
+            On.Celeste.CrushBlock.Update += CrushBlockOnUpdate;
         }
 
         public override void OnInit() {
@@ -89,6 +102,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private class RestoreCrushBlockStateComponent : Monocle.Component {
+            private readonly MethodInfo attackMethodInfo =
+                typeof(CrushBlock).GetMethod("Attack", BindingFlags.Instance | BindingFlags.NonPublic);
+
             private readonly CrushBlock savedCrushBlock;
 
             public RestoreCrushBlockStateComponent(CrushBlock savedCrushBlock) : base(true, false) {
@@ -97,11 +113,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             public override void Update() {
                 object crushDir = savedCrushBlock.GetPrivateField("crushDir");
+
                 if (crushDir != null) {
                     MuteAudio("event:/game/06_reflection/crushblock_activate");
 
-                    MethodInfo attackMethodInfo =
-                        Entity.GetType().GetMethod("Attack", BindingFlags.Instance | BindingFlags.NonPublic);
                     if ((Vector2) crushDir != Vector2.Zero) {
                         attackMethodInfo?.Invoke(Entity, new[] {crushDir});
                     }
@@ -113,7 +128,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                         Entity.SetExtendedDataValue("IsReturning", true);
                     }
 
-                    Entity.SetPrivateField("canActivate", true);
+                    Entity.SetPrivateField("canActivate", !(bool) savedCrushBlock.GetPrivateField("chillOut"));
                 }
 
                 RemoveSelf();

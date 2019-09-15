@@ -39,7 +39,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             yield break;
         }
 
-        private void SpriteOnPlay(Sprite.orig_Play orig, Monocle.Sprite self, string id, bool restart,
+        private static void SpriteOnPlay(Sprite.orig_Play orig, Monocle.Sprite self, string id, bool restart,
             bool randomizeFrame) {
             orig(self, id, restart, randomizeFrame);
 

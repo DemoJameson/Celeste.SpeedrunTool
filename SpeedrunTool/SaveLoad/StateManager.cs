@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
@@ -87,12 +86,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         public void Load() {
             On.Celeste.Level.DoScreenWipe += QuickLoadWhenDeath;
             On.Celeste.Level.Update += LevelOnUpdate;
+            On.Celeste.PlayerHair.Render += PlayerHairOnRender;
             entityActions.ForEach(action => action.OnLoad());
         }
 
         public void Unload() {
             On.Celeste.Level.DoScreenWipe -= QuickLoadWhenDeath;
             On.Celeste.Level.Update -= LevelOnUpdate;
+            On.Celeste.PlayerHair.Render -= PlayerHairOnRender;
             entityActions.ForEach(action => action.OnUnload());
         }
 
@@ -107,6 +108,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             ButtonConfigUi.UpdateClearButton();
         }
 
+        // 防止读档设置冲刺次数时游戏崩溃
+        private static void PlayerHairOnRender(On.Celeste.PlayerHair.orig_Render orig, PlayerHair self) {
+            try {
+                orig(self);
+            }
+            catch (ArgumentOutOfRangeException) {
+                // ignored
+            }
+        }
+        
         private void LevelOnUpdate(On.Celeste.Level.orig_Update orig, Level self) {
             if (!SpeedrunToolModule.Enabled) {
                 orig(self);
@@ -225,7 +236,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             Engine.Scene = new LevelLoader(sessionCopy, sessionCopy.RespawnPoint);
         }
 
-        // 等待人物重生完毕后设置各项状态
+        // 尽快设置人物的位置与镜头，然后冻结游戏等待人物复活
         private void QuickLoadStart(Level level, Player player) {
             level.Session.Inventory = savedSession.Inventory;
             
@@ -242,7 +253,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             level.CameraOffset = SavedPlayer.SceneAs<Level>().CameraOffset;
             
             player.MuffleLanding = SavedPlayer.MuffleLanding;
-            player.Dashes = Math.Min(SavedPlayer.Dashes, player.MaxDashes);
+            player.Dashes = SavedPlayer.Dashes;
             level.CoreMode = savedSession.CoreMode;
             level.Session.CoreMode = sessionCoreModeBackup;
 
@@ -258,28 +269,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
         }
 
-        private void UpdateEntitiesWhenFreeze(Level level, Player player) {
-            if (player == null) {
-                level.Frozen = false;
-            }
-            else if (player.StateMachine.State != Player.StNormal) {
-                player.Update();
-
-                entityActions.ForEach(action => action.OnUpdateEntitiesWhenFreeze(level));
-            }
-        }
-
-        private static IEnumerator RestorePlayerDash(Player player, int dashNumber) {
-            player.Dashes = dashNumber;
-            yield break;
-        }
-
+        // 人物复活完毕后设置人物相关属性
         private void QuickLoading(Level level, Player player) {
             player.Facing = SavedPlayer.Facing;
             player.Ducking = SavedPlayer.Ducking;
             player.Speed = SavedPlayer.Speed;
             player.Stamina = SavedPlayer.Stamina;
-            player.Add(new Coroutine(RestorePlayerDash(player, SavedPlayer.Dashes)));
                 
             if (SavedPlayer.StateMachine.State == Player.StStarFly) {
                 player.StateMachine.State = Player.StStarFly;
@@ -291,6 +286,17 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             loadState = LoadState.LoadComplete;
             On.Celeste.Player.Die -= DisableDie;
+        }
+
+        private void UpdateEntitiesWhenFreeze(Level level, Player player) {
+            if (player == null) {
+                level.Frozen = false;
+            }
+            else if (player.StateMachine.State != Player.StNormal) {
+                player.Update();
+
+                entityActions.ForEach(action => action.OnUpdateEntitiesWhenFreeze(level));
+            }
         }
 
         private int RestoreStarFlyTimer(On.Celeste.Player.orig_StarFlyUpdate orig, Player self) {

@@ -12,8 +12,10 @@ using MapEditor = On.Celeste.Editor.MapEditor;
 
 namespace Celeste.Mod.SpeedrunTool {
     public class BetterMapEditor {
+        private static readonly Lazy<bool> _EnableQoL = new Lazy<bool>(()=>Everest.Version <= new Version(1, 1078, 0));
+        private static bool EnableQoL => _EnableQoL.Value;
+        
         private const string StartChasingLevel = "3";
-        private static Session sessionBackup;
 
         // 3A 杂乱房间部分的光线调暗
         private readonly List<string> darkRooms = new List<string> {
@@ -72,7 +74,6 @@ namespace Celeste.Mod.SpeedrunTool {
             MapEditor.Update += MakeControllerWork;
             On.Celeste.Level.Update += AddedOpenDebugMapButton;
             On.Celeste.WindController.SetAmbienceStrength += FixWindSoundNotPlay;
-            On.Celeste.Level.Update += BackupSession;
             MapEditor.Update += PressCancelToReturnGame;
             On.Celeste.OshiroTrigger.ctor += RestoreOshiroTrigger;
             On.Celeste.Commands.CmdLoad += CommandsOnCmdLoad;
@@ -83,7 +84,6 @@ namespace Celeste.Mod.SpeedrunTool {
             MapEditor.Update -= MakeControllerWork;
             On.Celeste.Level.Update -= AddedOpenDebugMapButton;
             On.Celeste.WindController.SetAmbienceStrength -= FixWindSoundNotPlay;
-            On.Celeste.Level.Update -= BackupSession;
             MapEditor.Update -= PressCancelToReturnGame;
             On.Celeste.OshiroTrigger.ctor -= RestoreOshiroTrigger;
             On.Celeste.Commands.CmdLoad -= CommandsOnCmdLoad;
@@ -131,18 +131,14 @@ namespace Celeste.Mod.SpeedrunTool {
         }
 
         private static void PressCancelToReturnGame(MapEditor.orig_Update orig, Editor.MapEditor self) {
-            if ((Input.ESC.Pressed || Input.MenuCancel.Pressed) && sessionBackup != null) {
+            Session currentSession = (Engine.Scene as Level)?.Session ?? SaveData.Instance?.CurrentSession;
+            if ((Input.ESC.Pressed || Input.MenuCancel.Pressed) && currentSession != null) {
                 Input.ESC.ConsumePress();
                 Input.MenuCancel.ConsumePress();
-                Engine.Scene = new LevelLoader(sessionBackup);
+                Engine.Scene = new LevelLoader(currentSession);
             }
 
             orig(self);
-        }
-
-        private static void BackupSession(On.Celeste.Level.orig_Update orig, Level self) {
-            orig(self);
-            sessionBackup = self.Session;
         }
 
         public static void Init() {
@@ -161,7 +157,7 @@ namespace Celeste.Mod.SpeedrunTool {
 
         private void MakeControllerWork(MapEditor.orig_Update orig, Editor.MapEditor self) {
             orig(self);
-            if (!SpeedrunToolModule.Enabled) {
+            if (!SpeedrunToolModule.Enabled || !EnableQoL) {
                 return;
             }
 
@@ -210,6 +206,10 @@ namespace Celeste.Mod.SpeedrunTool {
 
         private static void AddedOpenDebugMapButton(On.Celeste.Level.orig_Update orig, Level self) {
             orig(self);
+            
+            if (!SpeedrunToolModule.Enabled || !EnableQoL) {
+                return;
+            }
 
             if (ButtonConfigUi.OpenDebugButton.Value.Pressed && !self.Paused) {
                 ButtonConfigUi.OpenDebugButton.Value.ConsumePress();

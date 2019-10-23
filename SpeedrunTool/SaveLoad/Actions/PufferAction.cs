@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
 using Monocle;
 
@@ -20,20 +21,23 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (IsLoadStart && savedPuffers.ContainsKey(entityId)) {
                 Puffer savedPuffer = savedPuffers[entityId];
-                self.Position = savedPuffer.Position;
                 self.CopyPrivateField("state", savedPuffer);
                 self.CopyPrivateField("goneTimer", savedPuffer);
                 self.CopyPrivateField("cannotHitTimer", savedPuffer);
+                self.CopyPrivateField("cantExplodeTimer", savedPuffer);
                 self.CopyPrivateField("alertTimer", savedPuffer);
                 self.CopyPrivateField("eyeSpin", savedPuffer);
                 self.CopyPrivateField("hitSpeed", savedPuffer);
                 self.CopyPrivateField("lastPlayerPos", savedPuffer);
+                self.CopyPrivateField("lastSpeedPosition", savedPuffer);
                 self.CopyPrivateField("scale", savedPuffer);
                 self.CopyPrivateField("playerAliveFade", savedPuffer);
 
                 Sprite sprite = (Sprite) self.GetPrivateField("sprite");
                 Sprite savedSprite = (Sprite) savedPuffer.GetPrivateField("sprite");
                 sprite.Play(savedSprite.CurrentAnimationID);
+                
+                self.Add(new RestorePositionComponent(self, savedPuffer));
             }
         }
 

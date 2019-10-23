@@ -35,11 +35,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             savedFlingBirds.Clear();
         }
 
-        public override void OnLoad() {
-            On.Celeste.FlingBird.ctor_EntityData_Vector2 += RestoreFlingBirdPosition;
-            On.Celeste.FlingBird.Update += FlingBirdOnUpdate;
-        }
-
         private void FlingBirdOnUpdate(On.Celeste.FlingBird.orig_Update orig, FlingBird self) {
             if (waitForUpdate) {
                 waitForUpdate = false;
@@ -76,6 +71,19 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
 
             orig(self);
+        }
+
+        public override void OnLoad() {
+            On.Celeste.FlingBird.ctor_EntityData_Vector2 += RestoreFlingBirdPosition;
+            On.Celeste.FlingBird.Update += FlingBirdOnUpdate;
+            On.Celeste.FlingBird.OnPlayer += FlingBirdOnOnPlayer;
+        }
+
+        private static void FlingBirdOnOnPlayer(On.Celeste.FlingBird.orig_OnPlayer orig, FlingBird self, Player player) {
+            if (player.SceneAs<Level>().Frozen) {
+                return;
+            }
+            orig(self, player);
         }
 
         public override void OnUnload() {

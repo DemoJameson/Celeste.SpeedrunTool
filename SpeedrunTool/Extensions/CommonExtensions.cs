@@ -32,11 +32,11 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static object GetPrivateField(this object obj, string name) {
-            return obj.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(obj);
+            return obj.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)?.GetValue(obj);
         }
 
         public static void SetPrivateField(this object obj, string name, object value) {
-            obj.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)?.SetValue(obj, value);
+            obj.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)?.SetValue(obj, value);
         }
 
         public static void CopyPrivateField(this object obj, string name, object fromObj) {
@@ -58,7 +58,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static object InvokePrivateMethod(this object obj, string methodName, params object[] parameters) {
-            return obj.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic)
+            return obj.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
                 ?.Invoke(obj, parameters);
         }
 

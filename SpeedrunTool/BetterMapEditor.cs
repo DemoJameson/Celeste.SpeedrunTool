@@ -207,7 +207,7 @@ namespace Celeste.Mod.SpeedrunTool {
         private static void AddedOpenDebugMapButton(On.Celeste.Level.orig_Update orig, Level self) {
             orig(self);
             
-            if (!SpeedrunToolModule.Enabled || !EnableQoL) {
+            if (!SpeedrunToolModule.Enabled) {
                 return;
             }
 

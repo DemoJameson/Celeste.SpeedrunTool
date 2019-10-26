@@ -1,7 +1,10 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
+using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class TriggerSpikesAction : AbstractEntityAction {
@@ -30,16 +33,33 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                         self.Add(new RestorePositionComponent(self, savedTriggerSpike));
                     }
                     else {
-                        self.Position = savedTriggerSpikes[entityId].Position;
+                        self.Position = savedTriggerSpike.Position;
                     }
 
-                    self.Collidable = savedTriggerSpikes[entityId].Collidable;
-                    self.Visible = savedTriggerSpikes[entityId].Visible;
+                    self.Collidable = savedTriggerSpike.Collidable;
+                    self.Visible = savedTriggerSpike.Visible;
+                    self.Add(new Coroutine(RestoreTriggerState(self, savedTriggerSpike)));
                 }
                 else {
                     self.Add(new RemoveSelfComponent());
                 }
             }
+        }
+
+        private static IEnumerator RestoreTriggerState(TriggerSpikes self, TriggerSpikes savedTriggerSpikes) {
+            Array spikes = self.GetPrivateField("spikes") as Array;
+            Array savedSpikes = savedTriggerSpikes.GetPrivateField("spikes") as Array;
+            Array newSpikes = Activator.CreateInstance(spikes.GetType(), spikes.Length) as Array;
+            
+            for (var i = 0; i < spikes.Length; i++) {
+                var spike = spikes.GetValue(i);
+                var savedSpike = savedSpikes.GetValue(i);
+                savedSpike.CopyPrivateField("Parent", spike);
+                newSpikes.SetValue(savedSpike, i);
+            }
+            
+            self.SetPrivateField("spikes", newSpikes);
+            yield break;
         }
 
         public override void OnClear() {

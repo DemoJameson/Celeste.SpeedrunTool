@@ -16,7 +16,6 @@ namespace Celeste.Mod.SpeedrunTool {
         private static long lastTime;
         private static bool died;
         private static string causeOfDeath;
-        private static Vector2? respawnPoint;
         private static long totalLostTime = 0;
         private static bool Enabled => SpeedrunToolModule.Settings.DeathStatistics;
 
@@ -36,7 +35,8 @@ namespace Celeste.Mod.SpeedrunTool {
             On.Celeste.Player.Update -= PlayerOnUpdate;
             On.Celeste.OuiFileSelectSlot.EnterFirstArea -= OuiFileSelectSlotOnEnterFirstArea;
             On.Celeste.ChangeRespawnTrigger.OnEnter -= ChangeRespawnTriggerOnOnEnter;
-            On.Celeste.Session.SetFlag += UpdateTimerStateOnTouchFlag;
+            On.Celeste.Session.SetFlag -= UpdateTimerStateOnTouchFlag;
+            On.Celeste.LevelLoader.ctor -= LevelLoaderOnCtor;
         }
 
         public static void Init() {
@@ -50,6 +50,7 @@ namespace Celeste.Mod.SpeedrunTool {
             orig(self, session, startPosition);
             
             lastTime = SaveData.Instance.Time;
+            SpeedrunToolModule.Settings.LastDeathStatistics = Enabled;
         }
 
         private static void UpdateTimerStateOnTouchFlag(On.Celeste.Session.orig_SetFlag origSetFlag, Session session,
@@ -91,15 +92,11 @@ namespace Celeste.Mod.SpeedrunTool {
                 died = false;
                 LoggingData(self);
             }
-        }
-
-        private static void LevelOnUpdate(On.Celeste.Level.orig_Update orig, Level self) {
-            orig(self);
-
-            if (Enabled && respawnPoint != self.Session.RespawnPoint && self.Session.RespawnPoint != null) {
-                respawnPoint = self.Session.RespawnPoint;
-                lastTime = SaveData.Instance.Time;
+            
+            if (Enabled && !SpeedrunToolModule.Settings.LastDeathStatistics) {
+                self.SceneAs<Level>().Add(new MiniTextbox(DialogIds.DialogDeathStatisticsDescription));
             }
+            SpeedrunToolModule.Settings.LastDeathStatistics = Enabled;
         }
 
         private static void LevelOnNextLevel(On.Celeste.Level.orig_NextLevel orig, Level self, Vector2 at, Vector2 dir) {

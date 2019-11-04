@@ -59,5 +59,8 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string OpenDebugMap = "SPEEDRUN_TOOL_OPEN_DEBUG_MAP";
         public const string ResetRoomPb = "SPEEDRUN_TOOL_RESET_ROOM_PB";
         public const string SetEndPoint = "SPEEDRUN_TOOL_SET_END_POINT";
+        
+        // Death Statistics
+        public const string DialogDeathStatisticsDescription = "SPEEDRUN_TOOL_DIALOG_DEATH_STATISTICS_DESCRIPTION";
     }
 }

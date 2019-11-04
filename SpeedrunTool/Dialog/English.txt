@@ -84,3 +84,8 @@ SPEEDRUN_TOOL_RANDOM=    Random
 SPEEDRUN_TOOL_OPEN_DEBUG_MAP= Open Debug Map
 SPEEDRUN_TOOL_RESET_ROOM_PB=  Reset Room PB
 SPEEDRUN_TOOL_SET_END_POINT=  Set End Point
+
+# ================================== Death Statistics ==================================
+SPEEDRUN_TOOL_DIALOG_DEATH_STATISTICS_DESCRIPTION=
+    [MADELINE left normal]
+    The statistics will be saved in the {# 96EFFF}Saves/SpeedrunTool{#} folder.

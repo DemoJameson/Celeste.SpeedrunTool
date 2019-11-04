@@ -23,6 +23,8 @@ namespace Celeste.Mod.SpeedrunTool {
         
         [SettingName(DialogIds.DeathStatistics)]
         public bool DeathStatistics { get; set; } = false;
+        [YamlIgnore] [SettingIgnore] 
+        public bool LastDeathStatistics { get; set; } = false;
 
         [SettingName(DialogIds.AutoLoadAfterDeath)]
         public bool AutoLoadAfterDeath { get; set; } = true;

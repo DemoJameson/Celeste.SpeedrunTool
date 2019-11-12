@@ -8,8 +8,8 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class StateManager {
-        public const float FrozenTime = 34 * 0.017f;       
-        
+        public const float FrozenTime = 34 * 0.017f;
+
         private readonly List<AbstractEntityAction> entityActions = new List<AbstractEntityAction> {
             new BadelineBoostAction(),
             new BadelineOldsiteAction(),
@@ -68,6 +68,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             new ZipMoverAction()
         };
 
+        private bool disableDie;
+        private bool restoreStarFlyTimer;
+
         public Player SavedPlayer;
         private Camera savedCamera;
         private LoadState loadState = LoadState.None;
@@ -87,6 +90,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Celeste.Level.DoScreenWipe += QuickLoadWhenDeath;
             On.Celeste.Level.Update += LevelOnUpdate;
             On.Celeste.PlayerHair.Render += PlayerHairOnRender;
+            On.Celeste.Player.Die += DisableDie;
+            On.Celeste.Player.StarFlyUpdate += RestoreStarFlyTimer;
             entityActions.ForEach(action => action.OnLoad());
         }
 
@@ -94,6 +99,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Celeste.Level.DoScreenWipe -= QuickLoadWhenDeath;
             On.Celeste.Level.Update -= LevelOnUpdate;
             On.Celeste.PlayerHair.Render -= PlayerHairOnRender;
+            On.Celeste.Player.Die -= DisableDie;
+            On.Celeste.Player.StarFlyUpdate -= RestoreStarFlyTimer;
             entityActions.ForEach(action => action.OnUnload());
         }
 
@@ -117,7 +124,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 // ignored
             }
         }
-        
+
         private void LevelOnUpdate(On.Celeste.Level.orig_Update orig, Level self) {
             if (!SpeedrunToolModule.Enabled) {
                 orig(self);
@@ -218,8 +225,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedCamera = level.Camera;
 
             // 防止被恢复了位置的熔岩烫死
-            On.Celeste.Player.Die -= DisableDie;
-            On.Celeste.Player.Die += DisableDie;
+            disableDie = true;
 
             Engine.Scene = new LevelLoader(level.Session, level.Session.RespawnPoint);
         }
@@ -231,15 +237,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             loadState = LoadState.LoadStart;
             Session sessionCopy = savedSession.DeepClone();
-            On.Celeste.Player.Die -= DisableDie;
-            On.Celeste.Player.Die += DisableDie;
+            disableDie = true;
             Engine.Scene = new LevelLoader(sessionCopy, sessionCopy.RespawnPoint);
         }
 
         // 尽快设置人物的位置与镜头，然后冻结游戏等待人物复活
         private void QuickLoadStart(Level level, Player player) {
             level.Session.Inventory = savedSession.Inventory;
-            
+
             player.JustRespawned = SavedPlayer.JustRespawned;
             player.Position = SavedPlayer.Position;
             player.CameraAnchor = SavedPlayer.CameraAnchor;
@@ -251,7 +256,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             level.Camera.CopyFrom(savedCamera);
             level.CameraLockMode = SavedPlayer.SceneAs<Level>().CameraLockMode;
             level.CameraOffset = SavedPlayer.SceneAs<Level>().CameraOffset;
-            
+
             player.MuffleLanding = SavedPlayer.MuffleLanding;
             player.Dashes = SavedPlayer.Dashes;
             level.CoreMode = savedSession.CoreMode;
@@ -275,17 +280,17 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             player.Ducking = SavedPlayer.Ducking;
             player.Speed = SavedPlayer.Speed;
             player.Stamina = SavedPlayer.Stamina;
-                
+
             if (SavedPlayer.StateMachine.State == Player.StStarFly) {
                 player.StateMachine.State = Player.StStarFly;
-                On.Celeste.Player.StarFlyUpdate += RestoreStarFlyTimer;
+                restoreStarFlyTimer = true;
             }
 
             level.Frozen = false;
             level.PauseLock = false;
 
             loadState = LoadState.LoadComplete;
-            On.Celeste.Player.Die -= DisableDie;
+            disableDie = false;
         }
 
         private void UpdateEntitiesWhenFreeze(Level level, Player player) {
@@ -302,9 +307,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private int RestoreStarFlyTimer(On.Celeste.Player.orig_StarFlyUpdate orig, Player self) {
             int result = orig(self);
 
-            if (!(bool) self.GetPrivateField("starFlyTransforming")) {
+            if (SavedPlayer != null && restoreStarFlyTimer && !(bool) self.GetPrivateField("starFlyTransforming")) {
                 self.CopyPrivateField("starFlyTimer", SavedPlayer);
-                On.Celeste.Player.StarFlyUpdate -= RestoreStarFlyTimer;
+                restoreStarFlyTimer = false;
             }
 
             return result;
@@ -315,7 +320,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 level.Frozen = false;
             }
 
-            On.Celeste.Player.Die -= DisableDie;
+            disableDie = false;
+            restoreStarFlyTimer = false;
             savedSession = null;
             SavedPlayer = null;
             savedCamera = null;
@@ -323,18 +329,22 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             entityActions.ForEach(action => action.OnClear());
         }
-        
+
         private void QuickLoadWhenDeath(On.Celeste.Level.orig_DoScreenWipe orig, Level self, bool wipeIn, Action onComplete, bool hiresSnow) {
             if (SpeedrunToolModule.Settings.Enabled && SpeedrunToolModule.Settings.AutoLoadAfterDeath && IsSaved && onComplete == self.Reload) {
                 onComplete = QuickLoad;
             }
-            
+
             orig(self, wipeIn, onComplete, hiresSnow);
         }
 
         private PlayerDeadBody DisableDie(On.Celeste.Player.orig_Die orig, Player self, Vector2 direction,
             bool evenIfInvincible, bool registerDeathInStats) {
-            return null;
+            if (disableDie) {
+                return null;
+            }
+
+            return orig(self, direction, evenIfInvincible, registerDeathInStats);
         }
 
         // @formatter:off

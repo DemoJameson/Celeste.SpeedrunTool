@@ -3,6 +3,7 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class SnowballAction : AbstractEntityAction {
+        private bool snowballOnAdded;
         private Snowball savedSnowball;
 
         public override void OnQuickSave(Level level) {
@@ -12,19 +13,19 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public override void OnQuickLoadStart(Level level) {
             if (savedSnowball != null) {
                 Snowball snowball = new Snowball();
-                On.Celeste.Snowball.Added += SnowballOnAdded;
+                snowballOnAdded = true;
                 level.Add(snowball);
             }
         }
 
         private void SnowballOnAdded(On.Celeste.Snowball.orig_Added orig, Snowball self, Scene scene) {
-            On.Celeste.Snowball.Added -= SnowballOnAdded;
-
             orig(self, scene);
 
-            if (savedSnowball == null) {
+            if (!snowballOnAdded || savedSnowball == null) {
                 return;
             }
+
+            snowballOnAdded = false;
 
             self.Position = savedSnowball.Position;
             self.Collidable = self.Visible = savedSnowball.Collidable;
@@ -45,15 +46,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         public override void OnClear() {
+            snowballOnAdded = false;
             savedSnowball = null;
         }
 
         public override void OnLoad() {
             On.Celeste.WindAttackTrigger.OnEnter += WindAttackTriggerOnOnEnter;
+            On.Celeste.Snowball.Added += SnowballOnAdded;
         }
 
         public override void OnUnload() {
             On.Celeste.WindAttackTrigger.OnEnter -= WindAttackTriggerOnOnEnter;
+            On.Celeste.Snowball.Added -= SnowballOnAdded;
         }
 
         public override void OnInit() { }

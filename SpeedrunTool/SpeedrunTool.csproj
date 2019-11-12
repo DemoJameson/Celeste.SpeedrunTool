@@ -65,6 +65,7 @@
     <Compile Include="RoomTimer\RoomTimerData.cs" />
     <Compile Include="RoomTimer\RoomTimerManager.cs" />
     <Compile Include="SaveLoad\Actions\AbstractEntityAction.cs" />
+    <Compile Include="SaveLoad\Actions\AudioAction.cs" />
     <Compile Include="SaveLoad\Actions\BadelineBoostAction.cs" />
     <Compile Include="SaveLoad\Actions\BadelineOldsiteAction.cs" />
     <Compile Include="SaveLoad\Actions\BoosterAction.cs" />

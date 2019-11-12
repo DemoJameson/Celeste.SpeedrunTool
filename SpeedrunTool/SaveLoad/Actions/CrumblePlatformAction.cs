@@ -30,7 +30,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             if (self is CrumblePlatform && self.GetExtendedDataValue<bool>("IsFade")) {
                 self.SetExtendedDataValue("IsFade", false);
 
-                MuteAudio("event:/game/general/platform_disintegrate");
+                AudioAction.MuteAudio("event:/game/general/platform_disintegrate");
                 return Engine.Scene.Tracker.GetEntity<Player>();
             }
 

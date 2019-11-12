@@ -30,13 +30,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             TempleGate saved = savedTempleGates[self.GetEntityId()];
             if ((bool) saved.GetPrivateField("open")) {
                 if (self.Type == TempleGate.Types.TouchSwitches) {
-                    MuteAudio("event:/game/05_mirror_temple/gate_main_open");
+                    AudioAction.MuteAudio("event:/game/05_mirror_temple/gate_main_open");
                 }
 
                 self.StartOpen();
             }
             else if ((bool) self.GetPrivateField("open")) {
-                MuteAudio("event:/game/05_mirror_temple/gate_main_close");
+                AudioAction.MuteAudio("event:/game/05_mirror_temple/gate_main_close");
                 self.InvokePrivateMethod("SetHeight", self.GetPrivateField("closedHeight"));
             }
         }

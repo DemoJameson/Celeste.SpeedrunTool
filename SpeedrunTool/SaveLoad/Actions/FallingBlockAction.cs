@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class FallingBlockAction : AbstractEntityAction {
+        private bool disableShakeSfx;
         private Dictionary<EntityID, FallingBlock> fallingBlocks = new Dictionary<EntityID, FallingBlock>();
 
         public override void OnQuickSave(Level level) {
@@ -13,6 +14,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnClear() {
             fallingBlocks.Clear();
+            disableShakeSfx = false;
         }
 
         private void OnFallingBlockOnCtorVector2CharIntIntBoolBoolBool(
@@ -50,7 +52,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     FallingBlock fallingBlock = fallingBlocks[entityId];
                     self.Position = fallingBlock.Position;
                     if (fallingBlock.HasStartedFalling && !OnGround(fallingBlock)) {
-                        On.Celeste.FallingBlock.ShakeSfx += DisableShakeSfx;
+                        disableShakeSfx = true;
                         self.Triggered = true;
                     }
                 }
@@ -69,8 +71,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 fallingBlock.Position + Vector2.UnitY * downCheck);
         }
 
-        private static void DisableShakeSfx(On.Celeste.FallingBlock.orig_ShakeSfx orig, FallingBlock self) {
-            On.Celeste.FallingBlock.ShakeSfx -= DisableShakeSfx;
+        private void DisableShakeSfx(On.Celeste.FallingBlock.orig_ShakeSfx orig, FallingBlock self) {
+            if (disableShakeSfx) {
+                disableShakeSfx = false;
+                return;
+            }
+
+            orig(self);
         }
 
         public override void OnLoad() {
@@ -78,6 +85,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             On.Celeste.FallingBlock.ctor_EntityData_Vector2 += OnFallingBlockOnCtorEntityDataVector2;
             On.Celeste.FallingBlock.ctor_Vector2_char_int_int_bool_bool_bool +=
                 OnFallingBlockOnCtorVector2CharIntIntBoolBoolBool;
+            On.Celeste.FallingBlock.ShakeSfx += DisableShakeSfx;
         }
 
         public override void OnUnload() {
@@ -85,6 +93,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             On.Celeste.FallingBlock.ctor_EntityData_Vector2 -= OnFallingBlockOnCtorEntityDataVector2;
             On.Celeste.FallingBlock.ctor_Vector2_char_int_int_bool_bool_bool -=
                 OnFallingBlockOnCtorVector2CharIntIntBoolBoolBool;
+            On.Celeste.FallingBlock.ShakeSfx -= DisableShakeSfx;
         }
 
         public override void OnInit() {

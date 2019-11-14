@@ -66,7 +66,32 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingIgnore] public Keys KeyboardResetRoomPb { get; set; } = ButtonConfigUi.DefaultKeyboardResetPb;
         [SettingIgnore] public Keys KeyboardSetEndPoint { get; set; } = ButtonConfigUi.DefaultKeyboardSetEndPoint;
 
+        private TextMenu.Option<bool> firstTextMenu;
+        private TextMenu.Item lastTextMenu;
+        // ReSharper disable once UnusedMember.Global
+        public void CreateEnabledEntry(TextMenu textMenu, bool inGame) {
+            firstTextMenu = new TextMenu.OnOff(DialogIds.Enabled.DialogClean(), Enabled);
+            firstTextMenu.Change(enabled => {
+                bool isSpeedrunToolMenuItem = false;
+                textMenu.Items.ForEach(item => {
+                    if (isSpeedrunToolMenuItem) {
+                        item.Disabled = !enabled;
+                    }
+                    
+                    if (firstTextMenu == item) {
+                        isSpeedrunToolMenuItem = true;
+                    }
+                    
+                    if (lastTextMenu == item) {
+                        isSpeedrunToolMenuItem = false;
+                    }
 
+                    Enabled = enabled;
+                });
+            });
+            textMenu.Add(firstTextMenu);
+        }
+        
         // ReSharper disable once UnusedMember.Global
         public void CreateRespawnSpeedEntry(TextMenu textMenu, bool inGame) {
             textMenu.Add(
@@ -128,12 +153,13 @@ namespace Celeste.Mod.SpeedrunTool {
 
         // ReSharper disable once UnusedMember.Global
         public void CreateButtonConfigEntry(TextMenu textMenu, bool inGame) {
-            textMenu.Add(new TextMenu.Button(Dialog.Clean(DialogIds.ButtonConfig)).Pressed(() => {
+            textMenu.Add(lastTextMenu = new TextMenu.Button(Dialog.Clean(DialogIds.ButtonConfig)).Pressed(() => {
                 textMenu.Focused = false;
                 ButtonConfigUi buttonConfigUi = new ButtonConfigUi {OnClose = () => textMenu.Focused = true};
                 Engine.Scene.Add(buttonConfigUi);
                 Engine.Scene.OnEndOfFrame += (Action) (() => Engine.Scene.Entities.UpdateLists());
             }));
+            firstTextMenu.OnValueChange(Enabled);
         }
 
         private static List<string> GetEnumNames<T>() where T : struct, IConvertible {

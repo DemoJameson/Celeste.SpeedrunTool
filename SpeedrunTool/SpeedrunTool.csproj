@@ -91,6 +91,7 @@
     <Compile Include="SaveLoad\Actions\DustStaticSpinnerAction.cs" />
     <Compile Include="SaveLoad\Actions\StarJumpBlockAction.cs" />
     <Compile Include="SaveLoad\Actions\StrawberryAction.cs" />
+    <Compile Include="SaveLoad\Actions\StrawberrySeedAction.cs" />
     <Compile Include="SaveLoad\Actions\TalkComponentUIAction.cs" />
     <Compile Include="SaveLoad\Actions\TempleMirrorPortalAction.cs" />
     <Compile Include="SaveLoad\Actions\TrackSpinnerAction.cs" />

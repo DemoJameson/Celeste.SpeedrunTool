@@ -75,7 +75,7 @@ namespace Celeste.Mod.SpeedrunTool {
                 bool isSpeedrunToolMenuItem = false;
                 textMenu.Items.ForEach(item => {
                     if (isSpeedrunToolMenuItem) {
-                        item.Disabled = !enabled;
+                        item.Visible = enabled;
                     }
                     
                     if (firstTextMenu == item) {

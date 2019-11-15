@@ -21,17 +21,23 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (IsLoadStart && savedPuffers.ContainsKey(entityId)) {
                 Puffer savedPuffer = savedPuffers[entityId];
-                self.CopyPrivateField("state", savedPuffer);
-                self.CopyPrivateField("goneTimer", savedPuffer);
+                self.CopyPrivateField("alertTimer", savedPuffer);
+                self.CopyPrivateField("anchorPosition", savedPuffer);
                 self.CopyPrivateField("cannotHitTimer", savedPuffer);
                 self.CopyPrivateField("cantExplodeTimer", savedPuffer);
-                self.CopyPrivateField("alertTimer", savedPuffer);
                 self.CopyPrivateField("eyeSpin", savedPuffer);
+                self.CopyPrivateField("goneTimer", savedPuffer);
                 self.CopyPrivateField("hitSpeed", savedPuffer);
                 self.CopyPrivateField("lastPlayerPos", savedPuffer);
+                self.CopyPrivateField("lastSinePosition", savedPuffer);
                 self.CopyPrivateField("lastSpeedPosition", savedPuffer);
-                self.CopyPrivateField("scale", savedPuffer);
                 self.CopyPrivateField("playerAliveFade", savedPuffer);
+                self.CopyPrivateField("scale", savedPuffer);
+                self.CopyPrivateField("state", savedPuffer);
+                
+                SineWave sineWave = (SineWave) self.GetPrivateField("idleSine");
+                SineWave savedSineWave = (SineWave) savedPuffer.GetPrivateField("idleSine");
+                sineWave.Counter = savedSineWave.Counter;
 
                 Sprite sprite = (Sprite) self.GetPrivateField("sprite");
                 Sprite savedSprite = (Sprite) savedPuffer.GetPrivateField("sprite");

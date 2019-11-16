@@ -11,6 +11,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         public const float FrozenTime = 34 * 0.017f;
 
         private readonly List<AbstractEntityAction> entityActions = new List<AbstractEntityAction> {
+            new AudioAction(),
             new BadelineBoostAction(),
             new BadelineOldsiteAction(),
             new BoosterAction(),

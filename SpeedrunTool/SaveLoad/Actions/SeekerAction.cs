@@ -7,8 +7,10 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class SeekerAction : AbstractEntityAction {
+        private const int StRegenerate = 6;
+        
         private readonly Dictionary<EntityID, Seeker> savedSeekers = new Dictionary<EntityID, Seeker>();
-
+        
         public override void OnQuickSave(Level level) {
             savedSeekers.AddRange(level.Tracker.GetCastEntities<Seeker>());
         }
@@ -34,11 +36,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private IEnumerator SetStateMachine(Seeker self, Seeker savedSeeker) {
             StateMachine stateMachine = self.GetPrivateField("State") as StateMachine;
             int savedState = (savedSeeker.GetPrivateField("State") as StateMachine).State;
-            if (savedState == 6) {
+            if (savedState == StRegenerate) {
                 AudioAction.MuteAudio("event:/game/general/thing_booped");
             }
 
-            stateMachine.State = (savedSeeker.GetPrivateField("State") as StateMachine).State;
+            stateMachine.State = savedState;
             yield return null;
         }
 

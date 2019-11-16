@@ -1,25 +1,26 @@
+using System.Collections.Generic;
 using FMOD.Studio;
 using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class AudioAction : AbstractEntityAction {
-        private static string muteSoundSourcePath;
-        private static string muteAudioPath;
+        private static readonly List<string> MuteSoundSourcePaths = new List<string>();
+        private static readonly List<string> MuteAudioPaths = new List<string>();
 
         public static void MuteSoundSource(string audioPath) {
-            muteSoundSourcePath = audioPath;
+            MuteSoundSourcePaths.Add(audioPath);
         }
 
         public static void MuteAudio(string audioPath) {
-            muteAudioPath = audioPath;
+            MuteAudioPaths.Add(audioPath);
         }
 
         public override void OnQuickSave(Level level) {
         }
 
         public override void OnClear() {
-            muteSoundSourcePath = null;
-            muteAudioPath = null;
+            MuteSoundSourcePaths.Clear();
+            MuteAudioPaths.Clear();
         }
 
         public override void OnLoad() {
@@ -34,8 +35,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         private static SoundSource SoundSourceOnPlay(On.Celeste.SoundSource.orig_Play orig, SoundSource self, string path,
             string param, float value) {
-            if (path == muteSoundSourcePath) {
-                muteSoundSourcePath = null;
+            if (MuteSoundSourcePaths.Contains(path)) {
+                MuteSoundSourcePaths.Remove(path);
                 return null;
             }
 
@@ -44,8 +45,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         private static EventInstance AudioOnPlayStringVector2(On.Celeste.Audio.orig_Play_string_Vector2 orig, string path,
             Vector2 position) {
-            if (path == muteAudioPath) {
-                muteAudioPath = null;
+            if (MuteAudioPaths.Contains(path)) {
+                MuteAudioPaths.Remove(path);
                 return null;
             }
 

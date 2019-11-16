@@ -65,7 +65,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     follower.DelayTimer = 0f;
                     addedBerrySeed.Position = savedBerrySeed.Position;
 
-                    addedBerrySeed.InvokePrivateMethod("OnPlayer", player);
+                    addedBerrySeed.SetPrivateField("player", player);
+                    player.Leader.GainFollower(follower);
+                    addedBerrySeed.Collidable = false;
+                    addedBerrySeed.Depth = -1000000;
                 }
             }
         }

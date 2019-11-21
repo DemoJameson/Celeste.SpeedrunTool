@@ -31,12 +31,51 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return defaultValue;
         }
 
+        private static FieldInfo GetFieldInfo(object obj, string name) {
+            Type type = obj.GetType();
+            FieldInfo fieldInfo = type.GetExtendedDataValue<FieldInfo>(name);
+            if (fieldInfo == null) {
+                fieldInfo = type.GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                if (fieldInfo != null) {
+                    type.SetExtendedDataValue(name, fieldInfo);
+                }
+            }
+
+            return fieldInfo;
+        }
+        
+        private static PropertyInfo GetPropertyInfo(object obj, string name) {
+            Type type = obj.GetType();
+            PropertyInfo propertyInfo = type.GetExtendedDataValue<PropertyInfo>(name);
+            if (propertyInfo == null) {
+                propertyInfo = type.GetProperty(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                if (propertyInfo != null) {
+                    type.SetExtendedDataValue(name, propertyInfo);
+                }
+            }
+
+            return propertyInfo;
+        }
+        
+        private static MethodInfo GetMethodInfo(object obj, string name) {
+            Type type = obj.GetType();
+            MethodInfo methodInfo = type.GetExtendedDataValue<MethodInfo>(name);
+            if (methodInfo == null) {
+                methodInfo = type.GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                if (methodInfo != null) {
+                    type.SetExtendedDataValue(name, methodInfo);
+                }
+            }
+
+            return methodInfo;
+        }
+
         public static object GetPrivateField(this object obj, string name) {
-            return obj.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)?.GetValue(obj);
+            return GetFieldInfo(obj, name)?.GetValue(obj);
         }
 
         public static void SetPrivateField(this object obj, string name, object value) {
-            obj.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)?.SetValue(obj, value);
+            GetFieldInfo(obj, name)?.SetValue(obj, value);
         }
 
         public static void CopyPrivateField(this object obj, string name, object fromObj) {
@@ -44,22 +83,15 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static object GetPrivateProperty(this object obj, string name) {
-            return obj.GetType().GetProperty(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
-                ?.GetValue(obj);
+            return GetPropertyInfo(obj, name)?.GetValue(obj);
         }
 
         public static void SetPrivateProperty(this object obj, string name, object value) {
-            obj.GetType().GetProperty(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
-                ?.SetValue(obj, value);
+            GetPropertyInfo(obj, name)?.SetValue(obj, value);
         }
 
-        public static MethodInfo GetPrivateMethod(this object obj, string name) {
-            return obj.GetType().GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic);
-        }
-
-        public static object InvokePrivateMethod(this object obj, string methodName, params object[] parameters) {
-            return obj.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
-                ?.Invoke(obj, parameters);
+        public static object InvokePrivateMethod(this object obj, string name, params object[] parameters) {
+            return GetMethodInfo(obj, name)?.Invoke(obj, parameters);
         }
 
         // from https://stackoverflow.com/a/17264480
@@ -102,8 +134,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return default(T);
         }
 
-        public static T With<T>(this T item, Action<T> action)
-        {
+        public static T With<T>(this T item, Action<T> action) {
             action(item);
             return item;
         }

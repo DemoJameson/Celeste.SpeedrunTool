@@ -9,6 +9,26 @@ using Monocle;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class CrushBlockAction : AbstractEntityAction {
         private Dictionary<EntityID, CrushBlock> savedCrushBlocks = new Dictionary<EntityID, CrushBlock>();
+        
+        public override void OnClear() {
+            savedCrushBlocks.Clear();
+        }
+
+        public override void OnLoad() {
+            On.Celeste.CrushBlock.ctor_EntityData_Vector2 += RestoreCrushBlockState;
+            On.Celeste.CrushBlock.Attack += CrushBlockOnAttack;
+            On.Celeste.CrushBlock.MoveHCheck += CrushBlockOnMoveHCheck;
+            On.Celeste.CrushBlock.MoveVCheck += CrushBlockOnMoveVCheck;
+            On.Celeste.CrushBlock.Update += CrushBlockOnUpdate;
+        }
+
+        public override void OnUnload() {
+            On.Celeste.CrushBlock.ctor_EntityData_Vector2 -= RestoreCrushBlockState;
+            On.Celeste.CrushBlock.Attack -= CrushBlockOnAttack;
+            On.Celeste.CrushBlock.MoveHCheck -= CrushBlockOnMoveHCheck;
+            On.Celeste.CrushBlock.MoveVCheck -= CrushBlockOnMoveVCheck;
+            On.Celeste.CrushBlock.Update -= CrushBlockOnUpdate;
+        }
 
         public override void OnQuickSave(Level level) {
             savedCrushBlocks = level.Tracker.GetDictionary<CrushBlock>();
@@ -64,16 +84,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             return orig(self, amount);
         }
 
-        public override void OnClear() {
-            savedCrushBlocks.Clear();
-        }
-
-        public override void OnLoad() {
-            On.Celeste.CrushBlock.ctor_EntityData_Vector2 += RestoreCrushBlockState;
-            On.Celeste.CrushBlock.Attack += CrushBlockOnAttack;
-            On.Celeste.CrushBlock.MoveHCheck += CrushBlockOnMoveHCheck;
-            On.Celeste.CrushBlock.MoveVCheck += CrushBlockOnMoveVCheck;
-            On.Celeste.CrushBlock.Update += CrushBlockOnUpdate;
+        public override void OnInit() {
+            typeof(CrushBlock).AddToTracker();
         }
 
         private static void CrushBlockOnUpdate(On.Celeste.CrushBlock.orig_Update orig, CrushBlock self) {
@@ -83,18 +95,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             catch (Exception) {
                 ((Sprite) self.GetPrivateField("face")).Play("idle");
             }
-        }
-
-        public override void OnUnload() {
-            On.Celeste.CrushBlock.ctor_EntityData_Vector2 -= RestoreCrushBlockState;
-            On.Celeste.CrushBlock.Attack -= CrushBlockOnAttack;
-            On.Celeste.CrushBlock.MoveHCheck -= CrushBlockOnMoveHCheck;
-            On.Celeste.CrushBlock.MoveVCheck -= CrushBlockOnMoveVCheck;
-            On.Celeste.CrushBlock.Update += CrushBlockOnUpdate;
-        }
-
-        public override void OnInit() {
-            typeof(CrushBlock).AddToTracker();
         }
 
         public override void OnUpdateEntitiesWhenFreeze(Level level) {

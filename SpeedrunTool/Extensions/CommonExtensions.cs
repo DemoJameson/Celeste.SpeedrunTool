@@ -126,7 +126,6 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             Type type = obj.GetType();
             Func<object, object> getter = type.GetExtendedDataValue<Func<object, object>>("getter" + name);
             if (getter == null) {
-                Logger.Log("SpeedrunTool", "property getter");
                 var propertyInfo = type.GetProperty(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
                 if (propertyInfo == null) {
                     return null;
@@ -155,7 +154,6 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             Type type = obj.GetType();
             Action<object, object> setter = type.GetExtendedDataValue<Action<object, object>>("setter" + name);
             if (setter == null) {
-                Logger.Log("SpeedrunTool", "property setter");
                 var propertyInfo = type.GetProperty(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
                 if (propertyInfo == null) {
                     return;

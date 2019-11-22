@@ -6,35 +6,44 @@ using Microsoft.Xna.Framework;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class DashSwitchAction : AbstractEntityAction {
         private IEnumerable<string> pressedDashSwitches = Enumerable.Empty<string>();
+        private Dictionary<EntityID, DashSwitch> savedDashSwitches = new Dictionary<EntityID, DashSwitch>();
 
         public override void OnQuickSave(Level level) {
+            savedDashSwitches = level.Tracker.GetDictionary<DashSwitch>();
+            
             pressedDashSwitches = level.Tracker.GetEntities<DashSwitch>()
                 .Where(dashSwitch => !dashSwitch.Collidable).Select(
-                    entity => entity.GetPrivateProperty("FlagName") as string);
+                    entity => DashSwitch.GetFlagName(entity.GetEntityId()));
 
             foreach (string flagName in pressedDashSwitches) {
                 level.Session.SetFlag(flagName);
             }
         }
 
-        private DashSwitch RestoreDashSwitchState(On.Celeste.DashSwitch.orig_Create origCreate, EntityData data,
+        private DashSwitch RestoreDashSwitchState(On.Celeste.DashSwitch.orig_Create orig, EntityData data,
             Vector2 position,
             EntityID entityId) {
-            DashSwitch dashSwitch = origCreate(data, position, entityId);
-            dashSwitch.SetEntityId(entityId);
+            DashSwitch self = orig(data, position, entityId);
+            self.SetEntityId(entityId);
 
             if (IsLoadStart) {
                 string flagName = DashSwitch.GetFlagName(entityId);
                 if (pressedDashSwitches.Contains(flagName)) {
-                    dashSwitch.SetPrivateField("persistent", true);
+                    self.SetPrivateField("persistent", true);
+                }
+
+                if (savedDashSwitches.ContainsKey(entityId)) {
+                    DashSwitch savedDashSwitch = savedDashSwitches[entityId];
+                    self.Position = savedDashSwitch.Position;
                 }
             }
 
-            return dashSwitch;
+            return self;
         }
 
         public override void OnClear() {
             pressedDashSwitches = Enumerable.Empty<string>();
+            savedDashSwitches.Clear();
         }
 
         public override void OnLoad() {

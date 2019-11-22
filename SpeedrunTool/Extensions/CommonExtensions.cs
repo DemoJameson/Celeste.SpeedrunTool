@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq.Expressions;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization.Formatters.Binary;
 
@@ -31,32 +33,6 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return defaultValue;
         }
 
-        private static FieldInfo GetFieldInfo(object obj, string name) {
-            Type type = obj.GetType();
-            FieldInfo fieldInfo = type.GetExtendedDataValue<FieldInfo>(name);
-            if (fieldInfo == null) {
-                fieldInfo = type.GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-                if (fieldInfo != null) {
-                    type.SetExtendedDataValue(name, fieldInfo);
-                }
-            }
-
-            return fieldInfo;
-        }
-        
-        private static PropertyInfo GetPropertyInfo(object obj, string name) {
-            Type type = obj.GetType();
-            PropertyInfo propertyInfo = type.GetExtendedDataValue<PropertyInfo>(name);
-            if (propertyInfo == null) {
-                propertyInfo = type.GetProperty(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-                if (propertyInfo != null) {
-                    type.SetExtendedDataValue(name, propertyInfo);
-                }
-            }
-
-            return propertyInfo;
-        }
-        
         private static MethodInfo GetMethodInfo(object obj, string name) {
             Type type = obj.GetType();
             MethodInfo methodInfo = type.GetExtendedDataValue<MethodInfo>(name);
@@ -70,12 +46,76 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return methodInfo;
         }
 
+        private static Func<object, object> CompileGetter(this FieldInfo field) {
+            string methodName = field.ReflectedType.FullName + ".get_" + field.Name;
+            DynamicMethod setterMethod = new DynamicMethod(methodName, typeof(object), new[] {typeof(object)}, true);
+            ILGenerator gen = setterMethod.GetILGenerator();
+            if (field.IsStatic) {
+                gen.Emit(OpCodes.Ldsfld, field);
+                gen.Emit(field.FieldType.IsClass ? OpCodes.Castclass : OpCodes.Box, field.FieldType);
+            }
+            else {
+                gen.Emit(OpCodes.Ldarg_0);
+                gen.Emit(OpCodes.Castclass, field.DeclaringType);
+                gen.Emit(OpCodes.Ldfld, field);
+                gen.Emit(field.FieldType.IsClass ? OpCodes.Castclass : OpCodes.Box, field.FieldType);
+            }
+
+            gen.Emit(OpCodes.Ret);
+            return (Func<object, object>) setterMethod.CreateDelegate(typeof(Func<object, object>));
+        }
+
+        private static Action<object, object> CompileSetter(this FieldInfo field) {
+            string methodName = field.ReflectedType.FullName + ".set_" + field.Name;
+            DynamicMethod setterMethod = new DynamicMethod(methodName, null, new[] {typeof(object), typeof(object)}, true);
+            ILGenerator gen = setterMethod.GetILGenerator();
+            if (field.IsStatic) {
+                gen.Emit(OpCodes.Ldarg_1);
+                gen.Emit(field.FieldType.IsClass ? OpCodes.Castclass : OpCodes.Unbox_Any, field.FieldType);
+                gen.Emit(OpCodes.Stsfld, field);
+            }
+            else {
+                gen.Emit(OpCodes.Ldarg_0);
+                gen.Emit(OpCodes.Castclass, field.DeclaringType);
+                gen.Emit(OpCodes.Ldarg_1);
+                gen.Emit(field.FieldType.IsClass ? OpCodes.Castclass : OpCodes.Unbox_Any, field.FieldType);
+                gen.Emit(OpCodes.Stfld, field);
+            }
+
+            gen.Emit(OpCodes.Ret);
+            return (Action<object, object>) setterMethod.CreateDelegate(typeof(Action<object, object>));
+        }
+
         public static object GetPrivateField(this object obj, string name) {
-            return GetFieldInfo(obj, name)?.GetValue(obj);
+            Type type = obj.GetType();
+            Func<object, object> getter = type.GetExtendedDataValue<Func<object, object>>("getter" + name);
+            if (getter == null) {
+                getter = type.GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)?.CompileGetter();
+                if (getter != null) {
+                    type.SetExtendedDataValue("getter" + name, getter);
+                }
+                else {
+                    return null;
+                }
+            }
+
+            return getter(obj);
         }
 
         public static void SetPrivateField(this object obj, string name, object value) {
-            GetFieldInfo(obj, name)?.SetValue(obj, value);
+            Type type = obj.GetType();
+            Action<object, object> setter = type.GetExtendedDataValue<Action<object, object>>("setter" + name);
+            if (setter == null) {
+                setter = type.GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)?.CompileSetter();
+                if (setter != null) {
+                    type.SetExtendedDataValue("setter" + name, setter);
+                }
+                else {
+                    return;
+                }
+            }
+
+            setter(obj, value);
         }
 
         public static void CopyPrivateField(this object obj, string name, object fromObj) {
@@ -83,11 +123,66 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static object GetPrivateProperty(this object obj, string name) {
-            return GetPropertyInfo(obj, name)?.GetValue(obj);
+            Type type = obj.GetType();
+            Func<object, object> getter = type.GetExtendedDataValue<Func<object, object>>("getter" + name);
+            if (getter == null) {
+                Logger.Log("SpeedrunTool", "property getter");
+                var propertyInfo = type.GetProperty(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                if (propertyInfo == null) {
+                    return null;
+                }
+
+                var method = propertyInfo.GetGetMethod(true);
+                var exprObj = Expression.Parameter(typeof(object), "instance");
+
+                Expression<Func<object, object>> expr =
+                    Expression.Lambda<Func<object, object>>(
+                        Expression.Convert(
+                            Expression.Call(
+                                Expression.Convert(exprObj, method.DeclaringType),
+                                method),
+                            typeof(object)),
+                        exprObj);
+
+                getter = expr.Compile();
+                type.SetExtendedDataValue("getter" + name, getter);
+            }
+
+            return getter(obj);
         }
 
         public static void SetPrivateProperty(this object obj, string name, object value) {
-            GetPropertyInfo(obj, name)?.SetValue(obj, value);
+            Type type = obj.GetType();
+            Action<object, object> setter = type.GetExtendedDataValue<Action<object, object>>("setter" + name);
+            if (setter == null) {
+                Logger.Log("SpeedrunTool", "property setter");
+                var propertyInfo = type.GetProperty(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                if (propertyInfo == null) {
+                    return;
+                }
+
+                var method = propertyInfo.GetSetMethod(true);
+                if (method == null) {
+                    return;
+                }
+                
+                var exprObj = Expression.Parameter(typeof(object), "obj");
+                var exprValue = Expression.Parameter(typeof(object), "value");
+
+                Expression<Action<object, object>> expr =
+                    Expression.Lambda<Action<object, object>>(
+                        Expression.Call(
+                            Expression.Convert(exprObj, method.DeclaringType),
+                            method,
+                            Expression.Convert(exprValue, method.GetParameters()[0].ParameterType)),
+                        exprObj,
+                        exprValue);
+                setter = expr.Compile();
+                ;
+                type.SetExtendedDataValue("setter" + name, setter);
+            }
+
+            setter(obj, value);
         }
 
         public static object InvokePrivateMethod(this object obj, string name, params object[] parameters) {

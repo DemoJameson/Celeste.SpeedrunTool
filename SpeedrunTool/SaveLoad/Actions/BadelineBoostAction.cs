@@ -37,7 +37,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
             
             if (entityId.Equals(default(EntityID))) {
-
                 entityId = new EntityID(level?.Session.Level, nodes.GetHashCode());
                 self.SetEntityId(entityId);
             }

@@ -234,7 +234,7 @@ namespace Celeste.Mod.SpeedrunTool {
 
         private void FixTeleportProblems(On.Celeste.LevelLoader.orig_ctor orig, LevelLoader self, Session session,
             Vector2? startPosition) {
-            if (fixTeleportProblems && session.StartCheckpoint == null) {
+            if (fixTeleportProblems && session.StartCheckpoint == null && session.LevelData != null) {
                 Vector2 spawnPoint;
                 if (startPosition != null) {
                     spawnPoint = session.GetSpawnPoint((Vector2) startPosition);

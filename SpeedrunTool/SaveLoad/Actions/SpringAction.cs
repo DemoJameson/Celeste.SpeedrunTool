@@ -22,6 +22,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 if (springs.ContainsKey(entityId)) {
                     var savedSpring = springs[entityId];
                     var platform = savedSpring.Get<StaticMover>()?.Platform;
+                    
+                    if (platform is CassetteBlock) {
+                        return;
+                    }
+                    
                     if (platform is FloatySpaceBlock) {
                         self.Add(new RestorePositionComponent(self, savedSpring));
                     }

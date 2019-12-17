@@ -5,10 +5,10 @@ using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class LightningAction : AbstractEntityAction {
-        private Dictionary<EntityID, Lightning> savedLightning = new Dictionary<EntityID, Lightning>();
+        private Dictionary<EntityID, Lightning> savedLightnings = new Dictionary<EntityID, Lightning>();
 
         public override void OnQuickSave(Level level) {
-            savedLightning = level.Tracker.GetDictionary<Lightning>();
+            savedLightnings = level.Tracker.GetDictionary<Lightning>();
         }
 
         private void RestoreLightningState(
@@ -19,10 +19,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             orig(self, data, offset);
 
             if (IsLoadStart) {
-                if (savedLightning.ContainsKey(entityId)) {
-                    self.Position = savedLightning[entityId].Position;
-                    self.Collidable = savedLightning[entityId].Collidable;
-                    self.Visible = savedLightning[entityId].Visible;
+                if (savedLightnings.ContainsKey(entityId)) {
+                    Lightning saved = savedLightnings[entityId];
+                    self.Collidable = saved.Collidable;
+                    self.Visible = saved.Visible;
                 }
                 else {
                     self.Add(new RemoveSelfComponent());
@@ -30,20 +30,35 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
         }
 
+        private void LightningOnUpdate(On.Celeste.Lightning.orig_Update orig, Lightning self) {
+            if (IsLoadStart) {
+                EntityID entityId = self.GetEntityId();
+                if (savedLightnings.ContainsKey(entityId)) {
+                    Lightning saved = savedLightnings[entityId];
+
+                    LightningRenderer lightningRenderer = self.Scene.Tracker.GetEntity<LightningRenderer>();
+                    while (self.Position != saved.Position) {
+                        lightningRenderer?.Update();
+                        orig(self);
+                    }
+                }
+            }
+
+            orig(self);
+        }
+
         public override void OnClear() {
-            savedLightning.Clear();
+            savedLightnings.Clear();
         }
 
         public override void OnLoad() {
             On.Celeste.Lightning.ctor_EntityData_Vector2 += RestoreLightningState;
+            On.Celeste.Lightning.Update += LightningOnUpdate;
         }
 
         public override void OnUnload() {
             On.Celeste.Lightning.ctor_EntityData_Vector2 -= RestoreLightningState;
-        }
-
-        public override void OnUpdateEntitiesWhenFreeze(Level level) {
-            level.UpdateEntities<Lightning>();
+            On.Celeste.Lightning.Update -= LightningOnUpdate;
         }
 
         public override void OnInit() {

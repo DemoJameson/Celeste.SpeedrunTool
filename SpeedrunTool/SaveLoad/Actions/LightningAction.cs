@@ -1,10 +1,16 @@
+using System.Collections;
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
+using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class LightningAction : AbstractEntityAction {
+        private const string RESTORE_POSITION = "restorePosition";
+        private const string BACK = "back";
+        private const string END = "end";
+
         private Dictionary<EntityID, Lightning> savedLightnings = new Dictionary<EntityID, Lightning>();
 
         public override void OnQuickSave(Level level) {
@@ -23,6 +29,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     Lightning saved = savedLightnings[entityId];
                     self.Collidable = saved.Collidable;
                     self.Visible = saved.Visible;
+                    self.SetExtendedDataValue(RESTORE_POSITION, true);
                 }
                 else {
                     self.Add(new RemoveSelfComponent());
@@ -31,20 +38,38 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private void LightningOnUpdate(On.Celeste.Lightning.orig_Update orig, Lightning self) {
-            if (IsLoadStart) {
+            if (self.GetExtendedDataValue<bool>(RESTORE_POSITION)) {
+                self.SetExtendedDataValue(RESTORE_POSITION, false);
                 EntityID entityId = self.GetEntityId();
-                if (savedLightnings.ContainsKey(entityId)) {
-                    Lightning saved = savedLightnings[entityId];
+                Lightning saved = savedLightnings[entityId];
 
-                    LightningRenderer lightningRenderer = self.Scene.Tracker.GetEntity<LightningRenderer>();
-                    while (self.Position != saved.Position) {
+                LightningRenderer lightningRenderer = self.Scene.Tracker.GetEntity<LightningRenderer>();
+                
+                if (saved.GetExtendedDataValue<bool>(BACK)) {
+                    Vector2 end = saved.GetExtendedDataValue<Vector2>(END);
+                    while (self.Position != end) {
                         lightningRenderer?.Update();
                         orig(self);
                     }
                 }
+
+                while (self.Position != saved.Position) {
+                    lightningRenderer?.Update();
+                    orig(self);
+                }
             }
 
             orig(self);
+        }
+
+        private static IEnumerator LightningOnMoveRoutine(On.Celeste.Lightning.orig_MoveRoutine orig, Lightning self, Vector2 start, Vector2 end, float moveTime) {
+            self.SetExtendedDataValue(END, end);
+
+            IEnumerator enumerator = orig(self, start, end, moveTime);
+            while (enumerator.MoveNext()) {
+                yield return enumerator.Current;
+                self.SetExtendedDataValue(BACK, !self.GetExtendedDataValue<bool>(BACK));
+            }
         }
 
         public override void OnClear() {
@@ -54,11 +79,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public override void OnLoad() {
             On.Celeste.Lightning.ctor_EntityData_Vector2 += RestoreLightningState;
             On.Celeste.Lightning.Update += LightningOnUpdate;
+            On.Celeste.Lightning.MoveRoutine += LightningOnMoveRoutine;
         }
 
         public override void OnUnload() {
             On.Celeste.Lightning.ctor_EntityData_Vector2 -= RestoreLightningState;
             On.Celeste.Lightning.Update -= LightningOnUpdate;
+            On.Celeste.Lightning.MoveRoutine -= LightningOnMoveRoutine;
         }
 
         public override void OnInit() {

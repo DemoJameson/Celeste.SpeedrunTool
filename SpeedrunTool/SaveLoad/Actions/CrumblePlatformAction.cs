@@ -27,6 +27,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private static Player SolidOnGetPlayerOnTop(On.Celeste.Solid.orig_GetPlayerOnTop orig, Solid self) {
+            if (IsLoading) {
+                return null;
+            }
+            
             if (self is CrumblePlatform && self.GetExtendedDataValue<bool>("IsFade")) {
                 self.SetExtendedDataValue("IsFade", false);
 

@@ -115,13 +115,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 object crushDir = savedCrushBlock.GetPrivateField("crushDir");
 
                 if (crushDir != null) {
-                    AudioAction.MuteAudio("event:/game/06_reflection/crushblock_activate");
+                    AudioAction.MuteAudioPathVector2("event:/game/06_reflection/crushblock_activate");
 
                     if ((Vector2) crushDir != Vector2.Zero) {
                         attackMethodInfo?.Invoke(Entity, new[] {crushDir});
                     }
                     else {
-                        AudioAction.MuteAudio("event:/game/06_reflection/crushblock_impact");
+                        AudioAction.MuteAudioPathVector2("event:/game/06_reflection/crushblock_impact");
                         AudioAction.MuteSoundSource("event:/game/06_reflection/crushblock_move_loop");
                         object lastCrushDir = savedCrushBlock.GetExtendedDataValue<Vector2>("lastCrushDir");
                         attackMethodInfo?.Invoke(Entity, new[] {lastCrushDir});

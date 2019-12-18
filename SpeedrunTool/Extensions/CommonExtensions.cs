@@ -176,7 +176,6 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                         exprObj,
                         exprValue);
                 setter = expr.Compile();
-                ;
                 type.SetExtendedDataValue("setter" + name, setter);
             }
 

@@ -17,6 +17,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             new BoosterAction(),
             new BounceBlockAction(),
             new BumperAction(),
+            new CassetteBlockManagerAction(),
             new CloudAction(),
             new ClutterSwitchAction(),
             new CrumblePlatformAction(),

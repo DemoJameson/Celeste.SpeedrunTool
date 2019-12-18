@@ -37,7 +37,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             StateMachine stateMachine = self.GetPrivateField("State") as StateMachine;
             int savedState = (savedSeeker.GetPrivateField("State") as StateMachine).State;
             if (savedState == StRegenerate) {
-                AudioAction.MuteAudio("event:/game/general/thing_booped");
+                AudioAction.MuteAudioPathVector2("event:/game/general/thing_booped");
             }
 
             stateMachine.State = savedState;

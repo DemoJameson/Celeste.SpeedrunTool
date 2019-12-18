@@ -4,39 +4,59 @@ using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class AudioAction : AbstractEntityAction {
-        private static readonly List<string> MuteSoundSourcePaths = new List<string>();
-        private static readonly List<string> MuteAudioPaths = new List<string>();
+        private static readonly List<string> MuteSoundSourcePathList = new List<string>();
+        private static readonly List<string> MuteAudioPathVector2List = new List<string>();
+        private static readonly List<string> MuteAudioPathList = new List<string>();
 
         public static void MuteSoundSource(string audioPath) {
-            MuteSoundSourcePaths.Add(audioPath);
+            MuteSoundSourcePathList.Add(audioPath);
+        }
+        
+        public static void EnableSoundSource(string audioPath) {
+            MuteSoundSourcePathList.Remove(audioPath);
         }
 
-        public static void MuteAudio(string audioPath) {
-            MuteAudioPaths.Add(audioPath);
+        public static void MuteAudioPathVector2(string audioPath) {
+            MuteAudioPathVector2List.Add(audioPath);
+        }
+        
+        public static void EnableAudioPathVector2(string audioPath) {
+            MuteAudioPathVector2List.Remove(audioPath);
+        }
+        
+        public static void MuteAudioPath(string audioPath) {
+            MuteAudioPathList.Add(audioPath);
+        }
+        
+        public static void EnableAudioPath(string audioPath) {
+            MuteAudioPathList.Remove(audioPath);
         }
 
         public override void OnQuickSave(Level level) {
         }
 
         public override void OnClear() {
-            MuteSoundSourcePaths.Clear();
-            MuteAudioPaths.Clear();
+            MuteSoundSourcePathList.Clear();
+            MuteAudioPathVector2List.Clear();
+            MuteAudioPathList.Clear();
         }
 
         public override void OnLoad() {
             On.Celeste.SoundSource.Play += SoundSourceOnPlay;
             On.Celeste.Audio.Play_string_Vector2 += AudioOnPlayStringVector2;
+            On.Celeste.Audio.Play_string += AudioOnPlayString;
         }
 
         public override void OnUnload() {
             On.Celeste.SoundSource.Play -= SoundSourceOnPlay;
             On.Celeste.Audio.Play_string_Vector2 -= AudioOnPlayStringVector2;
+            On.Celeste.Audio.Play_string -= AudioOnPlayString;
         }
 
         private static SoundSource SoundSourceOnPlay(On.Celeste.SoundSource.orig_Play orig, SoundSource self, string path,
             string param, float value) {
-            if (MuteSoundSourcePaths.Contains(path)) {
-                MuteSoundSourcePaths.Remove(path);
+            if (MuteSoundSourcePathList.Contains(path)) {
+                MuteSoundSourcePathList.Remove(path);
                 return null;
             }
 
@@ -45,12 +65,21 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         private static EventInstance AudioOnPlayStringVector2(On.Celeste.Audio.orig_Play_string_Vector2 orig, string path,
             Vector2 position) {
-            if (MuteAudioPaths.Contains(path)) {
-                MuteAudioPaths.Remove(path);
+            if (MuteAudioPathVector2List.Contains(path)) {
+                MuteAudioPathVector2List.Remove(path);
                 return null;
             }
 
             return orig(path, position);
+        }
+
+        private static EventInstance AudioOnPlayString(On.Celeste.Audio.orig_Play_string orig, string path) {
+            if (MuteAudioPathList.Contains(path)) {
+                MuteAudioPathList.Remove(path);
+                return null;
+            }
+
+            return orig(path);
         }
     }
 }

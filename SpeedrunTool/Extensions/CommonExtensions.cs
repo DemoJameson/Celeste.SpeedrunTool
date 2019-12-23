@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization.Formatters.Binary;
 
@@ -46,76 +45,30 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return methodInfo;
         }
 
-        private static Func<object, object> CompileGetter(this FieldInfo field) {
-            string methodName = field.ReflectedType.FullName + ".get_" + field.Name;
-            DynamicMethod setterMethod = new DynamicMethod(methodName, typeof(object), new[] {typeof(object)}, true);
-            ILGenerator gen = setterMethod.GetILGenerator();
-            if (field.IsStatic) {
-                gen.Emit(OpCodes.Ldsfld, field);
-                gen.Emit(field.FieldType.IsClass ? OpCodes.Castclass : OpCodes.Box, field.FieldType);
-            }
-            else {
-                gen.Emit(OpCodes.Ldarg_0);
-                gen.Emit(OpCodes.Castclass, field.DeclaringType);
-                gen.Emit(OpCodes.Ldfld, field);
-                gen.Emit(field.FieldType.IsClass ? OpCodes.Castclass : OpCodes.Box, field.FieldType);
-            }
-
-            gen.Emit(OpCodes.Ret);
-            return (Func<object, object>) setterMethod.CreateDelegate(typeof(Func<object, object>));
-        }
-
-        private static Action<object, object> CompileSetter(this FieldInfo field) {
-            string methodName = field.ReflectedType.FullName + ".set_" + field.Name;
-            DynamicMethod setterMethod = new DynamicMethod(methodName, null, new[] {typeof(object), typeof(object)}, true);
-            ILGenerator gen = setterMethod.GetILGenerator();
-            if (field.IsStatic) {
-                gen.Emit(OpCodes.Ldarg_1);
-                gen.Emit(field.FieldType.IsClass ? OpCodes.Castclass : OpCodes.Unbox_Any, field.FieldType);
-                gen.Emit(OpCodes.Stsfld, field);
-            }
-            else {
-                gen.Emit(OpCodes.Ldarg_0);
-                gen.Emit(OpCodes.Castclass, field.DeclaringType);
-                gen.Emit(OpCodes.Ldarg_1);
-                gen.Emit(field.FieldType.IsClass ? OpCodes.Castclass : OpCodes.Unbox_Any, field.FieldType);
-                gen.Emit(OpCodes.Stfld, field);
-            }
-
-            gen.Emit(OpCodes.Ret);
-            return (Action<object, object>) setterMethod.CreateDelegate(typeof(Action<object, object>));
-        }
-
-        public static object GetPrivateField(this object obj, string name) {
+        private static FieldInfo GetFieldInfo(this object obj, string name) {
             Type type = obj.GetType();
-            Func<object, object> getter = type.GetExtendedDataValue<Func<object, object>>("getter" + name);
-            if (getter == null) {
-                getter = type.GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)?.CompileGetter();
-                if (getter != null) {
-                    type.SetExtendedDataValue("getter" + name, getter);
+            FieldInfo fieldInfo = type.GetExtendedDataValue<FieldInfo>(name);
+            if (fieldInfo == null) {
+                fieldInfo = type.GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                if (fieldInfo != null) {
+                    type.SetExtendedDataValue(name, fieldInfo);
                 }
                 else {
                     return null;
                 }
             }
 
-            return getter(obj);
+            return fieldInfo;
+        }
+        
+        public static object GetPrivateField(this object obj, string name) {
+            FieldInfo fieldInfo = GetFieldInfo(obj, name);
+            return fieldInfo?.GetValue(obj);
         }
 
         public static void SetPrivateField(this object obj, string name, object value) {
-            Type type = obj.GetType();
-            Action<object, object> setter = type.GetExtendedDataValue<Action<object, object>>("setter" + name);
-            if (setter == null) {
-                setter = type.GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)?.CompileSetter();
-                if (setter != null) {
-                    type.SetExtendedDataValue("setter" + name, setter);
-                }
-                else {
-                    return;
-                }
-            }
-
-            setter(obj, value);
+            FieldInfo fieldInfo = GetFieldInfo(obj, name);
+            fieldInfo?.SetValue(obj, value);
         }
 
         public static void CopyPrivateField(this object obj, string name, object fromObj) {

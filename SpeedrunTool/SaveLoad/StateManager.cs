@@ -168,23 +168,24 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
         }
 
+        private List<int> disabledSaveStates = new List<int> {
+            Player.StReflectionFall,
+            Player.StTempleFall,
+            Player.StCassetteFly,
+            Player.StIntroJump,
+            Player.StIntroWalk,
+            Player.StIntroRespawn,
+            Player.StIntroWakeUp
+        };
+        
         private bool CheckButton(Level level, Player player) {
             if (ButtonConfigUi.SaveButton.Value.Pressed && !level.Paused && !level.Transitioning && !level.PauseLock &&
                 !level.InCutscene &&
                 !level.SkippingCutscene && player != null && !player.Dead) {
                 ButtonConfigUi.SaveButton.Value.ConsumePress();
                 int state = player.StateMachine.State;
-                List<int> disabledSaveState = new List<int> {
-                    Player.StReflectionFall,
-                    Player.StTempleFall,
-                    Player.StCassetteFly,
-                    Player.StIntroJump,
-                    Player.StIntroWalk,
-                    Player.StIntroRespawn,
-                    Player.StIntroWakeUp
-                };
 
-                if (!disabledSaveState.Contains(state)) {
+                if (!disabledSaveStates.Contains(state)) {
                     QuickSave(level, player);
                     return true;
                 }

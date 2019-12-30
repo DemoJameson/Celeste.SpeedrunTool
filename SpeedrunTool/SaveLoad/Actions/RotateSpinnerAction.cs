@@ -11,6 +11,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private readonly Dictionary<EntityID, RotateSpinner> savedRotateSpinners =
             new Dictionary<EntityID, RotateSpinner>();
 
+        private static readonly FieldInfo RotationPercentFieldInfo =
+            typeof(RotateSpinner).GetField("rotationPercent", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        private static readonly FieldInfo CenterFieldInfo =
+            typeof(RotateSpinner).GetField("center", BindingFlags.NonPublic | BindingFlags.Instance);
+
         public override void OnQuickSave(Level level) {
             List<Entity> entities = level.Tracker.GetEntities<BladeRotateSpinner>();
             entities.AddRange(level.Tracker.GetEntities<DustRotateSpinner>());
@@ -27,17 +33,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (IsLoadStart && savedRotateSpinners.ContainsKey(entityId)) {
                 RotateSpinner saved = savedRotateSpinners[entityId];
-                FieldInfo centerFieldInfo =
-                    typeof(RotateSpinner).GetField("center", BindingFlags.NonPublic | BindingFlags.Instance);
-                centerFieldInfo?.SetValue(self, centerFieldInfo.GetValue(saved));
+                CenterFieldInfo.SetValue(self, CenterFieldInfo.GetValue(saved));
                 self.Add(new Coroutine(RestoreRotationPercent(self, saved)));
             }
         }
 
         private static IEnumerator RestoreRotationPercent(RotateSpinner self, RotateSpinner saved) {
-            FieldInfo fieldInfo =
-                typeof(RotateSpinner).GetField("rotationPercent", BindingFlags.NonPublic | BindingFlags.Instance);
-            fieldInfo?.SetValue(self, fieldInfo.GetValue(saved));
+            RotationPercentFieldInfo.SetValue(self, RotationPercentFieldInfo.GetValue(saved));
             yield break;
         }
 

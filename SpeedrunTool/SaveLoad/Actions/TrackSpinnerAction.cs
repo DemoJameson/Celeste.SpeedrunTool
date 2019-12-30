@@ -8,7 +8,11 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class TrackSpinnerAction : AbstractEntityAction {
-        private readonly Dictionary<EntityID, TrackSpinner> savedTrackSpinners = new Dictionary<EntityID, TrackSpinner>();
+        private readonly Dictionary<EntityID, TrackSpinner> savedTrackSpinners =
+            new Dictionary<EntityID, TrackSpinner>();
+
+        private static readonly PropertyInfo PercentPropertyInfo =
+            typeof(TrackSpinner).GetProperty("Percent", BindingFlags.Public | BindingFlags.Instance);
 
         public override void OnQuickSave(Level level) {
             List<Entity> entities = level.Tracker.GetEntities<BladeTrackSpinner>();
@@ -26,9 +30,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (IsLoadStart && savedTrackSpinners.ContainsKey(entityId)) {
                 TrackSpinner savedTrackSpinner = savedTrackSpinners[entityId];
-                PropertyInfo property =
-                    typeof(TrackSpinner).GetProperty("Percent", BindingFlags.Public | BindingFlags.Instance);
-                property.SetValue(self, savedTrackSpinner.Percent);
+
+                PercentPropertyInfo.SetValue(self, savedTrackSpinner.Percent);
                 self.Up = savedTrackSpinner.Up;
                 self.Moving = savedTrackSpinner.Moving;
                 self.PauseTimer = savedTrackSpinner.PauseTimer;
@@ -36,7 +39,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 if (self is DustTrackSpinner) {
                     self.Add(new Coroutine(RestoreEyeDirection(self, savedTrackSpinner)));
                 }
+
+                self.Add(new Coroutine(MoveTrackSpinner(self)));
             }
+        }
+
+        private IEnumerator MoveTrackSpinner(TrackSpinner self) {
+            self.UpdatePosition();
+            yield break;
         }
 
         private static IEnumerator RestoreEyeDirection(TrackSpinner self, TrackSpinner saved) {

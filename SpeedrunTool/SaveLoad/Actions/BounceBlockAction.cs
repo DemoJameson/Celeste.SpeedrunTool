@@ -26,13 +26,19 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 self.CopyPrivateField("moveSpeed", savedBounceBlock);
                 self.CopyPrivateField("windUpStartTimer", savedBounceBlock);
                 self.CopyPrivateField("windUpProgress", savedBounceBlock);
-                self.CopyPrivateField("respawnTimer", savedBounceBlock);
                 self.CopyPrivateField("bounceEndTimer", savedBounceBlock);
                 self.CopyPrivateField("bounceLift", savedBounceBlock);
                 self.CopyPrivateField("reappearFlash", savedBounceBlock);
                 self.CopyPrivateField("debrisDirection", savedBounceBlock);
                 self.CopyPrivateField("iceMode", savedBounceBlock);
                 self.CopyPrivateField("iceModeNext", savedBounceBlock);
+                // self.CopyPrivateField("respawnTimer", savedBounceBlock);
+                float savedRespawnTimer = (float) savedBounceBlock.GetPrivateField("respawnTimer");
+                // 避免 player 在此石头中复活时被挤开或挤死
+                if (savedRespawnTimer <= 0) {
+                    savedRespawnTimer += 0.017f;
+                }
+                self.SetPrivateField("respawnTimer", savedRespawnTimer);
             }
         }
 

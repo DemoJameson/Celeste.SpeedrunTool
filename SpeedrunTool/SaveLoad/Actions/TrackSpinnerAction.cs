@@ -40,13 +40,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     self.Add(new Coroutine(RestoreEyeDirection(self, savedTrackSpinner)));
                 }
 
-                self.Add(new Coroutine(MoveTrackSpinner(self)));
+                self.UpdatePosition();
             }
-        }
-
-        private IEnumerator MoveTrackSpinner(TrackSpinner self) {
-            self.UpdatePosition();
-            yield break;
         }
 
         private static IEnumerator RestoreEyeDirection(TrackSpinner self, TrackSpinner saved) {

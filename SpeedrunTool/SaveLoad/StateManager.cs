@@ -55,6 +55,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             new SpikesAction(),
             new SpringAction(),
             new StarJumpBlockAction(),
+            new StaticMoverAction(),
             new StrawberryAction(),
             new StrawberrySeedAction(),
             new SwapBlockAction(),

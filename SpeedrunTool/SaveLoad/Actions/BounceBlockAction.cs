@@ -32,7 +32,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 self.CopyPrivateField("debrisDirection", savedBounceBlock);
                 self.CopyPrivateField("iceMode", savedBounceBlock);
                 self.CopyPrivateField("iceModeNext", savedBounceBlock);
-                // self.CopyPrivateField("respawnTimer", savedBounceBlock);
                 float savedRespawnTimer = (float) savedBounceBlock.GetPrivateField("respawnTimer");
                 // 避免 player 在此石头中复活时被挤开或挤死
                 if (savedRespawnTimer <= 0) {

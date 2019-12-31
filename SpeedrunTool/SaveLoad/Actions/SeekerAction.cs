@@ -41,7 +41,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
 
             stateMachine.State = savedState;
-            yield return null;
+            yield break;
         }
 
         public override void OnClear() {

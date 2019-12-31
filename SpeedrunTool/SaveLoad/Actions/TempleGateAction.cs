@@ -26,7 +26,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private IEnumerator SetState(TempleGate self) {
-            yield return null;
             TempleGate saved = savedTempleGates[self.GetEntityId()];
             if ((bool) saved.GetPrivateField("open")) {
                 if (self.Type == TempleGate.Types.TouchSwitches) {
@@ -39,6 +38,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 AudioAction.MuteAudioPathVector2("event:/game/05_mirror_temple/gate_main_close");
                 self.InvokePrivateMethod("SetHeight", self.GetPrivateField("closedHeight"));
             }
+            yield break;
         }
 
 

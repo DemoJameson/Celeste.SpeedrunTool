@@ -53,7 +53,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     }
                 }
 
-                while (self.Position != saved.Position) {
+                while (Vector2.Distance(self.Position, saved.Position) > 0.5) {
                     lightningRenderer?.Update();
                     orig(self);
                 }

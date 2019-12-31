@@ -8,7 +8,7 @@ using Monocle;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class FlingBirdAction : AbstractEntityAction {
         private Dictionary<EntityID, FlingBird> savedFlingBirds = new Dictionary<EntityID, FlingBird>();
-        private bool waitForUpdate;
+        private const string RestoreBird = "RestoreBird";
 
         public override void OnQuickSave(Level level) {
             savedFlingBirds = level.Tracker.GetDictionary<FlingBird>();
@@ -23,7 +23,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (IsLoadStart) {
                 if (savedFlingBirds.ContainsKey(entityId)) {
-                    waitForUpdate = true;
+                    self.SetExtendedDataValue(RestoreBird, true);
                 }
                 else {
                     self.Add(new RemoveSelfComponent());
@@ -36,8 +36,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private void FlingBirdOnUpdate(On.Celeste.FlingBird.orig_Update orig, FlingBird self) {
-            if (waitForUpdate) {
-                waitForUpdate = false;
+            if (self.GetExtendedDataValue<bool>(RestoreBird)) {
+                self.SetExtendedDataValue(RestoreBird, false);
                 EntityID entityId = self.GetEntityId();
                 if (IsLoadStart && savedFlingBirds.ContainsKey(entityId)) {
                     FlingBird savedFlingBird = savedFlingBirds[entityId];
@@ -73,12 +73,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             orig(self);
         }
 
-        public override void OnLoad() {
-            On.Celeste.FlingBird.ctor_EntityData_Vector2 += RestoreFlingBirdPosition;
-            On.Celeste.FlingBird.Update += FlingBirdOnUpdate;
-            On.Celeste.FlingBird.OnPlayer += FlingBirdOnOnPlayer;
-        }
-
         private static void FlingBirdOnOnPlayer(On.Celeste.FlingBird.orig_OnPlayer orig, FlingBird self, Player player) {
             if (player.SceneAs<Level>().Frozen) {
                 return;
@@ -86,9 +80,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             orig(self, player);
         }
 
+        public override void OnLoad() {
+            On.Celeste.FlingBird.ctor_EntityData_Vector2 += RestoreFlingBirdPosition;
+            On.Celeste.FlingBird.Update += FlingBirdOnUpdate;
+            On.Celeste.FlingBird.OnPlayer += FlingBirdOnOnPlayer;
+        }
+
         public override void OnUnload() {
             On.Celeste.FlingBird.ctor_EntityData_Vector2 -= RestoreFlingBirdPosition;
             On.Celeste.FlingBird.Update -= FlingBirdOnUpdate;
+            On.Celeste.FlingBird.OnPlayer -= FlingBirdOnOnPlayer;
         }
 
         public override void OnInit() {

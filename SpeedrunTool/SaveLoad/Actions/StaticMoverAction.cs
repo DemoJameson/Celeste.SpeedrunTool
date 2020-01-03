@@ -1,11 +1,13 @@
+using System;
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
+using Mono.Cecil.Cil;
 using Monocle;
+using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class StaticMoverAction : AbstractEntityAction {
-        private const string CheckStaticMover = "CheckStaticMover";
         private readonly Dictionary<EntityID, StaticMover> savedStaticMovers = new Dictionary<EntityID, StaticMover>();
 
         public override void OnQuickSave(Level level) {
@@ -39,47 +41,34 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
         }
 
-        private bool StaticMoverOnIsRiding_Solid(On.Celeste.StaticMover.orig_IsRiding_Solid orig, StaticMover self, Solid solid) {
-            bool result = orig(self, solid);
-            if (solid.GetExtendedDataValue<bool>(CheckStaticMover)) {
-                result = result && StaticMoverOnIsRiding(self, solid);
-            }
+        private void ModStaticMoverChecker(ILContext il) {
+            ILCursor cursor = new ILCursor(il);
 
-            return result;
-        }
-        
-        private bool StaticMoverOnIsRiding_JumpThru(On.Celeste.StaticMover.orig_IsRiding_JumpThru orig, StaticMover self, JumpThru jumpthru) {
-            bool result = orig(self, jumpthru);
-            if (jumpthru.GetExtendedDataValue<bool>(CheckStaticMover)) {
-                result = result && StaticMoverOnIsRiding(self, jumpthru);
+            // if (component.IsRiding(this) && component.Platform == null)
+            if (cursor.TryGotoNext(MoveType.After, instr => instr.MatchLdfld<StaticMover>("Platform"))) {
+                String className = cursor.Method.Parameters[0].ParameterType.Name;
+                Logger.Log("SpeedrunTool/StaticMoverAction",
+                    $"Adding code to avoid attaching spikes to the wrong entities at index {cursor.Index} in CIL code for {className}.{cursor.Method.Name}");
+                cursor.Emit(className == "Solid" ? OpCodes.Ldloc_2 : OpCodes.Ldloc_1);
+                cursor.Emit(OpCodes.Ldarg_0); // this: Solid or JumpThru
+                cursor.EmitDelegate<Func<bool, StaticMover, Platform, bool>>(CheckIfNotAttachStaticMover);
             }
-
-            return result;
         }
 
-
-        private bool StaticMoverOnIsRiding(StaticMover staticMover, Platform platform) {
-            var entityId = staticMover.Entity.GetEntityId();
-            var platformEntityId = platform.GetEntityId();
-            if (savedStaticMovers.ContainsKey(entityId)) {
-                var savedStaticMover = savedStaticMovers[entityId];
-                // 之前依附的 Platform 与本次查找的 Platform 非同一个则不依附
-                if (savedStaticMover.Platform == null || !savedStaticMover.Platform.GetEntityId().Equals(platformEntityId)) {
-                    return false;
+        private bool CheckIfNotAttachStaticMover(bool shouldNotAttach, StaticMover staticMover, Platform platform) {
+            if (IsLoadStart && !shouldNotAttach) {
+                var entityId = staticMover.Entity.GetEntityId();
+                var platformEntityId = platform.GetEntityId();
+                if (savedStaticMovers.ContainsKey(entityId)) {
+                    var savedStaticMover = savedStaticMovers[entityId];
+                    // 之前依附的 Platform 与本次查找的 Platform 非同一个则不依附
+                    if (savedStaticMover.Platform == null || !savedStaticMover.Platform.GetEntityId().Equals(platformEntityId)) {
+                        return true;
+                    }
                 }
             }
 
-            return true;
-        }
-
-        private void SolidOnAwake(On.Celeste.Solid.orig_Awake orig, Solid self, Scene scene) {
-            self.SetExtendedDataValue(CheckStaticMover, IsLoadStart && self.AllowStaticMovers);
-            orig(self, scene);
-        }
-
-        private void JumpThruOnAwake(On.Celeste.JumpThru.orig_Awake orig, JumpThru self, Scene scene) {
-            self.SetExtendedDataValue(CheckStaticMover, IsLoadStart);
-            orig(self, scene);
+            return shouldNotAttach;
         }
 
         public override void OnClear() {
@@ -87,19 +76,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         public override void OnLoad() {
-            On.Celeste.StaticMover.IsRiding_Solid += StaticMoverOnIsRiding_Solid;
-            On.Celeste.StaticMover.IsRiding_JumpThru += StaticMoverOnIsRiding_JumpThru;
             On.Celeste.Platform.ctor += PlatformOnCtor;
-            On.Celeste.Solid.Awake += SolidOnAwake;
-            On.Celeste.JumpThru.Awake += JumpThruOnAwake;
+            IL.Celeste.Solid.Awake += ModStaticMoverChecker;
+            IL.Celeste.JumpThru.Awake += ModStaticMoverChecker;
         }
 
         public override void OnUnload() {
-            On.Celeste.StaticMover.IsRiding_Solid -= StaticMoverOnIsRiding_Solid;
-            On.Celeste.StaticMover.IsRiding_JumpThru -= StaticMoverOnIsRiding_JumpThru;
             On.Celeste.Platform.ctor -= PlatformOnCtor;
-            On.Celeste.Solid.Awake -= SolidOnAwake;
-            On.Celeste.JumpThru.Awake -= JumpThruOnAwake;
+            IL.Celeste.Solid.Awake -= ModStaticMoverChecker;
+            IL.Celeste.JumpThru.Awake -= ModStaticMoverChecker;
         }
     }
 }

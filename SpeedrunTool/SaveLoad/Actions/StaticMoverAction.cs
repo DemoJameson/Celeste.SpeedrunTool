@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
-using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
-using Monocle;
 using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
@@ -17,27 +15,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 if (staticMover.Entity != null && !entityId.Equals(default(EntityID))) {
                     savedStaticMovers.Add(staticMover.Entity.GetEntityId(), staticMover);
                 }
-            }
-        }
-
-        private void PlatformOnCtor(On.Celeste.Platform.orig_ctor orig, Platform self, Vector2 position, bool safe) {
-            orig(self, position, safe);
-            EntityID entityId = self.GetEntityId();
-            if (entityId.Equals(default(EntityID))) {
-                Level level = null;
-                if (Engine.Scene is Level) {
-                    level = (Level) Engine.Scene;
-                }
-                else if (Engine.Scene is LevelLoader levelLoader) {
-                    level = levelLoader.Level;
-                }
-
-                if (level == null) {
-                    return;
-                }
-
-                entityId = new EntityID(level.Session.Level, position.GetHashCode() + safe.GetHashCode());
-                self.SetEntityId(entityId);
             }
         }
 
@@ -59,6 +36,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             if (IsLoadStart && !shouldNotAttach) {
                 var entityId = staticMover.Entity.GetEntityId();
                 var platformEntityId = platform.GetEntityId();
+                EntityID defaultEntityId = default(EntityID);
+                if (entityId.Equals(defaultEntityId) || platformEntityId.Equals(defaultEntityId)) {
+                    return false;
+                }
+                
                 if (savedStaticMovers.ContainsKey(entityId)) {
                     var savedStaticMover = savedStaticMovers[entityId];
                     // 之前依附的 Platform 与本次查找的 Platform 非同一个则不依附
@@ -76,13 +58,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         public override void OnLoad() {
-            On.Celeste.Platform.ctor += PlatformOnCtor;
             IL.Celeste.Solid.Awake += ModStaticMoverChecker;
             IL.Celeste.JumpThru.Awake += ModStaticMoverChecker;
         }
 
         public override void OnUnload() {
-            On.Celeste.Platform.ctor -= PlatformOnCtor;
             IL.Celeste.Solid.Awake -= ModStaticMoverChecker;
             IL.Celeste.JumpThru.Awake -= ModStaticMoverChecker;
         }

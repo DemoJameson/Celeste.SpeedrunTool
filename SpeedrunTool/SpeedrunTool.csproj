@@ -112,6 +112,7 @@
     <Compile Include="SaveLoad\Actions\DashBlockAction.cs" />
     <Compile Include="SaveLoad\Actions\DashSwitchAction.cs" />
     <Compile Include="SaveLoad\Actions\DreamBlockAction.cs" />
+    <Compile Include="SaveLoad\Actions\EntityAction.cs" />
     <Compile Include="SaveLoad\Actions\FlingBirdAction.cs" />
     <Compile Include="SaveLoad\Actions\GliderAction.cs" />
     <Compile Include="SaveLoad\Actions\JumpthruPlatformAction.cs" />

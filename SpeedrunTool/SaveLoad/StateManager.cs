@@ -35,6 +35,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             new FlingBirdAction(),
             new FloatySpaceBlockAction(),
             new FlyFeatherAction(),
+            new EntityAction(),
             new ExitBlockAction(),
             new GliderAction(),
             new KeyAction(),

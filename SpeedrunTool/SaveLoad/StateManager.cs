@@ -249,7 +249,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             Engine.Scene = new LevelLoader(level.Session, level.Session.RespawnPoint);
         }
 
-        public void QuickLoad() {
+        private void QuickLoad() {
             if (!IsSaved) {
                 return;
             }
@@ -342,7 +342,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private void QuickLoadWhenDeath(On.Celeste.Level.orig_DoScreenWipe orig, Level self, bool wipeIn, Action onComplete, bool hiresSnow) {
             if (SpeedrunToolModule.Settings.Enabled && SpeedrunToolModule.Settings.AutoLoadAfterDeath && IsSaved && onComplete == self.Reload) {
-                onComplete = QuickLoad;
+                onComplete = () => {
+                    if (IsSaved) {
+                        QuickLoad();
+                    }
+                    else {
+                        self.Reload();
+                    }
+                };
             }
 
             orig(self, wipeIn, onComplete, hiresSnow);

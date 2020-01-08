@@ -80,8 +80,37 @@ namespace Celeste.Mod.SpeedrunTool {
             firstTextMenu = new TextMenu.OnOff(DialogIds.Enabled.DialogClean(), Enabled);
             firstTextMenu.Change(enabled => {
                 Enabled = enabled;
-                if (!enabled) {
-                    ToggleMoreOptionsMenuItem(textMenu, false);
+                if (enabled) {
+                    bool isBeforeMoreOptionsItem = false;
+                    foreach (TextMenu.Item item in textMenu.Items) {
+                        if (isBeforeMoreOptionsItem) {
+                            item.Visible = true;
+                        }
+
+                        if (firstTextMenu == item) {
+                            isBeforeMoreOptionsItem = true;
+                        }
+
+                        if (moreOptionsTextMenu == item) {
+                            isBeforeMoreOptionsItem = false;
+                        }
+                    }
+                }
+                else {
+                    bool isSpeedrunToolItem = false;
+                    foreach (TextMenu.Item item in textMenu.Items) {
+                        if (isSpeedrunToolItem) {
+                            item.Visible = false;
+                        }
+
+                        if (firstTextMenu == item) {
+                            isSpeedrunToolItem = true;
+                        }
+
+                        if (lastTextMenu == item) {
+                            isSpeedrunToolItem = false;
+                        }
+                    }
                 }
 
                 moreOptionsTextMenu.Visible = enabled;

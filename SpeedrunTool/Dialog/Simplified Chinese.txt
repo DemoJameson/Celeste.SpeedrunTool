@@ -39,8 +39,9 @@ SPEEDRUN_TOOL_DEATH_STATISTICS=      统计死亡数据
 SPEEDRUN_TOOL_RESPAWN_SPEED=         复活速度
 SPEEDRUN_TOOL_SKIP_CHAPTER_SCENE=    跳过章节场景
 SPEEDRUN_TOOL_ROOM_TIMER=            房间计时器
-SPEEDRUN_TOOL_END_POINT_STYLE=       终点样式
+SPEEDRUN_TOOL_END_POINT_STYLE=       房间计时器终点样式
 SPEEDRUN_TOOL_BUTTON_CONFIG=         按键设置
+SPEEDRUN_TOOL_MORE_OPTIONS=          更多选项
 
 # ================================== Skip Chapter Scene Options ==================================
 SPEEDRUN_TOOL_INTRO=    开头
@@ -81,9 +82,10 @@ SPEEDRUN_TOOL_YURI=      Yuri
 SPEEDRUN_TOOL_RANDOM=    随机
 
 # ================================== Button Config ==================================
-SPEEDRUN_TOOL_OPEN_DEBUG_MAP= 打开地图 
-SPEEDRUN_TOOL_RESET_ROOM_PB=  重置房间记录
-SPEEDRUN_TOOL_SET_END_POINT=  设置终点
+SPEEDRUN_TOOL_OPEN_DEBUG_MAP=   打开地图 
+SPEEDRUN_TOOL_RESET_ROOM_PB=    重置房间记录
+SPEEDRUN_TOOL_SWITCH_ROOM_TIMER=切换房间计时器
+SPEEDRUN_TOOL_SET_END_POINT=    标记房间计时器终点
 
 # ================================== Death Statistics ==================================
 SPEEDRUN_TOOL_DIALOG_DEATH_STATISTICS_DESCRIPTION=

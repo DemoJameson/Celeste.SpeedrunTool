@@ -39,8 +39,9 @@ SPEEDRUN_TOOL_DEATH_STATISTICS=      Death Statistics
 SPEEDRUN_TOOL_RESPAWN_SPEED=         Respawn Speed
 SPEEDRUN_TOOL_SKIP_CHAPTER_SCENE=    Skip Chapter Scene
 SPEEDRUN_TOOL_ROOM_TIMER=            Room Timer
-SPEEDRUN_TOOL_END_POINT_STYLE=       End Point Style
+SPEEDRUN_TOOL_END_POINT_STYLE=       Room Timer End Point Style
 SPEEDRUN_TOOL_BUTTON_CONFIG=         Button Config
+SPEEDRUN_TOOL_MORE_OPTIONS=          More Options
 
 # ================================== Skip Chapter Scene Options ==================================
 SPEEDRUN_TOOL_INTRO=    Intro
@@ -81,9 +82,10 @@ SPEEDRUN_TOOL_YURI=      Yuri
 SPEEDRUN_TOOL_RANDOM=    Random
 
 # ================================== Button Config ==================================
-SPEEDRUN_TOOL_OPEN_DEBUG_MAP= Open Debug Map
-SPEEDRUN_TOOL_RESET_ROOM_PB=  Reset Room PB
-SPEEDRUN_TOOL_SET_END_POINT=  Set End Point
+SPEEDRUN_TOOL_OPEN_DEBUG_MAP=   Open Debug Map
+SPEEDRUN_TOOL_RESET_ROOM_PB=    Reset Room PB
+SPEEDRUN_TOOL_SWITCH_ROOM_TIMER=Switch Room Timer
+SPEEDRUN_TOOL_SET_END_POINT=    Set Room Timer End Point
 
 # ================================== Death Statistics ==================================
 SPEEDRUN_TOOL_DIALOG_DEATH_STATISTICS_DESCRIPTION=

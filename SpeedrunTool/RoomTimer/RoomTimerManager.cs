@@ -27,6 +27,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         public void Init() {
             OriginalSpeedrunType = Settings.Instance.SpeedrunClock;
             ButtonConfigUi.UpdateResetRoomPbButton();
+            ButtonConfigUi.UpdateSwitchRoomTimerButton();
             ButtonConfigUi.UpdateSetEndPointButton();
         }
 
@@ -48,6 +49,12 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             if (ButtonConfigUi.ResetRoomPbButton.Value.Pressed && !self.Paused) {
                 ButtonConfigUi.ResetRoomPbButton.Value.ConsumePress();
                 ClearPbTimes();
+            }
+            
+            if (ButtonConfigUi.SwitchRoomTimerButton.Value.Pressed && !self.Paused) {
+                ButtonConfigUi.SwitchRoomTimerButton.Value.ConsumePress();
+                RoomTimerType roomTimerType = SpeedrunToolModule.Settings.RoomTimerType;
+                SwitchRoomTimer(((int) roomTimerType + 1) % Enum.GetNames(typeof(RoomTimerType)).Length);
             }
 
             if (ButtonConfigUi.SetEndPointButton.Value.Pressed && !self.Paused) {
@@ -71,6 +78,21 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             if (level.Tracker.GetEntity<Player>() is Player player && !player.Dead) {
                 SavedEndPoint?.RemoveSelf();
                 level.Add(SavedEndPoint = new EndPoint(player));
+            }
+        }
+        
+        public void SwitchRoomTimer(int index) {
+            SpeedrunToolSettings speedrunToolSettings = SpeedrunToolModule.Settings;
+            speedrunToolSettings.RoomTimer = SpeedrunToolSettings.RoomTimerStrings[index];
+
+            if (speedrunToolSettings.RoomTimerType != RoomTimerType.Off) {
+                return;
+            }
+
+            ClearPbTimes();
+            SpeedrunType? speedrunType = OriginalSpeedrunType;
+            if (speedrunType != null) {
+                Settings.Instance.SpeedrunClock = (SpeedrunType) speedrunType;
             }
         }
 

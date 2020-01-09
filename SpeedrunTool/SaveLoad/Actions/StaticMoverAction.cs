@@ -57,11 +57,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private void SolidOnAwake(On.Celeste.Solid.orig_Awake orig, Solid self, Scene scene) {
             self.SetExtendedDataValue(CheckStaticMover, IsLoadStart && self.AllowStaticMovers);
             orig(self, scene);
+            self.SetExtendedDataValue(CheckStaticMover, false);
         }
 
         private void JumpThruOnAwake(On.Celeste.JumpThru.orig_Awake orig, JumpThru self, Scene scene) {
             self.SetExtendedDataValue(CheckStaticMover, IsLoadStart);
             orig(self, scene);
+            self.SetExtendedDataValue(CheckStaticMover, false);
         }
 
         public override void OnClear() {

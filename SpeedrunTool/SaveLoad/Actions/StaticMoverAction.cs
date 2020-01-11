@@ -11,7 +11,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             var staticMovers = level.Tracker.GetComponents<StaticMover>();
             foreach (StaticMover staticMover in staticMovers) {
                 var entityId = staticMover.Entity.GetEntityId();
-                if (staticMover.Entity != null && !entityId.Equals(default(EntityID))) {
+                if (staticMover.Entity != null && !entityId.Equals(default(EntityID)) && !savedStaticMovers.ContainsKey(entityId)) {
                     savedStaticMovers.Add(staticMover.Entity.GetEntityId(), staticMover);
                 }
             }

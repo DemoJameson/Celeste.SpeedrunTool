@@ -53,7 +53,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private void BoosterOnOnPlayer(On.Celeste.Booster.orig_OnPlayer orig, Booster self, Player player) {
-            if (self.SceneAs<Level>().Frozen) {
+            if (IsLoadStart || self.SceneAs<Level>().Frozen) {
                 return;
             }
 

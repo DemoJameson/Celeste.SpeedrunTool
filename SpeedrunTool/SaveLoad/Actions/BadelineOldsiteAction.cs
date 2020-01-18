@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             new Dictionary<EntityID, BadelineOldsite>();
 
         public override void OnQuickSave(Level level) {
-            savedBadelineOldsites = level.Tracker.GetDictionary<BadelineOldsite>();
+            savedBadelineOldsites = level.Entities.GetDictionary<BadelineOldsite>();
         }
 
         private void RestoreBadelineOldsitePosition(On.Celeste.BadelineOldsite.orig_ctor_EntityData_Vector2_int orig,
@@ -33,10 +33,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.BadelineOldsite.ctor_EntityData_Vector2_int -= RestoreBadelineOldsitePosition;
-        }
-
-        public override void OnInit() {
-            typeof(BadelineOldsite).AddToTracker();
         }
     }
 }

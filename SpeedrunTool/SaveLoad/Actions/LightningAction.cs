@@ -14,7 +14,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, Lightning> savedLightnings = new Dictionary<EntityID, Lightning>();
 
         public override void OnQuickSave(Level level) {
-            savedLightnings = level.Tracker.GetDictionary<Lightning>();
+            savedLightnings = level.Entities.GetDictionary<Lightning>();
         }
 
         private void RestoreLightningState(
@@ -43,7 +43,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 EntityID entityId = self.GetEntityId();
                 Lightning saved = savedLightnings[entityId];
 
-                LightningRenderer lightningRenderer = self.Scene.Tracker.GetEntity<LightningRenderer>();
+                LightningRenderer lightningRenderer = self.Scene.Entities.FindFirst<LightningRenderer>();
                 
                 if (saved.GetExtendedDataValue<bool>(BACK)) {
                     Vector2 end = saved.GetExtendedDataValue<Vector2>(END);
@@ -86,10 +86,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             On.Celeste.Lightning.ctor_EntityData_Vector2 -= RestoreLightningState;
             On.Celeste.Lightning.Update -= LightningOnUpdate;
             On.Celeste.Lightning.MoveRoutine -= LightningOnMoveRoutine;
-        }
-
-        public override void OnInit() {
-            typeof(Lightning).AddToTracker();
         }
     }
 }

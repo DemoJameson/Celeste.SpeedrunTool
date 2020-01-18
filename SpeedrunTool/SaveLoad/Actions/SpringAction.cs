@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, Spring> springs = new Dictionary<EntityID, Spring>();
 
         public override void OnQuickSave(Level level) {
-            springs = level.Tracker.GetDictionary<Spring>();
+            springs = level.Entities.GetDictionary<Spring>();
         }
 
         private void SpringOnCtorEntityDataVector2Orientations(
@@ -50,10 +50,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.Spring.ctor_EntityData_Vector2_Orientations -= SpringOnCtorEntityDataVector2Orientations;
-        }
-
-        public override void OnInit() {
-            typeof(Spring).AddToTracker();
         }
     }
 }

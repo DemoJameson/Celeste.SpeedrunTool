@@ -11,7 +11,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, TriggerSpikes> savedTriggerSpikes = new Dictionary<EntityID, TriggerSpikes>();
 
         public override void OnQuickSave(Level level) {
-            savedTriggerSpikes = level.Tracker.GetDictionary<TriggerSpikes>();
+            savedTriggerSpikes = level.Entities.GetDictionary<TriggerSpikes>();
         }
 
         private void TriggerSpikesOnCtorEntityDataVector2Directions(
@@ -74,10 +74,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public override void OnUnload() {
             On.Celeste.TriggerSpikes.ctor_EntityData_Vector2_Directions -=
                 TriggerSpikesOnCtorEntityDataVector2Directions;
-        }
-
-        public override void OnInit() {
-            typeof(TriggerSpikes).AddToTracker();
         }
     }
 }

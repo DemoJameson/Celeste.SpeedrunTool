@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, Cloud> savedClouds = new Dictionary<EntityID, Cloud>();
 
         public override void OnQuickSave(Level level) {
-            savedClouds = level.Tracker.GetDictionary<Cloud>();
+            savedClouds = level.Entities.GetDictionary<Cloud>();
         }
 
         private void RestoreCloudPosition(On.Celeste.Cloud.orig_ctor_EntityData_Vector2 orig,
@@ -49,10 +49,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.Cloud.ctor_EntityData_Vector2 -= RestoreCloudPosition;
-        }
-
-        public override void OnInit() {
-            typeof(Cloud).AddToTracker();
         }
     }
 }

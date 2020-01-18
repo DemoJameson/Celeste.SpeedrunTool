@@ -10,7 +10,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, ZipMover> savedZipMovers = new Dictionary<EntityID, ZipMover>();
 
         public override void OnQuickSave(Level level) {
-            savedZipMovers = level.Tracker.GetDictionary<ZipMover>();
+            savedZipMovers = level.Entities.GetDictionary<ZipMover>();
         }
 
         private void RestoreZipMoverPosition(On.Celeste.ZipMover.orig_ctor_EntityData_Vector2 orig, ZipMover self,
@@ -175,10 +175,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public override void OnUnload() {
             On.Celeste.ZipMover.ctor_EntityData_Vector2 -= RestoreZipMoverPosition;
             On.Celeste.ZipMover.Sequence -= ZipMoverOnSequence;
-        }
-
-        public override void OnInit() {
-            typeof(ZipMover).AddToTracker();
         }
     }
 }

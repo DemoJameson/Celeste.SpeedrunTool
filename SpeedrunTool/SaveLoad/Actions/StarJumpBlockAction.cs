@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, StarJumpBlock> savedStarJumpBlocks = new Dictionary<EntityID, StarJumpBlock>();
 
         public override void OnQuickSave(Level level) {
-            savedStarJumpBlocks = level.Tracker.GetDictionary<StarJumpBlock>();
+            savedStarJumpBlocks = level.Entities.GetDictionary<StarJumpBlock>();
         }
 
         private void RestoreStarJumpBlockPosition(On.Celeste.StarJumpBlock.orig_ctor_EntityData_Vector2 orig,

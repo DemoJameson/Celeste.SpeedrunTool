@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, MovingPlatform> savedMovingPlatforms = new Dictionary<EntityID, MovingPlatform>();
 
         public override void OnQuickSave(Level level) {
-            savedMovingPlatforms = level.Tracker.GetDictionary<MovingPlatform>();
+            savedMovingPlatforms = level.Entities.GetDictionary<MovingPlatform>();
         }
 
         private void ResotreMovingPlatformPosition(On.Celeste.MovingPlatform.orig_ctor_EntityData_Vector2 orig,
@@ -38,10 +38,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.MovingPlatform.ctor_EntityData_Vector2 -= ResotreMovingPlatformPosition;
-        }
-
-        public override void OnInit() {
-            typeof(MovingPlatform).AddToTracker();
         }
     }
 }

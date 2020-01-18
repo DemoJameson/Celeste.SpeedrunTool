@@ -42,7 +42,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             if (entityId.Equals(defaultEntityId) || platformEntityId.Equals(defaultEntityId)) {
                 return true;
             }
-            
+
             if (savedStaticMovers.ContainsKey(entityId)) {
                 var savedStaticMover = savedStaticMovers[entityId];
                 // 之前依附的 Platform 与本次查找的 Platform 非同一个则不依附

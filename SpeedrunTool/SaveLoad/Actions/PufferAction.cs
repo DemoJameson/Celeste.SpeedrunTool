@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, Puffer> savedPuffers = new Dictionary<EntityID, Puffer>();
 
         public override void OnQuickSave(Level level) {
-            savedPuffers = level.Tracker.GetDictionary<Puffer>();
+            savedPuffers = level.Entities.GetDictionary<Puffer>();
         }
 
         private void RestorePufferPosition(On.Celeste.Puffer.orig_ctor_EntityData_Vector2 orig,
@@ -57,10 +57,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.Puffer.ctor_EntityData_Vector2 -= RestorePufferPosition;
-        }
-
-        public override void OnInit() {
-            typeof(Puffer).AddToTracker();
         }
 
         public override void OnUpdateEntitiesWhenFreeze(Level level) {

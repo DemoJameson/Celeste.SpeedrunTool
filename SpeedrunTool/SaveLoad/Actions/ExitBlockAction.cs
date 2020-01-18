@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, ExitBlock> savedExitBlocks = new Dictionary<EntityID, ExitBlock>();
 
         public override void OnQuickSave(Level level) {
-            savedExitBlocks = level.Tracker.GetDictionary<ExitBlock>();
+            savedExitBlocks = level.Entities.GetDictionary<ExitBlock>();
         }
 
         private void PreventExitBlockLockPlayer(On.Celeste.ExitBlock.orig_ctor_EntityData_Vector2 orig,
@@ -54,10 +54,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public override void OnUnload() {
             On.Celeste.ExitBlock.ctor_EntityData_Vector2 -= PreventExitBlockLockPlayer;
             On.Celeste.ExitBlock.Update -= OnExitBlockOnUpdate;
-        }
-
-        public override void OnInit() {
-            typeof(ExitBlock).AddToTracker();
         }
     }
 }

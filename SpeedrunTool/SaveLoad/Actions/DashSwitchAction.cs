@@ -9,9 +9,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, DashSwitch> savedDashSwitches = new Dictionary<EntityID, DashSwitch>();
 
         public override void OnQuickSave(Level level) {
-            savedDashSwitches = level.Tracker.GetDictionary<DashSwitch>();
+            savedDashSwitches = level.Entities.GetDictionary<DashSwitch>();
             
-            pressedDashSwitches = level.Tracker.GetEntities<DashSwitch>()
+            pressedDashSwitches = level.Entities.FindAll<DashSwitch>()
                 .Where(dashSwitch => !dashSwitch.Collidable).Select(
                     entity => DashSwitch.GetFlagName(entity.GetEntityId()));
 
@@ -52,10 +52,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.DashSwitch.Create -= RestoreDashSwitchState;
-        }
-
-        public override void OnInit() {
-            typeof(DashSwitch).AddToTracker();
         }
     }
 }

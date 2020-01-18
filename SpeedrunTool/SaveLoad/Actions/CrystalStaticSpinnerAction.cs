@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             new Dictionary<EntityID, CrystalStaticSpinner>();
 
         public override void OnQuickSave(Level level) {
-            savedSpinners = level.Tracker.GetDictionary<CrystalStaticSpinner>();
+            savedSpinners = level.Entities.GetDictionary<CrystalStaticSpinner>();
         }
 
         private void RestoreSpinnerPosition(
@@ -42,10 +42,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.CrystalStaticSpinner.ctor_EntityData_Vector2_CrystalColor -= RestoreSpinnerPosition;
-        }
-
-        public override void OnInit() {
-            typeof(CrystalStaticSpinner).AddToTracker();
         }
 
         public override void OnUpdateEntitiesWhenFreeze(Level level) {

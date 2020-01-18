@@ -68,14 +68,14 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             bool isFromLoader) {
             orig(self, playerIntro, isFromLoader);
 
-            EndPoint end = self.Tracker.GetEntity<EndPoint>();
+            EndPoint end = self.Entities.FindFirst<EndPoint>();
             if (end == null && SavedEndPoint != null && self.Session.Level == SavedEndPoint.LevelName) {
                 SavedEndPoint.ReAdded(self);
             }
         }
 
         private void CreateEndPoint(Level level) {
-            if (level.Tracker.GetEntity<Player>() is Player player && !player.Dead) {
+            if (level.Entities.FindFirst<Player>() is Player player && !player.Dead) {
                 SavedEndPoint?.RemoveSelf();
                 level.Add(SavedEndPoint = new EndPoint(player));
             }

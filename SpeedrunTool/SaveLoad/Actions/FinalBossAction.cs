@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, FinalBoss> savedFinalBosses = new Dictionary<EntityID, FinalBoss>();
 
         public override void OnQuickSave(Level level) {
-            savedFinalBosses = level.Tracker.GetDictionary<FinalBoss>();
+            savedFinalBosses = level.Entities.GetDictionary<FinalBoss>();
         }
 
         private void RestoreFinalBossState(On.Celeste.FinalBoss.orig_ctor_EntityData_Vector2 orig, FinalBoss self,

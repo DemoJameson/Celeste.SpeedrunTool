@@ -136,7 +136,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 return;
             }
 
-            Player player = self.Tracker.GetEntity<Player>();
+            Player player = self.Entities.FindFirst<Player>();
 
             if (CheckButton(self, player)) {
                 return;

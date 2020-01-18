@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, Spikes> savedSpikes = new Dictionary<EntityID, Spikes>();
 
         public override void OnQuickSave(Level level) {
-            savedSpikes = level.Tracker.GetDictionary<Spikes>();
+            savedSpikes = level.Entities.GetDictionary<Spikes>();
         }
 
         private void SpikesOnCtorEntityDataVector2Directions(

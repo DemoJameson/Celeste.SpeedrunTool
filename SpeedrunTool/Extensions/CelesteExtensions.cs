@@ -8,18 +8,18 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         private const string EntityIdKey = "EntityId";
         private const string EntityDataKey = "EntityDataKey";
 
-        public static void AddToTracker(this Type type) {
-            if (!Tracker.StoredEntityTypes.Contains(type)) {
-                Tracker.StoredEntityTypes.Add(type);
-            }
-
-            if (!Tracker.TrackedEntityTypes.ContainsKey(type)) {
-                Tracker.TrackedEntityTypes[type] = new List<Type> {type};
-            }
-            else if (!Tracker.TrackedEntityTypes[type].Contains(type)) {
-                Tracker.TrackedEntityTypes[type].Add(type);
-            }
-        }
+        // public static void AddToTracker(this Type type) {
+        //     if (!Tracker.StoredEntityTypes.Contains(type)) {
+        //         Tracker.StoredEntityTypes.Add(type);
+        //     }
+        //
+        //     if (!Tracker.TrackedEntityTypes.ContainsKey(type)) {
+        //         Tracker.TrackedEntityTypes[type] = new List<Type> {type};
+        //     }
+        //     else if (!Tracker.TrackedEntityTypes[type].Contains(type)) {
+        //         Tracker.TrackedEntityTypes[type].Add(type);
+        //     }
+        // }
 
         public static void SetEntityId(this Entity entity, EntityID entityId) {
             entity.SetExtendedDataValue(EntityIdKey, entityId);
@@ -45,13 +45,9 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return new EntityID(entityData.Level.Name, entityData.ID);
         }
 
-        public static IEnumerable<T> GetCastEntities<T>(this Tracker tracker) where T : Entity {
-            return tracker.GetEntities<T>().Cast<T>();
-        }
-
-        public static Dictionary<EntityID, T> GetDictionary<T>(this Tracker tracker) where T : Entity {
+        public static Dictionary<EntityID, T> GetDictionary<T>(this EntityList entityList) where T : Entity {
             Dictionary<EntityID, T> result = new Dictionary<EntityID, T>();
-            foreach (T entity in tracker.GetCastEntities<T>()) {
+            foreach (T entity in entityList.FindAll<T>()) {
                 EntityID entityId = entity.GetEntityId();
                 if (entityId.Equals(default(EntityID)) || result.ContainsKey(entityId)) {
                     Logger.Log("Speedrun Tool", $"EntityID Duplication: Level Name={entityId.Level}, Position={entity.Position}, Entity Name={entity.GetType().Name}");
@@ -65,7 +61,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static void UpdateEntities<T>(this Level level) where T : Entity {
-            level.Tracker.GetEntities<T>().ForEach(entity => entity.Update());
+            level.Entities.FindAll<T>().ForEach(entity => entity.Update());
         }
 
         public static void SetTime(this SoundSource soundSource, int time) {
@@ -88,7 +84,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static Player GetPlayer(this Scene scene) {
-            if (scene is Level level && level.Tracker.GetEntity<Player>() is Player player) {
+            if (scene is Level level && level.Entities.FindFirst<Player>() is Player player) {
                 return player;
             }
 

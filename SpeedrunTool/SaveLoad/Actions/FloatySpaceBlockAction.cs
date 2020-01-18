@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, FloatySpaceBlock> savedFloatySpaceBlocks = new Dictionary<EntityID, FloatySpaceBlock>();
 
         public override void OnQuickSave(Level level) {
-            savedFloatySpaceBlocks = level.Tracker.GetDictionary<FloatySpaceBlock>();
+            savedFloatySpaceBlocks = level.Entities.GetDictionary<FloatySpaceBlock>();
         }
 
         private void RestoreFloatySpaceBlockPosition(On.Celeste.FloatySpaceBlock.orig_ctor_EntityData_Vector2 orig,

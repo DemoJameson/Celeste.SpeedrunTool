@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, Bumper> savedBumpers = new Dictionary<EntityID, Bumper>();
 
         public override void OnQuickSave(Level level) {
-            savedBumpers = level.Tracker.GetDictionary<Bumper>();
+            savedBumpers = level.Entities.GetDictionary<Bumper>();
         }
 
         private void RestoreBumperPosition(On.Celeste.Bumper.orig_ctor_EntityData_Vector2 orig,
@@ -46,10 +46,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.Bumper.ctor_EntityData_Vector2 -= RestoreBumperPosition;
-        }
-
-        public override void OnInit() {
-            typeof(Bumper).AddToTracker();
         }
     }
 }

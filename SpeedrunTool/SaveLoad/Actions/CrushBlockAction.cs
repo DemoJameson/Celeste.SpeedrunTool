@@ -31,7 +31,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         public override void OnQuickSave(Level level) {
-            savedCrushBlocks = level.Tracker.GetDictionary<CrushBlock>();
+            savedCrushBlocks = level.Entities.GetDictionary<CrushBlock>();
         }
 
         private void RestoreCrushBlockState(On.Celeste.CrushBlock.orig_ctor_EntityData_Vector2 orig, CrushBlock self,
@@ -82,10 +82,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
 
             return orig(self, amount);
-        }
-
-        public override void OnInit() {
-            typeof(CrushBlock).AddToTracker();
         }
 
         private static void CrushBlockOnUpdate(On.Celeste.CrushBlock.orig_Update orig, CrushBlock self) {

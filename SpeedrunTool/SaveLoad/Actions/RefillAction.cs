@@ -10,7 +10,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, Refill> savedRefills = new Dictionary<EntityID, Refill>();
 
         public override void OnQuickSave(Level level) {
-            savedRefills = level.Tracker.GetDictionary<Refill>();
+            savedRefills = level.Entities.GetDictionary<Refill>();
         }
 
         private void RefillOnCtorEntityDataVector2(
@@ -60,10 +60,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.Refill.ctor_EntityData_Vector2 -= RefillOnCtorEntityDataVector2;
-        }
-
-        public override void OnInit() {
-            typeof(Refill).AddToTracker();
         }
     }
 }

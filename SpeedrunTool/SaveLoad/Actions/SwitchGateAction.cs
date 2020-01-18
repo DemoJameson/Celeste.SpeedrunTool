@@ -7,7 +7,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, SwitchGate> savedSwitchGates = new Dictionary<EntityID, SwitchGate>();
 
         public override void OnQuickSave(Level level) {
-            savedSwitchGates = level.Tracker.GetDictionary<SwitchGate>();
+            savedSwitchGates = level.Entities.GetDictionary<SwitchGate>();
         }
 
         private void RestoreSwitchGatePosition(On.Celeste.SwitchGate.orig_ctor_EntityData_Vector2 orig, SwitchGate self,
@@ -32,10 +32,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.SwitchGate.ctor_EntityData_Vector2 -= RestoreSwitchGatePosition;
-        }
-
-        public override void OnInit() {
-            typeof(SwitchGate).AddToTracker();
         }
     }
 }

@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, JumpthruPlatform> savedJumpthruPlatforms = new Dictionary<EntityID, JumpthruPlatform>();
 
         public override void OnQuickSave(Level level) {
-            savedJumpthruPlatforms = level.Tracker.GetDictionary<JumpthruPlatform>();
+            savedJumpthruPlatforms = level.Entities.GetDictionary<JumpthruPlatform>();
         }
 
         private void RestoreJumpthruPlatformPosition(On.Celeste.JumpthruPlatform.orig_ctor_EntityData_Vector2 orig,
@@ -34,10 +34,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.JumpthruPlatform.ctor_EntityData_Vector2 -= RestoreJumpthruPlatformPosition;
-        }
-
-        public override void OnInit() {
-            typeof(JumpthruPlatform).AddToTracker();
         }
     }
 }

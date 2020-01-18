@@ -11,7 +11,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private const string RestoreBird = "RestoreBird";
 
         public override void OnQuickSave(Level level) {
-            savedFlingBirds = level.Tracker.GetDictionary<FlingBird>();
+            savedFlingBirds = level.Entities.GetDictionary<FlingBird>();
         }
 
         private void RestoreFlingBirdPosition(On.Celeste.FlingBird.orig_ctor_EntityData_Vector2 orig,
@@ -90,10 +90,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             On.Celeste.FlingBird.ctor_EntityData_Vector2 -= RestoreFlingBirdPosition;
             On.Celeste.FlingBird.Update -= FlingBirdOnUpdate;
             On.Celeste.FlingBird.OnPlayer -= FlingBirdOnOnPlayer;
-        }
-
-        public override void OnInit() {
-            typeof(FlingBird).AddToTracker();
         }
     }
 }

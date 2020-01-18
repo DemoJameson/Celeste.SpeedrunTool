@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private readonly Dictionary<EntityID, SinkingPlatform> sinkingPlatforms = new Dictionary<EntityID, SinkingPlatform>();
 
         public override void OnQuickSave(Level level) {
-            sinkingPlatforms.AddRange(level.Tracker.GetCastEntities<SinkingPlatform>());
+            sinkingPlatforms.AddRange(level.Entities.FindAll<SinkingPlatform>());
         }
 
         private void RestoreSinkingPlatformPosition(On.Celeste.SinkingPlatform.orig_ctor_EntityData_Vector2 orig,
@@ -39,10 +39,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.SinkingPlatform.ctor_EntityData_Vector2 -= RestoreSinkingPlatformPosition;
-        }
-
-        public override void OnInit() {
-            typeof(SinkingPlatform).AddToTracker();
         }
     }
 }

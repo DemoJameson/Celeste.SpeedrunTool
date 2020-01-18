@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, DashBlock> savedDashBlocks = new Dictionary<EntityID, DashBlock>();
 
         public override void OnQuickSave(Level level) {
-            savedDashBlocks = level.Tracker.GetDictionary<DashBlock>();
+            savedDashBlocks = level.Entities.GetDictionary<DashBlock>();
         }
 
         private void RestoreDashBlockPosition(On.Celeste.DashBlock.orig_ctor_EntityData_Vector2_EntityID orig,
@@ -38,10 +38,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.DashBlock.ctor_EntityData_Vector2_EntityID -= RestoreDashBlockPosition;
-        }
-
-        public override void OnInit() {
-            typeof(DashBlock).AddToTracker();
         }
     }
 }

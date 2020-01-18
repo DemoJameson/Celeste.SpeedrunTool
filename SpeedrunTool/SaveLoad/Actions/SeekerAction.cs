@@ -12,7 +12,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private readonly Dictionary<EntityID, Seeker> savedSeekers = new Dictionary<EntityID, Seeker>();
         
         public override void OnQuickSave(Level level) {
-            savedSeekers.AddRange(level.Tracker.GetCastEntities<Seeker>());
+            savedSeekers.AddRange(level.Entities.FindAll<Seeker>());
         }
 
         private void RestoreSeekerPosition(On.Celeste.Seeker.orig_ctor_EntityData_Vector2 orig, Seeker self,

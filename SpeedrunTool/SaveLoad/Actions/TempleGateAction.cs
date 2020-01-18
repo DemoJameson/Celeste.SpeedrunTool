@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, TempleGate> savedTempleGates = new Dictionary<EntityID, TempleGate>();
 
         public override void OnQuickSave(Level level) {
-            savedTempleGates = level.Tracker.GetDictionary<TempleGate>();
+            savedTempleGates = level.Entities.GetDictionary<TempleGate>();
         }
 
         private void TempleGateOnCtorEntityDataVector2String(
@@ -52,10 +52,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.TempleGate.ctor_EntityData_Vector2_string -= TempleGateOnCtorEntityDataVector2String;
-        }
-
-        public override void OnInit() {
-            typeof(TempleGate).AddToTracker();
         }
 
         public override void OnUpdateEntitiesWhenFreeze(Level level) {

@@ -11,7 +11,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<string, FireBall> savedFireBalls = new Dictionary<string, FireBall>();
 
         public override void OnQuickSave(Level level) {
-            savedFireBalls = level.Tracker.GetCastEntities<FireBall>()
+            savedFireBalls = level.Entities.FindAll<FireBall>()
                 .ToDictionary(ball => ball.GetExtendedDataValue<string>("nodesIndexKey"));
         }
 
@@ -61,10 +61,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public override void OnUnload() {
             On.Celeste.FireBall.ctor_Vector2Array_int_int_float_float_bool -= RestoreFireBallState;
             Sprite.Play -= SpriteOnPlay;
-        }
-
-        public override void OnInit() {
-            typeof(FireBall).AddToTracker();
         }
     }
 }

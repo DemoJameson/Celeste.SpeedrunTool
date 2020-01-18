@@ -7,7 +7,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, Key> savedKeys = new Dictionary<EntityID, Key>();
 
         public override void OnQuickSave(Level level) {
-            savedKeys = level.Tracker.GetCastEntities<Key>().ToDictionary(key => key.ID);
+            savedKeys = level.Entities.FindAll<Key>().ToDictionary(key => key.ID);
         }
 
         private void RestoreKeyPosition(On.Celeste.Key.orig_ctor_Player_EntityID orig,
@@ -30,10 +30,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.Key.ctor_Player_EntityID -= RestoreKeyPosition;
-        }
-
-        public override void OnInit() {
-            typeof(Key).AddToTracker();
         }
 
         public override void OnUpdateEntitiesWhenFreeze(Level level) {

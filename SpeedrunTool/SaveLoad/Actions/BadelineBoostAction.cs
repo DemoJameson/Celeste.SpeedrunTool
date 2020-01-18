@@ -10,7 +10,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, Vector2[]> savedNodes = new Dictionary<EntityID, Vector2[]>();
 
         public override void OnQuickSave(Level level) {
-            savedNodes = level.Tracker.GetCastEntities<BadelineBoost>().ToDictionary(boost => boost.GetEntityId(),
+            savedNodes = level.Entities.FindAll<BadelineBoost>().ToDictionary(boost => boost.GetEntityId(),
                 boost => {
                     int nodeIndex = (int) boost.GetPrivateField("nodeIndex");
                     Vector2[] nodes = boost.GetPrivateField("nodes") as Vector2[];
@@ -87,10 +87,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             On.Celeste.BadelineBoost.ctor_EntityData_Vector2 -= AttachEntityId;
             On.Celeste.BadelineBoost.ctor_Vector2Array_bool_bool_bool_bool_bool -= RestoreBadelineBoostState;
             On.Celeste.BadelineBoost.OnPlayer -= FixMultipleTriggers;
-        }
-
-        public override void OnInit() {
-            typeof(BadelineBoost).AddToTracker();
         }
     }
 }

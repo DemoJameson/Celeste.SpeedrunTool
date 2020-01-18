@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private LightningBreakerBox savedLightningBreakerBox;
 
         public override void OnQuickSave(Level level) {
-            savedLightningBreakerBox = level.Tracker.GetEntity<LightningBreakerBox>();
+            savedLightningBreakerBox = level.Entities.FindFirst<LightningBreakerBox>();
         }
 
         private void RestoreLightningBreakerBoxHealth(
@@ -59,10 +59,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.LightningBreakerBox.ctor_EntityData_Vector2 -= RestoreLightningBreakerBoxHealth;
-        }
-
-        public override void OnInit() {
-            typeof(LightningBreakerBox).AddToTracker();
         }
     }
 }

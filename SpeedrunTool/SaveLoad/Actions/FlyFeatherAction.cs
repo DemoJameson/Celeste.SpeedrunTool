@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, FlyFeather> savedFlyFeathers = new Dictionary<EntityID, FlyFeather>();
 
         public override void OnQuickSave(Level level) {
-            savedFlyFeathers = level.Tracker.GetDictionary<FlyFeather>();
+            savedFlyFeathers = level.Entities.GetDictionary<FlyFeather>();
         }
 
         private void RestoreFlyFeatherState(On.Celeste.FlyFeather.orig_ctor_EntityData_Vector2 orig,
@@ -73,10 +73,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             On.Celeste.FlyFeather.ctor_EntityData_Vector2 -= RestoreFlyFeatherState;
             On.Celeste.FlyFeather.ctor_Vector2_bool_bool -= RestoreFlyFeatherState;
             On.Celeste.FlyFeather.OnPlayer -= FlyFeatherOnOnPlayer;
-        }
-
-        public override void OnInit() {
-            typeof(FlyFeather).AddToTracker();
         }
     }
 }

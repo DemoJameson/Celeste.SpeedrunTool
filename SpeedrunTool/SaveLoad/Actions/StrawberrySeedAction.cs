@@ -11,11 +11,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private readonly Dictionary<EntityID, StrawberrySeed> savedCollectedBerrySeeds = new Dictionary<EntityID, StrawberrySeed>();
 
         public override void OnQuickSave(Level level) {
-            if (!(level.Tracker.GetEntity<Player>() is Player player)) {
+            if (!(level.Entities.FindFirst<Player>() is Player player)) {
                 return;
             }
 
-            savedBerrySeeds = level.Tracker.GetDictionary<StrawberrySeed>();
+            savedBerrySeeds = level.Entities.GetDictionary<StrawberrySeed>();
 
             foreach (Follower follower in player.Leader.Followers) {
                 if (follower.Entity is StrawberrySeed berry) {
@@ -52,7 +52,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         public override void OnQuickLoadStart(Level level) {
-            if (!(level.Tracker.GetEntity<Player>() is Player player)) {
+            if (!(level.Entities.FindFirst<Player>() is Player player)) {
                 return;
             }
 

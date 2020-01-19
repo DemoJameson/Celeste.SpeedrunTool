@@ -66,7 +66,7 @@ namespace Celeste.Mod.SpeedrunTool {
                 return;
             }
 
-            Player player = level.Tracker.GetEntity<Player>();
+            Player player = level.Entities.FindFirst<Player>();
 
             // level 场景中 player == null 代表人物死亡
             if (player != null && player.StateMachine.State == Player.StIntroRespawn || player == null) {

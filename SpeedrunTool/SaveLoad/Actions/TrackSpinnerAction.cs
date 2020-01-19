@@ -8,17 +8,14 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class TrackSpinnerAction : AbstractEntityAction {
-        private readonly Dictionary<EntityID, TrackSpinner> savedTrackSpinners =
+        private Dictionary<EntityID, TrackSpinner> savedTrackSpinners =
             new Dictionary<EntityID, TrackSpinner>();
 
         private static readonly PropertyInfo PercentPropertyInfo =
             typeof(TrackSpinner).GetProperty("Percent", BindingFlags.Public | BindingFlags.Instance);
 
         public override void OnQuickSave(Level level) {
-            List<Entity> entities = level.Tracker.GetEntities<BladeTrackSpinner>();
-            entities.AddRange(level.Tracker.GetEntities<DustTrackSpinner>());
-            entities.AddRange(level.Tracker.GetEntities<StarTrackSpinner>());
-            savedTrackSpinners.AddRange(entities.Cast<TrackSpinner>());
+            savedTrackSpinners = level.Entities.GetDictionary<TrackSpinner>();
         }
 
         private void RestoreTrackSpinnerPosition(On.Celeste.TrackSpinner.orig_ctor orig, TrackSpinner self,
@@ -61,12 +58,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.TrackSpinner.ctor -= RestoreTrackSpinnerPosition;
-        }
-
-        public override void OnInit() {
-            typeof(BladeTrackSpinner).AddToTracker();
-            typeof(DustTrackSpinner).AddToTracker();
-            typeof(StarTrackSpinner).AddToTracker();
         }
     }
 }

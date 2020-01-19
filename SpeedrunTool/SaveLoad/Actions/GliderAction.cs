@@ -10,8 +10,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private List<Glider> savedGlidersCopy = new List<Glider>();
 
         public override void OnQuickSave(Level level) {
-            savedGliders = level.Tracker.GetCastEntities<Glider>().ToList();
-            savedGlidersCopy = level.Tracker.GetCastEntities<Glider>().ToList();
+            savedGliders = level.Entities.FindAll<Glider>().ToList();
+            savedGlidersCopy = level.Entities.FindAll<Glider>().ToList();
         }
 
         private void RestoreGliderPosition(On.Celeste.Glider.orig_ctor_EntityData_Vector2 orig,
@@ -71,10 +71,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.Glider.ctor_EntityData_Vector2 -= RestoreGliderPosition;
-        }
-
-        public override void OnInit() {
-            typeof(Glider).AddToTracker();
         }
     }
 }

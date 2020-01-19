@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, OshiroTrigger> savedOshiroTriggers = new Dictionary<EntityID, OshiroTrigger>();
 
         public override void OnQuickSave(Level level) {
-            savedOshiroTriggers = level.Tracker.GetDictionary<OshiroTrigger>();
+            savedOshiroTriggers = level.Entities.GetDictionary<OshiroTrigger>();
         }
 
         private void RestoreOshiroTrigger(On.Celeste.OshiroTrigger.orig_ctor orig, OshiroTrigger self,
@@ -42,10 +42,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.OshiroTrigger.ctor -= RestoreOshiroTrigger;
-        }
-
-        public override void OnInit() {
-            typeof(OshiroTrigger).AddToTracker();
         }
     }
 }

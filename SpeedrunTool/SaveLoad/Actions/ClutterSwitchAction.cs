@@ -7,7 +7,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, ClutterSwitch> savedClutterSwitches = new Dictionary<EntityID, ClutterSwitch>();
 
         public override void OnQuickSave(Level level) {
-            savedClutterSwitches = level.Tracker.GetDictionary<ClutterSwitch>();
+            savedClutterSwitches = level.Entities.GetDictionary<ClutterSwitch>();
         }
 
         private void RestoreClutterSwitchPosition(On.Celeste.ClutterSwitch.orig_ctor_EntityData_Vector2 orig,
@@ -33,14 +33,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.ClutterSwitch.ctor_EntityData_Vector2 -= RestoreClutterSwitchPosition;
-        }
-
-        public override void OnInit() {
-            typeof(ClutterSwitch).AddToTracker();
-        }
-
-        public override void OnUpdateEntitiesWhenFreeze(Level level) {
-            level.UpdateEntities<ClutterSwitch>();
         }
     }
 }

@@ -10,7 +10,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, MoveBlock> movingBlocks = new Dictionary<EntityID, MoveBlock>();
 
         public override void OnQuickSave(Level level) {
-            movingBlocks = level.Tracker.GetCastEntities<MoveBlock>()
+            movingBlocks = level.Entities.FindAll<MoveBlock>()
                 .Where(block => (int) block.GetPrivateField("state") == 1).ToDictionary(block => block.GetEntityId());
         }
 
@@ -46,10 +46,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.MoveBlock.ctor_EntityData_Vector2 -= RestoreMoveBlockStateOnCreate;
-        }
-
-        public override void OnInit() {
-            typeof(MoveBlock).AddToTracker();
         }
     }
 }

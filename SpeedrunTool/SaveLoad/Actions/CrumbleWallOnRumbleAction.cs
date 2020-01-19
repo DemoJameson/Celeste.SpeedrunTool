@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, CrumbleWallOnRumble> savedCrumbleWallOnRumbles = new Dictionary<EntityID, CrumbleWallOnRumble>();
 
         public override void OnQuickSave(Level level) {
-            savedCrumbleWallOnRumbles = level.Tracker.GetDictionary<CrumbleWallOnRumble>();
+            savedCrumbleWallOnRumbles = level.Entities.GetDictionary<CrumbleWallOnRumble>();
         }
 
         private void RestoreCrumbleWallOnRumblePosition(On.Celeste.CrumbleWallOnRumble.orig_ctor_EntityData_Vector2_EntityID orig,

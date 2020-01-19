@@ -7,7 +7,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, BounceBlock> savedBounceBlocks = new Dictionary<EntityID, BounceBlock>();
 
         public override void OnQuickSave(Level level) {
-            savedBounceBlocks = level.Tracker.GetDictionary<BounceBlock>();
+            savedBounceBlocks = level.Entities.GetDictionary<BounceBlock>();
         }
 
         private void RestoreBounceBlockState(On.Celeste.BounceBlock.orig_ctor_EntityData_Vector2 orig, BounceBlock self,
@@ -46,10 +46,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.BounceBlock.ctor_EntityData_Vector2 -= RestoreBounceBlockState;
-        }
-
-        public override void OnInit() {
-            typeof(BounceBlock).AddToTracker();
         }
     }
 }

@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, RisingLava> savedRisingLavas = new Dictionary<EntityID, RisingLava>();
 
         public override void OnQuickSave(Level level) {
-            savedRisingLavas = level.Tracker.GetDictionary<RisingLava>();
+            savedRisingLavas = level.Entities.GetDictionary<RisingLava>();
         }
 
         private void RestoreRisingLavaState(On.Celeste.RisingLava.orig_ctor_EntityData_Vector2 orig,
@@ -43,10 +43,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.RisingLava.ctor_EntityData_Vector2 -= RestoreRisingLavaState;
-        }
-
-        public override void OnInit() {
-            typeof(RisingLava).AddToTracker();
         }
     }
 }

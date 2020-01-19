@@ -42,7 +42,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             if (entityId.Equals(defaultEntityId) || platformEntityId.Equals(defaultEntityId)) {
                 return true;
             }
-            
+
             if (savedStaticMovers.ContainsKey(entityId)) {
                 var savedStaticMover = savedStaticMovers[entityId];
                 // 之前依附的 Platform 与本次查找的 Platform 非同一个则不依附
@@ -57,11 +57,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private void SolidOnAwake(On.Celeste.Solid.orig_Awake orig, Solid self, Scene scene) {
             self.SetExtendedDataValue(CheckStaticMover, IsLoadStart && self.AllowStaticMovers);
             orig(self, scene);
+            self.SetExtendedDataValue(CheckStaticMover, false);
         }
 
         private void JumpThruOnAwake(On.Celeste.JumpThru.orig_Awake orig, JumpThru self, Scene scene) {
             self.SetExtendedDataValue(CheckStaticMover, IsLoadStart);
             orig(self, scene);
+            self.SetExtendedDataValue(CheckStaticMover, false);
         }
 
         public override void OnClear() {

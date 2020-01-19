@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, TempleCrackedBlock> saveEntities = new Dictionary<EntityID, TempleCrackedBlock>();
 
         public override void OnQuickSave(Level level) {
-            saveEntities = level.Tracker.GetDictionary<TempleCrackedBlock>();
+            saveEntities = level.Entities.GetDictionary<TempleCrackedBlock>();
         }
 
         private void RestoreTempleCrackedBlockPosition(
@@ -38,10 +38,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.TempleCrackedBlock.ctor_EntityID_EntityData_Vector2 -= RestoreTempleCrackedBlockPosition;
-        }
-
-        public override void OnInit() {
-            typeof(TempleCrackedBlock).AddToTracker();
         }
     }
 }

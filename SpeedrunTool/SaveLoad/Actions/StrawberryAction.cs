@@ -7,7 +7,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private readonly Dictionary<EntityID, Strawberry> savedBerries = new Dictionary<EntityID, Strawberry>();
 
         public override void OnQuickSave(Level level) {
-            if (!(level.Tracker.GetEntity<Player>() is Player player)) {
+            if (!(level.Entities.FindFirst<Player>() is Player player)) {
                 return;
             }
 
@@ -31,7 +31,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         public override void OnQuickLoadStart(Level level) {
-            if (!(level.Tracker.GetEntity<Player>() is Player player)) {
+            if (!(level.Entities.FindFirst<Player>() is Player player)) {
                 return;
             }
 

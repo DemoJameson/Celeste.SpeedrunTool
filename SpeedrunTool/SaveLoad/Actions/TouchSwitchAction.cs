@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private IEnumerable<TouchSwitch> activatedTouchSwitches = Enumerable.Empty<TouchSwitch>();
 
         public override void OnQuickSave(Level level) {
-            activatedTouchSwitches = level.Tracker.GetCastEntities<TouchSwitch>()
+            activatedTouchSwitches = level.Entities.FindAll<TouchSwitch>()
                 .Where(touchSwitch => touchSwitch.Switch.Activated);
         }
 

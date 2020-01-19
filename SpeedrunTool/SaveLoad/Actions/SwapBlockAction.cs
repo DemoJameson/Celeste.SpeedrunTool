@@ -7,7 +7,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, SwapBlock> swapBlocks = new Dictionary<EntityID, SwapBlock>();
 
         public override void OnQuickSave(Level level) {
-            swapBlocks = level.Tracker.GetDictionary<SwapBlock>();
+            swapBlocks = level.Entities.GetDictionary<SwapBlock>();
         }
 
         private void RestoreSwapBlockState(On.Celeste.SwapBlock.orig_ctor_EntityData_Vector2 orig, SwapBlock self,
@@ -37,10 +37,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.SwapBlock.ctor_EntityData_Vector2 -= RestoreSwapBlockState;
-        }
-
-        public override void OnInit() {
-            typeof(SwapBlock).AddToTracker();
         }
     }
 }

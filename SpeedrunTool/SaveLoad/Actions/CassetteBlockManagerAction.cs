@@ -10,11 +10,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private bool disableAudio;
 
         public override void OnQuickSave(Level level) {
-            savedCassetteBlockManager = level.Tracker.GetEntity<CassetteBlockManager>();
+            savedCassetteBlockManager = level.Entities.FindFirst<CassetteBlockManager>();
         }
 
         private void RestoreCassetteBlockManager(On.Celeste.CassetteBlockManager.orig_Update orig, CassetteBlockManager self) {
-            List<Entity> cassetteBlocks = self.Scene.Tracker.GetEntities<CassetteBlock>();
+            List<CassetteBlock> cassetteBlocks = self.Scene.Entities.FindAll<CassetteBlock>();
             if (IsLoadStart && savedCassetteBlockManager != null) {
                 disableAudio = true; // sfx.setParameterValue("sixteenth_note", GetSixteenthNote());
                 int tickNumber = (int) self.GetPrivateField("beatsPerTick") * (int) self.GetPrivateField("ticksPerSwap");

@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, Booster> savedBoosters = new Dictionary<EntityID, Booster>();
 
         public override void OnQuickSave(Level level) {
-            savedBoosters = level.Tracker.GetDictionary<Booster>();
+            savedBoosters = level.Entities.GetDictionary<Booster>();
         }
 
         private void RestoreBoosterPosition(On.Celeste.Booster.orig_ctor_EntityData_Vector2 orig,
@@ -38,7 +38,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 yield return null;
             }
 
-            Player player = self.SceneAs<Level>().Tracker.GetEntity<Player>();
+            Player player = self.SceneAs<Level>().Entities.FindFirst<Player>();
             self.InvokePrivateMethod("OnPlayer", player);
             self.Center = savedBooster.Center;
         }
@@ -72,10 +72,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public override void OnUnload() {
             On.Celeste.Booster.ctor_EntityData_Vector2 -= RestoreBoosterPosition;
             On.Celeste.Booster.OnPlayer -= BoosterOnOnPlayer;
-        }
-
-        public override void OnInit() {
-            typeof(Booster).AddToTracker();
         }
     }
 }

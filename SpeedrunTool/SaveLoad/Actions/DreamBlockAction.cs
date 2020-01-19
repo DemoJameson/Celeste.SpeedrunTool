@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, DreamBlock> savedDreamBlocks = new Dictionary<EntityID, DreamBlock>();
 
         public override void OnQuickSave(Level level) {
-            savedDreamBlocks = level.Tracker.GetDictionary<DreamBlock>();
+            savedDreamBlocks = level.Entities.GetDictionary<DreamBlock>();
         }
 
         private void ResotreDreamBlockPosition(On.Celeste.DreamBlock.orig_ctor_EntityData_Vector2 orig,
@@ -64,10 +64,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.DreamBlock.ctor_EntityData_Vector2 -= ResotreDreamBlockPosition;
-        }
-
-        public override void OnInit() {
-            typeof(DreamBlock).AddToTracker();
         }
     }
 }

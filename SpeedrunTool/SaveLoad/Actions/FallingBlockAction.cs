@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, FallingBlock> fallingBlocks = new Dictionary<EntityID, FallingBlock>();
 
         public override void OnQuickSave(Level level) {
-            fallingBlocks = level.Tracker.GetDictionary<FallingBlock>();
+            fallingBlocks = level.Entities.GetDictionary<FallingBlock>();
         }
 
         public override void OnClear() {
@@ -94,10 +94,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             On.Celeste.FallingBlock.ctor_Vector2_char_int_int_bool_bool_bool -=
                 OnFallingBlockOnCtorVector2CharIntIntBoolBoolBool;
             On.Celeste.FallingBlock.ShakeSfx -= DisableShakeSfx;
-        }
-
-        public override void OnInit() {
-            typeof(FallingBlock).AddToTracker();
         }
 
         public override void OnUpdateEntitiesWhenFreeze(Level level) {

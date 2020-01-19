@@ -10,7 +10,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             new Dictionary<EntityID, CrumblePlatform>();
 
         public override void OnQuickSave(Level level) {
-            savedCrumblePlatforms = level.Tracker.GetCastEntities<CrumblePlatform>()
+            savedCrumblePlatforms = level.Entities.FindAll<CrumblePlatform>()
                 .Where(platform => !platform.Collidable).ToDictionary(platform => platform.GetEntityId());
         }
 
@@ -35,7 +35,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 self.SetExtendedDataValue("IsFade", false);
 
                 AudioAction.MuteAudioPathVector2("event:/game/general/platform_disintegrate");
-                return Engine.Scene.Tracker.GetEntity<Player>();
+                return Engine.Scene.Entities.FindFirst<Player>();
             }
 
             return orig(self);
@@ -53,10 +53,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public override void OnUnload() {
             On.Celeste.CrumblePlatform.ctor_EntityData_Vector2 -= RestoreCrumblePlatformPosition;
             On.Celeste.Solid.GetPlayerOnTop -= SolidOnGetPlayerOnTop;
-        }
-
-        public override void OnInit() {
-            typeof(CrumblePlatform).AddToTracker();
         }
 
         public override void OnUpdateEntitiesWhenFreeze(Level level) {

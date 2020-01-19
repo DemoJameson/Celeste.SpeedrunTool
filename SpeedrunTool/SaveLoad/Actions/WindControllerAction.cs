@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private WindController savedWindController;
 
         public override void OnQuickSave(Level level) {
-            savedWindController = level.Tracker.GetEntity<WindController>();
+            savedWindController = level.Entities.FindFirst<WindController>();
             levelWind = level.Wind;
         }
 
@@ -21,7 +21,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 level.Wind = levelWind;
             }
 
-            WindController windController = level.Tracker.GetEntity<WindController>();
+            WindController windController = level.Entities.FindFirst<WindController>();
             WindController.Patterns savedPattern =
                 (WindController.Patterns) savedWindController.GetPrivateField("pattern");
             if (windController == null) {
@@ -40,9 +40,5 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public override void OnLoad() { }
 
         public override void OnUnload() { }
-
-        public override void OnInit() {
-            typeof(WindController).AddToTracker();
-        }
     }
 }

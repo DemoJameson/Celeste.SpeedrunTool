@@ -6,7 +6,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private TheoCrystal savedTheoCrystal;
 
         public override void OnQuickSave(Level level) {
-            savedTheoCrystal = level.Tracker.GetEntity<TheoCrystal>();
+            savedTheoCrystal = level.Entities.FindFirst<TheoCrystal>();
         }
 
         private void RestoreTheoCrystalPosition(On.Celeste.TheoCrystal.orig_ctor_Vector2 orig, TheoCrystal self,

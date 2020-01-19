@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, SandwichLava> savedSandwichLavas = new Dictionary<EntityID, SandwichLava>();
 
         public override void OnQuickSave(Level level) {
-            savedSandwichLavas = level.Tracker.GetDictionary<SandwichLava>();
+            savedSandwichLavas = level.Entities.GetDictionary<SandwichLava>();
         }
 
         private void RestoreSandwichLavaState(On.Celeste.SandwichLava.orig_ctor_EntityData_Vector2 orig,
@@ -43,24 +43,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.SandwichLava.ctor_EntityData_Vector2 -= RestoreSandwichLavaState;
-        }
-
-        public override void OnInit() {
-            typeof(SandwichLava).AddToTracker();
-        }
-
-        private class SandwichLavaComponent : Monocle.Component {
-            private readonly SandwichLava savedSandwichLava;
-
-            public SandwichLavaComponent(SandwichLava savedSandwichLava) : base(true, false) {
-                this.savedSandwichLava = savedSandwichLava;
-            }
-
-            public override void Update() {
-                Entity.Position = savedSandwichLava.Position;
-
-                RemoveSelf();
-            }
         }
     }
 }

@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, TempleMirrorPortal> savedTempleMirrorPortal = new Dictionary<EntityID, TempleMirrorPortal>();
 
         public override void OnQuickSave(Level level) {
-            savedTempleMirrorPortal = level.Tracker.GetDictionary<TempleMirrorPortal>();
+            savedTempleMirrorPortal = level.Entities.GetDictionary<TempleMirrorPortal>();
         }
 
         private void TempleMirrorPortalOnCtorEntityDataVector2(On.Celeste.TempleMirrorPortal.orig_ctor_EntityData_Vector2 orig, TempleMirrorPortal self, EntityData data, Vector2 offset) {
@@ -54,11 +54,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.TempleMirrorPortal.ctor_EntityData_Vector2 -= TempleMirrorPortalOnCtorEntityDataVector2;
-        }
-
-        public override void OnInit() {
-            typeof(TempleMirrorPortal).AddToTracker();
-            typeof(TemplePortalTorch).AddToTracker();
         }
     }
 }

@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             new Dictionary<EntityID, FinalBossMovingBlock>();
 
         public override void OnQuickSave(Level level) {
-            savedFinalBossMovingBlocks = level.Tracker.GetDictionary<FinalBossMovingBlock>();
+            savedFinalBossMovingBlocks = level.Entities.GetDictionary<FinalBossMovingBlock>();
         }
 
         private void RestoreFinalBossMovingBlockPosition(
@@ -52,7 +52,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             public UpdateComponent() : base(true, false) { }
 
             public override void Update() {
-                FinalBoss finalBoss = Scene.Tracker.GetEntity<FinalBoss>();
+                FinalBoss finalBoss = Scene.Entities.FindFirst<FinalBoss>();
                 if (finalBoss == null) {
                     return;
                 }

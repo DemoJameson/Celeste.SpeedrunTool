@@ -8,7 +8,7 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class RotateSpinnerAction : AbstractEntityAction {
-        private readonly Dictionary<EntityID, RotateSpinner> savedRotateSpinners =
+        private Dictionary<EntityID, RotateSpinner> savedRotateSpinners =
             new Dictionary<EntityID, RotateSpinner>();
 
         private static readonly FieldInfo RotationPercentFieldInfo =
@@ -18,10 +18,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             typeof(RotateSpinner).GetField("center", BindingFlags.NonPublic | BindingFlags.Instance);
 
         public override void OnQuickSave(Level level) {
-            List<Entity> entities = level.Tracker.GetEntities<BladeRotateSpinner>();
-            entities.AddRange(level.Tracker.GetEntities<DustRotateSpinner>());
-            entities.AddRange(level.Tracker.GetEntities<StarRotateSpinner>());
-            savedRotateSpinners.AddRange(entities.Cast<RotateSpinner>());
+            savedRotateSpinners = level.Entities.GetDictionary<RotateSpinner>();
         }
 
         private void RestoreRotateSpinnerState(On.Celeste.RotateSpinner.orig_ctor orig, RotateSpinner self,
@@ -53,12 +50,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.RotateSpinner.ctor -= RestoreRotateSpinnerState;
-        }
-
-        public override void OnInit() {
-            typeof(BladeRotateSpinner).AddToTracker();
-            typeof(DustRotateSpinner).AddToTracker();
-            typeof(StarRotateSpinner).AddToTracker();
         }
     }
 }

@@ -1,6 +1,8 @@
+using System.Collections;
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
+using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class ClutterSwitchAction : AbstractEntityAction {
@@ -19,8 +21,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (IsLoadStart && savedClutterSwitches.ContainsKey(entityId)) {
                 ClutterSwitch savedClutterSwitch = savedClutterSwitches[entityId];
-                self.Position = savedClutterSwitch.Position;
+                self.Add(new Coroutine(Restore(self, savedClutterSwitch)));
             }
+        }
+
+        private IEnumerator Restore(ClutterSwitch self, ClutterSwitch savedClutterSwitch) {
+            self.Position = savedClutterSwitch.Position;
+            yield break;
         }
 
         public override void OnClear() {

@@ -1,11 +1,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class CrumblePlatformAction : AbstractEntityAction {
+        private const string IsFade = "IsFade";
+
         private Dictionary<EntityID, CrumblePlatform> savedCrumblePlatforms =
             new Dictionary<EntityID, CrumblePlatform>();
 
@@ -22,20 +25,28 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             orig(self, data, offset);
 
             if (IsLoadStart && savedCrumblePlatforms.ContainsKey(entityId)) {
-                self.SetExtendedDataValue("IsFade", true);
+                self.SetExtendedBoolean(IsFade, true);
+                self.Add(new FastForwardComponent<CrumblePlatform>(savedCrumblePlatforms[entityId], OnFastForward));
+            }
+        }
+
+        private void OnFastForward(CrumblePlatform entity, CrumblePlatform savedentity) {
+            for (int i = 0; i < 36; i++) {
+                entity.Update();
             }
         }
 
         private static Player SolidOnGetPlayerOnTop(On.Celeste.Solid.orig_GetPlayerOnTop orig, Solid self) {
-            if (IsLoading) {
-                return null;
-            }
-            
-            if (self is CrumblePlatform && self.GetExtendedDataValue<bool>("IsFade")) {
-                self.SetExtendedDataValue("IsFade", false);
+            if (self is CrumblePlatform && self.GetExtendedBoolean(IsFade)) {
+                self.SetExtendedBoolean(IsFade, false);
 
                 AudioAction.MuteAudioPathVector2("event:/game/general/platform_disintegrate");
-                return Engine.Scene.Entities.FindFirst<Player>();
+                return self.Scene.Entities.FindFirst<Player>();
+            }
+            
+            // 适用于所有 Solid
+            if (IsLoadStart || IsLoading || IsFrozen) {
+                return null;
             }
 
             return orig(self);
@@ -53,10 +64,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public override void OnUnload() {
             On.Celeste.CrumblePlatform.ctor_EntityData_Vector2 -= RestoreCrumblePlatformPosition;
             On.Celeste.Solid.GetPlayerOnTop -= SolidOnGetPlayerOnTop;
-        }
-
-        public override void OnUpdateEntitiesWhenFreeze(Level level) {
-            level.UpdateEntities<CrumblePlatform>();
         }
     }
 }

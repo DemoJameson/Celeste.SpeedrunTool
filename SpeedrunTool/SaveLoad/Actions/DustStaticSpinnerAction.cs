@@ -34,9 +34,5 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public override void OnUnload() {
             On.Celeste.DustStaticSpinner.ctor_EntityData_Vector2 -= RestoreDustStaticSpinnerPosition;
         }
-
-        public override void OnUpdateEntitiesWhenFreeze(Level level) {
-            level.UpdateEntities<DustStaticSpinner>();
-        }
     }
 }

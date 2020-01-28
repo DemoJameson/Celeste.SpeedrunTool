@@ -9,7 +9,7 @@ using Monocle;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class CrushBlockAction : AbstractEntityAction {
         private Dictionary<EntityID, CrushBlock> savedCrushBlocks = new Dictionary<EntityID, CrushBlock>();
-        
+
         public override void OnClear() {
             savedCrushBlocks.Clear();
         }
@@ -46,15 +46,21 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     CrushBlock savedCrushBlock = savedCrushBlocks[entityId];
                     if (self.Position != savedCrushBlock.Position) {
                         self.Position = savedCrushBlock.Position;
+                        self.Add(new FastForwardComponent<CrushBlock>(savedCrushBlock, OnFastForward));
 
                         object returnStack = savedCrushBlock.GetPrivateField("returnStack").Copy();
                         self.SetPrivateField("returnStack", returnStack);
                         self.Add(new RestoreCrushBlockStateComponent(savedCrushBlock));
                     }
-                }
-                else {
+                } else {
                     self.Add(new RemoveSelfComponent());
                 }
+            }
+        }
+
+        private void OnFastForward(CrushBlock entity, CrushBlock savedEntity) {
+            for (int i = 0; i < 24; i++) {
+                entity.Update();
             }
         }
 
@@ -87,14 +93,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private static void CrushBlockOnUpdate(On.Celeste.CrushBlock.orig_Update orig, CrushBlock self) {
             try {
                 orig(self);
-            }
-            catch (Exception) {
+            } catch (NullReferenceException) {
                 ((Sprite) self.GetPrivateField("face")).Play("idle");
             }
-        }
-
-        public override void OnUpdateEntitiesWhenFreeze(Level level) {
-            level.UpdateEntities<CrushBlock>();
         }
 
         private class RestoreCrushBlockStateComponent : Monocle.Component {
@@ -115,8 +116,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
                     if ((Vector2) crushDir != Vector2.Zero) {
                         attackMethodInfo?.Invoke(Entity, new[] {crushDir});
-                    }
-                    else {
+                    } else {
                         AudioAction.MuteAudioPathVector2("event:/game/06_reflection/crushblock_impact");
                         AudioAction.MuteSoundSource("event:/game/06_reflection/crushblock_move_loop");
                         object lastCrushDir = savedCrushBlock.GetExtendedDataValue<Vector2>("lastCrushDir");

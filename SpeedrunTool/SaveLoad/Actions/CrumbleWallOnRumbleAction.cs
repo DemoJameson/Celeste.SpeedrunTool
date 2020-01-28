@@ -34,9 +34,5 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public override void OnUnload() {
             On.Celeste.CrumbleWallOnRumble.ctor_EntityData_Vector2_EntityID -= RestoreCrumbleWallOnRumblePosition;
         }
-
-        public override void OnUpdateEntitiesWhenFreeze(Level level) {
-            level.UpdateEntities<CrumbleWallOnRumble>();
-        }
     }
 }

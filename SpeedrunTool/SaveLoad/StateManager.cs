@@ -124,8 +124,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private static void PlayerHairOnRender(On.Celeste.PlayerHair.orig_Render orig, PlayerHair self) {
             try {
                 orig(self);
-            }
-            catch (ArgumentOutOfRangeException) {
+            } catch (ArgumentOutOfRangeException) {
                 // ignored
             }
         }
@@ -152,37 +151,38 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // 尽快设置人物的位置与镜头，然后冻结游戏等待人物复活
             if (IsSaved && IsLoadStart && player != null) {
                 QuickLoadStart(self, player);
-                
+
                 // 设置完等待一帧允许所有 Entity 更新然后再冻结游戏
                 orig(self);
-                
+
                 // 冻结游戏或者进入下一状态
                 if (player.StateMachine.State == Player.StIntroRespawn) {
                     self.Frozen = true;
                     self.PauseLock = true;
                     loadState = LoadState.LoadFrozen;
-                }
-                else {
+                } else {
                     loadState = LoadState.Loading;
                 }
+
                 return;
             }
-            
+
             // 冻结时允许人物复活
             if (IsSaved && IsLoadFrozen) {
-                UpdateEntitiesWhenFreeze(self, player);
+                UpdatePlayerWhenFreeze(self, player);
             }
 
             // 人物复活完毕后设置人物相关属性
             if (IsSaved && (IsLoading || IsLoadFrozen) && player != null &&
-                (player.StateMachine.State == Player.StNormal || player.StateMachine.State == Player.StSwim || player.StateMachine.State == Player.StFlingBird)) {
+                (player.StateMachine.State == Player.StNormal || player.StateMachine.State == Player.StSwim ||
+                 player.StateMachine.State == Player.StFlingBird)) {
                 QuickLoading(self, player);
             }
-            
+
             orig(self);
         }
 
-        private List<int> disabledSaveStates = new List<int> {
+        private readonly List<int> disabledSaveStates = new List<int> {
             Player.StReflectionFall,
             Player.StTempleFall,
             Player.StCassetteFly,
@@ -191,7 +191,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             Player.StIntroRespawn,
             Player.StIntroWakeUp
         };
-        
+
         private bool CheckButton(Level level, Player player) {
             if (ButtonConfigUi.SaveButton.Value.Pressed && !level.Paused && !level.Transitioning && !level.PauseLock &&
                 !level.InCutscene &&
@@ -209,8 +209,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 ButtonConfigUi.LoadButton.Value.ConsumePress();
                 if (IsSaved) {
                     QuickLoad();
-                }
-                else if (!level.Frozen) {
+                } else if (!level.Frozen) {
                     level.Add(new MiniTextbox(DialogIds.DialogNotSaved));
                 }
 
@@ -303,14 +302,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             disableDie = false;
         }
 
-        private void UpdateEntitiesWhenFreeze(Level level, Player player) {
+        private void UpdatePlayerWhenFreeze(Level level, Player player) {
             if (player == null) {
                 level.Frozen = false;
-            }
-            else if (player.StateMachine.State != Player.StNormal) {
+            } else if (player.StateMachine.State != Player.StNormal) {
                 player.Update();
-
-                entityActions.ForEach(action => action.OnUpdateEntitiesWhenFreeze(level));
+                // entityActions.ForEach(action => action.OnUpdateEntitiesWhenFreeze(level));
             }
         }
 
@@ -340,13 +337,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             entityActions.ForEach(action => action.OnClear());
         }
 
-        private void QuickLoadWhenDeath(On.Celeste.Level.orig_DoScreenWipe orig, Level self, bool wipeIn, Action onComplete, bool hiresSnow) {
-            if (SpeedrunToolModule.Settings.Enabled && SpeedrunToolModule.Settings.AutoLoadAfterDeath && IsSaved && onComplete == self.Reload) {
+        private void QuickLoadWhenDeath(On.Celeste.Level.orig_DoScreenWipe orig, Level self, bool wipeIn,
+            Action onComplete, bool hiresSnow) {
+            if (SpeedrunToolModule.Settings.Enabled && SpeedrunToolModule.Settings.AutoLoadAfterDeath && IsSaved &&
+                onComplete == self.Reload) {
                 onComplete = () => {
                     if (IsSaved) {
                         QuickLoad();
-                    }
-                    else {
+                    } else {
                         self.Reload();
                     }
                 };

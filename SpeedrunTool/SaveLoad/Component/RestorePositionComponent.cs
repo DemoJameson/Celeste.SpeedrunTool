@@ -7,6 +7,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Component {
 
         private static IEnumerator RestorePosition(Entity self, Entity saved) {
             self.Position = saved.Position;
+            self.Collidable = saved.Collidable;
+            self.Visible = saved.Visible;
             yield break;
         }
     }

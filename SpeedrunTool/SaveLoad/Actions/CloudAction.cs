@@ -12,6 +12,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             savedClouds = level.Entities.GetDictionary<Cloud>();
         }
 
+        // TODO 在云蓄力到最顶端时保存会被弹起来
         private void RestoreCloudPosition(On.Celeste.Cloud.orig_ctor_EntityData_Vector2 orig,
             Cloud self, EntityData data,
             Vector2 offset) {
@@ -33,10 +34,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private IEnumerator RestoreRespawnState(Cloud self, Cloud savedCloud) {
-            yield return null;
             self.CopyPrivateField("respawnTimer", savedCloud);
             self.Collidable = savedCloud.Collidable;
             self.CopyPrivateField("speed", savedCloud);
+            yield break;
         }
 
         public override void OnClear() {

@@ -58,9 +58,5 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public override void OnUnload() {
             On.Celeste.Puffer.ctor_EntityData_Vector2 -= RestorePufferPosition;
         }
-
-        public override void OnUpdateEntitiesWhenFreeze(Level level) {
-            level.UpdateEntities<Puffer>();
-        }
     }
 }

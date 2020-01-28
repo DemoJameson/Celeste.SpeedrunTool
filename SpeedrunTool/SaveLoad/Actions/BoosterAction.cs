@@ -33,10 +33,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         private IEnumerator BoostPlayer(Booster self, Booster savedBooster) {
             self.Center = StateManager.Instance.SavedPlayer.Center;
+            self.Collidable = false;
 
             while (!IsLoadComplete) {
                 yield return null;
             }
+            
+            self.Collidable = true;
 
             Player player = self.SceneAs<Level>().Entities.FindFirst<Player>();
             self.InvokePrivateMethod("OnPlayer", player);

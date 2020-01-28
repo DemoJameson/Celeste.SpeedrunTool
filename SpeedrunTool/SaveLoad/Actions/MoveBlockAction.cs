@@ -25,8 +25,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             if (IsLoadStart && movingBlocks.ContainsKey(entityId)) {
                 self.Position = movingBlocks[entityId].Position;
 
-                if ((int) movingBlocks[entityId].GetPrivateField("state") == 1) {
+                int state = (int) movingBlocks[entityId].GetPrivateField("state");
+                if (state == 1) {
+                    // MovementState.Moving
                     self.Add(new Coroutine(TriggerBlock(self)));
+                } else if (state == 2) {
+                    // MovementState.Breaking
+                    // TODO 还原破碎后的状态
                 }
             }
         }

@@ -107,7 +107,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     self.InvokePrivateMethod("ScrapeParticlesCheck", to);
                     if (self.Scene.OnInterval(0.1f)) {
                         object pathRenderer = self.GetPrivateField("pathRenderer");
-                        pathRenderer.GetType().GetMethod("CreateSparks").Invoke(pathRenderer, new object[] { });
+                        pathRenderer.GetType().GetMethod("CreateSparks")?.Invoke(pathRenderer, new object[] { });
                     }
 
                     self.MoveTo(to);

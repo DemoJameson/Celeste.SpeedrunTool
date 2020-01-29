@@ -161,7 +161,6 @@
     <Compile Include="SaveLoad\Component\FastForwardComponent.cs" />
     <Compile Include="SaveLoad\Component\RemoveSelfComponent.cs" />
     <Compile Include="SaveLoad\Component\RestorePositionComponent.cs" />
-    <Compile Include="SaveLoad\Entity\FastForwardEntity.cs" />
     <Compile Include="SaveLoad\StateManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="BetterMapEditor.cs" />

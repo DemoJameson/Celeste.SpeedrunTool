@@ -50,8 +50,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             entity.OnStaticMoverTrigger(null);
             Rectangle bounds = entity.SceneAs<Level>().Bounds;
             entity.MoveTo(new Vector2(bounds.Left - 100f, bounds.Bottom - 100f));
-            float breakTime = savedEntity.GetExtendedDataValue<float>(nameof(breakTime));
-            int breakTimeFrames = Convert.ToInt32(breakTime / 0.017f);
+            int breakTimeFrames = savedEntity.GetExtendedDataValue<int>(nameof(breakTimeFrames));
             for (int i = 0; i < 12 + breakTimeFrames; i++) {
                 entity.Update();
             }
@@ -68,11 +67,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 object result = enumerator.Current;
                 if (result is float restoreTime && Math.Abs(restoreTime - 2.2f) < 0.01) {
                     restoreTime += 0.016f;
-                    float breakTime = 0f;
+                    int breakTimeFrames = 0;
                     while (restoreTime > 0f) {
                         restoreTime -= Engine.DeltaTime;
-                        breakTime += Engine.DeltaTime;
-                        self.SetExtendedDataValue(nameof(breakTime), breakTime);
+                        breakTimeFrames++;
+                        self.SetExtendedDataValue(nameof(breakTimeFrames), breakTimeFrames);
                         yield return null;
                     }
                     continue;

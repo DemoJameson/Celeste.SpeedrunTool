@@ -1,3 +1,5 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
@@ -30,8 +32,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
         }
 
-        private void OnFastForward(CrumblePlatform entity, CrumblePlatform savedentity) {
-            for (int i = 0; i < 36; i++) {
+        private void OnFastForward(CrumblePlatform entity, CrumblePlatform savedEntity) {
+            int breakTimeFrames = savedEntity.GetExtendedDataValue<int>(nameof(breakTimeFrames));
+            for (int i = 0; i < 36 + breakTimeFrames; i++) {
                 entity.Update();
             }
         }
@@ -52,6 +55,26 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             return orig(self);
         }
 
+        private IEnumerator CrumblePlatformOnSequence(On.Celeste.CrumblePlatform.orig_Sequence orig, CrumblePlatform self) {
+            IEnumerator enumerator = orig(self);
+            while (enumerator.MoveNext()) {
+                object result = enumerator.Current;
+                if (result is float restoreTime && Math.Abs(restoreTime - 2f) < 0.01) {
+                    restoreTime += 0.016f;
+                    int breakTimeFrames = 0;
+                    while (restoreTime > 0f) {
+                        restoreTime -= Engine.DeltaTime;
+                        breakTimeFrames++;
+                        self.SetExtendedDataValue(nameof(breakTimeFrames), breakTimeFrames);
+                        yield return null;
+                    }
+                    continue;
+                }
+
+                yield return result;
+            }
+        }
+
         public override void OnClear() {
             savedCrumblePlatforms.Clear();
         }
@@ -59,11 +82,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public override void OnLoad() {
             On.Celeste.CrumblePlatform.ctor_EntityData_Vector2 += RestoreCrumblePlatformPosition;
             On.Celeste.Solid.GetPlayerOnTop += SolidOnGetPlayerOnTop;
+            On.Celeste.CrumblePlatform.Sequence += CrumblePlatformOnSequence;
         }
 
         public override void OnUnload() {
             On.Celeste.CrumblePlatform.ctor_EntityData_Vector2 -= RestoreCrumblePlatformPosition;
             On.Celeste.Solid.GetPlayerOnTop -= SolidOnGetPlayerOnTop;
+            On.Celeste.CrumblePlatform.Sequence -= CrumblePlatformOnSequence;
         }
     }
 }

@@ -179,6 +179,14 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return default(T);
         }
 
+        public static bool GetExtendedBoolean(this object o, string name) {
+            return GetExtendedDataValue<bool>(o, name);
+        }
+        
+        public static void SetExtendedBoolean(this object o, string name, bool value) {
+            SetExtendedDataValue(o, name, value);
+        }
+        
         public static T With<T>(this T item, Action<T> action) {
             action(item);
             return item;

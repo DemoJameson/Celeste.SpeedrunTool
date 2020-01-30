@@ -52,9 +52,5 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public override void OnUnload() {
             On.Celeste.Spikes.ctor_EntityData_Vector2_Directions -= SpikesOnCtorEntityDataVector2Directions;
         }
-
-        public override void OnUpdateEntitiesWhenFreeze(Level level) {
-            level.UpdateEntities<Spikes>();
-        }
     }
 }

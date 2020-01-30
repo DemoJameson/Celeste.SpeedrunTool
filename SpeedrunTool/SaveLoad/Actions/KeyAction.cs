@@ -31,9 +31,5 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public override void OnUnload() {
             On.Celeste.Key.ctor_Player_EntityID -= RestoreKeyPosition;
         }
-
-        public override void OnUpdateEntitiesWhenFreeze(Level level) {
-            level.UpdateEntities<Key>();
-        }
     }
 }

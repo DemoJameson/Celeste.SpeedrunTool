@@ -5,8 +5,10 @@ using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class FallingBlockAction : AbstractEntityAction {
-        private bool disableShakeSfx;
         private Dictionary<EntityID, FallingBlock> fallingBlocks = new Dictionary<EntityID, FallingBlock>();
+        private const string DisableShakeSfx = "DisableShakeSfx";
+        private const string DisableImpactSfx = "DisableImpactSfx";
+        private const string DisableLandParticles = "DisableLandParticles";
 
         public override void OnQuickSave(Level level) {
             fallingBlocks = level.Entities.GetDictionary<FallingBlock>();
@@ -14,7 +16,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnClear() {
             fallingBlocks.Clear();
-            disableShakeSfx = false;
         }
 
         private void OnFallingBlockOnCtorVector2CharIntIntBoolBoolBool(
@@ -49,16 +50,27 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private void RestoreState(FallingBlock self, EntityID entityId) {
             if (IsLoadStart) {
                 if (fallingBlocks.ContainsKey(entityId)) {
-                    FallingBlock fallingBlock = fallingBlocks[entityId];
-                    self.Position = fallingBlock.Position;
-                    if (fallingBlock.HasStartedFalling && !OnGround(fallingBlock)) {
-                        disableShakeSfx = true;
+                    FallingBlock savedFallingBlock = fallingBlocks[entityId];
+                    self.Position = savedFallingBlock.Position;
+                    if (savedFallingBlock.HasStartedFalling) {
+                        self.SetExtendedBoolean(DisableShakeSfx, true);
                         self.Triggered = true;
+                        if (OnGround(savedFallingBlock)) {
+                            self.Add(new FastForwardComponent<FallingBlock>(savedFallingBlock, OnFastForward));
+                            self.SetExtendedBoolean(DisableImpactSfx, true);
+                            self.SetExtendedBoolean(DisableLandParticles, true);
+                        }
                     }
                 }
                 else {
                     self.Add(new RemoveSelfComponent());
                 }
+            }
+        }
+
+        private void OnFastForward(FallingBlock entity, FallingBlock savedentity) {
+            for (var i = 0; i < 60; i++) {
+                entity.Update();
             }
         }
 
@@ -71,9 +83,27 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 fallingBlock.Position + Vector2.UnitY * downCheck);
         }
 
-        private void DisableShakeSfx(On.Celeste.FallingBlock.orig_ShakeSfx orig, FallingBlock self) {
-            if (disableShakeSfx) {
-                disableShakeSfx = false;
+        private void FallingBlockOnShakeSfx(On.Celeste.FallingBlock.orig_ShakeSfx orig, FallingBlock self) {
+            if (self.GetExtendedBoolean(DisableShakeSfx)) {
+                self.SetExtendedBoolean(DisableShakeSfx, false);
+                return;
+            }
+
+            orig(self);
+        }
+
+        private void FallingBlockOnImpactSfx(On.Celeste.FallingBlock.orig_ImpactSfx orig, FallingBlock self) {
+            if (self.GetExtendedBoolean(DisableImpactSfx)) {
+                self.SetExtendedBoolean(DisableImpactSfx, false);
+                return;
+            }
+
+            orig(self);
+        }
+
+        private void FallingBlockOnLandParticles(On.Celeste.FallingBlock.orig_LandParticles orig, FallingBlock self) {
+            if (self.GetExtendedBoolean(DisableLandParticles)) {
+                self.SetExtendedBoolean(DisableLandParticles, false);
                 return;
             }
 
@@ -85,7 +115,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             On.Celeste.FallingBlock.ctor_EntityData_Vector2 += OnFallingBlockOnCtorEntityDataVector2;
             On.Celeste.FallingBlock.ctor_Vector2_char_int_int_bool_bool_bool +=
                 OnFallingBlockOnCtorVector2CharIntIntBoolBoolBool;
-            On.Celeste.FallingBlock.ShakeSfx += DisableShakeSfx;
+            On.Celeste.FallingBlock.ShakeSfx += FallingBlockOnShakeSfx;
+            On.Celeste.FallingBlock.ImpactSfx += FallingBlockOnImpactSfx;
+            On.Celeste.FallingBlock.LandParticles += FallingBlockOnLandParticles;
         }
 
         public override void OnUnload() {
@@ -93,11 +125,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             On.Celeste.FallingBlock.ctor_EntityData_Vector2 -= OnFallingBlockOnCtorEntityDataVector2;
             On.Celeste.FallingBlock.ctor_Vector2_char_int_int_bool_bool_bool -=
                 OnFallingBlockOnCtorVector2CharIntIntBoolBoolBool;
-            On.Celeste.FallingBlock.ShakeSfx -= DisableShakeSfx;
-        }
-
-        public override void OnUpdateEntitiesWhenFreeze(Level level) {
-            level.UpdateEntities<FallingBlock>();
+            On.Celeste.FallingBlock.ShakeSfx -= FallingBlockOnShakeSfx;
+            On.Celeste.FallingBlock.ImpactSfx -= FallingBlockOnImpactSfx;
+            On.Celeste.FallingBlock.LandParticles -= FallingBlockOnLandParticles;
         }
     }
 }

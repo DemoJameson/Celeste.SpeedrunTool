@@ -38,11 +38,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             yield break;
         }
         
-        public override void OnUpdateEntitiesWhenFreeze(Level level) {
-            level.UpdateEntities<TempleMirrorPortal>();
-            level.UpdateEntities<TemplePortalTorch>();
-        }
-
         public override void OnClear() {
             savedTempleMirrorPortal.Clear();
         }

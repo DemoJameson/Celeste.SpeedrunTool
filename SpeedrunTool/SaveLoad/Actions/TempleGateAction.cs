@@ -53,9 +53,5 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public override void OnUnload() {
             On.Celeste.TempleGate.ctor_EntityData_Vector2_string -= TempleGateOnCtorEntityDataVector2String;
         }
-
-        public override void OnUpdateEntitiesWhenFreeze(Level level) {
-            level.UpdateEntities<TempleGate>();
-        }
     }
 }

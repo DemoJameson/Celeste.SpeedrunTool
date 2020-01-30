@@ -38,6 +38,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
                 self.SetPrivateField("nodeIndex", nodeIndex);
                 self.Add(new RestoreFinalBossStateComponent(savedFinalBoss));
+                
+                self.CopyPrivateField("playerHasMoved", savedFinalBoss);
             }
         }
 

@@ -43,9 +43,5 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public override void OnUnload() {
             On.Celeste.CrystalStaticSpinner.ctor_EntityData_Vector2_CrystalColor -= RestoreSpinnerPosition;
         }
-
-        public override void OnUpdateEntitiesWhenFreeze(Level level) {
-            level.UpdateEntities<CrystalStaticSpinner>();
-        }
     }
 }

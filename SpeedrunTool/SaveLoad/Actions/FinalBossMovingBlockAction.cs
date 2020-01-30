@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
+using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class FinalBossMovingBlockAction : AbstractEntityAction {
@@ -23,12 +24,21 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (IsLoadStart) {
                 if (savedFinalBossMovingBlocks.ContainsKey(entityId)) {
-                    self.Position = savedFinalBossMovingBlocks[entityId].Position;
+                    FinalBossMovingBlock savedEntity = savedFinalBossMovingBlocks[entityId];
+                    self.Position = savedEntity.Position;
                     self.Add(new UpdateComponent());
+                    self.Add(new FastForwardComponent<FinalBossMovingBlock>(savedEntity, OnFastForward));
                 }
                 else {
                     self.Add(new RemoveSelfComponent());
                 }
+            }
+        }
+
+        private void OnFastForward(FinalBossMovingBlock entity, FinalBossMovingBlock savedEntity) {
+            // 0.5s
+            for (int i = 0; i < 30; i++) {
+                entity.Update();
             }
         }
 
@@ -44,10 +54,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             On.Celeste.FinalBossMovingBlock.ctor_EntityData_Vector2 -= RestoreFinalBossMovingBlockPosition;
         }
 
-        public override void OnUpdateEntitiesWhenFreeze(Level level) {
-            level.UpdateEntities<FinalBossMovingBlock>();
-        }
-
         private class UpdateComponent : Monocle.Component {
             public UpdateComponent() : base(true, false) { }
 
@@ -58,10 +64,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 }
                 int nodeIndex = (int) finalBoss.GetPrivateField("nodeIndex");
                 FinalBossMovingBlock finalBossMovingBlock = EntityAs<FinalBossMovingBlock>();
-                if (finalBossMovingBlock.BossNodeIndex == nodeIndex) {
+
+                if ((bool) finalBoss.GetPrivateField("playerHasMoved") && finalBossMovingBlock.BossNodeIndex == nodeIndex) {
                     finalBossMovingBlock.StartMoving(0);
                 }
-
+                
                 RemoveSelf();
             }
         }

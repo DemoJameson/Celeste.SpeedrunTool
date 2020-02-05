@@ -17,7 +17,6 @@ namespace Celeste.Mod.SpeedrunTool {
         private static readonly List<string> RespawnSpeedStrings =
             Enumerable.Range(1, 9).Select(intValue => intValue + "00%").ToList();
 
-        private static readonly List<string> SkipSceneStrings = GetEnumNames<SkipSceneOption>();
         private static readonly List<string> EndPointStyleStrings = GetEnumNames<EndPoint.SpriteStyle>();
 
         [SettingName(DialogIds.Enabled)] public bool Enabled { get; set; } = true;
@@ -42,10 +41,6 @@ namespace Celeste.Mod.SpeedrunTool {
         public string RespawnSpeed { get; set; } = RespawnSpeedStrings.First();
 
         [YamlIgnore] [SettingIgnore] public int RespawnSpeedInt => RespawnSpeedStrings.IndexOf(RespawnSpeed) + 1;
-
-        public string SkipScene { get; set; } = SkipSceneStrings.Last();
-
-        [YamlIgnore] [SettingIgnore] public SkipSceneOption SkipSceneOption => GetEnumFromName<SkipSceneOption>(SkipScene);
 
         [SettingName(DialogIds.DeathStatistics)]
         public bool DeathStatistics { get; set; } = false;
@@ -155,18 +150,6 @@ namespace Celeste.Mod.SpeedrunTool {
                 ).Change(index => RespawnSpeed = RespawnSpeedStrings[index]));
         }
 
-
-        // ReSharper disable once UnusedMember.Global
-        public void CreateSkipSceneEntry(TextMenu textMenu, bool inGame) {
-            textMenu.Add(
-                new TextMenu.Slider(Dialog.Clean(DialogIds.SkipChapterScene),
-                    index => Dialog.Clean(DialogIds.Prefix + SkipSceneStrings[index]),
-                    0,
-                    SkipSceneStrings.Count - 1,
-                    Math.Max(0, SkipSceneStrings.IndexOf(SkipScene))
-                ).Change(index => SkipScene = SkipSceneStrings[index]));
-        }
-
         // ReSharper disable once UnusedMember.Global
         public void CreateRoomTimerEntry(TextMenu textMenu, bool inGame) {
             textMenu.Add(
@@ -219,17 +202,6 @@ namespace Celeste.Mod.SpeedrunTool {
                 return (T) Enum.Parse(typeof(T), Enum.GetNames(typeof(T))[0]);
             }
         }
-    }
-
-    [Flags]
-    public enum SkipSceneOption {
-        // ReSharper disable UnusedMember.Global
-        Off = 0,
-        Intro = 1,
-        Complete = 2,
-
-        All = Intro | Complete
-        // ReSharper restore UnusedMember.Global
     }
 
     public enum RoomTimerType {

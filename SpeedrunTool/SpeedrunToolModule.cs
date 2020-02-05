@@ -30,8 +30,6 @@ namespace Celeste.Mod.SpeedrunTool {
             StateManager.Instance.Load();
             DeathStatistics.Load();
             
-            On.Celeste.LevelEnter.Go += SkipChapterIntro;
-            On.Celeste.LevelExit.ctor += SkipChapterComplete;
             Engine.Update += RespawnSpeed;
         }
 
@@ -42,8 +40,6 @@ namespace Celeste.Mod.SpeedrunTool {
             StateManager.Instance.Unload();
             DeathStatistics.Unload();
             
-            On.Celeste.LevelEnter.Go -= SkipChapterIntro;
-            On.Celeste.LevelExit.ctor -= SkipChapterComplete;
             Engine.Update -= RespawnSpeed;
         }
 
@@ -74,33 +70,6 @@ namespace Celeste.Mod.SpeedrunTool {
                     orig(self, time);
                 }
             }
-        }
-
-
-
-        private static void SkipChapterIntro(On.Celeste.LevelEnter.orig_Go orig, Session session, bool data) {
-            if (!Settings.Enabled) {
-                orig(session, data);
-                return;
-            }
-
-            bool skipIntro = (Settings.SkipSceneOption & SkipSceneOption.Intro) != 0;
-            orig(session, skipIntro || data);
-        }
-
-        private static void SkipChapterComplete(On.Celeste.LevelExit.orig_ctor orig, LevelExit self,
-            LevelExit.Mode mode, Session session, HiresSnow snow) {
-            if (!Settings.Enabled) {
-                orig(self, mode, session, snow);
-                return;
-            }
-
-            bool skipComplete = (Settings.SkipSceneOption & SkipSceneOption.Complete) != 0;
-            if (skipComplete && mode == LevelExit.Mode.Completed) {
-                mode = LevelExit.Mode.CompletedInterlude;
-            }
-
-            orig(self, mode, session, snow);
         }
     }
 }

@@ -73,7 +73,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             new ZipMoverAction()
         };
 
-        private bool disableDie;
+        private bool preventDie;
         private bool restoreStarFlyTimer;
 
         public Player SavedPlayer;
@@ -243,7 +243,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedCamera = level.Camera;
 
             // 防止被恢复了位置的熔岩烫死
-            disableDie = true;
+            preventDie = true;
 
             Engine.Scene = new LevelLoader(level.Session, level.Session.RespawnPoint);
         }
@@ -255,7 +255,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             loadState = LoadState.LoadStart;
             Session sessionCopy = savedSession.DeepClone();
-            disableDie = true;
+            preventDie = true;
             Engine.Scene = new LevelLoader(sessionCopy, sessionCopy.RespawnPoint);
         }
 
@@ -299,7 +299,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             level.PauseLock = false;
 
             loadState = LoadState.LoadComplete;
-            disableDie = false;
+            preventDie = false;
         }
 
         private void UpdatePlayerWhenFreeze(Level level, Player player) {
@@ -307,7 +307,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 level.Frozen = false;
             } else if (player.StateMachine.State != Player.StNormal) {
                 player.Update();
-                // entityActions.ForEach(action => action.OnUpdateEntitiesWhenFreeze(level));
             }
         }
 
@@ -327,7 +326,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 level.Frozen = false;
             }
 
-            disableDie = false;
+            preventDie = false;
             restoreStarFlyTimer = false;
             savedSession = null;
             SavedPlayer = null;
@@ -355,7 +354,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private PlayerDeadBody DisableDie(On.Celeste.Player.orig_Die orig, Player self, Vector2 direction,
             bool evenIfInvincible, bool registerDeathInStats) {
-            if (disableDie) {
+            if (preventDie) {
                 return null;
             }
 

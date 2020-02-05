@@ -20,7 +20,6 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string AutoLoadAfterDeath = "SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH";
         public const string DeathStatistics = "SPEEDRUN_TOOL_DEATH_STATISTICS";
         public const string RespawnSpeed = "SPEEDRUN_TOOL_RESPAWN_SPEED";
-        public const string SkipChapterScene = "SPEEDRUN_TOOL_SKIP_CHAPTER_SCENE";
         public const string RoomTimer = "SPEEDRUN_TOOL_ROOM_TIMER";
         public const string EndPointStyle = "SPEEDRUN_TOOL_END_POINT_STYLE";
         public const string NumberOfRooms = "SPEEDRUN_TOOL_NUMBER_OF_ROOMS";

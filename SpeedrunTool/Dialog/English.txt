@@ -37,15 +37,10 @@ SPEEDRUN_TOOL_ENABLED=               Enabled
 SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH= Auto Load State After Death
 SPEEDRUN_TOOL_DEATH_STATISTICS=      Death Statistics
 SPEEDRUN_TOOL_RESPAWN_SPEED=         Respawn Speed
-SPEEDRUN_TOOL_SKIP_CHAPTER_SCENE=    Skip Chapter Scene
 SPEEDRUN_TOOL_ROOM_TIMER=            Room Timer
 SPEEDRUN_TOOL_END_POINT_STYLE=       Room Timer End Point Style
 SPEEDRUN_TOOL_BUTTON_CONFIG=         Button Config
 SPEEDRUN_TOOL_MORE_OPTIONS=          More Options
-
-# ================================== Skip Chapter Scene Options ==================================
-SPEEDRUN_TOOL_INTRO=    Intro
-SPEEDRUN_TOOL_COMPLETE= Complete
 
 # ================================== Room Timer Options ==================================
 SPEEDRUN_TOOL_NEXT_ROOM=       Next Room

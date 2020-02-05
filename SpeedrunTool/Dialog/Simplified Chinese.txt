@@ -37,15 +37,10 @@ SPEEDRUN_TOOL_ENABLED=               开关
 SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH= 死亡后自动加载状态
 SPEEDRUN_TOOL_DEATH_STATISTICS=      统计死亡数据
 SPEEDRUN_TOOL_RESPAWN_SPEED=         复活速度
-SPEEDRUN_TOOL_SKIP_CHAPTER_SCENE=    跳过章节场景
 SPEEDRUN_TOOL_ROOM_TIMER=            房间计时器
 SPEEDRUN_TOOL_END_POINT_STYLE=       房间计时器终点样式
 SPEEDRUN_TOOL_BUTTON_CONFIG=         按键设置
 SPEEDRUN_TOOL_MORE_OPTIONS=          更多选项
-
-# ================================== Skip Chapter Scene Options ==================================
-SPEEDRUN_TOOL_INTRO=    开头
-SPEEDRUN_TOOL_COMPLETE= 结尾
 
 # ================================== Room Timer Options ==================================
 SPEEDRUN_TOOL_NEXT_ROOM=       下个房间

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
@@ -36,6 +34,26 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         public static void SetEntityData(this Entity entity, EntityData entityData) {
             entity.SetExtendedDataValue(EntityDataKey, entityData);
         }
+        
+        public static void SetEntityId(this Entity entity, int hashCode) {
+            EntityID entityId = entity.GetEntityId();
+            if (entityId.Equals(default(EntityID))) {
+                Level level = null;
+                if (Engine.Scene is Level) {
+                    level = (Level) Engine.Scene;
+                }
+                else if (Engine.Scene is LevelLoader levelLoader) {
+                    level = levelLoader.Level;
+                }
+
+                if (level?.Session?.Level == null) {
+                    return;
+                }
+
+                entityId = new EntityID(level.Session.Level, hashCode);
+                entity.SetEntityId(entityId);
+            }
+        }
 
         public static EntityData GetEntityData(this Entity entity) {
             return entity.GetExtendedDataValue<EntityData>(EntityDataKey);
@@ -59,9 +77,20 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
             return result;
         }
+        
+        public static Dictionary<EntityID, T> GetDictionary<T>(this IEnumerable<T> enumerable) where T : Entity {
+            Dictionary<EntityID, T> result = new Dictionary<EntityID, T>();
+            foreach (T entity in enumerable) {
+                EntityID entityId = entity.GetEntityId();
+                if (entityId.Equals(default(EntityID)) || result.ContainsKey(entityId)) {
+                    Logger.Log("Speedrun Tool", $"EntityID Duplication: Level Name={entityId.Level}, Position={entity.Position}, Entity Name={entity.GetType().Name}");
+                    continue;
+                }
 
-        public static void UpdateEntities<T>(this Level level) where T : Entity {
-            level.Entities.FindAll<T>().ForEach(entity => entity.Update());
+                result[entityId] = entity;
+            }
+
+            return result;
         }
 
         public static void SetTime(this SoundSource soundSource, int time) {

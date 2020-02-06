@@ -114,6 +114,7 @@
     <Compile Include="SaveLoad\Actions\DreamBlockAction.cs" />
     <Compile Include="SaveLoad\Actions\EntityAction.cs" />
     <Compile Include="SaveLoad\Actions\FlingBirdAction.cs" />
+    <Compile Include="SaveLoad\Actions\FrostHelper\ToggleSwapBlockAction.cs" />
     <Compile Include="SaveLoad\Actions\GliderAction.cs" />
     <Compile Include="SaveLoad\Actions\JumpthruPlatformAction.cs" />
     <Compile Include="SaveLoad\Actions\LightningAction.cs" />

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Actions;
+using Celeste.Mod.SpeedrunTool.SaveLoad.Actions.FrostHelper;
 using Microsoft.Xna.Framework;
 using Monocle;
 
@@ -66,6 +67,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             new TempleGateAction(),
             new TempleMirrorPortalAction(),
             new TheoCrystalAction(),
+            new ToggleSwapBlockAction(),
             new TouchSwitchAction(),
             new TrackSpinnerAction(),
             new TriggerSpikesAction(),

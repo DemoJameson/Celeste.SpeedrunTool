@@ -1,8 +1,6 @@
 ﻿using System;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
-using Microsoft.Xna.Framework;
-using On.Monocle;
 
 namespace Celeste.Mod.SpeedrunTool {
     // ReSharper disable once ClassNeverInstantiated.Global
@@ -26,50 +24,30 @@ namespace Celeste.Mod.SpeedrunTool {
         // Load runs before Celeste itself has initialized properly.
         public override void Load() {
             BetterMapEditor.Instance.Load();
+            DeathStatisticsUtils.Load();
+            RespawnSpeedUtils.Load();
             RoomTimerManager.Instance.Load();
+            SnapshotUtils.Load();
             StateManager.Instance.Load();
-            DeathStatistics.Load();
-            
-            Engine.Update += RespawnSpeed;
         }
 
         // Unload the entirety of your mod's content, remove any event listeners and undo all hooks.
         public override void Unload() {
             BetterMapEditor.Instance.Unload();
+            DeathStatisticsUtils.Unload();
+            RespawnSpeedUtils.Unload();
             RoomTimerManager.Instance.Unload();
+            SnapshotUtils.Unload();
             StateManager.Instance.Unload();
-            DeathStatistics.Unload();
-            
-            Engine.Update -= RespawnSpeed;
         }
 
         // Optional, initialize anything after Celeste has initialized itself properly.
         public override void Initialize() {
             BetterMapEditor.Init();
-            StateManager.Instance.Init();
+            DeathStatisticsUtils.Init();
             RoomTimerManager.Instance.Init();
-            DeathStatistics.Init();
+            StateManager.Instance.Init();
         }
 
-        private static void RespawnSpeed(Engine.orig_Update orig, Monocle.Engine self, GameTime time) {
-            orig(self, time);
-
-            if (!Settings.Enabled) {
-                return;
-            }
-
-            if (!(Monocle.Engine.Scene is Level level)) {
-                return;
-            }
-
-            Player player = level.Entities.FindFirst<Player>();
-
-            // level 场景中 player == null 代表人物死亡
-            if (player != null && player.StateMachine.State == Player.StIntroRespawn || player == null) {
-                for (int i = 1; i < Settings.RespawnSpeedInt; i++) {
-                    orig(self, time);
-                }
-            }
-        }
     }
 }

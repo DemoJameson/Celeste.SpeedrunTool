@@ -9,7 +9,7 @@ using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool {
-    public static class DeathStatistics {
+    public static class DeathStatisticsUtils {
         private static readonly string LogDir = Path.Combine(Everest.PathSettings, "SpeedrunTool");
         private static readonly string LogFile = Path.Combine(LogDir, "Death Statistics.txt");
         private static readonly string LogFileForStreaming = Path.Combine(LogDir, "Death Statistics for Streaming.txt");

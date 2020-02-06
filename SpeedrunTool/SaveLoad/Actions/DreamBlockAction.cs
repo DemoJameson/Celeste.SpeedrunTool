@@ -35,7 +35,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             self.Remove(tween);
 
             float duration = Vector2.Distance(start, end) / 12f;
-            if ((bool) self.GetPrivateField("fastMoving")) {
+            if ((bool) self.GetField("fastMoving")) {
                 duration /= 3f;
             }
 

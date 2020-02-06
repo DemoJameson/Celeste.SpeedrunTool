@@ -23,7 +23,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             WindController windController = level.Entities.FindFirst<WindController>();
             WindController.Patterns savedPattern =
-                (WindController.Patterns) savedWindController.GetPrivateField("pattern");
+                (WindController.Patterns) savedWindController.GetField("pattern");
             if (windController == null) {
                 level.Add(new WindController(savedPattern));
             }

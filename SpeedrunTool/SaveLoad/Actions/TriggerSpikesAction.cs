@@ -47,18 +47,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private static IEnumerator RestoreTriggerState(TriggerSpikes self, TriggerSpikes savedTriggerSpikes) {
-            Array spikes = self.GetPrivateField("spikes") as Array;
-            Array savedSpikes = savedTriggerSpikes.GetPrivateField("spikes") as Array;
+            Array spikes = self.GetField("spikes") as Array;
+            Array savedSpikes = savedTriggerSpikes.GetField("spikes") as Array;
             Array newSpikes = Activator.CreateInstance(spikes.GetType(), spikes.Length) as Array;
 
             for (var i = 0; i < spikes.Length; i++) {
                 var spike = spikes.GetValue(i);
                 var savedSpike = savedSpikes.GetValue(i);
-                savedSpike.CopyPrivateField("Parent", spike);
+                savedSpike.CopyField("Parent", spike);
                 newSpikes.SetValue(savedSpike, i);
             }
 
-            self.SetPrivateField("spikes", newSpikes);
+            self.SetField("spikes", newSpikes);
             yield break;
         }
 

@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
-using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
@@ -22,9 +21,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 if (savedStarJumpBlocks.ContainsKey(entityId)) {
                     var savedBlock = savedStarJumpBlocks[entityId];
                     self.Position = savedBlock.Position;
-                    self.CopyPrivateField("sinks", savedBlock);
-                    self.CopyPrivateField("yLerp", savedBlock);
-                    self.CopyPrivateField("sinkTimer", savedBlock);
+                    self.CopyField("sinks", savedBlock);
+                    self.CopyField("yLerp", savedBlock);
+                    self.CopyField("sinkTimer", savedBlock);
                 }
             }
         }

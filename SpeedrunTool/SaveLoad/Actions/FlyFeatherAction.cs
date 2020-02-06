@@ -38,15 +38,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 FlyFeather savedFlyFeather = savedFlyFeathers[entityId];
                 if (!savedFlyFeather.Collidable) {
                     self.Collidable = false;
-                    float respawnTimer = (float) savedFlyFeather.GetPrivateField("respawnTimer") + 0.4f;
-                    (self.GetPrivateField("sprite") as Sprite).Visible = false;
+                    float respawnTimer = (float) savedFlyFeather.GetField("respawnTimer") + 0.4f;
+                    (self.GetField("sprite") as Sprite).Visible = false;
 
-                    if ((bool) self.GetPrivateField("singleUse")) {
+                    if ((bool) self.GetField("singleUse")) {
                         return;
                     }
 
-                    self.SetPrivateField("respawnTimer", respawnTimer);
-                    (self.GetPrivateField("outline") as Image).Visible = true;
+                    self.SetField("respawnTimer", respawnTimer);
+                    (self.GetField("outline") as Image).Visible = true;
                 }
             }
         }

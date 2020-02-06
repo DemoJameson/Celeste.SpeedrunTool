@@ -194,7 +194,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
 
             float roomTimeScale = 1f;
             if (roomTimerData.IsCompleted) {
-                Wiggler wiggler = (Wiggler) self.GetPrivateField("wiggler");
+                Wiggler wiggler = (Wiggler) self.GetField("wiggler");
                 if (wiggler != null) {
                     roomTimeScale = 1f + wiggler.Value * 0.15f;
                 }

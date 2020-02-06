@@ -1,8 +1,6 @@
 using System.Collections.Generic;
-using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using FMOD;
-using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class CassetteBlockManagerAction : AbstractEntityAction {
@@ -17,9 +15,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             List<CassetteBlock> cassetteBlocks = self.Scene.Entities.FindAll<CassetteBlock>();
             if (IsLoadStart && savedCassetteBlockManager != null) {
                 disableAudio = true; // sfx.setParameterValue("sixteenth_note", GetSixteenthNote());
-                int tickNumber = (int) self.GetPrivateField("beatsPerTick") * (int) self.GetPrivateField("ticksPerSwap");
-                while ((int) self.GetPrivateField("currentIndex") != (int) savedCassetteBlockManager.GetPrivateField("currentIndex") ||
-                       (int) self.GetPrivateField("beatIndex") % tickNumber != (int) savedCassetteBlockManager.GetPrivateField("beatIndex") % tickNumber) {
+                int tickNumber = (int) self.GetField("beatsPerTick") * (int) self.GetField("ticksPerSwap");
+                while ((int) self.GetField("currentIndex") != (int) savedCassetteBlockManager.GetField("currentIndex") ||
+                       (int) self.GetField("beatIndex") % tickNumber != (int) savedCassetteBlockManager.GetField("beatIndex") % tickNumber) {
 
                     AudioAction.MuteAudioPath("event:/game/general/cassette_block_switch_1");
                     AudioAction.MuteAudioPath("event:/game/general/cassette_block_switch_2");

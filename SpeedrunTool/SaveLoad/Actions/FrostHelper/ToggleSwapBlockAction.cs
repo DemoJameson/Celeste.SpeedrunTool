@@ -23,7 +23,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.FrostHelper {
                 EntityID entityId = self.GetEntityId();
                 if (IsLoadStart && savedSolids.ContainsKey(entityId)) {
                     Solid savedSolid = savedSolids[entityId];
-                    Vector2 start = (Vector2) savedSolid.GetPrivateField("start");
+                    Vector2 start = (Vector2) savedSolid.GetField("start");
                     if (Vector2.Distance(savedSolid.Position, start) > 0.5) {
                         self.Add(new Coroutine(RestoreState(self, savedSolid)));
                     }
@@ -33,11 +33,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.FrostHelper {
 
         private static IEnumerator RestoreState(Solid self, Solid saved) {
             self.Position = saved.Position;
-            self.CopyPrivateField("lerp", saved);
-            self.CopyPrivateField("target", saved);
-            self.CopyPrivateField("returnTimer", saved);
-            self.CopyPrivateField("speed", saved);
-            self.CopyPrivateField("Swapping", saved);
+            self.CopyField("lerp", saved);
+            self.CopyField("target", saved);
+            self.CopyField("returnTimer", saved);
+            self.CopyField("speed", saved);
+            self.CopyField("Swapping", saved);
             // 重新使刺依附上去
             self.Awake(self.Scene);
             yield break;

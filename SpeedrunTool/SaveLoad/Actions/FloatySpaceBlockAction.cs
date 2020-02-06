@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
-using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class FloatySpaceBlockAction : AbstractEntityAction {
@@ -20,11 +19,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (IsLoadStart && savedFloatySpaceBlocks.ContainsKey(entityId)) {
                 FloatySpaceBlock savedFloatySpaceBlock = savedFloatySpaceBlocks[entityId];
-                self.CopyPrivateField("yLerp", savedFloatySpaceBlock);
-                self.CopyPrivateField("sinkTimer", savedFloatySpaceBlock);
-                self.CopyPrivateField("sineWave", savedFloatySpaceBlock);
-                self.CopyPrivateField("dashEase", savedFloatySpaceBlock);
-                self.CopyPrivateField("dashDirection", savedFloatySpaceBlock);
+                self.CopyField("yLerp", savedFloatySpaceBlock);
+                self.CopyField("sinkTimer", savedFloatySpaceBlock);
+                self.CopyField("sineWave", savedFloatySpaceBlock);
+                self.CopyField("dashEase", savedFloatySpaceBlock);
+                self.CopyField("dashDirection", savedFloatySpaceBlock);
             }
         }
 

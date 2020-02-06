@@ -1,9 +1,7 @@
-using System;
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
-using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class StrawberrySeedAction : AbstractEntityAction {
@@ -40,8 +38,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
                 // 处于还原动画中的种子，设置到起始点
                 if (!savedCollectedBerrySeeds.ContainsKey(entityId) && !savedBerrySeed.Collidable) {
-                    self.Position = (Vector2) savedBerrySeed.GetPrivateField("start");
-                    if (savedBerrySeed.GetPrivateField("attached") is Platform savedAttached) {
+                    self.Position = (Vector2) savedBerrySeed.GetField("start");
+                    if (savedBerrySeed.GetField("attached") is Platform savedAttached) {
                         self.Position += savedAttached.Position;
                     }
                 }
@@ -60,12 +58,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             foreach (StrawberrySeed savedBerrySeed in savedCollectedBerrySeeds.Values) {
                 if (addedBerrySeeds.Find(strawberrySeed => strawberrySeed.GetEntityId().Equals(savedBerrySeed.GetEntityId())) is StrawberrySeed addedBerrySeed) {
-                    Follower follower = (Follower) addedBerrySeed.GetPrivateField("follower");
+                    Follower follower = (Follower) addedBerrySeed.GetField("follower");
                     follower.FollowDelay = 0f;
                     follower.DelayTimer = 0f;
                     addedBerrySeed.Position = savedBerrySeed.Position;
 
-                    addedBerrySeed.SetPrivateField("player", player);
+                    addedBerrySeed.SetField("player", player);
                     player.Leader.GainFollower(follower);
                     addedBerrySeed.Collidable = false;
                     addedBerrySeed.Depth = -1000000;

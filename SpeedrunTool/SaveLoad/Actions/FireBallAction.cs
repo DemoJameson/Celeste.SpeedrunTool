@@ -25,9 +25,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (IsLoadStart && savedFireBalls.ContainsKey(nodesIndexKey)) {
                 FireBall savedFireBall = savedFireBalls[nodesIndexKey];
-                self.CopyPrivateField("percent", savedFireBall);
+                self.CopyField("percent", savedFireBall);
 
-                if ((bool) savedFireBall.GetPrivateField("iceMode")) {
+                if ((bool) savedFireBall.GetField("iceMode")) {
                     self.Visible = self.Collidable = savedFireBall.Collidable;
                     self.Add(new Coroutine(RestoreBroken(self, savedFireBall)));
                 }
@@ -35,7 +35,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private static IEnumerator RestoreBroken(FireBall self, FireBall savedFireBall) {
-            self.CopyPrivateField("broken", savedFireBall);
+            self.CopyField("broken", savedFireBall);
             yield break;
         }
 

@@ -169,15 +169,15 @@ namespace Celeste.Mod.SpeedrunTool {
             // pressed confirm button teleport to the select room
             if (Input.MenuConfirm.Pressed) {
                 Input.MenuConfirm.ConsumePress();
-                Vector2 mousePosition = (Vector2) self.GetPrivateField("mousePosition");
+                Vector2 mousePosition = (Vector2) self.GetField("mousePosition");
                 LevelTemplate level =
-                    self.InvokePrivateMethod("TestCheck", mousePosition) as LevelTemplate;
+                    self.InvokeMethod("TestCheck", mousePosition) as LevelTemplate;
                 if (level != null) {
                     if (level.Type == LevelTemplateType.Filler) {
                         return;
                     }
 
-                    self.InvokePrivateMethod("LoadLevel", level, mousePosition * 8f);
+                    self.InvokeMethod("LoadLevel", level, mousePosition * 8f);
                 }
             }
 

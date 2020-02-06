@@ -21,26 +21,26 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (IsLoadStart && savedPuffers.ContainsKey(entityId)) {
                 Puffer savedPuffer = savedPuffers[entityId];
-                self.CopyPrivateField("alertTimer", savedPuffer);
-                self.CopyPrivateField("anchorPosition", savedPuffer);
-                self.CopyPrivateField("cannotHitTimer", savedPuffer);
-                self.CopyPrivateField("cantExplodeTimer", savedPuffer);
-                self.CopyPrivateField("eyeSpin", savedPuffer);
-                self.CopyPrivateField("goneTimer", savedPuffer);
-                self.CopyPrivateField("hitSpeed", savedPuffer);
-                self.CopyPrivateField("lastPlayerPos", savedPuffer);
-                self.CopyPrivateField("lastSinePosition", savedPuffer);
-                self.CopyPrivateField("lastSpeedPosition", savedPuffer);
-                self.CopyPrivateField("playerAliveFade", savedPuffer);
-                self.CopyPrivateField("scale", savedPuffer);
-                self.CopyPrivateField("state", savedPuffer);
+                self.CopyField("alertTimer", savedPuffer);
+                self.CopyField("anchorPosition", savedPuffer);
+                self.CopyField("cannotHitTimer", savedPuffer);
+                self.CopyField("cantExplodeTimer", savedPuffer);
+                self.CopyField("eyeSpin", savedPuffer);
+                self.CopyField("goneTimer", savedPuffer);
+                self.CopyField("hitSpeed", savedPuffer);
+                self.CopyField("lastPlayerPos", savedPuffer);
+                self.CopyField("lastSinePosition", savedPuffer);
+                self.CopyField("lastSpeedPosition", savedPuffer);
+                self.CopyField("playerAliveFade", savedPuffer);
+                self.CopyField("scale", savedPuffer);
+                self.CopyField("state", savedPuffer);
                 
-                SineWave sineWave = (SineWave) self.GetPrivateField("idleSine");
-                SineWave savedSineWave = (SineWave) savedPuffer.GetPrivateField("idleSine");
+                SineWave sineWave = (SineWave) self.GetField("idleSine");
+                SineWave savedSineWave = (SineWave) savedPuffer.GetField("idleSine");
                 sineWave.Counter = savedSineWave.Counter;
 
-                Sprite sprite = (Sprite) self.GetPrivateField("sprite");
-                Sprite savedSprite = (Sprite) savedPuffer.GetPrivateField("sprite");
+                Sprite sprite = (Sprite) self.GetField("sprite");
+                Sprite savedSprite = (Sprite) savedPuffer.GetField("sprite");
                 sprite.Play(savedSprite.CurrentAnimationID);
                 
                 self.Add(new RestorePositionComponent(self, savedPuffer));

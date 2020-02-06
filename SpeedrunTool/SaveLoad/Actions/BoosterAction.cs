@@ -42,7 +42,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             yield return null;
 
-            Entity outline = booster.GetPrivateField("outline") as Entity;
+            Entity outline = booster.GetField("outline") as Entity;
             outline?.RemoveSelf();
             booster.Position = hidden;
         }
@@ -62,7 +62,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     self.Add(new Coroutine(WaitPlayerRespawn(self)));
                 } else if (savedBooster.BoostingPlayer) {
                     self.Add(new Coroutine(BoostPlayer(self, savedBooster)));
-                } else if ((float) savedBooster.GetPrivateField("respawnTimer") > 0f) {
+                } else if ((float) savedBooster.GetField("respawnTimer") > 0f) {
                     self.Add(new Coroutine(WaitToRespawn(self, savedBooster)));
                 }
             }
@@ -106,10 +106,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private IEnumerator WaitToRespawn(Booster self, Booster savedBooster) {
-            self.CopyPrivateField("respawnTimer", savedBooster);
-            Sprite sprite = self.GetPrivateField("sprite") as Sprite;
+            self.CopyField("respawnTimer", savedBooster);
+            Sprite sprite = self.GetField("sprite") as Sprite;
             sprite.Visible = false;
-            Entity outline = self.GetPrivateField("outline") as Entity;
+            Entity outline = self.GetField("outline") as Entity;
             outline.Visible = true;
             yield break;
         }

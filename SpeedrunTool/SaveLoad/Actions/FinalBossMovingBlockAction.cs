@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
-using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class FinalBossMovingBlockAction : AbstractEntityAction {
@@ -62,10 +61,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 if (finalBoss == null) {
                     return;
                 }
-                int nodeIndex = (int) finalBoss.GetPrivateField("nodeIndex");
+                int nodeIndex = (int) finalBoss.GetField("nodeIndex");
                 FinalBossMovingBlock finalBossMovingBlock = EntityAs<FinalBossMovingBlock>();
 
-                if ((bool) finalBoss.GetPrivateField("playerHasMoved") && finalBossMovingBlock.BossNodeIndex == nodeIndex) {
+                if ((bool) finalBoss.GetField("playerHasMoved") && finalBossMovingBlock.BossNodeIndex == nodeIndex) {
                     finalBossMovingBlock.StartMoving(0);
                 }
                 

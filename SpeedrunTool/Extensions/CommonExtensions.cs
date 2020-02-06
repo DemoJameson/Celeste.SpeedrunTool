@@ -61,21 +61,21 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return fieldInfo;
         }
         
-        public static object GetPrivateField(this object obj, string name) {
+        public static object GetField(this object obj, string name) {
             FieldInfo fieldInfo = GetFieldInfo(obj, name);
             return fieldInfo?.GetValue(obj);
         }
 
-        public static void SetPrivateField(this object obj, string name, object value) {
+        public static void SetField(this object obj, string name, object value) {
             FieldInfo fieldInfo = GetFieldInfo(obj, name);
             fieldInfo?.SetValue(obj, value);
         }
 
-        public static void CopyPrivateField(this object obj, string name, object fromObj) {
-            obj.SetPrivateField(name, fromObj.GetPrivateField(name));
+        public static void CopyField(this object obj, string name, object fromObj) {
+            obj.SetField(name, fromObj.GetField(name));
         }
 
-        public static object GetPrivateProperty(this object obj, string name) {
+        public static object GetProperty(this object obj, string name) {
             Type type = obj.GetType();
             Func<object, object> getter = type.GetExtendedDataValue<Func<object, object>>("getter" + name);
             if (getter == null) {
@@ -103,7 +103,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return getter(obj);
         }
 
-        public static void SetPrivateProperty(this object obj, string name, object value) {
+        public static void SetProperty(this object obj, string name, object value) {
             Type type = obj.GetType();
             Action<object, object> setter = type.GetExtendedDataValue<Action<object, object>>("setter" + name);
             if (setter == null) {
@@ -135,7 +135,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             setter(obj, value);
         }
 
-        public static object InvokePrivateMethod(this object obj, string name, params object[] parameters) {
+        public static object InvokeMethod(this object obj, string name, params object[] parameters) {
             return GetMethodInfo(obj, name)?.Invoke(obj, parameters);
         }
 

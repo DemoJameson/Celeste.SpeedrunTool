@@ -34,10 +34,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 yield return orig(self);
             }
 
-            Vector2 start = (Vector2) self.GetPrivateField("start");
-            Vector2 target = (Vector2) self.GetPrivateField("target");
-            SoundSource soundSource = self.GetPrivateField("sfx") as SoundSource;
-            Sprite streetlight = self.GetPrivateField("streetlight") as Sprite;
+            Vector2 start = (Vector2) self.GetField("start");
+            Vector2 target = (Vector2) self.GetField("target");
+            SoundSource soundSource = self.GetField("sfx") as SoundSource;
+            Sprite streetlight = self.GetField("streetlight") as Sprite;
 
             Vector2 currentPosition = self.Position;
             float goProgress = 0f;
@@ -68,7 +68,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
                 DateTime startTime = DateTime.Now.Add(TimeSpan.FromMilliseconds(-audioTime));
 
-                soundSource.Play("event:/game/01_forsaken_city/zip_mover");
+                soundSource?.Play("event:/game/01_forsaken_city/zip_mover");
                 soundSource.SetTime(audioTime);
 
                 if (startShakeTimer < 0.1) {
@@ -85,10 +85,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 }
 
                 if (goProgress < 1) {
-                    streetlight.SetAnimationFrame(3);
+                    streetlight?.SetAnimationFrame(3);
                 }
                 else {
-                    streetlight.SetAnimationFrame(2);
+                    streetlight?.SetAnimationFrame(2);
                 }
 
                 self.StopPlayerRunIntoAnimation = false;
@@ -101,13 +101,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     audioTime = (int) (DateTime.Now - startTime).TotalMilliseconds;
                     self.SetExtendedDataValue(nameof(audioTime), audioTime);
 
-                    self.SetPrivateField("percent", Ease.SineIn(goProgress));
-                    float percent = (float) self.GetPrivateField("percent");
+                    self.SetField("percent", Ease.SineIn(goProgress));
+                    float percent = (float) self.GetField("percent");
                     Vector2 to = Vector2.Lerp(currentPosition, target, percent);
-                    self.InvokePrivateMethod("ScrapeParticlesCheck", to);
+                    self.InvokeMethod("ScrapeParticlesCheck", to);
                     if (self.Scene.OnInterval(0.1f)) {
-                        object pathRenderer = self.GetPrivateField("pathRenderer");
-                        pathRenderer.GetType().GetMethod("CreateSparks")?.Invoke(pathRenderer, new object[] { });
+                        object pathRenderer = self.GetField("pathRenderer");
+                        pathRenderer.GetType().InvokeMethod("CreateSparks");
                     }
 
                     self.MoveTo(to);
@@ -130,7 +130,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 }
 
                 self.StopPlayerRunIntoAnimation = false;
-                streetlight.SetAnimationFrame(2);
+                streetlight?.SetAnimationFrame(2);
 
                 while (backProgress < 1.0) {
                     yield return null;
@@ -140,14 +140,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     audioTime = (int) (DateTime.Now - startTime).TotalMilliseconds;
                     self.SetExtendedDataValue(nameof(audioTime), audioTime);
 
-                    self.SetPrivateField("percent", 1f - Ease.SineIn(backProgress));
+                    self.SetField("percent", 1f - Ease.SineIn(backProgress));
                     Vector2 to = Vector2.Lerp(target, start, Ease.SineIn(backProgress));
                     self.MoveTo(to);
                 }
 
                 self.StopPlayerRunIntoAnimation = true;
                 self.StartShaking(0.2f);
-                streetlight.SetAnimationFrame(1);
+                streetlight?.SetAnimationFrame(1);
 
                 // reset
                 currentPosition = start;

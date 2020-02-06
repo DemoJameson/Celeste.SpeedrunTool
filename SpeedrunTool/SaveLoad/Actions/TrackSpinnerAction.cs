@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
@@ -42,8 +41,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private static IEnumerator RestoreEyeDirection(TrackSpinner self, TrackSpinner saved) {
-            DustGraphic dustGraphic = self.GetPrivateField("dusty") as DustGraphic;
-            DustGraphic savedDustGraphic = saved.GetPrivateField("dusty") as DustGraphic;
+            DustGraphic dustGraphic = self.GetField("dusty") as DustGraphic;
+            DustGraphic savedDustGraphic = saved.GetField("dusty") as DustGraphic;
             dustGraphic.EyeDirection = savedDustGraphic.EyeDirection;
             yield break;
         }

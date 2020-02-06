@@ -29,7 +29,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private IEnumerator SetState(ExitBlock self) {
-            (self.GetPrivateField("tiles") as TileGrid).Alpha = 0f;
+            (self.GetField("tiles") as TileGrid).Alpha = 0f;
             self.Get<EffectCutout>().Alpha = 0f;
             yield break;
         }

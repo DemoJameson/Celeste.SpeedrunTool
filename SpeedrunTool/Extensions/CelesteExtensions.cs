@@ -94,13 +94,13 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static void SetTime(this SoundSource soundSource, int time) {
-            object eventInstance = soundSource.GetPrivateField("instance");
+            object eventInstance = soundSource.GetField("instance");
             eventInstance.GetType().GetMethod("setTimelinePosition")?.Invoke(eventInstance, new object[] {time});
         }
 
         public static void CopyFrom(this Tween tween, Tween otherTween) {
-            tween.SetPrivateProperty("TimeLeft", otherTween.TimeLeft);
-            tween.SetPrivateProperty("Reverse", otherTween.Reverse);
+            tween.SetProperty("TimeLeft", otherTween.TimeLeft);
+            tween.SetProperty("Reverse", otherTween.Reverse);
         }
 
         public static void AddRange<T>(this Dictionary<EntityID, T> dict, IEnumerable<T> entities) where T : Entity {

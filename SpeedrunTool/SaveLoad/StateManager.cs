@@ -315,8 +315,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private int RestoreStarFlyTimer(On.Celeste.Player.orig_StarFlyUpdate orig, Player self) {
             int result = orig(self);
 
-            if (SavedPlayer != null && restoreStarFlyTimer && !(bool) self.GetPrivateField("starFlyTransforming")) {
-                self.CopyPrivateField("starFlyTimer", SavedPlayer);
+            if (SavedPlayer != null && restoreStarFlyTimer && !(bool) self.GetField("starFlyTransforming")) {
+                self.CopyField("starFlyTimer", SavedPlayer);
                 restoreStarFlyTimer = false;
             }
 

@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
@@ -29,7 +28,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             MoveBlock savedMoveBlock = movingBlocks[entityId];
 
-            int state = (int) savedMoveBlock.GetPrivateField("state");
+            int state = (int) savedMoveBlock.GetField("state");
             switch (state) {
                 case 1:
                     // MovementState.Moving

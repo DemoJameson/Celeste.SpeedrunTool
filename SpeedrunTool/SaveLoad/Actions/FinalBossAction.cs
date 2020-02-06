@@ -22,24 +22,24 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             if (IsLoadStart && savedFinalBosses.ContainsKey(entityId)) {
                 FinalBoss savedFinalBoss = savedFinalBosses[entityId];
 
-                int nodeIndex = (int) savedFinalBoss.GetPrivateField("nodeIndex");
-                Vector2[] nodes = (Vector2[]) savedFinalBoss.GetPrivateField("nodes");
-                bool startHit = (bool) savedFinalBoss.GetPrivateField("startHit");
+                int nodeIndex = (int) savedFinalBoss.GetField("nodeIndex");
+                Vector2[] nodes = (Vector2[]) savedFinalBoss.GetField("nodes");
+                bool startHit = (bool) savedFinalBoss.GetField("startHit");
 
                 self.Position = nodes[nodeIndex];
 
                 if (data.Int("patternIndex") == 0 && nodeIndex >= 1) {
-                    self.SetPrivateField("patternIndex", 1);
+                    self.SetField("patternIndex", 1);
                 }
 
                 if (startHit) {
                     nodeIndex--;
                 }
 
-                self.SetPrivateField("nodeIndex", nodeIndex);
+                self.SetField("nodeIndex", nodeIndex);
                 self.Add(new RestoreFinalBossStateComponent(savedFinalBoss));
                 
-                self.CopyPrivateField("playerHasMoved", savedFinalBoss);
+                self.CopyField("playerHasMoved", savedFinalBoss);
             }
         }
 
@@ -63,8 +63,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
 
             public override void Update() {
-                List<Entity> fallingBlocks = Entity.GetPrivateField("fallingBlocks") as List<Entity>;
-                List<Entity> savedFallingBlocks = savedFinalBoss.GetPrivateField("fallingBlocks") as List<Entity>;
+                List<Entity> fallingBlocks = Entity.GetField("fallingBlocks") as List<Entity>;
+                List<Entity> savedFallingBlocks = savedFinalBoss.GetField("fallingBlocks") as List<Entity>;
 
                 if (fallingBlocks == null || savedFallingBlocks == null) {
                     RemoveSelf();

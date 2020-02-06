@@ -21,18 +21,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 BounceBlock savedBounceBlock = savedBounceBlocks[entityId];
                 self.Position = savedBounceBlock.Position;
                 self.Collidable = savedBounceBlock.Collidable;
-                self.CopyPrivateField("bounceDir", savedBounceBlock);
-                self.CopyPrivateField("state", savedBounceBlock);
-                self.CopyPrivateField("moveSpeed", savedBounceBlock);
-                self.CopyPrivateField("windUpStartTimer", savedBounceBlock);
-                self.CopyPrivateField("windUpProgress", savedBounceBlock);
-                self.CopyPrivateField("bounceEndTimer", savedBounceBlock);
-                self.CopyPrivateField("bounceLift", savedBounceBlock);
-                self.CopyPrivateField("reappearFlash", savedBounceBlock);
-                self.CopyPrivateField("debrisDirection", savedBounceBlock);
-                self.CopyPrivateField("iceMode", savedBounceBlock);
-                self.CopyPrivateField("iceModeNext", savedBounceBlock);
-                self.CopyPrivateField("respawnTimer", savedBounceBlock);
+                self.CopyField("bounceDir", savedBounceBlock);
+                self.CopyField("state", savedBounceBlock);
+                self.CopyField("moveSpeed", savedBounceBlock);
+                self.CopyField("windUpStartTimer", savedBounceBlock);
+                self.CopyField("windUpProgress", savedBounceBlock);
+                self.CopyField("bounceEndTimer", savedBounceBlock);
+                self.CopyField("bounceLift", savedBounceBlock);
+                self.CopyField("reappearFlash", savedBounceBlock);
+                self.CopyField("debrisDirection", savedBounceBlock);
+                self.CopyField("iceMode", savedBounceBlock);
+                self.CopyField("iceModeNext", savedBounceBlock);
+                self.CopyField("respawnTimer", savedBounceBlock);
             }
         }
 

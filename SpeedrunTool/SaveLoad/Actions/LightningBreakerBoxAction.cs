@@ -19,14 +19,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             if (IsLoadStart) {
                 if (savedLightningBreakerBox != null) {
                     self.Position = savedLightningBreakerBox.Position;
-                    self.CopyPrivateField("health", savedLightningBreakerBox);
-                    self.CopyPrivateField("sink", savedLightningBreakerBox);
+                    self.CopyField("health", savedLightningBreakerBox);
+                    self.CopyField("sink", savedLightningBreakerBox);
                     SineWave sine = self.Get<SineWave>();
                     SineWave savedSine = savedLightningBreakerBox.Get<SineWave>();
                     sine.Counter = savedSine.Counter;
 
-                    Sprite sprite = (Sprite) self.GetPrivateField("sprite");
-                    int health = (int) savedLightningBreakerBox.GetPrivateField("health");
+                    Sprite sprite = (Sprite) self.GetField("sprite");
+                    int health = (int) savedLightningBreakerBox.GetField("health");
                     if (health < 2) {
                         sprite.Play("open");
                     }
@@ -45,7 +45,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private static IEnumerator BreakBox(LightningBreakerBox self) {
-            self.InvokePrivateMethod("Break");
+            self.InvokeMethod("Break");
             yield break;
         }
 

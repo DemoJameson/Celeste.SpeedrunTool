@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.RoomTimer {
-    public sealed partial class RoomTimerManager {
+    public sealed class RoomTimerManager {
         public const string FlagPrefix = "summit_checkpoint_";
         private readonly RoomTimerData currentRoomTimerData = new RoomTimerData(RoomTimerType.CurrentRoom);
         private readonly RoomTimerData nextRoomTimerData = new RoomTimerData(RoomTimerType.NextRoom);
@@ -35,6 +35,8 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             On.Celeste.SpeedrunTimerDisplay.Render -= Render;
             On.Celeste.MenuOptions.SetSpeedrunClock -= SaveOriginalSpeedrunClock;
             On.Celeste.Level.Update -= Timing;
+            On.Celeste.Level.Update -= ProcessButtons;
+            On.Celeste.Level.LoadLevel -= RestoreEndPoint;
             On.Celeste.Level.NextLevel -= UpdateTimerStateOnNextLevel;
             On.Celeste.Session.SetFlag -= UpdateTimerStateOnTouchFlag;
             On.Celeste.LevelLoader.ctor -= ResetTime;

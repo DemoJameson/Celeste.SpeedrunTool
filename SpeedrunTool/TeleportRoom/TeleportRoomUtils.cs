@@ -1,0 +1,279 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using Celeste.Editor;
+using Celeste.Mod.SpeedrunTool.Extensions;
+using Microsoft.Xna.Framework;
+using Monocle;
+
+namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
+    public static class TeleportRoomUtils {
+        private const string FlagPrefix = "summit_checkpoint_";
+        private static readonly List<Session> RoomHistory = new List<Session>();
+        private static int HistoryIndex = -1;
+        private static bool AllowRecord;
+
+        public static void Init() {
+            ButtonConfigUi.UpdateLastRoomButton();
+            ButtonConfigUi.UpdateNextRoomButton();
+        }
+
+        public static void Load() {
+            On.Celeste.Level.Update += LevelOnUpdate;
+            On.Celeste.Level.LoadLevel += LevelOnLoadLevel;
+            On.Celeste.Level.TransitionRoutine += LevelOnTransitionRoutine;
+            On.Celeste.LevelExit.ctor += LevelExitOnCtor;
+            On.Celeste.Session.SetFlag += SessionOnSetFlag;
+            On.Celeste.Editor.MapEditor.LoadLevel += MapEditorOnLoadLevel;
+            On.Celeste.LevelLoader.ctor += LevelLoaderOnCtor;
+        }
+
+        public static void Unload() {
+            On.Celeste.Level.Update -= LevelOnUpdate;
+            On.Celeste.Level.LoadLevel -= LevelOnLoadLevel;
+            On.Celeste.Level.TransitionRoutine -= LevelOnTransitionRoutine;
+            On.Celeste.LevelExit.ctor -= LevelExitOnCtor;
+            On.Celeste.Session.SetFlag -= SessionOnSetFlag;
+            On.Celeste.Editor.MapEditor.LoadLevel -= MapEditorOnLoadLevel;
+            On.Celeste.Session.SetFlag -= SessionOnSetFlag;
+        }
+
+        private static void LevelLoaderOnCtor(On.Celeste.LevelLoader.orig_ctor orig, LevelLoader self, Session session,
+            Vector2? startPosition) {
+            orig(self, session, startPosition);
+            if (AllowRecord) {
+                RecordTransitionRoom(session);
+            }
+        }
+
+        private static void MapEditorOnLoadLevel(On.Celeste.Editor.MapEditor.orig_LoadLevel orig, Editor.MapEditor self,
+            LevelTemplate level, Vector2 at) {
+            AllowRecord = true;
+            orig(self, level, at);
+            AllowRecord = false;
+        }
+
+        private static IEnumerator WaitSessionReady(Session self) {
+            yield return null;
+            RecordTransitionRoom(self);
+        }
+
+        private static void SessionOnSetFlag(On.Celeste.Session.orig_SetFlag orig, Session self, string flag,
+            bool setTo) {
+            orig(self, flag, setTo);
+
+            // 似乎通过地图选择旗子作为传送点会预设旗子，所以从第二面碰到的旗子开始才开始记录位置
+            if (flag.StartsWith(FlagPrefix) && setTo && self.Flags.Count(input => input.StartsWith(FlagPrefix)) >= 2) {
+                if (Engine.Scene is Level level && level.Entities.FindFirst<Player>() is Player player) {
+                    player.Add(new Coroutine(WaitSessionReady(self)));
+                }
+            }
+        }
+
+        private static void TeleportTo(Session session) {
+            BetterMapEditor.FixTeleportProblems = true;
+            Engine.Scene = new LevelLoader(session.DeepClone());
+            BetterMapEditor.FixTeleportProblems = false;
+        }
+
+        private static void LevelExitOnCtor(On.Celeste.LevelExit.orig_ctor orig, LevelExit self, LevelExit.Mode mode,
+            Session session, HiresSnow snow) {
+            orig(self, mode, session, snow);
+
+            if (mode != LevelExit.Mode.GoldenBerryRestart) {
+                Reset();
+            }
+        }
+
+        private static void Reset() {
+            RoomHistory.Clear();
+            HistoryIndex = -1;
+        }
+
+        private static void LevelOnUpdate(On.Celeste.Level.orig_Update orig, Level self) {
+            orig(self);
+
+            if (!SpeedrunToolModule.Enabled) {
+                return;
+            }
+
+            if (ButtonConfigUi.LastRoomButton.Value.Pressed && !self.Paused) {
+                ButtonConfigUi.LastRoomButton.Value.ConsumePress();
+                TeleportToLastRoom(self);
+            } else if (ButtonConfigUi.NextRoomButton.Value.Pressed && !self.Paused) {
+                ButtonConfigUi.NextRoomButton.Value.ConsumePress();
+                TeleportToNextRoom(self);
+            }
+        }
+
+        private static void TeleportToLastRoom(Level level) {
+            if (HistoryIndex > 0 && HistoryIndex < RoomHistory.Count) {
+                HistoryIndex--;
+                TeleportTo(RoomHistory[HistoryIndex]);
+                return;
+            }
+
+            var levelDatas = LevelDataReorderUtils.GetReorderLevelDatas(level);
+            if (levelDatas == null) {
+                return;
+            }
+
+            LevelData currentLevelData = level.Session?.LevelData;
+            if (currentLevelData == null) {
+                return;
+            }
+
+            int index = levelDatas.IndexOf(currentLevelData);
+            if (index <= 0) {
+                return;
+            }
+
+            index--;
+            LevelData lastLevelData = levelDatas[index];
+            while (lastLevelData.Dummy && index > 0) {
+                index--;
+                lastLevelData = levelDatas[index];
+            }
+
+            if (lastLevelData.Dummy) {
+                return;
+            }
+
+            level.Session.Level = lastLevelData.Name;
+            level.Session.RespawnPoint = null;
+            TeleportTo(level.Session);
+        }
+
+        private static void TeleportToNextRoom(Level level) {
+            if (HistoryIndex >= 0 && HistoryIndex < RoomHistory.Count - 1) {
+                HistoryIndex++;
+                TeleportTo(RoomHistory[HistoryIndex]);
+                return;
+            }
+
+            var levelDatas = LevelDataReorderUtils.GetReorderLevelDatas(level);
+            if (levelDatas == null) {
+                return;
+            }
+
+            LevelData currentLevelData = level.Session?.LevelData;
+            if (currentLevelData == null) {
+                return;
+            }
+
+            if (SearchSummitCheckpoint(level)) {
+                // 根据数据跳到下一个房间也需要记录
+                RecordAndTeleport(level.Session);
+                return;
+            }
+
+            int index = levelDatas.IndexOf(currentLevelData);
+            if (index < 0 || index == levelDatas.Count - 1) {
+                return;
+            }
+
+            index++;
+            LevelData nextLevelData = levelDatas[index];
+            while (nextLevelData.Dummy && index < levelDatas.Count - 1) {
+                index++;
+                nextLevelData = levelDatas[index];
+            }
+
+            if (nextLevelData.Dummy) {
+                return;
+            }
+
+            level.Session.Level = nextLevelData.Name;
+            level.Session.RespawnPoint = null;
+
+            SearchSummitCheckpoint(nextLevelData, level);
+            // 根据数据跳到下一个房间也需要记录
+            RecordAndTeleport(level.Session);
+        }
+
+        private static bool SearchSummitCheckpoint(Level level) {
+            // 查找当前房间是否有未触发的旗子，且旗子数现有的小，如果有则跳到旗子处
+            int currentFlagNumber = -1;
+            foreach (string flag in level.Session.Flags) {
+                if (!flag.StartsWith(FlagPrefix)) {
+                    continue;
+                }
+
+                if (int.TryParse(flag.Replace(FlagPrefix, ""), out int flagNumber)) {
+                    currentFlagNumber = Math.Max(currentFlagNumber, flagNumber);
+                }
+            }
+
+            List<SummitCheckpoint> flagList = level.Entities.FindAll<SummitCheckpoint>()
+                .Where(checkpoint => !checkpoint.Activated).ToList();
+            flagList.Sort((first, second) => second.Number - first.Number);
+            if (flagList.Count > 0 && flagList[0].Number < currentFlagNumber) {
+                level.Session.RespawnPoint = level.GetSpawnPoint(flagList[0].Position);
+                return true;
+            }
+
+            return false;
+        }
+
+        private static void SearchSummitCheckpoint(LevelData levelData, Level level) {
+            // 查找下个房间是否有旗子，如果有则跳到旗子处
+            List<EntityData> flagList = levelData.Entities.Where(data => data.Name == "summitcheckpoint").ToList();
+
+            flagList.Sort((first, second) => second.Int("number") - first.Int("number"));
+            if (flagList.Count > 0) {
+                level.Session.RespawnPoint = level.GetSpawnPoint(flagList[0].Position);
+            }
+        }
+
+        private static void LevelOnLoadLevel(On.Celeste.Level.orig_LoadLevel orig, Level self,
+            Player.IntroTypes playerIntro, bool isFromLoader) {
+            orig(self, playerIntro, isFromLoader);
+
+            // 切换章节清理历史记录
+            if (RoomHistory.Count > 0 && RoomHistory[0].Area != self.Session.Area) {
+                Reset();
+            }
+
+            // 非初始房间
+            if (HistoryIndex != -1) {
+                return;
+            }
+
+            RoomHistory.Add(self.Session.DeepClone());
+            HistoryIndex = 0;
+        }
+
+
+        private static IEnumerator LevelOnTransitionRoutine(On.Celeste.Level.orig_TransitionRoutine orig, Level self,
+            LevelData next, Vector2 direction) {
+            IEnumerator enumerator = orig(self, next, direction);
+            while (enumerator.MoveNext()) {
+                yield return enumerator.Current;
+            }
+
+            // 切图结束后
+            RecordTransitionRoom(self.Session);
+        }
+
+        // 记录自行进入的房间或者触碰的旗子
+        private static void RecordTransitionRoom(Session currentSession) {
+            // 如果不是指向末尾证明曾经后退过，所以要记录新数据前必须清除后面的记录
+            if (HistoryIndex < RoomHistory.Count - 1) {
+                RoomHistory.RemoveRange(HistoryIndex + 1, RoomHistory.Count - HistoryIndex - 1);
+            }
+
+            // 增加记录          
+            RoomHistory.Add(currentSession.DeepClone());
+            HistoryIndex = RoomHistory.Count - 1;
+        }
+
+        // 记录通过查找地图数据传送的房间
+        private static void RecordAndTeleport(Session session) {
+            RoomHistory.Add(session.DeepClone());
+            HistoryIndex = RoomHistory.Count - 1;
+
+            TeleportTo(session);
+        }
+    }
+}

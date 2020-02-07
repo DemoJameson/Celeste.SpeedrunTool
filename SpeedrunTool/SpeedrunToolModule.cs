@@ -1,6 +1,7 @@
 ﻿using System;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
+using Celeste.Mod.SpeedrunTool.TeleportRoom;
 
 namespace Celeste.Mod.SpeedrunTool {
     // ReSharper disable once ClassNeverInstantiated.Global
@@ -27,7 +28,7 @@ namespace Celeste.Mod.SpeedrunTool {
             DeathStatisticsUtils.Load();
             RespawnSpeedUtils.Load();
             RoomTimerManager.Instance.Load();
-            SnapshotUtils.Load();
+            TeleportRoomUtils.Load();
             StateManager.Instance.Load();
         }
 
@@ -37,7 +38,7 @@ namespace Celeste.Mod.SpeedrunTool {
             DeathStatisticsUtils.Unload();
             RespawnSpeedUtils.Unload();
             RoomTimerManager.Instance.Unload();
-            SnapshotUtils.Unload();
+            TeleportRoomUtils.Unload();
             StateManager.Instance.Unload();
         }
 
@@ -46,8 +47,8 @@ namespace Celeste.Mod.SpeedrunTool {
             BetterMapEditor.Init();
             DeathStatisticsUtils.Init();
             RoomTimerManager.Instance.Init();
+            TeleportRoomUtils.Init();
             StateManager.Instance.Init();
         }
-
     }
 }

@@ -12,7 +12,7 @@ using MapEditor = On.Celeste.Editor.MapEditor;
 
 namespace Celeste.Mod.SpeedrunTool {
     public class BetterMapEditor {
-        private static bool fixTeleportProblems = false;
+        public static bool FixTeleportProblems = false;
         private static readonly Lazy<bool> _EnableQoL = new Lazy<bool>(()=>Everest.Version <= new Version(1, 1078, 0));
         private static bool EnableQoL => _EnableQoL.Value;
         
@@ -78,7 +78,7 @@ namespace Celeste.Mod.SpeedrunTool {
             MapEditor.Update += PressCancelToReturnGame;
             On.Celeste.OshiroTrigger.ctor += RestoreOshiroTrigger;
             On.Celeste.Commands.CmdLoad += CommandsOnCmdLoad;
-            On.Celeste.LevelLoader.ctor += FixTeleportProblems;
+            On.Celeste.LevelLoader.ctor += LevelLoaderOnCtor;
         }
 
         public void Unload() {
@@ -89,7 +89,7 @@ namespace Celeste.Mod.SpeedrunTool {
             MapEditor.Update -= PressCancelToReturnGame;
             On.Celeste.OshiroTrigger.ctor -= RestoreOshiroTrigger;
             On.Celeste.Commands.CmdLoad -= CommandsOnCmdLoad;
-            On.Celeste.LevelLoader.ctor -= FixTeleportProblems;
+            On.Celeste.LevelLoader.ctor -= LevelLoaderOnCtor;
         }
 
         private void CommandsOnCmdLoad(On.Celeste.Commands.orig_CmdLoad orig, int id, string level) {
@@ -98,9 +98,9 @@ namespace Celeste.Mod.SpeedrunTool {
                 return;
             }
 
-            fixTeleportProblems = true;
+            FixTeleportProblems = true;
             orig(id, level);
-            fixTeleportProblems = false;
+            FixTeleportProblems = false;
         }
 
         // 修复 3C 第三面最后的传送点 Oshiro 不出现的问题
@@ -227,14 +227,14 @@ namespace Celeste.Mod.SpeedrunTool {
                 return;
             }
 
-            fixTeleportProblems = true;
+            FixTeleportProblems = true;
             orig(self, level, at);
-            fixTeleportProblems = false;
+            FixTeleportProblems = false;
         }
 
-        private void FixTeleportProblems(On.Celeste.LevelLoader.orig_ctor orig, LevelLoader self, Session session,
+        private void LevelLoaderOnCtor(On.Celeste.LevelLoader.orig_ctor orig, LevelLoader self, Session session,
             Vector2? startPosition) {
-            if (fixTeleportProblems && session.StartCheckpoint == null && session.LevelData != null) {
+            if (FixTeleportProblems && session.StartCheckpoint == null && session.LevelData != null) {
                 Vector2 spawnPoint;
                 if (startPosition != null) {
                     spawnPoint = session.GetSpawnPoint((Vector2) startPosition);
@@ -248,6 +248,7 @@ namespace Celeste.Mod.SpeedrunTool {
                 FixBadelineChase(session, spawnPoint);
                 FixHugeMessRoomLight(session);
                 FixFarewellCassetteRoomLight(session, spawnPoint);
+                FixFarewellIntro02LaunchDashes(session);
             }
 
             orig(self, session, startPosition);
@@ -261,6 +262,12 @@ namespace Celeste.Mod.SpeedrunTool {
 
             if (session.Area.ToString() == "10" && farewellCassetteRooms.Contains(session.Level)) {
                 session.ColorGrade = "feelingdown";
+            }
+        }
+
+        private void FixFarewellIntro02LaunchDashes(Session session) {
+            if (session.Area.ToString() == "10" && session.Level == "intro-02-launch") {
+                session.Inventory.Dashes = 2;
             }
         }
 

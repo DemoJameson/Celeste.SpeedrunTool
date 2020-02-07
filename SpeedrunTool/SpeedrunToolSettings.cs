@@ -57,6 +57,8 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingIgnore] public Buttons? ControllerResetRoomPb { get; set; }
         [SettingIgnore] public Buttons? ControllerSwitchRoomTimer { get; set; }
         [SettingIgnore] public Buttons? ControllerSetEndPoint { get; set; }
+        [SettingIgnore] public Buttons? ControllerLastRoom { get; set; }
+        [SettingIgnore] public Buttons? ControllerNextRoom { get; set; }
 
         [SettingIgnore] public Keys KeyboardQuickSave { get; set; } = ButtonConfigUi.DefaultKeyboardSave;
         [SettingIgnore] public Keys KeyboardQuickLoad { get; set; } = ButtonConfigUi.DefaultKeyboardLoad;
@@ -65,6 +67,8 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingIgnore] public Keys KeyboardResetRoomPb { get; set; } = ButtonConfigUi.DefaultKeyboardResetPb;
         [SettingIgnore] public Keys KeyboardSwitchRoomTimer { get; set; } = ButtonConfigUi.DefaultKeyboardSwitchRoomTimer;
         [SettingIgnore] public Keys KeyboardSetEndPoint { get; set; } = ButtonConfigUi.DefaultKeyboardSetEndPoint;
+        [SettingIgnore] public Keys KeyboardLastRoom { get; set; } = ButtonConfigUi.DefaultKeyboardLastRoom;
+        [SettingIgnore] public Keys KeyboardNextRoom { get; set; } = ButtonConfigUi.DefaultKeyboardNextRoom;
 
         private TextMenu.Option<bool> firstTextMenu;
         private TextMenu.Item lastTextMenu;

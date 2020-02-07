@@ -92,6 +92,8 @@
     <Compile Include="Extensions\CommonExtensions.cs" />
     <Compile Include="Extensions\DeepCopyExtensions.cs" />
     <Compile Include="RespawnSpeedUtils.cs" />
+    <Compile Include="TeleportRoom\LevelDataReorderUtils.cs" />
+    <Compile Include="TeleportRoom\TeleportRoomUtils.cs" />
     <Compile Include="RoomTimer\ConfettiRenderer.cs" />
     <Compile Include="RoomTimer\EndPoint.cs" />
     <Compile Include="RoomTimer\FlagComponent.cs" />
@@ -166,7 +168,6 @@
     <Compile Include="SaveLoad\StateManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="BetterMapEditor.cs" />
-    <Compile Include="SnapshotUtils.cs" />
     <Compile Include="SpeedrunToolModule.cs" />
     <Compile Include="SpeedrunToolSettings.cs" />
   </ItemGroup>

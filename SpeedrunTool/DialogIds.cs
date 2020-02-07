@@ -26,10 +26,6 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string ButtonConfig = "SPEEDRUN_TOOL_BUTTON_CONFIG";
         public const string MoreOptions = "SPEEDRUN_TOOL_MORE_OPTIONS";
 
-        // Skip Chapter Scene Options
-        public const string Intro = "SPEEDRUN_TOOL_INTRO";
-        public const string Complete = "SPEEDRUN_TOOL_COMPLETE";
-
         // State Manager
         public const string Controller = "SPEEDRUN_TOOL_CONTROLLER";
         public const string Keyboard = "SPEEDRUN_TOOL_KEYBOARD";
@@ -60,6 +56,8 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string ResetRoomPb = "SPEEDRUN_TOOL_RESET_ROOM_PB";
         public const string SwitchRoomTimer = "SPEEDRUN_TOOL_SWITCH_ROOM_TIMER";
         public const string SetEndPoint = "SPEEDRUN_TOOL_SET_END_POINT";
+        public const string TeleportToLastRoom = "SPEEDRUN_TOOL_TELEPORT_TO_LAST_ROOM";
+        public const string TeleportToNextRoom = "SPEEDRUN_TOOL_TELEPORT_TO_NEXT_ROOM";
         
         // Death Statistics
         public const string DialogDeathStatisticsDescription = "SPEEDRUN_TOOL_DIALOG_DEATH_STATISTICS_DESCRIPTION";

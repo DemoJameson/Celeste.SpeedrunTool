@@ -74,6 +74,11 @@ namespace Celeste.Mod.SpeedrunTool {
 
         private static void OuiFileSelectSlotOnEnterFirstArea(On.Celeste.OuiFileSelectSlot.orig_EnterFirstArea orig, OuiFileSelectSlot self) {
             orig(self);
+            
+            if (!Enabled) {
+                return;
+            }
+            
             totalLostTime = 0;
             lastTime = 0;
             using (StreamWriter sw = File.AppendText(LogFile)) {
@@ -275,12 +280,16 @@ namespace Celeste.Mod.SpeedrunTool {
                 return levelName;
             }
 
+            if (levelName == "Farewell") {
+                return levelName;
+            }
+
             return levelName + " " + levelMode;
         }
 
         private static string GetCauseOfDeath() {
             StackTrace stackTrace = new StackTrace();
-            string death = stackTrace.GetFrame(3).GetMethod().ReflectedType?.Name ?? "";
+            string death = stackTrace.GetFrame(5).GetMethod().ReflectedType?.Name ?? "";
 
             if (death == "Level") {
                 death = "Fall";

@@ -240,6 +240,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                 return;
             }
 
+            // 进入章节的第一个房间
             RoomHistory.Add(self.Session.DeepClone());
             HistoryIndex = 0;
         }
@@ -264,16 +265,25 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
             }
 
             // 增加记录          
-            RoomHistory.Add(currentSession.DeepClone());
-            HistoryIndex = RoomHistory.Count - 1;
+            RecordRoom(currentSession);
         }
 
         // 记录通过查找地图数据传送的房间
         private static void RecordAndTeleport(Session session) {
+            RecordRoom(session);
+            TeleportTo(session);
+        }
+
+        private static void RecordRoom(Session session) {
+            // 如果存在相同的房间则先清除
+            for (var i = RoomHistory.Count - 1; i >= 0; i--) {
+                if (RoomHistory[i].Level == session.Level) {
+                    RoomHistory.RemoveAt(i);
+                }
+            }
+
             RoomHistory.Add(session.DeepClone());
             HistoryIndex = RoomHistory.Count - 1;
-
-            TeleportTo(session);
         }
     }
 }

@@ -33,6 +33,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             if (!SpeedrunToolModule.Enabled) {
                 yield return orig(self);
             }
+            
+            object pathRenderer = self.GetField("pathRenderer");
 
             Vector2 start = (Vector2) self.GetField("start");
             Vector2 target = (Vector2) self.GetField("target");
@@ -106,8 +108,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     Vector2 to = Vector2.Lerp(currentPosition, target, percent);
                     self.InvokeMethod("ScrapeParticlesCheck", to);
                     if (self.Scene.OnInterval(0.1f)) {
-                        object pathRenderer = self.GetField("pathRenderer");
-                        pathRenderer.GetType().InvokeMethod("CreateSparks");
+                        pathRenderer.InvokeMethod("CreateSparks");
                     }
 
                     self.MoveTo(to);

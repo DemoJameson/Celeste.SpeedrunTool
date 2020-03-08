@@ -61,10 +61,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 if (finalBoss == null) {
                     return;
                 }
-                int nodeIndex = (int) finalBoss.GetField("nodeIndex");
+                int nodeIndex = (int) finalBoss.GetField(typeof(FinalBoss), "nodeIndex");
                 FinalBossMovingBlock finalBossMovingBlock = EntityAs<FinalBossMovingBlock>();
 
-                if ((bool) finalBoss.GetField("playerHasMoved") && finalBossMovingBlock.BossNodeIndex == nodeIndex) {
+                if ((bool) finalBoss.GetField(typeof(FinalBoss), "playerHasMoved") && finalBossMovingBlock.BossNodeIndex == nodeIndex) {
                     finalBossMovingBlock.StartMoving(0);
                 }
                 

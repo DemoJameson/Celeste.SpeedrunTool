@@ -26,7 +26,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             if (IsLoadStart && savedBerries.ContainsKey(entityId)) {
                 Strawberry savedBerry = savedBerries[entityId];
                 self.Position = savedBerry.Position;
-                self.SetProperty("Winged", false);
+                self.SetProperty(typeof(Strawberry), "Winged", false);
             }
         }
 

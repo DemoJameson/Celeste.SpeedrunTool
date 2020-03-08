@@ -48,8 +48,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                         self.Position = savedCrushBlock.Position;
                         self.Add(new FastForwardComponent<CrushBlock>(savedCrushBlock, OnFastForward));
 
-                        object returnStack = savedCrushBlock.GetField("returnStack").Copy();
-                        self.SetField("returnStack", returnStack);
+                        object returnStack = savedCrushBlock.GetField(typeof(CrushBlock), "returnStack").Copy();
+                        self.SetField(typeof(CrushBlock), "returnStack", returnStack);
                         self.Add(new RestoreCrushBlockStateComponent(savedCrushBlock));
                     }
                 } else {
@@ -94,7 +94,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             try {
                 orig(self);
             } catch (NullReferenceException) {
-                ((Sprite) self.GetField("face")).Play("idle");
+                ((Sprite) self.GetField(typeof(CrushBlock), "face")).Play("idle");
             }
         }
 
@@ -109,7 +109,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
 
             public override void Update() {
-                object crushDir = savedCrushBlock.GetField("crushDir");
+                object crushDir = savedCrushBlock.GetField(typeof(CrushBlock), "crushDir");
 
                 if (crushDir != null) {
                     AudioAction.MuteAudioPathVector2("event:/game/06_reflection/crushblock_activate");
@@ -124,7 +124,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                         Entity.SetExtendedDataValue("IsReturning", true);
                     }
 
-                    Entity.SetField("canActivate", !(bool) savedCrushBlock.GetField("chillOut"));
+                    Entity.SetField(typeof(CrushBlock), "canActivate", !(bool) savedCrushBlock.GetField(typeof(CrushBlock), "chillOut"));
                 }
 
                 RemoveSelf();

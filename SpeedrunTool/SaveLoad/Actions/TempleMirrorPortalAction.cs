@@ -25,12 +25,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private static IEnumerator SetTorch(TempleMirrorPortal self, TempleMirrorPortal saved) {
-            if ((int) saved.GetField("switchCounter") > 0) {
-                if (saved.GetField("leftTorch").GetField("light") != null) {
+            if ((int) saved.GetField(typeof(TempleMirrorPortal), "switchCounter") > 0) {
+                if (saved.GetField(typeof(TempleMirrorPortal), "leftTorch").GetField("light") != null) {
                     self.OnSwitchHit(-1);
                 }
                 
-                if (saved.GetField("rightTorch").GetField("light") != null) {
+                if (saved.GetField(typeof(TempleMirrorPortal), "rightTorch").GetField("light") != null) {
                     self.OnSwitchHit(1);
                 }
             }

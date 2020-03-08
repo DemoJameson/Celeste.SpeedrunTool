@@ -21,6 +21,12 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             }
         }
 
+        // deep clone an object using YAML (de)serialization.
+        public static T DeepCloneYAML<T>(this object obj, Type type) {
+            string yaml = YamlHelper.Serializer.Serialize(obj);
+            return (T) YamlHelper.Deserializer.Deserialize(yaml, type);
+        }
+
         public static TValue GetValueOrDefault<TKey, TValue>
         (this IDictionary<TKey, TValue> dictionary,
             TKey key,
@@ -32,8 +38,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return defaultValue;
         }
 
-        private static MethodInfo GetMethodInfo(object obj, string name) {
-            Type type = obj.GetType();
+        private static MethodInfo GetMethodInfo(Type type, string name) {
             MethodInfo methodInfo = type.GetExtendedDataValue<MethodInfo>(name);
             if (methodInfo == null) {
                 methodInfo = type.GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
@@ -45,8 +50,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return methodInfo;
         }
 
-        private static FieldInfo GetFieldInfo(this object obj, string name) {
-            Type type = obj.GetType();
+        private static FieldInfo GetFieldInfo(Type type, string name) {
             FieldInfo fieldInfo = type.GetExtendedDataValue<FieldInfo>(name);
             if (fieldInfo == null) {
                 fieldInfo = type.GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
@@ -60,14 +64,22 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
             return fieldInfo;
         }
-        
+
         public static object GetField(this object obj, string name) {
-            FieldInfo fieldInfo = GetFieldInfo(obj, name);
+            return obj.GetField(obj.GetType(), name);
+        }
+
+        public static object GetField(this object obj, Type type, string name) {
+            FieldInfo fieldInfo = GetFieldInfo(type, name);
             return fieldInfo?.GetValue(obj);
         }
 
         public static void SetField(this object obj, string name, object value) {
-            FieldInfo fieldInfo = GetFieldInfo(obj, name);
+            obj.SetField(obj.GetType(), name, value);
+        }
+
+        public static void SetField(this object obj, Type type, string name, object value) {
+            FieldInfo fieldInfo = GetFieldInfo(type, name);
             fieldInfo?.SetValue(obj, value);
         }
 
@@ -75,8 +87,15 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             obj.SetField(name, fromObj.GetField(name));
         }
 
+        public static void CopyField(this object obj, Type type, string name, object fromObj) {
+            obj.SetField(type, name, fromObj.GetField(type, name));
+        }
+
         public static object GetProperty(this object obj, string name) {
-            Type type = obj.GetType();
+            return obj.GetProperty(obj.GetType(), name);
+        }
+
+        public static object GetProperty(this object obj, Type type, string name) {
             Func<object, object> getter = type.GetExtendedDataValue<Func<object, object>>("getter" + name);
             if (getter == null) {
                 var propertyInfo = type.GetProperty(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
@@ -104,7 +123,10 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static void SetProperty(this object obj, string name, object value) {
-            Type type = obj.GetType();
+            obj.SetProperty(obj.GetType(), name, value);
+        }
+
+        public static void SetProperty(this object obj, Type type, string name, object value) {
             Action<object, object> setter = type.GetExtendedDataValue<Action<object, object>>("setter" + name);
             if (setter == null) {
                 var propertyInfo = type.GetProperty(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
@@ -136,7 +158,11 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static object InvokeMethod(this object obj, string name, params object[] parameters) {
-            return GetMethodInfo(obj, name)?.Invoke(obj, parameters);
+            return obj.InvokeMethod(obj.GetType(), name, parameters);
+        }
+
+        public static object InvokeMethod(this object obj, Type type, string name, params object[] parameters) {
+            return GetMethodInfo(type, name)?.Invoke(obj, parameters);
         }
 
         // from https://stackoverflow.com/a/17264480

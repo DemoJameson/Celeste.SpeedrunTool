@@ -29,7 +29,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             if (IsLoadStart) {
                 string flagName = DashSwitch.GetFlagName(entityId);
                 if (pressedDashSwitches.Contains(flagName)) {
-                    self.SetField("persistent", true);
+                    self.SetField(typeof(DashSwitch), "persistent", true);
                 }
 
                 if (savedDashSwitches.ContainsKey(entityId)) {

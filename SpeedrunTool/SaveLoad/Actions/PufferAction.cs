@@ -21,26 +21,26 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (IsLoadStart && savedPuffers.ContainsKey(entityId)) {
                 Puffer savedPuffer = savedPuffers[entityId];
-                self.CopyField("alertTimer", savedPuffer);
-                self.CopyField("anchorPosition", savedPuffer);
-                self.CopyField("cannotHitTimer", savedPuffer);
-                self.CopyField("cantExplodeTimer", savedPuffer);
-                self.CopyField("eyeSpin", savedPuffer);
-                self.CopyField("goneTimer", savedPuffer);
-                self.CopyField("hitSpeed", savedPuffer);
-                self.CopyField("lastPlayerPos", savedPuffer);
-                self.CopyField("lastSinePosition", savedPuffer);
-                self.CopyField("lastSpeedPosition", savedPuffer);
-                self.CopyField("playerAliveFade", savedPuffer);
-                self.CopyField("scale", savedPuffer);
-                self.CopyField("state", savedPuffer);
+                self.CopyField(typeof(Puffer), "alertTimer", savedPuffer);
+                self.CopyField(typeof(Puffer), "anchorPosition", savedPuffer);
+                self.CopyField(typeof(Puffer), "cannotHitTimer", savedPuffer);
+                self.CopyField(typeof(Puffer), "cantExplodeTimer", savedPuffer);
+                self.CopyField(typeof(Puffer), "eyeSpin", savedPuffer);
+                self.CopyField(typeof(Puffer), "goneTimer", savedPuffer);
+                self.CopyField(typeof(Puffer), "hitSpeed", savedPuffer);
+                self.CopyField(typeof(Puffer), "lastPlayerPos", savedPuffer);
+                self.CopyField(typeof(Puffer), "lastSinePosition", savedPuffer);
+                self.CopyField(typeof(Puffer), "lastSpeedPosition", savedPuffer);
+                self.CopyField(typeof(Puffer), "playerAliveFade", savedPuffer);
+                self.CopyField(typeof(Puffer), "scale", savedPuffer);
+                self.CopyField(typeof(Puffer), "state", savedPuffer);
                 
-                SineWave sineWave = (SineWave) self.GetField("idleSine");
-                SineWave savedSineWave = (SineWave) savedPuffer.GetField("idleSine");
+                SineWave sineWave = (SineWave) self.GetField(typeof(Puffer), "idleSine");
+                SineWave savedSineWave = (SineWave) savedPuffer.GetField(typeof(Puffer), "idleSine");
                 sineWave.Counter = savedSineWave.Counter;
 
-                Sprite sprite = (Sprite) self.GetField("sprite");
-                Sprite savedSprite = (Sprite) savedPuffer.GetField("sprite");
+                Sprite sprite = (Sprite) self.GetField(typeof(Puffer), "sprite");
+                Sprite savedSprite = (Sprite) savedPuffer.GetField(typeof(Puffer), "sprite");
                 sprite.Play(savedSprite.CurrentAnimationID);
                 
                 self.Add(new RestorePositionComponent(self, savedPuffer));

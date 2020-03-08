@@ -16,7 +16,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             savedBerrySeeds = level.Entities.GetDictionary<StrawberrySeed>();
 
             foreach (Follower follower in player.Leader.Followers) {
-                if (follower.Entity is StrawberrySeed berry) {
+                // multi-room strawberry seeds (Spring Collab 2020) don't need save states.
+                if (follower.Entity is StrawberrySeed berry && berry.GetType().Name != "MultiRoomStrawberrySeed") {
                     savedCollectedBerrySeeds.Add(berry.GetEntityId(), berry);
                 }
             }
@@ -25,6 +26,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private void RestoreStrawberrySeedPosition(On.Celeste.StrawberrySeed.orig_ctor orig, StrawberrySeed self,
             Strawberry strawberry, Vector2 position, int index, bool ghost) {
             orig(self, strawberry, position, index, ghost);
+
+            // multi-room strawberry seeds (Spring Collab 2020) don't need save states.
+            if (self.GetType().Name == "MultiRoomStrawberrySeed") {
+                return;
+            }
+
             var entityId = new EntityID(strawberry.ID.Level, strawberry.ID.GetHashCode() + index);
             self.SetEntityId(entityId);
 
@@ -38,8 +45,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
                 // 处于还原动画中的种子，设置到起始点
                 if (!savedCollectedBerrySeeds.ContainsKey(entityId) && !savedBerrySeed.Collidable) {
-                    self.Position = (Vector2) savedBerrySeed.GetField("start");
-                    if (savedBerrySeed.GetField("attached") is Platform savedAttached) {
+                    self.Position = (Vector2) savedBerrySeed.GetField(typeof(StrawberrySeed), "start");
+                    if (savedBerrySeed.GetField(typeof(StrawberrySeed), "attached") is Platform savedAttached) {
                         self.Position += savedAttached.Position;
                     }
                 }
@@ -58,12 +65,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             foreach (StrawberrySeed savedBerrySeed in savedCollectedBerrySeeds.Values) {
                 if (addedBerrySeeds.Find(strawberrySeed => strawberrySeed.GetEntityId().Equals(savedBerrySeed.GetEntityId())) is StrawberrySeed addedBerrySeed) {
-                    Follower follower = (Follower) addedBerrySeed.GetField("follower");
+                    Follower follower = (Follower) addedBerrySeed.GetField(typeof(StrawberrySeed), "follower");
                     follower.FollowDelay = 0f;
                     follower.DelayTimer = 0f;
                     addedBerrySeed.Position = savedBerrySeed.Position;
 
-                    addedBerrySeed.SetField("player", player);
+                    addedBerrySeed.SetField(typeof(StrawberrySeed), "player", player);
                     player.Leader.GainFollower(follower);
                     addedBerrySeed.Collidable = false;
                     addedBerrySeed.Depth = -1000000;

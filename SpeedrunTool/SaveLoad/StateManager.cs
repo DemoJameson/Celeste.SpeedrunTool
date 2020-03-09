@@ -83,6 +83,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private LoadState loadState = LoadState.None;
 
         private Session savedSession;
+        private Dictionary<EverestModule, EverestModuleSession> savedModSessions;
         private Session.CoreModes sessionCoreModeBackup;
 
         public bool IsLoadStart => loadState == LoadState.LoadStart;
@@ -244,6 +245,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SavedPlayer = player;
             savedCamera = level.Camera;
 
+            // save all mod sessions
+            savedModSessions = new Dictionary<EverestModule, EverestModuleSession>();
+            foreach (EverestModule module in Everest.Modules) {
+                if (module._Session != null) {
+                    savedModSessions[module] = module._Session.DeepCloneYAML<EverestModuleSession>(module.SessionType);
+                }
+            }
+
             // 防止被恢复了位置的熔岩烫死
             preventDie = true;
 
@@ -259,6 +268,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             Session sessionCopy = savedSession.DeepClone();
             preventDie = true;
             Engine.Scene = new LevelLoader(sessionCopy, sessionCopy.RespawnPoint);
+
+            // restore all mod sessions
+            foreach (EverestModule module in Everest.Modules) {
+                if (savedModSessions.TryGetValue(module, out EverestModuleSession savedModSession)) {
+                    module._Session = savedModSession.DeepCloneYAML<EverestModuleSession>(module.SessionType);
+                }
+            }
         }
 
         // 尽快设置人物的位置与镜头，然后冻结游戏等待人物复活
@@ -331,6 +347,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             preventDie = false;
             restoreStarFlyTimer = false;
             savedSession = null;
+            savedModSessions = null;
             SavedPlayer = null;
             savedCamera = null;
             loadState = LoadState.None;

@@ -21,9 +21,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 if (savedStarJumpBlocks.ContainsKey(entityId)) {
                     var savedBlock = savedStarJumpBlocks[entityId];
                     self.Position = savedBlock.Position;
-                    self.CopyField("sinks", savedBlock);
-                    self.CopyField("yLerp", savedBlock);
-                    self.CopyField("sinkTimer", savedBlock);
+                    self.CopyField(typeof(StarJumpBlock), "sinks", savedBlock);
+                    self.CopyField(typeof(StarJumpBlock), "yLerp", savedBlock);
+                    self.CopyField(typeof(StarJumpBlock), "sinkTimer", savedBlock);
                 }
             }
         }

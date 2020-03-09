@@ -12,8 +12,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public override void OnQuickSave(Level level) {
             savedNodes = level.Entities.FindAll<BadelineBoost>().ToDictionary(boost => boost.GetEntityId(),
                 boost => {
-                    int nodeIndex = (int) boost.GetField("nodeIndex");
-                    Vector2[] nodes = boost.GetField("nodes") as Vector2[];
+                    int nodeIndex = (int) boost.GetField(typeof(BadelineBoost), "nodeIndex");
+                    Vector2[] nodes = boost.GetField(typeof(BadelineBoost), "nodes") as Vector2[];
                     Vector2[] result = nodes?.Skip(nodeIndex).ToArray();
                     return result ?? new Vector2[] { };
                 });

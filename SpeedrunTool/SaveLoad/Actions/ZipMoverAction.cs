@@ -34,12 +34,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 yield return orig(self);
             }
             
-            object pathRenderer = self.GetField("pathRenderer");
+            object pathRenderer = self.GetField(typeof(ZipMover), "pathRenderer");
 
-            Vector2 start = (Vector2) self.GetField("start");
-            Vector2 target = (Vector2) self.GetField("target");
-            SoundSource soundSource = self.GetField("sfx") as SoundSource;
-            Sprite streetlight = self.GetField("streetlight") as Sprite;
+            Vector2 start = (Vector2) self.GetField(typeof(ZipMover), "start");
+            Vector2 target = (Vector2) self.GetField(typeof(ZipMover), "target");
+            SoundSource soundSource = self.GetField(typeof(ZipMover), "sfx") as SoundSource;
+            Sprite streetlight = self.GetField(typeof(ZipMover), "streetlight") as Sprite;
 
             Vector2 currentPosition = self.Position;
             float goProgress = 0f;
@@ -103,10 +103,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     audioTime = (int) (DateTime.Now - startTime).TotalMilliseconds;
                     self.SetExtendedDataValue(nameof(audioTime), audioTime);
 
-                    self.SetField("percent", Ease.SineIn(goProgress));
-                    float percent = (float) self.GetField("percent");
+                    self.SetField(typeof(ZipMover), "percent", Ease.SineIn(goProgress));
+                    float percent = (float) self.GetField(typeof(ZipMover), "percent");
                     Vector2 to = Vector2.Lerp(currentPosition, target, percent);
-                    self.InvokeMethod("ScrapeParticlesCheck", to);
+                    self.InvokeMethod(typeof(ZipMover), "ScrapeParticlesCheck", to);
                     if (self.Scene.OnInterval(0.1f)) {
                         pathRenderer.InvokeMethod("CreateSparks");
                     }
@@ -141,7 +141,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     audioTime = (int) (DateTime.Now - startTime).TotalMilliseconds;
                     self.SetExtendedDataValue(nameof(audioTime), audioTime);
 
-                    self.SetField("percent", 1f - Ease.SineIn(backProgress));
+                    self.SetField(typeof(ZipMover), "percent", 1f - Ease.SineIn(backProgress));
                     Vector2 to = Vector2.Lerp(target, start, Ease.SineIn(backProgress));
                     self.MoveTo(to);
                 }

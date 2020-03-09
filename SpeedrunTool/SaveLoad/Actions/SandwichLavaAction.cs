@@ -23,8 +23,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     SandwichLava savedSandwichLava = savedSandwichLavas[entityId];
                     self.Collidable = savedSandwichLava.Collidable;
                     self.Waiting = savedSandwichLava.Waiting;
-                    self.CopyField("leaving", savedSandwichLava);
-                    self.CopyField("delay", savedSandwichLava);
+                    self.CopyField(typeof(SandwichLava), "leaving", savedSandwichLava);
+                    self.CopyField(typeof(SandwichLava), "delay", savedSandwichLava);
                     self.Add(new RestorePositionComponent(self, savedSandwichLava));
                 }
                 else {

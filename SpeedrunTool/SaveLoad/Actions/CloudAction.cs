@@ -23,20 +23,20 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             if (IsLoadStart && savedClouds.ContainsKey(entityId)) {
                 Cloud savedCloud = savedClouds[entityId];
                 self.Position = savedCloud.Position;
-                self.CopyField("waiting", savedCloud);
-                self.CopyField("returning", savedCloud);
-                self.CopyField("timer", savedCloud);
-                self.CopyField("scale", savedCloud);
-                self.CopyField("canRumble", savedCloud);
+                self.CopyField(typeof(Cloud), "waiting", savedCloud);
+                self.CopyField(typeof(Cloud), "returning", savedCloud);
+                self.CopyField(typeof(Cloud), "timer", savedCloud);
+                self.CopyField(typeof(Cloud), "scale", savedCloud);
+                self.CopyField(typeof(Cloud), "canRumble", savedCloud);
 
                 self.Add(new Coroutine(RestoreRespawnState(self, savedCloud)));
             }
         }
 
         private IEnumerator RestoreRespawnState(Cloud self, Cloud savedCloud) {
-            self.CopyField("respawnTimer", savedCloud);
+            self.CopyField(typeof(Cloud), "respawnTimer", savedCloud);
             self.Collidable = savedCloud.Collidable;
-            self.CopyField("speed", savedCloud);
+            self.CopyField(typeof(Cloud), "speed", savedCloud);
             yield break;
         }
 

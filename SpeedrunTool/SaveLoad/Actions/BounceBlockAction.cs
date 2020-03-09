@@ -21,18 +21,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 BounceBlock savedBounceBlock = savedBounceBlocks[entityId];
                 self.Position = savedBounceBlock.Position;
                 self.Collidable = savedBounceBlock.Collidable;
-                self.CopyField("bounceDir", savedBounceBlock);
-                self.CopyField("state", savedBounceBlock);
-                self.CopyField("moveSpeed", savedBounceBlock);
-                self.CopyField("windUpStartTimer", savedBounceBlock);
-                self.CopyField("windUpProgress", savedBounceBlock);
-                self.CopyField("bounceEndTimer", savedBounceBlock);
-                self.CopyField("bounceLift", savedBounceBlock);
-                self.CopyField("reappearFlash", savedBounceBlock);
-                self.CopyField("debrisDirection", savedBounceBlock);
-                self.CopyField("iceMode", savedBounceBlock);
-                self.CopyField("iceModeNext", savedBounceBlock);
-                self.CopyField("respawnTimer", savedBounceBlock);
+                self.CopyField(typeof(BounceBlock), "bounceDir", savedBounceBlock);
+                self.CopyField(typeof(BounceBlock), "state", savedBounceBlock);
+                self.CopyField(typeof(BounceBlock), "moveSpeed", savedBounceBlock);
+                self.CopyField(typeof(BounceBlock), "windUpStartTimer", savedBounceBlock);
+                self.CopyField(typeof(BounceBlock), "windUpProgress", savedBounceBlock);
+                self.CopyField(typeof(BounceBlock), "bounceEndTimer", savedBounceBlock);
+                self.CopyField(typeof(BounceBlock), "bounceLift", savedBounceBlock);
+                self.CopyField(typeof(BounceBlock), "reappearFlash", savedBounceBlock);
+                self.CopyField(typeof(BounceBlock), "debrisDirection", savedBounceBlock);
+                self.CopyField(typeof(BounceBlock), "iceMode", savedBounceBlock);
+                self.CopyField(typeof(BounceBlock), "iceModeNext", savedBounceBlock);
+                self.CopyField(typeof(BounceBlock), "respawnTimer", savedBounceBlock);
             }
         }
 

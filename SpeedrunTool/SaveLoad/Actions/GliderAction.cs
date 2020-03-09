@@ -40,7 +40,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
 
             foreach (var savedGlider in savedGlidersCopy) {
-                var createdGlider = new Glider(savedGlider.Position, (bool) savedGlider.GetField("bubble"), (bool) savedGlider.GetField("tutorial"));
+                var createdGlider = new Glider(savedGlider.Position, (bool) savedGlider.GetField(typeof(Glider), "bubble"), (bool) savedGlider.GetField(typeof(Glider), "tutorial"));
                 createdGlider.SetEntityId(savedGlider.GetEntityId());
                 level.Add(createdGlider);
                 RestoreState(createdGlider, savedGlider);
@@ -53,11 +53,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
             self.Position = savedGlider.Position;
             self.Speed = savedGlider.Speed;
-            self.CopyField("prevLiftSpeed", savedGlider);
-            self.CopyField("noGravityTimer", savedGlider);
-            self.CopyField("highFrictionTimer", savedGlider);
-            self.CopyField("bubble", savedGlider);
-            self.CopyField("destroyed", savedGlider);
+            self.CopyField(typeof(Glider), "prevLiftSpeed", savedGlider);
+            self.CopyField(typeof(Glider), "noGravityTimer", savedGlider);
+            self.CopyField(typeof(Glider), "highFrictionTimer", savedGlider);
+            self.CopyField(typeof(Glider), "bubble", savedGlider);
+            self.CopyField(typeof(Glider), "destroyed", savedGlider);
         }
 
         public override void OnClear() {

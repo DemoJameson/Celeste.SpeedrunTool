@@ -22,24 +22,24 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             if (IsLoadStart && savedFinalBosses.ContainsKey(entityId)) {
                 FinalBoss savedFinalBoss = savedFinalBosses[entityId];
 
-                int nodeIndex = (int) savedFinalBoss.GetField("nodeIndex");
-                Vector2[] nodes = (Vector2[]) savedFinalBoss.GetField("nodes");
-                bool startHit = (bool) savedFinalBoss.GetField("startHit");
+                int nodeIndex = (int) savedFinalBoss.GetField(typeof(FinalBoss), "nodeIndex");
+                Vector2[] nodes = (Vector2[]) savedFinalBoss.GetField(typeof(FinalBoss), "nodes");
+                bool startHit = (bool) savedFinalBoss.GetField(typeof(FinalBoss), "startHit");
 
                 self.Position = nodes[nodeIndex];
 
                 if (data.Int("patternIndex") == 0 && nodeIndex >= 1) {
-                    self.SetField("patternIndex", 1);
+                    self.SetField(typeof(FinalBoss), "patternIndex", 1);
                 }
 
                 if (startHit) {
                     nodeIndex--;
                 }
 
-                self.SetField("nodeIndex", nodeIndex);
+                self.SetField(typeof(FinalBoss), "nodeIndex", nodeIndex);
                 self.Add(new RestoreFinalBossStateComponent(savedFinalBoss));
                 
-                self.CopyField("playerHasMoved", savedFinalBoss);
+                self.CopyField(typeof(FinalBoss), "playerHasMoved", savedFinalBoss);
             }
         }
 
@@ -63,8 +63,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
 
             public override void Update() {
-                List<Entity> fallingBlocks = Entity.GetField("fallingBlocks") as List<Entity>;
-                List<Entity> savedFallingBlocks = savedFinalBoss.GetField("fallingBlocks") as List<Entity>;
+                List<Entity> fallingBlocks = Entity.GetField(typeof(FinalBoss), "fallingBlocks") as List<Entity>;
+                List<Entity> savedFallingBlocks = savedFinalBoss.GetField(typeof(FinalBoss), "fallingBlocks") as List<Entity>;
 
                 if (fallingBlocks == null || savedFallingBlocks == null) {
                     RemoveSelf();

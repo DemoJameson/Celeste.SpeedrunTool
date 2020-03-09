@@ -28,7 +28,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             MoveBlock savedMoveBlock = movingBlocks[entityId];
 
-            int state = (int) savedMoveBlock.GetField("state");
+            int state = (int) savedMoveBlock.GetField(typeof(MoveBlock), "state");
             switch (state) {
                 case 1:
                     // MovementState.Moving

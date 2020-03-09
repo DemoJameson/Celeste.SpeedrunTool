@@ -26,6 +26,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
 
             Booster booster = new Booster(savedPlayer.Position - Vector2.UnitY * 6, true);
+            booster.SetEntityId(lastBooster.GetEntityId());
             booster.Add(new Coroutine(BootPlayerNewRoom(booster)));
             level.Add(booster);
         }
@@ -106,7 +107,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private IEnumerator WaitToRespawn(Booster self, Booster savedBooster) {
-            self.CopyField("respawnTimer", savedBooster);
+            self.CopyField(typeof(Booster), "respawnTimer", savedBooster);
             Sprite sprite = self.GetField(typeof(Booster), "sprite") as Sprite;
             sprite.Visible = false;
             Entity outline = self.GetField(typeof(Booster), "outline") as Entity;

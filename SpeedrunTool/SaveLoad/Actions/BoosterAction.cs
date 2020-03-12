@@ -61,8 +61,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 if (self.CollideCheck(StateManager.Instance.SavedPlayer)) {
                     self.Collidable = false;
                     self.Add(new Coroutine(WaitPlayerRespawn(self)));
-                } else if (savedBooster.BoostingPlayer) {
-                    self.Add(new Coroutine(BoostPlayer(self, savedBooster)));
+                }
+
+                if (savedBooster.BoostingPlayer) {
+                    if (data.Bool("red")) {
+                        self.Add(new Coroutine(BoostPlayer(self, savedBooster)));
+                    } else {
+                        self.SetField(typeof(Booster), "respawnTimer", 1f);
+                        self.Add(new Coroutine(WaitToRespawn(self, savedBooster)));
+                    }
                 } else if ((float) savedBooster.GetField(typeof(Booster), "respawnTimer") > 0f) {
                     self.Add(new Coroutine(WaitToRespawn(self, savedBooster)));
                 }
@@ -113,6 +120,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             sprite.Visible = false;
             Entity outline = self.GetField(typeof(Booster), "outline") as Entity;
             outline.Visible = true;
+            if ((bool) self.GetField(typeof(Booster), "red") == false) {
+                AudioAction.MuteAudioPathVector2("event:/game/04_cliffside/greenbooster_end");
+                self.PlayerReleased();
+            }
             yield break;
         }
 

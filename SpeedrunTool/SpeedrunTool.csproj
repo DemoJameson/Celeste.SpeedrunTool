@@ -92,6 +92,7 @@
     <Compile Include="Extensions\CommonExtensions.cs" />
     <Compile Include="Extensions\DeepCopyExtensions.cs" />
     <Compile Include="RespawnSpeedUtils.cs" />
+    <Compile Include="SaveLoad\Actions\IntroCrusherAction.cs" />
     <Compile Include="TeleportRoom\LevelDataReorderUtils.cs" />
     <Compile Include="TeleportRoom\TeleportRoomUtils.cs" />
     <Compile Include="RoomTimer\ConfettiRenderer.cs" />

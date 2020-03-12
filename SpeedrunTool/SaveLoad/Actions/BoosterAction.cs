@@ -78,6 +78,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private IEnumerator BoostPlayer(Booster self, Booster savedBooster) {
+            Vector2 origCenter = self.Center;
             self.Center = StateManager.Instance.SavedPlayer.Center;
             self.Collidable = false;
 
@@ -103,7 +104,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
 
             yield return 0.7f;
-            self.Center = savedBooster.Center;
+            self.Center = origCenter;
         }
 
         private IEnumerator WaitToRespawn(Booster self, Booster savedBooster) {

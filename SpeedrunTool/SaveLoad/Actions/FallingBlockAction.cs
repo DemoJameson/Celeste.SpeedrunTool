@@ -153,6 +153,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public override void OnUnload() {
             On.Celeste.FallingBlock.CreateFinalBossBlock -= FallingBlockOnCreateFinalBossBlock;
             On.Celeste.FallingBlock.ctor_EntityData_Vector2 -= OnFallingBlockOnCtorEntityDataVector2;
+            On.Celeste.FallingBlock.Sequence -= FallingBlockOnSequence;
             On.Celeste.FallingBlock.ShakeSfx -= FallingBlockOnShakeSfx;
             On.Celeste.FallingBlock.ImpactSfx -= FallingBlockOnImpactSfx;
             On.Celeste.FallingBlock.LandParticles -= FallingBlockOnLandParticles;

@@ -38,14 +38,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         public static void SetEntityId(this Entity entity, int hashCode) {
             EntityID entityId = entity.GetEntityId();
             if (entityId.Equals(default(EntityID))) {
-                Level level = null;
-                if (Engine.Scene is Level) {
-                    level = (Level) Engine.Scene;
-                }
-                else if (Engine.Scene is LevelLoader levelLoader) {
-                    level = levelLoader.Level;
-                }
-
+                Level level = GetLevel();
                 if (level?.Session?.Level == null) {
                     return;
                 }
@@ -118,6 +111,16 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             }
 
             return null;
+        }
+
+        public static Level GetLevel() {
+            Level level = null;
+            if (Engine.Scene is Level) {
+                level = (Level) Engine.Scene;
+            } else if (Engine.Scene is LevelLoader levelLoader) {
+                level = levelLoader.Level;
+            }
+            return level;
         }
     }
 }

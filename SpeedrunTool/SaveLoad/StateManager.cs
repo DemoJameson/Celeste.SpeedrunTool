@@ -46,6 +46,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             new LightningBreakerBoxAction(),
             new MoveBlockAction(),
             new MovingPlatformAction(),
+            new OshiroTriggerAction(),
             new PufferAction(),
             new ReflectionTentaclesAction(),
             new RefillAction(),
@@ -72,6 +73,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             new TouchSwitchAction(),
             new TrackSpinnerAction(),
             new TriggerSpikesAction(),
+            new TriggerSpikesOriginalAction(),
             new WindControllerAction(),
             new ZipMoverAction()
         };

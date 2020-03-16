@@ -28,15 +28,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private void RestoreBadelineBoostState(On.Celeste.BadelineBoost.orig_ctor_Vector2Array_bool_bool_bool_bool_bool orig,
             BadelineBoost self, Vector2[] nodes, bool lockCamera, bool canSkip, bool finalCh9Boost, bool finalCh9GoldenBoost, bool finalCh9Dialog) {
             EntityID entityId = self.GetEntityId();
+
+            Level level = CelesteExtensions.GetLevel();
             
-            Level level = null;
-            if (Engine.Scene is Level) {
-                level = (Level) Engine.Scene;
-            } else if (Engine.Scene is LevelLoader levelLoader) {
-                level = levelLoader.Level;
-            }
-            
-            if (entityId.Equals(default(EntityID))) {
+            if (level?.Session?.Level != null && entityId.Equals(default(EntityID))) {
                 entityId = new EntityID(level?.Session.Level, nodes.GetHashCode());
                 self.SetEntityId(entityId);
             }

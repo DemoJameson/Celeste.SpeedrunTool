@@ -7,37 +7,13 @@ using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
 using Monocle;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
+namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Everest {
     public class TriggerSpikesOriginalAction : AbstractEntityAction {
         private Dictionary<EntityID, Entity> savedTriggerSpikes = new Dictionary<EntityID, Entity>();
 
         public override void OnQuickSave(Level level) {
             savedTriggerSpikes = level.Entities.FindAll<Entity>()
                 .Where(entity => entity.GetType().FullName == "Celeste.Mod.Entities.TriggerSpikesOriginal").GetDictionary();
-        }
-
-        private static IEnumerator RestoreTriggerState(Entity self, Entity savedTriggerSpikes) {
-            Array spikes = self.GetField("spikes") as Array;
-            Array savedSpikes = savedTriggerSpikes.GetField("spikes") as Array;
-            Array newSpikes = Activator.CreateInstance(spikes.GetType(), spikes.Length) as Array;
-
-            for (var i = 0; i < spikes.Length; i++) {
-                var spike = spikes.GetValue(i);
-                var savedSpike = savedSpikes.GetValue(i);
-                savedSpike.CopyField("Parent", spike);
-                newSpikes.SetValue(savedSpike, i);
-            }
-
-            self.SetField("spikes", newSpikes);
-            yield break;
-        }
-
-        public override void OnClear() {
-            savedTriggerSpikes.Clear();
-        }
-
-        public override void OnLoad() {
-            On.Monocle.Entity.ctor_Vector2 += EntityOnCtor_Vector2;
         }
 
         private void EntityOnCtor_Vector2(On.Monocle.Entity.orig_ctor_Vector2 orig, Entity self, Vector2 position) {
@@ -78,7 +54,32 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             } 
         }
 
+        private static IEnumerator RestoreTriggerState(Entity self, Entity savedTriggerSpikes) {
+            Array spikes = self.GetField("spikes") as Array;
+            Array savedSpikes = savedTriggerSpikes.GetField("spikes") as Array;
+            Array newSpikes = Activator.CreateInstance(spikes.GetType(), spikes.Length) as Array;
+
+            for (var i = 0; i < spikes.Length; i++) {
+                var spike = spikes.GetValue(i);
+                var savedSpike = savedSpikes.GetValue(i);
+                savedSpike.CopyField("Parent", spike);
+                newSpikes.SetValue(savedSpike, i);
+            }
+
+            self.SetField("spikes", newSpikes);
+            yield break;
+        }
+
+        public override void OnClear() {
+            savedTriggerSpikes.Clear();
+        }
+
+        public override void OnLoad() {
+            On.Monocle.Entity.ctor_Vector2 += EntityOnCtor_Vector2;
+        }
+
         public override void OnUnload() {
+            On.Monocle.Entity.ctor_Vector2 -= EntityOnCtor_Vector2;
         }
     }
 }

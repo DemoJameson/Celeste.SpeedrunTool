@@ -36,7 +36,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
             On.Celeste.LevelExit.ctor -= LevelExitOnCtor;
             On.Celeste.Session.SetFlag -= SessionOnSetFlag;
             On.Celeste.Editor.MapEditor.LoadLevel -= MapEditorOnLoadLevel;
-            On.Celeste.Session.SetFlag -= SessionOnSetFlag;
+            On.Celeste.LevelLoader.ctor -= LevelLoaderOnCtor;
         }
 
         private static void LevelLoaderOnCtor(On.Celeste.LevelLoader.orig_ctor orig, LevelLoader self, Session session,

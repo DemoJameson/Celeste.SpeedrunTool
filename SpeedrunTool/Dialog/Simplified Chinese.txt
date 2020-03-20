@@ -27,10 +27,6 @@
 	PERIODS=.?!？！。
 	FONT=Noto Sans CJK SC Medium,64
 
-# ================================== Common ==================================
-SPEEDRUN_TOOL_OFF=关
-SPEEDRUN_TOOL_ALL=全部
-
 # ================================== Mod Options Menu ==================================
 SPEEDRUN_TOOL=                       速通辅助工具
 SPEEDRUN_TOOL_ENABLED=               开关

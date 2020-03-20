@@ -8,10 +8,6 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string BtnConfigChanging = "BTN_CONFIG_CHANGING";
         public const string BtnConfigNoController = "BTN_CONFIG_NOCONTROLLER";
 
-        // Common
-        public const string Off = "SPEEDRUN_TOOL_OFF";
-        public const string All = "SPEEDRUN_TOOL_ALL";
-
         // Mod Options
         public const string SpeedrunTool = "SPEEDRUN_TOOL";
         public const string Enabled = "SPEEDRUN_TOOL_ENABLED";

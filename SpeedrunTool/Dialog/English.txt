@@ -26,10 +26,6 @@
 # Font (Face, Base Size)
 # Use BMFONT to generate the .fnt and image files
 	FONT=Renogare,64
-	
-# ================================== Common ==================================
-SPEEDRUN_TOOL_OFF=OFF
-SPEEDRUN_TOOL_ALL=ALL
 
 # ================================== Mod Options Menu ==================================
 SPEEDRUN_TOOL=                       Speedrun Tool

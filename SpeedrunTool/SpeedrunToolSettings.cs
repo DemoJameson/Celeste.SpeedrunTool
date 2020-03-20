@@ -14,9 +14,6 @@ namespace Celeste.Mod.SpeedrunTool {
     public class SpeedrunToolSettings : EverestModuleSettings {
         public static readonly List<string> RoomTimerStrings = GetEnumNames<RoomTimerType>();
 
-        private static readonly List<string> RespawnSpeedStrings =
-            Enumerable.Range(1, 9).Select(intValue => intValue + "00%").ToList();
-
         private static readonly List<string> EndPointStyleStrings = GetEnumNames<EndPoint.SpriteStyle>();
 
         [SettingName(DialogIds.Enabled)] public bool Enabled { get; set; } = true;
@@ -37,10 +34,6 @@ namespace Celeste.Mod.SpeedrunTool {
 
         public string EndPointStyle { get; set; } = EndPointStyleStrings.First();
         [YamlIgnore] [SettingIgnore] public EndPoint.SpriteStyle EndPointSpriteStyle => GetEnumFromName<EndPoint.SpriteStyle>(EndPointStyle);
-
-        public string RespawnSpeed { get; set; } = RespawnSpeedStrings.First();
-
-        [YamlIgnore] [SettingIgnore] public int RespawnSpeedInt => RespawnSpeedStrings.IndexOf(RespawnSpeed) + 1;
 
         [SettingName(DialogIds.DeathStatistics)]
         public bool DeathStatistics { get; set; } = false;
@@ -141,17 +134,6 @@ namespace Celeste.Mod.SpeedrunTool {
                     isAfterMoreOptionsTextMenu = false;
                 }
             }
-        }
-
-        // ReSharper disable once UnusedMember.Global
-        public void CreateRespawnSpeedEntry(TextMenu textMenu, bool inGame) {
-            textMenu.Add(
-                new TextMenu.Slider(Dialog.Clean(DialogIds.RespawnSpeed),
-                    index => RespawnSpeedStrings[index],
-                    0,
-                    RespawnSpeedStrings.Count - 1,
-                    Math.Max(0, RespawnSpeedStrings.IndexOf(RespawnSpeed))
-                ).Change(index => RespawnSpeed = RespawnSpeedStrings[index]));
         }
 
         // ReSharper disable once UnusedMember.Global

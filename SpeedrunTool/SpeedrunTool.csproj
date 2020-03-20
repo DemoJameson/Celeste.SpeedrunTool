@@ -91,7 +91,6 @@
     <Compile Include="Extensions\CelesteExtensions.cs" />
     <Compile Include="Extensions\CommonExtensions.cs" />
     <Compile Include="Extensions\DeepCopyExtensions.cs" />
-    <Compile Include="RespawnSpeedUtils.cs" />
     <Compile Include="SaveLoad\Actions\DSide\FastOshiroTriggerAction.cs" />
     <Compile Include="SaveLoad\Actions\Everest\TriggerSpikesOriginalAction.cs" />
     <Compile Include="SaveLoad\Actions\IntroCrusherAction.cs" />

@@ -36,7 +36,6 @@ SPEEDRUN_TOOL=                       Speedrun Tool
 SPEEDRUN_TOOL_ENABLED=               Enabled
 SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH= Auto Load State After Death
 SPEEDRUN_TOOL_DEATH_STATISTICS=      Death Statistics
-SPEEDRUN_TOOL_RESPAWN_SPEED=         Respawn Speed
 SPEEDRUN_TOOL_ROOM_TIMER=            Room Timer
 SPEEDRUN_TOOL_END_POINT_STYLE=       Room Timer End Point Style
 SPEEDRUN_TOOL_BUTTON_CONFIG=         Button Config
@@ -87,4 +86,4 @@ SPEEDRUN_TOOL_TELEPORT_TO_NEXT_ROOM=Teleport to Next Room
 # ================================== Death Statistics ==================================
 SPEEDRUN_TOOL_DIALOG_DEATH_STATISTICS_DESCRIPTION=
     [MADELINE left normal]
-    The statistics will be saved in the {# 96EFFF}Saves/SpeedrunTool{#} folder.
+    The statistics data will be saved in the {# 96EFFF}Saves/SpeedrunTool{#} folder.

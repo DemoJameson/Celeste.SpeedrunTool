@@ -1,5 +1,3 @@
-// ReSharper disable UnusedMember.Global
-
 namespace Celeste.Mod.SpeedrunTool {
     public static class DialogIds {
         public const string Prefix = "SPEEDRUN_TOOL_";
@@ -11,15 +9,14 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string BtnConfigNoController = "BTN_CONFIG_NOCONTROLLER";
 
         // Common
-        public const string Off = "SPEED_TOOL_OFF";
-        public const string All = "SPEED_TOOL_ALL";
+        public const string Off = "SPEEDRUN_TOOL_OFF";
+        public const string All = "SPEEDRUN_TOOL_ALL";
 
         // Mod Options
         public const string SpeedrunTool = "SPEEDRUN_TOOL";
         public const string Enabled = "SPEEDRUN_TOOL_ENABLED";
         public const string AutoLoadAfterDeath = "SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH";
         public const string DeathStatistics = "SPEEDRUN_TOOL_DEATH_STATISTICS";
-        public const string RespawnSpeed = "SPEEDRUN_TOOL_RESPAWN_SPEED";
         public const string RoomTimer = "SPEEDRUN_TOOL_ROOM_TIMER";
         public const string EndPointStyle = "SPEEDRUN_TOOL_END_POINT_STYLE";
         public const string NumberOfRooms = "SPEEDRUN_TOOL_NUMBER_OF_ROOMS";
@@ -35,6 +32,7 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string DialogClear = "SPEEDRUN_TOOL_DIALOG_CLEAR";
         public const string DialogNotSaved = "SPEEDRUN_TOOL_DIALOG_NOT_SAVED";
         
+        // ReSharper disable UnusedMember.Global
         // End Point Style
         public const string Flag = "SPEEDRUN_TOOL_FLAG";
         public const string GoldBerry = "SPEEDRUN_TOOL_GOLD_BERRY";
@@ -50,6 +48,7 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string Towerfall = "SPEEDRUN_TOOL_TOWERFALL";
         public const string Yuri = "SPEEDRUN_TOOL_YURI";
         public const string Random = "SPEEDRUN_TOOL_RANDOM";
+        // ReSharper restore UnusedMember.Global
 
         // Button Config
         public const string OpenDebugMap = "SPEEDRUN_TOOL_OPEN_DEBUG_MAP";

@@ -1,4 +1,4 @@
-﻿# NOTES:
+# NOTES:
 # The # Symbol at the start of a line counts as a Comment. To include in dialog, use a \#
 # The . Symbol will cause a pause unless escaped with \. (ex: Mr. Oshiro has a pause, Mr\. Oshiro does not)
 # Newlines automatically create a Page Break, unless there is an {n} command on the previous line
@@ -32,14 +32,16 @@ SPEEDRUN_TOOL_OFF=OFF
 SPEEDRUN_TOOL_ALL=ALL
 
 # ================================== Mod Options Menu ==================================
-SPEEDRUN_TOOL=                       Speedrun Tool
-SPEEDRUN_TOOL_ENABLED=               Enabled
-SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH= Auto Load State After Death
-SPEEDRUN_TOOL_DEATH_STATISTICS=      Death Statistics
-SPEEDRUN_TOOL_ROOM_TIMER=            Room Timer
-SPEEDRUN_TOOL_END_POINT_STYLE=       Room Timer End Point Style
-SPEEDRUN_TOOL_BUTTON_CONFIG=         Button Config
-SPEEDRUN_TOOL_MORE_OPTIONS=          More Options
+SPEEDRUN_TOOL=                          Speedrun Tool
+SPEEDRUN_TOOL_ENABLED=                  Enabled
+SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH=    Auto Load State After Death
+SPEEDRUN_TOOL_DEATH_STATISTICS=         Death Statistics
+SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA= Max Number of Death Data
+SPEEDRUN_TOOL_CHECK_DEATH_STATISTICS=   Check Death Data
+SPEEDRUN_TOOL_ROOM_TIMER=               Room Timer
+SPEEDRUN_TOOL_END_POINT_STYLE=          Room Timer End Point Style
+SPEEDRUN_TOOL_BUTTON_CONFIG=            Button Config
+SPEEDRUN_TOOL_MORE_OPTIONS=             More Options
 
 # ================================== Room Timer Options ==================================
 SPEEDRUN_TOOL_NEXT_ROOM=       Next Room

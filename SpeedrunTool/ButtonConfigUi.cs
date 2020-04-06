@@ -13,6 +13,7 @@ namespace Celeste.Mod.SpeedrunTool {
         public const Keys DefaultKeyboardResetPb = Keys.F9;
         public const Keys DefaultKeyboardSwitchRoomTimer = Keys.F10;
         public const Keys DefaultKeyboardSetEndPoint = Keys.F11;
+        public const Keys DefaultKeyboardCheckDeathStatistics = Keys.F12;
         public const Keys DefaultKeyboardLastRoom = Keys.PageUp;
         public const Keys DefaultKeyboardNextRoom = Keys.PageDown;
 
@@ -40,6 +41,7 @@ namespace Celeste.Mod.SpeedrunTool {
         public static readonly Lazy<VirtualButton> ResetRoomPbButton = new Lazy<VirtualButton>(CreateVirtualButton);
         public static readonly Lazy<VirtualButton> SwitchRoomTimerButton = new Lazy<VirtualButton>(CreateVirtualButton);
         public static readonly Lazy<VirtualButton> SetEndPointButton = new Lazy<VirtualButton>(CreateVirtualButton);
+        public static readonly Lazy<VirtualButton> CheckDeathStatisticsButton = new Lazy<VirtualButton>(CreateVirtualButton);
         public static readonly Lazy<VirtualButton> LastRoomButton = new Lazy<VirtualButton>(CreateVirtualButton);
         public static readonly Lazy<VirtualButton> NextRoomButton = new Lazy<VirtualButton>(CreateVirtualButton);
 
@@ -81,6 +83,7 @@ namespace Celeste.Mod.SpeedrunTool {
             AddControllerSetting(Mappings.ResetRoomPb, Settings.ControllerResetRoomPb);
             AddControllerSetting(Mappings.SwitchRoomTimer, Settings.ControllerSwitchRoomTimer);
             AddControllerSetting(Mappings.SetEndPoint, Settings.ControllerSetEndPoint);
+            AddControllerSetting(Mappings.CheckDeathStatistics, Settings.ControllerCheckDeathStatistics);
             AddControllerSetting(Mappings.LastRoom, Settings.ControllerLastRoom);
             AddControllerSetting(Mappings.NextRoom, Settings.ControllerNextRoom);
 
@@ -100,6 +103,8 @@ namespace Celeste.Mod.SpeedrunTool {
                 Remap(Mappings.SwitchRoomTimer, true)));
             Add(new Setting(Label(Mappings.SetEndPoint), Settings.KeyboardSetEndPoint).Pressed(() =>
                 Remap(Mappings.SetEndPoint, true)));
+            Add(new Setting(Label(Mappings.CheckDeathStatistics), Settings.KeyboardCheckDeathStatistics).Pressed(() =>
+                Remap(Mappings.CheckDeathStatistics, true)));
             Add(new Setting(Label(Mappings.LastRoom), Settings.KeyboardLastRoom).Pressed(() =>
                 Remap(Mappings.LastRoom, true)));
             Add(new Setting(Label(Mappings.NextRoom), Settings.KeyboardNextRoom).Pressed(() =>
@@ -140,6 +145,7 @@ namespace Celeste.Mod.SpeedrunTool {
             Settings.ControllerResetRoomPb = null;
             Settings.ControllerSwitchRoomTimer = null;
             Settings.ControllerSetEndPoint = null;
+            Settings.ControllerCheckDeathStatistics = null;
             Settings.ControllerLastRoom = null;
             Settings.ControllerNextRoom = null;
 
@@ -150,6 +156,7 @@ namespace Celeste.Mod.SpeedrunTool {
             Settings.KeyboardResetRoomPb = DefaultKeyboardResetPb;
             Settings.KeyboardSwitchRoomTimer = DefaultKeyboardSwitchRoomTimer;
             Settings.KeyboardSetEndPoint = DefaultKeyboardSetEndPoint;
+            Settings.KeyboardCheckDeathStatistics = DefaultKeyboardCheckDeathStatistics;
             Settings.KeyboardLastRoom = DefaultKeyboardLastRoom;
             Settings.KeyboardNextRoom = DefaultKeyboardNextRoom;
 
@@ -160,6 +167,7 @@ namespace Celeste.Mod.SpeedrunTool {
             UpdateResetRoomPbButton();
             UpdateSwitchRoomTimerButton();
             UpdateSetEndPointButton();
+            UpdateCheckDeathStatisticsButton();
             UpdateLastRoomButton();
             UpdateNextRoomButton();
         }
@@ -209,6 +217,10 @@ namespace Celeste.Mod.SpeedrunTool {
                     Settings.KeyboardSetEndPoint = key;
                     UpdateSetEndPointButton();
                     break;
+                case Mappings.CheckDeathStatistics:
+                    Settings.KeyboardCheckDeathStatistics = key;
+                    UpdateCheckDeathStatisticsButton();
+                    break;
                 case Mappings.LastRoom:
                     Settings.KeyboardLastRoom = key;
                     UpdateLastRoomButton();
@@ -255,6 +267,10 @@ namespace Celeste.Mod.SpeedrunTool {
                 case Mappings.SetEndPoint:
                     Settings.ControllerSetEndPoint = button;
                     UpdateSetEndPointButton();
+                    break;
+                case Mappings.CheckDeathStatistics:
+                    Settings.ControllerCheckDeathStatistics = button;
+                    UpdateCheckDeathStatisticsButton();
                     break;
                 case Mappings.LastRoom:
                     Settings.ControllerLastRoom = button;
@@ -334,6 +350,15 @@ namespace Celeste.Mod.SpeedrunTool {
             nodes.Add(new VirtualButton.KeyboardKey(Settings.KeyboardSetEndPoint));
             if (Settings.ControllerSetEndPoint != null) {
                 nodes.Add(new VirtualButton.PadButton(Input.Gamepad, (Buttons) Settings.ControllerSetEndPoint));
+            }
+        }
+        
+        public static void UpdateCheckDeathStatisticsButton() {
+            List<VirtualButton.Node> nodes = CheckDeathStatisticsButton.Value.Nodes;
+            nodes.Clear();
+            nodes.Add(new VirtualButton.KeyboardKey(Settings.KeyboardCheckDeathStatistics));
+            if (Settings.ControllerCheckDeathStatistics != null) {
+                nodes.Add(new VirtualButton.PadButton(Input.Gamepad, (Buttons) Settings.ControllerCheckDeathStatistics));
             }
         }
         
@@ -461,6 +486,7 @@ namespace Celeste.Mod.SpeedrunTool {
             ResetRoomPb,
             SwitchRoomTimer,
             SetEndPoint,
+            CheckDeathStatistics,
             LastRoom,
             NextRoom
         }

@@ -1,4 +1,4 @@
-﻿# NOTES:
+# NOTES:
 # The # Symbol at the start of a line counts as a Comment. To include in dialog, use a \#
 # The . Symbol will cause a pause unless escaped with \. (ex: Mr. Oshiro has a pause, Mr\. Oshiro does not)
 # Newlines automatically create a Page Break, unless there is an {n} command on the previous line
@@ -32,14 +32,16 @@ SPEEDRUN_TOOL_OFF=关
 SPEEDRUN_TOOL_ALL=全部
 
 # ================================== Mod Options Menu ==================================
-SPEEDRUN_TOOL=                       速通辅助工具
-SPEEDRUN_TOOL_ENABLED=               开关
-SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH= 死亡后自动加载状态
-SPEEDRUN_TOOL_DEATH_STATISTICS=      统计死亡数据
-SPEEDRUN_TOOL_ROOM_TIMER=            房间计时器
-SPEEDRUN_TOOL_END_POINT_STYLE=       房间计时器终点样式
-SPEEDRUN_TOOL_BUTTON_CONFIG=         按键设置
-SPEEDRUN_TOOL_MORE_OPTIONS=          更多选项
+SPEEDRUN_TOOL=                          速通辅助工具
+SPEEDRUN_TOOL_ENABLED=                  开关
+SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH=    死亡后自动加载状态
+SPEEDRUN_TOOL_DEATH_STATISTICS=         统计死亡数据
+SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA= 死亡数据数量
+SPEEDRUN_TOOL_CHECK_DEATH_STATISTICS=   查看死亡数据
+SPEEDRUN_TOOL_ROOM_TIMER=               房间计时器
+SPEEDRUN_TOOL_END_POINT_STYLE=          房间计时器终点样式
+SPEEDRUN_TOOL_BUTTON_CONFIG=            按键设置
+SPEEDRUN_TOOL_MORE_OPTIONS=             更多选项
 
 # ================================== Room Timer Options ==================================
 SPEEDRUN_TOOL_NEXT_ROOM=       下个房间

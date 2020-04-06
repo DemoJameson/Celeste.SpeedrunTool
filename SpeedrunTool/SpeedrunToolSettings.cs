@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -33,12 +33,20 @@ namespace Celeste.Mod.SpeedrunTool {
         public bool AutoLoadAfterDeath { get; set; } = true;
 
         public string EndPointStyle { get; set; } = EndPointStyleStrings.First();
-        [YamlIgnore] [SettingIgnore] public EndPoint.SpriteStyle EndPointSpriteStyle => GetEnumFromName<EndPoint.SpriteStyle>(EndPointStyle);
+
+        [YamlIgnore]
+        [SettingIgnore]
+        public EndPoint.SpriteStyle EndPointSpriteStyle => GetEnumFromName<EndPoint.SpriteStyle>(EndPointStyle);
 
         [SettingName(DialogIds.DeathStatistics)]
         public bool DeathStatistics { get; set; } = false;
 
-        [YamlIgnore] [SettingIgnore] public bool LastDeathStatistics { get; set; } = false;
+        [SettingRange(0, 99)]
+        [SettingName(DialogIds.MaxNumberOfDeathData)]
+        public int MaxNumberOfDeathData { get; set; } = 0;
+
+        // ReSharper disable once UnusedMember.Global
+        [YamlIgnore] public string CheckDeathStatistics { get; set; } = "";
 
         // ReSharper disable once UnusedMember.Global
         [YamlIgnore] public string ButtonConfig { get; set; } = "";
@@ -50,16 +58,27 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingIgnore] public Buttons? ControllerResetRoomPb { get; set; }
         [SettingIgnore] public Buttons? ControllerSwitchRoomTimer { get; set; }
         [SettingIgnore] public Buttons? ControllerSetEndPoint { get; set; }
+        [SettingIgnore] public Buttons? ControllerCheckDeathStatistics { get; set; }
         [SettingIgnore] public Buttons? ControllerLastRoom { get; set; }
         [SettingIgnore] public Buttons? ControllerNextRoom { get; set; }
 
         [SettingIgnore] public Keys KeyboardQuickSave { get; set; } = ButtonConfigUi.DefaultKeyboardSave;
         [SettingIgnore] public Keys KeyboardQuickLoad { get; set; } = ButtonConfigUi.DefaultKeyboardLoad;
         [SettingIgnore] public List<Keys> KeyboardQuickClear { get; set; } = ButtonConfigUi.FixedClearKeys.ToList();
-        [SettingIgnore] public List<Keys> KeyboardOpenDebugMap { get; set; } = ButtonConfigUi.FixedOpenDebugMapKeys.ToList();
+
+        [SettingIgnore]
+        public List<Keys> KeyboardOpenDebugMap { get; set; } = ButtonConfigUi.FixedOpenDebugMapKeys.ToList();
+
         [SettingIgnore] public Keys KeyboardResetRoomPb { get; set; } = ButtonConfigUi.DefaultKeyboardResetPb;
-        [SettingIgnore] public Keys KeyboardSwitchRoomTimer { get; set; } = ButtonConfigUi.DefaultKeyboardSwitchRoomTimer;
+
+        [SettingIgnore]
+        public Keys KeyboardSwitchRoomTimer { get; set; } = ButtonConfigUi.DefaultKeyboardSwitchRoomTimer;
+
         [SettingIgnore] public Keys KeyboardSetEndPoint { get; set; } = ButtonConfigUi.DefaultKeyboardSetEndPoint;
+
+        [SettingIgnore]
+        public Keys KeyboardCheckDeathStatistics { get; set; } = ButtonConfigUi.DefaultKeyboardCheckDeathStatistics;
+
         [SettingIgnore] public Keys KeyboardLastRoom { get; set; } = ButtonConfigUi.DefaultKeyboardLastRoom;
         [SettingIgnore] public Keys KeyboardNextRoom { get; set; } = ButtonConfigUi.DefaultKeyboardNextRoom;
 
@@ -87,8 +106,7 @@ namespace Celeste.Mod.SpeedrunTool {
                             isBeforeMoreOptionsItem = false;
                         }
                     }
-                }
-                else {
+                } else {
                     bool isSpeedrunToolItem = false;
                     foreach (TextMenu.Item item in textMenu.Items) {
                         if (isSpeedrunToolItem) {
@@ -163,6 +181,30 @@ namespace Celeste.Mod.SpeedrunTool {
         }
 
         // ReSharper disable once UnusedMember.Global
+        public void CreateMaxNumberOfDeathDataEntry(TextMenu textMenu, bool inGame) {
+            textMenu.Add(new TextMenu.Slider(
+                DialogIds.MaxNumberOfDeathData.DialogClean(),
+                index => index == 0 ? "99+" : index.ToString(),
+                0,
+                99,
+                MaxNumberOfDeathData
+            ) {
+                OnValueChange = value => MaxNumberOfDeathData = value
+            });
+
+        }
+
+        // ReSharper disable once UnusedMember.Global
+        public void CreateCheckDeathStatisticsEntry(TextMenu textMenu, bool inGame) {
+            textMenu.Add(new TextMenu.Button(Dialog.Clean(DialogIds.CheckDeathStatistics)).Pressed(() => {
+                textMenu.Focused = false;
+                DeathStatisticsUi buttonConfigUi = new DeathStatisticsUi {OnClose = () => textMenu.Focused = true};
+                Engine.Scene.Add(buttonConfigUi);
+                Engine.Scene.OnEndOfFrame += (Action) (() => Engine.Scene.Entities.UpdateLists());
+            }));
+        }
+
+        // ReSharper disable once UnusedMember.Global
         public void CreateButtonConfigEntry(TextMenu textMenu, bool inGame) {
             textMenu.Add(lastTextMenu = new TextMenu.Button(Dialog.Clean(DialogIds.ButtonConfig)).Pressed(() => {
                 textMenu.Focused = false;
@@ -183,8 +225,7 @@ namespace Celeste.Mod.SpeedrunTool {
             try {
                 string enumName = Enum.GetNames(typeof(T))[GetEnumNames<T>().IndexOf(name)];
                 return (T) Enum.Parse(typeof(T), enumName);
-            }
-            catch (ArgumentException) {
+            } catch (ArgumentException) {
                 return (T) Enum.Parse(typeof(T), Enum.GetNames(typeof(T))[0]);
             }
         }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Celeste.Mod.SpeedrunTool.TeleportRoom;
@@ -43,10 +43,10 @@ namespace Celeste.Mod.SpeedrunTool {
         // Optional, initialize anything after Celeste has initialized itself properly.
         public override void Initialize() {
             BetterMapEditor.Init();
-            DeathStatisticsUtils.Init();
             RoomTimerManager.Instance.Init();
             TeleportRoomUtils.Init();
             StateManager.Instance.Init();
+            DeathStatisticsManager.Instance.Init();
         }
     }
 }

@@ -1,4 +1,4 @@
-# NOTES:
+﻿# NOTES:
 # The # Symbol at the start of a line counts as a Comment. To include in dialog, use a \#
 # The . Symbol will cause a pause unless escaped with \. (ex: Mr. Oshiro has a pause, Mr\. Oshiro does not)
 # Newlines automatically create a Page Break, unless there is an {n} command on the previous line
@@ -86,6 +86,11 @@ SPEEDRUN_TOOL_TELEPORT_TO_LAST_ROOM=飞到上个房间
 SPEEDRUN_TOOL_TELEPORT_TO_NEXT_ROOM=飞到下个房间
 
 # ================================== Death Statistics ==================================
-SPEEDRUN_TOOL_DIALOG_DEATH_STATISTICS_DESCRIPTION=
-    [MADELINE left normal]
-    统计数据将会保存在 {# 96EFFF}Saves/SpeedrunTool{#} 文件夹。
+SPEEDRUN_TOOL_CLEAR_DEATH_STATISTICS=   清除数据
+SPEEDRUN_TOOL_CHAPTER=                  章节
+SPEEDRUN_TOOL_ROOM=                     房间
+SPEEDRUN_TOOL_LOST_TIME=                损失时间
+SPEEDRUN_TOOL_CAUSE_OF_DEATH=           死因
+SPEEDRUN_TOOL_TOTAL_DEATH_COUNT=        总死亡数
+SPEEDRUN_TOOL_TOTAL_LOST_TIME=          总损失时间
+SPEEDRUN_TOOL_NO_DATA=                  无数据

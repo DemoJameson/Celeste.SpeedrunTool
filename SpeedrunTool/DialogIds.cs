@@ -63,6 +63,13 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string TeleportToNextRoom = "SPEEDRUN_TOOL_TELEPORT_TO_NEXT_ROOM";
         
         // Death Statistics
-        public const string DialogDeathStatisticsDescription = "SPEEDRUN_TOOL_DIALOG_DEATH_STATISTICS_DESCRIPTION";
+        public const string ClearDeathStatistics = "SPEEDRUN_TOOL_CLEAR_DEATH_STATISTICS";
+        public const string Chapter = "SPEEDRUN_TOOL_CHAPTER";
+        public const string Room = "SPEEDRUN_TOOL_ROOM";
+        public const string LostTime = "SPEEDRUN_TOOL_LOST_TIME";
+        public const string CauseOfDeath = "SPEEDRUN_TOOL_CAUSE_OF_DEATH";
+        public const string TotalDeathCount = "SPEEDRUN_TOOL_TOTAL_DEATH_COUNT";
+        public const string TotalLostTime = "SPEEDRUN_TOOL_TOTAL_LOST_TIME";
+        public const string NoData = "SPEEDRUN_TOOL_NO_DATA";
     }
 }

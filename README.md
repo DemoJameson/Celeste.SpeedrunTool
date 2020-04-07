@@ -8,9 +8,8 @@
 ## Features
 
 - Create save states* to practice certain segments of the room, automatically loaded after death. Customizable keyboard/controller shortcut for saving and loading. 
-- Faster respawn time.
 - Room timer compatible with Summit flags. Personal best is recorded.
-- Removes cutscenes when loading and finishing a chapter.
+- Statistics on deaths, including location, time lost, etc.
 - Controller support for debug map: use confirm to teleport, right analog to zoom.
 - Debug mode F6 teleport bug-fix – Dream blocks and Badeline not activating in Old Site, incorrect ice/fire state in Core, Celestial Resort huge mess hall being strangely lit, wind sound does not play in Summit 2000m.
 

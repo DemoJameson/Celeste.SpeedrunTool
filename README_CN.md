@@ -1,7 +1,7 @@
 ﻿# Celeste 速通辅助工具
 
 ## 下载
-[GitHub](https://github.com/DemoJameson/CelesteSpeedrunTool/releases) 或者 [GameBanana](https://gamebanana.com/tools/6597)
+[GameBanana](https://gamebanana.com/tools/6597)
 
 ## 功能
 - 通过自定义的按键快速保存恢复玩家与房间快照

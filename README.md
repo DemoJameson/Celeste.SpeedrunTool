@@ -3,7 +3,7 @@
 [中文说明](./README_CN.md)
 
 ## Download
-[GitHub](https://github.com/DemoJameson/CelesteSpeedrunTool/releases) or [GameBanana](https://gamebanana.com/tools/6597)
+[GameBanana](https://gamebanana.com/tools/6597)
 
 ## Features
 

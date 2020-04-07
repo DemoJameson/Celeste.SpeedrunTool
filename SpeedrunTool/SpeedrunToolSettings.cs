@@ -44,7 +44,7 @@ namespace Celeste.Mod.SpeedrunTool {
 
         [SettingRange(0, 99)]
         [SettingName(DialogIds.MaxNumberOfDeathData)]
-        public int MaxNumberOfDeathData { get; set; } = 0;
+        public int MaxNumberOfDeathData { get; set; } = 20;
 
         // ReSharper disable once UnusedMember.Global
         [YamlIgnore] public string CheckDeathStatistics { get; set; } = "";

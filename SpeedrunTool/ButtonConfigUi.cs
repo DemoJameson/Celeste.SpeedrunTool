@@ -469,6 +469,8 @@ namespace Celeste.Mod.SpeedrunTool {
                     return Dialog.Clean(DialogIds.SwitchRoomTimer);
                 case Mappings.SetEndPoint:
                     return Dialog.Clean(DialogIds.SetEndPoint);
+                case Mappings.CheckDeathStatistics:
+                    return Dialog.Clean(DialogIds.CheckDeathStatistics);
                 case Mappings.LastRoom:
                     return Dialog.Clean(DialogIds.TeleportToLastRoom);
                 case Mappings.NextRoom:

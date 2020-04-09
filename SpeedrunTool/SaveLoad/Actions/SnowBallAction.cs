@@ -38,7 +38,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         private void WindAttackTriggerOnOnEnter(On.Celeste.WindAttackTrigger.orig_OnEnter orig, WindAttackTrigger self,
             Player player) {
-            if (IsFrozen && savedSnowball != null) {
+            if (IsLoadStart && savedSnowball != null) {
                 return;
             }
 

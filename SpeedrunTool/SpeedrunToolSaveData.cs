@@ -28,9 +28,9 @@ namespace Celeste.Mod.SpeedrunTool {
                 DeathInfos.Count > SpeedrunToolModule.Settings.MaxNumberOfDeathData) {
                 DeathInfos.RemoveRange(SpeedrunToolModule.Settings.MaxNumberOfDeathData,
                     DeathInfos.Count - SpeedrunToolModule.Settings.MaxNumberOfDeathData);
+            } else if (SpeedrunToolModule.Settings.MaxNumberOfDeathData == 0 && DeathInfos.Count > 200) {
+                DeathInfos.RemoveRange(200, DeathInfos.Count - 200);
             }
-
-            Save();
         }
 
         public void Clear() {
@@ -41,7 +41,6 @@ namespace Celeste.Mod.SpeedrunTool {
 
         public void SetSelection(int selection) {
             Selection = selection;
-            Save();
         }
 
         private static void Save() {

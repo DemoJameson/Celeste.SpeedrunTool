@@ -57,6 +57,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 ButtonConfigUi.SwitchRoomTimerButton.Value.ConsumePress();
                 RoomTimerType roomTimerType = SpeedrunToolModule.Settings.RoomTimerType;
                 SwitchRoomTimer(((int) roomTimerType + 1) % Enum.GetNames(typeof(RoomTimerType)).Length);
+                SpeedrunToolModule.Instance.SaveSettings();
             }
 
             if (ButtonConfigUi.SetEndPointButton.Value.Pressed && !self.Paused) {

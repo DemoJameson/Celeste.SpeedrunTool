@@ -24,12 +24,13 @@ namespace Celeste.Mod.SpeedrunTool {
 
         public void Add(DeathInfo deathInfo) {
             DeathInfos.Insert(0, deathInfo);
-            if (SpeedrunToolModule.Settings.MaxNumberOfDeathData > 0 &&
-                DeathInfos.Count > SpeedrunToolModule.Settings.MaxNumberOfDeathData) {
-                DeathInfos.RemoveRange(SpeedrunToolModule.Settings.MaxNumberOfDeathData,
-                    DeathInfos.Count - SpeedrunToolModule.Settings.MaxNumberOfDeathData);
-            } else if (SpeedrunToolModule.Settings.MaxNumberOfDeathData == 0 && DeathInfos.Count > 200) {
-                DeathInfos.RemoveRange(200, DeathInfos.Count - 200);
+            int max = SpeedrunToolModule.Settings.MaxNumberOfDeathData * 10;
+            if (max <= 0) {
+                max = 90;
+            }
+
+            if (DeathInfos.Count > max) {
+                DeathInfos.RemoveRange(max, DeathInfos.Count - max);
             }
         }
 

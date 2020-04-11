@@ -42,9 +42,9 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingName(DialogIds.DeathStatistics)]
         public bool DeathStatistics { get; set; } = false;
 
-        [SettingRange(0, 99)]
+        [SettingRange(1, 9)]
         [SettingName(DialogIds.MaxNumberOfDeathData)]
-        public int MaxNumberOfDeathData { get; set; } = 20;
+        public int MaxNumberOfDeathData { get; set; } = 2;
 
         // ReSharper disable once UnusedMember.Global
         [YamlIgnore] public string CheckDeathStatistics { get; set; } = "";
@@ -185,14 +185,13 @@ namespace Celeste.Mod.SpeedrunTool {
         public void CreateMaxNumberOfDeathDataEntry(TextMenu textMenu, bool inGame) {
             textMenu.Add(new TextMenu.Slider(
                 DialogIds.MaxNumberOfDeathData.DialogClean(),
-                index => index == 0 ? "99+" : index.ToString(),
-                0,
-                99,
+                value => value == 0 ? "90" : (value * 10).ToString(),
+                1,
+                9,
                 MaxNumberOfDeathData
             ) {
                 OnValueChange = value => MaxNumberOfDeathData = value
             });
-
         }
 
         // ReSharper disable once UnusedMember.Global

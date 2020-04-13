@@ -3,6 +3,7 @@ using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
 using Monocle;
+using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
 
 namespace Celeste.Mod.SpeedrunTool.RoomTimer {
     public sealed class RoomTimerManager {
@@ -26,9 +27,9 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
 
         public void Init() {
             OriginalSpeedrunType = Settings.Instance.SpeedrunClock;
-            ButtonConfigUi.UpdateResetRoomPbButton();
-            ButtonConfigUi.UpdateSwitchRoomTimerButton();
-            ButtonConfigUi.UpdateSetEndPointButton();
+            UpdateVirtualButton(Mappings.ResetRoomPb);
+            UpdateVirtualButton(Mappings.SwitchRoomTimer);
+            UpdateVirtualButton(Mappings.SetEndPoint);
         }
 
         public void Unload() {
@@ -48,20 +49,20 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 return;
             }
 
-            if (ButtonConfigUi.ResetRoomPbButton.Value.Pressed && !self.Paused) {
-                ButtonConfigUi.ResetRoomPbButton.Value.ConsumePress();
+            if (GetVirtualButton(Mappings.ResetRoomPb).Pressed && !self.Paused) {
+                GetVirtualButton(Mappings.ResetRoomPb).ConsumePress();
                 ClearPbTimes();
             }
             
-            if (ButtonConfigUi.SwitchRoomTimerButton.Value.Pressed && !self.Paused) {
-                ButtonConfigUi.SwitchRoomTimerButton.Value.ConsumePress();
+            if (GetVirtualButton(Mappings.SwitchRoomTimer).Pressed && !self.Paused) {
+                GetVirtualButton(Mappings.SwitchRoomTimer).ConsumePress();
                 RoomTimerType roomTimerType = SpeedrunToolModule.Settings.RoomTimerType;
                 SwitchRoomTimer(((int) roomTimerType + 1) % Enum.GetNames(typeof(RoomTimerType)).Length);
                 SpeedrunToolModule.Instance.SaveSettings();
             }
 
-            if (ButtonConfigUi.SetEndPointButton.Value.Pressed && !self.Paused) {
-                ButtonConfigUi.SetEndPointButton.Value.ConsumePress();
+            if (GetVirtualButton(Mappings.SetEndPoint).Pressed && !self.Paused) {
+                GetVirtualButton(Mappings.SetEndPoint).ConsumePress();
                 ClearPbTimes();
                 CreateEndPoint(self);
             }

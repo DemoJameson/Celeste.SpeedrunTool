@@ -7,6 +7,7 @@ using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Monocle;
+using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
 using LevelTemplate = Celeste.Editor.LevelTemplate;
 using MapEditor = On.Celeste.Editor.MapEditor;
 
@@ -139,7 +140,7 @@ namespace Celeste.Mod.SpeedrunTool {
         }
 
         public static void Init() {
-            ButtonConfigUi.UpdateOpenDebugMapButton();
+            UpdateVirtualButton(Mappings.OpenDebugMap);
         }
 
         private static void FixWindSoundNotPlay(On.Celeste.WindController.orig_SetAmbienceStrength orig,
@@ -208,8 +209,8 @@ namespace Celeste.Mod.SpeedrunTool {
                 return;
             }
 
-            if (ButtonConfigUi.OpenDebugButton.Value.Pressed && !self.Paused) {
-                ButtonConfigUi.OpenDebugButton.Value.ConsumePress();
+            if (GetVirtualButton(Mappings.OpenDebugMap).Pressed && !self.Paused) {
+                GetVirtualButton(Mappings.OpenDebugMap).ConsumePress();
                 Engine.Commands.FunctionKeyActions[5]();
             }
         }

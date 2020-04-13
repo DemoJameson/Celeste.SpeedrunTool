@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
 using Monocle;
+using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
 
 namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
     public class DeathStatisticsManager {
@@ -62,7 +63,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         }
 
         public void Init() {
-            ButtonConfigUi.UpdateCheckDeathStatisticsButton();
+            UpdateVirtualButton(Mappings.CheckDeathStatistics);
         }
 
         private void LevelOnUpdate(On.Celeste.Level.orig_Update orig, Level level) {
@@ -79,8 +80,9 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         }
 
         private void CheckDeathStatisticsButton(Level level) {
-            if (ButtonConfigUi.CheckDeathStatisticsButton.Value.Pressed) {
-                ButtonConfigUi.CheckDeathStatisticsButton.Value.ConsumePress();
+            VirtualButton virtualButton = GetVirtualButton(Mappings.CheckDeathStatistics);
+            if (virtualButton.Pressed) {
+                virtualButton.ConsumePress();
 
                 level.Paused = true;
                 DeathStatisticsUi buttonConfigUi = new DeathStatisticsUi {

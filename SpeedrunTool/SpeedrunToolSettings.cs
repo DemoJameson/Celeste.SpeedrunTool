@@ -7,6 +7,7 @@ using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Microsoft.Xna.Framework.Input;
 using Monocle;
 using YamlDotNet.Serialization;
+using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
@@ -63,25 +64,25 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingIgnore] public Buttons? ControllerLastRoom { get; set; }
         [SettingIgnore] public Buttons? ControllerNextRoom { get; set; }
 
-        [SettingIgnore] public Keys KeyboardQuickSave { get; set; } = ButtonConfigUi.DefaultKeyboardSave;
-        [SettingIgnore] public Keys KeyboardQuickLoad { get; set; } = ButtonConfigUi.DefaultKeyboardLoad;
-        [SettingIgnore] public List<Keys> KeyboardQuickClear { get; set; } = ButtonConfigUi.FixedClearKeys;
+        [SettingIgnore] public List<Keys> KeyboardQuickSave { get; set; } = GetButtonInfo(Mappings.Save).DefaultKeys.ToList();
+        [SettingIgnore] public List<Keys> KeyboardQuickLoad { get; set; } =  GetButtonInfo(Mappings.Load).DefaultKeys.ToList();
+        [SettingIgnore] public List<Keys> KeyboardQuickClear { get; set; } =  GetButtonInfo(Mappings.Clear).DefaultKeys.ToList();
 
         [SettingIgnore]
-        public List<Keys> KeyboardOpenDebugMap { get; set; } = ButtonConfigUi.FixedOpenDebugMapKeys;
+        public List<Keys> KeyboardOpenDebugMap { get; set; } =  GetButtonInfo(Mappings.OpenDebugMap).DefaultKeys.ToList();
 
-        [SettingIgnore] public Keys KeyboardResetRoomPb { get; set; } = ButtonConfigUi.DefaultKeyboardResetPb;
-
-        [SettingIgnore]
-        public Keys KeyboardSwitchRoomTimer { get; set; } = ButtonConfigUi.DefaultKeyboardSwitchRoomTimer;
-
-        [SettingIgnore] public Keys KeyboardSetEndPoint { get; set; } = ButtonConfigUi.DefaultKeyboardSetEndPoint;
+        [SettingIgnore] public List<Keys> KeyboardResetRoomPb { get; set; } =  GetButtonInfo(Mappings.ResetRoomPb).DefaultKeys.ToList();
 
         [SettingIgnore]
-        public Keys KeyboardCheckDeathStatistics { get; set; } = ButtonConfigUi.DefaultKeyboardCheckDeathStatistics;
+        public List<Keys> KeyboardSwitchRoomTimer { get; set; } =  GetButtonInfo(Mappings.SwitchRoomTimer).DefaultKeys.ToList();
 
-        [SettingIgnore] public Keys KeyboardLastRoom { get; set; } = ButtonConfigUi.DefaultKeyboardLastRoom;
-        [SettingIgnore] public Keys KeyboardNextRoom { get; set; } = ButtonConfigUi.DefaultKeyboardNextRoom;
+        [SettingIgnore] public List<Keys> KeyboardSetEndPoint { get; set; } =  GetButtonInfo(Mappings.SetEndPoint).DefaultKeys.ToList();
+
+        [SettingIgnore]
+        public List<Keys> KeyboardCheckDeathStatistics { get; set; } =  GetButtonInfo(Mappings.CheckDeathStatistics).DefaultKeys.ToList();
+
+        [SettingIgnore] public List<Keys> KeyboardLastRoom { get; set; } = GetButtonInfo(Mappings.LastRoom).DefaultKeys.ToList();
+        [SettingIgnore] public List<Keys> KeyboardNextRoom { get; set; } = GetButtonInfo(Mappings.NextRoom).DefaultKeys.ToList();
 
         private TextMenu.Option<bool> firstTextMenu;
         private TextMenu.Item lastTextMenu;

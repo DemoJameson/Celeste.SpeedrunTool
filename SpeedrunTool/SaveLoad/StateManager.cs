@@ -8,6 +8,7 @@ using Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Everest;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Actions.FrostHelper;
 using Microsoft.Xna.Framework;
 using Monocle;
+using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class StateManager {
@@ -127,9 +128,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             entityActions.ForEach(action => action.OnInit());
 
-            ButtonConfigUi.UpdateSaveButton();
-            ButtonConfigUi.UpdateLoadButton();
-            ButtonConfigUi.UpdateClearButton();
+            UpdateVirtualButton(Mappings.Save);
+            UpdateVirtualButton(Mappings.Load);
+            UpdateVirtualButton(Mappings.Clear);
         }
 
         // 防止读档设置冲刺次数时游戏崩溃
@@ -205,10 +206,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         };
 
         private bool CheckButton(Level level, Player player) {
-            if (ButtonConfigUi.SaveButton.Value.Pressed && !level.Paused && !level.Transitioning && !level.PauseLock &&
+            if (GetVirtualButton(Mappings.Save).Pressed && !level.Paused && !level.Transitioning && !level.PauseLock &&
                 !level.InCutscene &&
                 !level.SkippingCutscene && player != null && !player.Dead) {
-                ButtonConfigUi.SaveButton.Value.ConsumePress();
+                GetVirtualButton(Mappings.Save).ConsumePress();
                 int state = player.StateMachine.State;
 
                 if (!disabledSaveStates.Contains(state)) {
@@ -217,8 +218,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
             }
 
-            if (ButtonConfigUi.LoadButton.Value.Pressed && !level.Paused) {
-                ButtonConfigUi.LoadButton.Value.ConsumePress();
+            if (GetVirtualButton(Mappings.Load).Pressed && !level.Paused) {
+                GetVirtualButton(Mappings.Load).ConsumePress();
                 if (IsSaved) {
                     QuickLoad();
                 } else if (!level.Frozen) {
@@ -228,8 +229,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 return true;
             }
 
-            if (ButtonConfigUi.ClearButton.Value.Pressed && !level.Paused && IsLoadComplete) {
-                ButtonConfigUi.ClearButton.Value.ConsumePress();
+            if (GetVirtualButton(Mappings.Clear).Pressed && !level.Paused && IsLoadComplete) {
+                GetVirtualButton(Mappings.Clear).ConsumePress();
                 Clear();
                 RoomTimerManager.Instance.ClearPbTimes();
                 if (!level.Frozen) {

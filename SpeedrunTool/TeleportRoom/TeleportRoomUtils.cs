@@ -6,6 +6,7 @@ using Celeste.Editor;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
 using Monocle;
+using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
 
 namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
     public static class TeleportRoomUtils {
@@ -15,8 +16,8 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
         private static bool AllowRecord;
 
         public static void Init() {
-            ButtonConfigUi.UpdateLastRoomButton();
-            ButtonConfigUi.UpdateNextRoomButton();
+            UpdateVirtualButton(Mappings.LastRoom);
+            UpdateVirtualButton(Mappings.NextRoom);
         }
 
         public static void Load() {
@@ -98,11 +99,11 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                 return;
             }
 
-            if (ButtonConfigUi.LastRoomButton.Value.Pressed && !self.Paused) {
-                ButtonConfigUi.LastRoomButton.Value.ConsumePress();
+            if (GetVirtualButton(Mappings.LastRoom).Pressed && !self.Paused) {
+                GetVirtualButton(Mappings.LastRoom).ConsumePress();
                 TeleportToLastRoom(self);
-            } else if (ButtonConfigUi.NextRoomButton.Value.Pressed && !self.Paused) {
-                ButtonConfigUi.NextRoomButton.Value.ConsumePress();
+            } else if (GetVirtualButton(Mappings.NextRoom).Pressed && !self.Paused) {
+                GetVirtualButton(Mappings.NextRoom).ConsumePress();
                 TeleportToNextRoom(self);
             }
         }

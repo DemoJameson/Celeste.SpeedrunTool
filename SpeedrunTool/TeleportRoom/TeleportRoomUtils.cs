@@ -275,9 +275,9 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
         }
 
         private static void RecordRoom(Session session) {
-            // 如果存在相同的房间则先清除
+            // 如果存在相同的房间且存档点相同则先清除
             for (var i = RoomHistory.Count - 1; i >= 0; i--) {
-                if (RoomHistory[i].Level == session.Level) {
+                if (RoomHistory[i].Level == session.Level && RoomHistory[i].RespawnPoint == session.RespawnPoint) {
                     RoomHistory.RemoveAt(i);
                 }
             }

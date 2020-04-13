@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
@@ -17,6 +18,9 @@ namespace Celeste.Mod.SpeedrunTool {
         public const Keys DefaultKeyboardLastRoom = Keys.PageUp;
         public const Keys DefaultKeyboardNextRoom = Keys.PageDown;
 
+        public static readonly List<Keys> FixedClearKeys = new List<Keys> {Keys.F3, Keys.F6};
+        public static readonly List<Keys> FixedOpenDebugMapKeys = new List<Keys> {Keys.F6};
+
         private static readonly List<Buttons> AllButtons = new List<Buttons> {
             Buttons.A,
             Buttons.B,
@@ -30,9 +34,6 @@ namespace Celeste.Mod.SpeedrunTool {
             Buttons.RightStick,
             Buttons.Back
         };
-
-        public static readonly Keys[] FixedClearKeys = {Keys.F3, Keys.F6};
-        public static readonly Keys[] FixedOpenDebugMapKeys = {Keys.F6};
 
         public static readonly Lazy<VirtualButton> SaveButton = new Lazy<VirtualButton>(CreateVirtualButton);
         public static readonly Lazy<VirtualButton> LoadButton = new Lazy<VirtualButton>(CreateVirtualButton);
@@ -53,11 +54,94 @@ namespace Celeste.Mod.SpeedrunTool {
         private bool remappingKeyboard;
         private float timeout;
 
+        public class ButtonInfo {
+            public Mappings Mapping;
+            public Func<Buttons?> GetButton;
+            public Action<Buttons?> SetButton;
+            public Func<List<Keys>> GetKeys;
+            public Action<List<Keys>> SetKeys;
+            
+        }
+
+        public static readonly List<ButtonInfo> ButtonInfos = new List<ButtonInfo> {
+            new ButtonInfo {
+                Mapping = Mappings.Save,
+                GetButton = () => Settings.ControllerQuickSave,
+                SetButton = button => Settings.ControllerQuickSave = button,
+                GetKeys = () => new List<Keys>{Settings.KeyboardQuickSave},
+                SetKeys = keys => Settings.KeyboardQuickSave = keys[0],
+            },
+            new ButtonInfo {
+                Mapping = Mappings.Load,
+                GetButton = () => Settings.ControllerQuickLoad,
+                SetButton = button => Settings.ControllerQuickLoad = button,
+                GetKeys = () => new List<Keys>{Settings.KeyboardQuickLoad},
+                SetKeys = keys => Settings.KeyboardQuickLoad = keys[0],
+            },
+            new ButtonInfo {
+                Mapping = Mappings.Clear,
+                GetButton = () => Settings.ControllerQuickClear,
+                SetButton = button => Settings.ControllerQuickClear = button,
+                GetKeys = () => Settings.KeyboardQuickClear,
+                SetKeys = keys => Settings.KeyboardQuickClear = keys,
+            },
+            new ButtonInfo {
+                Mapping = Mappings.OpenDebugMap,
+                GetButton = () => Settings.ControllerOpenDebugMap,
+                SetButton = button => Settings.ControllerOpenDebugMap = button,
+                GetKeys = () => Settings.KeyboardOpenDebugMap,
+                SetKeys = keys => Settings.KeyboardOpenDebugMap = keys,
+            },
+            new ButtonInfo {
+                Mapping = Mappings.ResetRoomPb,
+                GetButton = () => Settings.ControllerResetRoomPb,
+                SetButton = button => Settings.ControllerResetRoomPb = button,
+                GetKeys = () => new List<Keys>{Settings.KeyboardResetRoomPb},
+                SetKeys = keys => Settings.KeyboardResetRoomPb = keys[0],
+            },
+            new ButtonInfo {
+                Mapping = Mappings.SwitchRoomTimer,
+                GetButton = () => Settings.ControllerSwitchRoomTimer,
+                SetButton = button => Settings.ControllerSwitchRoomTimer = button,
+                GetKeys = () => new List<Keys>{Settings.KeyboardSwitchRoomTimer},
+                SetKeys = keys => Settings.KeyboardSwitchRoomTimer = keys[0],
+            },
+            new ButtonInfo {
+                Mapping = Mappings.SetEndPoint,
+                GetButton = () => Settings.ControllerSetEndPoint,
+                SetButton = button => Settings.ControllerSetEndPoint = button,
+                GetKeys = () => new List<Keys>{Settings.KeyboardSetEndPoint},
+                SetKeys = keys => Settings.KeyboardSetEndPoint = keys[0],
+            },
+            new ButtonInfo {
+                Mapping = Mappings.CheckDeathStatistics,
+                GetButton = () => Settings.ControllerCheckDeathStatistics,
+                SetButton = button => Settings.ControllerCheckDeathStatistics = button,
+                GetKeys = () => new List<Keys>{Settings.KeyboardCheckDeathStatistics},
+                SetKeys = keys => Settings.KeyboardCheckDeathStatistics = keys[0],
+            },
+            new ButtonInfo {
+                Mapping = Mappings.LastRoom,
+                GetButton = () => Settings.ControllerLastRoom,
+                SetButton = button => Settings.ControllerLastRoom = button,
+                GetKeys = () => new List<Keys>{Settings.KeyboardLastRoom},
+                SetKeys = keys => Settings.KeyboardLastRoom = keys[0],
+            },
+            new ButtonInfo {
+                Mapping = Mappings.NextRoom,
+                GetButton = () => Settings.ControllerNextRoom,
+                SetButton = button => Settings.ControllerNextRoom = button,
+                GetKeys = () => new List<Keys>{Settings.KeyboardNextRoom},
+                SetKeys = keys => Settings.KeyboardNextRoom = keys[0],
+            },
+        };
+
         public ButtonConfigUi() {
             Reload();
             OnESC = OnCancel = () => {
                 Focused = false;
                 closing = true;
+                SpeedrunToolModule.Instance.SaveSettings();
             };
             MinWidth = 600f;
             Position.Y = ScrollTargetY;
@@ -75,43 +159,20 @@ namespace Celeste.Mod.SpeedrunTool {
 
             Add(new Header(Dialog.Clean(DialogIds.ButtonConfig)));
             Add(new SubHeader(Dialog.Clean(DialogIds.Controller)));
-
-            AddControllerSetting(Mappings.Save, Settings.ControllerQuickSave);
-            AddControllerSetting(Mappings.Load, Settings.ControllerQuickLoad);
-            AddControllerSetting(Mappings.Clear, Settings.ControllerQuickClear);
-            AddControllerSetting(Mappings.OpenDebugMap, Settings.ControllerOpenDebugMap);
-            AddControllerSetting(Mappings.ResetRoomPb, Settings.ControllerResetRoomPb);
-            AddControllerSetting(Mappings.SwitchRoomTimer, Settings.ControllerSwitchRoomTimer);
-            AddControllerSetting(Mappings.SetEndPoint, Settings.ControllerSetEndPoint);
-            AddControllerSetting(Mappings.CheckDeathStatistics, Settings.ControllerCheckDeathStatistics);
-            AddControllerSetting(Mappings.LastRoom, Settings.ControllerLastRoom);
-            AddControllerSetting(Mappings.NextRoom, Settings.ControllerNextRoom);
+            
+            foreach (ButtonInfo buttonInfo in ButtonInfos) {
+                AddControllerSetting(buttonInfo.Mapping, buttonInfo.GetButton());
+            }
 
             Add(new SubHeader(Dialog.Clean(DialogIds.Keyboard)));
-            
-            Add(new Setting(Label(Mappings.Save), Settings.KeyboardQuickSave).Pressed(() =>
-                Remap(Mappings.Save, true)));
-            Add(new Setting(Label(Mappings.Load), Settings.KeyboardQuickLoad).Pressed(() =>
-                Remap(Mappings.Load, true)));
-            Add(new Setting(Label(Mappings.Clear), Settings.KeyboardQuickClear).Pressed(() =>
-                Remap(Mappings.Clear, true)));
-            Add(new Setting(Label(Mappings.OpenDebugMap), Settings.KeyboardOpenDebugMap).Pressed(() =>
-                Remap(Mappings.OpenDebugMap, true)));
-            Add(new Setting(Label(Mappings.ResetRoomPb), Settings.KeyboardResetRoomPb).Pressed(() =>
-                Remap(Mappings.ResetRoomPb, true)));
-            Add(new Setting(Label(Mappings.SwitchRoomTimer), Settings.KeyboardSwitchRoomTimer).Pressed(() =>
-                Remap(Mappings.SwitchRoomTimer, true)));
-            Add(new Setting(Label(Mappings.SetEndPoint), Settings.KeyboardSetEndPoint).Pressed(() =>
-                Remap(Mappings.SetEndPoint, true)));
-            Add(new Setting(Label(Mappings.CheckDeathStatistics), Settings.KeyboardCheckDeathStatistics).Pressed(() =>
-                Remap(Mappings.CheckDeathStatistics, true)));
-            Add(new Setting(Label(Mappings.LastRoom), Settings.KeyboardLastRoom).Pressed(() =>
-                Remap(Mappings.LastRoom, true)));
-            Add(new Setting(Label(Mappings.NextRoom), Settings.KeyboardNextRoom).Pressed(() =>
-                Remap(Mappings.NextRoom, true)));
 
+            foreach (ButtonInfo buttonInfo in ButtonInfos) {
+                AddKeyboardSetting(buttonInfo.Mapping, buttonInfo.GetKeys());
+            }
+            
             Add(new SubHeader(""));
-            Button button = new Button(Dialog.Clean(DialogIds.KeyConfigReset)) {
+
+            Button resetButton = new Button(Dialog.Clean(DialogIds.KeyConfigReset)) {
                 IncludeWidthInMeasurement = false,
                 AlwaysCenter = true,
                 OnPressed = () => {
@@ -119,7 +180,7 @@ namespace Celeste.Mod.SpeedrunTool {
                     Reload(Selection);
                 }
             };
-            Add(button);
+            Add(resetButton);
 
             if (index < 0) {
                 return;
@@ -129,30 +190,27 @@ namespace Celeste.Mod.SpeedrunTool {
         }
 
         private void AddControllerSetting(Mappings mappingType, Buttons? button) {
-            Add(new Setting(Label(mappingType), Keys.None).With(setting => {
-                    if (button != null) {
-                        setting.Set(new List<Buttons> {(Buttons) button});
-                    }
-                }
-            ).Pressed(() => Remap(mappingType)));
+            Setting setting = new Setting(Label(mappingType), Keys.None);
+            setting.Pressed(() => Remap(mappingType));
+            if (button != null) {
+                setting.Set(new List<Buttons> {(Buttons) button});
+            }
+            Add(setting);
+        }
+
+        private void AddKeyboardSetting(Mappings mappingType, List<Keys> keys) {
+            Add(new Setting(Label(mappingType), keys).Pressed(() => Remap(mappingType, true)));
         }
 
         private static void SetDefaultButtons() {
-            Settings.ControllerQuickSave = null;
-            Settings.ControllerQuickLoad = null;
-            Settings.ControllerQuickClear = null;
-            Settings.ControllerOpenDebugMap = null;
-            Settings.ControllerResetRoomPb = null;
-            Settings.ControllerSwitchRoomTimer = null;
-            Settings.ControllerSetEndPoint = null;
-            Settings.ControllerCheckDeathStatistics = null;
-            Settings.ControllerLastRoom = null;
-            Settings.ControllerNextRoom = null;
+            foreach (ButtonInfo buttonInfo in ButtonInfos) {
+                buttonInfo.SetButton(null);
+            }
 
             Settings.KeyboardQuickSave = DefaultKeyboardSave;
             Settings.KeyboardQuickLoad = DefaultKeyboardLoad;
-            Settings.KeyboardQuickClear = FixedClearKeys.ToList();
-            Settings.KeyboardOpenDebugMap = FixedOpenDebugMapKeys.ToList();
+            Settings.KeyboardQuickClear = FixedClearKeys;
+            Settings.KeyboardOpenDebugMap = FixedOpenDebugMapKeys;
             Settings.KeyboardResetRoomPb = DefaultKeyboardResetPb;
             Settings.KeyboardSwitchRoomTimer = DefaultKeyboardSwitchRoomTimer;
             Settings.KeyboardSetEndPoint = DefaultKeyboardSetEndPoint;
@@ -173,12 +231,63 @@ namespace Celeste.Mod.SpeedrunTool {
         }
 
 
-        private void Remap(Mappings mapping, bool remappingKeyboard = false) {
+        private void Remap(Mappings mapping, bool remapKeyboard = false) {
             remapping = true;
-            this.remappingKeyboard = remappingKeyboard;
+            remappingKeyboard = remapKeyboard;
             remappingButton = mapping;
             timeout = 5f;
             Focused = false;
+        }
+
+        private void SetRemap(Buttons button) {
+            remapping = false;
+            inputDelay = 0.25f;
+            switch (remappingButton) {
+                case Mappings.Save:
+                    Settings.ControllerQuickSave = button;
+                    UpdateSaveButton();
+                    break;
+                case Mappings.Load:
+                    Settings.ControllerQuickLoad = button;
+                    UpdateLoadButton();
+                    break;
+                case Mappings.Clear:
+                    Settings.ControllerQuickClear = button;
+                    UpdateClearButton();
+                    break;
+                case Mappings.OpenDebugMap:
+                    Settings.ControllerOpenDebugMap = button;
+                    UpdateOpenDebugMapButton();
+                    break;
+                case Mappings.ResetRoomPb:
+                    Settings.ControllerResetRoomPb = button;
+                    UpdateResetRoomPbButton();
+                    break;
+                case Mappings.SwitchRoomTimer:
+                    Settings.ControllerSwitchRoomTimer = button;
+                    UpdateSwitchRoomTimerButton();
+                    break;
+                case Mappings.SetEndPoint:
+                    Settings.ControllerSetEndPoint = button;
+                    UpdateSetEndPointButton();
+                    break;
+                case Mappings.CheckDeathStatistics:
+                    Settings.ControllerCheckDeathStatistics = button;
+                    UpdateCheckDeathStatisticsButton();
+                    break;
+                case Mappings.LastRoom:
+                    Settings.ControllerLastRoom = button;
+                    UpdateLastRoomButton();
+                    break;
+                case Mappings.NextRoom:
+                    Settings.ControllerNextRoom = button;
+                    UpdateNextRoomButton();
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
+            Reload(Selection);
         }
 
         private void SetRemap(Keys key) {
@@ -236,57 +345,6 @@ namespace Celeste.Mod.SpeedrunTool {
             Reload(Selection);
         }
 
-        private void SetRemap(Buttons button) {
-            remapping = false;
-            inputDelay = 0.25f;
-            switch (remappingButton) {
-                case Mappings.Save:
-                    Settings.ControllerQuickSave = button;
-                    UpdateSaveButton();
-                    break;
-                case Mappings.Load:
-                    Settings.ControllerQuickLoad = button;
-                    UpdateLoadButton();
-                    break;
-                case Mappings.Clear:
-                    Settings.ControllerQuickClear = button;
-                    UpdateClearButton();
-                    break;
-                case Mappings.OpenDebugMap:
-                    Settings.ControllerOpenDebugMap = button;
-                    UpdateOpenDebugMapButton();
-                    break;
-                case Mappings.ResetRoomPb:
-                    Settings.ControllerResetRoomPb = button;
-                    UpdateResetRoomPbButton();
-                    break;
-                case Mappings.SwitchRoomTimer:
-                    Settings.ControllerSwitchRoomTimer = button;
-                    UpdateSwitchRoomTimerButton();
-                    break;
-                case Mappings.SetEndPoint:
-                    Settings.ControllerSetEndPoint = button;
-                    UpdateSetEndPointButton();
-                    break;
-                case Mappings.CheckDeathStatistics:
-                    Settings.ControllerCheckDeathStatistics = button;
-                    UpdateCheckDeathStatisticsButton();
-                    break;
-                case Mappings.LastRoom:
-                    Settings.ControllerLastRoom = button;
-                    UpdateLastRoomButton();
-                    break;
-                case Mappings.NextRoom:
-                    Settings.ControllerNextRoom = button;
-                    UpdateNextRoomButton();
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-
-            Reload(Selection);
-        }
-
         public static void UpdateSaveButton() {
             List<VirtualButton.Node> nodes = SaveButton.Value.Nodes;
             nodes.Clear();
@@ -334,7 +392,7 @@ namespace Celeste.Mod.SpeedrunTool {
                 nodes.Add(new VirtualButton.PadButton(Input.Gamepad, (Buttons) Settings.ControllerResetRoomPb));
             }
         }
-        
+
         public static void UpdateSwitchRoomTimerButton() {
             List<VirtualButton.Node> nodes = SwitchRoomTimerButton.Value.Nodes;
             nodes.Clear();
@@ -352,7 +410,7 @@ namespace Celeste.Mod.SpeedrunTool {
                 nodes.Add(new VirtualButton.PadButton(Input.Gamepad, (Buttons) Settings.ControllerSetEndPoint));
             }
         }
-        
+
         public static void UpdateCheckDeathStatisticsButton() {
             List<VirtualButton.Node> nodes = CheckDeathStatisticsButton.Value.Nodes;
             nodes.Clear();
@@ -361,14 +419,14 @@ namespace Celeste.Mod.SpeedrunTool {
                 nodes.Add(new VirtualButton.PadButton(Input.Gamepad, (Buttons) Settings.ControllerCheckDeathStatistics));
             }
         }
-        
+
         public static void UpdateLastRoomButton() {
             List<VirtualButton.Node> nodes = LastRoomButton.Value.Nodes;
             nodes.Clear();
             nodes.Add(new VirtualButton.KeyboardKey(Settings.KeyboardLastRoom));
             if (Settings.ControllerLastRoom != null) {
                 nodes.Add(new VirtualButton.PadButton(Input.Gamepad, (Buttons) Settings.ControllerLastRoom));
-            } 
+            }
         }
 
         public static void UpdateNextRoomButton() {
@@ -377,7 +435,7 @@ namespace Celeste.Mod.SpeedrunTool {
             nodes.Add(new VirtualButton.KeyboardKey(Settings.KeyboardNextRoom));
             if (Settings.ControllerNextRoom != null) {
                 nodes.Add(new VirtualButton.PadButton(Input.Gamepad, (Buttons) Settings.ControllerNextRoom));
-            } 
+            }
         }
 
         public override void Update() {
@@ -394,15 +452,13 @@ namespace Celeste.Mod.SpeedrunTool {
                 if (Input.ESC.Pressed || Input.MenuCancel || timeout <= 0.0) {
                     remapping = false;
                     Focused = true;
-                }
-                else if (remappingKeyboard) {
+                } else if (remappingKeyboard) {
                     Keys[] pressedKeys = MInput.Keyboard.CurrentState.GetPressedKeys();
                     if (pressedKeys != null && pressedKeys.Length != 0 &&
                         MInput.Keyboard.Pressed(pressedKeys[pressedKeys.Length - 1])) {
                         SetRemap(pressedKeys[pressedKeys.Length - 1]);
                     }
-                }
-                else {
+                } else {
                     GamePadState currentState = MInput.GamePads[Input.Gamepad].CurrentState;
                     GamePadState previousState = MInput.GamePads[Input.Gamepad].PreviousState;
                     foreach (Buttons buttons in AllButtons) {
@@ -446,14 +502,13 @@ namespace Celeste.Mod.SpeedrunTool {
                 ActiveFont.Draw(Label(remappingButton),
                     position + new Vector2(0.0f, 8f), new Vector2(0.5f, 0.0f), Vector2.One * 2f,
                     Color.White * Ease.CubeIn(remappingEase));
-            }
-            else {
+            } else {
                 ActiveFont.Draw(Dialog.Clean(DialogIds.BtnConfigNoController), position, new Vector2(0.5f, 0.5f), Vector2.One,
                     Color.White * Ease.CubeIn(remappingEase));
             }
         }
 
-        private string Label(Mappings mapping) {
+        private static string Label(Mappings mapping) {
             switch (mapping) {
                 case Mappings.Save:
                     return Dialog.Clean(DialogIds.Save);
@@ -480,7 +535,7 @@ namespace Celeste.Mod.SpeedrunTool {
             }
         }
 
-        private enum Mappings {
+        public enum Mappings {
             Save,
             Load,
             Clear,

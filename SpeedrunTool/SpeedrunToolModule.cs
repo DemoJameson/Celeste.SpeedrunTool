@@ -42,6 +42,7 @@ namespace Celeste.Mod.SpeedrunTool {
         public override void Load() {
             BetterMapEditor.Instance.Load();
             DeathStatisticsManager.Instance.Load();
+            RespawnSpeedUtils.Load();
             RoomTimerManager.Instance.Load();
             TeleportRoomUtils.Load();
             StateManager.Instance.Load();
@@ -51,6 +52,7 @@ namespace Celeste.Mod.SpeedrunTool {
         public override void Unload() {
             BetterMapEditor.Instance.Unload();
             DeathStatisticsManager.Instance.Unload();
+            RespawnSpeedUtils.Unload();
             RoomTimerManager.Instance.Unload();
             TeleportRoomUtils.Unload();
             StateManager.Instance.Unload();

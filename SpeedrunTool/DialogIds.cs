@@ -8,10 +8,10 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string BtnConfigChanging = "BTN_CONFIG_CHANGING";
         public const string BtnConfigNoController = "BTN_CONFIG_NOCONTROLLER";
 
-        // ReSharper disable UnusedMember.Global
         // Common
-        public const string Off = "SPEEDRUN_TOOL_OFF";
-        public const string All = "SPEEDRUN_TOOL_ALL";
+        // ReSharper disable UnusedMember.Global
+        public const string Off = "SPEED_TOOL_OFF";
+        public const string All = "SPEED_TOOL_ALL";
         // ReSharper restore UnusedMember.Global
 
         // Mod Options
@@ -21,6 +21,7 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string DeathStatistics = "SPEEDRUN_TOOL_DEATH_STATISTICS";
         public const string MaxNumberOfDeathData = "SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA";
         public const string CheckDeathStatistics = "SPEEDRUN_TOOL_CHECK_DEATH_STATISTICS";
+        public const string RespawnSpeed = "SPEEDRUN_TOOL_RESPAWN_SPEED";
         public const string RoomTimer = "SPEEDRUN_TOOL_ROOM_TIMER";
         public const string EndPointStyle = "SPEEDRUN_TOOL_END_POINT_STYLE";
         public const string NumberOfRooms = "SPEEDRUN_TOOL_NUMBER_OF_ROOMS";

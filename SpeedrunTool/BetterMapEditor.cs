@@ -139,10 +139,6 @@ namespace Celeste.Mod.SpeedrunTool {
             orig(self);
         }
 
-        public static void Init() {
-            UpdateVirtualButton(Mappings.OpenDebugMap);
-        }
-
         private static void FixWindSoundNotPlay(On.Celeste.WindController.orig_SetAmbienceStrength orig,
             WindController self,
             bool strong) {

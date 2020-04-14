@@ -27,9 +27,6 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
 
         public void Init() {
             OriginalSpeedrunType = Settings.Instance.SpeedrunClock;
-            UpdateVirtualButton(Mappings.ResetRoomPb);
-            UpdateVirtualButton(Mappings.SwitchRoomTimer);
-            UpdateVirtualButton(Mappings.SetEndPoint);
         }
 
         public void Unload() {

@@ -127,10 +127,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             Engine.Commands.FunctionKeyActions[5] += Clear;
 
             entityActions.ForEach(action => action.OnInit());
-
-            UpdateVirtualButton(Mappings.Save);
-            UpdateVirtualButton(Mappings.Load);
-            UpdateVirtualButton(Mappings.Clear);
         }
 
         // 防止读档设置冲刺次数时游戏崩溃

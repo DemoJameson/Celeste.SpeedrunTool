@@ -15,11 +15,6 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
         private static int HistoryIndex = -1;
         private static bool AllowRecord;
 
-        public static void Init() {
-            UpdateVirtualButton(Mappings.LastRoom);
-            UpdateVirtualButton(Mappings.NextRoom);
-        }
-
         public static void Load() {
             On.Celeste.Level.Update += LevelOnUpdate;
             On.Celeste.Level.LoadLevel += LevelOnLoadLevel;

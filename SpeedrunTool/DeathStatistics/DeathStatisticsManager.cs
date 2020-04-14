@@ -62,10 +62,6 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             }
         }
 
-        public void Init() {
-            UpdateVirtualButton(Mappings.CheckDeathStatistics);
-        }
-
         private void LevelOnUpdate(On.Celeste.Level.orig_Update orig, Level level) {
             orig(level);
             if (!SpeedrunToolModule.Enabled) {

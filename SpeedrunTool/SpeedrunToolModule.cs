@@ -58,11 +58,9 @@ namespace Celeste.Mod.SpeedrunTool {
 
         // Optional, initialize anything after Celeste has initialized itself properly.
         public override void Initialize() {
-            BetterMapEditor.Init();
             RoomTimerManager.Instance.Init();
-            TeleportRoomUtils.Init();
             StateManager.Instance.Init();
-            DeathStatisticsManager.Instance.Init();
+            ButtonConfigUi.Init();
         }
     }
 }

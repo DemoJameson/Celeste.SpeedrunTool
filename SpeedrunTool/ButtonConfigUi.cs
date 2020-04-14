@@ -28,8 +28,8 @@ namespace Celeste.Mod.SpeedrunTool {
             public Func<List<Keys>> GetKeys;
             public Action<List<Keys>> SetKeys;
             public Keys[] DefaultKeys;
-            public Func<String> GetLabel;
-            public Lazy<VirtualButton> VirtualButton = new Lazy<VirtualButton>(CreateVirtualButton);
+            public Func<string> GetLabel;
+            public readonly Lazy<VirtualButton> VirtualButton = new Lazy<VirtualButton>(CreateVirtualButton);
             public bool FixedDefaultKeys;
 
             public void UpdateVirtualButton() {
@@ -150,6 +150,12 @@ namespace Celeste.Mod.SpeedrunTool {
 
         public static void UpdateVirtualButton(Mappings mappings) {
             ButtonInfos[mappings].UpdateVirtualButton();
+        }
+
+        public static void Init() {
+            foreach (ButtonInfo buttonInfo in ButtonInfos.Values) {
+                buttonInfo.UpdateVirtualButton();
+            }
         }
 
         private bool closing;

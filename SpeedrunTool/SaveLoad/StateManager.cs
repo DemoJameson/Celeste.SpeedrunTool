@@ -104,8 +104,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private bool IsSaved => savedSession != null && SavedPlayer != null && savedCamera != null;
 
+        private PlayerDeadBody currentPlayerDeadBody;
+
         public void Load() {
-            On.Celeste.Level.DoScreenWipe += QuickLoadWhenDeath;
+            On.Celeste.AreaData.DoScreenWipe += QuickLoadWhenDeath;
+            On.Celeste.Player.Die += PlayerOnDie;
             On.Celeste.Level.Update += LevelOnUpdate;
             On.Celeste.PlayerHair.Render += PlayerHairOnRender;
             On.Celeste.Player.Die += DisableDie;
@@ -114,7 +117,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         public void Unload() {
-            On.Celeste.Level.DoScreenWipe -= QuickLoadWhenDeath;
+            On.Celeste.AreaData.DoScreenWipe -= QuickLoadWhenDeath;
+            On.Celeste.Player.Die += PlayerOnDie;
             On.Celeste.Level.Update -= LevelOnUpdate;
             On.Celeste.PlayerHair.Render -= PlayerHairOnRender;
             On.Celeste.Player.Die -= DisableDie;
@@ -360,21 +364,29 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             entityActions.ForEach(action => action.OnClear());
         }
+        
+        
+        private PlayerDeadBody PlayerOnDie(On.Celeste.Player.orig_Die orig, Player self, Vector2 direction, bool evenifinvincible, bool registerdeathinstats) {
+            currentPlayerDeadBody = orig(self, direction, evenifinvincible, registerdeathinstats);
+            return currentPlayerDeadBody;
+        }
 
-        private void QuickLoadWhenDeath(On.Celeste.Level.orig_DoScreenWipe orig, Level self, bool wipeIn,
-            Action onComplete, bool hiresSnow) {
-            if (SpeedrunToolModule.Settings.Enabled && SpeedrunToolModule.Settings.AutoLoadAfterDeath && IsSaved &&
-                onComplete == self.Reload) {
+        // TODO: 向 Everest 汇报个 Bug，另外的 Mod Hook 了 PlayerDeadBody.End 方法后 Level.DoScreenWipe Hook 的方法 wipeIn 为 false 时就不触发了
+        // 所以改成了 Hook AreaData.DoScreenWipe 方法
+        private void QuickLoadWhenDeath(On.Celeste.AreaData.orig_DoScreenWipe orig, AreaData self, Scene scene, bool wipeIn, Action onComplete) {
+            if (SpeedrunToolModule.Settings.Enabled && SpeedrunToolModule.Settings.AutoLoadAfterDeath && IsSaved && !wipeIn && scene is Level level &&
+                onComplete != null && (onComplete == level.Reload || currentPlayerDeadBody?.HasGolden == true)) {
+                Action complete = onComplete;
                 onComplete = () => {
                     if (IsSaved) {
                         QuickLoad();
                     } else {
-                        self.Reload();
+                        complete();
                     }
                 };
             }
 
-            orig(self, wipeIn, onComplete, hiresSnow);
+            orig(self, scene, wipeIn, onComplete);
         }
 
         private PlayerDeadBody DisableDie(On.Celeste.Player.orig_Die orig, Player self, Vector2 direction,

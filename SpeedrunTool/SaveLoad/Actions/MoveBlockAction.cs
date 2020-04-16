@@ -8,6 +8,7 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class MoveBlockAction : AbstractEntityAction {
+        private const string BreakTimeFrames = "breakTimeFrames";
         private Dictionary<EntityID, MoveBlock> movingBlocks = new Dictionary<EntityID, MoveBlock>();
 
         public override void OnQuickSave(Level level) {
@@ -29,16 +30,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             MoveBlock savedMoveBlock = movingBlocks[entityId];
 
             int state = (int) savedMoveBlock.GetField(typeof(MoveBlock), "state");
-            switch (state) {
-                case 1:
-                    // MovementState.Moving
-                    self.Position = savedMoveBlock.Position;
-                    self.Add(new Coroutine(TriggerBlock(self)));
-                    break;
-                case 2:
-                    // MovementState.Breaking
-                    self.Add(new FastForwardComponent<MoveBlock>(savedMoveBlock, OnFastForward));
-                    break;
+            if (state == 1 || state == 2 && savedMoveBlock.GetExtendedDataValue<int>(BreakTimeFrames) == 0) {
+                // MovementState.Moving or MovementState.Breaking but just stop not disappear.
+                self.Position = savedMoveBlock.Position;
+                self.Add(new Coroutine(TriggerBlock(self)));
+            } else if (state == 2) {
+                // MovementState.Breaking
+                self.Add(new FastForwardComponent<MoveBlock>(savedMoveBlock, OnFastForward));
             }
         }
 
@@ -49,7 +47,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             entity.OnStaticMoverTrigger(null);
             Rectangle bounds = entity.SceneAs<Level>().Bounds;
             entity.MoveTo(new Vector2(bounds.Left - 100f, bounds.Bottom - 100f));
-            int breakTimeFrames = savedEntity.GetExtendedDataValue<int>(nameof(breakTimeFrames));
+            int breakTimeFrames = savedEntity.GetExtendedDataValue<int>(BreakTimeFrames);
             for (int i = 0; i < 12 + breakTimeFrames; i++) {
                 entity.Update();
             }
@@ -61,6 +59,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private static IEnumerator MoveBlockOnController(On.Celeste.MoveBlock.orig_Controller orig, MoveBlock self) {
+            self.SetExtendedDataValue(BreakTimeFrames, 0);
             IEnumerator enumerator = orig(self);
             while (enumerator.MoveNext()) {
                 object result = enumerator.Current;
@@ -70,9 +69,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     while (restoreTime > 0f) {
                         restoreTime -= Engine.DeltaTime;
                         breakTimeFrames++;
-                        self.SetExtendedDataValue(nameof(breakTimeFrames), breakTimeFrames);
+                        self.SetExtendedDataValue(BreakTimeFrames, breakTimeFrames);
                         yield return null;
                     }
+
                     continue;
                 }
 

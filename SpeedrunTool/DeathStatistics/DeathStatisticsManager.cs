@@ -270,7 +270,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
 
         private string GetCauseOfDeath() {
             StackTrace stackTrace = new StackTrace();
-            MethodBase deathMethod = stackTrace.GetFrame(6).GetMethod();
+            MethodBase deathMethod = stackTrace.GetFrame(9).GetMethod();
             string death = deathMethod.ReflectedType?.Name ?? "";
 
             if (death == "Level") {

@@ -371,12 +371,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             return currentPlayerDeadBody;
         }
 
-        // TODO: 向 Everest 汇报个 Bug，另外的 Mod Hook 了 PlayerDeadBody.End 方法后 Level.DoScreenWipe Hook 的方法 wipeIn 为 false 时就不触发了
+        // Everest 的 Bug，另外的 Mod Hook 了 PlayerDeadBody.End 方法后 Level.DoScreenWipe Hook 的方法 wipeIn 为 false 时就不触发了
         // 所以改成了 Hook AreaData.DoScreenWipe 方法
         private void QuickLoadWhenDeath(On.Celeste.AreaData.orig_DoScreenWipe orig, AreaData self, Scene scene, bool wipeIn, Action onComplete) {
             if (SpeedrunToolModule.Settings.Enabled && SpeedrunToolModule.Settings.AutoLoadAfterDeath && IsSaved && !wipeIn && scene is Level level &&
                 onComplete != null && (onComplete == level.Reload || currentPlayerDeadBody?.HasGolden == true)) {
                 Action complete = onComplete;
+                currentPlayerDeadBody = null;
                 onComplete = () => {
                     if (IsSaved) {
                         QuickLoad();

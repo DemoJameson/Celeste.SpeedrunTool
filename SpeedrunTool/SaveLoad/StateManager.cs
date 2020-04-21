@@ -113,6 +113,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Celeste.PlayerHair.Render += PlayerHairOnRender;
             On.Celeste.Player.Die += DisableDie;
             On.Celeste.Player.StarFlyUpdate += RestoreStarFlyTimer;
+            On.Celeste.Overworld.ctor += ClearStateAndPbTimes;
             entityActions.ForEach(action => action.OnLoad());
         }
 
@@ -123,6 +124,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Celeste.PlayerHair.Render -= PlayerHairOnRender;
             On.Celeste.Player.Die -= DisableDie;
             On.Celeste.Player.StarFlyUpdate -= RestoreStarFlyTimer;
+            On.Celeste.Overworld.ctor -= ClearStateAndPbTimes;
             entityActions.ForEach(action => action.OnUnload());
         }
 
@@ -131,6 +133,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             Engine.Commands.FunctionKeyActions[5] += Clear;
 
             entityActions.ForEach(action => action.OnInit());
+        }
+
+        private void ClearStateAndPbTimes(On.Celeste.Overworld.orig_ctor orig, Overworld self, OverworldLoader loader) {
+            orig(self, loader);
+            Clear();
+            RoomTimerManager.Instance.ClearPbTimes();
         }
 
         // 防止读档设置冲刺次数时游戏崩溃
@@ -341,7 +349,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private int RestoreStarFlyTimer(On.Celeste.Player.orig_StarFlyUpdate orig, Player self) {
             int result = orig(self);
 
-            if (SavedPlayer != null && restoreStarFlyTimer && !(bool) self.GetField(typeof(Player), "starFlyTransforming")) {
+            if (SavedPlayer != null && restoreStarFlyTimer &&
+                !(bool) self.GetField(typeof(Player), "starFlyTransforming")) {
                 self.CopyField(typeof(Player), "starFlyTimer", SavedPlayer);
                 restoreStarFlyTimer = false;
             }
@@ -364,17 +373,20 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             entityActions.ForEach(action => action.OnClear());
         }
-        
-        
-        private PlayerDeadBody PlayerOnDie(On.Celeste.Player.orig_Die orig, Player self, Vector2 direction, bool evenifinvincible, bool registerdeathinstats) {
+
+
+        private PlayerDeadBody PlayerOnDie(On.Celeste.Player.orig_Die orig, Player self, Vector2 direction,
+            bool evenifinvincible, bool registerdeathinstats) {
             currentPlayerDeadBody = orig(self, direction, evenifinvincible, registerdeathinstats);
             return currentPlayerDeadBody;
         }
 
         // Everest 的 Bug，另外的 Mod Hook 了 PlayerDeadBody.End 方法后 Level.DoScreenWipe Hook 的方法 wipeIn 为 false 时就不触发了
         // 所以改成了 Hook AreaData.DoScreenWipe 方法
-        private void QuickLoadWhenDeath(On.Celeste.AreaData.orig_DoScreenWipe orig, AreaData self, Scene scene, bool wipeIn, Action onComplete) {
-            if (SpeedrunToolModule.Settings.Enabled && SpeedrunToolModule.Settings.AutoLoadAfterDeath && IsSaved && !wipeIn && scene is Level level &&
+        private void QuickLoadWhenDeath(On.Celeste.AreaData.orig_DoScreenWipe orig, AreaData self, Scene scene,
+            bool wipeIn, Action onComplete) {
+            if (SpeedrunToolModule.Settings.Enabled && SpeedrunToolModule.Settings.AutoLoadAfterDeath && IsSaved &&
+                !wipeIn && scene is Level level &&
                 onComplete != null && (onComplete == level.Reload || currentPlayerDeadBody?.HasGolden == true)) {
                 Action complete = onComplete;
                 currentPlayerDeadBody = null;

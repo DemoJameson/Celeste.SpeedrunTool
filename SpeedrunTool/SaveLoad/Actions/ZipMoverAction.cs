@@ -33,7 +33,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             if (!SpeedrunToolModule.Enabled) {
                 yield return orig(self);
             }
-            
+
             object pathRenderer = self.GetField(typeof(ZipMover), "pathRenderer");
 
             Vector2 start = (Vector2) self.GetField(typeof(ZipMover), "start");
@@ -70,7 +70,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
                 DateTime startTime = DateTime.Now.Add(TimeSpan.FromMilliseconds(-audioTime));
 
-                soundSource?.Play("event:/game/01_forsaken_city/zip_mover");
+                soundSource?.Play(ZipMover.Themes.Normal == (ZipMover.Themes) self.GetField(typeof(ZipMover), "theme") ? "event:/game/01_forsaken_city/zip_mover" : "event:/new_content/game/10_farewell/zip_mover");
                 soundSource.SetTime(audioTime);
 
                 if (startShakeTimer < 0.1) {
@@ -88,8 +88,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
                 if (goProgress < 1) {
                     streetlight?.SetAnimationFrame(3);
-                }
-                else {
+                } else {
                     streetlight?.SetAnimationFrame(2);
                 }
 

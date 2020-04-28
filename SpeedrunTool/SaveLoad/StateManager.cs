@@ -242,7 +242,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 GetVirtualButton(Mappings.Clear).ConsumePress();
                 Clear();
                 RoomTimerManager.Instance.ClearPbTimes();
-                if (!level.Frozen || level.Entities.FindAll<HeartGem>().All(gem => false == (bool) gem.GetField(typeof(HeartGem), "collected"))) {
+                if (!level.Frozen && level.Entities.FindAll<HeartGem>().All(gem => false == (bool) gem.GetField(typeof(HeartGem), "collected"))) {
                     level.Add(new MiniTextbox(DialogIds.DialogClear));
                 }
             }

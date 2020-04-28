@@ -46,6 +46,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             On.Celeste.LevelLoader.ctor -= LevelLoaderOnCtor;
             On.Celeste.Level.Update -= LevelOnUpdate;
             On.Celeste.Player.Added -= PlayerOnAdded;
+            On.Celeste.LevelExit.ctor -= LevelExitOnCtor;
         }
 
         private void LevelExitOnCtor(On.Celeste.LevelExit.orig_ctor orig, LevelExit self, LevelExit.Mode mode, Session session, HiresSnow snow) {

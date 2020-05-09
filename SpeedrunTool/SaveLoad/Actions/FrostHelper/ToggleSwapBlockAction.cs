@@ -11,7 +11,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.FrostHelper {
 
         public override void OnQuickSave(Level level) {
             savedSolids = level.Entities.FindAll<Solid>()
-                .Where(entity => entity.GetType().FullName == "FrostTempleHelper.ToggleSwapBlock").GetDictionary();
+                .Where(entity => entity.GetType().FullName == "FrostHelper.ToggleSwapBlock").GetDictionary();
         }
 
         private void SolidOnCtor(On.Celeste.Solid.orig_ctor orig, Solid self, Vector2 position, float width,
@@ -19,7 +19,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.FrostHelper {
             orig(self, position, width, height, safe);
             self.SetEntityId(position.GetHashCode() + width.GetHashCode() + height.GetHashCode() + safe.GetHashCode());
 
-            if (self.GetType().FullName == "FrostTempleHelper.ToggleSwapBlock") {
+            if (self.GetType().FullName == "FrostHelper.ToggleSwapBlock") {
                 EntityID entityId = self.GetEntityId();
                 if (IsLoadStart && savedSolids.ContainsKey(entityId)) {
                     Solid savedSolid = savedSolids[entityId];

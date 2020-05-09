@@ -97,6 +97,8 @@
     <Compile Include="RespawnSpeedUtils.cs" />
     <Compile Include="SaveLoad\Actions\DSide\FastOshiroTriggerAction.cs" />
     <Compile Include="SaveLoad\Actions\Everest\TriggerSpikesOriginalAction.cs" />
+    <Compile Include="SaveLoad\Actions\FrostHelper\CustomCrystalSpinnerAction.cs" />
+    <Compile Include="SaveLoad\Actions\Glyph\AttachedWallBoosterAction.cs" />
     <Compile Include="SaveLoad\Actions\IntroCrusherAction.cs" />
     <Compile Include="SpeedrunToolSaveData.cs" />
     <Compile Include="TeleportRoom\LevelDataReorderUtils.cs" />

@@ -5,6 +5,7 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class LightningBreakerBoxAction : AbstractEntityAction {
+        private const string DisableSetBreakValue = "DisableSetBreakValue";
         private LightningBreakerBox savedLightningBreakerBox;
 
         public override void OnQuickSave(Level level) {
@@ -46,7 +47,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         private static IEnumerator BreakBox(LightningBreakerBox self) {
             self.InvokeMethod(typeof(LightningBreakerBox), "Break");
+            self.Add(new DisableSetBreakValueComponent());
             yield break;
+        }
+
+        // 去除撞毁电箱后整个画面闪白的效果
+        private void LightningOnSetBreakValue(On.Celeste.Lightning.orig_SetBreakValue orig, Level level, float t) {
+            if (level.Entities.FindFirst<LightningBreakerBox>() is LightningBreakerBox box &&
+                box.GetExtendedBoolean(DisableSetBreakValue)) {
+                return;
+            }
+
+            orig(level, t);
         }
 
         public override void OnClear() {
@@ -55,10 +67,26 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnLoad() {
             On.Celeste.LightningBreakerBox.ctor_EntityData_Vector2 += RestoreLightningBreakerBoxHealth;
+            On.Celeste.Lightning.SetBreakValue += LightningOnSetBreakValue;
         }
 
         public override void OnUnload() {
             On.Celeste.LightningBreakerBox.ctor_EntityData_Vector2 -= RestoreLightningBreakerBoxHealth;
+            On.Celeste.Lightning.SetBreakValue -= LightningOnSetBreakValue;
+        }
+
+        private class DisableSetBreakValueComponent : Monocle.Component {
+            public DisableSetBreakValueComponent() : base(true, true) { }
+
+            public override void Added(Entity entity) {
+                base.Added(entity);
+                entity.SetExtendedBoolean(DisableSetBreakValue, true);
+            }
+
+            public override void EntityRemoved(Scene scene) {
+                base.EntityRemoved(scene);
+                Entity?.SetExtendedBoolean(DisableSetBreakValue, false);
+            }
         }
     }
 }

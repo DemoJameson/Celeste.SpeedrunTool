@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
@@ -121,6 +122,10 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 level = levelLoader.Level;
             }
             return level;
+        }
+        
+        public static int GetRealHashCode(this Vector2 position) {
+            return (position.X * 31).GetHashCode() + position.Y.GetHashCode();
         }
     }
 }

@@ -26,7 +26,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Everest {
             if (level?.Session?.Level == null) {
                 return;
             }
-            EntityID entityId = new EntityID(level.Session.Level, position.GetHashCode() + self.GetField("direction").GetHashCode());
+            EntityID entityId = new EntityID(level.Session.Level, position.GetRealHashCode() + self.GetField("direction").GetHashCode());
             self.SetEntityId(entityId);
 
             if (IsLoadStart) {

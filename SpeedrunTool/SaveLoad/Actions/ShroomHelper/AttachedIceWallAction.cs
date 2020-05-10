@@ -25,7 +25,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.ShroomHelper {
             if (level?.Session?.Level == null) {
                 return;
             }
-            EntityID entityId = new EntityID(level.Session.Level, position.GetHashCode() + self.GetField("Facing").GetHashCode());
+            EntityID entityId = new EntityID(level.Session.Level, position.GetRealHashCode() + self.GetField("Facing").GetHashCode());
             self.SetEntityId(entityId);
 
             if (IsLoadStart) {

@@ -25,7 +25,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.FrostHelper {
             if (level?.Session?.Level == null) {
                 return;
             }
-            EntityID entityId = new EntityID(level.Session.Level, position.GetHashCode() + self.GetField("ID").GetHashCode());
+            EntityID entityId = new EntityID(level.Session.Level, position.GetRealHashCode());
             self.SetEntityId(entityId);
 
             if (IsLoadStart) {

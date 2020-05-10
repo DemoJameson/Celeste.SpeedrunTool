@@ -25,7 +25,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Glyph {
             if (level?.Session?.Level == null) {
                 return;
             }
-            EntityID entityId = new EntityID(level.Session.Level, position.GetHashCode() + height.GetHashCode() + left.GetHashCode() + notCoreMode.GetHashCode());
+            EntityID entityId = new EntityID(level.Session.Level, position.GetRealHashCode() + height.GetHashCode() + left.GetHashCode() + notCoreMode.GetHashCode());
             self.SetEntityId(entityId);
 
             if (IsLoadStart) {

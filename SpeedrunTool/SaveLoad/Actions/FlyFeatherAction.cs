@@ -26,7 +26,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             orig(self, position, shielded, singleUse);
             if (self.GetEntityId().Equals(default(EntityID)) && Engine.Scene is Level level) {
                 EntityID entityId = new EntityID(level.Session.Level,
-                    position.GetHashCode() + shielded.GetHashCode() + singleUse.GetHashCode());
+                    position.GetRealHashCode() + shielded.GetHashCode() + singleUse.GetHashCode());
                 self.SetEntityId(entityId);
 
                 RestoreState(self, entityId);

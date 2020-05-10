@@ -125,7 +125,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
         
         public static int GetRealHashCode(this Vector2 position) {
-            return (position.X * 31).GetHashCode() + position.Y.GetHashCode();
+            return position.ToString().GetHashCode();
         }
     }
 }

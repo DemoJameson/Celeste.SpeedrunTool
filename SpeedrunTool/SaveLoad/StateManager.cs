@@ -8,6 +8,7 @@ using Celeste.Mod.SpeedrunTool.SaveLoad.Actions.DSide;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Everest;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Actions.FrostHelper;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Glyph;
+using Celeste.Mod.SpeedrunTool.SaveLoad.Actions.ShroomHelper;
 using Microsoft.Xna.Framework;
 using Monocle;
 using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
@@ -88,6 +89,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             new CustomCrystalSpinnerAction(),
             // Glyph
             new AttachedWallBoosterAction(),
+            // ShroomHelper
+            new AttachedIceWallAction(),
         };
 
         private bool preventDie;

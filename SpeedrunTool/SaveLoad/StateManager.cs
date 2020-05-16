@@ -91,6 +91,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             new AttachedWallBoosterAction(),
             // ShroomHelper
             new AttachedIceWallAction(),
+            new CrumbleBlockOnTouchAction(),
         };
 
         private bool preventDie;

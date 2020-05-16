@@ -105,7 +105,10 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
 
         private static void TeleportToLastRoom(Level level) {
             if (HistoryIndex > 0 && HistoryIndex < RoomHistory.Count) {
-                HistoryIndex--;
+                // Glyph 这种传送到其他房间是不做记录的，所以只回到当前记录的房间
+                if (level.Session.Level == RoomHistory[HistoryIndex].Level) {
+                    HistoryIndex--;
+                }
                 TeleportTo(RoomHistory[HistoryIndex]);
                 return;
             }

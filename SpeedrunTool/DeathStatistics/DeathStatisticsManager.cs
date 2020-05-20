@@ -131,8 +131,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         private void PlayerOnUpdate(On.Celeste.Player.orig_Update orig, Player self) {
             orig(self);
 
-            if (Enabled && died &&
-                (self.StateMachine.State == Player.StNormal || self.StateMachine.State == Player.StSwim)) {
+            if (Enabled && died && (self.StateMachine.State == Player.StNormal || self.StateMachine.State == Player.StSwim)) {
                 died = false;
                 LoggingData(self);
             }
@@ -162,6 +161,11 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         private void LoggingData(Player player) {
             Level level = player.SceneAs<Level>();
             if (level == null) {
+                return;
+            }
+
+            // 传送到死亡地点练习时产生的死亡不记录
+            if (teleportDeathInfo?.Room == level.Session.Level) {
                 return;
             }
 
@@ -295,7 +299,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         }
 
         public void SetTeleportDeathInfo(DeathInfo deathInfo) {
-            this.teleportDeathInfo = deathInfo;
+            teleportDeathInfo = deathInfo;
         }
 
         public void Clear() {

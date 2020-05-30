@@ -59,7 +59,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                     Level level = Engine.Scene as Level;
                     if (numberOfRooms <= 1 && RoomTimerManager.Instance.SavedEndPoint == null
                         || endPoint && RoomTimerManager.Instance.SavedEndPoint != null
-                        ||  level != null && level.Completed) {
+                        || level != null && level.Completed) {
                         timerState = TimerState.Completed;
                         LastPbTime = pbTimes.GetValueOrDefault(pbTimeKey, 0);
                         if (Time < LastPbTime || LastPbTime == 0) {
@@ -69,8 +69,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                         if (level != null && !level.Completed) {
                             RoomTimerManager.Instance.SavedEndPoint?.StopTime();
                         }
-                    }
-                    else {
+                    } else {
                         numberOfRooms--;
                     }
 
@@ -101,7 +100,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             }
 
             TimeSpan timeSpan = TimeSpan.FromTicks(time);
-            return (int) timeSpan.TotalSeconds + timeSpan.ToString("\\.fff");
+            return timeSpan.ToString(timeSpan.TotalSeconds < 60 ? "s\\.fff" : "m\\:ss\\.fff");
         }
     }
 }

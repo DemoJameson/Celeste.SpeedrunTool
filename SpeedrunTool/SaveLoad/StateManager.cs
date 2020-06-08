@@ -281,6 +281,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             // 防止被恢复了位置的熔岩烫死
+            // prevent respawning lava from killing Madeline (? - euni)
             preventDie = true;
 
             Engine.Scene = new LevelLoader(level.Session, level.Session.RespawnPoint);
@@ -305,11 +306,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         // 尽快设置人物的位置与镜头，然后冻结游戏等待人物复活
+        // Set player position ASAP, then freeze game and wait for the player to respawn (? - euni)
         private void QuickLoadStart(Level level, Player player) {
             level.Session.Inventory = savedSession.Inventory;
 
             player.JustRespawned = SavedPlayer.JustRespawned;
             player.Position = SavedPlayer.Position;
+            player.SetField(typeof(Actor), "movementCounter", SavedPlayer.PositionRemainder);
             player.CameraAnchor = SavedPlayer.CameraAnchor;
             player.CameraAnchorLerp = SavedPlayer.CameraAnchorLerp;
             player.CameraAnchorIgnoreX = SavedPlayer.CameraAnchorIgnoreX;
@@ -329,6 +332,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         // 人物复活完毕后设置人物相关属性
+        // Set more player data after the player respawns
         private void QuickLoading(Level level, Player player) {
             player.Facing = SavedPlayer.Facing;
             player.Ducking = SavedPlayer.Ducking;

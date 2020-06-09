@@ -25,6 +25,7 @@ namespace Celeste.Mod.SpeedrunTool {
             Player player = level.Entities.FindFirst<Player>();
 
             // level 场景中 player == null 代表人物死亡
+			// if player is null, Madeline is dead
             if (player != null && player.StateMachine.State == Player.StIntroRespawn || player == null) {
                 for (int i = 1; i < SpeedrunToolModule.Settings.RespawnSpeed; i++) {
                     orig(self, time);

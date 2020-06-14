@@ -32,7 +32,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 return;
             }
 
-            var entityId = new EntityID(strawberry.ID.Level, strawberry.ID.GetHashCode() + index);
+            var entityId = new EntityID(strawberry.ID.Level, (strawberry.ID + "-" + index).GetHashCode());
             self.SetEntityId(entityId);
 
             if (IsLoadStart && savedBerrySeeds.ContainsKey(entityId)) {

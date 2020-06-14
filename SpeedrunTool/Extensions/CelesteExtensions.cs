@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
@@ -31,22 +30,31 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         public static EntityID GetEntityId(this Entity entity) {
             return entity.GetExtendedDataValue<EntityID>(EntityIdKey);
         }
-        
+
         public static void SetEntityData(this Entity entity, EntityData entityData) {
             entity.SetExtendedDataValue(EntityDataKey, entityData);
         }
-        
-        public static void SetEntityId(this Entity entity, int hashCode) {
+
+        public static void TrySetEntityId(this Entity entity, params string[] id) {
             EntityID entityId = entity.GetEntityId();
             if (entityId.Equals(default(EntityID))) {
-                Level level = GetLevel();
-                if (level?.Session?.Level == null) {
+                Session session = GetSession();
+                if (session?.Level == null) {
                     return;
                 }
 
-                entityId = new EntityID(level.Session.Level, hashCode);
+                entityId = entity.CreateEntityId(id);
                 entity.SetEntityId(entityId);
             }
+        }
+
+        public static EntityID CreateEntityId(this Entity entity, params string[] id) {
+            Session session = GetSession();
+            if (session?.Level == null) {
+                return default(EntityID);
+            }
+
+            return new EntityID(session.Level, (entity.GetType().FullName + "-" + string.Join("-", id)).GetHashCode());
         }
 
         public static EntityData GetEntityData(this Entity entity) {
@@ -62,7 +70,8 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             foreach (T entity in entityList.FindAll<T>()) {
                 EntityID entityId = entity.GetEntityId();
                 if (entityId.Equals(default(EntityID)) || result.ContainsKey(entityId)) {
-                    Logger.Log("Speedrun Tool", $"EntityID Duplication: Level Name={entityId.Level}, Position={entity.Position}, Entity Name={entity.GetType().Name}");
+                    Logger.Log("Speedrun Tool",
+                        $"EntityID Duplication: Level Name={entityId.Level}, Entity Name={entity.GetType().Name}, Position={entity.Position}");
                     continue;
                 }
 
@@ -71,13 +80,14 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
             return result;
         }
-        
+
         public static Dictionary<EntityID, T> GetDictionary<T>(this IEnumerable<T> enumerable) where T : Entity {
             Dictionary<EntityID, T> result = new Dictionary<EntityID, T>();
             foreach (T entity in enumerable) {
                 EntityID entityId = entity.GetEntityId();
                 if (entityId.Equals(default(EntityID)) || result.ContainsKey(entityId)) {
-                    Logger.Log("Speedrun Tool", $"EntityID Duplication: Level Name={entityId.Level}, Position={entity.Position}, Entity Name={entity.GetType().Name}");
+                    Logger.Log("Speedrun Tool",
+                        $"EntityID Duplication: Level Name={entityId.Level}, Entity Name={entity.GetType().Name}, Position={entity.Position}");
                     continue;
                 }
 
@@ -121,11 +131,17 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             } else if (Engine.Scene is LevelLoader levelLoader) {
                 level = levelLoader.Level;
             }
+
             return level;
         }
-        
-        public static int GetRealHashCode(this Vector2 position) {
-            return position.ToString().GetHashCode();
+
+        public static Session GetSession() {
+            return GetLevel()?.Session;
         }
+
+        //
+        // public static int GetRealHashCode(this Vector2 position) {
+        //     return position.ToString().GetHashCode();
+        // }
     }
 }

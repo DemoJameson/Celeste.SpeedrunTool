@@ -100,6 +100,7 @@
     <Compile Include="SaveLoad\Actions\FrostHelper\CustomCrystalSpinnerAction.cs" />
     <Compile Include="SaveLoad\Actions\Glyph\AttachedWallBoosterAction.cs" />
     <Compile Include="SaveLoad\Actions\IntroCrusherAction.cs" />
+    <Compile Include="SaveLoad\Actions\PlatformAction.cs" />
     <Compile Include="SaveLoad\Actions\ShroomHelper\AttachedIceWallAction.cs" />
     <Compile Include="SaveLoad\Actions\ShroomHelper\CrumbleBlockOnTouchAction.cs" />
     <Compile Include="SpeedrunToolSaveData.cs" />

@@ -29,8 +29,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.ShroomHelper {
                 return;
             }
 
-            EntityID entityId = new EntityID(level.Session.Level,
-                position.GetRealHashCode() + width.GetHashCode() + height.GetHashCode() + safe.GetHashCode());
+            EntityID entityId = self.CreateEntityId(position.ToString(), width.ToString(), height.ToString(), safe.ToString());
+            if (entityId.Equals(default(EntityID))) {
+                return;
+            }
             self.SetEntityId(entityId);
 
             if (IsLoadStart && !savedBlocks.ContainsKey(entityId)) {

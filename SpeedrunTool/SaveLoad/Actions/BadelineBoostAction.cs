@@ -3,7 +3,6 @@ using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
-using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class BadelineBoostAction : AbstractEntityAction {
@@ -32,7 +31,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             Level level = CelesteExtensions.GetLevel();
             
             if (level?.Session?.Level != null && entityId.Equals(default(EntityID))) {
-                entityId = new EntityID(level?.Session.Level, nodes.GetHashCode());
+                entityId = self.CreateEntityId(string.Join("", nodes));
                 self.SetEntityId(entityId);
             }
 

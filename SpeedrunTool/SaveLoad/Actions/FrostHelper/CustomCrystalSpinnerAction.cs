@@ -21,11 +21,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.FrostHelper {
                 return;
             }
 
-            Level level = CelesteExtensions.GetLevel();
-            if (level?.Session?.Level == null) {
+            EntityID entityId = self.CreateEntityId(position.ToString());
+            if (entityId.Equals(default(EntityID))) {
                 return;
             }
-            EntityID entityId = new EntityID(level.Session.Level, position.GetRealHashCode());
             self.SetEntityId(entityId);
 
             if (IsLoadStart) {

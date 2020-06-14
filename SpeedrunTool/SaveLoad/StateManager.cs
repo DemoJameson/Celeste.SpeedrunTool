@@ -53,6 +53,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             new MoveBlockAction(),
             new MovingPlatformAction(),
             new OshiroTriggerAction(),
+            new PlatformAction(),
             new PufferAction(),
             new ReflectionTentaclesAction(),
             new RefillAction(),

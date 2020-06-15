@@ -24,6 +24,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             if (IsLoadStart) {
                 if (savedFlingBirds.ContainsKey(entityId)) {
                     self.SetExtendedDataValue(RestoreBird, true);
+                    self.SetField("state", savedFlingBirds[entityId].GetField("state"));
                 }
                 else {
                     self.Add(new RemoveSelfComponent());
@@ -41,8 +42,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 EntityID entityId = self.GetEntityId();
                 if (IsLoadStart && savedFlingBirds.ContainsKey(entityId)) {
                     FlingBird savedFlingBird = savedFlingBirds[entityId];
+                    
                     int segmentIndex = (int) savedFlingBird.GetField(typeof(FlingBird), "segmentIndex");
-
+                    /*
                     if (segmentIndex > 0) {
                         bool atEnding = segmentIndex >= savedFlingBird.NodeSegments.Count;
                         Sprite sprite = (Sprite) self.GetField(typeof(FlingBird), "sprite");
@@ -64,9 +66,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                                 sprite.Play("hover");
                             }
                         }
-
-                        self.CopyField(typeof(FlingBird), "segmentIndex", savedFlingBird);
-                    }
+                        */
+                        //self.CopyField(typeof(FlingBird), "segmentIndex", savedFlingBird);
+                    //}
                 }
             }
 

@@ -95,11 +95,13 @@
     <Compile Include="Extensions\CommonExtensions.cs" />
     <Compile Include="Extensions\DeepCopyExtensions.cs" />
     <Compile Include="RespawnSpeedUtils.cs" />
+    <Compile Include="SaveLoad\Actions\CoroutineAction.cs" />
     <Compile Include="SaveLoad\Actions\DSide\FastOshiroTriggerAction.cs" />
     <Compile Include="SaveLoad\Actions\Everest\TriggerSpikesOriginalAction.cs" />
     <Compile Include="SaveLoad\Actions\FrostHelper\CustomCrystalSpinnerAction.cs" />
     <Compile Include="SaveLoad\Actions\Glyph\AttachedWallBoosterAction.cs" />
     <Compile Include="SaveLoad\Actions\IntroCrusherAction.cs" />
+    <Compile Include="SaveLoad\Actions\PlayerAction.cs" />
     <Compile Include="SaveLoad\Actions\ShroomHelper\AttachedIceWallAction.cs" />
     <Compile Include="SaveLoad\Actions\ShroomHelper\CrumbleBlockOnTouchAction.cs" />
     <Compile Include="SpeedrunToolSaveData.cs" />

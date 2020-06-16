@@ -59,7 +59,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             for (int j = 0; j < initialCount; j++) {
                 IEnumerator routine = ((Stack<IEnumerator>)enumerators).Pop();
 
-                GetCoroutineLocals(id, routine, out Type routineType, out FieldInfo[] routineFields, out object[] routineLocals);
+				if (routine.GetType().Assembly == Assembly.GetExecutingAssembly())
+					return false;
+
+				GetCoroutineLocals(id, routine, out Type routineType, out FieldInfo[] routineFields, out object[] routineLocals);
 
                 // When a coroutine yields a float, Coroutine.Update() waits that long before calling it again.
                 // Backup that as well.
@@ -90,20 +93,37 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             for (int i = 0; i < routineFields.Length; i++) {
                 FieldInfo local = routineFields[i];
                 object value = routine.GetField(local.Name);
-                // Store the value of value types.
-                if (value is ValueType)
-                    routineLocals[i] = value;
-                // Store the EntityID of entities.
-                else if (value is Entity entity)
-                    routineLocals[i] = entity.GetEntityId();
-                // If it's a compiler-generated type (ex: BadelineBoost.BoostRoutine) back that up too.
-                else if (local.FieldType.Name.StartsWith("<")) {
-                    GetCoroutineLocals(id, value, out Type _routineType, out FieldInfo[] _routineFields, out object[] _routineLocals);
-                    routineLocals[i] = new Routine(id, _routineType, _routineFields, _routineLocals, 0f, false, null);
-                }
+				// Store the value of value types.
+				if (value is ValueType)
+					routineLocals[i] = value;
+				// Store the EntityID of entities.
+				else if (value is Entity entity)
+					routineLocals[i] = entity.GetEntityId();
+				// If it's a compiler-generated type (ex: BadelineBoost.BoostRoutine) back that up too.
+				else if (local.FieldType.Name.StartsWith("<")) {
+					GetCoroutineLocals(id, value, out Type _routineType, out FieldInfo[] _routineFields, out object[] _routineLocals);
+					routineLocals[i] = new Routine(id, _routineType, _routineFields, _routineLocals, 0f, false, null);
+				}
+				else
+					GetLocalsSpecialCases(ref i, value, routineLocals);
 
             }
         }
+
+		public void GetLocalsSpecialCases(ref int i, object value, object[] routineLocals) {
+			if (value is List<MTexture>) {
+				routineLocals[i] = new List<MTexture>(value as List<MTexture>);
+			}
+			else if (value is Image) {
+				routineLocals[i] = new Image(new MTexture());
+			}
+			else if (value is SoundEmitter) {
+				routineLocals[i] = SoundEmitter.Play((value as SoundEmitter).Source.EventName);
+			}
+			else if (value is Tween) {
+				routineLocals[i] = Tween.Create((value as Tween).Mode);
+			}
+		}
 
         public void OnQuickLoad(Level level) {
             var entities = level.Entities.GetDictionary<Entity>();
@@ -137,30 +157,51 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             for (int i = 0; i < routine.fields.Length; i++) {
                 FieldInfo field = routine.fields[i];
                 object foundValue = null;
-                if (routine.locals[i] is EntityID storedID)
-                    if (entities.TryGetValue(storedID, out Entity e))
-                        foundValue = e;
-                    // If the entity doesn't store its ID, find the first entity of that type.
-                    // This may break some sound related stuff but I think that's it.
-                    else {
-                        MethodInfo findFirst = typeof(EntityList).GetMethod("FindFirst").MakeGenericMethod(field.FieldType);
-                        object value = findFirst.Invoke(level.Entities, new object[0]);
-                        foundValue = value;
-                    }
-                else if (field.FieldType == typeof(Level))
-                    foundValue = level;
-                else if (routine.locals[i] is ValueType)
-                    foundValue = routine.locals[i];
-                // It isn't actually a routine but a object of a compiler-generated type stored as a routine.
-                else if (routine.locals[i] is Routine _routine) {
-                    ConstructorInfo routineCtor = _routine.routine.GetConstructor(new Type[0]);
-                    object obj = routineCtor.Invoke(new object[0]);
-                    SetCoroutineLocals(level, entities, _routine, obj);
-                    foundValue = obj;
-                }
-                routineObj.SetField(routineObj.GetType(), field.Name, foundValue);
+				if (routine.locals[i] is EntityID storedID)
+					if (entities.TryGetValue(storedID, out Entity e))
+						foundValue = e;
+					// If the entity doesn't store its ID, find the first entity of that type.
+					// This may break some sound related stuff but I think that's it.
+					else {
+						MethodInfo findFirst = typeof(EntityList).GetMethod("FindFirst").MakeGenericMethod(field.FieldType);
+						object value = findFirst.Invoke(level.Entities, new object[0]);
+						foundValue = value;
+					}
+				else if (field.FieldType == typeof(Level))
+					foundValue = level;
+				else if (routine.locals[i] is ValueType)
+					foundValue = routine.locals[i];
+				// It isn't actually a routine but a object of a compiler-generated type stored as a routine.
+				else if (routine.locals[i] is Routine _routine) {
+					ConstructorInfo routineCtor = _routine.routine.GetConstructor(new Type[0]);
+					object obj = routineCtor.Invoke(new object[0]);
+					SetCoroutineLocals(level, entities, _routine, obj);
+					foundValue = obj;
+				}
+				else SetLocalsSpecialCases(ref i, routine, out foundValue);
+				if (foundValue != null)
+	                routineObj.SetField(routineObj.GetType(), field.Name, foundValue);
             }
         }
+
+		private void SetLocalsSpecialCases(ref int i, Routine routine, out object foundValue) {
+			foundValue = null;
+
+			object value = routine.locals[i];
+			if (value is List<MTexture>) {
+				foundValue = new List<MTexture>(value as List<MTexture>);
+			}
+			else if (value is Image) {
+				foundValue = new Image(new MTexture());
+			}
+			else if (value is SoundEmitter) {
+				foundValue = SoundEmitter.Play((value as SoundEmitter).Source.EventName);
+			}
+			else if (value is Tween) {
+				foundValue = Tween.Create((value as Tween).Mode);
+			}
+			return;
+		}
 
         public void OnClear() => loadedRoutines = new List<Routine>();
     }

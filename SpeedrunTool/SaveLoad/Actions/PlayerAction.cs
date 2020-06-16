@@ -88,13 +88,29 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     var dreamBlocks = Engine.Scene.Entities.GetDictionary<DreamBlock>();
                     dreamBlocks.TryGetValue(dreamBlock, out DreamBlock db);
                     loadedPlayer.SetField("dreamBlock", db);
-                    break;
+					SoundSource dreamSFX = new SoundSource();
+					loadedPlayer.Add(dreamSFX);
+					loadedPlayer.Loop(dreamSFX, "event:/char/madeline/dreamblock_travel");
+					loadedPlayer.SetField("dreamSfxLoop", dreamSFX);
+					break;
                 case Player.StStarFly:
                     loadedPlayer.CopyField("starFlyTimer", savedPlayer);
                     loadedPlayer.CopyField("starFlyTransforming", savedPlayer);
                     loadedPlayer.CopyField("starFlySpeedLerp", savedPlayer);
                     loadedPlayer.CopyField("starFlyLastDir", savedPlayer);
-                    break;
+					BloomPoint starFlyBloom = new BloomPoint(new Vector2(0f, -6f), 0f, 16f);
+					loadedPlayer.SetField("starFlyBloom", starFlyBloom);
+					SoundSource featherSFX = new SoundSource();
+					SoundSource featherWarningSFX = new SoundSource();
+					featherSFX.DisposeOnTransition = false;
+					featherWarningSFX.DisposeOnTransition = false;
+					featherSFX.Play("event:/game/06_reflection/feather_state_loop", "feather_speed", 1f);
+					featherWarningSFX.Stop(true);
+					loadedPlayer.Add(featherSFX);
+					loadedPlayer.Add(featherWarningSFX);
+					loadedPlayer.SetField("starFlyLoopSfx", featherSFX);
+					loadedPlayer.SetField("starFlyWarningSfx", featherWarningSFX);
+					break;
                 case Player.StFlingBird:
                     var flingBirds = Engine.Scene.Entities.GetDictionary<FlingBird>();
                     flingBirds.TryGetValue(flingBird, out FlingBird fb);

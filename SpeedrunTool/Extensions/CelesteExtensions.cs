@@ -3,8 +3,8 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
     public static class CelesteExtensions {
-        private const string EntityIdKey = "EntityId";
-        private const string EntityDataKey = "EntityDataKey";
+        private const string EntityIdKey = "SpeedrunToolEntityId";
+        private const string EntityDataKey = "SpeedrunToolEntityDataKey";
 
         // public static void AddToTracker(this Type type) {
         //     if (!Tracker.StoredEntityTypes.Contains(type)) {

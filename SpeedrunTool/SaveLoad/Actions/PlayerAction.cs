@@ -88,6 +88,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     var dreamBlocks = Engine.Scene.Entities.GetDictionary<DreamBlock>();
                     dreamBlocks.TryGetValue(dreamBlock, out DreamBlock db);
                     loadedPlayer.SetField("dreamBlock", db);
+					loadedPlayer.TreatNaive = true;
 					SoundSource dreamSFX = new SoundSource();
 					loadedPlayer.Add(dreamSFX);
 					loadedPlayer.Loop(dreamSFX, "event:/char/madeline/dreamblock_travel");
@@ -110,6 +111,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 					loadedPlayer.Add(featherWarningSFX);
 					loadedPlayer.SetField("starFlyLoopSfx", featherSFX);
 					loadedPlayer.SetField("starFlyWarningSfx", featherWarningSFX);
+					loadedPlayer.Collider = new Hitbox(8f, 8f, -4f, -10f);
+					loadedPlayer.SetField("hurtbox", new Hitbox(6f, 6f, -3f, -9f));
 					break;
                 case Player.StFlingBird:
                     var flingBirds = Engine.Scene.Entities.GetDictionary<FlingBird>();

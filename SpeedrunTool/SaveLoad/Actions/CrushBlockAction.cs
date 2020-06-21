@@ -15,25 +15,29 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         public override void OnLoad() {
+			
             On.Celeste.CrushBlock.ctor_EntityData_Vector2 += RestoreCrushBlockState;
             On.Celeste.CrushBlock.Attack += CrushBlockOnAttack;
             On.Celeste.CrushBlock.MoveHCheck += CrushBlockOnMoveHCheck;
             On.Celeste.CrushBlock.MoveVCheck += CrushBlockOnMoveVCheck;
             On.Celeste.CrushBlock.Update += CrushBlockOnUpdate;
+			
         }
 
         public override void OnUnload() {
+			
             On.Celeste.CrushBlock.ctor_EntityData_Vector2 -= RestoreCrushBlockState;
             On.Celeste.CrushBlock.Attack -= CrushBlockOnAttack;
             On.Celeste.CrushBlock.MoveHCheck -= CrushBlockOnMoveHCheck;
             On.Celeste.CrushBlock.MoveVCheck -= CrushBlockOnMoveVCheck;
             On.Celeste.CrushBlock.Update -= CrushBlockOnUpdate;
+			
         }
 
         public override void OnQuickSave(Level level) {
             savedCrushBlocks = level.Entities.GetDictionary<CrushBlock>();
         }
-
+		
         private void RestoreCrushBlockState(On.Celeste.CrushBlock.orig_ctor_EntityData_Vector2 orig, CrushBlock self,
             EntityData data,
             Vector2 offset) {
@@ -46,12 +50,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     CrushBlock savedCrushBlock = savedCrushBlocks[entityId];
                     if (self.Position != savedCrushBlock.Position) {
                         self.Position = savedCrushBlock.Position;
+						self.CopyField("crushDir", savedCrushBlock);
+						object returnStack = savedCrushBlock.GetField("returnStack").Copy();
+						self.SetField("returnStack", returnStack);
+						self.CopyField("chillOut", savedCrushBlock);
+						self.CopyField("canActivate", savedCrushBlock);
+						/*
                         self.Add(new FastForwardComponent<CrushBlock>(savedCrushBlock, OnFastForward));
-
-                        object returnStack = savedCrushBlock.GetField(typeof(CrushBlock), "returnStack").Copy();
-                        self.SetField(typeof(CrushBlock), "returnStack", returnStack);
                         self.Add(new RestoreCrushBlockStateComponent(savedCrushBlock));
-                    }
+						*/
+					}
                 } else {
                     self.Add(new RemoveSelfComponent());
                 }
@@ -129,6 +137,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
                 RemoveSelf();
             }
+			
         }
     }
 }

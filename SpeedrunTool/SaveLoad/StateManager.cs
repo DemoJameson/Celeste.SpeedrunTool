@@ -113,7 +113,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         public bool IsLoadComplete => loadState == LoadState.LoadComplete;
 
 
-        private bool IsSaved => savedSession != null && SavedPlayer != null && savedCamera != null;
+        public bool IsSaved => savedSession != null && SavedPlayer != null && savedCamera != null;
 
         public PlayerDeadBody currentPlayerDeadBody;
         public bool preventDie;
@@ -310,19 +310,23 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
         }
 
-        public void ExternalSave() {
+        public bool ExternalSave() {
             Level level = Engine.Scene as Level;
             Player player = level?.Entities.FindFirst<Player>();
             if (player == null)
-                return;
+                return false;
 
             int state = player.StateMachine.State;
-            if (!disabledSaveStates.Contains(state))
-                QuickSave(level, player);
+			if (!disabledSaveStates.Contains(state)) {
+				QuickSave(level, player);
+				return true;
+			}
+			return false;
         }
 
-        public void ExternalLoad() {
+        public bool ExternalLoad() {
             QuickLoad();
+			return IsSaved;
         }
 
         // 尽快设置人物的位置与镜头，然后冻结游戏等待人物复活

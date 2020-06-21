@@ -105,27 +105,32 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 					routineLocals[i] = new Routine(id, _routineType, _routineFields, _routineLocals, 0f, false, null);
 				}
 				else
-					GetLocalsSpecialCases(ref i, value, routineLocals);
+					LocalsSpecialCases(value, out routineLocals[i], false);
 
             }
         }
 
-		public void GetLocalsSpecialCases(ref int i, object value, object[] routineLocals) {
+		public void LocalsSpecialCases(object value, out object foundValue, bool loading) {
+			foundValue = null;
+
 			if (value is List<MTexture>) {
-				routineLocals[i] = new List<MTexture>(value as List<MTexture>);
+				foundValue = new List<MTexture>(value as List<MTexture>);
 			}
 			else if (value is Image) {
-				routineLocals[i] = new Image(new MTexture());
+				foundValue = new Image(new MTexture());
 			}
 			else if (value is SoundEmitter) {
-				routineLocals[i] = SoundEmitter.Play((value as SoundEmitter).Source.EventName);
+				foundValue = SoundEmitter.Play((value as SoundEmitter).Source.EventName);
 			}
 			else if (value is Tween) {
-				routineLocals[i] = Tween.Create((value as Tween).Mode);
+				foundValue = Tween.Create((value as Tween).Mode);
+			}
+			else if (value is Delegate) {
+				foundValue = (value as Delegate).Clone();
 			}
 		}
 
-        public void OnQuickLoad(Level level) {
+		public void OnQuickLoad(Level level) {
             var entities = level.Entities.GetDictionary<Entity>();
             Coroutine coroutine = null;
             foreach (Routine routine in loadedRoutines) {
@@ -178,30 +183,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 					SetCoroutineLocals(level, entities, _routine, obj);
 					foundValue = obj;
 				}
-				else SetLocalsSpecialCases(ref i, routine, out foundValue);
+				else LocalsSpecialCases(routine.locals[i], out foundValue, true);
 				if (foundValue != null)
 	                routineObj.SetField(routineObj.GetType(), field.Name, foundValue);
             }
         }
 
-		private void SetLocalsSpecialCases(ref int i, Routine routine, out object foundValue) {
-			foundValue = null;
 
-			object value = routine.locals[i];
-			if (value is List<MTexture>) {
-				foundValue = new List<MTexture>(value as List<MTexture>);
-			}
-			else if (value is Image) {
-				foundValue = new Image(new MTexture());
-			}
-			else if (value is SoundEmitter) {
-				foundValue = SoundEmitter.Play((value as SoundEmitter).Source.EventName);
-			}
-			else if (value is Tween) {
-				foundValue = Tween.Create((value as Tween).Mode);
-			}
-			return;
-		}
 
         public void OnClear() => loadedRoutines = new List<Routine>();
     }

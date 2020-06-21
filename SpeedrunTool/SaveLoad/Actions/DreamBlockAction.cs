@@ -12,7 +12,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             savedDreamBlocks = level.Entities.GetDictionary<DreamBlock>();
         }
 
-        private void ResotreDreamBlockPosition(On.Celeste.DreamBlock.orig_ctor_EntityData_Vector2 orig,
+        private void RestoreDreamBlockPosition(On.Celeste.DreamBlock.orig_ctor_EntityData_Vector2 orig,
             DreamBlock self, EntityData data,
             Vector2 offset) {
             EntityID entityId = data.ToEntityId();
@@ -59,11 +59,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         public override void OnLoad() {
-            On.Celeste.DreamBlock.ctor_EntityData_Vector2 += ResotreDreamBlockPosition;
+            On.Celeste.DreamBlock.ctor_EntityData_Vector2 += RestoreDreamBlockPosition;
         }
 
         public override void OnUnload() {
-            On.Celeste.DreamBlock.ctor_EntityData_Vector2 -= ResotreDreamBlockPosition;
+            On.Celeste.DreamBlock.ctor_EntityData_Vector2 -= RestoreDreamBlockPosition;
         }
     }
 }

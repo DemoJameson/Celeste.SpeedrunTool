@@ -24,11 +24,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.ShroomHelper {
                 return;
             }
 
-            Level level = CelesteExtensions.GetLevel();
-            if (level?.Session?.Level == null) {
-                return;
-            }
-
             EntityID entityId = self.CreateEntityId(position.ToString(), width.ToString(), height.ToString(), safe.ToString());
             if (entityId.Equals(default(EntityID))) {
                 return;

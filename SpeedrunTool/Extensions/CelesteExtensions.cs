@@ -51,7 +51,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         public static EntityID CreateEntityId(this Entity entity, params string[] id) {
             Session session = GetSession();
             if (session?.Level == null) {
-                return default(EntityID);
+                return default;
             }
 
             return new EntityID(session.Level, (entity.GetType().FullName + "-" + string.Join("-", id)).GetHashCode());
@@ -125,23 +125,19 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static Level GetLevel() {
-            Level level = null;
-            if (Engine.Scene is Level) {
-                level = (Level) Engine.Scene;
-            } else if (Engine.Scene is LevelLoader levelLoader) {
-                level = levelLoader.Level;
+            if (Engine.Scene is Level level) {
+                return level;
             }
 
-            return level;
+            if (Engine.Scene is LevelLoader levelLoader) {
+                return levelLoader.Level;
+            }
+
+            return null;
         }
 
         public static Session GetSession() {
             return GetLevel()?.Session;
         }
-
-        //
-        // public static int GetRealHashCode(this Vector2 position) {
-        //     return position.ToString().GetHashCode();
-        // }
     }
 }

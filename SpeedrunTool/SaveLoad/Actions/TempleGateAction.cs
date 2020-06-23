@@ -36,11 +36,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
             else if ((bool) self.GetField(typeof(TempleGate), "open")) {
                 AudioAction.MuteAudioPathVector2("event:/game/05_mirror_temple/gate_main_close");
-                self.InvokeMethod(typeof(TempleGate), "SetHeight", self.GetField(typeof(TempleGate), "closedHeight"));
+                self.InvokeMethod(typeof(TempleGate), "SetHeight", 0);
             }
             yield break;
         }
-
 
         public override void OnClear() {
             savedTempleGates.Clear();

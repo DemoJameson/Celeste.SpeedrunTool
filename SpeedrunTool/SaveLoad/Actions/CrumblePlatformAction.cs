@@ -5,7 +5,10 @@ using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
+using Mono.Cecil.Cil;
 using Monocle;
+using MonoMod.Cil;
+using MonoMod.RuntimeDetour;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class CrumblePlatformAction : AbstractEntityAction {
@@ -14,7 +17,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityID, CrumblePlatform> savedCrumblePlatforms =
             new Dictionary<EntityID, CrumblePlatform>();
 
-        public override void OnQuickSave(Level level) {
+		private ILHook addedHook;
+
+
+		public override void OnQuickSave(Level level) {
             savedCrumblePlatforms = level.Entities.FindAll<CrumblePlatform>()
                 .Where(platform => !platform.Collidable).ToDictionary(platform => platform.GetEntityId());
         }
@@ -28,14 +34,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (IsLoadStart && savedCrumblePlatforms.ContainsKey(entityId)) {
                 self.SetExtendedBoolean(IsFade, true);
-                self.Add(new FastForwardComponent<CrumblePlatform>(savedCrumblePlatforms[entityId], OnFastForward));
-            }
-        }
-
-        private void OnFastForward(CrumblePlatform entity, CrumblePlatform savedEntity) {
-            int breakTimeFrames = savedEntity.GetExtendedDataValue<int>(nameof(breakTimeFrames));
-            for (int i = 0; i < 36 + breakTimeFrames; i++) {
-                entity.Update();
             }
         }
 
@@ -55,40 +53,32 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             return orig(self);
         }
 
-        private IEnumerator CrumblePlatformOnSequence(On.Celeste.CrumblePlatform.orig_Sequence orig, CrumblePlatform self) {
-            IEnumerator enumerator = orig(self);
-            while (enumerator.MoveNext()) {
-                object result = enumerator.Current;
-                if (result is float restoreTime && Math.Abs(restoreTime - 2f) < 0.01) {
-                    restoreTime += 0.016f;
-                    int breakTimeFrames = 0;
-                    while (restoreTime > 0f) {
-                        restoreTime -= Engine.DeltaTime;
-                        breakTimeFrames++;
-                        self.SetExtendedDataValue(nameof(breakTimeFrames), breakTimeFrames);
-                        yield return null;
-                    }
-                    continue;
-                }
+		private void BlockCoroutineStart(ILContext il) {
+			ILCursor c = new ILCursor(il);
+			for (int i = 0; i < 6; i++)
+				c.GotoNext((inst) => inst.MatchCall(typeof(Entity).GetMethod("Add", new Type[] { typeof(Monocle.Component) })));
+			Instruction skipCoroutine = c.Next.Next;
+			c.GotoPrev((i) => i.MatchCall(typeof(Entity), "get_Width"));
+			c.GotoNext();
+			c.GotoNext();
+			c.EmitDelegate<Func<bool>>(() => IsLoadStart);
+			c.Emit(OpCodes.Brtrue, skipCoroutine);
+		}
 
-                yield return result;
-            }
-        }
-
-        public override void OnClear() {
+		public override void OnClear() {
             savedCrumblePlatforms.Clear();
         }
 
         public override void OnLoad() {
             On.Celeste.CrumblePlatform.ctor_EntityData_Vector2 += RestoreCrumblePlatformPosition;
             On.Celeste.Solid.GetPlayerOnTop += SolidOnGetPlayerOnTop;
-            On.Celeste.CrumblePlatform.Sequence += CrumblePlatformOnSequence;
+			addedHook = new ILHook(typeof(CrumblePlatform).GetMethod("orig_Added"), BlockCoroutineStart);
         }
 
         public override void OnUnload() {
             On.Celeste.CrumblePlatform.ctor_EntityData_Vector2 -= RestoreCrumblePlatformPosition;
             On.Celeste.Solid.GetPlayerOnTop -= SolidOnGetPlayerOnTop;
-            On.Celeste.CrumblePlatform.Sequence -= CrumblePlatformOnSequence;
-        }
+			addedHook.Dispose();
+		}
     }
 }

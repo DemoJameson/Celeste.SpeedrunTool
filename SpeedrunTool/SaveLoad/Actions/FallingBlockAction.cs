@@ -4,7 +4,9 @@ using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
+using Mono.Cecil.Cil;
 using Monocle;
+using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class FallingBlockAction : AbstractEntityAction {
@@ -45,20 +47,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 if (fallingBlocks.ContainsKey(entityId)) {
                     FallingBlock savedFallingBlock = fallingBlocks[entityId];
                     self.Position = savedFallingBlock.Position;
-                    if (savedFallingBlock.HasStartedFalling || savedFallingBlock.Triggered) {
-                        self.SetExtendedBoolean(DisableShakeSfx, true);
-                        self.FallDelay = savedFallingBlock.FallDelay;
-                        self.Triggered = true;
-                        if (OnGround(savedFallingBlock)) {
-                            self.Add(new FastForwardComponent<FallingBlock>(savedFallingBlock, SkipFallingGroundEffect));
-                            self.SetExtendedBoolean(DisableImpactSfx, true);
-                            self.SetExtendedBoolean(DisableLandParticles, true);
-                        } else if(self.FallDelay > 0){
-                            self.StartShaking(self.FallDelay);
-                        } else {
-                            self.Add(new FastForwardComponent<FallingBlock>(savedFallingBlock, SkipShake));
-                        }
-                    }
+					if (savedFallingBlock.HasStartedFalling || savedFallingBlock.Triggered) {
+						self.SetExtendedBoolean(DisableShakeSfx, true);
+						self.FallDelay = savedFallingBlock.FallDelay;
+						self.Triggered = true;
+						if (OnGround(savedFallingBlock)) {
+							self.Add(new FastForwardComponent<FallingBlock>(savedFallingBlock, SkipFallingGroundEffect));
+							self.SetExtendedBoolean(DisableImpactSfx, true);
+							self.SetExtendedBoolean(DisableLandParticles, true);
+						}
+						else if (self.FallDelay > 0)
+							self.StartShaking(self.FallDelay);
+					}
                 }
                 else {
                     self.Add(new RemoveSelfComponent());
@@ -68,13 +68,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         private void SkipFallingGroundEffect(FallingBlock entity, FallingBlock savedEntity) {
             for (int i = 0; i < 60; i++) {
-                entity.Update();
-            }
-        }
-
-        private void SkipShake(FallingBlock entity, FallingBlock savedEntity) {
-            int shakeTime = savedEntity.GetExtendedDataValue<int>(nameof(shakeTime));
-            for (int i = 0; i < shakeTime; i++) {
                 entity.Update();
             }
         }
@@ -115,37 +108,22 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             orig(self);
         }
 
-        private IEnumerator FallingBlockOnSequence(On.Celeste.FallingBlock.orig_Sequence orig, FallingBlock self) {
-                int shakeTime = 0;
-                IEnumerator enumerator = orig(self);
-                while (enumerator.MoveNext()) {
-                    object result = enumerator.Current;
-                    if (result is float shakeTimer && self.HasStartedFalling && Math.Abs(shakeTimer - 0.2f) < 0.01) {
-                        shakeTime = 0;
-                        shakeTimer += 0.016f;
-                        while (shakeTimer > 0f) {
-                            shakeTimer -= Engine.DeltaTime;
-                            shakeTime++;
-                            self.SetExtendedDataValue(nameof(shakeTime), shakeTime);
-                            yield return null;
-                        }
-                        continue;
-                    }
+		private void BlockCoroutineStart(ILContext il) {
+			ILCursor c = new ILCursor(il);
+			for (int i = 0; i < 3; i++)
+				c.GotoNext((inst) => inst.MatchCall(typeof(Entity).GetMethod("Add", new Type[] { typeof(Monocle.Component) })));
+			Instruction skipCoroutine = c.Next.Next;
+			c.GotoPrev((i) => i.MatchStfld(typeof(TileGrid), "Alpha"));
+			c.GotoNext();
+			c.EmitDelegate<Func<bool>>(() => IsLoadStart);
+			c.Emit(OpCodes.Brtrue, skipCoroutine);
+		}
 
-                    if (result == null && shakeTime > 0 && (bool) self.GetField(typeof(Platform), "shaking")) {
-                        shakeTime++;
-                        self.SetExtendedDataValue(nameof(shakeTime), shakeTime);
-                    }
-
-                    yield return result;
-                }
-        }
-
-        public override void OnLoad() {
+		public override void OnLoad() {
             On.Celeste.FallingBlock.CreateFinalBossBlock += FallingBlockOnCreateFinalBossBlock;
             On.Celeste.FallingBlock.ctor_EntityData_Vector2 += OnFallingBlockOnCtorEntityDataVector2;
-            On.Celeste.FallingBlock.Sequence += FallingBlockOnSequence;
-            On.Celeste.FallingBlock.ShakeSfx += FallingBlockOnShakeSfx;
+			IL.Celeste.FallingBlock.ctor_Vector2_char_int_int_bool_bool_bool += BlockCoroutineStart;
+			On.Celeste.FallingBlock.ShakeSfx += FallingBlockOnShakeSfx;
             On.Celeste.FallingBlock.ImpactSfx += FallingBlockOnImpactSfx;
             On.Celeste.FallingBlock.LandParticles += FallingBlockOnLandParticles;
         }
@@ -153,7 +131,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public override void OnUnload() {
             On.Celeste.FallingBlock.CreateFinalBossBlock -= FallingBlockOnCreateFinalBossBlock;
             On.Celeste.FallingBlock.ctor_EntityData_Vector2 -= OnFallingBlockOnCtorEntityDataVector2;
-            On.Celeste.FallingBlock.Sequence -= FallingBlockOnSequence;
+			IL.Celeste.FallingBlock.ctor_Vector2_char_int_int_bool_bool_bool -= BlockCoroutineStart;
             On.Celeste.FallingBlock.ShakeSfx -= FallingBlockOnShakeSfx;
             On.Celeste.FallingBlock.ImpactSfx -= FallingBlockOnImpactSfx;
             On.Celeste.FallingBlock.LandParticles -= FallingBlockOnLandParticles;

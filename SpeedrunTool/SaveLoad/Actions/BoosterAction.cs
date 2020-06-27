@@ -27,11 +27,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             Booster booster = new Booster(savedPlayer.Position - Vector2.UnitY * 6, true);
             booster.SetEntityId(lastBooster.GetEntityId());
-            booster.Add(new Coroutine(BootPlayerNewRoom(booster)));
+            booster.Add(new Coroutine(BoostPlayerNewRoom(booster)));
             level.Add(booster);
         }
 
-        private IEnumerator BootPlayerNewRoom(Booster booster) {
+        private IEnumerator BoostPlayerNewRoom(Booster booster) {
             Player player = booster.SceneAs<Level>().Entities.FindFirst<Player>();
             if (player == null) {
                 yield break;

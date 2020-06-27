@@ -1,10 +1,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
 using Monocle;
+using MonoMod.Cil;
+using Mono.Cecil.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class MoveBlockAction : AbstractEntityAction {
@@ -30,10 +33,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             MoveBlock savedMoveBlock = movingBlocks[entityId];
 
             int state = (int) savedMoveBlock.GetField(typeof(MoveBlock), "state");
+			self.SetField("state", state);
             if (state == 1 || state == 2 && savedMoveBlock.GetExtendedDataValue<int>(BreakTimeFrames) == 0) {
-                // MovementState.Moving or MovementState.Breaking but just stop not disappear.
+                // MovementState.Moving or MovementState.Breaking but stopped, not disappeared.
                 self.Position = savedMoveBlock.Position;
-                self.Add(new Coroutine(TriggerBlock(self)));
+				self.CopyFields(savedMoveBlock, "triggered", "speed", "angle", "targetSpeed", "targetAngle");
             } else if (state == 2) {
                 // MovementState.Breaking
                 self.Add(new FastForwardComponent<MoveBlock>(savedMoveBlock, OnFastForward));
@@ -53,45 +57,28 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
         }
 
-        private static IEnumerator TriggerBlock(MoveBlock self) {
-            self.OnStaticMoverTrigger(null);
-            yield break;
-        }
-
-        private static IEnumerator MoveBlockOnController(On.Celeste.MoveBlock.orig_Controller orig, MoveBlock self) {
-            self.SetExtendedDataValue(BreakTimeFrames, 0);
-            IEnumerator enumerator = orig(self);
-            while (enumerator.MoveNext()) {
-                object result = enumerator.Current;
-                if (result is float restoreTime && Math.Abs(restoreTime - 2.2f) < 0.01) {
-                    restoreTime += 0.016f;
-                    int breakTimeFrames = 0;
-                    while (restoreTime > 0f) {
-                        restoreTime -= Engine.DeltaTime;
-                        breakTimeFrames++;
-                        self.SetExtendedDataValue(BreakTimeFrames, breakTimeFrames);
-                        yield return null;
-                    }
-
-                    continue;
-                }
-
-                yield return result;
-            }
-        }
-
         public override void OnClear() {
             movingBlocks.Clear();
         }
 
         public override void OnLoad() {
             On.Celeste.MoveBlock.ctor_EntityData_Vector2 += RestoreMoveBlockStateOnCreate;
-            On.Celeste.MoveBlock.Controller += MoveBlockOnController;
+			IL.Celeste.MoveBlock.ctor_Vector2_int_int_Directions_bool_bool += BlockCoroutineStart;
         }
 
-        public override void OnUnload() {
+		private void BlockCoroutineStart(ILContext il) {
+			ILCursor c = new ILCursor(il);
+			c.GotoNext((i) => i.MatchCallvirt(typeof(MoveBlock), "UpdateColors"));
+			Instruction skipCoroutine = c.Prev;
+			for (int i = 0; i < 2; i++)
+				c.GotoPrev((inst) => inst.MatchCall(typeof(Entity).GetMethod("Add", new Type[] { typeof(Monocle.Component) })));
+			c.GotoNext();
+			c.EmitDelegate<Func<bool>>(() => IsLoadStart);
+			c.Emit(OpCodes.Brtrue, skipCoroutine);
+		}
+
+		public override void OnUnload() {
             On.Celeste.MoveBlock.ctor_EntityData_Vector2 -= RestoreMoveBlockStateOnCreate;
-            On.Celeste.MoveBlock.Controller -= MoveBlockOnController;
         }
     }
 }

@@ -52,36 +52,34 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             loadedPlayer.DashDir = savedPlayer.DashDir;
             loadedPlayer.StateMachine.SetField("state", savedPlayer.StateMachine.State);
 
-
-
-            loadedPlayer.CopyField("jumpGraceTimer", savedPlayer);
-            loadedPlayer.CopyField("varJumpSpeed", savedPlayer);
-            loadedPlayer.CopyField("varJumpTimer", savedPlayer);
-            loadedPlayer.CopyField("forceMoveX", savedPlayer);
-            loadedPlayer.CopyField("forceMoveXTimer", savedPlayer);
-            loadedPlayer.CopyField("hopWaitX", savedPlayer);
-            loadedPlayer.CopyField("hopWaitXSpeed", savedPlayer);
-            loadedPlayer.CopyField("lastAim", savedPlayer);
-            loadedPlayer.CopyField("wallSlideDir", savedPlayer);
-            loadedPlayer.CopyField("climbNoMoveTimer", savedPlayer);
-            loadedPlayer.CopyField("carryOffset", savedPlayer);
-            loadedPlayer.CopyField("wallSpeedRetentionTimer", savedPlayer);
-            loadedPlayer.CopyField("wallSpeedRetained", savedPlayer);
-            loadedPlayer.CopyField("wallBoostDir", savedPlayer);
-            loadedPlayer.CopyField("wallBoostTimer", savedPlayer);
-            loadedPlayer.CopyField("lastClimbMove", savedPlayer);
-            loadedPlayer.CopyField("noWindTimer", savedPlayer);
-            loadedPlayer.CopyField("climbHopSolidPosition", savedPlayer);
-            loadedPlayer.CopyField("minHoldTimer", savedPlayer);
+			loadedPlayer.CopyFields(savedPlayer,
+				"jumpGraceTimer",
+				"varJumpSpeed",
+				"varJumpTimer",
+				"forceMoveX",
+				"forceMoveXTimer",
+				"hopWaitX",
+				"hopWaitXSpeed",
+				"lastAim",
+				"wallSlideDir",
+				"climbNoMoveTimer",
+				"carryOffset",
+				"wallSpeedRetentionTimer",
+				"wallSpeedRetained",
+				"wallBoostDir",
+				"wallBoostTimer",
+				"lastClimbMove",
+				"noWindTimer",
+				"climbHopSolidPosition",
+				"minHoldTimer"
+			);
 
             switch (savedPlayer.StateMachine.State) {
                 case Player.StDash:
                 case Player.StRedDash:
-                    loadedPlayer.CopyField("dashAttackTimer", savedPlayer);
-                    loadedPlayer.CopyField("dashStartedOnGround", savedPlayer);
-                    loadedPlayer.CopyField("dashCooldownTimer", savedPlayer);
-                    loadedPlayer.CopyField("dashRefillCooldownTimer", savedPlayer);
-                    loadedPlayer.CopyField("DashDir", savedPlayer);
+					loadedPlayer.CopyFields(savedPlayer,
+						"dashAttackTimer", "dashStartedOnGround", "dashCooldownTimer", "dashRefillCooldownTimer", "DashDir"
+					);
                     break;
                 case Player.StDreamDash:
                     loadedPlayer.CopyField("dreamDashCanEndTimer", savedPlayer);
@@ -95,10 +93,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 					loadedPlayer.SetField("dreamSfxLoop", dreamSFX);
 					break;
                 case Player.StStarFly:
-                    loadedPlayer.CopyField("starFlyTimer", savedPlayer);
-                    loadedPlayer.CopyField("starFlyTransforming", savedPlayer);
-                    loadedPlayer.CopyField("starFlySpeedLerp", savedPlayer);
-                    loadedPlayer.CopyField("starFlyLastDir", savedPlayer);
+					loadedPlayer.CopyFields(savedPlayer,
+						"starFlyTimer", "starFlyTransforming", "starFlySpeedLerp", "starFlyLastDir"
+					);
 					BloomPoint starFlyBloom = new BloomPoint(new Vector2(0f, -6f), 0f, 16f);
 					loadedPlayer.SetField("starFlyBloom", starFlyBloom);
 					SoundSource featherSFX = new SoundSource();

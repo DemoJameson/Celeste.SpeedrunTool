@@ -22,11 +22,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             if (IsLoadStart && savedClouds.ContainsKey(entityId)) {
                 Cloud savedCloud = savedClouds[entityId];
                 self.Position = savedCloud.Position;
-                self.CopyField(typeof(Cloud), "waiting", savedCloud);
-                self.CopyField(typeof(Cloud), "returning", savedCloud);
-                self.CopyField(typeof(Cloud), "timer", savedCloud);
-                self.CopyField(typeof(Cloud), "scale", savedCloud);
-                self.CopyField(typeof(Cloud), "canRumble", savedCloud);
+                self.CopyFields(savedCloud, "waiting", "returning", "timer", "scale", "canRumble");
 
                 self.Add(new Coroutine(RestoreRespawnState(self, savedCloud)));
             }

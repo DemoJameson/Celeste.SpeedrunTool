@@ -83,15 +83,24 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             fieldInfo?.SetValue(obj, value);
         }
 
-        public static void CopyField(this object obj, string name, object fromObj) {
-            obj.SetField(name, fromObj.GetField(name));
-        }
+		public static void CopyField(this object obj, string name, object fromObj) {
+			obj.SetField(name, fromObj.GetField(name));
+		}
 
-        public static void CopyField(this object obj, Type type, string name, object fromObj) {
-            obj.SetField(type, name, fromObj.GetField(type, name));
-        }
+		public static void CopyField(this object obj, Type type, string name, object fromObj) {
+			obj.SetField(type, name, fromObj.GetField(type, name));
+		}
+		public static void CopyFields(this object obj, object fromObj, params string[] names) {
+			foreach (string name in names)	
+				obj.SetField(name, fromObj.GetField(name));
+		}
 
-        public static object GetProperty(this object obj, string name) {
+		public static void CopyFields(this object obj, Type type, object fromObj, params string[] names) {
+			foreach (string name in names)
+				obj.SetField(type, name, fromObj.GetField(type, name));
+		}
+
+		public static object GetProperty(this object obj, string name) {
             return obj.GetProperty(obj.GetType(), name);
         }
 

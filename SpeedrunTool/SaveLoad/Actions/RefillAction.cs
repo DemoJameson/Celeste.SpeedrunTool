@@ -27,7 +27,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                         self.Collidable = false;
                         float respawnTimer = (float) savedRefill.GetField(typeof(Refill), "respawnTimer");
                         self.SetField(typeof(Refill), "respawnTimer", respawnTimer);
-                        self.Add(new Coroutine(ConsumeRefill(self)));
+                        ConsumeRefill(self);
                     }
                 }
                 else {
@@ -36,17 +36,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
         }
 
-        private static IEnumerator ConsumeRefill(Refill self) {
+        private static void ConsumeRefill(Refill self) {
             (self.GetField(typeof(Refill), "sprite") as Sprite).Visible = false;
             (self.GetField(typeof(Refill), "flash") as Sprite).Visible = false;
             if (!(bool)self.GetField(typeof(Refill), "oneUse")) {
                 (self.GetField(typeof(Refill), "outline") as Image).Visible = true;
             }
-            else {
-                self.RemoveSelf();
-            }
             self.Depth = 8999;
-            yield return null;
+			// Refill.RefillRoutine takes care of the rest
+            return;
         }
 
         public override void OnClear() {

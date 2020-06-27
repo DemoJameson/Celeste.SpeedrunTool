@@ -1,6 +1,10 @@
+using System;
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Monocle;
 using Microsoft.Xna.Framework;
+using Mono.Cecil.Cil;
+using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class SwitchGateAction : AbstractEntityAction {
@@ -20,18 +24,33 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             if (IsLoadStart && savedSwitchGates.ContainsKey(entityId)) {
                 self.Position = savedSwitchGates[entityId].Position;
             }
-        }
+		}
 
-        public override void OnClear() {
+		//this isn't actually blocking the coroutine
+		//makes it duplicate it in a less broken way though i guess
+		private void BlockCoroutineStart(ILContext il) {
+			ILCursor c = new ILCursor(il);
+			c.GotoNext((i) => i.MatchRet());
+			c.GotoNext((i) => i.MatchRet());
+			Instruction skipCoroutine = c.Next;
+			c.GotoPrev((i) => i.MatchRet());
+			c.GotoNext();
+			c.EmitDelegate<Func<bool>>(() => IsLoadStart);
+			c.Emit(OpCodes.Brtrue, skipCoroutine);
+		}
+
+		public override void OnClear() {
             savedSwitchGates.Clear();
         }
 
         public override void OnLoad() {
             On.Celeste.SwitchGate.ctor_EntityData_Vector2 += RestoreSwitchGatePosition;
+			IL.Celeste.SwitchGate.Awake += BlockCoroutineStart;
         }
 
-        public override void OnUnload() {
+		public override void OnUnload() {
             On.Celeste.SwitchGate.ctor_EntityData_Vector2 -= RestoreSwitchGatePosition;
-        }
+			IL.Celeste.SwitchGate.Awake -= BlockCoroutineStart;
+		}
     }
 }

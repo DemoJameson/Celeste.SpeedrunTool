@@ -30,12 +30,22 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
         }
 
-        List<Routine> loadedRoutines = new List<Routine>();
+        static List<Routine> loadedRoutines = new List<Routine>();
 
-        bool IsLoading => StateManager.Instance.IsLoading;
+		readonly Type debrisListType = typeof(List<>).MakeGenericType(typeof(MoveBlock).GetNestedType("Debris", BindingFlags.NonPublic));
+
+		public static bool HasRoutine(string name) {
+			foreach (Routine routine in loadedRoutines) {
+				if (routine.routine.Name.Contains(name))
+					return true;
+			}
+			return false;
+		}
 
         public void OnQuickSave(Level level) {
             foreach (Entity e in level.Entities) {
+				if (e is ForsakenCitySatellite || e is FlutterBird || e is Lightning)
+					continue;
                 EntityID id = e.GetEntityId();
                 foreach (Monocle.Component component in e.Components) {
                     if (component is Coroutine coroutine) {
@@ -112,10 +122,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
 		public void LocalsSpecialCases(object value, out object foundValue, bool loading) {
 			foundValue = null;
-
 			if (value is List<MTexture>) {
 				foundValue = new List<MTexture>(value as List<MTexture>);
 			}
+			else if (value?.GetType() == debrisListType)
+				foundValue = Convert.ChangeType(value, debrisListType);
 			else if (value is Image) {
 				foundValue = new Image(new MTexture());
 			}
@@ -125,6 +136,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 			else if (value is Tween) {
 				foundValue = Tween.Create((value as Tween).Mode);
 			}
+			//doesn't actually work properly i think
 			else if (value is Delegate) {
 				foundValue = (value as Delegate).Clone();
 			}
@@ -152,6 +164,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                         coroutine = new Coroutine(functionCall, routine.removeOnComplete);
                         e.Components.Add(coroutine);
                     }
+					if (e is CrushBlock)
+						e.SetField("attackCoroutine", coroutine);
                     coroutine.SetField("waitTimer", routine.waitTimer);
                 }
                 SetCoroutineLocals(level, entities, routine, functionCall);

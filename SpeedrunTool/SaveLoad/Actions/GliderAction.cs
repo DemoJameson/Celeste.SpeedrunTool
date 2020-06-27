@@ -53,11 +53,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
             self.Position = savedGlider.Position;
             self.Speed = savedGlider.Speed;
-            self.CopyField(typeof(Glider), "prevLiftSpeed", savedGlider);
-            self.CopyField(typeof(Glider), "noGravityTimer", savedGlider);
-            self.CopyField(typeof(Glider), "highFrictionTimer", savedGlider);
-            self.CopyField(typeof(Glider), "bubble", savedGlider);
-            self.CopyField(typeof(Glider), "destroyed", savedGlider);
+            self.CopyFields(typeof(Glider), savedGlider, "prevLiftSpeed");
+            self.CopyFields(typeof(Glider), savedGlider, "noGravityTimer");
+            self.CopyFields(typeof(Glider), savedGlider, "highFrictionTimer");
+            self.CopyFields(typeof(Glider), savedGlider, "bubble");
+            self.CopyFields(typeof(Glider), savedGlider, "destroyed");
         }
 
         public override void OnClear() {

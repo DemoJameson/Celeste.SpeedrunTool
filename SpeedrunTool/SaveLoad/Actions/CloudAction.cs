@@ -31,8 +31,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private static IEnumerator RestoreRespawnState(Cloud self, Cloud savedCloud) {
             yield return null;
             self.Collidable = savedCloud.Collidable;
-            self.CopyField(typeof(Cloud), "respawnTimer", savedCloud);
-            self.CopyField(typeof(Cloud), "speed", savedCloud);
+            self.CopyFields(typeof(Cloud), savedCloud, "respawnTimer");
+            self.CopyFields(typeof(Cloud), savedCloud, "speed");
         }
 
         private void CloudOnUpdate(On.Celeste.Cloud.orig_Update orig, Cloud self) {

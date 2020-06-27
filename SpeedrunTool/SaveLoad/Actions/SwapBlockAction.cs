@@ -20,10 +20,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 SwapBlock swapBlock = swapBlocks[entityId];
                 self.Position = swapBlock.Position;
                 self.Swapping = swapBlock.Swapping;
-                self.CopyField(typeof(SwapBlock), "target", swapBlock);
-                self.CopyField(typeof(SwapBlock), "speed", swapBlock);
-                self.CopyField(typeof(SwapBlock), "lerp", swapBlock);
-                self.CopyField(typeof(SwapBlock), "returnTimer", swapBlock);
+                self.CopyFields(typeof(SwapBlock), swapBlock, "target");
+                self.CopyFields(typeof(SwapBlock), swapBlock, "speed");
+                self.CopyFields(typeof(SwapBlock), swapBlock, "lerp");
+                self.CopyFields(typeof(SwapBlock), swapBlock, "returnTimer");
             }
         }
 

@@ -1,17 +1,6 @@
 ﻿using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
 using Monocle;
-using Celeste;
-using Mono.Cecil;
-using MonoMod.Cil;
-using MonoMod.RuntimeDetour;
-using MonoMod.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     class PlayerAction : AbstractEntityAction {
@@ -82,7 +71,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 					);
                     break;
                 case Player.StDreamDash:
-                    loadedPlayer.CopyField("dreamDashCanEndTimer", savedPlayer);
+                    loadedPlayer.CopyFields(savedPlayer, "dreamDashCanEndTimer");
                     var dreamBlocks = Engine.Scene.Entities.GetDictionary<DreamBlock>();
                     dreamBlocks.TryGetValue(dreamBlock, out DreamBlock db);
                     loadedPlayer.SetField("dreamBlock", db);

@@ -21,19 +21,19 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (IsLoadStart && savedPuffers.ContainsKey(entityId)) {
                 Puffer savedPuffer = savedPuffers[entityId];
-                self.CopyField(typeof(Puffer), "alertTimer", savedPuffer);
-                self.CopyField(typeof(Puffer), "anchorPosition", savedPuffer);
-                self.CopyField(typeof(Puffer), "cannotHitTimer", savedPuffer);
-                self.CopyField(typeof(Puffer), "cantExplodeTimer", savedPuffer);
-                self.CopyField(typeof(Puffer), "eyeSpin", savedPuffer);
-                self.CopyField(typeof(Puffer), "goneTimer", savedPuffer);
-                self.CopyField(typeof(Puffer), "hitSpeed", savedPuffer);
-                self.CopyField(typeof(Puffer), "lastPlayerPos", savedPuffer);
-                self.CopyField(typeof(Puffer), "lastSinePosition", savedPuffer);
-                self.CopyField(typeof(Puffer), "lastSpeedPosition", savedPuffer);
-                self.CopyField(typeof(Puffer), "playerAliveFade", savedPuffer);
-                self.CopyField(typeof(Puffer), "scale", savedPuffer);
-                self.CopyField(typeof(Puffer), "state", savedPuffer);
+                self.CopyFields(typeof(Puffer), savedPuffer, "alertTimer");
+                self.CopyFields(typeof(Puffer), savedPuffer, "anchorPosition");
+                self.CopyFields(typeof(Puffer), savedPuffer, "cannotHitTimer");
+                self.CopyFields(typeof(Puffer), savedPuffer, "cantExplodeTimer");
+                self.CopyFields(typeof(Puffer), savedPuffer, "eyeSpin");
+                self.CopyFields(typeof(Puffer), savedPuffer, "goneTimer");
+                self.CopyFields(typeof(Puffer), savedPuffer, "hitSpeed");
+                self.CopyFields(typeof(Puffer), savedPuffer, "lastPlayerPos");
+                self.CopyFields(typeof(Puffer), savedPuffer, "lastSinePosition");
+                self.CopyFields(typeof(Puffer), savedPuffer, "lastSpeedPosition");
+                self.CopyFields(typeof(Puffer), savedPuffer, "playerAliveFade");
+                self.CopyFields(typeof(Puffer), savedPuffer, "scale");
+                self.CopyFields(typeof(Puffer), savedPuffer, "state");
                 
                 SineWave sineWave = (SineWave) self.GetField(typeof(Puffer), "idleSine");
                 SineWave savedSineWave = (SineWave) savedPuffer.GetField(typeof(Puffer), "idleSine");

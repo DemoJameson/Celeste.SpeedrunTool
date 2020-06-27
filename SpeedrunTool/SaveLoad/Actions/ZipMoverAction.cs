@@ -1,11 +1,10 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
+using Mono.Cecil.Cil;
 using Monocle;
 using MonoMod.Cil;
-using Mono.Cecil.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class ZipMoverAction : AbstractEntityAction {
@@ -25,7 +24,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 			orig.Invoke(self, data, offset);
 			if (IsLoadStart && savedZipMovers.ContainsKey(entityId)) {
 				self.Position = savedZipMovers[entityId].Position;
-				self.CopyField("percent", savedZipMovers[entityId]);
+				self.CopyFields(savedZipMovers[entityId], "percent");
 			}
 		}
 

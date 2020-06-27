@@ -29,8 +29,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             self.Position = savedSnowball.Position;
             self.Collidable = self.Visible = savedSnowball.Collidable;
-            self.CopyField(typeof(Snowball), "atY", savedSnowball);
-            self.CopyField(typeof(Snowball), "resetTimer", savedSnowball);
+            self.CopyFields(typeof(Snowball), savedSnowball, "atY");
+            self.CopyFields(typeof(Snowball), savedSnowball, "resetTimer");
             SineWave sine = self.Get<SineWave>();
             SineWave savedSine = savedSnowball.Get<SineWave>();
             sine.Counter = savedSine.Counter;

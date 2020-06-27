@@ -21,18 +21,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 BounceBlock savedBounceBlock = savedBounceBlocks[entityId];
                 self.Position = savedBounceBlock.Position;
                 self.Collidable = savedBounceBlock.Collidable;
-                self.CopyField(typeof(BounceBlock), "bounceDir", savedBounceBlock);
-                self.CopyField(typeof(BounceBlock), "state", savedBounceBlock);
-                self.CopyField(typeof(BounceBlock), "moveSpeed", savedBounceBlock);
-                self.CopyField(typeof(BounceBlock), "windUpStartTimer", savedBounceBlock);
-                self.CopyField(typeof(BounceBlock), "windUpProgress", savedBounceBlock);
-                self.CopyField(typeof(BounceBlock), "bounceEndTimer", savedBounceBlock);
-                self.CopyField(typeof(BounceBlock), "bounceLift", savedBounceBlock);
-                self.CopyField(typeof(BounceBlock), "reappearFlash", savedBounceBlock);
-                self.CopyField(typeof(BounceBlock), "debrisDirection", savedBounceBlock);
-                self.CopyField(typeof(BounceBlock), "iceMode", savedBounceBlock);
-                self.CopyField(typeof(BounceBlock), "iceModeNext", savedBounceBlock);
-                self.CopyField(typeof(BounceBlock), "respawnTimer", savedBounceBlock);
+                self.CopyFields(typeof(BounceBlock), savedBounceBlock, "bounceDir");
+                self.CopyFields(typeof(BounceBlock), savedBounceBlock, "state");
+                self.CopyFields(typeof(BounceBlock), savedBounceBlock, "moveSpeed");
+                self.CopyFields(typeof(BounceBlock), savedBounceBlock, "windUpStartTimer");
+                self.CopyFields(typeof(BounceBlock), savedBounceBlock, "windUpProgress");
+                self.CopyFields(typeof(BounceBlock), savedBounceBlock, "bounceEndTimer");
+                self.CopyFields(typeof(BounceBlock), savedBounceBlock, "bounceLift");
+                self.CopyFields(typeof(BounceBlock), savedBounceBlock, "reappearFlash");
+                self.CopyFields(typeof(BounceBlock), savedBounceBlock, "debrisDirection");
+                self.CopyFields(typeof(BounceBlock), savedBounceBlock, "iceMode");
+                self.CopyFields(typeof(BounceBlock), savedBounceBlock, "iceModeNext");
+                self.CopyFields(typeof(BounceBlock), savedBounceBlock, "respawnTimer");
             }
         }
 

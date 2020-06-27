@@ -34,11 +34,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.FrostHelper {
 
         private static IEnumerator RestoreState(Solid self, Solid saved) {
             self.Position = saved.Position;
-            self.CopyField("lerp", saved);
-            self.CopyField("target", saved);
-            self.CopyField("returnTimer", saved);
-            self.CopyField("speed", saved);
-            self.CopyField("Swapping", saved);
+            self.CopyFields(saved, "lerp");
+            self.CopyFields(saved, "target");
+            self.CopyFields(saved, "returnTimer");
+            self.CopyFields(saved, "speed");
+            self.CopyFields(saved, "Swapping");
             // 重新使刺依附上去
             self.Awake(self.Scene);
             yield break;

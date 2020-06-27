@@ -19,11 +19,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (IsLoadStart && savedFloatySpaceBlocks.ContainsKey(entityId)) {
                 FloatySpaceBlock savedFloatySpaceBlock = savedFloatySpaceBlocks[entityId];
-                self.CopyField(typeof(FloatySpaceBlock), "yLerp", savedFloatySpaceBlock);
-                self.CopyField(typeof(FloatySpaceBlock), "sinkTimer", savedFloatySpaceBlock);
-                self.CopyField(typeof(FloatySpaceBlock), "sineWave", savedFloatySpaceBlock);
-                self.CopyField(typeof(FloatySpaceBlock), "dashEase", savedFloatySpaceBlock);
-                self.CopyField(typeof(FloatySpaceBlock), "dashDirection", savedFloatySpaceBlock);
+                self.CopyFields(typeof(FloatySpaceBlock), savedFloatySpaceBlock, "yLerp");
+                self.CopyFields(typeof(FloatySpaceBlock), savedFloatySpaceBlock, "sinkTimer");
+                self.CopyFields(typeof(FloatySpaceBlock), savedFloatySpaceBlock, "sineWave");
+                self.CopyFields(typeof(FloatySpaceBlock), savedFloatySpaceBlock, "dashEase");
+                self.CopyFields(typeof(FloatySpaceBlock), savedFloatySpaceBlock, "dashDirection");
             }
         }
 

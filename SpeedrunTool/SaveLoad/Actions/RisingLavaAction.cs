@@ -21,9 +21,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (IsLoadStart && savedRisingLavas.ContainsKey(entityId)) {
                 RisingLava savedRisingLava = savedRisingLavas[entityId];
-                self.CopyField(typeof(RisingLava), "intro", savedRisingLava);
-                self.CopyField(typeof(RisingLava), "delay", savedRisingLava);
-                self.CopyField(typeof(RisingLava), "waiting", savedRisingLava);
+                self.CopyFields(typeof(RisingLava), savedRisingLava, "intro");
+                self.CopyFields(typeof(RisingLava), savedRisingLava, "delay");
+                self.CopyFields(typeof(RisingLava), savedRisingLava, "waiting");
                 self.Add(new RestorePositionComponent(self, savedRisingLava));
             }
         }

@@ -20,8 +20,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             if (IsLoadStart) {
                 if (savedLightningBreakerBox != null) {
                     self.Position = savedLightningBreakerBox.Position;
-                    self.CopyField(typeof(LightningBreakerBox), "health", savedLightningBreakerBox);
-                    self.CopyField(typeof(LightningBreakerBox), "sink", savedLightningBreakerBox);
+                    self.CopyFields(typeof(LightningBreakerBox), savedLightningBreakerBox, "health");
+                    self.CopyFields(typeof(LightningBreakerBox), savedLightningBreakerBox, "sink");
                     SineWave sine = self.Get<SineWave>();
                     SineWave savedSine = savedLightningBreakerBox.Get<SineWave>();
                     sine.Counter = savedSine.Counter;

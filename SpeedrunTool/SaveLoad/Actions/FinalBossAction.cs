@@ -39,7 +39,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 self.SetField(typeof(FinalBoss), "nodeIndex", nodeIndex);
                 self.Add(new RestoreFinalBossStateComponent(savedFinalBoss));
                 
-                self.CopyField(typeof(FinalBoss), "playerHasMoved", savedFinalBoss);
+                self.CopyFields(typeof(FinalBoss), savedFinalBoss, "playerHasMoved");
             }
         }
 

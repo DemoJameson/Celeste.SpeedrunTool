@@ -54,7 +54,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             for (var i = 0; i < spikes.Length; i++) {
                 var spike = spikes.GetValue(i);
                 var savedSpike = savedSpikes.GetValue(i);
-                savedSpike.CopyField("Parent", spike);
+                savedSpike.CopyFields(spike, "Parent");
                 newSpikes.SetValue(savedSpike, i);
             }
 

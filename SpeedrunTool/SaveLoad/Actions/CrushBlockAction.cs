@@ -54,11 +54,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     CrushBlock savedCrushBlock = savedCrushBlocks[entityId];
                     if (self.Position != savedCrushBlock.Position) {
                         self.Position = savedCrushBlock.Position;
-						self.CopyField("crushDir", savedCrushBlock);
 						object returnStack = savedCrushBlock.GetField("returnStack").Copy();
 						self.SetField("returnStack", returnStack);
-						self.CopyField("chillOut", savedCrushBlock);
-						self.CopyField("canActivate", savedCrushBlock);
+						self.CopyFields(savedCrushBlock, "chillOut", "canActivate", "crushDir");
 						/*
                         self.Add(new FastForwardComponent<CrushBlock>(savedCrushBlock, OnFastForward));
                         self.Add(new RestoreCrushBlockStateComponent(savedCrushBlock));

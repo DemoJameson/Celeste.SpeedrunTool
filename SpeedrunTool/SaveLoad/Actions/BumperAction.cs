@@ -29,8 +29,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
                 Tween savedTween = savedBumper.Get<Tween>();
                 if (savedTween != null) {
-                    self.CopyField(typeof(Bumper), "goBack", savedBumper);
-                    self.CopyField(typeof(Bumper), "anchor", savedBumper);
+                    self.CopyFields(typeof(Bumper), savedBumper, "goBack");
+                    self.CopyFields(typeof(Bumper), savedBumper, "anchor");
                     self.Get<Tween>().CopyFrom(savedTween);
                 }
             }

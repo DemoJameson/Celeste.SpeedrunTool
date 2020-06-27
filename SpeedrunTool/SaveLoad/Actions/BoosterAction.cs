@@ -115,7 +115,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private IEnumerator WaitToRespawn(Booster self, Booster savedBooster) {
-            self.CopyField(typeof(Booster), "respawnTimer", savedBooster);
+            self.CopyFields(typeof(Booster), savedBooster, "respawnTimer");
             Sprite sprite = self.GetField(typeof(Booster), "sprite") as Sprite;
             sprite.Visible = false;
             Entity outline = self.GetField(typeof(Booster), "outline") as Entity;

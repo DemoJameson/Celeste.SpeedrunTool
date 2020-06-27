@@ -18,7 +18,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.FrostHelper {
         private void SolidOnCtor(On.Celeste.Solid.orig_ctor orig, Solid self, Vector2 position, float width,
             float height, bool safe) {
             orig(self, position, width, height, safe);
-            self.SetEntityId(position.GetRealHashCode() + width.GetHashCode() + height.GetHashCode() + safe.GetHashCode());
+            self.TrySetEntityId(position.ToString(), width.ToString(), height.ToString(), safe.ToString());
 
             if (self.GetType().FullName == FullName) {
                 EntityID entityId = self.GetEntityId();

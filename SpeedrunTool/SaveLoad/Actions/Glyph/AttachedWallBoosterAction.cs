@@ -21,11 +21,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Glyph {
             // 移除 WallBooster 本身无用的 StaticMover 避免对 StaticMoverAction 造成干扰导致无法依附
             self.Remove(self.Get<StaticMover>());
 
-            Level level = CelesteExtensions.GetLevel();
-            if (level?.Session?.Level == null) {
+            EntityID entityId = self.CreateEntityId(position.ToString(), height.ToString(), left.ToString(), notCoreMode.ToString());
+            if (entityId.Equals(default(EntityID))) {
                 return;
             }
-            EntityID entityId = new EntityID(level.Session.Level, position.GetRealHashCode() + height.GetHashCode() + left.GetHashCode() + notCoreMode.GetHashCode());
             self.SetEntityId(entityId);
 
             if (IsLoadStart) {

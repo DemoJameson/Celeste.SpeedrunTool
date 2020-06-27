@@ -17,7 +17,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private void ReflectionTentaclesOnCreate(On.Celeste.ReflectionTentacles.orig_Create orig,
             ReflectionTentacles self, float fearDistance, int slideUntilIndex, int layer, List<Vector2> startNodes) {
             if (!mainEntityId.Equals(default(EntityID)) && layer > 0) {
-                self.SetEntityId(new EntityID(mainEntityId.Level + "ReflectionTentacles", mainEntityId.ID + layer));
+                self.SetEntityId(new EntityID(mainEntityId.Level, (mainEntityId + "-" + layer).GetHashCode()));
             }
 
             EntityID entityId = self.GetEntityId();

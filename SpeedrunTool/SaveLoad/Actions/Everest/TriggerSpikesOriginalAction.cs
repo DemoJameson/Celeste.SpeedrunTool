@@ -22,11 +22,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Everest {
                 return;
             }
 
-            Level level = CelesteExtensions.GetLevel();
-            if (level?.Session?.Level == null) {
+            EntityID entityId = self.CreateEntityId(position.ToString(), self.GetField("direction").ToString());
+            if (entityId.Equals(default(EntityID))) {
                 return;
             }
-            EntityID entityId = new EntityID(level.Session.Level, position.GetRealHashCode() + self.GetField("direction").GetHashCode());
             self.SetEntityId(entityId);
 
             if (IsLoadStart) {

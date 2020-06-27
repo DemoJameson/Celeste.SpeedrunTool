@@ -24,13 +24,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.ShroomHelper {
                 return;
             }
 
-            Level level = CelesteExtensions.GetLevel();
-            if (level?.Session?.Level == null) {
+            EntityID entityId = self.CreateEntityId(position.ToString(), width.ToString(), height.ToString(), safe.ToString());
+            if (entityId.Equals(default(EntityID))) {
                 return;
             }
-
-            EntityID entityId = new EntityID(level.Session.Level,
-                position.GetRealHashCode() + width.GetHashCode() + height.GetHashCode() + safe.GetHashCode());
             self.SetEntityId(entityId);
 
             if (IsLoadStart && !savedBlocks.ContainsKey(entityId)) {

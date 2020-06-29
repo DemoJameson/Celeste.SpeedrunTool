@@ -71,7 +71,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 EntityID entityId = entity.GetEntityId();
                 if (entityId.Equals(default(EntityID)) || result.ContainsKey(entityId)) {
                     Logger.Log("Speedrun Tool",
-                        $"EntityID Duplication: Level Name={entityId.Level}, Entity Name={entity.GetType().Name}, Position={entity.Position}");
+                        $"EntityID Duplication: ID={entityId.ID} Level Name={entityId.Level}, Entity Name={entity.GetType().FullName}, Position={entity.Position}");
                     continue;
                 }
 
@@ -87,7 +87,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 EntityID entityId = entity.GetEntityId();
                 if (entityId.Equals(default(EntityID)) || result.ContainsKey(entityId)) {
                     Logger.Log("Speedrun Tool",
-                        $"EntityID Duplication: Level Name={entityId.Level}, Entity Name={entity.GetType().Name}, Position={entity.Position}");
+                        $"EntityID Duplication: ID={entityId.ID} Level Name={entityId.Level}, Entity Name={entity.GetType().FullName}, Position={entity.Position}");
                     continue;
                 }
 

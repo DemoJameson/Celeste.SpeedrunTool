@@ -1,13 +1,19 @@
-﻿using Celeste.Mod.SpeedrunTool.Extensions;
-using Monocle;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using Celeste.Mod.SpeedrunTool.Extensions;
+using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
-
     class CoroutineAction {
+        private static readonly FieldInfo EnumeratorsFieldInfo =
+            typeof(Coroutine).GetField("enumerators", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        private static readonly MethodInfo FindFirstMethodInfo = typeof(EntityList).GetMethod("FindFirst");
+
+        private static readonly Type DebrisListType =
+            typeof(List<>).MakeGenericType(typeof(MoveBlock).GetNestedType("Debris", BindingFlags.NonPublic));
 
         private class Routine {
             public EntityID ID;
@@ -19,7 +25,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             public Routine parent;
             public bool IsFromState { get; set; } = false;
             public int State { get; set; } = 0;
-            public Routine(EntityID ID, Type routine, FieldInfo[] fields, object[] locals, float waitTimer, bool removeOnComplete, Routine parent) {
+
+            public Routine(EntityID ID, Type routine, FieldInfo[] fields, object[] locals, float waitTimer,
+                bool removeOnComplete, Routine parent) {
                 this.ID = ID;
                 this.routine = routine;
                 this.fields = fields;
@@ -30,29 +38,27 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
         }
 
-        static List<Routine> loadedRoutines = new List<Routine>();
+        private static List<Routine> loadedRoutines = new List<Routine>();
 
-		readonly Type debrisListType = typeof(List<>).MakeGenericType(typeof(MoveBlock).GetNestedType("Debris", BindingFlags.NonPublic));
+        public static bool HasRoutine(string name) {
+            foreach (Routine routine in loadedRoutines) {
+                if (routine.routine.Name.Contains(name))
+                    return true;
+            }
 
-		public static bool HasRoutine(string name) {
-			foreach (Routine routine in loadedRoutines) {
-				if (routine.routine.Name.Contains(name))
-					return true;
-			}
-			return false;
-		}
+            return false;
+        }
 
         public void OnQuickSave(Level level) {
             foreach (Entity e in level.Entities) {
-				if (e is ForsakenCitySatellite || e is FlutterBird || e is Lightning)
-					continue;
+                if (e is ForsakenCitySatellite || e is FlutterBird || e is Lightning)
+                    continue;
                 EntityID id = e.GetEntityId();
                 foreach (Monocle.Component component in e.Components) {
                     if (component is Coroutine coroutine) {
                         SaveCoroutine(coroutine, id);
-                    }
-                    else if (component is StateMachine state) {
-                        coroutine = (Coroutine)state.GetField("currentCoroutine");
+                    } else if (component is StateMachine state) {
+                        coroutine = (Coroutine) state.GetField("currentCoroutine");
                         if (coroutine != null && SaveCoroutine(coroutine, id)) {
                             loadedRoutines[loadedRoutines.Count - 1].IsFromState = true;
                             loadedRoutines[loadedRoutines.Count - 1].State = state.State;
@@ -60,34 +66,39 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     }
                 }
             }
+
             loadedRoutines.Reverse();
         }
 
         private bool SaveCoroutine(Coroutine coroutine, EntityID id) {
-            object enumerators = typeof(Coroutine).GetField("enumerators", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(coroutine);
-            int initialCount = ((Stack<IEnumerator>)enumerators).Count;
+            object enumerators = EnumeratorsFieldInfo.GetValue(coroutine);
+            int initialCount = ((Stack<IEnumerator>) enumerators).Count;
             for (int j = 0; j < initialCount; j++) {
-                IEnumerator routine = ((Stack<IEnumerator>)enumerators).Pop();
+                IEnumerator routine = ((Stack<IEnumerator>) enumerators).Pop();
 
-				if (routine.GetType().Assembly == Assembly.GetExecutingAssembly())
-					return false;
+                if (routine.GetType().Assembly == Assembly.GetExecutingAssembly())
+                    return false;
 
-				GetCoroutineLocals(id, routine, out Type routineType, out FieldInfo[] routineFields, out object[] routineLocals);
+                GetCoroutineLocals(id, routine, out Type routineType, out FieldInfo[] routineFields,
+                    out object[] routineLocals);
 
                 // When a coroutine yields a float, Coroutine.Update() waits that long before calling it again.
                 // Backup that as well.
-                float routineTimer = (float)coroutine.GetField("waitTimer");
+                float routineTimer = (float) coroutine.GetField("waitTimer");
 
-                Routine toAdd = new Routine(id, routineType, routineFields, routineLocals, routineTimer, coroutine.RemoveOnComplete, null);
+                Routine toAdd = new Routine(id, routineType, routineFields, routineLocals, routineTimer,
+                    coroutine.RemoveOnComplete, null);
                 loadedRoutines.Add(toAdd);
                 // If the coroutine called another coroutine, record the calling coroutine.
                 if (j > 0)
                     loadedRoutines[j - 1].parent = toAdd;
             }
+
             return initialCount > 0;
         }
 
-        public void GetCoroutineLocals(EntityID id, object routine, out Type routineType, out FieldInfo[] routineFields, out object[] routineLocals) {
+        public void GetCoroutineLocals(EntityID id, object routine, out Type routineType, out FieldInfo[] routineFields,
+            out object[] routineLocals) {
             // In Coroutine.ctor(IEnumerator):
             // The compiler creates a new class for the IEnumerator method call.
             // Calling the method itself just calls the constructor for that class.
@@ -103,107 +114,103 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             for (int i = 0; i < routineFields.Length; i++) {
                 FieldInfo local = routineFields[i];
                 object value = routine.GetField(local.Name);
-				// Store the value of value types.
-				if (value is ValueType)
-					routineLocals[i] = value;
-				// Store the EntityID of entities.
-				else if (value is Entity entity)
-					routineLocals[i] = entity.GetEntityId();
-				// If it's a compiler-generated type (ex: BadelineBoost.BoostRoutine) back that up too.
-				else if (local.FieldType.Name.StartsWith("<")) {
-					GetCoroutineLocals(id, value, out Type _routineType, out FieldInfo[] _routineFields, out object[] _routineLocals);
-					routineLocals[i] = new Routine(id, _routineType, _routineFields, _routineLocals, 0f, false, null);
-				}
-				else
-					LocalsSpecialCases(value, out routineLocals[i], false);
-
+                // Store the value of value types.
+                if (value is ValueType)
+                    routineLocals[i] = value;
+                // Store the EntityID of entities.
+                else if (value is Entity entity)
+                    routineLocals[i] = entity.GetEntityId();
+                // If it's a compiler-generated type (ex: BadelineBoost.BoostRoutine) back that up too.
+                else if (local.FieldType.Name.StartsWith("<")) {
+                    GetCoroutineLocals(id, value, out Type _routineType, out FieldInfo[] _routineFields,
+                        out object[] _routineLocals);
+                    routineLocals[i] = new Routine(id, _routineType, _routineFields, _routineLocals, 0f, false, null);
+                } else
+                    LocalsSpecialCases(value, out routineLocals[i], false);
             }
         }
 
-		public void LocalsSpecialCases(object value, out object foundValue, bool loading) {
-			foundValue = null;
-			if (value is List<MTexture>) {
-				foundValue = new List<MTexture>(value as List<MTexture>);
-			}
-			else if (value?.GetType() == debrisListType)
-				foundValue = Convert.ChangeType(value, debrisListType);
-			else if (value is Image) {
-				foundValue = new Image(new MTexture());
-			}
-			else if (value is SoundEmitter) {
-				foundValue = SoundEmitter.Play((value as SoundEmitter).Source.EventName);
-			}
-			else if (value is Tween) {
-				foundValue = Tween.Create((value as Tween).Mode);
-			}
-			//doesn't actually work properly i think
-			else if (value is Delegate) {
-				foundValue = (value as Delegate).Clone();
-			}
-		}
+        public void LocalsSpecialCases(object value, out object foundValue, bool loading) {
+            foundValue = null;
+            if (value is List<MTexture>) {
+                foundValue = new List<MTexture>(value as List<MTexture>);
+            } else if (value?.GetType() == DebrisListType)
+                foundValue = Convert.ChangeType(value, DebrisListType);
+            else if (value is Image) {
+                foundValue = new Image(new MTexture());
+            } else if (value is SoundEmitter) {
+                foundValue = SoundEmitter.Play((value as SoundEmitter).Source.EventName);
+            } else if (value is Tween) {
+                foundValue = Tween.Create((value as Tween).Mode);
+            }
+            //doesn't actually work properly i think
+            else if (value is Delegate) {
+                foundValue = (value as Delegate).Clone();
+            }
+        }
 
-		public void OnQuickLoad(Level level) {
+        public void OnQuickLoad(Level level) {
             var entities = level.Entities.GetDictionary<Entity>();
             Coroutine coroutine = null;
             foreach (Routine routine in loadedRoutines) {
-                ConstructorInfo routineCtor = routine.routine.GetConstructor(new Type[] { typeof(int) });
-                IEnumerator functionCall = (IEnumerator)routineCtor.Invoke(new object[] { 0 });
+                ConstructorInfo routineCtor = routine.routine.GetConstructor(new Type[] {typeof(int)});
+                IEnumerator functionCall = (IEnumerator) routineCtor.Invoke(new object[] {0});
                 if (entities.TryGetValue(routine.ID, out Entity e)) {
                     if (routine.parent != null) {
-                        var enumerators = (Stack<IEnumerator>)coroutine.GetField("enumerators");
+                        var enumerators = (Stack<IEnumerator>) coroutine.GetField("enumerators");
                         enumerators.Push(functionCall);
-                    }
-                    else if (routine.IsFromState) {
+                    } else if (routine.IsFromState) {
                         StateMachine state = e.Components.Get<StateMachine>();
                         coroutine = new Coroutine(functionCall, routine.removeOnComplete);
                         coroutine.Active = true;
                         state.SetField("currentCoroutine", coroutine);
                         state.SetField("state", routine.State);
-                    }
-                    else {
+                    } else {
                         coroutine = new Coroutine(functionCall, routine.removeOnComplete);
                         e.Components.Add(coroutine);
                     }
-					if (e is CrushBlock)
-						e.SetField("attackCoroutine", coroutine);
+
+                    if (e is CrushBlock)
+                        e.SetField("attackCoroutine", coroutine);
                     coroutine.SetField("waitTimer", routine.waitTimer);
                 }
+
                 SetCoroutineLocals(level, entities, routine, functionCall);
             }
         }
 
-        private void SetCoroutineLocals(Level level, Dictionary<EntityID, Entity> entities, Routine routine, object routineObj) {
+        private void SetCoroutineLocals(Level level, Dictionary<EntityID, Entity> entities, Routine routine,
+            object routineObj) {
             for (int i = 0; i < routine.fields.Length; i++) {
                 FieldInfo field = routine.fields[i];
                 object foundValue = null;
-				if (routine.locals[i] is EntityID storedID)
-					if (entities.TryGetValue(storedID, out Entity e))
-						foundValue = e;
-					// If the entity doesn't store its ID, find the first entity of that type.
-					// This may break some sound related stuff but I think that's it.
-					else {
-						MethodInfo findFirst = typeof(EntityList).GetMethod("FindFirst").MakeGenericMethod(field.FieldType);
-						object value = findFirst.Invoke(level.Entities, new object[0]);
-						foundValue = value;
-					}
-				else if (field.FieldType == typeof(Level))
-					foundValue = level;
-				else if (routine.locals[i] is ValueType)
-					foundValue = routine.locals[i];
-				// It isn't actually a routine but a object of a compiler-generated type stored as a routine.
-				else if (routine.locals[i] is Routine _routine) {
-					ConstructorInfo routineCtor = _routine.routine.GetConstructor(new Type[0]);
-					object obj = routineCtor.Invoke(new object[0]);
-					SetCoroutineLocals(level, entities, _routine, obj);
-					foundValue = obj;
-				}
-				else LocalsSpecialCases(routine.locals[i], out foundValue, true);
-				if (foundValue != null)
-	                routineObj.SetField(routineObj.GetType(), field.Name, foundValue);
+                if (routine.locals[i] is EntityID storedID)
+                    if (entities.TryGetValue(storedID, out Entity e))
+                        foundValue = e;
+                    // If the entity doesn't store its ID, find the first entity of that type.
+                    // This may break some sound related stuff but I think that's it.
+                    else {
+                        MethodInfo findFirst = FindFirstMethodInfo.MakeGenericMethod(field.FieldType);
+                        object value = findFirst.Invoke(level.Entities, new object[0]);
+                        foundValue = value;
+                    }
+                else if (field.FieldType == typeof(Level))
+                    foundValue = level;
+                else if (routine.locals[i] is ValueType)
+                    foundValue = routine.locals[i];
+                // It isn't actually a routine but a object of a compiler-generated type stored as a routine.
+                else if (routine.locals[i] is Routine _routine) {
+                    ConstructorInfo routineCtor = _routine.routine.GetConstructor(new Type[0]);
+                    object obj = routineCtor.Invoke(new object[0]);
+                    SetCoroutineLocals(level, entities, _routine, obj);
+                    foundValue = obj;
+                } else LocalsSpecialCases(routine.locals[i], out foundValue, true);
+
+                if (foundValue != null) {
+                    routineObj.SetField(routineObj.GetType(), field.Name, foundValue);
+                }
             }
         }
-
-
 
         public void OnClear() => loadedRoutines = new List<Routine>();
     }

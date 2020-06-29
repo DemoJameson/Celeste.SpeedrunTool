@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
@@ -47,18 +46,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 if (fallingBlocks.ContainsKey(entityId)) {
                     FallingBlock savedFallingBlock = fallingBlocks[entityId];
                     self.Position = savedFallingBlock.Position;
-					if (savedFallingBlock.HasStartedFalling || savedFallingBlock.Triggered) {
-						self.SetExtendedBoolean(DisableShakeSfx, true);
-						self.FallDelay = savedFallingBlock.FallDelay;
-						self.Triggered = true;
-						if (OnGround(savedFallingBlock)) {
-							self.Add(new FastForwardComponent<FallingBlock>(savedFallingBlock, SkipFallingGroundEffect));
-							self.SetExtendedBoolean(DisableImpactSfx, true);
-							self.SetExtendedBoolean(DisableLandParticles, true);
-						}
-						else if (self.FallDelay > 0)
-							self.StartShaking(self.FallDelay);
-					}
+                    self.FallDelay = savedFallingBlock.FallDelay;
+                    self.Triggered = savedFallingBlock.Triggered;
+                    self.SetProperty(typeof(FallingBlock), "HasStartedFalling", savedFallingBlock.HasStartedFalling);
+                    
+                    // remove duplicate coroutine
+                    // Add(new Coroutine(Sequence()));
+                    self.Remove(self.Get<Coroutine>());
                 }
                 else {
                     self.Add(new RemoveSelfComponent());
@@ -66,75 +60,28 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
         }
 
-        private void SkipFallingGroundEffect(FallingBlock entity, FallingBlock savedEntity) {
-            for (int i = 0; i < 60; i++) {
-                entity.Update();
-            }
-        }
-
-        private static bool OnGround(FallingBlock fallingBlock, int downCheck = 1) {
-            if (fallingBlock.CollideCheck<Solid>(fallingBlock.Position + Vector2.UnitY * downCheck)) {
-                return true;
-            }
-
-            return fallingBlock.CollideCheckOutside<JumpThru>(
-                fallingBlock.Position + Vector2.UnitY * downCheck);
-        }
-
-        private void FallingBlockOnShakeSfx(On.Celeste.FallingBlock.orig_ShakeSfx orig, FallingBlock self) {
-            if (self.GetExtendedBoolean(DisableShakeSfx)) {
-                self.SetExtendedBoolean(DisableShakeSfx, false);
-                return;
-            }
-
-            orig(self);
-        }
-
-        private void FallingBlockOnImpactSfx(On.Celeste.FallingBlock.orig_ImpactSfx orig, FallingBlock self) {
-            if (self.GetExtendedBoolean(DisableImpactSfx)) {
-                self.SetExtendedBoolean(DisableImpactSfx, false);
-                return;
-            }
-
-            orig(self);
-        }
-
-        private void FallingBlockOnLandParticles(On.Celeste.FallingBlock.orig_LandParticles orig, FallingBlock self) {
-            if (self.GetExtendedBoolean(DisableLandParticles)) {
-                self.SetExtendedBoolean(DisableLandParticles, false);
-                return;
-            }
-
-            orig(self);
-        }
-
+        // dont know why not work
 		private void BlockCoroutineStart(ILContext il) {
 			ILCursor c = new ILCursor(il);
 			for (int i = 0; i < 3; i++)
-				c.GotoNext((inst) => inst.MatchCall(typeof(Entity).GetMethod("Add", new Type[] { typeof(Monocle.Component) })));
+				c.GotoNext(inst => inst.MatchCall(typeof(Entity).GetMethod("Add", new[] { typeof(Monocle.Component) })));
 			Instruction skipCoroutine = c.Next.Next;
-			c.GotoPrev((i) => i.MatchStfld(typeof(TileGrid), "Alpha"));
+			c.GotoPrev(i => i.MatchStfld(typeof(TileGrid), "Alpha"));
 			c.GotoNext();
-			c.EmitDelegate<Func<bool>>(() => IsLoadStart);
+			c.EmitDelegate<Func<bool>>(() => true);
 			c.Emit(OpCodes.Brtrue, skipCoroutine);
-		}
+        }
 
 		public override void OnLoad() {
             On.Celeste.FallingBlock.CreateFinalBossBlock += FallingBlockOnCreateFinalBossBlock;
             On.Celeste.FallingBlock.ctor_EntityData_Vector2 += OnFallingBlockOnCtorEntityDataVector2;
-			IL.Celeste.FallingBlock.ctor_Vector2_char_int_int_bool_bool_bool += BlockCoroutineStart;
-			On.Celeste.FallingBlock.ShakeSfx += FallingBlockOnShakeSfx;
-            On.Celeste.FallingBlock.ImpactSfx += FallingBlockOnImpactSfx;
-            On.Celeste.FallingBlock.LandParticles += FallingBlockOnLandParticles;
+			// IL.Celeste.FallingBlock.ctor_Vector2_char_int_int_bool_bool_bool += BlockCoroutineStart;
         }
 
         public override void OnUnload() {
             On.Celeste.FallingBlock.CreateFinalBossBlock -= FallingBlockOnCreateFinalBossBlock;
             On.Celeste.FallingBlock.ctor_EntityData_Vector2 -= OnFallingBlockOnCtorEntityDataVector2;
-			IL.Celeste.FallingBlock.ctor_Vector2_char_int_int_bool_bool_bool -= BlockCoroutineStart;
-            On.Celeste.FallingBlock.ShakeSfx -= FallingBlockOnShakeSfx;
-            On.Celeste.FallingBlock.ImpactSfx -= FallingBlockOnImpactSfx;
-            On.Celeste.FallingBlock.LandParticles -= FallingBlockOnLandParticles;
+			// IL.Celeste.FallingBlock.ctor_Vector2_char_int_int_bool_bool_bool -= BlockCoroutineStart;
         }
     }
 }

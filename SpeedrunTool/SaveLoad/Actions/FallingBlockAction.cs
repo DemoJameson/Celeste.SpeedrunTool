@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
@@ -10,9 +11,6 @@ using MonoMod.Cil;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class FallingBlockAction : AbstractEntityAction {
         private Dictionary<EntityID, FallingBlock> fallingBlocks = new Dictionary<EntityID, FallingBlock>();
-        private const string DisableShakeSfx = "DisableShakeSfx";
-        private const string DisableImpactSfx = "DisableImpactSfx";
-        private const string DisableLandParticles = "DisableLandParticles";
 
         public override void OnQuickSave(Level level) {
             fallingBlocks = level.Entities.GetDictionary<FallingBlock>();
@@ -49,10 +47,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     self.FallDelay = savedFallingBlock.FallDelay;
                     self.Triggered = savedFallingBlock.Triggered;
                     self.SetProperty(typeof(FallingBlock), "HasStartedFalling", savedFallingBlock.HasStartedFalling);
-                    
-                    // remove duplicate coroutine
-                    // Add(new Coroutine(Sequence()));
-                    self.Remove(self.Get<Coroutine>());
                 }
                 else {
                     self.Add(new RemoveSelfComponent());
@@ -60,28 +54,42 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
         }
 
-        // dont know why not work
-		private void BlockCoroutineStart(ILContext il) {
-			ILCursor c = new ILCursor(il);
-			for (int i = 0; i < 3; i++)
-				c.GotoNext(inst => inst.MatchCall(typeof(Entity).GetMethod("Add", new[] { typeof(Monocle.Component) })));
-			Instruction skipCoroutine = c.Next.Next;
-			c.GotoPrev(i => i.MatchStfld(typeof(TileGrid), "Alpha"));
-			c.GotoNext();
-			c.EmitDelegate<Func<bool>>(() => true);
-			c.Emit(OpCodes.Brtrue, skipCoroutine);
+        private void BlockCoroutineStart(ILContext il) {
+            ILCursor cursor = new ILCursor(il);
+
+            if (!cursor.TryGotoNext(MoveType.After,
+                i => i.MatchCallvirt<FallingBlock>("Sequence"),
+                i => true,
+                i => true,
+                inst => inst.MatchCall(typeof(Entity).GetMethod("Add", new[] {typeof(Monocle.Component)})))) {
+                return;
+            }
+
+            Instruction skipCoroutine = cursor.Next;
+
+            cursor.GotoPrev(MoveType.After, i => i.MatchStfld(typeof(TileGrid), "Alpha"));
+
+            ILLabel label = cursor.MarkLabel();
+
+            cursor.EmitDelegate<Func<bool>>(() => IsLoadStart);
+            cursor.Emit(OpCodes.Brtrue, skipCoroutine);
+
+            if (cursor.TryGotoPrev(MoveType.After, i => i.OpCode == OpCodes.Ldarg_S && i.Operand.ToString() == "finalBoss",
+                i => i.OpCode == OpCodes.Brfalse_S)) {
+                cursor.Prev.Operand = label;
+            }
         }
 
-		public override void OnLoad() {
+        public override void OnLoad() {
             On.Celeste.FallingBlock.CreateFinalBossBlock += FallingBlockOnCreateFinalBossBlock;
             On.Celeste.FallingBlock.ctor_EntityData_Vector2 += OnFallingBlockOnCtorEntityDataVector2;
-			// IL.Celeste.FallingBlock.ctor_Vector2_char_int_int_bool_bool_bool += BlockCoroutineStart;
+            IL.Celeste.FallingBlock.ctor_Vector2_char_int_int_bool_bool_bool += BlockCoroutineStart;
         }
 
         public override void OnUnload() {
             On.Celeste.FallingBlock.CreateFinalBossBlock -= FallingBlockOnCreateFinalBossBlock;
             On.Celeste.FallingBlock.ctor_EntityData_Vector2 -= OnFallingBlockOnCtorEntityDataVector2;
-			// IL.Celeste.FallingBlock.ctor_Vector2_char_int_int_bool_bool_bool -= BlockCoroutineStart;
+            IL.Celeste.FallingBlock.ctor_Vector2_char_int_int_bool_bool_bool -= BlockCoroutineStart;
         }
     }
 }

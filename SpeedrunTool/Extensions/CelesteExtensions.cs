@@ -140,14 +140,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             }
 
             sprite._CopyImage(otherSprite);
-
-            sprite.Rate = otherSprite.Rate;
-            sprite.UseRawDeltaTime = otherSprite.UseRawDeltaTime;
-            sprite.Justify = otherSprite.Justify;
-
-            sprite.Play(otherSprite.CurrentAnimationID);
-            sprite.SetAnimationFrame(otherSprite.CurrentAnimationFrame);
-            
+            otherSprite.InvokeMethod("CloneInto", sprite);
         }
 
         public static Image GetImage<T>(this T entity, string fieldName) where T : Entity {

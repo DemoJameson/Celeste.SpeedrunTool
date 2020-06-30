@@ -5,21 +5,21 @@ using Monocle;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     class PlayerAction : AbstractEntityAction {
 
-        private EntityID flingBird = default;
-        private EntityID dreamBlock = default;
+        private EntityID flingBird;
+        private EntityID dreamBlock;
 
         public override void OnLoad() {
             On.Celeste.Player.Die += PlayerOnDie;
             On.Celeste.Player.Die += DisableDie;
         }
         public override void OnUnload() {
-            On.Celeste.Player.Die += PlayerOnDie;
+            On.Celeste.Player.Die -= PlayerOnDie;
             On.Celeste.Player.Die -= DisableDie;
         }
         public void OnQuickLoadStart(Level level, Player loadedPlayer, Player savedPlayer) {
             loadedPlayer.JustRespawned = savedPlayer.JustRespawned;
             loadedPlayer.Position = savedPlayer.Position;
-            loadedPlayer.SetField(typeof(Actor), "movementCounter", savedPlayer.PositionRemainder);
+            loadedPlayer.SetField<Actor>("movementCounter", savedPlayer.PositionRemainder);
             loadedPlayer.CameraAnchor = savedPlayer.CameraAnchor;
             loadedPlayer.CameraAnchorLerp = savedPlayer.CameraAnchorLerp;
             loadedPlayer.CameraAnchorIgnoreX = savedPlayer.CameraAnchorIgnoreX;
@@ -92,7 +92,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 					featherSFX.DisposeOnTransition = false;
 					featherWarningSFX.DisposeOnTransition = false;
 					featherSFX.Play("event:/game/06_reflection/feather_state_loop", "feather_speed", 1f);
-					featherWarningSFX.Stop(true);
+					featherWarningSFX.Stop();
 					loadedPlayer.Add(featherSFX);
 					loadedPlayer.Add(featherWarningSFX);
 					loadedPlayer.SetField("starFlyLoopSfx", featherSFX);
@@ -105,17 +105,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     flingBirds.TryGetValue(flingBird, out FlingBird fb);
                     loadedPlayer.SetField("flingBird", fb);
                     break;
-                default:
-                    break;
             }
         }
-
-
-
-
-
-
-
 
         public override void OnQuickSave(Level level) {
         }

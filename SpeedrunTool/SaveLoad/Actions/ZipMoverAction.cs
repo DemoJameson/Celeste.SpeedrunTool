@@ -1,9 +1,6 @@
-using System;
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
-using Mono.Cecil.Cil;
-using Monocle;
 using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
@@ -23,19 +20,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 			self.SetEntityId(entityId);
 			orig.Invoke(self, data, offset);
 			if (IsLoadStart && savedZipMovers.ContainsKey(entityId)) {
-				self.Position = savedZipMovers[entityId].Position;
-				self.CopyFields(savedZipMovers[entityId], "percent");
+				var savedZipMover = savedZipMovers[entityId];
+				self.Position = savedZipMover.Position;
+				self.CopyFields(typeof(ZipMover), savedZipMover, "percent");
+				self.CopySprite(savedZipMover, "streetlight");
 			}
 		}
 
 		private void BlockCoroutineStart(ILContext il) {
-			ILCursor c = new ILCursor(il);
-			c.GotoNext((i) => i.MatchCall(typeof(Entity).GetMethod("Add", new Type[] { typeof(Monocle.Component) })));
-			Instruction skipCoroutine = c.Next.Next;
-			c.GotoPrev((i) => i.MatchStfld(typeof(ZipMover), "theme"));
-			c.GotoNext();
-			c.EmitDelegate<Func<bool>>(() => IsLoadStart);
-			c.Emit(OpCodes.Brtrue, skipCoroutine);
+			il.SkipAddCoroutine<ZipMover>("Sequence", () => IsLoadStart);
 		}
 
 		public override void OnLoad() {

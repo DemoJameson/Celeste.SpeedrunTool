@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
-using Monocle;
 using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
+	// TODO: desync in TAS after savestate.
     public class SwitchGateAction : AbstractEntityAction {
         private Dictionary<EntityID, SwitchGate> savedSwitchGates = new Dictionary<EntityID, SwitchGate>();
 
@@ -22,7 +22,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             orig(self, data, offset);
 
             if (IsLoadStart && savedSwitchGates.ContainsKey(entityId)) {
-                self.Position = savedSwitchGates[entityId].Position;
+	            var savedSwitchGate = savedSwitchGates[entityId];
+	            self.Position = savedSwitchGate.Position;
+                self.CopySprite(savedSwitchGate, "icon");
+                self.CopyFields(savedSwitchGate, "iconOffset");
             }
 		}
 
@@ -30,12 +33,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 		//makes it duplicate it in a less broken way though i guess
 		private void BlockCoroutineStart(ILContext il) {
 			ILCursor c = new ILCursor(il);
-			c.GotoNext((i) => i.MatchRet());
-			c.GotoNext((i) => i.MatchRet());
+			c.GotoNext(i => i.MatchRet());
+			c.GotoNext(i => i.MatchRet());
 			Instruction skipCoroutine = c.Next;
-			c.GotoPrev((i) => i.MatchRet());
+			c.GotoPrev(i => i.MatchRet());
 			c.GotoNext();
-			c.EmitDelegate<Func<bool>>(() => IsLoadStart);
+			c.EmitDelegate<Func<bool>>(() => true);
 			c.Emit(OpCodes.Brtrue, skipCoroutine);
 		}
 

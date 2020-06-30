@@ -124,6 +124,73 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return null;
         }
 
+        public static Sprite GetSprite<T>(this T entity, string fieldName = "sprite") where T : Entity {
+            return entity.GetField(typeof(T), fieldName) as Sprite;
+        }
+
+        public static void CopySprite<T>(this T entity, T otherEntity, string fieldName = "sprite") where T : Entity {
+            var sprite = entity.GetSprite(fieldName);
+            if (sprite == null) {
+                return;
+            }
+
+            var otherSprite = otherEntity.GetSprite(fieldName);
+            if (otherSprite == null) {
+                return;
+            }
+
+            sprite._CopyImage(otherSprite);
+
+            sprite.Rate = otherSprite.Rate;
+            sprite.UseRawDeltaTime = otherSprite.UseRawDeltaTime;
+            sprite.Justify = otherSprite.Justify;
+
+            sprite.Play(otherSprite.CurrentAnimationID);
+            sprite.SetAnimationFrame(otherSprite.CurrentAnimationFrame);
+            
+        }
+
+        public static Image GetImage<T>(this T entity, string fieldName) where T : Entity {
+            return entity.GetField(typeof(T), fieldName) as Image;
+        }
+
+        public static void CopyImage<T>(this T entity, T otherEntity, string fieldName) where T : Entity {
+            var image = entity.GetImage(fieldName);
+            if (image == null) {
+                return;
+            }
+
+            var otherImage = otherEntity.GetImage(fieldName);
+            if (otherImage == null) {
+                return;
+            }
+
+            image._CopyImage(otherImage);
+        }
+
+        private static void _CopyImage(this Image image, Image otherImage) {
+            image.Scale = otherImage.Scale;
+            image.Color = otherImage.Color;
+            image.Position = otherImage.Position;
+            image.Origin = otherImage.Origin;
+            image.Rotation = otherImage.Rotation;
+            image.Effects = otherImage.Effects;
+            image.Visible = otherImage.Visible;
+            image.Active = otherImage.Active;
+        }
+
+        public static void CopyImageList<T>(this T entity, T otherEntity, string fieldName) where T : Entity {
+            var imageList = entity.GetField(fieldName) as List<Image>;
+            var otherImageList = otherEntity.GetField(fieldName) as List<Image>;
+            if (imageList == null || otherImageList == null || imageList.Count != otherImageList.Count) {
+                return;
+            }
+
+            for (var i = 0; i < imageList.Count; i++) {
+                imageList[i]._CopyImage(otherImageList[i]);
+            }
+        }
+
         public static Level GetLevel() {
             if (Engine.Scene is Level level) {
                 return level;

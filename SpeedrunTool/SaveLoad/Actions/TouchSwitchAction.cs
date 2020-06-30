@@ -1,48 +1,47 @@
 using System.Collections.Generic;
-using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class TouchSwitchAction : AbstractEntityAction {
-        private IEnumerable<TouchSwitch> activatedTouchSwitches = Enumerable.Empty<TouchSwitch>();
+        private Dictionary<EntityID, TouchSwitch> savedTouchSwitchs = new Dictionary<EntityID, TouchSwitch>();
 
         public override void OnQuickSave(Level level) {
-            activatedTouchSwitches = level.Entities.FindAll<TouchSwitch>()
-                .Where(touchSwitch => touchSwitch.Switch.Activated);
+            savedTouchSwitchs = level.Entities.GetDictionary<TouchSwitch>();
         }
 
-        private void RestoreTouchSwitchState(On.Celeste.TouchSwitch.orig_ctor_Vector2 orig, TouchSwitch self,
-            Vector2 position) {
-            orig(self, position);
-            TouchSwitch savedTouchSwitch =
-                activatedTouchSwitches.FirstOrDefault(touchSwitch => touchSwitch.Position == position);
+        private void TouchSwitchOnctor_EntityData_Vector2(On.Celeste.TouchSwitch.orig_ctor_EntityData_Vector2 orig, TouchSwitch self, EntityData data, Vector2 offset) {
+            EntityID entityId = data.ToEntityId();
+            self.SetEntityId(entityId);
+            orig(self, data, offset);
 
-            if (IsLoadStart && savedTouchSwitch != null) {
-                self.Add(new TurnOnSwitchComponent());
-            }
+            if (IsLoadStart && savedTouchSwitchs.ContainsKey(entityId)) {
+                var savedTouchSwitch = savedTouchSwitchs[entityId];
+                var savedSwitch = savedTouchSwitch.Switch;
+                if (!savedSwitch.Activated) {
+                    return;
+                }
+                
+                self.CopySprite(savedTouchSwitch, "icon");
+                self.CopyFields(savedTouchSwitch, "ease", "timer");
+                
+                var selfSwitch = self.Switch;
+                selfSwitch.GroundReset = savedSwitch.GroundReset;
+                selfSwitch.SetProperty("Activated", savedSwitch.Active);
+                selfSwitch.SetProperty("Finished", savedSwitch.Finished);
+            } 
         }
 
         public override void OnClear() {
-            activatedTouchSwitches = Enumerable.Empty<TouchSwitch>();
+            savedTouchSwitchs.Clear();
         }
 
         public override void OnLoad() {
-            On.Celeste.TouchSwitch.ctor_Vector2 += RestoreTouchSwitchState;
+            On.Celeste.TouchSwitch.ctor_EntityData_Vector2 += TouchSwitchOnctor_EntityData_Vector2;
         }
 
         public override void OnUnload() {
-            On.Celeste.TouchSwitch.ctor_Vector2 -= RestoreTouchSwitchState;
-        }
-
-        private class TurnOnSwitchComponent : Monocle.Component {
-            public TurnOnSwitchComponent() : base(true, false) { }
-
-            public override void Update() {
-                EntityAs<TouchSwitch>().Switch.OnActivate = null;
-                EntityAs<TouchSwitch>().Switch.Activate();
-                RemoveSelf();
-            }
+            On.Celeste.TouchSwitch.ctor_EntityData_Vector2 -= TouchSwitchOnctor_EntityData_Vector2;
         }
     }
 }

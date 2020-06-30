@@ -73,6 +73,11 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             FieldInfo fieldInfo = GetFieldInfo(type, name);
             return fieldInfo?.GetValue(obj);
         }
+        
+        public static object GetField<T>(this T obj, string name) {
+            FieldInfo fieldInfo = GetFieldInfo(typeof(T), name);
+            return fieldInfo?.GetValue(obj);
+        }
 
         public static void SetField(this object obj, string name, object value) {
             obj.SetField(obj.GetType(), name, value);
@@ -80,6 +85,11 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
         public static void SetField(this object obj, Type type, string name, object value) {
             FieldInfo fieldInfo = GetFieldInfo(type, name);
+            fieldInfo?.SetValue(obj, value);
+        }
+        
+        public static void SetField<T>(this T obj, string name, object value) {
+            FieldInfo fieldInfo = GetFieldInfo(typeof(T), name);
             fieldInfo?.SetValue(obj, value);
         }
 
@@ -92,9 +102,18 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 			foreach (string name in names)
 				obj.SetField(type, name, fromObj.GetField(type, name));
 		}
-
+        
+        public static void CopyFields<T>(this T obj, T fromObj, params string[] names) {
+            foreach (string name in names)
+                obj.SetField(name, fromObj.GetField<T>(name));
+        }
+        
 		public static object GetProperty(this object obj, string name) {
             return obj.GetProperty(obj.GetType(), name);
+        }
+        
+        public static object GetProperty<T>(this T obj, string name) {
+            return obj.GetProperty(typeof(T), name);
         }
 
         public static object GetProperty(this object obj, Type type, string name) {
@@ -126,6 +145,10 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
         public static void SetProperty(this object obj, string name, object value) {
             obj.SetProperty(obj.GetType(), name, value);
+        }
+        
+        public static void SetProperty<T>(this T obj, string name, object value) {
+            obj.SetProperty(typeof(T), name, value);
         }
 
         public static void SetProperty(this object obj, Type type, string name, object value) {

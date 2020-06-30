@@ -94,6 +94,7 @@
     <Compile Include="Extensions\CelesteExtensions.cs" />
     <Compile Include="Extensions\CommonExtensions.cs" />
     <Compile Include="Extensions\DeepCopyExtensions.cs" />
+    <Compile Include="Extensions\ILExtensions.cs" />
     <Compile Include="RespawnSpeedUtils.cs" />
     <Compile Include="SaveLoad\Actions\CoroutineAction.cs" />
     <Compile Include="SaveLoad\Actions\DSide\FastOshiroTriggerAction.cs" />

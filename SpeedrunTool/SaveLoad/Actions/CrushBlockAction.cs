@@ -51,6 +51,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                             "currentMoveLoopSfx",
                             "returnLoopSfx"
                         );
+                        self.CopySprite(savedCrushBlock, "face");
+                        self.CopyImageList(savedCrushBlock, "idleImages");
+                        self.CopyImageList(savedCrushBlock, "activeTopImages");
+                        self.CopyImageList(savedCrushBlock, "activeRightImages");
+                        self.CopyImageList(savedCrushBlock, "activeLeftImages");
+                        self.CopyImageList(savedCrushBlock, "activeBottomImages");
                     }
                 } else {
                     self.Add(new RemoveSelfComponent());
@@ -60,9 +66,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         private void BlockCoroutineStart(ILContext il) {
             ILCursor c = new ILCursor(il);
-            c.GotoNext((i) => i.MatchCall(typeof(Entity).GetMethod("Add", new Type[] {typeof(Monocle.Component)})));
+            c.GotoNext(i => i.MatchCall(typeof(Entity).GetMethod("Add", new[] {typeof(Monocle.Component)})));
             Instruction skipCoroutine = c.Next.Next;
-            c.GotoPrev((i) => i.MatchStfld(typeof(CrushBlock), "canActivate"));
+            c.GotoPrev(i => i.MatchStfld(typeof(CrushBlock), "canActivate"));
             c.GotoNext();
             c.EmitDelegate<Func<bool>>(() => IsLoadStart && CoroutineAction.HasRoutine("<AttackSequence>d__41"));
             //this also skips setting attackSequence - that's treated as a special case in CoroutineAction.

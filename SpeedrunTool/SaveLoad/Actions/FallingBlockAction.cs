@@ -1,11 +1,9 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
-using Monocle;
 using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
@@ -46,7 +44,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     self.Position = savedFallingBlock.Position;
                     self.FallDelay = savedFallingBlock.FallDelay;
                     self.Triggered = savedFallingBlock.Triggered;
-                    self.SetProperty(typeof(FallingBlock), "HasStartedFalling", savedFallingBlock.HasStartedFalling);
+                    self.SetProperty("HasStartedFalling", savedFallingBlock.HasStartedFalling);
                 }
                 else {
                     self.Add(new RemoveSelfComponent());
@@ -57,17 +55,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private void BlockCoroutineStart(ILContext il) {
             ILCursor cursor = new ILCursor(il);
 
-            if (!cursor.TryGotoNext(MoveType.After,
-                i => i.MatchCallvirt<FallingBlock>("Sequence"),
-                i => true,
-                i => true,
-                inst => inst.MatchCall(typeof(Entity).GetMethod("Add", new[] {typeof(Monocle.Component)})))) {
+            if (!cursor.TryGotoNextAddCoroutine<FallingBlock>("Sequence", out var skipCoroutine)) {
                 return;
             }
-
-            Instruction skipCoroutine = cursor.Next;
-
-            cursor.GotoPrev(MoveType.After, i => i.MatchStfld(typeof(TileGrid), "Alpha"));
 
             ILLabel label = cursor.MarkLabel();
 

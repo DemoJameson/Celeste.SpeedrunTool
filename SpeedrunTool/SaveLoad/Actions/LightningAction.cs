@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
-using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class LightningAction : AbstractEntityAction {
@@ -47,7 +46,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 }
             }
 
-            while (Vector2.Distance(self.Position, saved.Position) > 0.5) {
+            while (Vector2.Distance(self.Position, saved.Position) > 0.1) {
                 lightningRenderer?.Update();
                 self.Update();
             }

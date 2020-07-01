@@ -23,7 +23,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     Refill savedRefill = savedRefills[entityId];
                     if (!savedRefill.Collidable) {
                         self.Collidable = false;
-                        self.CopySprite(savedRefill);
+                        self.CopySprite(savedRefill, "sprite");
                         self.CopySprite(savedRefill, "flash");
                         self.CopyImage(savedRefill, "outline");
                         self.CopyFields(savedRefill, "respawnTimer");

@@ -25,7 +25,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.FrostHelper {
                 if (IsLoadStart && savedSolids.ContainsKey(entityId)) {
                     Solid savedSolid = savedSolids[entityId];
                     Vector2 start = (Vector2) savedSolid.GetField("start");
-                    if (Vector2.Distance(savedSolid.Position, start) > 0.5) {
+                    if (Vector2.Distance(savedSolid.Position, start) > 0.1) {
                         self.Add(new Coroutine(RestoreState(self, savedSolid)));
                     }
                 }

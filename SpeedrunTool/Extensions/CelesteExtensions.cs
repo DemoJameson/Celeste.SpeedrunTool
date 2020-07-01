@@ -133,11 +133,11 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return null;
         }
 
-        public static Sprite GetSprite<T>(this T entity, string fieldName = "sprite") where T : Entity {
+        public static Sprite GetSprite<T>(this T entity, string fieldName) where T : Entity {
             return entity.GetField(typeof(T), fieldName) as Sprite;
         }
 
-        public static void CopySprite<T>(this T entity, T otherEntity, string fieldName = "sprite") where T : Entity {
+        public static void CopySprite<T>(this T entity, T otherEntity, string fieldName) where T : Entity {
             var sprite = entity.GetSprite(fieldName);
             if (sprite == null) {
                 return;

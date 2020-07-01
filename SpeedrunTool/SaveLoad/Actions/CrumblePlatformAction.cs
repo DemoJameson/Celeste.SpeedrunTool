@@ -15,7 +15,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         private ILHook addedHook;
 
-
         public override void OnQuickSave(Level level) {
             savedCrumblePlatforms = level.Entities.FindAll<CrumblePlatform>()
                 .Where(platform => !platform.Collidable).ToDictionary(platform => platform.GetEntityId());

@@ -105,7 +105,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         
         public static void CopyFields<T>(this T obj, T fromObj, params string[] names) {
             foreach (string name in names)
-                obj.SetField(name, fromObj.GetField<T>(name));
+                obj.SetField(name, fromObj.GetField(name));
         }
         
 		public static object GetProperty(this object obj, string name) {
@@ -186,7 +186,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return obj.InvokeMethod(obj.GetType(), name, parameters);
         }
         
-        public static object InvokeMethod<T>(this object obj, string name, params object[] parameters) {
+        public static object InvokeMethod<T>(this T obj, string name, params object[] parameters) {
             return obj.InvokeMethod(typeof(T), name, parameters);
         }
 

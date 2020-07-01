@@ -32,7 +32,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             orig(self, scene);
             EntityID entityId = self.GetEntityId();
             if (IsLoadStart && savedClouds.ContainsKey(entityId)) {
-                self.CopySprite(savedClouds[entityId]);
+                self.CopySprite(savedClouds[entityId], "sprite");
             }
         }
 

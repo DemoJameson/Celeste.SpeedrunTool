@@ -51,8 +51,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public void OnQuickSave(Level level) {
             foreach (Entity e in level.Entities) {
-                if (e is ForsakenCitySatellite || e is FlutterBird || e is Lightning)
+                if (e is ForsakenCitySatellite || e is FlutterBird || e is Lightning || e is LightningBreakerBox) {
                     continue;
+                }
                 EntityID id = e.GetEntityId();
                 foreach (Monocle.Component component in e.Components) {
                     if (component is Coroutine coroutine) {

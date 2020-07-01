@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -6,48 +7,53 @@ using Monocle;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class LightningBreakerBoxAction : AbstractEntityAction {
         private const string DisableSetBreakValue = "DisableSetBreakValue";
-        private LightningBreakerBox savedLightningBreakerBox;
+
+        private Dictionary<EntityID, LightningBreakerBox> savedBreakerBoxes =
+            new Dictionary<EntityID, LightningBreakerBox>();
 
         public override void OnQuickSave(Level level) {
-            savedLightningBreakerBox = level.Entities.FindFirst<LightningBreakerBox>();
+            savedBreakerBoxes = level.Entities.GetDictionary<LightningBreakerBox>();
         }
 
         private void RestoreLightningBreakerBoxHealth(
             On.Celeste.LightningBreakerBox.orig_ctor_EntityData_Vector2 orig, LightningBreakerBox self,
             EntityData entityData, Vector2 levelOffset) {
+            EntityID entityId = entityData.ToEntityId();
+            self.SetEntityId(entityId);
             orig(self, entityData, levelOffset);
 
-            if (IsLoadStart) {
-                if (savedLightningBreakerBox != null) {
-                    self.Position = savedLightningBreakerBox.Position;
-                    self.CopyFields(typeof(LightningBreakerBox), savedLightningBreakerBox, "health");
-                    self.CopyFields(typeof(LightningBreakerBox), savedLightningBreakerBox, "sink");
-                    SineWave sine = self.Get<SineWave>();
-                    SineWave savedSine = savedLightningBreakerBox.Get<SineWave>();
-                    sine.Counter = savedSine.Counter;
+            if (!IsLoadStart) return;
 
-                    Sprite sprite = (Sprite) self.GetField(typeof(LightningBreakerBox), "sprite");
-                    int health = (int) savedLightningBreakerBox.GetField(typeof(LightningBreakerBox), "health");
-                    if (health < 2) {
-                        sprite.Play("open");
-                    }
-                    if (health == 0) {
-                        self.Visible = false;
-                        self.Collidable = false;
-                        self.Add(new Coroutine(BreakBox(self)));
-                    }
-                }
-                else {
+            if (savedBreakerBoxes.ContainsKey(entityId)) {
+                LightningBreakerBox saved = savedBreakerBoxes[entityId];
+                self.Position = saved.Position;
+                self.CopyFields(saved, "health", "sink", "shakeCounter", "smashParticles");
+                self.CopySprite(saved, "sprite");
+
+                SineWave sine = self.Get<SineWave>();
+                SineWave savedSine = saved.Get<SineWave>();
+                sine.Counter = savedSine.Counter;
+
+                int health = (int) saved.GetField("health");
+
+                if (health == 0) {
                     self.Visible = false;
                     self.Collidable = false;
-                    self.Add(new Coroutine(BreakBox(self)));
+                    self.Add(new Coroutine(BreakBox(self, false)));
                 }
+            }
+            else {
+                self.Visible = false;
+                self.Collidable = false;
+                self.Add(new Coroutine(BreakBox(self, true)));
             }
         }
 
-        private static IEnumerator BreakBox(LightningBreakerBox self) {
+        private static IEnumerator BreakBox(LightningBreakerBox self, bool disableSetBreakValue) {
             self.InvokeMethod(typeof(LightningBreakerBox), "Break");
-            self.Add(new DisableSetBreakValueComponent());
+            if (disableSetBreakValue) {
+                self.Add(new DisableSetBreakValueComponent());
+            }
             yield break;
         }
 
@@ -62,7 +68,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         public override void OnClear() {
-            savedLightningBreakerBox = null;
+            savedBreakerBoxes.Clear();
         }
 
         public override void OnLoad() {

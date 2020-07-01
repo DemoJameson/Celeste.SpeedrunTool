@@ -70,6 +70,10 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             foreach (T entity in entityList.FindAll<T>()) {
                 EntityID entityId = entity.GetEntityId();
                 if (entityId.Equals(default(EntityID)) || result.ContainsKey(entityId)) {
+                    continue;
+                }
+
+                if (result.ContainsKey(entityId)) {
                     Logger.Log("Speedrun Tool",
                         $"EntityID Duplication: ID={entityId.ID} Level Name={entityId.Level}, Entity Name={entity.GetType().FullName}, Position={entity.Position}");
                     continue;
@@ -86,6 +90,10 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             foreach (T entity in enumerable) {
                 EntityID entityId = entity.GetEntityId();
                 if (entityId.Equals(default(EntityID)) || result.ContainsKey(entityId)) {
+                    continue;
+                }
+
+                if (result.ContainsKey(entityId)) {
                     Logger.Log("Speedrun Tool",
                         $"EntityID Duplication: ID={entityId.ID} Level Name={entityId.Level}, Entity Name={entity.GetType().FullName}, Position={entity.Position}");
                     continue;
@@ -141,6 +149,8 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
             sprite._CopyImage(otherSprite);
             otherSprite.InvokeMethod("CloneInto", sprite);
+            sprite.Rate = otherSprite.Rate;
+            sprite.UseRawDeltaTime = otherSprite.UseRawDeltaTime;
         }
 
         public static Image GetImage<T>(this T entity, string fieldName) where T : Entity {

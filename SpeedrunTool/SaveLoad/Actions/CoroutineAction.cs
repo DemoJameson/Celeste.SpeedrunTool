@@ -140,8 +140,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 foundValue = new Image(new MTexture());
             } else if (value is SoundEmitter) {
                 foundValue = SoundEmitter.Play((value as SoundEmitter).Source.EventName);
-            } else if (value is Tween) {
-                foundValue = Tween.Create((value as Tween).Mode);
+            } else if (value is Tween tween) {
+                foundValue = Tween.Create(tween.Mode, tween.Easer, tween.Duration).CopyFrom(tween);
             }
             //doesn't actually work properly i think
             else if (value is Delegate) {
@@ -170,8 +170,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                         e.Components.Add(coroutine);
                     }
 
-                    if (e is CrushBlock)
+                    if (e is CrushBlock) {
                         e.SetField("attackCoroutine", coroutine);
+                    } else if (e is FinalBossMovingBlock){
+                        e.SetField("moveCoroutine", coroutine);
+                    }
+                    
                     coroutine.SetField("waitTimer", routine.waitTimer);
                 }
 

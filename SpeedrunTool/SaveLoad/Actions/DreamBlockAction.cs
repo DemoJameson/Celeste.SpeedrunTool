@@ -32,7 +32,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         private IEnumerator RestorePosition(DreamBlock self, Tween savedTween, Vector2 start, Vector2 end) {
             Tween tween = self.Get<Tween>();
-            self.Remove(tween);
+            if (tween != null) {
+                self.Remove(tween);
+            }
 
             float duration = Vector2.Distance(start, end) / 12f;
             if ((bool) self.GetField(typeof(DreamBlock), "fastMoving")) {

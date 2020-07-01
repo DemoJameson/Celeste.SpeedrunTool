@@ -110,9 +110,10 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             eventInstance.GetType().GetMethod("setTimelinePosition")?.Invoke(eventInstance, new object[] {time});
         }
 
-        public static void CopyFrom(this Tween tween, Tween otherTween) {
+        public static Tween CopyFrom(this Tween tween, Tween otherTween) {
             tween.SetProperty("TimeLeft", otherTween.TimeLeft);
             tween.SetProperty("Reverse", otherTween.Reverse);
+            return tween;
         }
 
         public static void AddRange<T>(this Dictionary<EntityID, T> dict, IEnumerable<T> entities) where T : Entity {
@@ -147,14 +148,38 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 return;
             }
 
-            sprite._CopyImage(otherSprite);
+            sprite._CopyGraphicsComponent(otherSprite);
             otherSprite.InvokeMethod("CloneInto", sprite);
             sprite.Rate = otherSprite.Rate;
             sprite.UseRawDeltaTime = otherSprite.UseRawDeltaTime;
         }
+        
+        public static TileGrid GetTileGrid<T>(this T entity, string fieldName) where T : Entity {
+            return entity.GetField(fieldName) as TileGrid;
+        }
+        
+        public static void CopyTileGrid<T>(this T entity, T otherEntity, string fieldName) where T : Entity {
+            var tileGrid = entity.GetTileGrid(fieldName);
+            if (tileGrid == null) {
+                return;
+            }
+
+            var otherTileGrid = otherEntity.GetTileGrid(fieldName);
+            if (otherTileGrid == null) {
+                return;
+            }
+
+            tileGrid._CopyComponent(otherTileGrid);
+            tileGrid.Position = otherTileGrid.Position;
+            tileGrid.Color = otherTileGrid.Color;
+            tileGrid.VisualExtend = otherTileGrid.VisualExtend;
+            tileGrid.ClipCamera = otherTileGrid.ClipCamera;
+            tileGrid.Alpha = otherTileGrid.Alpha;
+            // tileGrid.Tiles = otherTileGrid.Tiles;
+        }
 
         public static Image GetImage<T>(this T entity, string fieldName) where T : Entity {
-            return entity.GetField(typeof(T), fieldName) as Image;
+            return entity.GetField(fieldName) as Image;
         }
 
         public static void CopyImage<T>(this T entity, T otherEntity, string fieldName) where T : Entity {
@@ -168,18 +193,23 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 return;
             }
 
-            image._CopyImage(otherImage);
+            image._CopyGraphicsComponent(otherImage);
         }
 
-        private static void _CopyImage(this Image image, Image otherImage) {
-            image.Scale = otherImage.Scale;
-            image.Color = otherImage.Color;
-            image.Position = otherImage.Position;
-            image.Origin = otherImage.Origin;
-            image.Rotation = otherImage.Rotation;
-            image.Effects = otherImage.Effects;
-            image.Visible = otherImage.Visible;
-            image.Active = otherImage.Active;
+        private static void _CopyComponent(this Component component, Component otherComponent) {
+            component.Active = otherComponent.Active;
+            component.Visible = otherComponent.Visible;
+        }
+
+        private static void _CopyGraphicsComponent(this GraphicsComponent graphicsComponent,
+            GraphicsComponent otherGraphicsComponent) {
+            graphicsComponent.Scale = otherGraphicsComponent.Scale;
+            graphicsComponent.Color = otherGraphicsComponent.Color;
+            graphicsComponent.Position = otherGraphicsComponent.Position;
+            graphicsComponent.Origin = otherGraphicsComponent.Origin;
+            graphicsComponent.Rotation = otherGraphicsComponent.Rotation;
+            graphicsComponent.Effects = otherGraphicsComponent.Effects;
+            _CopyComponent(graphicsComponent, otherGraphicsComponent);
         }
 
         public static void CopyImageList<T>(this T entity, T otherEntity, string fieldName) where T : Entity {
@@ -190,7 +220,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             }
 
             for (var i = 0; i < imageList.Count; i++) {
-                imageList[i]._CopyImage(otherImageList[i]);
+                imageList[i]._CopyGraphicsComponent(otherImageList[i]);
             }
         }
 

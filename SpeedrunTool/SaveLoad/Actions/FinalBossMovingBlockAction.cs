@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
+using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class FinalBossMovingBlockAction : AbstractEntityAction {
@@ -21,23 +22,42 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             EntityID entityId = data.ToEntityId();
             self.SetEntityId(entityId);
 
-            if (IsLoadStart) {
-                if (savedFinalBossMovingBlocks.ContainsKey(entityId)) {
-                    FinalBossMovingBlock savedEntity = savedFinalBossMovingBlocks[entityId];
-                    self.Position = savedEntity.Position;
-                    self.Add(new UpdateComponent());
-                    self.Add(new FastForwardComponent<FinalBossMovingBlock>(savedEntity, OnFastForward));
-                }
-                else {
-                    self.Add(new RemoveSelfComponent());
-                }
-            }
-        }
+            if (!IsLoadStart) return;
+            
+            if (savedFinalBossMovingBlocks.ContainsKey(entityId)) {
+                FinalBossMovingBlock savedBlock = savedFinalBossMovingBlocks[entityId];
+                self.Position = savedBlock.Position;
+                self.CopyFields(savedBlock, "startDelay", "nodeIndex", "isHighlighted");
+                self.CopyTileGrid(savedBlock, "sprite");
+                self.CopyTileGrid(savedBlock, "highlight");
 
-        private void OnFastForward(FinalBossMovingBlock entity, FinalBossMovingBlock savedEntity) {
-            // 0.5s
-            for (int i = 0; i < 30; i++) {
-                entity.Update();
+                Tween savedTween = savedBlock.Get<Tween>();
+                if (savedTween == null) {
+                    return;
+                }
+                    
+                Vector2[] nodes = data.NodesWithPosition(offset);
+                int nodeIndex = (int) savedBlock.GetField("nodeIndex");
+                    
+                var from = nodeIndex == 1 ? data.Position + offset : nodes[1];
+                var to = nodes[nodeIndex];
+
+                Tween tween = Tween.Create(Tween.TweenMode.Oneshot, Ease.CubeIn, 0.8f, true);
+                tween.OnUpdate = t => { self.MoveTo(Vector2.Lerp(@from, to, t.Eased)); };
+                tween.OnComplete = t => {
+                    if (self.CollideCheck<SolidTiles>(self.Position + (to - @from).SafeNormalize() * 2f)) {
+                        Audio.Play("event:/game/06_reflection/fallblock_boss_impact", self.Center);
+                        self.InvokeMethod("ImpactParticles", to - @from);
+                    }
+                    else {
+                        self.InvokeMethod("StopParticles", to - @from);
+                    }
+                };
+                tween.CopyFrom(savedTween);
+                self.Add(tween);
+            }
+            else {
+                self.Add(new RemoveSelfComponent());
             }
         }
 
@@ -51,25 +71,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnUnload() {
             On.Celeste.FinalBossMovingBlock.ctor_EntityData_Vector2 -= RestoreFinalBossMovingBlockPosition;
-        }
-
-        private class UpdateComponent : Monocle.Component {
-            public UpdateComponent() : base(true, false) { }
-
-            public override void Update() {
-                FinalBoss finalBoss = Scene.Entities.FindFirst<FinalBoss>();
-                if (finalBoss == null) {
-                    return;
-                }
-                int nodeIndex = (int) finalBoss.GetField(typeof(FinalBoss), "nodeIndex");
-                FinalBossMovingBlock finalBossMovingBlock = EntityAs<FinalBossMovingBlock>();
-
-                if ((bool) finalBoss.GetField(typeof(FinalBoss), "playerHasMoved") && finalBossMovingBlock.BossNodeIndex == nodeIndex) {
-                    finalBossMovingBlock.StartMoving(0);
-                }
-                
-                RemoveSelf();
-            }
         }
     }
 }

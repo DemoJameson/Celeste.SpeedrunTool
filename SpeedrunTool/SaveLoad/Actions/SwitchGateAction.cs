@@ -34,14 +34,29 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
                 var start = data.Position + offset;
                 var end = data.FirstNodeNullable(offset).Value;
-                
+
                 Tween tween = Tween.Create(Tween.TweenMode.Oneshot, Ease.CubeOut, 2f, true);
-                tween.OnUpdate = t => { self.MoveTo(Vector2.Lerp(start, end, t.Eased)); };
+                int particleAt = 0;
+                tween.OnUpdate = t => {
+                    self.MoveTo(Vector2.Lerp(start, end, t.Eased));
+
+                    ++particleAt;
+                    particleAt %= 2;
+                    for (int x = 0; x < self.Width / 8; ++x) {
+                        for (int y = 0; y < self.Height / 8; ++y) {
+                            if ((x + y) % 2 == particleAt) {
+                                self.SceneAs<Level>().ParticlesBG.Emit(SwitchGate.P_Behind,
+                                    self.Position + new Vector2(x * 8, y * 8) +
+                                    Calc.Random.Range(Vector2.One * 2f, Vector2.One * 6f));
+                            }
+                        }
+                    }
+                };
                 tween.CopyFrom(savedTween);
                 self.Add(tween);
             }
         }
-        
+
         private void BlockCoroutineStart(ILContext il) {
             ILCursor cursor = new ILCursor(il);
             cursor.GotoNext(i => i.MatchRet());
@@ -55,7 +70,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             if (cursor.TryGotoPrev(MoveType.After, i => i.MatchCall<Switch>("CheckLevelFlag"),
                 i => i.OpCode == OpCodes.Brfalse_S)) {
                 cursor.Prev.Operand = label;
-            } 
+            }
         }
 
         public override void OnClear() {

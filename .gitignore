@@ -331,3 +331,4 @@ ASALocalRun/
 .mfractor/
 
 SpeedrunTool/lib-stripped/*
+/SpeedrunTool.sln.DotSettings

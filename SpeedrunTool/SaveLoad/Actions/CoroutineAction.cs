@@ -6,7 +6,7 @@ using Celeste.Mod.SpeedrunTool.Extensions;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
-    class CoroutineAction {
+    class CoroutineAction : AbstractEntityAction {
         private static readonly FieldInfo EnumeratorsFieldInfo =
             typeof(Coroutine).GetField("enumerators", BindingFlags.NonPublic | BindingFlags.Instance);
 
@@ -49,11 +49,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             return false;
         }
 
-        public void OnQuickSave(Level level) {
+        public override void OnQuickSave(Level level) {
             foreach (Entity e in level.Entities) {
                 if (e is ForsakenCitySatellite || e is FlutterBird || e is Lightning || e is LightningBreakerBox) {
                     continue;
                 }
+
                 EntityID id = e.GetEntityId();
                 foreach (Monocle.Component component in e.Components) {
                     if (component is Coroutine coroutine) {
@@ -150,7 +151,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
         }
 
-        public void OnQuickLoad(Level level) {
+        public override void OnQuickLoading(Level level, Player player, Player savedPlayer) {
             var entities = level.Entities.GetDictionary<Entity>();
             Coroutine coroutine = null;
             foreach (Routine routine in loadedRoutines) {
@@ -171,12 +172,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                         e.Components.Add(coroutine);
                     }
 
-                    if (e is CrushBlock) {
-                        e.SetField("attackCoroutine", coroutine);
-                    } else if (e is FinalBossMovingBlock){
-                        e.SetField("moveCoroutine", coroutine);
+                    if (e is CrushBlock crushBlock) {
+                        crushBlock.SetField("attackCoroutine", coroutine);
+                    } else if (e is FinalBossMovingBlock block) {
+                        block.SetField("moveCoroutine", coroutine);
                     }
-                    
+
                     coroutine.SetField("waitTimer", routine.waitTimer);
                 }
 
@@ -217,6 +218,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
         }
 
-        public void OnClear() => loadedRoutines = new List<Routine>();
+        public override void OnClear() => loadedRoutines = new List<Routine>();
+        public override void OnLoad() { }
+
+        public override void OnUnload() { }
     }
 }

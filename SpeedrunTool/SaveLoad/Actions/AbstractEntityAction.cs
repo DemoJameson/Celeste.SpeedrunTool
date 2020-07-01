@@ -1,6 +1,3 @@
-using FMOD.Studio;
-using Microsoft.Xna.Framework;
-
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public abstract class AbstractEntityAction {
         protected static bool IsLoadStart => StateManager.Instance.IsLoadStart;
@@ -16,5 +13,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public virtual void OnInit() { }
 
         public virtual void OnQuickLoadStart(Level level) { }
+        public virtual void OnQuickLoading(Level level, Player player, Player savedPlayer) { }
     }
 }

@@ -99,7 +99,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         };
 
         public Player SavedPlayer;
-        private Camera savedCamera;
+        private Level SavedLevel => SavedPlayer?.SceneAs<Level>();
         private LoadState loadState = LoadState.None;
 
         private Session savedSession;
@@ -111,15 +111,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         public bool IsLoading => loadState == LoadState.Loading;
         public bool IsLoadComplete => loadState == LoadState.LoadComplete;
 
+        public bool IsSaved => savedSession != null && SavedPlayer != null;
 
-        public bool IsSaved => savedSession != null && SavedPlayer != null && savedCamera != null;
-
-        public PlayerDeadBody currentPlayerDeadBody;
+        public PlayerDeadBody CurrentPlayerDeadBody;
 
         public void Load() {
             On.Celeste.AreaData.DoScreenWipe += QuickLoadWhenDeath;
             On.Celeste.Level.Update += LevelOnUpdate;
-            On.Celeste.PlayerHair.Render += PlayerHairOnRender;
             On.Celeste.Overworld.ctor += ClearStateAndPbTimes;
             entityActions.ForEach(action => action.OnLoad());
         }
@@ -127,7 +125,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         public void Unload() {
             On.Celeste.AreaData.DoScreenWipe -= QuickLoadWhenDeath;
             On.Celeste.Level.Update -= LevelOnUpdate;
-            On.Celeste.PlayerHair.Render -= PlayerHairOnRender;
             On.Celeste.Overworld.ctor -= ClearStateAndPbTimes;
             entityActions.ForEach(action => action.OnUnload());
         }
@@ -143,15 +140,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             orig(self, loader);
             Clear();
             RoomTimerManager.Instance.ClearPbTimes();
-        }
-
-        // 防止读档设置冲刺次数时游戏崩溃
-        private static void PlayerHairOnRender(On.Celeste.PlayerHair.orig_Render orig, PlayerHair self) {
-            try {
-                orig(self);
-            } catch (ArgumentOutOfRangeException) {
-                // ignored
-            }
         }
 
         private void LevelOnUpdate(On.Celeste.Level.orig_Update orig, Level self) {
@@ -271,7 +259,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedSession.CoreMode = level.CoreMode;
             level.Session.CoreMode = level.CoreMode;
             SavedPlayer = player;
-            savedCamera = level.Camera;
 
             // save all mod sessions
             savedModSessions = new Dictionary<EverestModule, EverestModuleSession>();
@@ -328,9 +315,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         // Set player position ASAP, then freeze game and wait for the player to respawn (? - euni)
         private void QuickLoadStart(Level level, Player player) {
             level.Session.Inventory = savedSession.Inventory;
-            level.Camera.CopyFrom(savedCamera);
-            level.CameraLockMode = SavedPlayer.SceneAs<Level>().CameraLockMode;
-            level.CameraOffset = SavedPlayer.SceneAs<Level>().CameraOffset;
+            level.Camera.CopyFrom(SavedLevel.Camera);
+            level.CameraLockMode = SavedLevel.CameraLockMode;
+            level.CameraOffset = SavedLevel.CameraOffset;
             level.CoreMode = savedSession.CoreMode;
             level.Session.CoreMode = sessionCoreModeBackup;
 
@@ -344,6 +331,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             level.Frozen = false;
             level.PauseLock = false;
+            level.TimeActive = SavedLevel.TimeActive;
 
             loadState = LoadState.LoadComplete;
         }
@@ -364,7 +352,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedSession = null;
             savedModSessions = null;
             SavedPlayer = null;
-            savedCamera = null;
             loadState = LoadState.None;
 
             entityActions.ForEach(action => action.OnClear());
@@ -376,9 +363,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             bool wipeIn, Action onComplete) {
             if (SpeedrunToolModule.Settings.Enabled && SpeedrunToolModule.Settings.AutoLoadAfterDeath && IsSaved &&
                 !wipeIn && scene is Level level &&
-                onComplete != null && (onComplete == level.Reload || currentPlayerDeadBody?.HasGolden == true)) {
+                onComplete != null && (onComplete == level.Reload || CurrentPlayerDeadBody?.HasGolden == true)) {
                 Action complete = onComplete;
-                currentPlayerDeadBody = null;
+                CurrentPlayerDeadBody = null;
                 onComplete = () => {
                     if (IsSaved) {
                         QuickLoad();

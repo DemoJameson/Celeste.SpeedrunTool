@@ -48,16 +48,20 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             return false;
         }
+        
+        private static List<Type> ExcludeTypes = new List<Type> {
+            typeof(BirdNPC),
+            typeof(FlutterBird),
+            typeof(ForsakenCitySatellite),
+            typeof(Lightning),
+            typeof(LightningBreakerBox),
+            typeof(Lookout),
+        };
 
         public override void OnQuickSave(Level level) {
             foreach (Entity e in level.Entities) {
-                if (e is ForsakenCitySatellite || e is FlutterBird || e is Lightning || e is LightningBreakerBox || e is BirdNPC) {
-                    continue;
-                }
-
-                if (e.NoEntityID()) {
-                    continue;
-                }
+                if (ExcludeTypes.Contains(e.GetType())) continue;
+                if (e.NoEntityID()) continue;
                 
                 EntityID id = e.GetEntityId();
                 foreach (Monocle.Component component in e.Components) {

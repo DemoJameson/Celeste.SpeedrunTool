@@ -54,6 +54,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             loadedPlayer.AutoJumpTimer = savedPlayer.AutoJumpTimer;
             loadedPlayer.DashDir = savedPlayer.DashDir;
             loadedPlayer.StateMachine.SetField("state", savedPlayer.StateMachine.State);
+            loadedPlayer.ChaserStates = savedPlayer.ChaserStates;
 
             loadedPlayer.CopyFields(savedPlayer,
                 "jumpGraceTimer",
@@ -140,8 +141,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         private PlayerDeadBody PlayerOnDie(On.Celeste.Player.orig_Die orig, Player self, Vector2 direction,
             bool evenifinvincible, bool registerdeathinstats) {
-            StateManager.Instance.currentPlayerDeadBody = orig(self, direction, evenifinvincible, registerdeathinstats);
-            return StateManager.Instance.currentPlayerDeadBody;
+            StateManager.Instance.CurrentPlayerDeadBody = orig(self, direction, evenifinvincible, registerdeathinstats);
+            return StateManager.Instance.CurrentPlayerDeadBody;
         }
     }
 }

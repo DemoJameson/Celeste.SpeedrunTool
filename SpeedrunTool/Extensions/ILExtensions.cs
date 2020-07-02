@@ -10,11 +10,11 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             endInstruction = null;
 
 
-            if (cursor.TryGotoNext(instruction => instruction.MatchCallvirt<T>(methodName),
+            if (cursor.TryGotoNext(MoveType.After, instruction => instruction.MatchCallvirt<T>(methodName),
                 instruction => instruction.OpCode == OpCodes.Ldc_I4_1,
                 instruction => instruction.OpCode == OpCodes.Newobj,
                 instruction => instruction.MatchCall(typeof(Entity).GetMethod("Add", new[] {typeof(Component)})))) {
-                endInstruction = cursor.Instrs[cursor.Index + 4];
+                endInstruction = cursor.Next;
 
                 cursor.GotoPrev(i => i.OpCode == OpCodes.Ldarg_0,
                     i => i.OpCode == OpCodes.Ldarg_0

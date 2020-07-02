@@ -23,7 +23,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Everest {
             }
 
             EntityID entityId = self.CreateEntityId(position.ToString(), self.GetField("direction").ToString());
-            if (entityId.Equals(default(EntityID))) {
+            if (entityId.IsDefault()) {
                 return;
             }
             self.SetEntityId(entityId);

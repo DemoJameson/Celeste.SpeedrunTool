@@ -17,7 +17,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             Vector2 position) {
             orig(self, position);
 
-            if (ExcludeTypes.Contains(self.GetType())) {
+            Type type = self.GetType();
+            
+            if (type.Namespace != "Celeste") {
+                return;
+            }
+
+            if (ExcludeTypes.Contains(type)) {
                 return;
             }
             

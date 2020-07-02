@@ -30,7 +30,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             Level level = CelesteExtensions.GetLevel();
 
-            if (level?.Session?.Level != null && entityId.Equals(default(EntityID))) {
+            if (level?.Session?.Level != null && entityId.IsDefault()) {
                 entityId = self.CreateEntityId(string.Join("", nodes), lockCamera.ToString(), canSkip.ToString(),
                     finalCh9Boost.ToString(), finalCh9GoldenBoost.ToString(), finalCh9Dialog.ToString());
                 self.SetEntityId(entityId);

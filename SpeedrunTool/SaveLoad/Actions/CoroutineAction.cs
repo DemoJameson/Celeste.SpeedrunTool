@@ -16,20 +16,20 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             typeof(List<>).MakeGenericType(typeof(MoveBlock).GetNestedType("Debris", BindingFlags.NonPublic));
 
         private class Routine {
-            public EntityID ID;
-            public Type routine;
-            public FieldInfo[] fields;
-            public object[] locals;
-            public float waitTimer;
-            public bool removeOnComplete;
+            public readonly EntityID ID;
+            public readonly Type type;
+            public readonly FieldInfo[] fields;
+            public readonly object[] locals;
+            public readonly float waitTimer;
+            public readonly bool removeOnComplete;
             public Routine parent;
             public bool IsFromState { get; set; } = false;
             public int State { get; set; } = 0;
 
-            public Routine(EntityID ID, Type routine, FieldInfo[] fields, object[] locals, float waitTimer,
+            public Routine(EntityID ID, Type type, FieldInfo[] fields, object[] locals, float waitTimer,
                 bool removeOnComplete, Routine parent) {
                 this.ID = ID;
-                this.routine = routine;
+                this.type = type;
                 this.fields = fields;
                 this.locals = locals;
                 this.waitTimer = waitTimer;
@@ -42,7 +42,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public static bool HasRoutine(string name) {
             foreach (Routine routine in loadedRoutines) {
-                if (routine.routine.Name.Contains(name))
+                if (routine.type.Name.Contains(name))
                     return true;
             }
 
@@ -51,17 +51,21 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnQuickSave(Level level) {
             foreach (Entity e in level.Entities) {
-                if (e is ForsakenCitySatellite || e is FlutterBird || e is Lightning || e is LightningBreakerBox) {
+                if (e is ForsakenCitySatellite || e is FlutterBird || e is Lightning || e is LightningBreakerBox || e is BirdNPC) {
                     continue;
                 }
 
+                if (e.NoEntityID()) {
+                    continue;
+                }
+                
                 EntityID id = e.GetEntityId();
                 foreach (Monocle.Component component in e.Components) {
                     if (component is Coroutine coroutine) {
                         SaveCoroutine(coroutine, id);
                     } else if (component is StateMachine state) {
                         coroutine = (Coroutine) state.GetField("currentCoroutine");
-                        if (coroutine != null && SaveCoroutine(coroutine, id)) {
+                        if (coroutine != null && SaveCoroutine(coroutine, id) && loadedRoutines.Count > 0) {
                             loadedRoutines[loadedRoutines.Count - 1].IsFromState = true;
                             loadedRoutines[loadedRoutines.Count - 1].State = state.State;
                         }
@@ -76,24 +80,33 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             object enumerators = EnumeratorsFieldInfo.GetValue(coroutine);
             int initialCount = ((Stack<IEnumerator>) enumerators).Count;
             for (int j = 0; j < initialCount; j++) {
-                IEnumerator routine = ((Stack<IEnumerator>) enumerators).Pop();
+                IEnumerator enumerator = ((Stack<IEnumerator>) enumerators).Pop();
 
-                if (routine.GetType().Assembly == Assembly.GetExecutingAssembly())
+                if (enumerator.GetType().Assembly == Assembly.GetExecutingAssembly())
                     return false;
 
-                GetCoroutineLocals(id, routine, out Type routineType, out FieldInfo[] routineFields,
+                // Dont Save Mod's Coroutine
+                // Fixed NullReferenceException: Celeste.Mod.MaxHelpingHand.Entities.FlagTouchSwitch.<onSeekerRegenerateCoroutine>d__5.MoveNext()
+                if (enumerator.GetType().FullName.StartsWith("Celeste.Mod")) {
+                    continue;
+                }
+                if (!enumerator.GetType().FullName.StartsWith("Celeste.")) {
+                    continue;
+                }
+                
+                GetCoroutineLocals(id, enumerator, out Type routineType, out FieldInfo[] routineFields,
                     out object[] routineLocals);
 
                 // When a coroutine yields a float, Coroutine.Update() waits that long before calling it again.
                 // Backup that as well.
                 float routineTimer = (float) coroutine.GetField("waitTimer");
 
-                Routine toAdd = new Routine(id, routineType, routineFields, routineLocals, routineTimer,
+                Routine routine = new Routine(id, routineType, routineFields, routineLocals, routineTimer,
                     coroutine.RemoveOnComplete, null);
-                loadedRoutines.Add(toAdd);
+                loadedRoutines.Add(routine);
                 // If the coroutine called another coroutine, record the calling coroutine.
                 if (j > 0)
-                    loadedRoutines[j - 1].parent = toAdd;
+                    loadedRoutines[j - 1].parent = routine;
             }
 
             return initialCount > 0;
@@ -155,14 +168,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             var entities = level.Entities.GetDictionary<Entity>();
             Coroutine coroutine = null;
             foreach (Routine routine in loadedRoutines) {
-                ConstructorInfo routineCtor = routine.routine.GetConstructor(new Type[] {typeof(int)});
+                ConstructorInfo routineCtor = routine.type.GetConstructor(new Type[] {typeof(int)});
                 IEnumerator functionCall = (IEnumerator) routineCtor.Invoke(new object[] {0});
                 if (entities.TryGetValue(routine.ID, out Entity e)) {
                     if (routine.parent != null) {
                         var enumerators = (Stack<IEnumerator>) coroutine.GetField("enumerators");
                         enumerators.Push(functionCall);
                     } else if (routine.IsFromState) {
-                        StateMachine state = e.Components.Get<StateMachine>();
+                        StateMachine state = e.Get<StateMachine>();
                         coroutine = new Coroutine(functionCall, routine.removeOnComplete);
                         coroutine.Active = true;
                         state.SetField("currentCoroutine", coroutine);
@@ -206,7 +219,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     foundValue = routine.locals[i];
                 // It isn't actually a routine but a object of a compiler-generated type stored as a routine.
                 else if (routine.locals[i] is Routine _routine) {
-                    ConstructorInfo routineCtor = _routine.routine.GetConstructor(new Type[0]);
+                    ConstructorInfo routineCtor = _routine.type.GetConstructor(new Type[0]);
                     object obj = routineCtor.Invoke(new object[0]);
                     SetCoroutineLocals(level, entities, _routine, obj);
                     foundValue = obj;

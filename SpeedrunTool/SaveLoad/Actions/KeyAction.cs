@@ -16,7 +16,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             orig(self, player, entityId);
 
             if (IsLoadStart && savedKeys.ContainsKey(entityId)) {
-                self.Position = savedKeys[entityId].Position;
+                var saved = savedKeys[entityId];
+                self.CopyFrom(saved);
+                self.CopySprite(saved, "sprite");
             }
         }
 

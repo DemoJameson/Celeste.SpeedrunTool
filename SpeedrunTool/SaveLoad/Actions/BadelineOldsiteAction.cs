@@ -1,11 +1,7 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
-using Mono.Cecil.Cil;
-using Monocle;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 
@@ -33,60 +29,19 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 var saved = savedBadelineOldsites[entityId];
                 self.CopyFrom(saved);
                 self.Hovering = saved.Hovering;
+                self.CopySprite(saved, "Sprite");
                 self.CopyFields(saved, "following", "hoveringTimer");
-
-                self.Add(new Coroutine(RestorePlayer(self, saved)));
             } else {
                 self.Add(new RemoveSelfComponent());
             }
         }
 
-        private IEnumerator RestorePlayer(BadelineOldsite self, BadelineOldsite saved) {
-            if (self.Scene.GetPlayer() is Player player && saved.GetField("player") != null) {
-                self.SetField("player", player);
-            }
-
-            yield break;
+        private void BadelineOldsiteOnAdded(ILContext il) {
+            il.SkipAddCoroutine<BadelineOldsite>("StartChasingRoutine", () => IsLoadStart);
         }
 
-        private void BadelineOldsiteOnAdded(ILContext il) {
-            ILCursor cursor = new ILCursor(il);
-
-            if (!cursor.TryGotoNextAddCoroutine<BadelineOldsite>("StartChasingRoutine", out var skipCoroutine, 9)) {
-                return;
-            }
-
-
-            Instruction start = cursor.Next;
-            start.GetHashCode().ToString().Log();
-            ILLabel startLabel = cursor.MarkLabel();
-
-            cursor.EmitDelegate<Func<bool>>(() => IsLoadStart);
-            cursor.Emit(OpCodes.Brtrue, skipCoroutine);
-
-            // if (cursor.TryGotoPrev(MoveType.After,
-            //     i => i.MatchCallvirt<Session>("GetFlag"),
-            //     i => i.OpCode == OpCodes.Brtrue)) {
-            //     cursor.Prev.Operand = label;
-            // }
-            
-            if (cursor.TryFindPrev(out var cursors,
-                i => {
-                    if (i.Operand is ILLabel a) {
-                        ("jumpLabelTarget = " + a.Target.GetHashCode()).Log();
-                        ("start =" + start.GetHashCode()).Log();
-                        (a.Target == start).ToString().Log();
-                    }
-
-                    return false;
-                    return i.Operand is ILLabel jumpLabel && jumpLabel.Target == start;
-                })) {
-                foreach (var ilCursor in cursors) {
-                    // ilCursor.Next.Operand = startLabel;
-                    "sjdfjsdjsdjf".Log();
-                }
-            }
-            
+        private void BadelineOldsiteOnOrigAdded(ILContext il) {
+            il.SkipAddCoroutine<BadelineOldsite>("StartChasingRoutine", () => IsLoadStart);
         }
 
         public override void OnClear() {
@@ -95,11 +50,21 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnLoad() {
             On.Celeste.BadelineOldsite.ctor_EntityData_Vector2_int += RestoreBadelineOldsitePosition;
-            addedHook = new ILHook(typeof(BadelineOldsite).GetMethod("orig_Added"), BadelineOldsiteOnAdded);
+            IL.Celeste.BadelineOldsite.Added += BadelineOldsiteOnAdded;
+            addedHook = new ILHook(typeof(BadelineOldsite).GetMethod("orig_Added"), BadelineOldsiteOnOrigAdded);
+            On.Celeste.BadelineOldsite.Update += BadelineOldsiteOnUpdate;
+        }
+
+        private void BadelineOldsiteOnUpdate(On.Celeste.BadelineOldsite.orig_Update orig, BadelineOldsite self) {
+            if (IsLoadStart && self.Scene.GetPlayer() is Player player) {
+                self.SetField("player", player);
+            }
+            orig(self);
         }
 
         public override void OnUnload() {
             On.Celeste.BadelineOldsite.ctor_EntityData_Vector2_int -= RestoreBadelineOldsitePosition;
+            IL.Celeste.BadelineOldsite.Added -= BadelineOldsiteOnAdded;
             addedHook.Dispose();
         }
     }

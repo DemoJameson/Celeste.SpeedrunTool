@@ -22,7 +22,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.FrostHelper {
             }
 
             EntityID entityId = self.CreateEntityId(position.ToString());
-            if (entityId.Equals(default(EntityID))) {
+            if (entityId.IsDefault()) {
                 return;
             }
             self.SetEntityId(entityId);

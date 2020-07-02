@@ -37,7 +37,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
         public static void TrySetEntityId(this Entity entity, params string[] id) {
             EntityID entityId = entity.GetEntityId();
-            if (entityId.Equals(default(EntityID))) {
+            if (entityId.IsDefault()) {
                 Session session = GetSession();
                 if (session?.Level == null) {
                     return;
@@ -46,6 +46,14 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 entityId = entity.CreateEntityId(id);
                 entity.SetEntityId(entityId);
             }
+        }
+
+        public static bool NoEntityID(this Entity entity) {
+            return entity.GetEntityId().IsDefault();
+        }
+
+        public static bool HasEntityID(this Entity entity) {
+            return !entity.NoEntityID();
         }
 
         public static EntityID CreateEntityId(this Entity entity, params string[] id) {
@@ -61,6 +69,10 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return entity.GetExtendedDataValue<EntityData>(EntityDataKey);
         }
 
+        public static bool IsDefault(this EntityID entityId) {
+            return entityId.Equals(default(EntityID));
+        }
+
         public static EntityID ToEntityId(this EntityData entityData) {
             return new EntityID(entityData.Level.Name, entityData.ID);
         }
@@ -69,7 +81,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             Dictionary<EntityID, T> result = new Dictionary<EntityID, T>();
             foreach (T entity in entityList.FindAll<T>()) {
                 EntityID entityId = entity.GetEntityId();
-                if (entityId.Equals(default(EntityID)) || result.ContainsKey(entityId)) {
+                if (entity.NoEntityID()) {
                     continue;
                 }
 
@@ -89,7 +101,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             Dictionary<EntityID, T> result = new Dictionary<EntityID, T>();
             foreach (T entity in enumerable) {
                 EntityID entityId = entity.GetEntityId();
-                if (entityId.Equals(default(EntityID)) || result.ContainsKey(entityId)) {
+                if (entity.NoEntityID()) {
                     continue;
                 }
 

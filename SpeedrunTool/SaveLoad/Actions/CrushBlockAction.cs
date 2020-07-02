@@ -1,10 +1,7 @@
-using System;
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
-using Mono.Cecil.Cil;
-using Monocle;
 using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
@@ -65,14 +62,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private void BlockCoroutineStart(ILContext il) {
-            ILCursor c = new ILCursor(il);
-            c.GotoNext(i => i.MatchCall(typeof(Entity).GetMethod("Add", new[] {typeof(Monocle.Component)})));
-            Instruction skipCoroutine = c.Next.Next;
-            c.GotoPrev(i => i.MatchStfld(typeof(CrushBlock), "canActivate"));
-            c.GotoNext();
-            c.EmitDelegate<Func<bool>>(() => IsLoadStart && CoroutineAction.HasRoutine("<AttackSequence>d__41"));
-            //this also skips setting attackSequence - that's treated as a special case in CoroutineAction.
-            c.Emit(OpCodes.Brtrue, skipCoroutine);
+            il.SkipAddCoroutine<CrushBlock>("AttackSequence",
+                () => IsLoadStart && CoroutineAction.HasRoutine("<AttackSequence>d__41"));
         }
     }
 }

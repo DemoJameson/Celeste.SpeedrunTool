@@ -1,9 +1,7 @@
-using System;
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
-using Mono.Cecil.Cil;
 using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
@@ -45,29 +43,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     self.FallDelay = savedFallingBlock.FallDelay;
                     self.Triggered = savedFallingBlock.Triggered;
                     self.SetProperty("HasStartedFalling", savedFallingBlock.HasStartedFalling);
-                }
-                else {
+                } else {
                     self.Add(new RemoveSelfComponent());
                 }
             }
         }
 
         private void BlockCoroutineStart(ILContext il) {
-            ILCursor cursor = new ILCursor(il);
-
-            if (!cursor.TryGotoNextAddCoroutine<FallingBlock>("Sequence", out var skipCoroutine)) {
-                return;
-            }
-
-            ILLabel label = cursor.MarkLabel();
-
-            cursor.EmitDelegate<Func<bool>>(() => IsLoadStart);
-            cursor.Emit(OpCodes.Brtrue, skipCoroutine);
-
-            if (cursor.TryGotoPrev(MoveType.After, i => i.OpCode == OpCodes.Ldarg_S && i.Operand.ToString() == "finalBoss",
-                i => i.OpCode == OpCodes.Brfalse_S)) {
-                cursor.Prev.Operand = label;
-            }
+            il.SkipAddCoroutine<FallingBlock>("Sequence", () => IsLoadStart);
         }
 
         public override void OnLoad() {

@@ -11,7 +11,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             var staticMovers = level.Tracker.GetComponents<StaticMover>();
             foreach (StaticMover staticMover in staticMovers) {
                 var entityId = staticMover.Entity.GetEntityId();
-                if (staticMover.Entity != null && !entityId.Equals(default(EntityID)) && !savedStaticMovers.ContainsKey(entityId)) {
+                if (staticMover.Entity != null && !entityId.IsDefault() && !savedStaticMovers.ContainsKey(entityId)) {
                     savedStaticMovers.Add(staticMover.Entity.GetEntityId(), staticMover);
                 }
             }
@@ -38,8 +38,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private bool StaticMoverOnIsRiding(StaticMover staticMover, Platform platform) {
             EntityID entityId = staticMover.Entity.GetEntityId();
             EntityID platformEntityId = platform.GetEntityId();
-            EntityID defaultEntityId = default(EntityID);
-            if (entityId.Equals(defaultEntityId) || platformEntityId.Equals(defaultEntityId)) {
+            if (entityId.IsDefault() || platformEntityId.IsDefault()) {
                 return true;
             }
 

@@ -40,6 +40,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             loadedPlayer.Dashes = savedPlayer.Dashes;
         }
 
+        public override void OnQuickLoadStart(Level level, Player player, Player savedPlayer) {
+            RestorePlayerPosition(player, savedPlayer);
+        }
+
         public override void OnQuickLoading(Level level, Player loadedPlayer, Player savedPlayer) {
             loadedPlayer.Facing = savedPlayer.Facing;
             loadedPlayer.Ducking = savedPlayer.Ducking;

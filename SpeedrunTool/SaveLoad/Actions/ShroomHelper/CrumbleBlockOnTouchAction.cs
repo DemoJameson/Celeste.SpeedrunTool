@@ -25,7 +25,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.ShroomHelper {
             }
 
             EntityID entityId = self.CreateEntityId(position.ToString(), width.ToString(), height.ToString(), safe.ToString());
-            if (entityId.Equals(default(EntityID))) {
+            if (entityId.IsDefault()) {
                 return;
             }
             self.SetEntityId(entityId);

@@ -22,7 +22,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Glyph {
             self.Remove(self.Get<StaticMover>());
 
             EntityID entityId = self.CreateEntityId(position.ToString(), height.ToString(), left.ToString(), notCoreMode.ToString());
-            if (entityId.Equals(default(EntityID))) {
+            if (entityId.IsDefault()) {
                 return;
             }
             self.SetEntityId(entityId);

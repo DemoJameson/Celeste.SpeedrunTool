@@ -1,8 +1,6 @@
-using System;
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
-using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 
@@ -31,22 +29,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private void IntroCrusherOnAdded(ILContext il) {
-            ILCursor cursor = new ILCursor(il);
-
-            if (!cursor.TryGotoNextAddCoroutine<IntroCrusher>("Sequence", out var skipCoroutine)) {
-                return;
-            }
-
-            ILLabel label = cursor.MarkLabel();
-
-            cursor.EmitDelegate<Func<bool>>(() => IsLoadStart);
-            cursor.Emit(OpCodes.Brtrue, skipCoroutine);
-
-            if (cursor.TryGotoPrev(MoveType.After,
-                i => i.OpCode == OpCodes.Call || i.OpCode == OpCodes.Callvirt,
-                i => i.OpCode == OpCodes.Brfalse_S)) {
-                cursor.Prev.Operand = label;
-            }
+            il.SkipAddCoroutine<IntroCrusher>("Sequence", () => IsLoadStart);
         }
 
         public override void OnClear() {

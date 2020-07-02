@@ -24,7 +24,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private void RestoreFlyFeatherState(On.Celeste.FlyFeather.orig_ctor_Vector2_bool_bool orig, FlyFeather self,
             Vector2 position, bool shielded, bool singleUse) {
             orig(self, position, shielded, singleUse);
-            if (self.GetEntityId().Equals(default(EntityID)) && Engine.Scene is Level) {
+            if (self.GetEntityId().IsDefault() && Engine.Scene is Level) {
                 EntityID entityId = self.CreateEntityId(position.ToString(), shielded.ToString(), singleUse.ToString());
                 self.SetEntityId(entityId);
 

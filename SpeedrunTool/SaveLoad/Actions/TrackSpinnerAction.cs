@@ -41,9 +41,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private static IEnumerator RestoreEyeDirection(TrackSpinner self, TrackSpinner saved) {
-            DustGraphic dustGraphic = self.GetField("dusty") as DustGraphic;
-            DustGraphic savedDustGraphic = saved.GetField("dusty") as DustGraphic;
+            DustGraphic dustGraphic = self.GetField(typeof(DustTrackSpinner), "dusty") as DustGraphic;
+            DustGraphic savedDustGraphic = saved.GetField(typeof(DustTrackSpinner), "dusty") as DustGraphic;
             dustGraphic.EyeDirection = savedDustGraphic.EyeDirection;
+            dustGraphic.EyeTargetDirection = savedDustGraphic.EyeTargetDirection;
+            dustGraphic.EyeFlip = savedDustGraphic.EyeFlip;
             yield break;
         }
 

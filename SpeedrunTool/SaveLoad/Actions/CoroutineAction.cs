@@ -172,10 +172,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                         e.Components.Add(coroutine);
                     }
 
-                    if (e is CrushBlock crushBlock) {
-                        crushBlock.SetField("attackCoroutine", coroutine);
-                    } else if (e is FinalBossMovingBlock block) {
-                        block.SetField("moveCoroutine", coroutine);
+                    if (e is CrushBlock) {
+                        e.SetField(typeof(CrushBlock),"attackCoroutine", coroutine);
+                    } else if (e is FinalBossMovingBlock) {
+                        e.SetField(typeof(FinalBossMovingBlock),"moveCoroutine", coroutine);
                     }
 
                     coroutine.SetField("waitTimer", routine.waitTimer);
@@ -210,14 +210,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     object obj = routineCtor.Invoke(new object[0]);
                     SetCoroutineLocals(level, entities, _routine, obj);
                     foundValue = obj;
-                } else LocalsSpecialCases(routine.locals[i], out foundValue, true);
+                } else {
+                    LocalsSpecialCases(routine.locals[i], out foundValue, true);
+                }
 
                 if (foundValue != null) {
                     routineObj.SetField(routineObj.GetType(), field.Name, foundValue);
                 }
             }
         }
-
         public override void OnClear() => loadedRoutines = new List<Routine>();
         public override void OnLoad() { }
 

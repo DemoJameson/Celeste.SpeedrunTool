@@ -12,7 +12,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             levelWind = level.Wind;
         }
 
-        public override void OnQuickLoadStart(Level level) {
+        public override void OnQuickLoadStart(Level level, Player player, Player savedPlayer) {
             if (savedWindController == null) {
                 return;
             }

@@ -34,7 +34,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
         }
 
-        public override void OnQuickLoadStart(Level level) {
+        public override void OnQuickLoadStart(Level level, Player player, Player savedPlayer) {
             if (savedGlidersCopy.Count == 0) {
                 return;
             }

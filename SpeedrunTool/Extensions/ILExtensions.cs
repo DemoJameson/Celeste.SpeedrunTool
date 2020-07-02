@@ -1,53 +1,34 @@
 using System;
+using System.Collections.Generic;
 using Mono.Cecil.Cil;
 using Monocle;
 using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
     public static class IlExtensions {
-        public static bool TryGotoNextAddCoroutine<T>(this ILCursor cursor, string methodName, out Instruction skipInstruction, MoveType moveType = MoveType.Before) {
+        public static bool TryGotoNextAddCoroutine<T>(this ILCursor cursor, string methodName, out Instruction skipInstruction, int instructionCounts = 6, MoveType moveType = MoveType.Before) {
             skipInstruction = null;
             
-            if (cursor.TryGotoNext(moveType,
+            List<Func<Instruction, bool>> predicates = new List<Func<Instruction, bool>> {
                 instruction => instruction.OpCode == OpCodes.Ldarg_0,
                 instruction => instruction.OpCode == OpCodes.Ldarg_0,
                 instruction => instruction.MatchCallvirt<T>(methodName),
                 instruction => instruction.OpCode == OpCodes.Ldc_I4_1,
                 instruction => instruction.OpCode == OpCodes.Newobj,
-                instruction => instruction.MatchCall(typeof(Entity).GetMethod("Add", new[] {typeof(Component)})))) {
-                switch (moveType) {
-                    case MoveType.Before:
-                        skipInstruction = cursor.Instrs[cursor.Index + 6];
-                        break;
-                    case MoveType.After:
-                        skipInstruction = cursor.Instrs[cursor.Index - 6];
-                        break;
-                    default:
-                        throw new ArgumentException("MoveType only allow MoveType.Before and MoveType.After");
-                }
+                instruction => instruction.MatchCall(typeof(Entity).GetMethod("Add", new[] {typeof(Component)}))
+            };
 
-                return true;
+            for (int i = 6; i < instructionCounts; i++) {
+                predicates.Insert(2, instruction => true);
             }
             
-            return false;
-        }
-        
-        public static bool TryGotoPrevAddCoroutine<T>(this ILCursor cursor, string methodName, out Instruction skipInstruction, MoveType moveType = MoveType.Before) {
-            skipInstruction = null;
-            
-            if (cursor.TryGotoPrev(moveType,
-                instruction => instruction.OpCode == OpCodes.Ldarg_0,
-                instruction => instruction.OpCode == OpCodes.Ldarg_0,
-                instruction => instruction.MatchCallvirt<T>(methodName),
-                instruction => instruction.OpCode == OpCodes.Ldc_I4_1,
-                instruction => instruction.OpCode == OpCodes.Newobj,
-                instruction => instruction.MatchCall(typeof(Entity).GetMethod("Add", new[] {typeof(Component)})))) {
+            if (cursor.TryGotoNext(moveType, predicates.ToArray())) {
                 switch (moveType) {
                     case MoveType.Before:
-                        skipInstruction = cursor.Instrs[cursor.Index + 6];
+                        skipInstruction = cursor.Instrs[cursor.Index + instructionCounts];
                         break;
                     case MoveType.After:
-                        skipInstruction = cursor.Instrs[cursor.Index - 6];
+                        skipInstruction = cursor.Instrs[cursor.Index - instructionCounts];
                         break;
                     default:
                         throw new ArgumentException("MoveType only allow MoveType.Before and MoveType.After");

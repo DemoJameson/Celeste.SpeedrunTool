@@ -13,8 +13,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             savedBoosters = level.Entities.GetDictionary<Booster>();
         }
 
-        public override void OnQuickLoadStart(Level level) {
-            Player savedPlayer = StateManager.Instance.SavedPlayer;
+        public override void OnQuickLoadStart(Level level, Player player, Player savedPlayer) {
             Booster lastBooster = savedPlayer.LastBooster;
 
             if (savedPlayer.StateMachine.State != Player.StRedDash || lastBooster == null) {

@@ -12,7 +12,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public virtual void OnInit() { }
 
-        public virtual void OnQuickLoadStart(Level level) { }
+        public virtual void OnQuickLoadStart(Level level, Player player, Player savedPlayer) {
+        }
         public virtual void OnQuickLoading(Level level, Player player, Player savedPlayer) { }
     }
 }

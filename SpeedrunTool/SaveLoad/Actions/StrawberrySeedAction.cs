@@ -56,11 +56,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
         }
 
-        public override void OnQuickLoadStart(Level level) {
-            if (!(level.Entities.FindFirst<Player>() is Player player)) {
-                return;
-            }
-
+        public override void OnQuickLoadStart(Level level, Player player, Player savedPlayer) {
             List<StrawberrySeed> addedBerrySeeds = level.Entities.FindAll<StrawberrySeed>();
 
             foreach (StrawberrySeed savedBerrySeed in savedCollectedBerrySeeds.Values) {

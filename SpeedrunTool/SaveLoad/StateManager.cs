@@ -18,8 +18,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             new PlayerAction(),
             new CoroutineAction(),
             
+            new AscendManagerAction(),
             new AudioAction(),
-            new BadelineBoostAction(),
+            // new BadelineBoostAction(),
+            new BadelineBoostAction2(),
+            new BadelineDummyAction(),
             new BadelineOldsiteAction(),
             new BoosterAction(),
             new BounceBlockAction(),
@@ -331,7 +334,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             level.CoreMode = savedSession.CoreMode;
             level.Session.CoreMode = sessionCoreModeBackup;
 
-            entityActions.ForEach(action => action.OnQuickLoadStart(level));
+            entityActions.ForEach(action => action.OnQuickLoadStart(level, player, SavedPlayer));
         }
 
         // 人物复活完毕后设置人物相关属性

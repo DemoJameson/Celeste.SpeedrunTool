@@ -29,11 +29,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 var saved = savedBadelineOldsites[entityId];
                 self.CopyFrom(saved);
                 self.Hovering = saved.Hovering;
-                self.CopySprite(saved, "Sprite");
+                self.Hair.CopyPlayerHairAndSprite(saved.Hair);
                 self.CopyFields(saved, "following", "hoveringTimer");
             } else {
                 self.Add(new RemoveSelfComponent());
             }
+        }
+
+        private void BadelineOldsiteOnUpdate(On.Celeste.BadelineOldsite.orig_Update orig, BadelineOldsite self) {
+            if (IsLoadStart && self.Scene.GetPlayer() is Player player) {
+                self.SetField("player", player);
+            }
+            orig(self);
         }
 
         private void BadelineOldsiteOnAdded(ILContext il) {
@@ -55,16 +62,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             On.Celeste.BadelineOldsite.Update += BadelineOldsiteOnUpdate;
         }
 
-        private void BadelineOldsiteOnUpdate(On.Celeste.BadelineOldsite.orig_Update orig, BadelineOldsite self) {
-            if (IsLoadStart && self.Scene.GetPlayer() is Player player) {
-                self.SetField("player", player);
-            }
-            orig(self);
-        }
-
         public override void OnUnload() {
             On.Celeste.BadelineOldsite.ctor_EntityData_Vector2_int -= RestoreBadelineOldsitePosition;
             IL.Celeste.BadelineOldsite.Added -= BadelineOldsiteOnAdded;
+            On.Celeste.BadelineOldsite.Update -= BadelineOldsiteOnUpdate;
             addedHook.Dispose();
         }
     }

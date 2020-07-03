@@ -21,16 +21,22 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             if (IsLoadStart && savedBumpers.ContainsKey(entityId)) {
                 Bumper savedBumper = savedBumpers[entityId];
 
+                self.CopyFields(savedBumper,
+                    "anchor",
+                    "fireMode",
+                    "goBack",
+                    "respawnTimer"
+                );
+                
+                self.CopySprite(savedBumper, "sprite");
+                self.CopySprite(savedBumper, "spriteEvil");
 
                 SineWave sineWave = self.Get<SineWave>();
                 SineWave savedSineWave = savedBumper.Get<SineWave>();
                 sineWave.Counter = savedSineWave.Counter;
 
-
                 Tween savedTween = savedBumper.Get<Tween>();
                 if (savedTween != null) {
-                    self.CopyFields(typeof(Bumper), savedBumper, "goBack");
-                    self.CopyFields(typeof(Bumper), savedBumper, "anchor");
                     self.Get<Tween>().CopyFrom(savedTween);
                 }
             }

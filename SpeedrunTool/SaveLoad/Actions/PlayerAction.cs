@@ -4,28 +4,25 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     class PlayerAction : AbstractEntityAction {
-        private EntityID flingBird;
-        private EntityID dreamBlock;
-
         public override void OnLoad() {
-            On.Celeste.Player.Die += PlayerOnDie;
             On.Celeste.Player.Added += PlayerOnAdded;
         }
 
         public override void OnUnload() {
-            On.Celeste.Player.Die -= PlayerOnDie;
             On.Celeste.Player.Added -= PlayerOnAdded;
         }
 
         private void PlayerOnAdded(On.Celeste.Player.orig_Added orig, Player self, Scene scene) {
             orig(self, scene);
 
+            // seems seeker will chase player immediately, so restore player position asap.
             if (IsLoadStart) {
                 RestorePlayerPosition(self, StateManager.Instance.SavedPlayer);
             }
         }
 
         private void RestorePlayerPosition(Player loadedPlayer, Player savedPlayer) {
+            loadedPlayer.Depth = savedPlayer.Depth;
             loadedPlayer.JustRespawned = savedPlayer.JustRespawned;
             loadedPlayer.Position = savedPlayer.Position;
             loadedPlayer.SetField<Actor>("movementCounter", savedPlayer.PositionRemainder);
@@ -41,6 +38,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         public override void OnQuickLoadStart(Level level, Player player, Player savedPlayer) {
+            // bug fixes for chapter 6 first room camera issue, there should be a better solution.
             RestorePlayerPosition(player, savedPlayer);
         }
 
@@ -54,43 +52,92 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             loadedPlayer.AutoJumpTimer = savedPlayer.AutoJumpTimer;
             loadedPlayer.DashDir = savedPlayer.DashDir;
             loadedPlayer.StateMachine.SetField("state", savedPlayer.StateMachine.State);
-            loadedPlayer.ChaserStates = savedPlayer.ChaserStates;
+
+            // too lazy to restore private List<ChaserStateSound> activeSounds
+            loadedPlayer.ChaserStates.Clear();
+            loadedPlayer.ChaserStates.AddRange(savedPlayer.ChaserStates);
+
+            loadedPlayer.CopySprite(savedPlayer, "sweatSprite");
+            loadedPlayer.Hair.CopyPlayerHairAndSprite(savedPlayer.Hair);
+            loadedPlayer.Collidable = savedPlayer.Collidable;
+            loadedPlayer.Collider = savedPlayer.Collider;
+
+            loadedPlayer.StrawberriesBlocked = savedPlayer.StrawberriesBlocked;
+            loadedPlayer.StrawberryCollectIndex = savedPlayer.StrawberryCollectIndex;
+            loadedPlayer.StrawberryCollectResetTimer = savedPlayer.StrawberryCollectResetTimer;
+
+            loadedPlayer.OverrideHairColor = savedPlayer.OverrideHairColor;
+
+            loadedPlayer.DummyMoving = savedPlayer.DummyMoving;
+            loadedPlayer.DummyGravity = savedPlayer.DummyGravity;
+            loadedPlayer.DummyFriction = savedPlayer.DummyFriction;
+            loadedPlayer.DummyMaxspeed = savedPlayer.DummyMaxspeed;
+
+            loadedPlayer.SetProperty("OnSafeGround", savedPlayer.OnSafeGround);
+            loadedPlayer.SetProperty("StartedDashing", savedPlayer.StartedDashing);
 
             loadedPlayer.CopyFields(savedPlayer,
-                "jumpGraceTimer",
-                "varJumpSpeed",
-                "varJumpTimer",
-                "forceMoveX",
-                "forceMoveXTimer",
-                "hopWaitX",
-                "hopWaitXSpeed",
-                "lastAim",
-                "wallSlideDir",
-                "climbNoMoveTimer",
+                "attractTo",
+                "boostRed", "boostTarget",
+                "beforeDashSpeed",
+                "canCurveDash",
+                "calledDashEvents",
                 "carryOffset",
-                "wallSpeedRetentionTimer",
-                "wallSpeedRetained",
-                "wallBoostDir",
-                "wallBoostTimer",
+                "cassetteFlyCurve", "cassetteFlyLerp",
+                "climbHopSolidPosition", "climbNoMoveTimer", "climbTriggerDir",
+                "dashAttackTimer", "dashStartedOnGround", "dashTrailTimer", "dashTrailCounter", "dashCooldownTimer",
+                "dashRefillCooldownTimer",
+                "deadOffset",
+                "dreamDashCanEndTimer", "dreamJump",
+                "fastJump",
+                "flash",
+                "forceMoveX", "forceMoveXTimer",
+                "gliderBoostDir", "gliderBoostTimer",
+                "hairFlashTimer",
+                "hiccupTimer",
+                "highestAirY",
+                "hitSquashNoMoveTimer",
+                "holdCannotDuck",
+                "hopWaitX", "hopWaitXSpeed",
+                "hurtbox",
+                "idleTimer",
+                "jumpGraceTimer",
+                "lastAim",
                 "lastClimbMove",
+                "lastDashes",
+                "launched", "launchedTimer", "launchApproachX",
+                "lowFrictionStopTimer",
+                "maxFall",
+                "minHoldTimer",
+                "moveX",
                 "noWindTimer",
-                "climbHopSolidPosition",
-                "minHoldTimer"
+                "onGround",
+                "playFootstepOnLand",
+                "starFlyTimer", "starFlyTransforming", "starFlySpeedLerp", "starFlyLastDir",
+                "startHairCalled", "startHairCount",
+                "summitLaunchTargetX", "summitLaunchParticleTimer",
+                "varJumpTimer", "varJumpSpeed",
+                "wallBoosting", "wallBoostDir", "wallBoostTimer",
+                "wallSlideDir", "wallSlideTimer",
+                "wallSpeedRetentionTimer", "wallSpeedRetained",
+                "wasDashB",
+                "wasDucking",
+                "wasOnGround",
+                "wasTired",
+                "windMovedUp", "windDirection", "windTimeout", "windHairTimer"
             );
 
+            // too lazy to restore this field, hope its ok.
+            // private HashSet<Trigger> triggersInside;
+
+            loadedPlayer.CopyEntity<Solid>(savedPlayer, "climbHopSolid");
+            loadedPlayer.CopyEntity<Booster>(savedPlayer, "CurrentBooster");
+            loadedPlayer.CopyEntity<Booster>(savedPlayer, "LastBooster");
+            loadedPlayer.CopyEntity<FlingBird>(savedPlayer, "flingBird");
+            loadedPlayer.CopyEntity<DreamBlock>(savedPlayer, "dreamBlock");
+
             switch (savedPlayer.StateMachine.State) {
-                case Player.StDash:
-                case Player.StRedDash:
-                    loadedPlayer.CopyFields(savedPlayer,
-                        "dashAttackTimer", "dashStartedOnGround", "dashCooldownTimer", "dashRefillCooldownTimer",
-                        "DashDir"
-                    );
-                    break;
                 case Player.StDreamDash:
-                    loadedPlayer.CopyFields(savedPlayer, "dreamDashCanEndTimer");
-                    var dreamBlocks = Engine.Scene.Entities.GetDictionary<DreamBlock>();
-                    dreamBlocks.TryGetValue(dreamBlock, out DreamBlock db);
-                    loadedPlayer.SetField("dreamBlock", db);
                     loadedPlayer.TreatNaive = true;
                     SoundSource dreamSFX = new SoundSource();
                     loadedPlayer.Add(dreamSFX);
@@ -98,9 +145,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     loadedPlayer.SetField("dreamSfxLoop", dreamSFX);
                     break;
                 case Player.StStarFly:
-                    loadedPlayer.CopyFields(savedPlayer,
-                        "starFlyTimer", "starFlyTransforming", "starFlySpeedLerp", "starFlyLastDir"
-                    );
                     BloomPoint starFlyBloom = new BloomPoint(new Vector2(0f, -6f), 0f, 16f);
                     loadedPlayer.SetField("starFlyBloom", starFlyBloom);
                     SoundSource featherSFX = new SoundSource();
@@ -113,36 +157,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     loadedPlayer.Add(featherWarningSFX);
                     loadedPlayer.SetField("starFlyLoopSfx", featherSFX);
                     loadedPlayer.SetField("starFlyWarningSfx", featherWarningSFX);
-                    loadedPlayer.Collider = new Hitbox(8f, 8f, -4f, -10f);
-                    loadedPlayer.SetField("hurtbox", new Hitbox(6f, 6f, -3f, -9f));
-                    break;
-                case Player.StFlingBird:
-                    var flingBirds = Engine.Scene.Entities.GetDictionary<FlingBird>();
-                    flingBirds.TryGetValue(flingBird, out FlingBird fb);
-                    loadedPlayer.SetField("flingBird", fb);
                     break;
             }
         }
 
-        public override void OnQuickSave(Level level) {
-            if (level.GetPlayer() is Player player) {
-                if (player.StateMachine.State == Player.StFlingBird) {
-                    flingBird = ((FlingBird) player.GetField("flingBird")).GetEntityId();
-                } else if (player.StateMachine.State == Player.StDreamDash) {
-                    dreamBlock = ((DreamBlock) player.GetField("dreamBlock")).GetEntityId();
-                }
-            }
-        }
+        public override void OnQuickSave(Level level) { }
 
-        public override void OnClear() {
-            flingBird = default;
-            dreamBlock = default;
-        }
-
-        private PlayerDeadBody PlayerOnDie(On.Celeste.Player.orig_Die orig, Player self, Vector2 direction,
-            bool evenifinvincible, bool registerdeathinstats) {
-            StateManager.Instance.CurrentPlayerDeadBody = orig(self, direction, evenifinvincible, registerdeathinstats);
-            return StateManager.Instance.CurrentPlayerDeadBody;
-        }
+        public override void OnClear() { }
     }
 }

@@ -17,14 +17,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             self.SetEntityId(entityId);
             orig(self, data, offset);
 
-            if (IsLoadStart) {
-                if (savedStarJumpBlocks.ContainsKey(entityId)) {
-                    var savedBlock = savedStarJumpBlocks[entityId];
-                    self.Position = savedBlock.Position;
-                    self.CopyFields(typeof(StarJumpBlock), savedBlock, "sinks");
-                    self.CopyFields(typeof(StarJumpBlock), savedBlock, "yLerp");
-                    self.CopyFields(typeof(StarJumpBlock), savedBlock, "sinkTimer");
-                }
+            if (!IsLoadStart) return;
+            
+            if (savedStarJumpBlocks.ContainsKey(entityId)) {
+                var savedBlock = savedStarJumpBlocks[entityId];
+                self.Position = savedBlock.Position;
+                self.CopyFields(savedBlock, "sinks", "yLerp", "sinkTimer");
             }
         }
 

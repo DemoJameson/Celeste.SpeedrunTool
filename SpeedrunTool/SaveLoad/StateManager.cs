@@ -9,6 +9,7 @@ using Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Everest;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Actions.FrostHelper;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Glyph;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Actions.ShroomHelper;
+using Microsoft.Xna.Framework;
 using Monocle;
 using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
 
@@ -20,8 +21,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             
             new AscendManagerAction(),
             new AudioAction(),
-            // new BadelineBoostAction(),
-            new BadelineBoostAction2(),
+            new BadelineBoostAction(),
             new BadelineDummyAction(),
             new BadelineOldsiteAction(),
             new BoosterAction(),
@@ -113,12 +113,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         public bool IsSaved => savedSession != null && SavedPlayer != null;
 
-        public PlayerDeadBody CurrentPlayerDeadBody;
+        private PlayerDeadBody currentPlayerDeadBody;
 
         public void Load() {
             On.Celeste.AreaData.DoScreenWipe += QuickLoadWhenDeath;
             On.Celeste.Level.Update += LevelOnUpdate;
             On.Celeste.Overworld.ctor += ClearStateAndPbTimes;
+            On.Celeste.Player.Die += PlayerOnDie;
             entityActions.ForEach(action => action.OnLoad());
         }
 
@@ -126,6 +127,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Celeste.AreaData.DoScreenWipe -= QuickLoadWhenDeath;
             On.Celeste.Level.Update -= LevelOnUpdate;
             On.Celeste.Overworld.ctor -= ClearStateAndPbTimes;
+            On.Celeste.Player.Die -= PlayerOnDie;
             entityActions.ForEach(action => action.OnUnload());
         }
 
@@ -357,15 +359,22 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             entityActions.ForEach(action => action.OnClear());
         }
 
+        
+        private PlayerDeadBody PlayerOnDie(On.Celeste.Player.orig_Die orig, Player self, Vector2 direction,
+            bool evenIfInvincible, bool registerDeathInStats) {
+            currentPlayerDeadBody = orig(self, direction, evenIfInvincible, registerDeathInStats);
+            return currentPlayerDeadBody;
+        }
+        
         // Everest 的 Bug，另外的 Mod Hook 了 PlayerDeadBody.End 方法后 Level.DoScreenWipe Hook 的方法 wipeIn 为 false 时就不触发了
         // 所以改成了 Hook AreaData.DoScreenWipe 方法
         private void QuickLoadWhenDeath(On.Celeste.AreaData.orig_DoScreenWipe orig, AreaData self, Scene scene,
             bool wipeIn, Action onComplete) {
             if (SpeedrunToolModule.Settings.Enabled && SpeedrunToolModule.Settings.AutoLoadAfterDeath && IsSaved &&
                 !wipeIn && scene is Level level &&
-                onComplete != null && (onComplete == level.Reload || CurrentPlayerDeadBody?.HasGolden == true)) {
+                onComplete != null && (onComplete == level.Reload || currentPlayerDeadBody?.HasGolden == true)) {
                 Action complete = onComplete;
-                CurrentPlayerDeadBody = null;
+                currentPlayerDeadBody = null;
                 onComplete = () => {
                     if (IsSaved) {
                         QuickLoad();

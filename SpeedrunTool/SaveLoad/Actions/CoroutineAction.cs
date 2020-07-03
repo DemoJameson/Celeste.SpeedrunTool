@@ -48,7 +48,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             return false;
         }
-        
+
         private static List<Type> ExcludeTypes = new List<Type> {
             typeof(BirdNPC),
             typeof(FlutterBird),
@@ -62,7 +62,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             foreach (Entity e in level.Entities) {
                 if (ExcludeTypes.Contains(e.GetType())) continue;
                 if (e.NoEntityID()) continue;
-                
+
                 EntityID id = e.GetEntityId();
                 foreach (Monocle.Component component in e.Components) {
                     if (component is Coroutine coroutine) {
@@ -94,10 +94,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 if (enumerator.GetType().FullName.StartsWith("Celeste.Mod")) {
                     continue;
                 }
+
                 if (!enumerator.GetType().FullName.StartsWith("Celeste.")) {
                     continue;
                 }
-                
+
                 GetCoroutineLocals(id, enumerator, out Type routineType, out FieldInfo[] routineFields,
                     out object[] routineLocals);
 
@@ -160,7 +161,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             } else if (value is SoundEmitter) {
                 foundValue = SoundEmitter.Play((value as SoundEmitter).Source.EventName);
             } else if (value is Tween tween) {
-                foundValue = Tween.Create(tween.Mode, tween.Easer, tween.Duration).CopyFrom(tween);
+                var foundTween = Tween.Create(tween.Mode, tween.Easer, tween.Duration);
+                foundTween.CopyFrom(tween);
+                foundValue = foundTween;
             }
             //doesn't actually work properly i think
             else if (value is Delegate) {
@@ -175,7 +178,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 ConstructorInfo routineCtor = routine.type.GetConstructor(new Type[] {typeof(int)});
                 IEnumerator functionCall = (IEnumerator) routineCtor.Invoke(new object[] {0});
                 if (entities.TryGetValue(routine.ID, out Entity e)) {
-                    if (routine.parent != null) {
+                    if (routine.parent != null && coroutine != null) {
                         var enumerators = (Stack<IEnumerator>) coroutine.GetField("enumerators");
                         enumerators.Push(functionCall);
                     } else if (routine.IsFromState) {
@@ -190,9 +193,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     }
 
                     if (e is CrushBlock) {
-                        e.SetField(typeof(CrushBlock),"attackCoroutine", coroutine);
+                        e.SetField(typeof(CrushBlock), "attackCoroutine", coroutine);
                     } else if (e is FinalBossMovingBlock) {
-                        e.SetField(typeof(FinalBossMovingBlock),"moveCoroutine", coroutine);
+                        e.SetField(typeof(FinalBossMovingBlock), "moveCoroutine", coroutine);
                     }
 
                     coroutine.SetField("waitTimer", routine.waitTimer);
@@ -206,10 +209,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             object routineObj) {
             for (int i = 0; i < routine.fields.Length; i++) {
                 FieldInfo field = routine.fields[i];
-                object foundValue = null;
-                if (routine.locals[i] is EntityID storedID)
-                    if (entities.TryGetValue(storedID, out Entity e))
+                object local = routine.locals[i];
+                object foundValue;
+                if (local is EntityID storedID) {
+                    if (entities.TryGetValue(storedID, out Entity e)) {
                         foundValue = e;
+                    }
                     // If the entity doesn't store its ID, find the first entity of that type.
                     // This may break some sound related stuff but I think that's it.
                     else {
@@ -217,18 +222,23 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                         object value = findFirst.Invoke(level.Entities, new object[0]);
                         foundValue = value;
                     }
-                else if (field.FieldType == typeof(Level))
+
+                    if (foundValue == null) {
+                        Logger.Log("SpeedrunTool",
+                            $"\nCan't Restore Coroutine Locals:\nroutineType={routine.type}\nfield={field}\nlocal={local}");
+                    }
+                } else if (field.FieldType == typeof(Level))
                     foundValue = level;
-                else if (routine.locals[i] is ValueType)
-                    foundValue = routine.locals[i];
+                else if (local is ValueType)
+                    foundValue = local;
                 // It isn't actually a routine but a object of a compiler-generated type stored as a routine.
-                else if (routine.locals[i] is Routine _routine) {
+                else if (local is Routine _routine) {
                     ConstructorInfo routineCtor = _routine.type.GetConstructor(new Type[0]);
                     object obj = routineCtor.Invoke(new object[0]);
                     SetCoroutineLocals(level, entities, _routine, obj);
                     foundValue = obj;
                 } else {
-                    LocalsSpecialCases(routine.locals[i], out foundValue, true);
+                    LocalsSpecialCases(local, out foundValue, true);
                 }
 
                 if (foundValue != null) {
@@ -236,6 +246,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 }
             }
         }
+
         public override void OnClear() => loadedRoutines = new List<Routine>();
         public override void OnLoad() { }
 

@@ -8,7 +8,7 @@ using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
-    public class BadelineBoostAction2 : AbstractEntityAction {
+    public class BadelineBoostAction : AbstractEntityAction {
         private Dictionary<EntityID, BadelineBoost> savedBadelineBoosts = new Dictionary<EntityID, BadelineBoost>();
 
         public override void OnQuickSave(Level level) {

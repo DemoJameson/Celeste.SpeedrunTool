@@ -77,6 +77,17 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return new EntityID(entityData.Level.Name, entityData.ID);
         }
 
+        public static T FindFirst<T>(this EntityList entityList, EntityID entityId) where T : Entity {
+            if (entityId.IsDefault()) return null;
+            
+            var dictionary = entityList.GetDictionary<T>();
+            return dictionary.ContainsKey(entityId) ? dictionary[entityId] : null;
+        }
+        
+        public static T FindFirst<T>(this EntityList entityList, T entity) where T : Entity {
+            return entity == null ? null : entityList.FindFirst<T>(entity.GetEntityId());
+        }
+        
         public static Dictionary<EntityID, T> GetDictionary<T>(this EntityList entityList) where T : Entity {
             Dictionary<EntityID, T> result = new Dictionary<EntityID, T>();
             foreach (T entity in entityList.FindAll<T>()) {
@@ -96,7 +107,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
             return result;
         }
-
+        
         public static Dictionary<EntityID, T> GetDictionary<T>(this IEnumerable<T> enumerable) where T : Entity {
             Dictionary<EntityID, T> result = new Dictionary<EntityID, T>();
             foreach (T entity in enumerable) {
@@ -122,10 +133,15 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             eventInstance.GetType().GetMethod("setTimelinePosition")?.Invoke(eventInstance, new object[] {time});
         }
 
-        public static Tween CopyFrom(this Tween tween, Tween otherTween) {
+        public static void CopyEntity<T>(this Player player, Player savedPlayer, string fieldName) where T: Entity{
+            if (player.SceneAs<Level>().Entities.FindFirst(savedPlayer.GetField(fieldName) as T) is T entity) {
+                player.SetField(fieldName, entity);
+            }
+        }
+
+        public static void CopyFrom(this Tween tween, Tween otherTween) {
             tween.SetProperty("TimeLeft", otherTween.TimeLeft);
             tween.SetProperty("Reverse", otherTween.Reverse);
-            return tween;
         }
 
         public static void AddRange<T>(this Dictionary<EntityID, T> dict, IEnumerable<T> entities) where T : Entity {
@@ -160,10 +176,35 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 return;
             }
 
-            sprite._CopyGraphicsComponent(otherSprite);
+            sprite._CopySprite(otherSprite);
+        }
+
+        private static void _CopySprite(this Sprite sprite, Sprite otherSprite) {
+            sprite.CopyGraphicsComponent(otherSprite);
             otherSprite.InvokeMethod("CloneInto", sprite);
             sprite.Rate = otherSprite.Rate;
             sprite.UseRawDeltaTime = otherSprite.UseRawDeltaTime;
+        }
+        
+        private static void CopyPlayerSprite(this PlayerSprite sprite, PlayerSprite otherSprite) {
+            sprite.HairCount = otherSprite.HairCount;
+            sprite._CopySprite(otherSprite);
+        }
+        
+        public static void CopyPlayerHairAndSprite(this PlayerHair hair, PlayerHair otherHair) {
+            hair.CopyComponent(otherHair);
+            hair.Alpha = otherHair.Alpha;
+            hair.Facing = otherHair.Facing;
+            hair.DrawPlayerSpriteOutline = otherHair.DrawPlayerSpriteOutline;
+            hair.SimulateMotion = otherHair.SimulateMotion;
+            hair.StepPerSegment = otherHair.StepPerSegment;
+            hair.StepInFacingPerSegment = otherHair.StepInFacingPerSegment;
+            hair.StepApproach = otherHair.StepApproach;
+            hair.StepYSinePerSegment = otherHair.StepYSinePerSegment;
+            hair.Nodes.Clear();
+            hair.Nodes.AddRange(otherHair.Nodes);
+            hair.CopyFields(otherHair, "wave");
+            hair.Sprite.CopyPlayerSprite(otherHair.Sprite);
         }
         
         public static TileGrid GetTileGrid<T>(this T entity, string fieldName) where T : Entity {
@@ -181,7 +222,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 return;
             }
 
-            tileGrid._CopyComponent(otherTileGrid);
+            tileGrid.CopyComponent(otherTileGrid);
             tileGrid.Position = otherTileGrid.Position;
             tileGrid.Color = otherTileGrid.Color;
             tileGrid.VisualExtend = otherTileGrid.VisualExtend;
@@ -205,15 +246,15 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 return;
             }
 
-            image._CopyGraphicsComponent(otherImage);
+            image.CopyGraphicsComponent(otherImage);
         }
 
-        private static void _CopyComponent(this Component component, Component otherComponent) {
+        private static void CopyComponent(this Component component, Component otherComponent) {
             component.Active = otherComponent.Active;
             component.Visible = otherComponent.Visible;
         }
 
-        private static void _CopyGraphicsComponent(this GraphicsComponent graphicsComponent,
+        public static void CopyGraphicsComponent(this GraphicsComponent graphicsComponent,
             GraphicsComponent otherGraphicsComponent) {
             graphicsComponent.Scale = otherGraphicsComponent.Scale;
             graphicsComponent.Color = otherGraphicsComponent.Color;
@@ -221,7 +262,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             graphicsComponent.Origin = otherGraphicsComponent.Origin;
             graphicsComponent.Rotation = otherGraphicsComponent.Rotation;
             graphicsComponent.Effects = otherGraphicsComponent.Effects;
-            _CopyComponent(graphicsComponent, otherGraphicsComponent);
+            CopyComponent(graphicsComponent, otherGraphicsComponent);
         }
 
         public static void CopyImageList<T>(this T entity, T otherEntity, string fieldName) where T : Entity {
@@ -232,7 +273,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             }
 
             for (var i = 0; i < imageList.Count; i++) {
-                imageList[i]._CopyGraphicsComponent(otherImageList[i]);
+                imageList[i].CopyGraphicsComponent(otherImageList[i]);
             }
         }
 

@@ -9,7 +9,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private static readonly List<Type> ExcludeTypes = new List<Type> {
             typeof(ParticleSystem),
             typeof(Wire),
+            typeof(Cobweb),
+            typeof(Decal),
         };
+        
+        private static readonly List<string> ExcludeTypeNames = new List<string> {
+            "Celeste.CrystalStaticSpinner+Border",
+        };
+        
         public override void OnQuickSave(Level level) { }
         public override void OnClear() { }
 
@@ -19,13 +26,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             Type type = self.GetType();
             
-            if (type.Namespace != "Celeste") {
-                return;
-            }
-
-            if (ExcludeTypes.Contains(type)) {
-                return;
-            }
+            if (type.Namespace != "Celeste") return;
+            if (ExcludeTypes.Contains(type)) return;
+            if (ExcludeTypeNames.Contains(type.FullName)) return;
             
             self.TrySetEntityId(position.ToString());
         }

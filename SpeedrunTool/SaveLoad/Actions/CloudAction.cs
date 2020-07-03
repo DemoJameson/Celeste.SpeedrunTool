@@ -35,9 +35,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 self.CopySprite(savedClouds[entityId], "sprite");
             }
         }
-
+        
         private void CloudOnUpdate(On.Celeste.Cloud.orig_Update orig, Cloud self) {
-            // 避免站在云上保存读档后被弹飞到天花板
+            // 避免站在云上保存状态后被弹飞到天花板
             if (IsLoadStart && self.SceneAs<Level>().GetPlayer() is Player player &&
                 player.StateMachine.State == Player.StIntroRespawn) {
                 return;

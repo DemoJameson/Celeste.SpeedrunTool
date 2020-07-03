@@ -18,25 +18,24 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             self.SetEntityId(entityId);
             orig(self, data, offset, orientation);
 
-            if (IsLoadStart) {
-                if (springs.ContainsKey(entityId)) {
-                    var savedSpring = springs[entityId];
-                    var platform = savedSpring.Get<StaticMover>()?.Platform;
+            if (!IsLoadStart) return;
+            
+            if (springs.ContainsKey(entityId)) {
+                var savedSpring = springs[entityId];
+                var platform = savedSpring.Get<StaticMover>()?.Platform;
                     
-                    if (platform is CassetteBlock) {
-                        return;
-                    }
+                if (platform is CassetteBlock) {
+                    return;
+                }
                     
-                    if (platform is FloatySpaceBlock) {
-                        self.Add(new RestorePositionComponent(self, savedSpring));
-                    }
-                    else {
-                        self.Position = savedSpring.Position;
-                    }
+                if (platform is FloatySpaceBlock) {
+                    self.Add(new RestorePositionComponent(self, savedSpring));
+                } else {
+                    self.Position = savedSpring.Position;
                 }
-                else {
-                    self.Add(new RemoveSelfComponent());
-                }
+            }
+            else {
+                self.Add(new RemoveSelfComponent());
             }
         }
 

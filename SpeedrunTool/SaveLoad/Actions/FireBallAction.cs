@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
-using On.Monocle;
-using Coroutine = Monocle.Coroutine;
+using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class FireBallAction : AbstractEntityAction {
@@ -25,29 +24,17 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (IsLoadStart && savedFireBalls.ContainsKey(nodesIndexKey)) {
                 FireBall savedFireBall = savedFireBalls[nodesIndexKey];
-                self.CopyFields(typeof(FireBall), savedFireBall, "percent");
-
-                if ((bool) savedFireBall.GetField(typeof(FireBall), "iceMode")) {
-                    self.Visible = self.Collidable = savedFireBall.Collidable;
-                    self.Add(new Coroutine(RestoreBroken(self, savedFireBall)));
-                }
+                self.CopyFrom(savedFireBall);
+                self.CopyFields(typeof(FireBall), savedFireBall, "percent", "broken");
+                self.Add(new Coroutine(RestoreBroken(self, savedFireBall)));
             }
         }
 
         private static IEnumerator RestoreBroken(FireBall self, FireBall savedFireBall) {
-            self.CopyFields(typeof(FireBall), savedFireBall, "broken");
+            self.CopyFields(typeof(FireBall), savedFireBall, "iceMode", "speedMult");
+            self.CopySprite(savedFireBall, "sprite");
             yield break;
         }
-
-        private static void SpriteOnPlay(Sprite.orig_Play orig, Monocle.Sprite self, string id, bool restart,
-            bool randomizeFrame) {
-            orig(self, id, restart, randomizeFrame);
-
-            if (id == "ice" && !restart && randomizeFrame && self.Entity is FireBall iceBall && iceBall.Collidable) {
-                iceBall.Visible = true;
-            }
-        }
-
 
         public override void OnClear() {
             savedFireBalls.Clear();
@@ -55,12 +42,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnLoad() {
             On.Celeste.FireBall.ctor_Vector2Array_int_int_float_float_bool += RestoreFireBallState;
-            Sprite.Play += SpriteOnPlay;
         }
 
         public override void OnUnload() {
             On.Celeste.FireBall.ctor_Vector2Array_int_int_float_float_bool -= RestoreFireBallState;
-            Sprite.Play -= SpriteOnPlay;
         }
     }
 }

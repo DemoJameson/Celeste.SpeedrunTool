@@ -5,7 +5,6 @@ using Microsoft.Xna.Framework;
 using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
-    // Bug: player is deviates to the left after savestate.
     public class AscendManagerAction : AbstractEntityAction {
         private Dictionary<EntityID, AscendManager> savedAscendManagers = new Dictionary<EntityID, AscendManager>();
 

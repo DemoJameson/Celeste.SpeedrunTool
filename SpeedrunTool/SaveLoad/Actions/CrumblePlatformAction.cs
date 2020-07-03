@@ -1,9 +1,7 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
-using Mono.Cecil.Cil;
 using Monocle;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
@@ -33,24 +31,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             EntityID entityId = self.GetEntityId();
             if (IsLoadStart && savedCrumblePlatforms.ContainsKey(entityId)) {
-                CrumblePlatform savedCrumblePlatform = savedCrumblePlatforms[entityId];
-                self.Collidable = savedCrumblePlatform.Collidable;
-                (self.GetField("images") as List<Image>)?.ForEach(image => image.Visible = savedCrumblePlatform.Collidable);
-                (self.GetField("outline") as List<Image>)?.ForEach(image => image.Color = Color.White * (savedCrumblePlatform.Collidable ? 0 : 1));
+                CrumblePlatform saved = savedCrumblePlatforms[entityId];
+                self.CopyFrom(saved);
+                
+                (self.GetField("images") as List<Image>)?.ForEach(image => image.Visible = saved.Collidable);
+                self.CopyImageList(saved, "outline");
             } 
         }
 
         private static void BlockCoroutineStart(ILContext il) {
-            ILCursor c = new ILCursor(il);
-            for (int i = 0; i < 6; i++)
-                c.GotoNext(inst =>
-                    inst.MatchCall(typeof(Entity).GetMethod("Add", new[] {typeof(Monocle.Component)})));
-            Instruction skipCoroutine = c.Next.Next;
-            c.GotoPrev(i => i.MatchCall(typeof(Entity), "get_Width"));
-            c.GotoNext();
-            c.GotoNext();
-            c.EmitDelegate<Func<bool>>(() => IsLoadStart);
-            c.Emit(OpCodes.Brtrue, skipCoroutine);
+            il.SkipAddCoroutine<CrumblePlatform>("Sequence", ()=>IsLoadStart);
         }
 
         public override void OnClear() {

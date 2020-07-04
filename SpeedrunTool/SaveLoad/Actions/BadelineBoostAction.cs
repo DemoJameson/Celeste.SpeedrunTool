@@ -45,21 +45,23 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             if (savedBadelineBoosts.ContainsKey(entityId)) {
                 BadelineBoost saved = savedBadelineBoosts[entityId];
 
-                self.Position = saved.Position;
-                self.Visible = saved.Visible;
-                self.Collidable = saved.Collidable;
-                self.Depth = saved.Depth;
+                self.Add(new RestoreOnce(() => {
+                    self.Position = saved.Position;
+                    self.Visible = saved.Visible;
+                    self.Collidable = saved.Collidable;
+                    self.Depth = saved.Depth;
 
-                self.CopySprite(saved, "sprite");
-                self.CopyImage(saved, "stretch");
-                self.CopyFields(saved,
-                    "nodeIndex",
-                    "travelling");
+                    self.CopySprite(saved, "sprite");
+                    self.CopyImage(saved, "stretch");
+                    self.CopyFields(saved,
+                        "nodeIndex",
+                        "travelling");
 
-                self.Add(new Coroutine(SetHolding(self, saved)));
+                    self.Add(new Coroutine(SetHolding(self, saved)));
 
-                RestoreTween(self, saved, nodes);
-                RestoreAlarm(self, saved, nodes);
+                    RestoreTween(self, saved, nodes);
+                    RestoreAlarm(self, saved, nodes);
+                }));
             } else {
                 self.Add(new RemoveSelfComponent());
             }

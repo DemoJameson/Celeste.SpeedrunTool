@@ -111,6 +111,7 @@
     <Compile Include="SaveLoad\Actions\PlatformAction.cs" />
     <Compile Include="SaveLoad\Actions\ShroomHelper\AttachedIceWallAction.cs" />
     <Compile Include="SaveLoad\Actions\ShroomHelper\CrumbleBlockOnTouchAction.cs" />
+    <Compile Include="SaveLoad\Component\RestoreTwice.cs" />
     <Compile Include="SpeedrunToolSaveData.cs" />
     <Compile Include="TeleportRoom\LevelDataReorderUtils.cs" />
     <Compile Include="TeleportRoom\TeleportRoomUtils.cs" />

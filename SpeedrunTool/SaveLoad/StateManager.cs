@@ -170,6 +170,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 QuickLoadStart(self, player);
 
                 // 设置完等待一帧允许所有 Entity 更新然后再冻结游戏
+                // 等待一帧是因为画面背景和许多 Entity 都需时间要绘制，即使等待里一帧第三章 dust 很多的时候依然能看出绘制不完全
                 // Wait for a frame so entities update, then freeze game.
                 orig(self);
 
@@ -226,7 +227,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
             }
 
-            if (GetVirtualButton(Mappings.Load).Pressed && !level.Paused) {
+            if (GetVirtualButton(Mappings.Load).Pressed && !level.Paused && !IsLoadFrozen) {
                 GetVirtualButton(Mappings.Load).ConsumePress();
                 if (IsSaved) {
                     QuickLoad();

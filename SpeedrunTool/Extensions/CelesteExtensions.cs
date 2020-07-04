@@ -46,6 +46,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 entityId = entity.CreateEntityId(id);
                 entity.SetEntityId(entityId);
             }
+
         }
 
         public static bool NoEntityID(this Entity entity) {

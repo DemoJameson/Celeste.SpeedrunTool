@@ -22,7 +22,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private void RestorePlayerPosition(Player loadedPlayer, Player savedPlayer) {
-            loadedPlayer.Depth = savedPlayer.Depth;
             loadedPlayer.JustRespawned = savedPlayer.JustRespawned;
             loadedPlayer.Position = savedPlayer.Position;
             loadedPlayer.SetField<Actor>("movementCounter", savedPlayer.PositionRemainder);
@@ -67,6 +66,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             loadedPlayer.StrawberryCollectResetTimer = savedPlayer.StrawberryCollectResetTimer;
 
             loadedPlayer.OverrideHairColor = savedPlayer.OverrideHairColor;
+            loadedPlayer.Depth = savedPlayer.Depth;
 
             loadedPlayer.DummyMoving = savedPlayer.DummyMoving;
             loadedPlayer.DummyGravity = savedPlayer.DummyGravity;

@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
-using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
@@ -19,14 +18,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (IsLoadStart && swapBlocks.ContainsKey(entityId)) {
                 SwapBlock swapBlock = swapBlocks[entityId];
-                self.Add(new RestoreTwice(() => {
-                    self.Position = swapBlock.Position;
-                    self.Swapping = swapBlock.Swapping;
-                    self.CopyFields(typeof(SwapBlock), swapBlock, "target");
-                    self.CopyFields(typeof(SwapBlock), swapBlock, "speed");
-                    self.CopyFields(typeof(SwapBlock), swapBlock, "lerp");
-                    self.CopyFields(typeof(SwapBlock), swapBlock, "returnTimer");
-                }));
+                self.Position = swapBlock.Position;
+                self.Swapping = swapBlock.Swapping;
+                self.CopyFields(typeof(SwapBlock), swapBlock, "target");
+                self.CopyFields(typeof(SwapBlock), swapBlock, "speed");
+                self.CopyFields(typeof(SwapBlock), swapBlock, "lerp");
+                self.CopyFields(typeof(SwapBlock), swapBlock, "returnTimer");
             }
         }
 

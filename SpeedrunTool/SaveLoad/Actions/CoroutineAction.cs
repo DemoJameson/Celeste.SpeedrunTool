@@ -63,7 +63,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 if (ExcludeTypes.Contains(e.GetType())) continue;
                 if (e.NoEntityID()) continue;
 
+
                 EntityID id = e.GetEntityId();
+
                 foreach (Monocle.Component component in e.Components) {
                     if (component is Coroutine coroutine) {
                         SaveCoroutine(coroutine, id);
@@ -82,20 +84,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         private bool SaveCoroutine(Coroutine coroutine, EntityID id) {
             Stack<IEnumerator> enumerators = (Stack<IEnumerator>) EnumeratorsFieldInfo.GetValue(coroutine);
-            
-            // Dont Save Mod's Coroutine
-            // Fixed NullReferenceException: Celeste.Mod.MaxHelpingHand.Entities.FlagTouchSwitch.<onSeekerRegenerateCoroutine>d__5.MoveNext()
-            List<IEnumerator> enumeratorList = enumerators.Where(enumerator => {
-                string fullName = enumerator.GetType().FullName ?? "";
-                return fullName.StartsWith("Celeste.") && !fullName.StartsWith("Celeste.Mod");
-            }).ToList();
-            
+
+            if (enumerators.Any(enumerator => enumerator.GetType().Assembly == Assembly.GetExecutingAssembly())) {
+                return false;
+            }
+
+            List<IEnumerator> enumeratorList = enumerators.ToList();
+
             int initialCount = enumeratorList.Count;
             for (int j = 0; j < initialCount; j++) {
                 IEnumerator enumerator = enumeratorList[j];
-
-                if (enumerator.GetType().Assembly == Assembly.GetExecutingAssembly())
-                    return false;
 
                 GetCoroutineLocals(id, enumerator, out Type routineType, out FieldInfo[] routineFields,
                     out object[] routineLocals);
@@ -106,19 +104,20 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
                 Routine routine = new Routine(id, routineType, routineFields, routineLocals, routineTimer,
                     coroutine.RemoveOnComplete, null);
-                
+
                 // If the coroutine called another coroutine, record the calling coroutine.
                 if (j > 0) {
                     loadedRoutines.Last().parent = routine;
                 }
-                
+
                 loadedRoutines.Add(routine);
             }
 
             return initialCount > 0;
         }
 
-        private void GetCoroutineLocals(EntityID id, object routine, out Type routineType, out FieldInfo[] routineFields,
+        private void GetCoroutineLocals(EntityID id, object routine, out Type routineType,
+            out FieldInfo[] routineFields,
             out object[] routineLocals) {
             // In Coroutine.ctor(IEnumerator):
             // The compiler creates a new class for the IEnumerator method call.
@@ -144,7 +143,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 }
             }
         }
-        
+
         private object LocalsSpecialCases(object value) {
             object foundValue = null;
             if (value is List<MTexture> mTextures) {
@@ -179,6 +178,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                         var enumerators = (Stack<IEnumerator>) coroutine.GetField("enumerators");
                         enumerators.Push(functionCall);
                     } else if (routine.IsFromState) {
+                        e.Log("OnQuickLoading:");
                         StateMachine state = e.Get<StateMachine>();
                         coroutine = new Coroutine(functionCall, routine.removeOnComplete);
                         coroutine.Active = true;
@@ -208,12 +208,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 FieldInfo field = routine.fields[i];
                 object local = routine.locals[i];
                 object foundValue = LocalsSpecialCases(local);
-                
+
                 if (foundValue != null) {
                     routineObj.SetField(routineObj.GetType(), field.Name, foundValue);
                     continue;
                 }
-                
+
                 if (local is Entity entity) {
                     if (entities.TryGetValue(entity.GetEntityId(), out Entity e)) {
                         foundValue = e;
@@ -226,10 +226,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                         foundValue = value;
                     }
 
-                    if (foundValue == null) {
-                        Logger.Log("SpeedrunTool",
-                            $"\nCan't Restore Coroutine Locals:\nroutineType={routine.type}\nfield={field}\nlocal={local}");
-                    }
+                    // if (foundValue == null) {
+                    // Logger.Log("SpeedrunTool",
+                    // $"\nCan't Restore Coroutine Locals:\nroutineType={routine.type}\nfield={field}\nlocal={local}");
+                    // }
                 } else if (field.FieldType == typeof(Level))
                     foundValue = level;
                 else if (local is ValueType)
@@ -244,6 +244,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
                 if (foundValue != null) {
                     routineObj.SetField(routineObj.GetType(), field.Name, foundValue);
+                } else {
+                    Logger.Log("SpeedrunTool",
+                        $"\nCan't Restore Coroutine Locals:\nroutineType={routine.type}\nfield={field}\nlocal={local}");
                 }
             }
         }

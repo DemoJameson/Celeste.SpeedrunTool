@@ -25,11 +25,19 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             EntityID entityId = data.ToEntityId();
             self.SetEntityId(entityId);
             orig(self, data, offset);
-            
+        }
+
+        private void SeekerOnAdded(On.Celeste.Seeker.orig_Added orig, Seeker self, Scene scene) {
+            orig(self, scene);
+
+
+            EntityID entityId = self.GetEntityId();
             if (IsLoadStart) {
                 if (savedSeekers.ContainsKey(entityId)) {
                     Seeker savedSeeker = savedSeekers[self.GetEntityId()];
-                    RestoreSeekerState(self, savedSeeker);
+
+                    self.Add(new RestoreState(RunType.Added | RunType.LoadComplete,
+                        () => { RestoreSeekerState(self, savedSeeker); }));
                 } else {
                     self.Add(new RemoveSelfComponent());
                 }
@@ -37,12 +45,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private static void RestoreSeekerState(Seeker self, Seeker savedSeeker) {
-            self.Depth = savedSeeker.Depth;
-            self.Position = savedSeeker.Position;
+            self.CopyFrom(savedSeeker);
             self.CopyFields(typeof(Actor), savedSeeker, "movementCounter");
 
             self.Speed = savedSeeker.Speed;
-            self.Collider = savedSeeker.Collider;
 
             (self.GetField("idleSineX") as SineWave).Counter = (savedSeeker.GetField("idleSineX") as SineWave).Counter;
             (self.GetField("idleSineY") as SineWave).Counter = (savedSeeker.GetField("idleSineY") as SineWave).Counter;
@@ -67,8 +73,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             self.CopySprite(savedSeeker, "sprite");
 
-            StateMachine stateMachine = self.GetField("State") as StateMachine;
-            stateMachine.State = (savedSeeker.GetField("State") as StateMachine).State;
+            // StateMachine stateMachine = self.GetField("State") as StateMachine;
+            // stateMachine.State = (savedSeeker.GetField("State") as StateMachine).State;
         }
 
         private void SeekerStatueOnCtor(On.Celeste.SeekerStatue.orig_ctor orig, SeekerStatue self, EntityData data,
@@ -97,10 +103,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     self.Scene.Add(seeker);
                     RestoreSeekerState(seeker, savedSeeker);
                 }
+
                 self.RemoveSelf();
                 return;
             }
-            
+
             orig(self);
         }
 
@@ -111,12 +118,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnLoad() {
             On.Celeste.Seeker.ctor_EntityData_Vector2 += SeekerOnCtor_EntityData_Vector2;
+            On.Celeste.Seeker.Added += SeekerOnAdded;
             On.Celeste.SeekerStatue.ctor += SeekerStatueOnCtor;
             On.Celeste.SeekerStatue.Update += SeekerStatueOnUpdate;
         }
 
+
         public override void OnUnload() {
             On.Celeste.Seeker.ctor_EntityData_Vector2 -= SeekerOnCtor_EntityData_Vector2;
+            On.Celeste.Seeker.Added -= SeekerOnAdded;
             On.Celeste.SeekerStatue.ctor -= SeekerStatueOnCtor;
             On.Celeste.SeekerStatue.Update -= SeekerStatueOnUpdate;
         }

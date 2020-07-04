@@ -6,34 +6,37 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Component {
 
     public class RestoreState : Monocle.Component{
         private readonly Action action;
-        private readonly bool added;
-        private readonly bool loadStart;
-        private readonly bool loadComplete;
+        private readonly RunType runType;
 
-        public RestoreState(Action action, bool added = false, bool loadStart = false, bool loadComplete = false) : base(true, true) {
+        public RestoreState(RunType runType, Action action) : base(true, true) {
             this.action = action;
-            this.added = added;
-            this.loadStart = loadStart;
-            this.loadComplete = loadComplete;
+            this.runType = runType;
         }
 
         public override void Added(Entity entity) {
             base.Added(entity);
 
-            if (added) {
+            if (runType.HasFlag(RunType.Added)) {
                 action();
             }
         }
 
         public override void Update() {
-            if (loadStart && StateManager.Instance.IsLoadStart) {
+            if (runType.HasFlag(RunType.LoadStart) && StateManager.Instance.IsLoadStart) {
                 action();
             }
 
-            if (loadComplete && StateManager.Instance.IsLoadComplete) {
+            if (runType.HasFlag(RunType.LoadComplete) && StateManager.Instance.IsLoadComplete) {
                 action();
                 RemoveSelf();
             } 
         }
+    }
+
+    [Flags]
+    public enum RunType {
+        Added = 0,
+        LoadStart = 1,
+        LoadComplete = 2
     }
 }

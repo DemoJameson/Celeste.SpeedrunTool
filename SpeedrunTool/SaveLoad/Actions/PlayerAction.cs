@@ -5,11 +5,19 @@ using Monocle;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     class PlayerAction : AbstractEntityAction {
         public override void OnLoad() {
+            On.Celeste.Player.ctor += PlayerOnCtor;
             On.Celeste.Player.Added += PlayerOnAdded;
         }
 
         public override void OnUnload() {
+            On.Celeste.Player.ctor -= PlayerOnCtor;
             On.Celeste.Player.Added -= PlayerOnAdded;
+        }
+
+        private void PlayerOnCtor(On.Celeste.Player.orig_ctor orig, Player self, Vector2 position, PlayerSpriteMode spriteMode) {
+            // Give Player a fixed EntityID.
+            self.SetEntityId(new EntityID("You can do it. —— 《Celeste》", 20180125));
+            orig(self, position, spriteMode);
         }
 
         private void PlayerOnAdded(On.Celeste.Player.orig_Added orig, Player self, Scene scene) {

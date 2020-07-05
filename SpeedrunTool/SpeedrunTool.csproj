@@ -112,6 +112,15 @@
     <Compile Include="SaveLoad\Actions\ShroomHelper\AttachedIceWallAction.cs" />
     <Compile Include="SaveLoad\Actions\ShroomHelper\CrumbleBlockOnTouchAction.cs" />
     <Compile Include="SaveLoad\Component\RestoreState.cs" />
+    <Compile Include="SaveLoad\EntityId2.cs" />
+    <Compile Include="SaveLoad\RestoreActions\AbstractRestoreAction.cs" />
+    <Compile Include="SaveLoad\RestoreActions\BoosterRestoreAction.cs" />
+    <Compile Include="SaveLoad\RestoreActions\CloudRestoreAction.cs" />
+    <Compile Include="SaveLoad\RestoreActions\FlyFeatherRestoreAction.cs" />
+    <Compile Include="SaveLoad\RestoreActions\KeyRestoreAction.cs" />
+    <Compile Include="SaveLoad\RestoreActions\PlayerRestoreAction.cs" />
+    <Compile Include="SaveLoad\RestoreActions\RestoreEntityUtils.cs" />
+    <Compile Include="SaveLoad\RestoreActions\StrawberryRestoreActionx.cs" />
     <Compile Include="SpeedrunToolSaveData.cs" />
     <Compile Include="TeleportRoom\LevelDataReorderUtils.cs" />
     <Compile Include="TeleportRoom\TeleportRoomUtils.cs" />
@@ -135,7 +144,6 @@
     <Compile Include="SaveLoad\Actions\DashBlockAction.cs" />
     <Compile Include="SaveLoad\Actions\DashSwitchAction.cs" />
     <Compile Include="SaveLoad\Actions\DreamBlockAction.cs" />
-    <Compile Include="SaveLoad\Actions\EntityAction.cs" />
     <Compile Include="SaveLoad\Actions\FlingBirdAction.cs" />
     <Compile Include="SaveLoad\Actions\FrostHelper\ToggleSwapBlockAction.cs" />
     <Compile Include="SaveLoad\Actions\GliderAction.cs" />

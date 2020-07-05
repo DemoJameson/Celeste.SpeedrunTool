@@ -24,7 +24,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (IsLoadStart && savedFireBalls.ContainsKey(nodesIndexKey)) {
                 FireBall savedFireBall = savedFireBalls[nodesIndexKey];
-                self.CopyFrom(savedFireBall);
+                self.CopyEntity(savedFireBall);
                 self.CopyFields(typeof(FireBall), savedFireBall, "percent", "broken");
                 self.Add(new Coroutine(RestoreBroken(self, savedFireBall)));
             }

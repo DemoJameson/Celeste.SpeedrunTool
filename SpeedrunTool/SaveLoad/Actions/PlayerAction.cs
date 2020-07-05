@@ -6,12 +6,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     class PlayerAction : AbstractEntityAction {
         public override void OnLoad() {
             On.Celeste.Player.ctor += PlayerOnCtor;
-            On.Celeste.Player.Added += PlayerOnAdded;
         }
 
         public override void OnUnload() {
             On.Celeste.Player.ctor -= PlayerOnCtor;
-            On.Celeste.Player.Added -= PlayerOnAdded;
         }
 
         private void PlayerOnCtor(On.Celeste.Player.orig_ctor orig, Player self, Vector2 position, PlayerSpriteMode spriteMode) {
@@ -45,7 +43,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         public override void OnQuickLoadStart(Level level, Player player, Player savedPlayer) {
-            // bug fixes for chapter 6 first room camera issue, there should be a better solution.
             RestorePlayerPosition(player, savedPlayer);
         }
 

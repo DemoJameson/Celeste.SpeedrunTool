@@ -78,7 +78,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 }
 
                 BadelineDummy badeline = self.Scene.Entities.FindAll<BadelineDummy>()
-                    .First(dummy => nodes[nodeIndex - 1] == dummy.GetStartPosition());
+                    .FirstOrDefault(dummy => nodes[nodeIndex - 1] == dummy.GetStartPosition());
                 if (badeline != null) {
                     self.Scene.Remove(badeline);
                     self.SceneAs<Level>().Displacement.AddBurst(badeline.Position, 0.25f, 8f, 32f, 0.5f);

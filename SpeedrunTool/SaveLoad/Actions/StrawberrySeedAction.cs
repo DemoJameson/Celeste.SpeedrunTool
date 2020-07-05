@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
@@ -60,7 +61,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             List<StrawberrySeed> addedBerrySeeds = level.Entities.FindAll<StrawberrySeed>();
 
             foreach (StrawberrySeed savedBerrySeed in savedCollectedBerrySeeds.Values) {
-                if (addedBerrySeeds.Find(strawberrySeed => strawberrySeed.GetEntityId().Equals(savedBerrySeed.GetEntityId())) is StrawberrySeed addedBerrySeed) {
+                if (addedBerrySeeds.FirstOrDefault(strawberrySeed => strawberrySeed.GetEntityId().Equals(savedBerrySeed.GetEntityId())) is StrawberrySeed addedBerrySeed) {
                     Follower follower = (Follower) addedBerrySeed.GetField(typeof(StrawberrySeed), "follower");
                     follower.FollowDelay = 0f;
                     follower.DelayTimer = 0f;

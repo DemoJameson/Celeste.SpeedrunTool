@@ -11,7 +11,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public override void OnQuickSave(Level level) {
             savedIntroCrushers = level.Entities.GetDictionary<IntroCrusher>();
         }
-        
+
         private ILHook addedHook;
 
         private void RestoreIntroCrusherPosition(On.Celeste.IntroCrusher.orig_ctor_EntityData_Vector2 orig,

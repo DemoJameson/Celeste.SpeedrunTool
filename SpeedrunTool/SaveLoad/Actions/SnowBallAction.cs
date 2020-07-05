@@ -59,7 +59,5 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             On.Celeste.WindAttackTrigger.OnEnter -= WindAttackTriggerOnOnEnter;
             On.Celeste.Snowball.Added -= SnowballOnAdded;
         }
-
-        public override void OnInit() { }
     }
 }

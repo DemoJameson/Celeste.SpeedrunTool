@@ -23,7 +23,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (IsLoadStart) {
                 if (savedGliders.Exists(glider => glider.GetEntityId().Equals(entityId))) {
-                    Glider savedGlider = savedGliders.Find(glider => glider.GetEntityId().Equals(entityId));
+                    Glider savedGlider = savedGliders.FirstOrDefault(glider => glider.GetEntityId().Equals(entityId));
                     savedGlidersCopy.Remove(savedGlider);
                 
                     RestoreState(self, savedGlider);

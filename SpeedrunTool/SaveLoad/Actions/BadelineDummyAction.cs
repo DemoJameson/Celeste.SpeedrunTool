@@ -24,7 +24,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             
             if (savedBadelineDummys.ContainsKey(entityId)) {
                 BadelineDummy saved = savedBadelineDummys[entityId];
-                self.CopyFrom(saved);
+                self.CopyEntity(saved);
                 self.Hair.CopyPlayerHairAndSprite(saved.Hair);
             } else {
                 self.Add(new RemoveSelfComponent());

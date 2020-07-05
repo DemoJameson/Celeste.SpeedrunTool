@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
 
@@ -35,7 +36,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             foreach (Strawberry savedBerry in savedBerries.Values) {
                 Strawberry restoreBerry;
-                if (addedBerries.Find(strawberry => strawberry.ID.Equals(savedBerry.ID)) is Strawberry addedBerry) {
+                if (addedBerries.FirstOrDefault(strawberry => strawberry.ID.Equals(savedBerry.ID)) is Strawberry addedBerry) {
                     restoreBerry = addedBerry;
                 }
                 else {

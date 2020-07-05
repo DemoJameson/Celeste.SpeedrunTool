@@ -51,6 +51,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private static readonly List<Type> ExcludeTypes = new List<Type> {
+            typeof(BirdNPC),
             typeof(FlutterBird),
             typeof(ForsakenCitySatellite),
             typeof(Lightning),
@@ -145,12 +146,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private object LocalsSpecialCases(object value) {
+            if (value == null) {
+                return null;
+            }
             object foundValue = null;
             if (value is List<MTexture> mTextures) {
                 foundValue = new List<MTexture>(mTextures);
-            } else if (value?.GetType() == DebrisListType)
+            } else if (value.GetType() == DebrisListType)
                 foundValue = Convert.ChangeType(value, DebrisListType);
-            else if (value is Image) {
+            else if (value.GetType() ==  typeof(Image)) {
                 foundValue = new Image(new MTexture());
             } else if (value is SoundEmitter soundEmitter) {
                 foundValue = SoundEmitter.Play(soundEmitter.Source.EventName, new Entity(soundEmitter.Position));
@@ -168,6 +172,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         public override void OnQuickLoading(Level level, Player player, Player savedPlayer) {
+            "CoroutineAction OnQuickLoading".Log();
+            
             var entities = level.Entities.GetDictionary<Entity>();
             Coroutine coroutine = null;
             foreach (Routine routine in loadedRoutines) {
@@ -244,9 +250,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
                 if (foundValue != null) {
                     routineObj.SetField(routineObj.GetType(), field.Name, foundValue);
+                } else if(local == null) {
+                    routineObj.SetField(routineObj.GetType(), field.Name, null);
                 } else {
                     Logger.Log("SpeedrunTool",
                         $"\nCan't Restore Coroutine Locals:\nroutineType={routine.type}\nfield={field}\nlocal={local}");
+                    
                 }
             }
         }

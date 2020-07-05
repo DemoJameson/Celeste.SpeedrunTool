@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
@@ -23,10 +24,6 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             entity.SetExtendedDataValue(EntityIdKey, entityId);
         }
 
-        public static void SetEntityId(this Entity entity, EntityData entityData) {
-            entity.SetExtendedDataValue(EntityIdKey, entityData.ToEntityId());
-        }
-
         public static EntityID GetEntityId(this Entity entity) {
             return entity.GetExtendedDataValue<EntityID>(EntityIdKey);
         }
@@ -46,7 +43,20 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 entityId = entity.CreateEntityId(id);
                 entity.SetEntityId(entityId);
             }
+        }
 
+        public static void CopyEntityId(this Entity entity, Entity otherEntity) {
+            if (otherEntity.HasEntityID()) {
+                entity.SetEntityId(otherEntity.GetEntityId());
+            }
+        }
+        
+        public static bool NoEntityData(this Entity entity) {
+            return entity.GetEntityData() == null;
+        }
+        
+        public static bool HasEntityData(this Entity entity) {
+            return !entity.NoEntityData();
         }
 
         public static bool NoEntityID(this Entity entity) {
@@ -80,13 +90,25 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
         public static T FindFirst<T>(this EntityList entityList, EntityID entityId) where T : Entity {
             if (entityId.IsDefault()) return null;
-            
+
             var dictionary = entityList.GetDictionary<T>();
             return dictionary.ContainsKey(entityId) ? dictionary[entityId] : null;
         }
-        
+
         public static T FindFirst<T>(this EntityList entityList, T entity) where T : Entity {
             return entity == null ? null : entityList.FindFirst<T>(entity.GetEntityId());
+        }
+        
+        public static Entity FindFirst(this Scene scene, EntityID entityId) {
+            if (entityId.IsDefault()) return null;
+            return scene.Entities.FindAll<Entity>().FirstOrDefault(e =>
+                e.GetEntityId().Equals(entityId));
+        }
+
+        public static Entity FindFirst(this Scene scene, Entity entity) {
+            if (entity.NoEntityID()) return null;
+            return scene.Entities.FindAll<Entity>().FirstOrDefault(e =>
+                e.GetType() == entity.GetType() && e.GetEntityId().Equals(entity.GetEntityId()));
         }
         
         public static Dictionary<EntityID, T> GetDictionary<T>(this EntityList entityList) where T : Entity {
@@ -108,7 +130,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
             return result;
         }
-        
+
         public static Dictionary<EntityID, T> GetDictionary<T>(this IEnumerable<T> enumerable) where T : Entity {
             Dictionary<EntityID, T> result = new Dictionary<EntityID, T>();
             foreach (T entity in enumerable) {
@@ -134,7 +156,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             eventInstance.GetType().GetMethod("setTimelinePosition")?.Invoke(eventInstance, new object[] {time});
         }
 
-        public static void CopyEntity<T>(this Player player, Player savedPlayer, string fieldName) where T: Entity{
+        public static void CopyEntity<T>(this Player player, Player savedPlayer, string fieldName) where T : Entity {
             if (player.SceneAs<Level>().Entities.FindFirst(savedPlayer.GetField(fieldName) as T) is T entity) {
                 player.SetField(fieldName, entity);
             }
@@ -162,6 +184,24 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return null;
         }
 
+        public static Tween GetTween<T>(this T entity, string fieldName) where T : Entity {
+            return entity.GetField(typeof(T), fieldName) as Tween;
+        }
+        
+        public static void CopyTween<T>(this T entity, T otherEntity, string fieldName) where T : Entity {
+            var tween = entity.GetTween(fieldName);
+            if (tween == null) {
+                return;
+            }
+
+            var otherTween = otherEntity.GetTween(fieldName);
+            if (otherTween == null) {
+                return;
+            }
+
+            tween.CopyFrom(otherTween);
+        }
+
         public static Sprite GetSprite<T>(this T entity, string fieldName) where T : Entity {
             return entity.GetField(typeof(T), fieldName) as Sprite;
         }
@@ -186,12 +226,12 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             sprite.Rate = otherSprite.Rate;
             sprite.UseRawDeltaTime = otherSprite.UseRawDeltaTime;
         }
-        
+
         private static void CopyPlayerSprite(this PlayerSprite sprite, PlayerSprite otherSprite) {
             sprite.HairCount = otherSprite.HairCount;
             sprite._CopySprite(otherSprite);
         }
-        
+
         public static void CopyPlayerHairAndSprite(this PlayerHair hair, PlayerHair otherHair) {
             hair.CopyComponent(otherHair);
             hair.Alpha = otherHair.Alpha;
@@ -207,11 +247,11 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             hair.CopyFields(otherHair, "wave");
             hair.Sprite.CopyPlayerSprite(otherHair.Sprite);
         }
-        
+
         public static TileGrid GetTileGrid<T>(this T entity, string fieldName) where T : Entity {
             return entity.GetField(fieldName) as TileGrid;
         }
-        
+
         public static void CopyTileGrid<T>(this T entity, T otherEntity, string fieldName) where T : Entity {
             var tileGrid = entity.GetTileGrid(fieldName);
             if (tileGrid == null) {

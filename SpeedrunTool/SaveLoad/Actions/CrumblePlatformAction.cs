@@ -32,7 +32,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             EntityID entityId = self.GetEntityId();
             if (IsLoadStart && savedCrumblePlatforms.ContainsKey(entityId)) {
                 CrumblePlatform saved = savedCrumblePlatforms[entityId];
-                self.CopyFrom(saved);
+                self.CopyEntity(saved);
                 
                 (self.GetField("images") as List<Image>)?.ForEach(image => image.Visible = saved.Collidable);
                 self.CopyImageList(saved, "outline");

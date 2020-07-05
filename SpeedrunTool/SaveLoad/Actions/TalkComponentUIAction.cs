@@ -1,6 +1,7 @@
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
+    // 解决第九章 g-06 面石块砸在望远镜上后存档游戏崩溃的问题
     public class TalkComponentUIAction : AbstractEntityAction {
 
         public override void OnQuickSave(Level level) {

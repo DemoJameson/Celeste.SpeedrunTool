@@ -1,0 +1,148 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Celeste.Mod.SpeedrunTool.Extensions;
+using Monocle;
+
+namespace Celeste.Mod.SpeedrunTool.SaveLoad {
+    public readonly struct EntityId2 {
+        // TODO 或许以后用来替换 EntityID
+        // 官图中 Trigger 的 ID 与 Entity 的 ID 有很大几率重复的
+        public readonly EntityID EntityId;
+        public readonly Type Type;
+
+        public EntityId2(EntityID entityId, Type type) {
+            EntityId = entityId;
+            Type = type;
+
+            if (Type != typeof(Entity) && !Type.IsSubclassOf(typeof(Entity))) {
+                throw new ArgumentException("type must be Entity");
+            }
+        }
+
+        public override bool Equals(object obj) {
+            return obj is EntityId2 id && id.EntityId.Equals(EntityId) && id.Type == Type;
+        }
+
+        public override int GetHashCode() {
+            return ToString().GetHashCode();
+        }
+
+        public override string ToString() {
+            return $"EntityId2: Type={Type.FullName} Level={EntityId.Level} ID={EntityId.ID}";
+        }
+
+        public static bool operator ==(EntityId2 value1, EntityId2 value2) {
+            return value1.Equals(value2);
+        }
+
+        public static bool operator !=(EntityId2 value1, EntityId2 value2) {
+            return !(value1 == value2);
+        }
+    }
+
+    public static class EntityId2Extension {
+        private const string EntityId2Key = "SpeedrunTool_EntityId2_Key";
+
+        public static EntityId2 ToEntityId2(this EntityID entityId, Type type) {
+            return new EntityId2(entityId, type);
+        }
+
+        public static EntityId2 GetEntityId2(this Entity entity) {
+            return entity.GetExtendedDataValue<EntityId2>(EntityId2Key);
+        }
+
+        public static void SetEntityId2(this Entity entity, EntityId2 entityId2) {
+            entity.SetExtendedDataValue(EntityId2Key, entityId2);
+        }
+
+        public static void SetEntityId2(this Entity entity, EntityID entityId) {
+            entity.SetEntityId2(entityId.ToEntityId2(entity.GetType()));
+        }
+
+        public static void CopyEntityId2(this Entity entity, Entity otherEntity) {
+            if (otherEntity.HasEntityId2()) {
+                entity.SetEntityId2(otherEntity.GetEntityId2());
+            }
+        }
+
+        public static void CopyEntityData(this Entity entity, Entity otherEntity) {
+            if (otherEntity.HasEntityData()) {
+                entity.SetEntityData(otherEntity.GetEntityData());
+            }
+        }
+
+        public static void CopyEntity2<T >(this T entity, T otherEntity, string fieldName)
+            where T : Entity {
+            if (otherEntity.GetField(fieldName) is Entity fieldValue &&
+                fieldValue.HasEntityId2() &&
+                entity.SceneAs<Level>().FindFirst(fieldValue.GetEntityId2()) is Entity found) {
+                entity.SetField(fieldName, found);
+            }
+        }
+
+        public static bool HasEntityId2(this Entity entity) {
+            return entity.GetEntityId2() != default;
+        }
+
+        public static bool NoEntityId2(this Entity entity) {
+            return !entity.HasEntityId2();
+        }
+
+        public static Entity FindFirst(this Scene scene, EntityId2 entityId2) {
+            if (entityId2 == default) return null;
+            return scene.Entities.FindAll<Entity>().FirstOrDefault(e =>
+                e.GetEntityId2() == entityId2);
+        }
+
+        public static Dictionary<EntityId2, T> FindAllToDict<T>(this EntityList entityList) where T : Entity {
+            Dictionary<EntityId2, T> result = new Dictionary<EntityId2, T>();
+            foreach (T entity in entityList.FindAll<T>()) {
+                if (entity.NoEntityId2()) {
+                    continue;
+                }
+
+                EntityId2 entityId2 = entity.GetEntityId2();
+                if (result.ContainsKey(entityId2)) {
+                    Logger.Log("Speedrun Tool", $"EntityId2 Duplication: {entityId2}");
+                    continue;
+                }
+
+                result[entityId2] = entity;
+            }
+
+            return result;
+        }
+
+        public static Dictionary<EntityId2, Entity> FindAllToDict(this EntityList entityList, Type type) {
+            Dictionary<EntityId2, Entity> result = new Dictionary<EntityId2, Entity>();
+            foreach (Entity entity in entityList.FindAll<Entity>()) {
+                if (entity.NoEntityId2()) {
+                    continue;
+                }
+
+                if (entity.GetType() != type) {
+                    continue;
+                }
+
+                EntityId2 entityId2 = entity.GetEntityId2();
+                if (result.ContainsKey(entityId2)) {
+                    Logger.Log("Speedrun Tool", $"EntityId2 Duplication: {entityId2}");
+                    continue;
+                }
+
+                result[entityId2] = entity;
+            }
+
+            return result;
+        }
+
+        public static Dictionary<EntityId2, T> FindAllToDict<T>(this Scene scene) where T : Entity {
+            return FindAllToDict<T>(scene.Entities);
+        }
+
+        public static Dictionary<EntityId2, Entity> FindAllToDict(this Scene scene, Type type) {
+            return FindAllToDict(scene.Entities, type);
+        }
+    }
+}

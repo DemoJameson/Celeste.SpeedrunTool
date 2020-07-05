@@ -17,7 +17,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (IsLoadStart && savedKeys.ContainsKey(entityId)) {
                 var saved = savedKeys[entityId];
-                self.CopyFrom(saved);
+                self.CopyEntity(saved);
                 self.CopySprite(saved, "sprite");
             }
         }

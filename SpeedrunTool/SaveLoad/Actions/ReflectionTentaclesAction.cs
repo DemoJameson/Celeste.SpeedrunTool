@@ -41,7 +41,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private void AttachEntityId(On.Celeste.ReflectionTentacles.orig_ctor_EntityData_Vector2 orig,
             ReflectionTentacles self, EntityData data, Vector2 offset) {
             mainEntityId = data.ToEntityId();
-            self.SetEntityId(data);
+            self.SetEntityId(mainEntityId);
             orig(self, data, offset);
         }
 

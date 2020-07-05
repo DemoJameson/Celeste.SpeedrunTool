@@ -27,7 +27,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             if (savedBadelineOldsites.ContainsKey(entityId)) {
                 var saved = savedBadelineOldsites[entityId];
-                self.CopyFrom(saved);
+                self.CopyEntity(saved);
                 self.Hovering = saved.Hovering;
                 self.Hair.CopyPlayerHairAndSprite(saved.Hair);
                 self.CopyFields(saved, "following", "hoveringTimer");

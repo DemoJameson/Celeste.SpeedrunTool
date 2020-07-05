@@ -45,7 +45,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private static void RestoreSeekerState(Seeker self, Seeker savedSeeker) {
-            self.CopyFrom(savedSeeker);
+            self.CopyEntity(savedSeeker);
             self.CopyFields(typeof(Actor), savedSeeker, "movementCounter");
 
             self.Speed = savedSeeker.Speed;

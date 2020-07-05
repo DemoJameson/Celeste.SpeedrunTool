@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
     public static class LevelDataReorderUtils {
@@ -1114,7 +1115,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
             if (ReorderLevelNames.ContainsKey(areaKey.SID + areaKey.Mode)) {
                 var levelNames = ReorderLevelNames[areaKey.SID + areaKey.Mode];
                 foreach (string levelName in levelNames) {
-                    LevelData levelData = levelDatas.Find(data => data.Name == levelName);
+                    LevelData levelData = levelDatas?.FirstOrDefault(data => data.Name == levelName);
                     if (levelData != null) {
                         datas.Add(levelData);
                     }

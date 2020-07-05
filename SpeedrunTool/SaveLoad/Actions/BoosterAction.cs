@@ -38,7 +38,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             if (IsLoadStart && savedBoosters.ContainsKey(entityId)) {
                 Booster savedBooster = savedBoosters[entityId];
 
-                self.CopyFrom(savedBooster);
+                self.CopyEntity(savedBooster);
                 self.CopySprite(savedBooster, "sprite");
                 self.Ch9HubTransition = savedBooster.Ch9HubTransition;
                 self.SetProperty("BoostingPlayer", savedBooster.BoostingPlayer);
@@ -53,7 +53,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private IEnumerator RestoreOutline(Booster self, Booster booster) {
             var outline = self.GetField("outline") as Entity;
             var savedOutline = booster.GetField("outline") as Entity;
-            outline.CopyFrom(savedOutline);
+            outline.CopyEntity(savedOutline);
             yield break;
         }
 

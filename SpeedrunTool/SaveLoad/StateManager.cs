@@ -9,6 +9,7 @@ using Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Everest;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Actions.FrostHelper;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Glyph;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Actions.ShroomHelper;
+using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions;
 using Microsoft.Xna.Framework;
 using Monocle;
 using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
@@ -16,19 +17,19 @@ using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class StateManager {
         private readonly List<AbstractEntityAction> entityActions = new List<AbstractEntityAction> {
-            new PlayerAction(),
+            // new PlayerAction(),
             new CoroutineAction(),
-            
+
             new AscendManagerAction(),
             new AudioAction(),
             new BadelineBoostAction(),
             new BadelineDummyAction(),
             new BadelineOldsiteAction(),
-            new BoosterAction(),
+            // new BoosterAction(),
             new BounceBlockAction(),
             new BumperAction(),
             new CassetteBlockManagerAction(),
-            new CloudAction(),
+            // new CloudAction(),
             new ClutterSwitchAction(),
             new CrumblePlatformAction(),
             new CrumbleWallOnRumbleAction(),
@@ -44,13 +45,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             new FireBallAction(),
             new FlingBirdAction(),
             new FloatySpaceBlockAction(),
-            new FlyFeatherAction(),
-            new EntityAction(),
+            // new FlyFeatherAction(),
             new ExitBlockAction(),
             new GliderAction(),
             new IntroCrusherAction(),
             new JumpthruPlatformAction(),
-            new KeyAction(),
+            // new KeyAction(),
             new LightningAction(),
             new LightningBreakerBoxAction(),
             new MoveBlockAction(),
@@ -70,7 +70,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             new SpringAction(),
             new StarJumpBlockAction(),
             new StaticMoverAction(),
-            new StrawberryAction(),
+            // new StrawberryAction(),
             new StrawberrySeedAction(),
             new SwapBlockAction(),
             new SwitchGateAction(),
@@ -99,17 +99,17 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         };
 
         public Player SavedPlayer;
-        private Level SavedLevel => SavedPlayer?.SceneAs<Level>();
-        private LoadState loadState = LoadState.None;
+        public Level SavedLevel => SavedPlayer?.SceneAs<Level>();
+        private LoadState loadState = SaveLoad.LoadState.None;
 
         private Session savedSession;
         private Dictionary<EverestModule, EverestModuleSession> savedModSessions;
         private Session.CoreModes sessionCoreModeBackup;
 
-        public bool IsLoadStart => loadState == LoadState.LoadStart;
-        public bool IsLoadFrozen => loadState == LoadState.LoadFrozen;
-        public bool IsLoading => loadState == LoadState.Loading;
-        public bool IsLoadComplete => loadState == LoadState.LoadComplete;
+        public bool IsLoadStart => loadState == SaveLoad.LoadState.Start;
+        public bool IsLoadFrozen => loadState == SaveLoad.LoadState.Frozen;
+        public bool IsLoading => loadState == SaveLoad.LoadState.Loading;
+        public bool IsLoadComplete => loadState == SaveLoad.LoadState.Complete;
 
         public bool IsSaved => savedSession != null && SavedPlayer != null;
 
@@ -120,6 +120,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Celeste.Level.Update += LevelOnUpdate;
             On.Celeste.Overworld.ctor += ClearStateAndPbTimes;
             On.Celeste.Player.Die += PlayerOnDie;
+            RestoreEntityUtils.Load();
             entityActions.ForEach(action => action.OnLoad());
         }
 
@@ -128,14 +129,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Celeste.Level.Update -= LevelOnUpdate;
             On.Celeste.Overworld.ctor -= ClearStateAndPbTimes;
             On.Celeste.Player.Die -= PlayerOnDie;
+            RestoreEntityUtils.Unload();
             entityActions.ForEach(action => action.OnUnload());
         }
 
         public void Init() {
             // enter debug map auto clear state
             Engine.Commands.FunctionKeyActions[5] += Clear;
-
-            entityActions.ForEach(action => action.OnInit());
         }
 
         private void ClearStateAndPbTimes(On.Celeste.Overworld.orig_ctor orig, Overworld self, OverworldLoader loader) {
@@ -167,21 +167,24 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // 尽快设置人物的位置与镜头，然后冻结游戏等待人物复活
             // Set player position ASAP, then freeze game and wait for the player to respawn (? - euni)
             if (IsSaved && IsLoadStart && player != null) {
-                QuickLoadStart(self, player);
+                LoadStart(self, player);
 
                 // 设置完等待一帧允许所有 Entity 更新然后再冻结游戏
                 // 等待一帧是因为画面背景和许多 Entity 都需时间要绘制，即使等待里一帧第三章 dust 很多的时候依然能看出绘制不完全
                 // Wait for a frame so entities update, then freeze game.
+                "after entity create and before update".Log();
                 orig(self);
+                "after entity create and update 1 frame".Log();
+                RestoreEntityUtils.AfterEntityCreateAndUpdate1Frame(self);
 
                 // 冻结游戏或者进入下一状态
                 // Freeze the game or enter the next state
                 if (player.StateMachine.State == Player.StIntroRespawn) {
                     self.Frozen = true;
                     self.PauseLock = true;
-                    loadState = LoadState.LoadFrozen;
+                    loadState = SaveLoad.LoadState.Frozen;
                 } else {
-                    loadState = LoadState.Loading;
+                    loadState = SaveLoad.LoadState.Loading;
                 }
 
                 return;
@@ -198,10 +201,17 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (IsSaved && (IsLoading || IsLoadFrozen) && player != null &&
                 (player.StateMachine.State == Player.StNormal || player.StateMachine.State == Player.StSwim ||
                  player.StateMachine.State == Player.StFlingBird)) {
-                QuickLoading(self, player);
+                "after player respawn".Log();
+                RestoreEntityUtils.AfterPlayerRespawn(self);
+                Loading(self, player);
+                loadState = SaveLoad.LoadState.Complete;
             }
 
             orig(self);
+
+            if (IsLoadComplete) {
+                loadState = SaveLoad.LoadState.None;
+            }
         }
 
         private readonly List<int> disabledSaveStates = new List<int> {
@@ -222,7 +232,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 int state = player.StateMachine.State;
 
                 if (!disabledSaveStates.Contains(state)) {
-                    QuickSave(level, player);
+                    SaveState(level, player);
                     return true;
                 }
             }
@@ -230,7 +240,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (GetVirtualButton(Mappings.Load).Pressed && !level.Paused && !IsLoadFrozen) {
                 GetVirtualButton(Mappings.Load).ConsumePress();
                 if (IsSaved) {
-                    QuickLoad();
+                    LoadState();
                 } else if (!level.Frozen) {
                     level.Add(new MiniTextbox(DialogIds.DialogNotSaved));
                 }
@@ -238,11 +248,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 return true;
             }
 
-            if (GetVirtualButton(Mappings.Clear).Pressed && !level.Paused && IsLoadComplete) {
+            if (GetVirtualButton(Mappings.Clear).Pressed && !level.Paused) {
                 GetVirtualButton(Mappings.Clear).ConsumePress();
                 Clear();
                 RoomTimerManager.Instance.ClearPbTimes();
-                if (!level.Frozen && level.Entities.FindAll<HeartGem>().All(gem => false == (bool) gem.GetField(typeof(HeartGem), "collected"))) {
+                if (!level.Frozen && level.Entities.FindAll<HeartGem>()
+                    .All(gem => false == (bool) gem.GetField(typeof(HeartGem), "collected"))) {
                     level.Add(new MiniTextbox(DialogIds.DialogClear));
                 }
             }
@@ -250,10 +261,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             return false;
         }
 
-        private void QuickSave(Level level, Player player) {
+        private void SaveState(Level level, Player player) {
             Clear();
 
-            loadState = LoadState.LoadStart;
+            loadState = SaveLoad.LoadState.Start;
 
             entityActions.ForEach(action => action.OnQuickSave(level));
 
@@ -274,12 +285,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             Engine.Scene = new LevelLoader(level.Session, level.Session.RespawnPoint);
         }
 
-        private void QuickLoad() {
+        private void LoadState() {
             if (!IsSaved) {
                 return;
             }
 
-            loadState = LoadState.LoadStart;
+            loadState = SaveLoad.LoadState.Start;
             Session sessionCopy = savedSession.DeepClone();
             Engine.Scene = new LevelLoader(sessionCopy, sessionCopy.RespawnPoint);
 
@@ -300,23 +311,24 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 return false;
 
             int state = player.StateMachine.State;
-			if (!disabledSaveStates.Contains(state)) {
-				QuickSave(level, player);
-				return true;
-			}
-			return false;
+            if (!disabledSaveStates.Contains(state)) {
+                SaveState(level, player);
+                return true;
+            }
+
+            return false;
         }
 
         // ReSharper disable once UnusedMember.Global
         // Public for TAS Mod
         public bool ExternalLoad() {
-            QuickLoad();
-			return IsSaved;
+            LoadState();
+            return IsSaved;
         }
 
         // 尽快设置人物的位置与镜头，然后冻结游戏等待人物复活
         // Set player position ASAP, then freeze game and wait for the player to respawn (? - euni)
-        private void QuickLoadStart(Level level, Player player) {
+        private void LoadStart(Level level, Player player) {
             level.Session.Inventory = savedSession.Inventory;
             level.Camera.CopyFrom(SavedLevel.Camera);
             level.CameraLockMode = SavedLevel.CameraLockMode;
@@ -329,14 +341,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         // 人物复活完毕后设置人物相关属性
         // Set more player data after the player respawns
-        private void QuickLoading(Level level, Player player) {
+        private void Loading(Level level, Player player) {
             entityActions.ForEach(action => action.OnQuickLoading(level, player, SavedPlayer));
 
             level.Frozen = false;
             level.PauseLock = false;
             level.TimeActive = SavedLevel.TimeActive;
-
-            loadState = LoadState.LoadComplete;
         }
 
         private void UpdatePlayerWhenFreeze(Level level, Player player) {
@@ -355,18 +365,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedSession = null;
             savedModSessions = null;
             SavedPlayer = null;
-            loadState = LoadState.None;
+            loadState = SaveLoad.LoadState.None;
 
             entityActions.ForEach(action => action.OnClear());
         }
 
-        
+
         private PlayerDeadBody PlayerOnDie(On.Celeste.Player.orig_Die orig, Player self, Vector2 direction,
             bool evenIfInvincible, bool registerDeathInStats) {
             currentPlayerDeadBody = orig(self, direction, evenIfInvincible, registerDeathInStats);
             return currentPlayerDeadBody;
         }
-        
+
         // Everest 的 Bug，另外的 Mod Hook 了 PlayerDeadBody.End 方法后 Level.DoScreenWipe Hook 的方法 wipeIn 为 false 时就不触发了
         // 所以改成了 Hook AreaData.DoScreenWipe 方法
         private void QuickLoadWhenDeath(On.Celeste.AreaData.orig_DoScreenWipe orig, AreaData self, Scene scene,
@@ -378,7 +388,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 currentPlayerDeadBody = null;
                 onComplete = () => {
                     if (IsSaved) {
-                        QuickLoad();
+                        LoadState();
                     } else {
                         complete();
                     }
@@ -397,9 +407,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
     public enum LoadState {
         None,
-        LoadStart,
-        LoadFrozen,
+        Start,
+        Frozen,
         Loading,
-        LoadComplete
+        Complete
     }
 }

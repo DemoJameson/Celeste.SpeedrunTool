@@ -7,20 +7,20 @@ using MonoMod.RuntimeDetour;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class BadelineOldsiteAction : AbstractEntityAction {
-        private Dictionary<EntityID, BadelineOldsite> savedBadelineOldsites =
-            new Dictionary<EntityID, BadelineOldsite>();
+        private Dictionary<EntityId2, BadelineOldsite> savedBadelineOldsites =
+            new Dictionary<EntityId2, BadelineOldsite>();
 
         private ILHook addedHook;
 
         public override void OnQuickSave(Level level) {
-            savedBadelineOldsites = level.Entities.GetDictionary<BadelineOldsite>();
+            savedBadelineOldsites = level.Entities.FindAllToDict<BadelineOldsite>();
         }
 
         private void RestoreBadelineOldsitePosition(On.Celeste.BadelineOldsite.orig_ctor_EntityData_Vector2_int orig,
             BadelineOldsite self, EntityData data,
             Vector2 offset, int index) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset, index);
 
             if (!IsLoadStart) return;

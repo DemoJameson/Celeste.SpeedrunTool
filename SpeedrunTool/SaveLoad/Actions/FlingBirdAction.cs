@@ -1,24 +1,22 @@
 using System.Collections.Generic;
-using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
-using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class FlingBirdAction : AbstractEntityAction {
-        private Dictionary<EntityID, FlingBird> savedFlingBirds = new Dictionary<EntityID, FlingBird>();
+        private Dictionary<EntityId2, FlingBird> savedFlingBirds = new Dictionary<EntityId2, FlingBird>();
         private const string RestoreBird = "RestoreBird";
 
         public override void OnQuickSave(Level level) {
-            savedFlingBirds = level.Entities.GetDictionary<FlingBird>();
+            savedFlingBirds = level.Entities.FindAllToDict<FlingBird>();
         }
 
         private void RestoreFlingBirdPosition(On.Celeste.FlingBird.orig_ctor_EntityData_Vector2 orig,
             FlingBird self, EntityData data,
             Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset);
 
             if (IsLoadStart) {
@@ -39,7 +37,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private void FlingBirdOnUpdate(On.Celeste.FlingBird.orig_Update orig, FlingBird self) {
             if (self.GetExtendedDataValue<bool>(RestoreBird)) {
                 self.SetExtendedDataValue(RestoreBird, false);
-                EntityID entityId = self.GetEntityId();
+                EntityId2 entityId = self.GetEntityId2();
                 if (IsLoadStart && savedFlingBirds.ContainsKey(entityId)) {
                     FlingBird savedFlingBird = savedFlingBirds[entityId];
                     

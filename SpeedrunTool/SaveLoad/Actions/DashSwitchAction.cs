@@ -6,14 +6,14 @@ using Microsoft.Xna.Framework;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class DashSwitchAction : AbstractEntityAction {
         private IEnumerable<string> pressedDashSwitches = Enumerable.Empty<string>();
-        private Dictionary<EntityID, DashSwitch> savedDashSwitches = new Dictionary<EntityID, DashSwitch>();
+        private Dictionary<EntityId2, DashSwitch> savedDashSwitches = new Dictionary<EntityId2, DashSwitch>();
 
         public override void OnQuickSave(Level level) {
-            savedDashSwitches = level.Entities.GetDictionary<DashSwitch>();
+            savedDashSwitches = level.Entities.FindAllToDict<DashSwitch>();
             
             pressedDashSwitches = level.Entities.FindAll<DashSwitch>()
                 .Where(dashSwitch => !dashSwitch.Collidable).Select(
-                    entity => DashSwitch.GetFlagName(entity.GetEntityId()));
+                    entity => DashSwitch.GetFlagName(entity.GetEntityId2().EntityId));
 
             foreach (string flagName in pressedDashSwitches) {
                 level.Session.SetFlag(flagName);
@@ -24,7 +24,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             Vector2 position,
             EntityID entityId) {
             DashSwitch self = orig(data, position, entityId);
-            self.SetEntityId(entityId);
+            EntityId2 entityId2 = entityId.ToEntityId2(self);
+            self.SetEntityId2(entityId);
 
             if (IsLoadStart) {
                 string flagName = DashSwitch.GetFlagName(entityId);
@@ -32,8 +33,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     self.SetField(typeof(DashSwitch), "persistent", true);
                 }
 
-                if (savedDashSwitches.ContainsKey(entityId)) {
-                    DashSwitch savedDashSwitch = savedDashSwitches[entityId];
+                if (savedDashSwitches.ContainsKey(entityId2)) {
+                    DashSwitch savedDashSwitch = savedDashSwitches[entityId2];
                     self.Position = savedDashSwitch.Position;
                 }
             }

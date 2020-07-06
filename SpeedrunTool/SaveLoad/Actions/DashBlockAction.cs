@@ -1,21 +1,20 @@
 using System.Collections.Generic;
-using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class DashBlockAction : AbstractEntityAction {
-        private Dictionary<EntityID, DashBlock> savedDashBlocks = new Dictionary<EntityID, DashBlock>();
+        private Dictionary<EntityId2, DashBlock> savedDashBlocks = new Dictionary<EntityId2, DashBlock>();
 
         public override void OnQuickSave(Level level) {
-            savedDashBlocks = level.Entities.GetDictionary<DashBlock>();
+            savedDashBlocks = level.Entities.FindAllToDict<DashBlock>();
         }
 
         private void RestoreDashBlockPosition(On.Celeste.DashBlock.orig_ctor_EntityData_Vector2_EntityID orig,
             DashBlock self, EntityData data,
             Vector2 offset, EntityID id) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset, id);
 
             if (!IsLoadStart) return;

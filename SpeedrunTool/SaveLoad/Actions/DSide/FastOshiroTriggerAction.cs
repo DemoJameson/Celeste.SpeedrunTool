@@ -8,7 +8,7 @@ using Monocle;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.DSide {
     public class FastOshiroTriggerAction : AbstractEntityAction {
         private static string TypeFullName = "Celeste.Mod.RubysEntities.FastOshiroTrigger";
-        private Dictionary<EntityID, Trigger> savedTriggers = new Dictionary<EntityID, Trigger>();
+        private Dictionary<EntityId2, Trigger> savedTriggers = new Dictionary<EntityId2, Trigger>();
 
         public override void OnQuickSave(Level level) {
             savedTriggers = level.Entities.FindAll<Trigger>()
@@ -22,8 +22,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.DSide {
                 return;
             }
 
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
 
             if (IsLoadStart & !savedTriggers.ContainsKey(entityId)) {
                 self.Add(new Coroutine(OnEnter(self)));               

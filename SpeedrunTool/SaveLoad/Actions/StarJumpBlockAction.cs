@@ -4,17 +4,17 @@ using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class StarJumpBlockAction : AbstractEntityAction {
-        private Dictionary<EntityID, StarJumpBlock> savedStarJumpBlocks = new Dictionary<EntityID, StarJumpBlock>();
+        private Dictionary<EntityId2, StarJumpBlock> savedStarJumpBlocks = new Dictionary<EntityId2, StarJumpBlock>();
 
         public override void OnQuickSave(Level level) {
-            savedStarJumpBlocks = level.Entities.GetDictionary<StarJumpBlock>();
+            savedStarJumpBlocks = level.Entities.FindAllToDict<StarJumpBlock>();
         }
 
         private void RestoreStarJumpBlockPosition(On.Celeste.StarJumpBlock.orig_ctor_EntityData_Vector2 orig,
             StarJumpBlock self, EntityData data,
             Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset);
 
             if (!IsLoadStart) return;

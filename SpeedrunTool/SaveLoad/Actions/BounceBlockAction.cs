@@ -4,17 +4,17 @@ using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class BounceBlockAction : AbstractEntityAction {
-        private Dictionary<EntityID, BounceBlock> savedBounceBlocks = new Dictionary<EntityID, BounceBlock>();
+        private Dictionary<EntityId2, BounceBlock> savedBounceBlocks = new Dictionary<EntityId2, BounceBlock>();
 
         public override void OnQuickSave(Level level) {
-            savedBounceBlocks = level.Entities.GetDictionary<BounceBlock>();
+            savedBounceBlocks = level.Entities.FindAllToDict<BounceBlock>();
         }
 
         private void RestoreBounceBlockState(On.Celeste.BounceBlock.orig_ctor_EntityData_Vector2 orig, BounceBlock self,
             EntityData data,
             Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset);
 
             if (IsLoadStart && savedBounceBlocks.ContainsKey(entityId)) {

@@ -17,7 +17,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             typeof(List<>).MakeGenericType(typeof(MoveBlock).GetNestedType("Debris", BindingFlags.NonPublic));
 
         private class Routine {
-            public readonly EntityID ID;
+            public readonly EntityId2 ID;
             public readonly Type type;
             public readonly FieldInfo[] fields;
             public readonly object[] locals;
@@ -27,7 +27,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             public bool IsFromState { get; set; }
             public int State { get; set; }
 
-            public Routine(EntityID ID, Type type, FieldInfo[] fields, object[] locals, float waitTimer,
+            public Routine(EntityId2 ID, Type type, FieldInfo[] fields, object[] locals, float waitTimer,
                 bool removeOnComplete, Routine parent) {
                 this.ID = ID;
                 this.type = type;
@@ -62,10 +62,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public override void OnQuickSave(Level level) {
             foreach (Entity e in level.Entities) {
                 if (ExcludeTypes.Contains(e.GetType())) continue;
-                if (e.NoEntityID()) continue;
+                if (e.NoEntityId2()) continue;
 
 
-                EntityID id = e.GetEntityId();
+                EntityId2 id = e.GetEntityId2();
 
                 foreach (Monocle.Component component in e.Components) {
                     if (component is Coroutine coroutine) {
@@ -83,7 +83,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             loadedRoutines.Reverse();
         }
 
-        private bool SaveCoroutine(Coroutine coroutine, EntityID id) {
+        private bool SaveCoroutine(Coroutine coroutine, EntityId2 id) {
             Stack<IEnumerator> enumerators = (Stack<IEnumerator>) EnumeratorsFieldInfo.GetValue(coroutine);
 
             if (enumerators.Any(enumerator => enumerator.GetType().Assembly == Assembly.GetExecutingAssembly())) {
@@ -117,7 +117,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             return initialCount > 0;
         }
 
-        private void GetCoroutineLocals(EntityID id, object routine, out Type routineType,
+        private void GetCoroutineLocals(EntityId2 id, object routine, out Type routineType,
             out FieldInfo[] routineFields,
             out object[] routineLocals) {
             // In Coroutine.ctor(IEnumerator):
@@ -174,7 +174,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public override void OnQuickLoading(Level level, Player player, Player savedPlayer) {
             "CoroutineAction OnQuickLoading".Log();
             
-            var entities = level.Entities.GetDictionary<Entity>();
+            var entities = level.Entities.FindAllToDict<Entity>();
             Coroutine coroutine = null;
             foreach (Routine routine in loadedRoutines) {
                 ConstructorInfo routineCtor = routine.type.GetConstructor(new Type[] {typeof(int)});
@@ -208,7 +208,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
         }
 
-        private void SetCoroutineLocals(Level level, Dictionary<EntityID, Entity> entities, Routine routine,
+        private void SetCoroutineLocals(Level level, Dictionary<EntityId2, Entity> entities, Routine routine,
             object routineObj) {
             for (int i = 0; i < routine.fields.Length; i++) {
                 FieldInfo field = routine.fields[i];
@@ -221,7 +221,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 }
 
                 if (local is Entity entity) {
-                    if (entities.TryGetValue(entity.GetEntityId(), out Entity e)) {
+                    if (entities.TryGetValue(entity.GetEntityId2(), out Entity e)) {
                         foundValue = e;
                     }
                     // If the entity doesn't store its ID, find the first entity of that type.

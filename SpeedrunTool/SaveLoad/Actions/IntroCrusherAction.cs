@@ -6,18 +6,18 @@ using MonoMod.RuntimeDetour;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class IntroCrusherAction : AbstractEntityAction {
-        private Dictionary<EntityID, IntroCrusher> savedIntroCrushers = new Dictionary<EntityID, IntroCrusher>();
+        private Dictionary<EntityId2, IntroCrusher> savedIntroCrushers = new Dictionary<EntityId2, IntroCrusher>();
 
         public override void OnQuickSave(Level level) {
-            savedIntroCrushers = level.Entities.GetDictionary<IntroCrusher>();
+            savedIntroCrushers = level.Entities.FindAllToDict<IntroCrusher>();
         }
 
         private ILHook addedHook;
 
         private void RestoreIntroCrusherPosition(On.Celeste.IntroCrusher.orig_ctor_EntityData_Vector2 orig,
             IntroCrusher self, EntityData data, Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset);
 
             if (IsLoadStart && savedIntroCrushers.ContainsKey(entityId)) {

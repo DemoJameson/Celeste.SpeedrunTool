@@ -9,7 +9,7 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Everest {
     public class TriggerSpikesOriginalAction : AbstractEntityAction {
-        private Dictionary<EntityID, Entity> savedTriggerSpikes = new Dictionary<EntityID, Entity>();
+        private Dictionary<EntityId2, Entity> savedTriggerSpikes = new Dictionary<EntityId2, Entity>();
 
         public override void OnQuickSave(Level level) {
             savedTriggerSpikes = level.Entities.FindAll<Entity>()
@@ -22,11 +22,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Everest {
                 return;
             }
 
-            EntityID entityId = self.CreateEntityId(position.ToString(), self.GetField("direction").ToString());
-            if (entityId.IsDefault()) {
+            EntityId2 entityId = self.CreateEntityId2(position.ToString(), self.GetField("direction").ToString());
+            if (entityId == default) {
                 return;
             }
-            self.SetEntityId(entityId);
+            self.SetEntityId2(entityId);
 
             if (IsLoadStart) {
                 if (savedTriggerSpikes.ContainsKey(entityId)) {

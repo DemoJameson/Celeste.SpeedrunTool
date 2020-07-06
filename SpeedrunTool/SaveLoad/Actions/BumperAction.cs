@@ -5,17 +5,17 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class BumperAction : AbstractEntityAction {
-        private Dictionary<EntityID, Bumper> savedBumpers = new Dictionary<EntityID, Bumper>();
+        private Dictionary<EntityId2, Bumper> savedBumpers = new Dictionary<EntityId2, Bumper>();
 
         public override void OnQuickSave(Level level) {
-            savedBumpers = level.Entities.GetDictionary<Bumper>();
+            savedBumpers = level.Entities.FindAllToDict<Bumper>();
         }
 
         private void RestoreBumperPosition(On.Celeste.Bumper.orig_ctor_EntityData_Vector2 orig,
             Bumper self, EntityData data,
             Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset);
 
             if (IsLoadStart && savedBumpers.ContainsKey(entityId)) {

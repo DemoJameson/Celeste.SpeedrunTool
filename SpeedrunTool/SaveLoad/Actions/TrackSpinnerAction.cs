@@ -7,21 +7,21 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class TrackSpinnerAction : AbstractEntityAction {
-        private Dictionary<EntityID, TrackSpinner> savedTrackSpinners =
-            new Dictionary<EntityID, TrackSpinner>();
+        private Dictionary<EntityId2, TrackSpinner> savedTrackSpinners =
+            new Dictionary<EntityId2, TrackSpinner>();
 
         private static readonly PropertyInfo PercentPropertyInfo =
             typeof(TrackSpinner).GetProperty("Percent", BindingFlags.Public | BindingFlags.Instance);
 
         public override void OnQuickSave(Level level) {
-            savedTrackSpinners = level.Entities.GetDictionary<TrackSpinner>();
+            savedTrackSpinners = level.Entities.FindAllToDict<TrackSpinner>();
         }
 
         private void RestoreTrackSpinnerPosition(On.Celeste.TrackSpinner.orig_ctor orig, TrackSpinner self,
             EntityData data,
             Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset);
 
             if (IsLoadStart && savedTrackSpinners.ContainsKey(entityId)) {

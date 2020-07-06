@@ -6,17 +6,17 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class OshiroTriggerAction : AbstractEntityAction {
-        private Dictionary<EntityID, OshiroTrigger> savedOshiroTriggers = new Dictionary<EntityID, OshiroTrigger>();
+        private Dictionary<EntityId2, OshiroTrigger> savedOshiroTriggers = new Dictionary<EntityId2, OshiroTrigger>();
 
         public override void OnQuickSave(Level level) {
-            savedOshiroTriggers = level.Entities.GetDictionary<OshiroTrigger>();
+            savedOshiroTriggers = level.Entities.FindAllToDict<OshiroTrigger>();
         }
 
         private void RestoreOshiroTrigger(On.Celeste.OshiroTrigger.orig_ctor orig, OshiroTrigger self,
             EntityData data,
             Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset);
 
             if (IsLoadStart && !savedOshiroTriggers.ContainsKey(entityId)) {

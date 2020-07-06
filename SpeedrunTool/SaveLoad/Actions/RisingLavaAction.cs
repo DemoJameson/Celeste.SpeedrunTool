@@ -6,17 +6,17 @@ using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class RisingLavaAction : AbstractEntityAction {
-        private Dictionary<EntityID, RisingLava> savedRisingLavas = new Dictionary<EntityID, RisingLava>();
+        private Dictionary<EntityId2, RisingLava> savedRisingLavas = new Dictionary<EntityId2, RisingLava>();
 
         public override void OnQuickSave(Level level) {
-            savedRisingLavas = level.Entities.GetDictionary<RisingLava>();
+            savedRisingLavas = level.Entities.FindAllToDict<RisingLava>();
         }
 
         private void RestoreRisingLavaState(On.Celeste.RisingLava.orig_ctor_EntityData_Vector2 orig,
             RisingLava self, EntityData data,
             Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset);
 
             if (IsLoadStart && savedRisingLavas.ContainsKey(entityId)) {

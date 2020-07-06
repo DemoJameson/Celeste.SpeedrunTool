@@ -17,13 +17,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private void RestoreGliderPosition(On.Celeste.Glider.orig_ctor_EntityData_Vector2 orig,
             Glider self, EntityData data,
             Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset);
 
             if (IsLoadStart) {
-                if (savedGliders.Exists(glider => glider.GetEntityId().Equals(entityId))) {
-                    Glider savedGlider = savedGliders.FirstOrDefault(glider => glider.GetEntityId().Equals(entityId));
+                if (savedGliders.Exists(glider => glider.GetEntityId2().Equals(entityId))) {
+                    Glider savedGlider = savedGliders.FirstOrDefault(glider => glider.GetEntityId2().Equals(entityId));
                     savedGlidersCopy.Remove(savedGlider);
                 
                     RestoreState(self, savedGlider);
@@ -41,7 +41,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
             foreach (var savedGlider in savedGlidersCopy) {
                 var createdGlider = new Glider(savedGlider.Position, (bool) savedGlider.GetField(typeof(Glider), "bubble"), (bool) savedGlider.GetField(typeof(Glider), "tutorial"));
-                createdGlider.SetEntityId(savedGlider.GetEntityId());
+                createdGlider.SetEntityId2(savedGlider.GetEntityId2());
                 level.Add(createdGlider);
                 RestoreState(createdGlider, savedGlider);
             }

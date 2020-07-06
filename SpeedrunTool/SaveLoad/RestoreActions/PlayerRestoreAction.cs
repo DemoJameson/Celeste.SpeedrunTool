@@ -119,12 +119,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             // too lazy to restore this field, hope its ok.
             // private HashSet<Trigger> triggersInside;
 
-            // TODO 替换为 EntityId2
-            loaded.CopyEntity<Solid>(saved, "climbHopSolid");
+            loaded.CopyEntity2(saved, "climbHopSolid");
             loaded.CopyEntity2(saved, "CurrentBooster");
             loaded.CopyEntity2(saved, "LastBooster");
-            loaded.CopyEntity<FlingBird>(saved, "flingBird");
-            loaded.CopyEntity<DreamBlock>(saved, "dreamBlock");
+            loaded.CopyEntity2(saved, "flingBird");
+            loaded.CopyEntity2(saved, "dreamBlock");
 
             switch (saved.StateMachine.State) {
                 case Player.StDreamDash:
@@ -184,9 +183,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             PlayerSpriteMode spriteMode) {
             // Give Player a fixed EntityID.
             self.SetEntityId2(new EntityID("You can do it. —— 《Celeste》", 20180125));
-
-            // TODO 等替换为 EntityId2 后删除
-            self.SetEntityId(new EntityID("You can do it. —— 《Celeste》", 20180125));
             orig(self, position, spriteMode);
         }
     }

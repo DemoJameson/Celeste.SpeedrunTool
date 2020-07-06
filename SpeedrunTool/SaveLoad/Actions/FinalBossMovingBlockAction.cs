@@ -6,11 +6,11 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class FinalBossMovingBlockAction : AbstractEntityAction {
-        private Dictionary<EntityID, FinalBossMovingBlock> savedFinalBossMovingBlocks =
-            new Dictionary<EntityID, FinalBossMovingBlock>();
+        private Dictionary<EntityId2, FinalBossMovingBlock> savedFinalBossMovingBlocks =
+            new Dictionary<EntityId2, FinalBossMovingBlock>();
 
         public override void OnQuickSave(Level level) {
-            savedFinalBossMovingBlocks = level.Entities.GetDictionary<FinalBossMovingBlock>();
+            savedFinalBossMovingBlocks = level.Entities.FindAllToDict<FinalBossMovingBlock>();
         }
 
         private void RestoreFinalBossMovingBlockPosition(
@@ -19,8 +19,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             Vector2 offset) {
             orig(self, data, offset);
 
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
 
             if (!IsLoadStart) return;
             

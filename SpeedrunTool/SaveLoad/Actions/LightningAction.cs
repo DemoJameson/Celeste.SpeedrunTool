@@ -9,17 +9,17 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private const string BACK = "back";
         private const string END = "end";
 
-        private Dictionary<EntityID, Lightning> savedLightnings = new Dictionary<EntityID, Lightning>();
+        private Dictionary<EntityId2, Lightning> savedLightnings = new Dictionary<EntityId2, Lightning>();
 
         public override void OnQuickSave(Level level) {
-            savedLightnings = level.Entities.GetDictionary<Lightning>();
+            savedLightnings = level.Entities.FindAllToDict<Lightning>();
         }
 
         private void RestoreLightningState(
             On.Celeste.Lightning.orig_ctor_EntityData_Vector2 orig, Lightning self, EntityData data,
             Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset);
 
             if (IsLoadStart) {

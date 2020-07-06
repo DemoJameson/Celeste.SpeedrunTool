@@ -6,10 +6,10 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class TempleGateAction : AbstractEntityAction {
-        private Dictionary<EntityID, TempleGate> savedTempleGates = new Dictionary<EntityID, TempleGate>();
+        private Dictionary<EntityId2, TempleGate> savedTempleGates = new Dictionary<EntityId2, TempleGate>();
 
         public override void OnQuickSave(Level level) {
-            savedTempleGates = level.Entities.GetDictionary<TempleGate>();
+            savedTempleGates = level.Entities.FindAllToDict<TempleGate>();
         }
 
         private void TempleGateOnCtorEntityDataVector2String(
@@ -17,8 +17,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             Vector2 offset, string levelId) {
             orig(self, data, offset, levelId);
 
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
 
             if (IsLoadStart && savedTempleGates.ContainsKey(entityId)) {
                 self.Add(new Coroutine(SetState(self)));
@@ -26,7 +26,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private IEnumerator SetState(TempleGate self) {
-            TempleGate saved = savedTempleGates[self.GetEntityId()];
+            TempleGate saved = savedTempleGates[self.GetEntityId2()];
             if ((bool) saved.GetField(typeof(TempleGate), "open") || saved.ClaimedByASwitch) {
                 if (self.Type == TempleGate.Types.TouchSwitches) {
                     AudioAction.MuteAudioPathVector2("event:/game/05_mirror_temple/gate_main_open");

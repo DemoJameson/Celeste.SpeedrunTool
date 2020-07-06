@@ -6,17 +6,17 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class PufferAction : AbstractEntityAction {
-        private Dictionary<EntityID, Puffer> savedPuffers = new Dictionary<EntityID, Puffer>();
+        private Dictionary<EntityId2, Puffer> savedPuffers = new Dictionary<EntityId2, Puffer>();
 
         public override void OnQuickSave(Level level) {
-            savedPuffers = level.Entities.GetDictionary<Puffer>();
+            savedPuffers = level.Entities.FindAllToDict<Puffer>();
         }
 
         private void RestorePufferPosition(On.Celeste.Puffer.orig_ctor_EntityData_Vector2 orig,
             Puffer self, EntityData data,
             Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset);
 
             if (IsLoadStart && savedPuffers.ContainsKey(entityId)) {

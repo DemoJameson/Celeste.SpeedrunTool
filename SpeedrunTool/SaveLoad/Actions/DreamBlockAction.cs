@@ -6,17 +6,17 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class DreamBlockAction : AbstractEntityAction {
-        private Dictionary<EntityID, DreamBlock> savedDreamBlocks = new Dictionary<EntityID, DreamBlock>();
+        private Dictionary<EntityId2, DreamBlock> savedDreamBlocks = new Dictionary<EntityId2, DreamBlock>();
 
         public override void OnQuickSave(Level level) {
-            savedDreamBlocks = level.Entities.GetDictionary<DreamBlock>();
+            savedDreamBlocks = level.Entities.FindAllToDict<DreamBlock>();
         }
 
         private void RestoreDreamBlockPosition(On.Celeste.DreamBlock.orig_ctor_EntityData_Vector2 orig,
             DreamBlock self, EntityData data,
             Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset);
 
             if (IsLoadStart && savedDreamBlocks.ContainsKey(entityId)) {

@@ -107,7 +107,6 @@
     <Compile Include="SaveLoad\Actions\FrostHelper\CustomCrystalSpinnerAction.cs" />
     <Compile Include="SaveLoad\Actions\Glyph\AttachedWallBoosterAction.cs" />
     <Compile Include="SaveLoad\Actions\IntroCrusherAction.cs" />
-    <Compile Include="SaveLoad\Actions\PlayerAction.cs" />
     <Compile Include="SaveLoad\Actions\PlatformAction.cs" />
     <Compile Include="SaveLoad\Actions\ShroomHelper\AttachedIceWallAction.cs" />
     <Compile Include="SaveLoad\Actions\ShroomHelper\CrumbleBlockOnTouchAction.cs" />
@@ -132,11 +131,9 @@
     <Compile Include="SaveLoad\Actions\AbstractEntityAction.cs" />
     <Compile Include="SaveLoad\Actions\AudioAction.cs" />
     <Compile Include="SaveLoad\Actions\BadelineOldsiteAction.cs" />
-    <Compile Include="SaveLoad\Actions\BoosterAction.cs" />
     <Compile Include="SaveLoad\Actions\BounceBlockAction.cs" />
     <Compile Include="SaveLoad\Actions\BumperAction.cs" />
     <Compile Include="SaveLoad\Actions\CassetteBlockManagerAction.cs" />
-    <Compile Include="SaveLoad\Actions\CloudAction.cs" />
     <Compile Include="SaveLoad\Actions\ClutterSwitchAction.cs" />
     <Compile Include="SaveLoad\Actions\CrumblePlatformAction.cs" />
     <Compile Include="SaveLoad\Actions\CrumbleWallOnRumbleAction.cs" />
@@ -157,7 +154,6 @@
     <Compile Include="SaveLoad\Actions\DustStaticSpinnerAction.cs" />
     <Compile Include="SaveLoad\Actions\StarJumpBlockAction.cs" />
     <Compile Include="SaveLoad\Actions\StaticMoverAction.cs" />
-    <Compile Include="SaveLoad\Actions\StrawberryAction.cs" />
     <Compile Include="SaveLoad\Actions\StrawberrySeedAction.cs" />
     <Compile Include="SaveLoad\Actions\TalkComponentUIAction.cs" />
     <Compile Include="SaveLoad\Actions\TempleMirrorPortalAction.cs" />
@@ -167,8 +163,6 @@
     <Compile Include="SaveLoad\Actions\FinalBossAction.cs" />
     <Compile Include="SaveLoad\Actions\FinalBossMovingBlockAction.cs" />
     <Compile Include="SaveLoad\Actions\FireBallAction.cs" />
-    <Compile Include="SaveLoad\Actions\FlyFeatherAction.cs" />
-    <Compile Include="SaveLoad\Actions\KeyAction.cs" />
     <Compile Include="SaveLoad\Actions\MoveBlockAction.cs" />
     <Compile Include="SaveLoad\Actions\MovingPlatformAction.cs" />
     <Compile Include="SaveLoad\Actions\RefillAction.cs" />

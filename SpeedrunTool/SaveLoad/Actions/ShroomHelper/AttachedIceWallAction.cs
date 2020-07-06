@@ -8,7 +8,7 @@ using Monocle;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.ShroomHelper {
     public class AttachedIceWallAction : AbstractEntityAction {
         private const string FullName = "Celeste.Mod.ShroomHelper.Entities.AttachedIceWall";
-        private Dictionary<EntityID, Entity> savedIceWalls = new Dictionary<EntityID, Entity>();
+        private Dictionary<EntityId2, Entity> savedIceWalls = new Dictionary<EntityId2, Entity>();
 
         public override void OnQuickSave(Level level) {
             savedIceWalls = level.Entities.FindAll<Entity>()
@@ -21,11 +21,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.ShroomHelper {
                 return;
             }
 
-            EntityID entityId = self.CreateEntityId(position.ToString(), self.GetField("Facing").ToString());
-            if (entityId.IsDefault()) {
+            EntityId2 entityId = self.CreateEntityId2(position.ToString(), self.GetField("Facing").ToString());
+            if (entityId == default) {
                 return;
             }
-            self.SetEntityId(entityId);
+            self.SetEntityId2(entityId);
 
             if (IsLoadStart) {
                 if (savedIceWalls.ContainsKey(entityId)) {

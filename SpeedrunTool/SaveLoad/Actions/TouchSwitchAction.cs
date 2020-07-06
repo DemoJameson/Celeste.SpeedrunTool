@@ -4,15 +4,15 @@ using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class TouchSwitchAction : AbstractEntityAction {
-        private Dictionary<EntityID, TouchSwitch> savedTouchSwitchs = new Dictionary<EntityID, TouchSwitch>();
+        private Dictionary<EntityId2, TouchSwitch> savedTouchSwitchs = new Dictionary<EntityId2, TouchSwitch>();
 
         public override void OnQuickSave(Level level) {
-            savedTouchSwitchs = level.Entities.GetDictionary<TouchSwitch>();
+            savedTouchSwitchs = level.Entities.FindAllToDict<TouchSwitch>();
         }
 
         private void TouchSwitchOnctor_EntityData_Vector2(On.Celeste.TouchSwitch.orig_ctor_EntityData_Vector2 orig, TouchSwitch self, EntityData data, Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset);
 
             if (IsLoadStart && savedTouchSwitchs.ContainsKey(entityId)) {

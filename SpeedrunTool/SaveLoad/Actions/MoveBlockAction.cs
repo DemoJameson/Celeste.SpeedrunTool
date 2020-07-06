@@ -5,17 +5,17 @@ using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class MoveBlockAction : AbstractEntityAction {
-        private Dictionary<EntityID, MoveBlock> movingBlocks = new Dictionary<EntityID, MoveBlock>();
+        private Dictionary<EntityId2, MoveBlock> movingBlocks = new Dictionary<EntityId2, MoveBlock>();
 
         public override void OnQuickSave(Level level) {
-            movingBlocks = level.Entities.GetDictionary<MoveBlock>();
+            movingBlocks = level.Entities.FindAllToDict<MoveBlock>();
         }
 
         private void RestoreMoveBlockStateOnCreate(On.Celeste.MoveBlock.orig_ctor_EntityData_Vector2 orig,
             MoveBlock self,
             EntityData data, Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset);
 
             if (!IsLoadStart || !movingBlocks.ContainsKey(entityId)) {

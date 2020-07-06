@@ -8,7 +8,7 @@ using Monocle;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.FrostHelper {
     public class ToggleSwapBlockAction : AbstractEntityAction {
         private const string FullName = "FrostHelper.ToggleSwapBlock";
-        private Dictionary<EntityID, Solid> savedSolids = new Dictionary<EntityID, Solid>();
+        private Dictionary<EntityId2, Solid> savedSolids = new Dictionary<EntityId2, Solid>();
 
         public override void OnQuickSave(Level level) {
             savedSolids = level.Entities.FindAll<Solid>()
@@ -18,10 +18,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.FrostHelper {
         private void SolidOnCtor(On.Celeste.Solid.orig_ctor orig, Solid self, Vector2 position, float width,
             float height, bool safe) {
             orig(self, position, width, height, safe);
-            self.TrySetEntityId(position.ToString(), width.ToString(), height.ToString(), safe.ToString());
+            self.TrySetEntityId2(position.ToString(), width.ToString(), height.ToString(), safe.ToString());
 
             if (self.GetType().FullName == FullName) {
-                EntityID entityId = self.GetEntityId();
+                EntityId2 entityId = self.GetEntityId2();
                 if (IsLoadStart && savedSolids.ContainsKey(entityId)) {
                     Solid savedSolid = savedSolids[entityId];
                     Vector2 start = (Vector2) savedSolid.GetField("start");

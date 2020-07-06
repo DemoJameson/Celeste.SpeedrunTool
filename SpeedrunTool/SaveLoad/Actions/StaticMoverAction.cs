@@ -5,14 +5,14 @@ using Monocle;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class StaticMoverAction : AbstractEntityAction {
         private const string CheckStaticMover = "CheckStaticMover";
-        private readonly Dictionary<EntityID, StaticMover> savedStaticMovers = new Dictionary<EntityID, StaticMover>();
+        private readonly Dictionary<EntityId2, StaticMover> savedStaticMovers = new Dictionary<EntityId2, StaticMover>();
 
         public override void OnQuickSave(Level level) {
             var staticMovers = level.Tracker.GetComponents<StaticMover>();
             foreach (StaticMover staticMover in staticMovers) {
-                var entityId = staticMover.Entity.GetEntityId();
-                if (staticMover.Entity != null && !entityId.IsDefault() && !savedStaticMovers.ContainsKey(entityId)) {
-                    savedStaticMovers.Add(staticMover.Entity.GetEntityId(), staticMover);
+                var entityId = staticMover.Entity.GetEntityId2();
+                if (staticMover.Entity != null && entityId != default && !savedStaticMovers.ContainsKey(entityId)) {
+                    savedStaticMovers.Add(staticMover.Entity.GetEntityId2(), staticMover);
                 }
             }
         }
@@ -36,16 +36,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private bool StaticMoverOnIsRiding(StaticMover staticMover, Platform platform) {
-            EntityID entityId = staticMover.Entity.GetEntityId();
-            EntityID platformEntityId = platform.GetEntityId();
-            if (entityId.IsDefault() || platformEntityId.IsDefault()) {
+            EntityId2 entityId = staticMover.Entity.GetEntityId2();
+            EntityId2 platformEntityId = platform.GetEntityId2();
+            if (entityId == default || platformEntityId == default) {
                 return true;
             }
 
             if (savedStaticMovers.ContainsKey(entityId)) {
                 var savedStaticMover = savedStaticMovers[entityId];
                 // 之前依附的 Platform 与本次查找的 Platform 非同一个则不依附
-                if (savedStaticMover.Platform == null || !savedStaticMover.Platform.GetEntityId().Equals(platformEntityId)) {
+                if (savedStaticMover.Platform == null || !savedStaticMover.Platform.GetEntityId2().Equals(platformEntityId)) {
                     return false;
                 }
             }

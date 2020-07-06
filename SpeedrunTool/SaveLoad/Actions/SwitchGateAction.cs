@@ -8,17 +8,17 @@ using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class SwitchGateAction : AbstractEntityAction {
-        private Dictionary<EntityID, SwitchGate> savedSwitchGates = new Dictionary<EntityID, SwitchGate>();
+        private Dictionary<EntityId2, SwitchGate> savedSwitchGates = new Dictionary<EntityId2, SwitchGate>();
 
         public override void OnQuickSave(Level level) {
-            savedSwitchGates = level.Entities.GetDictionary<SwitchGate>();
+            savedSwitchGates = level.Entities.FindAllToDict<SwitchGate>();
         }
 
         private void RestoreSwitchGatePosition(On.Celeste.SwitchGate.orig_ctor_EntityData_Vector2 orig, SwitchGate self,
             EntityData data,
             Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset);
 
             if (IsLoadStart && savedSwitchGates.ContainsKey(entityId)) {

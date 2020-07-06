@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.ShroomHelper {
     public class CrumbleBlockOnTouchAction : AbstractEntityAction {
         private const string FullName = "Celeste.Mod.ShroomHelper.Entities.CrumbleBlockOnTouch";
         private const string FullName2 = "Celeste.Mod.AcidHelper.Entities.CrumbleWallOnTouch";
-        private Dictionary<EntityID, Entity> savedBlocks = new Dictionary<EntityID, Entity>();
+        private Dictionary<EntityId2, Entity> savedBlocks = new Dictionary<EntityId2, Entity>();
 
         public override void OnQuickSave(Level level) {
             savedBlocks = level.Entities.FindAll<Entity>()
@@ -24,13 +24,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.ShroomHelper {
                 return;
             }
 
-            EntityID entityId = self.CreateEntityId(position.ToString(), width.ToString(), height.ToString(), safe.ToString());
-            if (entityId.IsDefault()) {
+            EntityId2 entityId2 = self.CreateEntityId2(position.ToString(), width.ToString(), height.ToString(), safe.ToString());
+            if (entityId2 == default) {
                 return;
             }
-            self.SetEntityId(entityId);
+            self.SetEntityId2(entityId2);
 
-            if (IsLoadStart && !savedBlocks.ContainsKey(entityId)) {
+            if (IsLoadStart && !savedBlocks.ContainsKey(entityId2)) {
                 self.Add(new RemoveSelfComponent());
             }
         }

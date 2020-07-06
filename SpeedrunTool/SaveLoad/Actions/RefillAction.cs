@@ -5,17 +5,17 @@ using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class RefillAction : AbstractEntityAction {
-        private Dictionary<EntityID, Refill> savedRefills = new Dictionary<EntityID, Refill>();
+        private Dictionary<EntityId2, Refill> savedRefills = new Dictionary<EntityId2, Refill>();
 
         public override void OnQuickSave(Level level) {
-            savedRefills = level.Entities.GetDictionary<Refill>();
+            savedRefills = level.Entities.FindAllToDict<Refill>();
         }
 
         private void RefillOnCtorEntityDataVector2(
             On.Celeste.Refill.orig_ctor_EntityData_Vector2 orig, Refill self, EntityData data,
             Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset);
 
             if (IsLoadStart) {

@@ -6,8 +6,8 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public readonly struct EntityId2 {
-        // TODO 或许以后用来替换 EntityID
-        // 官图中 Trigger 的 ID 与 Entity 的 ID 有很大几率重复的
+        // 后用来替换 EntityID 避免 ID 重复
+        // 官图中 Trigger 的 ID 与 Entity 的 ID 有很大几率重复
         public readonly EntityID EntityId;
         public readonly Type Type;
 
@@ -43,9 +43,23 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
     public static class EntityId2Extension {
         private const string EntityId2Key = "SpeedrunTool_EntityId2_Key";
+        private const string EntityDataKey = "SpeedrunTool_EntityData_Key";
 
+        
         public static EntityId2 ToEntityId2(this EntityID entityId, Type type) {
             return new EntityId2(entityId, type);
+        }
+        
+        public static EntityId2 ToEntityId2(this EntityID entityId, Entity entity) {
+            return entityId.ToEntityId2(entity.GetType());
+        }
+        
+        public static EntityId2 ToEntityId2(this EntityData entityData, Type type) {
+            return new EntityId2(new EntityID(entityData.Level.Name, entityData.ID), type);
+        }
+        
+        public static EntityId2 ToEntityId2(this EntityData entityData, Entity entity) {
+            return entityData.ToEntityId2(entity.GetType());
         }
 
         public static EntityId2 GetEntityId2(this Entity entity) {
@@ -65,10 +79,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 entity.SetEntityId2(otherEntity.GetEntityId2());
             }
         }
+        
+        public static EntityData GetEntityData(this Entity entity) {
+            return entity.GetExtendedDataValue<EntityData>(EntityDataKey);
+        }
+        
+        public static void SetEntityData(this Entity entity, EntityData entityData) {
+            entity.SetExtendedDataValue(EntityDataKey, entityData);
+        }
 
         public static void CopyEntityData(this Entity entity, Entity otherEntity) {
-            if (otherEntity.HasEntityData()) {
-                entity.SetEntityData(otherEntity.GetEntityData());
+            if (otherEntity.GetEntityData() is EntityData data) {
+                entity.SetEntityData(data);
             }
         }
 

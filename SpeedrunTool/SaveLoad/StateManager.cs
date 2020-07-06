@@ -169,16 +169,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (IsSaved && IsLoadStart && player != null) {
                 LoadStart(self, player);
 
-                // 设置完等待一帧允许所有 Entity 更新然后再冻结游戏
+                // 设置完等待一帧允许所有 Entity 更新绘制然后再冻结游戏
                 // 等待一帧是因为画面背景和许多 Entity 都需时间要绘制，即使等待里一帧第三章 dust 很多的时候依然能看出绘制不完全
                 // Wait for a frame so entities update, then freeze game.
-                "after entity create and before update".Log();
                 orig(self);
-                "after entity create and update 1 frame".Log();
+                // 等所有 Entity 创建完毕并运行一帧后再统一在此时机还原状态
                 RestoreEntityUtils.AfterEntityCreateAndUpdate1Frame(self);
 
-                // 冻结游戏或者进入下一状态
-                // Freeze the game or enter the next state
+                // 冻结游戏等待 Madeline 复活
+                // Freeze the game wait for madeline respawn.
                 if (player.StateMachine.State == Player.StIntroRespawn) {
                     self.Frozen = true;
                     self.PauseLock = true;
@@ -190,7 +189,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 return;
             }
 
-            // 冻结时允许人物复活
+            // 冻结时允许人物 Update 以便复活
             // Allow player to respawn while level is frozen
             if (IsSaved && IsLoadFrozen) {
                 UpdatePlayerWhenFreeze(self, player);

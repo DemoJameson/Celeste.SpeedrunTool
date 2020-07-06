@@ -6,20 +6,20 @@ using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class StrawberrySeedAction : AbstractEntityAction {
-        private Dictionary<EntityID, StrawberrySeed> savedBerrySeeds = new Dictionary<EntityID, StrawberrySeed>();
-        private readonly Dictionary<EntityID, StrawberrySeed> savedCollectedBerrySeeds = new Dictionary<EntityID, StrawberrySeed>();
+        private Dictionary<EntityId2, StrawberrySeed> savedBerrySeeds = new Dictionary<EntityId2, StrawberrySeed>();
+        private readonly Dictionary<EntityId2, StrawberrySeed> savedCollectedBerrySeeds = new Dictionary<EntityId2, StrawberrySeed>();
 
         public override void OnQuickSave(Level level) {
             if (!(level.Entities.FindFirst<Player>() is Player player)) {
                 return;
             }
 
-            savedBerrySeeds = level.Entities.GetDictionary<StrawberrySeed>();
+            savedBerrySeeds = level.Entities.FindAllToDict<StrawberrySeed>();
 
             foreach (Follower follower in player.Leader.Followers) {
                 // multi-room strawberry seeds (Spring Collab 2020) don't need save states.
                 if (follower.Entity is StrawberrySeed berry && berry.GetType().Name != "MultiRoomStrawberrySeed") {
-                    savedCollectedBerrySeeds.Add(berry.GetEntityId(), berry);
+                    savedCollectedBerrySeeds.Add(berry.GetEntityId2(), berry);
                 }
             }
         }
@@ -33,11 +33,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 return;
             }
 
-            var entityId = new EntityID(strawberry.ID.Level, (strawberry.ID + "-" + index).GetHashCode());
-            self.SetEntityId(entityId);
+            var entityId2 = new EntityID(strawberry.ID.Level, (strawberry.ID + "-" + index).GetHashCode()).ToEntityId2(self);
+            self.SetEntityId2(entityId2);
 
-            if (IsLoadStart && savedBerrySeeds.ContainsKey(entityId)) {
-                StrawberrySeed savedBerrySeed = savedBerrySeeds[entityId];
+            if (IsLoadStart && savedBerrySeeds.ContainsKey(entityId2)) {
+                StrawberrySeed savedBerrySeed = savedBerrySeeds[entityId2];
 
                 // 确保 StaticMover 起作用
                 if (savedBerrySeed.Get<StaticMover>()?.Platform is Platform platform) {
@@ -45,7 +45,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 }
 
                 // 处于还原动画中的种子，设置到起始点
-                if (!savedCollectedBerrySeeds.ContainsKey(entityId) && !savedBerrySeed.Collidable) {
+                if (!savedCollectedBerrySeeds.ContainsKey(entityId2) && !savedBerrySeed.Collidable) {
                     self.Position = (Vector2) savedBerrySeed.GetField(typeof(StrawberrySeed), "start");
                     if (savedBerrySeed.GetField(typeof(StrawberrySeed), "attached") is Platform savedAttached) {
                         self.Position += savedAttached.Position;
@@ -61,7 +61,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             List<StrawberrySeed> addedBerrySeeds = level.Entities.FindAll<StrawberrySeed>();
 
             foreach (StrawberrySeed savedBerrySeed in savedCollectedBerrySeeds.Values) {
-                if (addedBerrySeeds.FirstOrDefault(strawberrySeed => strawberrySeed.GetEntityId().Equals(savedBerrySeed.GetEntityId())) is StrawberrySeed addedBerrySeed) {
+                if (addedBerrySeeds.FirstOrDefault(strawberrySeed => strawberrySeed.GetEntityId2().Equals(savedBerrySeed.GetEntityId2())) is StrawberrySeed addedBerrySeed) {
                     Follower follower = (Follower) addedBerrySeed.GetField(typeof(StrawberrySeed), "follower");
                     follower.FollowDelay = 0f;
                     follower.DelayTimer = 0f;

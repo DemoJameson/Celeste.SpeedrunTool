@@ -5,17 +5,17 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class MovingPlatformAction : AbstractEntityAction {
-        private Dictionary<EntityID, MovingPlatform> savedMovingPlatforms = new Dictionary<EntityID, MovingPlatform>();
+        private Dictionary<EntityId2, MovingPlatform> savedMovingPlatforms = new Dictionary<EntityId2, MovingPlatform>();
 
         public override void OnQuickSave(Level level) {
-            savedMovingPlatforms = level.Entities.GetDictionary<MovingPlatform>();
+            savedMovingPlatforms = level.Entities.FindAllToDict<MovingPlatform>();
         }
 
         private void ResotreMovingPlatformPosition(On.Celeste.MovingPlatform.orig_ctor_EntityData_Vector2 orig,
             MovingPlatform self, EntityData data,
             Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset);
 
             if (IsLoadStart && savedMovingPlatforms.ContainsKey(entityId)) {

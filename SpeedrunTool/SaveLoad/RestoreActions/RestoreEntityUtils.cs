@@ -55,7 +55,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             if (ExcludeTypes.Contains(type)) return;
             if (ExcludeTypeNames.Contains(type.FullName)) return;
 
-            self.TrySetEntityId(position.ToString());
+            self.TrySetEntityId2(position.ToString());
         }
 
         // 将 EntityData 与 EntityID 附加到 Entity 的实例上
@@ -88,35 +88,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
         }
 
         private static void AttachEntityId(Entity entity, EntityData data) {
-            entity.SetEntityId2(data.ToEntityId().ToEntityId2(entity.GetType()));
-            entity.SetEntityId(data.ToEntityId());
+            entity.SetEntityId2(data.ToEntityId2(entity));
             entity.SetEntityData(data);
             
-            entity.Log("IL Set EntityID: ", data.ToEntityId().ToString());
             entity.Log("IL Set EntityId2: ", entity.GetEntityId2().ToString());
         }
-        // Make Trigger EntityData.ID Unique.
-        // 因为 Trigger 的 ID 会与 Entity 的 ID 重复，导致 EntityID 相同
-        // TODO 以后会用 EntityId2 替代 EntityID 避免此问题
-
-        private static void LevelDataOnCtor(On.Celeste.LevelData.orig_ctor orig, LevelData self,
-            BinaryPacker.Element data) {
-            orig(self, data);
-
-            List<EntityData> entitiesAndTriggers = new List<EntityData>(self.Entities);
-            entitiesAndTriggers.AddRange(self.Triggers);
-
-            int uniqueId = self.Entities.Count;
-            self.Triggers.ForEach(triggerData => {
-                if (entitiesAndTriggers.Any(existData => existData.ID == triggerData.ID)) {
-                    while (entitiesAndTriggers.Any(existData => existData.ID == ++uniqueId)) { }
-
-                    // Logger.Log("SpeedrunTool", $"Change {triggerData.Name}'s EntityData.ID from {triggerData.ID} to {uniqueId}");
-                    triggerData.ID = uniqueId;
-                }
-            });
-        }
-
+        
         private delegate void Found(AbstractRestoreAction restoreAction, Entity loaded, Entity saved);
 
         private delegate void NotFound(AbstractRestoreAction restoreAction, Entity loaded);
@@ -151,23 +128,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             }
         }
 
-        private static void EntityOnUpdate(On.Monocle.Entity.orig_Update orig, Entity self) {
-            orig(self);
-
-            if (IsLoadStart) {
-                InvokeAction(self, (action, loaded, saved) => action.AfterEntityCreateAndUpdate1Frame(loaded, saved),
-                    (action, loaded) => { action.CantFoundSavedEntity(self); });
-            } else if (IsLoadComplete) {
-                InvokeAction(self, (action, loaded, saved) => action.AfterPlayerRespawn(loaded, saved));
-            }
-        }
-
-
         private static void LevelOnBegin(On.Celeste.Level.orig_Begin orig, Level self) {
             orig(self);
             if (!IsLoadStart) return;
 
-            "LevelOnBegin".Log();
             RestoreActions.ForEach(restoreAction => {
                 List<Entity> loadedEntityList = self.Entities.FindAll<Entity>()
                     .Where(entity => entity.GetType() == restoreAction.Type).ToList();
@@ -175,7 +139,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
                     .Where(entity => entity.GetType() == restoreAction.Type).ToList();
 
                 List<Entity> entityNotExistInLevel = savedEntityList.Where(saved =>
-                    !loadedEntityList.Any(loaded => loaded.GetEntityId().Equals(saved.GetEntityId()))).ToList();
+                    !loadedEntityList.Any(loaded => loaded.GetEntityId2().Equals(saved.GetEntityId2()))).ToList();
                 if (entityNotExistInLevel.Count > 0) {
                     restoreAction.CantFoundLoadedEntity(self, entityNotExistInLevel);
                 }
@@ -216,11 +180,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             On.Monocle.Entity.ctor_Vector2 += EntityOnCtor_Vector2;
             origLoadLevelHook = new ILHook(typeof(Level).GetMethod("orig_LoadLevel"), ModOrigLoadLevel);
             LoadCustomEntityHook = new ILHook(typeof(Level).GetMethod("LoadCustomEntity"), ModLoadCustomEntity);
-            On.Celeste.LevelData.ctor += LevelDataOnCtor;
             
             On.Monocle.Entity.Added += EntityOnAdded;
             On.Monocle.Entity.Awake += EntityOnAwake;
-            // On.Monocle.Entity.Update += EntityOnUpdate;
             On.Celeste.Level.Begin += LevelOnBegin;
             RestoreActions.ForEach(action => action.Load());
         }
@@ -229,10 +191,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             On.Monocle.Entity.ctor_Vector2 -= EntityOnCtor_Vector2;
             origLoadLevelHook.Dispose();
             On.Monocle.Entity.Added -= EntityOnAdded;
-            On.Celeste.LevelData.ctor -= LevelDataOnCtor;
+            // On.Celeste.LevelData.ctor -= LevelDataOnCtor;
             
             On.Monocle.Entity.Awake -= EntityOnAwake;
-            // On.Monocle.Entity.Update -= EntityOnUpdate;
             On.Celeste.Level.Begin -= LevelOnBegin;
             RestoreActions.ForEach(action => action.Unload());
         }

@@ -1,21 +1,20 @@
 using System.Collections.Generic;
-using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class TempleCrackedBlockAction : AbstractEntityAction {
-        private Dictionary<EntityID, TempleCrackedBlock> saveEntities = new Dictionary<EntityID, TempleCrackedBlock>();
+        private Dictionary<EntityId2, TempleCrackedBlock> saveEntities = new Dictionary<EntityId2, TempleCrackedBlock>();
 
         public override void OnQuickSave(Level level) {
-            saveEntities = level.Entities.GetDictionary<TempleCrackedBlock>();
+            saveEntities = level.Entities.FindAllToDict<TempleCrackedBlock>();
         }
 
         private void RestoreTempleCrackedBlockPosition(
             On.Celeste.TempleCrackedBlock.orig_ctor_EntityID_EntityData_Vector2 orig, TempleCrackedBlock self,
             EntityID eid, EntityData data, Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, eid, data, offset);
 
             if (IsLoadStart) {

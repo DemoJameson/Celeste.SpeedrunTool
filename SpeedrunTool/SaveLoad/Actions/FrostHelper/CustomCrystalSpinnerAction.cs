@@ -8,7 +8,7 @@ using Monocle;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.FrostHelper {
     public class CustomCrystalSpinnerAction : AbstractEntityAction {
         private const string FullName = "FrostHelper.CrystalStaticSpinner";
-        private Dictionary<EntityID, Entity> savedSpinners = new Dictionary<EntityID, Entity>();
+        private Dictionary<EntityId2, Entity> savedSpinners = new Dictionary<EntityId2, Entity>();
 
         public override void OnQuickSave(Level level) {
             savedSpinners = level.Entities.FindAll<Entity>()
@@ -21,11 +21,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.FrostHelper {
                 return;
             }
 
-            EntityID entityId = self.CreateEntityId(position.ToString());
-            if (entityId.IsDefault()) {
+            EntityId2 entityId = self.CreateEntityId2(position.ToString());
+            if (entityId == default) {
                 return;
             }
-            self.SetEntityId(entityId);
+            self.SetEntityId2(entityId);
 
             if (IsLoadStart) {
                 if (savedSpinners.ContainsKey(entityId)) {

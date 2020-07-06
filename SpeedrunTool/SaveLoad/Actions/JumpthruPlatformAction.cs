@@ -1,21 +1,20 @@
 using System.Collections.Generic;
-using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class JumpthruPlatformAction : AbstractEntityAction {
-        private Dictionary<EntityID, JumpthruPlatform> savedJumpthruPlatforms = new Dictionary<EntityID, JumpthruPlatform>();
+        private Dictionary<EntityId2, JumpthruPlatform> savedJumpthruPlatforms = new Dictionary<EntityId2, JumpthruPlatform>();
 
         public override void OnQuickSave(Level level) {
-            savedJumpthruPlatforms = level.Entities.GetDictionary<JumpthruPlatform>();
+            savedJumpthruPlatforms = level.Entities.FindAllToDict<JumpthruPlatform>();
         }
 
         private void RestoreJumpthruPlatformPosition(On.Celeste.JumpthruPlatform.orig_ctor_EntityData_Vector2 orig,
             JumpthruPlatform self, EntityData data,
             Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset);
 
             if (IsLoadStart && savedJumpthruPlatforms.ContainsKey(entityId)) {

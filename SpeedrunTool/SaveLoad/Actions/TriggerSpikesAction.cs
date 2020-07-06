@@ -8,17 +8,17 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class TriggerSpikesAction : AbstractEntityAction {
-        private Dictionary<EntityID, TriggerSpikes> savedTriggerSpikes = new Dictionary<EntityID, TriggerSpikes>();
+        private Dictionary<EntityId2, TriggerSpikes> savedTriggerSpikes = new Dictionary<EntityId2, TriggerSpikes>();
 
         public override void OnQuickSave(Level level) {
-            savedTriggerSpikes = level.Entities.GetDictionary<TriggerSpikes>();
+            savedTriggerSpikes = level.Entities.FindAllToDict<TriggerSpikes>();
         }
 
         private void TriggerSpikesOnCtorEntityDataVector2Directions(
             On.Celeste.TriggerSpikes.orig_ctor_EntityData_Vector2_Directions orig, TriggerSpikes self, EntityData data,
             Vector2 offset, TriggerSpikes.Directions dir) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset, dir);
 
             if (IsLoadStart) {

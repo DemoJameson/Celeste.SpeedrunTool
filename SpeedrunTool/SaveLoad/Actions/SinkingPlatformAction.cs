@@ -6,7 +6,7 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class SinkingPlatformAction : AbstractEntityAction {
-        private readonly Dictionary<EntityID, SinkingPlatform> sinkingPlatforms = new Dictionary<EntityID, SinkingPlatform>();
+        private readonly Dictionary<EntityId2, SinkingPlatform> sinkingPlatforms = new Dictionary<EntityId2, SinkingPlatform>();
 
         public override void OnQuickSave(Level level) {
             sinkingPlatforms.AddRange(level.Entities.FindAll<SinkingPlatform>());
@@ -14,8 +14,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         private void RestoreSinkingPlatformPosition(On.Celeste.SinkingPlatform.orig_ctor_EntityData_Vector2 orig,
             SinkingPlatform self, EntityData data, Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset);
 
             if (IsLoadStart && sinkingPlatforms.ContainsKey(entityId)) {

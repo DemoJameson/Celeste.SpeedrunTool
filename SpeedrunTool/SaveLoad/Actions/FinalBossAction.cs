@@ -6,18 +6,18 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class FinalBossAction : AbstractEntityAction {
-        private Dictionary<EntityID, FinalBoss> savedFinalBosses = new Dictionary<EntityID, FinalBoss>();
+        private Dictionary<EntityId2, FinalBoss> savedFinalBosses = new Dictionary<EntityId2, FinalBoss>();
 
         public override void OnQuickSave(Level level) {
-            savedFinalBosses = level.Entities.GetDictionary<FinalBoss>();
+            savedFinalBosses = level.Entities.FindAllToDict<FinalBoss>();
         }
 
         private void RestoreFinalBossState(On.Celeste.FinalBoss.orig_ctor_EntityData_Vector2 orig, FinalBoss self,
             EntityData data,
             Vector2 offset) {
             orig(self, data, offset);
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
 
             if (IsLoadStart && savedFinalBosses.ContainsKey(entityId)) {
                 FinalBoss savedFinalBoss = savedFinalBosses[entityId];

@@ -1,15 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class RotateSpinnerAction : AbstractEntityAction {
-        private Dictionary<EntityID, RotateSpinner> savedRotateSpinners =
-            new Dictionary<EntityID, RotateSpinner>();
+        private Dictionary<EntityId2, RotateSpinner> savedRotateSpinners =
+            new Dictionary<EntityId2, RotateSpinner>();
 
         private static readonly FieldInfo RotationPercentFieldInfo =
             typeof(RotateSpinner).GetField("rotationPercent", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -18,15 +16,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             typeof(RotateSpinner).GetField("center", BindingFlags.NonPublic | BindingFlags.Instance);
 
         public override void OnQuickSave(Level level) {
-            savedRotateSpinners = level.Entities.GetDictionary<RotateSpinner>();
+            savedRotateSpinners = level.Entities.FindAllToDict<RotateSpinner>();
         }
 
         private void RestoreRotateSpinnerState(On.Celeste.RotateSpinner.orig_ctor orig, RotateSpinner self,
             EntityData data,
             Vector2 offset) {
             orig(self, data, offset);
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
 
             if (IsLoadStart && savedRotateSpinners.ContainsKey(entityId)) {
                 RotateSpinner saved = savedRotateSpinners[entityId];

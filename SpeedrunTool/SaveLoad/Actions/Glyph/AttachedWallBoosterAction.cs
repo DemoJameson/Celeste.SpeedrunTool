@@ -6,10 +6,10 @@ using Microsoft.Xna.Framework;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Glyph {
     public class AttachedWallBoosterAction : AbstractEntityAction {
         private const string FullName = "Celeste.Mod.AcidHelper.Entities.AttachedWallBooster";
-        private Dictionary<EntityID, WallBooster> savedWallBoosters = new Dictionary<EntityID, WallBooster>();
+        private Dictionary<EntityId2, WallBooster> savedWallBoosters = new Dictionary<EntityId2, WallBooster>();
 
         public override void OnQuickSave(Level level) {
-            savedWallBoosters = level.Entities.GetDictionary<WallBooster>();
+            savedWallBoosters = level.Entities.FindAllToDict<WallBooster>();
         }
 
         private void WallBoosterOnCtor_Vector2_float_bool_bool(On.Celeste.WallBooster.orig_ctor_Vector2_float_bool_bool orig, WallBooster self, Vector2 position, float height, bool left, bool notCoreMode) {
@@ -21,11 +21,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Glyph {
             // 移除 WallBooster 本身无用的 StaticMover 避免对 StaticMoverAction 造成干扰导致无法依附
             self.Remove(self.Get<StaticMover>());
 
-            EntityID entityId = self.CreateEntityId(position.ToString(), height.ToString(), left.ToString(), notCoreMode.ToString());
-            if (entityId.IsDefault()) {
+            EntityId2 entityId = self.CreateEntityId2(position.ToString(), height.ToString(), left.ToString(), notCoreMode.ToString());
+            if (entityId == default) {
                 return;
             }
-            self.SetEntityId(entityId);
+            self.SetEntityId2(entityId);
 
             if (IsLoadStart) {
                 if (savedWallBoosters.ContainsKey(entityId)) {

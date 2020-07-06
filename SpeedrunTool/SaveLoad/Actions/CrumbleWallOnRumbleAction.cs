@@ -1,24 +1,23 @@
 using System.Collections.Generic;
-using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class CrumbleWallOnRumbleAction : AbstractEntityAction {
-        private Dictionary<EntityID, CrumbleWallOnRumble> savedCrumbleWallOnRumbles = new Dictionary<EntityID, CrumbleWallOnRumble>();
+        private Dictionary<EntityId2, CrumbleWallOnRumble> savedCrumbleWallOnRumbles = new Dictionary<EntityId2, CrumbleWallOnRumble>();
 
         public override void OnQuickSave(Level level) {
-            savedCrumbleWallOnRumbles = level.Entities.GetDictionary<CrumbleWallOnRumble>();
+            savedCrumbleWallOnRumbles = level.Entities.FindAllToDict<CrumbleWallOnRumble>();
         }
 
         private void RestoreCrumbleWallOnRumblePosition(On.Celeste.CrumbleWallOnRumble.orig_ctor_EntityData_Vector2_EntityID orig,
             CrumbleWallOnRumble self, EntityData data,
             Vector2 offset, EntityID id) {
-            EntityID entityId = id;
-            self.SetEntityId(entityId);
+            EntityId2 entityId2 = id.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId2);
             orig(self, data, offset, id);
 
-            if (IsLoadStart && !savedCrumbleWallOnRumbles.ContainsKey(entityId)) {
+            if (IsLoadStart && !savedCrumbleWallOnRumbles.ContainsKey(entityId2)) {
                 self.Add(new RemoveSelfComponent());
             }
         }

@@ -1,10 +1,9 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
+using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
     public static class CelesteExtensions {
-        private const string EntityIdKey = "SpeedrunToolEntityId";
         private const string EntityDataKey = "SpeedrunToolEntityDataKey";
 
         // public static void AddToTracker(this Type type) {
@@ -20,132 +19,45 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         //     }
         // }
 
-        public static void SetEntityId(this Entity entity, EntityID entityId) {
-            entity.SetExtendedDataValue(EntityIdKey, entityId);
-        }
-
-        public static EntityID GetEntityId(this Entity entity) {
-            return entity.GetExtendedDataValue<EntityID>(EntityIdKey);
-        }
-
-        public static void SetEntityData(this Entity entity, EntityData entityData) {
-            entity.SetExtendedDataValue(EntityDataKey, entityData);
-        }
-
-        public static void TrySetEntityId(this Entity entity, params string[] id) {
-            EntityID entityId = entity.GetEntityId();
-            if (entityId.IsDefault()) {
+        public static bool TrySetEntityId2(this Entity entity, params string[] id) {
+            if (entity.NoEntityId2()) {
                 Session session = GetSession();
                 if (session?.Level == null) {
-                    return;
+                    return false;
                 }
 
-                entityId = entity.CreateEntityId(id);
-                entity.SetEntityId(entityId);
+                EntityId2 entityId = entity.CreateEntityId2(id);
+                entity.SetEntityId2(entityId);
+                return true;
             }
+
+            return false;
         }
 
-        public static void CopyEntityId(this Entity entity, Entity otherEntity) {
-            if (otherEntity.HasEntityID()) {
-                entity.SetEntityId(otherEntity.GetEntityId());
-            }
-        }
-        
-        public static bool NoEntityData(this Entity entity) {
-            return entity.GetEntityData() == null;
-        }
-        
-        public static bool HasEntityData(this Entity entity) {
-            return !entity.NoEntityData();
-        }
-
-        public static bool NoEntityID(this Entity entity) {
-            return entity.GetEntityId().IsDefault();
-        }
-
-        public static bool HasEntityID(this Entity entity) {
-            return !entity.NoEntityID();
-        }
-
-        public static EntityID CreateEntityId(this Entity entity, params string[] id) {
+        public static EntityId2 CreateEntityId2(this Entity entity, params string[] id) {
             Session session = GetSession();
             if (session?.Level == null) {
                 return default;
             }
 
-            return new EntityID(session.Level, (entity.GetType().FullName + "-" + string.Join("-", id)).GetHashCode());
+            return new EntityID(session.Level, (string.Join("-", id)).GetHashCode()).ToEntityId2(entity);
         }
 
-        public static EntityData GetEntityData(this Entity entity) {
-            return entity.GetExtendedDataValue<EntityData>(EntityDataKey);
-        }
-
-        public static bool IsDefault(this EntityID entityId) {
-            return entityId.Equals(default(EntityID));
-        }
-
-        public static EntityID ToEntityId(this EntityData entityData) {
-            return new EntityID(entityData.Level.Name, entityData.ID);
-        }
-
-        public static T FindFirst<T>(this EntityList entityList, EntityID entityId) where T : Entity {
-            if (entityId.IsDefault()) return null;
-
-            var dictionary = entityList.GetDictionary<T>();
-            return dictionary.ContainsKey(entityId) ? dictionary[entityId] : null;
-        }
-
-        public static T FindFirst<T>(this EntityList entityList, T entity) where T : Entity {
-            return entity == null ? null : entityList.FindFirst<T>(entity.GetEntityId());
-        }
-        
-        public static Entity FindFirst(this Scene scene, EntityID entityId) {
-            if (entityId.IsDefault()) return null;
-            return scene.Entities.FindAll<Entity>().FirstOrDefault(e =>
-                e.GetEntityId().Equals(entityId));
-        }
-
-        public static Entity FindFirst(this Scene scene, Entity entity) {
-            if (entity.NoEntityID()) return null;
-            return scene.Entities.FindAll<Entity>().FirstOrDefault(e =>
-                e.GetType() == entity.GetType() && e.GetEntityId().Equals(entity.GetEntityId()));
-        }
-        
-        public static Dictionary<EntityID, T> GetDictionary<T>(this EntityList entityList) where T : Entity {
-            Dictionary<EntityID, T> result = new Dictionary<EntityID, T>();
-            foreach (T entity in entityList.FindAll<T>()) {
-                EntityID entityId = entity.GetEntityId();
-                if (entity.NoEntityID()) {
-                    continue;
-                }
-
-                if (result.ContainsKey(entityId)) {
-                    Logger.Log("Speedrun Tool",
-                        $"EntityID Duplication: ID={entityId.ID} Level Name={entityId.Level}, Entity Name={entity.GetType().FullName}, Position={entity.Position}");
-                    continue;
-                }
-
-                result[entityId] = entity;
-            }
-
-            return result;
-        }
-
-        public static Dictionary<EntityID, T> GetDictionary<T>(this IEnumerable<T> enumerable) where T : Entity {
-            Dictionary<EntityID, T> result = new Dictionary<EntityID, T>();
+        // TODO 重写，或许不需要这个方法
+        public static Dictionary<EntityId2, T> GetDictionary<T>(this IEnumerable<T> enumerable) where T : Entity {
+            Dictionary<EntityId2, T> result = new Dictionary<EntityId2, T>();
             foreach (T entity in enumerable) {
-                EntityID entityId = entity.GetEntityId();
-                if (entity.NoEntityID()) {
+                if (entity.NoEntityId2()) {
                     continue;
                 }
 
-                if (result.ContainsKey(entityId)) {
-                    Logger.Log("Speedrun Tool",
-                        $"EntityID Duplication: ID={entityId.ID} Level Name={entityId.Level}, Entity Name={entity.GetType().FullName}, Position={entity.Position}");
+                EntityId2 entityId2 = entity.GetEntityId2();
+                if (result.ContainsKey(entityId2)) {
+                    Logger.Log("Speedrun Tool", $"EntityId2 Duplication: {entityId2}");
                     continue;
                 }
 
-                result[entityId] = entity;
+                result[entityId2] = entity;
             }
 
             return result;
@@ -156,20 +68,14 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             eventInstance.GetType().GetMethod("setTimelinePosition")?.Invoke(eventInstance, new object[] {time});
         }
 
-        public static void CopyEntity<T>(this Player player, Player savedPlayer, string fieldName) where T : Entity {
-            if (player.SceneAs<Level>().Entities.FindFirst(savedPlayer.GetField(fieldName) as T) is T entity) {
-                player.SetField(fieldName, entity);
-            }
-        }
-
         public static void CopyFrom(this Tween tween, Tween otherTween) {
             tween.SetProperty("TimeLeft", otherTween.TimeLeft);
             tween.SetProperty("Reverse", otherTween.Reverse);
         }
 
-        public static void AddRange<T>(this Dictionary<EntityID, T> dict, IEnumerable<T> entities) where T : Entity {
+        public static void AddRange<T>(this Dictionary<EntityId2, T> dict, IEnumerable<T> entities) where T : Entity {
             foreach (T entity in entities) {
-                EntityID entityId = entity.GetEntityId();
+                EntityId2 entityId = entity.GetEntityId2();
                 if (!dict.ContainsKey(entityId)) {
                     dict[entityId] = entity;
                 }
@@ -188,20 +94,6 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return entity.GetField(typeof(T), fieldName) as Tween;
         }
         
-        public static void CopyTween<T>(this T entity, T otherEntity, string fieldName) where T : Entity {
-            var tween = entity.GetTween(fieldName);
-            if (tween == null) {
-                return;
-            }
-
-            var otherTween = otherEntity.GetTween(fieldName);
-            if (otherTween == null) {
-                return;
-            }
-
-            tween.CopyFrom(otherTween);
-        }
-
         public static Sprite GetSprite<T>(this T entity, string fieldName) where T : Entity {
             return entity.GetField(typeof(T), fieldName) as Sprite;
         }

@@ -1,23 +1,22 @@
 using System.Collections.Generic;
-using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class CrystalStaticSpinnerAction : AbstractEntityAction {
-        private Dictionary<EntityID, CrystalStaticSpinner> savedSpinners =
-            new Dictionary<EntityID, CrystalStaticSpinner>();
+        private Dictionary<EntityId2, CrystalStaticSpinner> savedSpinners =
+            new Dictionary<EntityId2, CrystalStaticSpinner>();
 
         public override void OnQuickSave(Level level) {
-            savedSpinners = level.Entities.GetDictionary<CrystalStaticSpinner>();
+            savedSpinners = level.Entities.FindAllToDict<CrystalStaticSpinner>();
         }
 
         private void RestoreSpinnerPosition(
             On.Celeste.CrystalStaticSpinner.orig_ctor_EntityData_Vector2_CrystalColor orig, CrystalStaticSpinner self,
             EntityData data,
             Vector2 offset, CrystalColor color) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset, color);
 
             if (IsLoadStart && savedSpinners.ContainsKey(entityId)) {

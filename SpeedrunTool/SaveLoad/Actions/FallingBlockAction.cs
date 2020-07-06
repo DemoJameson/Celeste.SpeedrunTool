@@ -6,10 +6,10 @@ using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class FallingBlockAction : AbstractEntityAction {
-        private Dictionary<EntityID, FallingBlock> fallingBlocks = new Dictionary<EntityID, FallingBlock>();
+        private Dictionary<EntityId2, FallingBlock> fallingBlocks = new Dictionary<EntityId2, FallingBlock>();
 
         public override void OnQuickSave(Level level) {
-            fallingBlocks = level.Entities.GetDictionary<FallingBlock>();
+            fallingBlocks = level.Entities.FindAllToDict<FallingBlock>();
         }
 
         public override void OnClear() {
@@ -18,24 +18,24 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         private void OnFallingBlockOnCtorEntityDataVector2(On.Celeste.FallingBlock.orig_ctor_EntityData_Vector2 orig,
             FallingBlock self, EntityData data, Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId2 = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId2);
             orig(self, data, offset);
-            RestoreState(self, entityId);
+            RestoreState(self, entityId2);
         }
 
         private FallingBlock FallingBlockOnCreateFinalBossBlock(On.Celeste.FallingBlock.orig_CreateFinalBossBlock orig,
             EntityData data, Vector2 offset) {
             FallingBlock self = orig(data, offset);
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
 
             RestoreState(self, entityId);
 
             return self;
         }
 
-        private void RestoreState(FallingBlock self, EntityID entityId) {
+        private void RestoreState(FallingBlock self, EntityId2 entityId) {
             if (IsLoadStart) {
                 if (fallingBlocks.ContainsKey(entityId)) {
                     FallingBlock savedFallingBlock = fallingBlocks[entityId];

@@ -8,28 +8,28 @@ using MonoMod.RuntimeDetour;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class CrumblePlatformAction : AbstractEntityAction {
-        private Dictionary<EntityID, CrumblePlatform> savedCrumblePlatforms =
-            new Dictionary<EntityID, CrumblePlatform>();
+        private Dictionary<EntityId2, CrumblePlatform> savedCrumblePlatforms =
+            new Dictionary<EntityId2, CrumblePlatform>();
 
         private ILHook addedHook;
 
         public override void OnQuickSave(Level level) {
             savedCrumblePlatforms = level.Entities.FindAll<CrumblePlatform>()
-                .Where(platform => !platform.Collidable).ToDictionary(platform => platform.GetEntityId());
+                .Where(platform => !platform.Collidable).ToDictionary(platform => platform.GetEntityId2());
         }
 
         private void RestoreCrumblePlatformPosition(On.Celeste.CrumblePlatform.orig_ctor_EntityData_Vector2 orig,
             CrumblePlatform self, EntityData data,
             Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset);
         }
 
         private void CrumblePlatformOnAdded(On.Celeste.CrumblePlatform.orig_Added orig, CrumblePlatform self, Scene scene) {
             orig(self, scene);
 
-            EntityID entityId = self.GetEntityId();
+            EntityId2 entityId = self.GetEntityId2();
             if (IsLoadStart && savedCrumblePlatforms.ContainsKey(entityId)) {
                 CrumblePlatform saved = savedCrumblePlatforms[entityId];
                 self.CopyEntity(saved);

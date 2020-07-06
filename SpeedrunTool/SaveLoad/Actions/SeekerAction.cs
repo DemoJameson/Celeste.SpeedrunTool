@@ -10,10 +10,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private const string RemoveStatue = "RemoveStatue";
         private const int StRegenerate = 6;
 
-        private readonly Dictionary<EntityID, Seeker> savedSeekers = new Dictionary<EntityID, Seeker>();
+        private readonly Dictionary<EntityId2, Seeker> savedSeekers = new Dictionary<EntityId2, Seeker>();
 
-        private readonly Dictionary<EntityID, SeekerStatue> savedSeekerStatues =
-            new Dictionary<EntityID, SeekerStatue>();
+        private readonly Dictionary<EntityId2, SeekerStatue> savedSeekerStatues =
+            new Dictionary<EntityId2, SeekerStatue>();
 
         public override void OnQuickSave(Level level) {
             savedSeekers.AddRange(level.Entities.FindAll<Seeker>());
@@ -22,8 +22,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         private void SeekerOnCtor_EntityData_Vector2(On.Celeste.Seeker.orig_ctor_EntityData_Vector2 orig, Seeker self,
             EntityData data, Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset);
         }
 
@@ -31,10 +31,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             orig(self, scene);
 
 
-            EntityID entityId = self.GetEntityId();
+            EntityId2 entityId = self.GetEntityId2();
             if (IsLoadStart) {
                 if (savedSeekers.ContainsKey(entityId)) {
-                    Seeker savedSeeker = savedSeekers[self.GetEntityId()];
+                    Seeker savedSeeker = savedSeekers[self.GetEntityId2()];
 
                     self.Add(new RestoreState(RunType.Added | RunType.LoadComplete,
                         () => { RestoreSeekerState(self, savedSeeker); }));
@@ -79,8 +79,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         private void SeekerStatueOnCtor(On.Celeste.SeekerStatue.orig_ctor orig, SeekerStatue self, EntityData data,
             Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             self.SetEntityData(data);
             orig(self, data, offset);
 
@@ -97,8 +97,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private void SeekerStatueOnUpdate(On.Celeste.SeekerStatue.orig_Update orig, SeekerStatue self) {
             if (self.GetExtendedBoolean(RemoveStatue)) {
                 self.SetExtendedBoolean(RemoveStatue, false);
-                if (savedSeekers.ContainsKey(self.GetEntityId())) {
-                    Seeker savedSeeker = savedSeekers[self.GetEntityId()];
+                if (savedSeekers.ContainsKey(self.GetEntityId2())) {
+                    Seeker savedSeeker = savedSeekers[self.GetEntityId2()];
                     Seeker seeker = new Seeker(self.GetEntityData(), Vector2.Zero) {Position = savedSeeker.Position};
                     self.Scene.Add(seeker);
                     RestoreSeekerState(seeker, savedSeeker);

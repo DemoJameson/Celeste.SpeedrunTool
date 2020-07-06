@@ -1,28 +1,27 @@
 using System.Collections.Generic;
 using System.Linq;
-using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class ReflectionTentaclesAction : AbstractEntityAction {
-        private EntityID mainEntityId = default(EntityID);
+        private EntityId2 mainEntityId2;
 
-        private Dictionary<EntityID, ReflectionTentacles> savedReflectionTentacles =
-            new Dictionary<EntityID, ReflectionTentacles>();
+        private Dictionary<EntityId2, ReflectionTentacles> savedReflectionTentacles =
+            new Dictionary<EntityId2, ReflectionTentacles>();
 
         public override void OnQuickSave(Level level) {
-            savedReflectionTentacles = level.Entities.GetDictionary<ReflectionTentacles>();
+            savedReflectionTentacles = level.Entities.FindAllToDict<ReflectionTentacles>();
         }
 
         private void ReflectionTentaclesOnCreate(On.Celeste.ReflectionTentacles.orig_Create orig,
             ReflectionTentacles self, float fearDistance, int slideUntilIndex, int layer, List<Vector2> startNodes) {
-            if (!mainEntityId.IsDefault() && layer > 0) {
-                self.SetEntityId(new EntityID(mainEntityId.Level, (mainEntityId + "-" + layer).GetHashCode()));
+            if (mainEntityId2 != default && layer > 0) {
+                self.SetEntityId2(new EntityID(mainEntityId2.EntityId.Level, (mainEntityId2 + "-" + layer).GetHashCode()));
             }
 
-            EntityID entityId = self.GetEntityId();
+            EntityId2 entityId = self.GetEntityId2();
 
-            if (!entityId.IsDefault() && IsLoadStart && savedReflectionTentacles.ContainsKey(entityId)) {
+            if (self.HasEntityId2() && IsLoadStart && savedReflectionTentacles.ContainsKey(entityId)) {
                 ReflectionTentacles savedTentacle = savedReflectionTentacles[entityId];
                 int index = savedTentacle.Index - savedTentacle.Nodes.Count + startNodes.Count;
 
@@ -40,8 +39,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         private void AttachEntityId(On.Celeste.ReflectionTentacles.orig_ctor_EntityData_Vector2 orig,
             ReflectionTentacles self, EntityData data, Vector2 offset) {
-            mainEntityId = data.ToEntityId();
-            self.SetEntityId(mainEntityId);
+            mainEntityId2 = data.ToEntityId2(self);
+            self.SetEntityId2(mainEntityId2);
             orig(self, data, offset);
         }
 

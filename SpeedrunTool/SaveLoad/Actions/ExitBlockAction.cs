@@ -6,17 +6,17 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class ExitBlockAction : AbstractEntityAction {
-        private Dictionary<EntityID, ExitBlock> savedExitBlocks = new Dictionary<EntityID, ExitBlock>();
+        private Dictionary<EntityId2, ExitBlock> savedExitBlocks = new Dictionary<EntityId2, ExitBlock>();
 
         public override void OnQuickSave(Level level) {
-            savedExitBlocks = level.Entities.GetDictionary<ExitBlock>();
+            savedExitBlocks = level.Entities.FindAllToDict<ExitBlock>();
         }
 
         private void PreventExitBlockLockPlayer(On.Celeste.ExitBlock.orig_ctor_EntityData_Vector2 orig,
             ExitBlock self, EntityData data,
             Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset);
 
             if (IsLoadStart && savedExitBlocks.ContainsKey(entityId)) {

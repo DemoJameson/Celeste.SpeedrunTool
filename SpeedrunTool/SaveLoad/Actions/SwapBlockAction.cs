@@ -4,16 +4,16 @@ using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class SwapBlockAction : AbstractEntityAction {
-        private Dictionary<EntityID, SwapBlock> swapBlocks = new Dictionary<EntityID, SwapBlock>();
+        private Dictionary<EntityId2, SwapBlock> swapBlocks = new Dictionary<EntityId2, SwapBlock>();
 
         public override void OnQuickSave(Level level) {
-            swapBlocks = level.Entities.GetDictionary<SwapBlock>();
+            swapBlocks = level.Entities.FindAllToDict<SwapBlock>();
         }
 
         private void RestoreSwapBlockState(On.Celeste.SwapBlock.orig_ctor_EntityData_Vector2 orig, SwapBlock self,
             EntityData data, Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset);
 
             if (IsLoadStart && swapBlocks.ContainsKey(entityId)) {

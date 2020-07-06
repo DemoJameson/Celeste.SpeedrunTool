@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         private void PlatformOnCtor(On.Celeste.Platform.orig_ctor orig, Platform self, Vector2 position, bool safe) {
             orig(self, position, safe);
-            self.TrySetEntityId(position.ToString(), safe.ToString());
+            self.TrySetEntityId2(position.ToString(), safe.ToString());
         }
 
         public override void OnLoad() {

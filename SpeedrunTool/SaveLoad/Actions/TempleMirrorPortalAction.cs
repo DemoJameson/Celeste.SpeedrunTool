@@ -6,15 +6,15 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class TempleMirrorPortalAction : AbstractEntityAction {
-        private Dictionary<EntityID, TempleMirrorPortal> savedTempleMirrorPortal = new Dictionary<EntityID, TempleMirrorPortal>();
+        private Dictionary<EntityId2, TempleMirrorPortal> savedTempleMirrorPortal = new Dictionary<EntityId2, TempleMirrorPortal>();
 
         public override void OnQuickSave(Level level) {
-            savedTempleMirrorPortal = level.Entities.GetDictionary<TempleMirrorPortal>();
+            savedTempleMirrorPortal = level.Entities.FindAllToDict<TempleMirrorPortal>();
         }
 
         private void TempleMirrorPortalOnCtorEntityDataVector2(On.Celeste.TempleMirrorPortal.orig_ctor_EntityData_Vector2 orig, TempleMirrorPortal self, EntityData data, Vector2 offset) {
-                EntityID entityId = data.ToEntityId();
-                self.SetEntityId(entityId);
+                EntityId2 entityId = data.ToEntityId2(self.GetType());
+                self.SetEntityId2(entityId);
                 orig(self, data, offset);
 
                 if (IsLoadStart) {

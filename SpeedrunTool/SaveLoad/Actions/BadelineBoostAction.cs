@@ -9,16 +9,16 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class BadelineBoostAction : AbstractEntityAction {
-        private Dictionary<EntityID, BadelineBoost> savedBadelineBoosts = new Dictionary<EntityID, BadelineBoost>();
+        private Dictionary<EntityId2, BadelineBoost> savedBadelineBoosts = new Dictionary<EntityId2, BadelineBoost>();
 
         public override void OnQuickSave(Level level) {
-            savedBadelineBoosts = level.Entities.GetDictionary<BadelineBoost>();
+            savedBadelineBoosts = level.Entities.FindAllToDict<BadelineBoost>();
         }
 
         private void BadelineBoostOnCtor_EntityData_Vector2(On.Celeste.BadelineBoost.orig_ctor_EntityData_Vector2 orig,
             BadelineBoost self, EntityData data, Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset);
         }
 
@@ -26,14 +26,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             On.Celeste.BadelineBoost.orig_ctor_Vector2Array_bool_bool_bool_bool_bool orig, BadelineBoost self,
             Vector2[] nodes, bool lockCamera, bool canSkip, bool finalCh9Boost, bool finalCh9GoldenBoost,
             bool finalCh9Dialog) {
-            EntityID entityId = self.GetEntityId();
+            EntityId2 entityId = self.GetEntityId2();
 
             Level level = CelesteExtensions.GetLevel();
 
-            if (level?.Session?.Level != null && entityId.IsDefault()) {
-                entityId = self.CreateEntityId(string.Join("", nodes), lockCamera.ToString(), canSkip.ToString(),
+            if (level?.Session?.Level != null && entityId == default) {
+                entityId = self.CreateEntityId2(string.Join("", nodes), lockCamera.ToString(), canSkip.ToString(),
                     finalCh9Boost.ToString(), finalCh9GoldenBoost.ToString(), finalCh9Dialog.ToString());
-                self.SetEntityId(entityId);
+                self.SetEntityId2(entityId);
             }
 
             orig(self, nodes, lockCamera, canSkip, finalCh9Boost, finalCh9GoldenBoost, finalCh9Dialog);

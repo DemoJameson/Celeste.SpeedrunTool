@@ -1,21 +1,20 @@
 using System.Collections.Generic;
-using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class SpikesAction : AbstractEntityAction {
-        private Dictionary<EntityID, Spikes> savedSpikes = new Dictionary<EntityID, Spikes>();
+        private Dictionary<EntityId2, Spikes> savedSpikes = new Dictionary<EntityId2, Spikes>();
 
         public override void OnQuickSave(Level level) {
-            savedSpikes = level.Entities.GetDictionary<Spikes>();
+            savedSpikes = level.Entities.FindAllToDict<Spikes>();
         }
 
         private void SpikesOnCtorEntityDataVector2Directions(
             On.Celeste.Spikes.orig_ctor_EntityData_Vector2_Directions orig, Spikes self, EntityData data,
             Vector2 offset, Spikes.Directions dir) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset, dir);
 
             if (IsLoadStart) {

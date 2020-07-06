@@ -8,18 +8,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class LightningBreakerBoxAction : AbstractEntityAction {
         private const string DisableSetBreakValue = "DisableSetBreakValue";
 
-        private Dictionary<EntityID, LightningBreakerBox> savedBreakerBoxes =
-            new Dictionary<EntityID, LightningBreakerBox>();
+        private Dictionary<EntityId2, LightningBreakerBox> savedBreakerBoxes =
+            new Dictionary<EntityId2, LightningBreakerBox>();
 
         public override void OnQuickSave(Level level) {
-            savedBreakerBoxes = level.Entities.GetDictionary<LightningBreakerBox>();
+            savedBreakerBoxes = level.Entities.FindAllToDict<LightningBreakerBox>();
         }
 
         private void RestoreLightningBreakerBoxHealth(
             On.Celeste.LightningBreakerBox.orig_ctor_EntityData_Vector2 orig, LightningBreakerBox self,
             EntityData entityData, Vector2 levelOffset) {
-            EntityID entityId = entityData.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = entityData.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, entityData, levelOffset);
 
             if (!IsLoadStart) return;

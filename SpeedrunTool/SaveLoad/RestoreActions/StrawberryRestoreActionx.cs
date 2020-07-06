@@ -8,10 +8,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
     public class StrawberryRestoreAction : AbstractRestoreAction {
         public StrawberryRestoreAction() : base(typeof(Strawberry)) { }
 
-        public override void Added(Entity loadedEntity, Entity savedEntity) {
-            Strawberry loaded = (Strawberry) loadedEntity;
-        }
-
         public override void AfterEntityCreateAndUpdate1Frame(Entity loadedEntity, Entity savedEntity) {
             Strawberry loaded = (Strawberry) loadedEntity;
             Strawberry saved = (Strawberry) savedEntity;
@@ -35,8 +31,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             foreach (Strawberry saved in savedEntityList.Cast<Strawberry>()) {
                 Strawberry loaded = new Strawberry(saved.GetEntityData(), Vector2.Zero, saved.ID);
                 loaded.CopyEntityId2(saved);
-                // TODO 移除 CopyEntityId
-                loaded.CopyEntityId(saved);
                 loaded.CopyEntityData(saved);
                 level.Add(loaded);
             }

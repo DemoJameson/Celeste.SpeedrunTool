@@ -1,21 +1,20 @@
 using System.Collections.Generic;
-using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class DustStaticSpinnerAction : AbstractEntityAction {
-        private Dictionary<EntityID, DustStaticSpinner> savedDustStaticSpinners =
-            new Dictionary<EntityID, DustStaticSpinner>();
+        private Dictionary<EntityId2, DustStaticSpinner> savedDustStaticSpinners =
+            new Dictionary<EntityId2, DustStaticSpinner>();
 
         public override void OnQuickSave(Level level) {
-            savedDustStaticSpinners = level.Entities.GetDictionary<DustStaticSpinner>();
+            savedDustStaticSpinners = level.Entities.FindAllToDict<DustStaticSpinner>();
         }
 
         private void RestoreDustStaticSpinnerPosition(On.Celeste.DustStaticSpinner.orig_ctor_EntityData_Vector2 orig,
             DustStaticSpinner self, EntityData data,
             Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset);
 
             if (IsLoadStart && savedDustStaticSpinners.ContainsKey(entityId)) {

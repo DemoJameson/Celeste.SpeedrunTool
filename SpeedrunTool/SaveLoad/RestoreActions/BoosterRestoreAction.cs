@@ -26,8 +26,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             Entity saved = savedEntityList[0];
             Booster loaded = new Booster(saved.GetEntityData(), Vector2.Zero);
             loaded.CopyEntityId2(saved);
-            // TODO 移除 CopyEntityId
-            loaded.CopyEntityId(saved);
             loaded.CopyEntityData(saved);
             level.Add(loaded);
         }

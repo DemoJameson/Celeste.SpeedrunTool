@@ -14,8 +14,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
         }
 
         private static void KeyOnCtor_Player_EntityID(On.Celeste.Key.orig_ctor_Player_EntityID orig, Key self, Player player, EntityID id) {
-            self.SetEntityId(id);
-            self.SetEntityId2(id.ToEntityId2(self.GetType()));
+            self.SetEntityId2(id);
+            self.SetEntityId2(id);
             orig(self, player, id);
         }
 

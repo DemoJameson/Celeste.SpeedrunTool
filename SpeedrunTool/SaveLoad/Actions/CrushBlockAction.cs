@@ -6,7 +6,7 @@ using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class CrushBlockAction : AbstractEntityAction {
-        private Dictionary<EntityID, CrushBlock> savedCrushBlocks = new Dictionary<EntityID, CrushBlock>();
+        private Dictionary<EntityId2, CrushBlock> savedCrushBlocks = new Dictionary<EntityId2, CrushBlock>();
 
         public override void OnClear() {
             savedCrushBlocks.Clear();
@@ -23,14 +23,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         public override void OnQuickSave(Level level) {
-            savedCrushBlocks = level.Entities.GetDictionary<CrushBlock>();
+            savedCrushBlocks = level.Entities.FindAllToDict<CrushBlock>();
         }
 
         private void RestoreCrushBlockState(On.Celeste.CrushBlock.orig_ctor_EntityData_Vector2 orig, CrushBlock self,
             EntityData data,
             Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset);
 
             if (IsLoadStart) {

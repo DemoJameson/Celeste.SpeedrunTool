@@ -6,16 +6,16 @@ using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class AscendManagerAction : AbstractEntityAction {
-        private Dictionary<EntityID, AscendManager> savedAscendManagers = new Dictionary<EntityID, AscendManager>();
+        private Dictionary<EntityId2, AscendManager> savedAscendManagers = new Dictionary<EntityId2, AscendManager>();
 
         public override void OnQuickSave(Level level) {
-            savedAscendManagers = level.Entities.GetDictionary<AscendManager>();
+            savedAscendManagers = level.Entities.FindAllToDict<AscendManager>();
         }
 
         private void AscendManagerOnCtor(On.Celeste.AscendManager.orig_ctor orig, AscendManager self, EntityData data,
             Vector2 offset) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset);
 
             if (!IsLoadStart) return;

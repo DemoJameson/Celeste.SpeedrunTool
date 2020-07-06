@@ -1,21 +1,20 @@
 using System.Collections.Generic;
-using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
 using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class SpringAction : AbstractEntityAction {
-        private Dictionary<EntityID, Spring> springs = new Dictionary<EntityID, Spring>();
+        private Dictionary<EntityId2, Spring> springs = new Dictionary<EntityId2, Spring>();
 
         public override void OnQuickSave(Level level) {
-            springs = level.Entities.GetDictionary<Spring>();
+            springs = level.Entities.FindAllToDict<Spring>();
         }
 
         private void SpringOnCtorEntityDataVector2Orientations(
             On.Celeste.Spring.orig_ctor_EntityData_Vector2_Orientations orig, Spring self, EntityData data,
             Vector2 offset, Spring.Orientations orientation) {
-            EntityID entityId = data.ToEntityId();
-            self.SetEntityId(entityId);
+            EntityId2 entityId = data.ToEntityId2(self.GetType());
+            self.SetEntityId2(entityId);
             orig(self, data, offset, orientation);
 
             if (!IsLoadStart) return;

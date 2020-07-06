@@ -56,7 +56,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             On.Celeste.FinalBoss.ctor_EntityData_Vector2 -= RestoreFinalBossState;
         }
 
-        private class RestoreFinalBossStateComponent : Monocle.Component {
+        private class RestoreFinalBossStateComponent : Component {
             private readonly FinalBoss savedFinalBoss;
 
             public RestoreFinalBossStateComponent(FinalBoss savedFinalBoss) : base(true, false) {

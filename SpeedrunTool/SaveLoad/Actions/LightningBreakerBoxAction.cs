@@ -82,7 +82,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             On.Celeste.Lightning.SetBreakValue -= LightningOnSetBreakValue;
         }
 
-        private class DisableSetBreakValueComponent : Monocle.Component {
+        private class DisableSetBreakValueComponent : Component {
             public DisableSetBreakValueComponent() : base(true, true) { }
 
             public override void Added(Entity entity) {

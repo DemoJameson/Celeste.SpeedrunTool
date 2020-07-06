@@ -1,47 +1,30 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-using Monocle;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
-using Entity = On.Monocle.Entity;
+using On.Monocle;
+using Scene = Monocle.Scene;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
     public static class AttachEntityId2Utils {
         private static ILHook origLoadLevelHook;
         private static ILHook LoadCustomEntityHook;
 
-        private static readonly List<Type> ExcludeTypes = new List<Type> {
-            typeof(ParticleSystem),
-            typeof(Wire),
-            typeof(Cobweb),
-            typeof(Decal),
-            typeof(Lamp),
-            typeof(HangingLamp),
-        };
-
-        private static readonly List<string> ExcludeTypeNames = new List<string> {
-            "Celeste.CrystalStaticSpinner+Border",
-            "Celeste.DustGraphic+Eyeballs",
-            "Celeste.TalkComponent+TalkComponentUI",
-            "Celeste.ZipMover+ZipMoverPathRenderer",
-        };
-
-        
         private static void EntityOnAdded(Entity.orig_Added orig, Monocle.Entity self, Scene scene) {
             orig(self, scene);
 
+            if (self.HasEntityId2()) return;
             if (!(scene is Level)) return;
 
-            // Type type = self.GetType();
-            // if (type.Namespace != "Celeste") return;
-            // if (ExcludeTypes.Contains(type)) return;
-            // if (ExcludeTypeNames.Contains(type.FullName)) return;
+            EntityId2 entityId2 = self.CreateEntityId2(self.Position.ToString());
+            while (scene.FindFirst(entityId2) != null) {
+                entityId2 = new EntityId2(new EntityID(entityId2.EntityId.Level, entityId2.EntityId.ID.ToString().GetHashCode()), self.GetType());
+            }
 
-            self.TrySetEntityId2(self.Position.ToString());
+            self.SetEntityId2(entityId2);
         }
 
         // 将 EntityData 与 EntityID 附加到 Entity 的实例上

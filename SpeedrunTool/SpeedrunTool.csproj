@@ -110,12 +110,13 @@
     <Compile Include="SaveLoad\Actions\PlatformAction.cs" />
     <Compile Include="SaveLoad\Actions\ShroomHelper\AttachedIceWallAction.cs" />
     <Compile Include="SaveLoad\Actions\ShroomHelper\CrumbleBlockOnTouchAction.cs" />
-    <Compile Include="SaveLoad\Component\RestoreState.cs" />
+    <Compile Include="SaveLoad\Components\RestoreState.cs" />
     <Compile Include="SaveLoad\EntityIdPlus\AttachEntityId2Utils.cs" />
     <Compile Include="SaveLoad\EntityIdPlus\EntityId2.cs" />
     <Compile Include="SaveLoad\RestoreActions\AbstractRestoreAction.cs" />
     <Compile Include="SaveLoad\RestoreActions\ActorActions\ActorRestoreAction.cs" />
     <Compile Include="SaveLoad\RestoreActions\ActorActions\PlayerRestoreAction.cs" />
+    <Compile Include="SaveLoad\RestoreActions\ActorActions\TheoCrystalRestoreAction.cs" />
     <Compile Include="SaveLoad\RestoreActions\EntityActions\BoosterRestoreAction.cs" />
     <Compile Include="SaveLoad\RestoreActions\EntityActions\FlyFeatherRestoreAction.cs" />
     <Compile Include="SaveLoad\RestoreActions\EntityActions\KeyRestoreAction.cs" />
@@ -193,9 +194,9 @@
     <Compile Include="SaveLoad\Actions\TriggerSpikesAction.cs" />
     <Compile Include="SaveLoad\Actions\WindControllerAction.cs" />
     <Compile Include="SaveLoad\Actions\ZipMoverAction.cs" />
-    <Compile Include="SaveLoad\Component\FastForwardComponent.cs" />
-    <Compile Include="SaveLoad\Component\RemoveSelfComponent.cs" />
-    <Compile Include="SaveLoad\Component\RestorePositionComponent.cs" />
+    <Compile Include="SaveLoad\Components\FastForwardComponent.cs" />
+    <Compile Include="SaveLoad\Components\RemoveSelfComponent.cs" />
+    <Compile Include="SaveLoad\Components\RestorePositionComponent.cs" />
     <Compile Include="SaveLoad\StateManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="BetterMapEditor.cs" />
@@ -206,6 +207,7 @@
     <None Include="everest.yaml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Dialog\English.txt">

@@ -1,7 +1,7 @@
 using Monocle;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad.Component {
-    public class FastForwardComponent<T> : Monocle.Component where T : Entity {
+namespace Celeste.Mod.SpeedrunTool.SaveLoad.Components {
+    public class FastForwardComponent<T> : Component where T : Entity {
         private readonly T savedEntity;
         private readonly FastForwardAction onFastForward;
 

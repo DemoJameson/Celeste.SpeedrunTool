@@ -27,7 +27,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.EntityActions {
             // public List<StrawberrySeed> Seeds;
         }
 
-        public override void CantFoundLoadedEntityInSaved(Level level, List<Entity> savedEntityList) {
+        public override void NotLoadedEntitiesButSaved(Level level, List<Entity> savedEntityList) {
             foreach (Strawberry saved in savedEntityList.Cast<Strawberry>()) {
                 Strawberry loaded = new Strawberry(saved.GetEntityData(), Vector2.Zero, saved.ID);
                 loaded.CopyEntityId2(saved);

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using Celeste.Mod.SpeedrunTool.Extensions;
@@ -68,7 +69,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
                 EntityId2 id = e.GetEntityId2();
 
-                foreach (Monocle.Component component in e.Components) {
+                foreach (Component component in e.Components) {
                     if (component is Coroutine coroutine) {
                         SaveCoroutine(coroutine, id);
                     } else if (component is StateMachine state) {
@@ -173,8 +174,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         public override void OnQuickLoading(Level level, Player player, Player savedPlayer) {
-            "CoroutineAction OnQuickLoading".Log();
-            
             var entities = level.Entities.FindAllToDict<Entity>();
             Coroutine coroutine = null;
             foreach (Routine routine in loadedRoutines) {
@@ -185,7 +184,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                         var enumerators = (Stack<IEnumerator>) coroutine.GetField("enumerators");
                         enumerators.Push(functionCall);
                     } else if (routine.IsFromState) {
-                        e.Log("OnQuickLoading:");
                         StateMachine state = e.Get<StateMachine>();
                         coroutine = new Coroutine(functionCall, routine.removeOnComplete);
                         coroutine.Active = true;
@@ -256,14 +254,36 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 } else {
                     Logger.Log("SpeedrunTool",
                         $"\nCan't Restore Coroutine Locals:\nroutineType={routine.type}\nfield={field}\nlocal={local}");
-                    
                 }
             }
         }
 
         public override void OnClear() => loadedRoutines = new List<Routine>();
-        public override void OnLoad() { }
 
+        public override void OnLoad() {
+            On.Monocle.Entity.Add_Component += EntityOnAdd_Component;
+        }
+
+        private void EntityOnAdd_Component(On.Monocle.Entity.orig_Add_Component orig, Entity self, Component component) {
+            orig(self, component);
+            if (self.TagCheck(Tags.Global) || self is PlayerDeadBody || !IsLoadStart) return;
+            
+            if (component is Coroutine coroutine) {
+                StackTrace stackTrace = new StackTrace();
+                foreach (StackFrame stackFrame in stackTrace.GetFrames().Take(8)) {
+                    MethodBase methodBase = stackFrame.GetMethod();
+                    string methodName = methodBase.Name;
+                    if (methodBase.DeclaringType == self.GetType() &&
+                        methodName.Contains("Added") || methodName.Contains("Awake") || methodName.Contains(".ctor")) {
+                        coroutine.RemoveSelf();
+                        self.Log("Remove Coroutine:");
+                    }
+                }
+            }
+        }
+        
+        
         public override void OnUnload() { }
     }
+
 }

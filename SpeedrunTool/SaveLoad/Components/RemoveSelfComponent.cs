@@ -1,7 +1,7 @@
 using Monocle;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad.Component {
-    public class RemoveSelfComponent : Monocle.Component {
+namespace Celeste.Mod.SpeedrunTool.SaveLoad.Components {
+    public class RemoveSelfComponent : Component {
         public RemoveSelfComponent() : base(true, false) { }
 
         public override void Added(Entity entity) {

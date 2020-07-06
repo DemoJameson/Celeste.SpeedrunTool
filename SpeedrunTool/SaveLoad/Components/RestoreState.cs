@@ -1,10 +1,10 @@
 using System;
 using Monocle;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad.Component {
+namespace Celeste.Mod.SpeedrunTool.SaveLoad.Components {
     // 因为有些物体在构造函数中恢复状态后又 Update 了一帧，位置发生了偏移，所以再需要恢复一次以便达成与保存的状态一致
 
-    public class RestoreState : Monocle.Component{
+    public class RestoreState : Component{
         private readonly Action action;
         private readonly RunType runType;
 

@@ -1,7 +1,7 @@
 using System.Collections;
 using Monocle;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad.Component {
+namespace Celeste.Mod.SpeedrunTool.SaveLoad.Components {
     public class RestorePositionComponent : Coroutine {
         public RestorePositionComponent(Entity self, Entity saved) : base(RestorePosition(self, saved)) { }
 

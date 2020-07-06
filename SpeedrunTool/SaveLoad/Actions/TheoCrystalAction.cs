@@ -1,4 +1,4 @@
-using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
+using Celeste.Mod.SpeedrunTool.SaveLoad.Components;
 using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {

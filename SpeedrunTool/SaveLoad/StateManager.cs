@@ -198,7 +198,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (IsSaved && (IsLoading || IsLoadFrozen) && player != null &&
                 (player.StateMachine.State == Player.StNormal || player.StateMachine.State == Player.StSwim ||
                  player.StateMachine.State == Player.StFlingBird)) {
-                "after player respawn".Log();
                 RestoreEntityUtils.AfterPlayerRespawn(self);
                 Loading(self, player);
                 loadState = SaveLoad.LoadState.Complete;

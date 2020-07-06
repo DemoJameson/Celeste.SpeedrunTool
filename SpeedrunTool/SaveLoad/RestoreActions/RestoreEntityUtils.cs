@@ -56,13 +56,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
                 List<Entity> entityNotExistInLevel = savedEntityList.Where(saved =>
                     !loadedEntityList.Any(loaded => loaded.GetEntityId2().Equals(saved.GetEntityId2()))).ToList();
                 if (entityNotExistInLevel.Count > 0) {
-                    restoreAction.CantFoundLoadedEntityInSaved(self, entityNotExistInLevel);
+                    restoreAction.NotLoadedEntitiesButSaved(self, entityNotExistInLevel);
                 }
             });
         }
 
         public static void AfterEntityCreateAndUpdate1Frame(Level level) {
-            AllRestoreActions.Count.Log("AllRestoreActions:");
             AllRestoreActions.ForEach(restoreAction => {
                 var loadedDict = level.FindAllToDict(restoreAction.Type, true);
                 var savedDict = SavedLevel.FindAllToDict(restoreAction.Type, true);
@@ -71,7 +70,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
                     if (savedDict.ContainsKey(loaded.Key)) {
                         restoreAction.AfterEntityCreateAndUpdate1Frame(loaded.Value, savedDict[loaded.Key]);
                     } else {
-                        restoreAction.CantFoundSavedEntityWhenLoad(loaded.Value);
+                        restoreAction.NotSavedEntityButLoaded(loaded.Value);
                     }
 
                 }

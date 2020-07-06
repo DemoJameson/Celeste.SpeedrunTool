@@ -18,7 +18,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.EntityActions {
             loaded.CopyFields(saved, "respawnTimer", "cannotUseTimer");
         }
 
-        public override void CantFoundLoadedEntityInSaved(Level level, List<Entity> savedEntityList) {
+        public override void NotLoadedEntitiesButSaved(Level level, List<Entity> savedEntityList) {
             Entity saved = savedEntityList[0];
             Booster loaded = new Booster(saved.GetEntityData(), Vector2.Zero);
             loaded.CopyEntityId2(saved);

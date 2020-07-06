@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
-using Celeste.Mod.SpeedrunTool.SaveLoad.Component;
+using Celeste.Mod.SpeedrunTool.SaveLoad.Components;
 using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Microsoft.Xna.Framework;
 

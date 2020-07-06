@@ -152,6 +152,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
             return getter(obj);
         }
+        
 
         public static void SetProperty(this object obj, string name, object value) {
             obj.SetProperty(obj.GetType(), name, value);
@@ -191,6 +192,21 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             }
 
             setter(obj, value);
+        }
+        
+        public static void CopyProperties(this object obj, object fromObj, params string[] names) {
+            foreach (string name in names)
+                obj.SetProperty(name, fromObj.GetProperty(name));
+        }
+        
+        public static void CopyProperties(this object obj, Type type, object fromObj, params string[] names) {
+            foreach (string name in names)
+                obj.SetProperty(type, name, fromObj.GetProperty(type, name));
+        }
+
+        public static void CopyProperties<T>(this T obj, T fromObj, params string[] names) {
+            foreach (string name in names)
+                obj.SetProperty(name, fromObj.GetProperty(name));
         }
 
         public static object InvokeMethod(this object obj, string name, params object[] parameters) {

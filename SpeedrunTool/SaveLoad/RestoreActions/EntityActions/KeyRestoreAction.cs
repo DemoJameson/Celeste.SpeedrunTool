@@ -1,8 +1,9 @@
 using System;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Monocle;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
+namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.EntityActions {
     public class KeyRestoreAction : AbstractRestoreAction {
         public KeyRestoreAction() : base(typeof(Key)) { }
         public override void Load() {
@@ -23,7 +24,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             Key loaded = (Key) loadedEntity;
             Key saved = (Key) savedEntity;
             
-            loaded.CopyEntity(saved);
             loaded.CopySprite(saved, "sprite");
             loaded.CopyFields(saved, "wobble", "wobbleActive");
             // TODO Restore Tween and Alarm

@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Celeste.Mod.SpeedrunTool.SaveLoad;
+using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {

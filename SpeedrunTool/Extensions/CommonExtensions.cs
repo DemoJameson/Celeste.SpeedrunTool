@@ -38,6 +38,16 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return defaultValue;
         }
 
+        public static bool IsSameOrSubclassOf(this Type potentialDescendant, Type potentialBase) {
+            return potentialDescendant.IsSubclassOf(potentialBase)
+                   || potentialDescendant == potentialBase;
+        }
+
+        public static bool IsSameOrSuperclassOf(this Type potentialBase, Type potentialDescendant) {
+            return potentialDescendant.IsSubclassOf(potentialBase)
+                   || potentialBase == potentialDescendant;
+        }
+
         private static MethodInfo GetMethodInfo(Type type, string name) {
             MethodInfo methodInfo = type.GetExtendedDataValue<MethodInfo>(name);
             if (methodInfo == null) {
@@ -56,8 +66,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 fieldInfo = type.GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
                 if (fieldInfo != null) {
                     type.SetExtendedDataValue(name, fieldInfo);
-                }
-                else {
+                } else {
                     return null;
                 }
             }
@@ -73,7 +82,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             FieldInfo fieldInfo = GetFieldInfo(type, name);
             return fieldInfo?.GetValue(obj);
         }
-        
+
         public static object GetField<T>(this T obj, string name) {
             FieldInfo fieldInfo = GetFieldInfo(typeof(T), name);
             return fieldInfo?.GetValue(obj);
@@ -87,31 +96,31 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             FieldInfo fieldInfo = GetFieldInfo(type, name);
             fieldInfo?.SetValue(obj, value);
         }
-        
+
         public static void SetField<T>(this T obj, string name, object value) {
             FieldInfo fieldInfo = GetFieldInfo(typeof(T), name);
             fieldInfo?.SetValue(obj, value);
         }
 
-		public static void CopyFields(this object obj, object fromObj, params string[] names) {
-			foreach (string name in names)	
-				obj.SetField(name, fromObj.GetField(name));
-		}
+        public static void CopyFields(this object obj, object fromObj, params string[] names) {
+            foreach (string name in names)
+                obj.SetField(name, fromObj.GetField(name));
+        }
 
-		public static void CopyFields(this object obj, Type type, object fromObj, params string[] names) {
-			foreach (string name in names)
-				obj.SetField(type, name, fromObj.GetField(type, name));
-		}
-        
+        public static void CopyFields(this object obj, Type type, object fromObj, params string[] names) {
+            foreach (string name in names)
+                obj.SetField(type, name, fromObj.GetField(type, name));
+        }
+
         public static void CopyFields<T>(this T obj, T fromObj, params string[] names) {
             foreach (string name in names)
                 obj.SetField(name, fromObj.GetField(name));
         }
-        
-		public static object GetProperty(this object obj, string name) {
+
+        public static object GetProperty(this object obj, string name) {
             return obj.GetProperty(obj.GetType(), name);
         }
-        
+
         public static object GetProperty<T>(this T obj, string name) {
             return obj.GetProperty(typeof(T), name);
         }
@@ -119,7 +128,8 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         public static object GetProperty(this object obj, Type type, string name) {
             Func<object, object> getter = type.GetExtendedDataValue<Func<object, object>>("getter" + name);
             if (getter == null) {
-                var propertyInfo = type.GetProperty(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                var propertyInfo = type.GetProperty(name,
+                    BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
                 if (propertyInfo == null) {
                     return null;
                 }
@@ -146,7 +156,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         public static void SetProperty(this object obj, string name, object value) {
             obj.SetProperty(obj.GetType(), name, value);
         }
-        
+
         public static void SetProperty<T>(this T obj, string name, object value) {
             obj.SetProperty(typeof(T), name, value);
         }
@@ -154,7 +164,8 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         public static void SetProperty(this object obj, Type type, string name, object value) {
             Action<object, object> setter = type.GetExtendedDataValue<Action<object, object>>("setter" + name);
             if (setter == null) {
-                var propertyInfo = type.GetProperty(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                var propertyInfo = type.GetProperty(name,
+                    BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
                 if (propertyInfo == null) {
                     return;
                 }
@@ -163,7 +174,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 if (method == null) {
                     return;
                 }
-                
+
                 var exprObj = Expression.Parameter(typeof(object), "obj");
                 var exprValue = Expression.Parameter(typeof(object), "value");
 
@@ -185,7 +196,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         public static object InvokeMethod(this object obj, string name, params object[] parameters) {
             return obj.InvokeMethod(obj.GetType(), name, parameters);
         }
-        
+
         public static object InvokeMethod<T>(this T obj, string name, params object[] parameters) {
             return obj.InvokeMethod(typeof(T), name, parameters);
         }
@@ -211,8 +222,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
             if (value != null) {
                 values[name] = value;
-            }
-            else {
+            } else {
                 values.Remove(name);
             }
         }
@@ -237,11 +247,11 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         public static bool GetExtendedBoolean(this object o, string name) {
             return GetExtendedDataValue<bool>(o, name);
         }
-        
+
         public static void SetExtendedBoolean(this object o, string name, bool value) {
             SetExtendedDataValue(o, name, value);
         }
-        
+
         public static T With<T>(this T item, Action<T> action) {
             action(item);
             return item;

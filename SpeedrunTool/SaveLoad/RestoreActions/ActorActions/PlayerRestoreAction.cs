@@ -1,31 +1,31 @@
 using System.Linq;
 using System.Reflection;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Microsoft.Xna.Framework;
 using Monocle;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
+namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.ActorActions {
     public class PlayerRestoreAction : AbstractRestoreAction {
         public PlayerRestoreAction() : base(typeof(Player)) { }
 
         public override void AfterEntityCreateAndUpdate1Frame(Entity loadedEntity, Entity savedEntity) {
             Player loaded = (Player) loadedEntity;
             Player saved = (Player) savedEntity;
+            
+            // 避免复活时的光圈被背景遮住
+            loaded.Depth = Depths.Top; 
 
             loaded.JustRespawned = saved.JustRespawned;
-            loaded.Position = saved.Position;
-            loaded.SetField<Actor>("movementCounter", saved.PositionRemainder);
             loaded.CameraAnchor = saved.CameraAnchor;
             loaded.CameraAnchorLerp = saved.CameraAnchorLerp;
             loaded.CameraAnchorIgnoreX = saved.CameraAnchorIgnoreX;
             loaded.CameraAnchorIgnoreY = saved.CameraAnchorIgnoreY;
             loaded.ForceCameraUpdate = saved.ForceCameraUpdate;
             loaded.EnforceLevelBounds = saved.EnforceLevelBounds;
-
             loaded.MuffleLanding = saved.MuffleLanding;
             loaded.Dashes = saved.Dashes;
         }
-
 
         public override void AfterPlayerRespawn(Entity loadedEntity, Entity savedEntity) {
             Player loaded = (Player) loadedEntity;
@@ -48,7 +48,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             loaded.CopySprite(saved, "sweatSprite");
             loaded.Hair.CopyPlayerHairAndSprite(saved.Hair);
             loaded.Collidable = saved.Collidable;
-            loaded.Collider = saved.Collider;
 
             loaded.StrawberriesBlocked = saved.StrawberriesBlocked;
             loaded.StrawberryCollectIndex = saved.StrawberryCollectIndex;
@@ -127,7 +126,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
 
             switch (saved.StateMachine.State) {
                 case Player.StDreamDash:
-                    loaded.TreatNaive = true;
                     SoundSource dreamSFX = new SoundSource();
                     loaded.Add(dreamSFX);
                     loaded.Loop(dreamSFX, "event:/char/madeline/dreamblock_travel");
@@ -181,7 +179,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
 
         private static void PlayerOnCtor(On.Celeste.Player.orig_ctor orig, Player self, Vector2 position,
             PlayerSpriteMode spriteMode) {
-            // Give Player a fixed EntityID.
+            // Give Player a fixed EntityId2.
             self.SetEntityId2(new EntityID("You can do it. —— 《Celeste》", 20180125));
             orig(self, position, spriteMode);
         }

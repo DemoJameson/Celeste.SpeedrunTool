@@ -4,9 +4,9 @@ using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Monocle;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad {
+namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
     public readonly struct EntityId2 {
-        // 后用来替换 EntityID 避免 ID 重复
+        // 用来替换 EntityID 避免 ID 重复
         // 官图中 Trigger 的 ID 与 Entity 的 ID 有很大几率重复
         public readonly EntityID EntityId;
         public readonly Type Type;
@@ -15,7 +15,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             EntityId = entityId;
             Type = type;
 
-            if (Type != typeof(Entity) && !Type.IsSubclassOf(typeof(Entity))) {
+            if (!type.IsSameOrSubclassOf(typeof(Entity))) {
                 throw new ArgumentException("type must be Entity");
             }
         }
@@ -45,19 +45,19 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private const string EntityId2Key = "SpeedrunTool_EntityId2_Key";
         private const string EntityDataKey = "SpeedrunTool_EntityData_Key";
 
-        
+
         public static EntityId2 ToEntityId2(this EntityID entityId, Type type) {
             return new EntityId2(entityId, type);
         }
-        
+
         public static EntityId2 ToEntityId2(this EntityID entityId, Entity entity) {
             return entityId.ToEntityId2(entity.GetType());
         }
-        
+
         public static EntityId2 ToEntityId2(this EntityData entityData, Type type) {
             return new EntityId2(new EntityID(entityData.Level.Name, entityData.ID), type);
         }
-        
+
         public static EntityId2 ToEntityId2(this EntityData entityData, Entity entity) {
             return entityData.ToEntityId2(entity.GetType());
         }
@@ -79,11 +79,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 entity.SetEntityId2(otherEntity.GetEntityId2());
             }
         }
-        
+
         public static EntityData GetEntityData(this Entity entity) {
             return entity.GetExtendedDataValue<EntityData>(EntityDataKey);
         }
-        
+
         public static void SetEntityData(this Entity entity, EntityData entityData) {
             entity.SetExtendedDataValue(EntityDataKey, entityData);
         }
@@ -94,7 +94,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
         }
 
-        public static void CopyEntity2<T >(this T entity, T otherEntity, string fieldName)
+        public static void CopyEntity2<T>(this T entity, T otherEntity, string fieldName)
             where T : Entity {
             if (otherEntity.GetField(fieldName) is Entity fieldValue &&
                 fieldValue.HasEntityId2() &&
@@ -126,7 +126,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                 EntityId2 entityId2 = entity.GetEntityId2();
                 if (result.ContainsKey(entityId2)) {
-                    Logger.Log("Speedrun Tool", $"EntityId2 Duplication: {entityId2}");
+                    Logger.Log("SpeedrunTool", $"EntityId2 Duplication: {entityId2}");
                     continue;
                 }
 
@@ -136,24 +136,24 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             return result;
         }
 
-        public static Dictionary<EntityId2, Entity> FindAllToDict(this EntityList entityList, Type type) {
+        public static Dictionary<EntityId2, Entity> FindAllToDict(this EntityList entityList, Type type,
+            bool includeSubclass = false) {
             Dictionary<EntityId2, Entity> result = new Dictionary<EntityId2, Entity>();
             foreach (Entity entity in entityList.FindAll<Entity>()) {
                 if (entity.NoEntityId2()) {
                     continue;
                 }
 
-                if (entity.GetType() != type) {
-                    continue;
-                }
+                if (includeSubclass && entity.GetType().IsSameOrSubclassOf(type) ||
+                    !includeSubclass && entity.GetType() == type) {
+                    EntityId2 entityId2 = entity.GetEntityId2();
+                    if (result.ContainsKey(entityId2)) {
+                        Logger.Log("SpeedrunTool", $"EntityId2 Duplication: {entityId2}");
+                        continue;
+                    }
 
-                EntityId2 entityId2 = entity.GetEntityId2();
-                if (result.ContainsKey(entityId2)) {
-                    Logger.Log("Speedrun Tool", $"EntityId2 Duplication: {entityId2}");
-                    continue;
+                    result[entityId2] = entity;
                 }
-
-                result[entityId2] = entity;
             }
 
             return result;
@@ -163,8 +163,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             return FindAllToDict<T>(scene.Entities);
         }
 
-        public static Dictionary<EntityId2, Entity> FindAllToDict(this Scene scene, Type type) {
-            return FindAllToDict(scene.Entities, type);
+        public static Dictionary<EntityId2, Entity> FindAllToDict(this Scene scene, Type type,
+            bool includeSubclass = false) {
+            return FindAllToDict(scene.Entities, type, includeSubclass);
         }
     }
 }

@@ -1,7 +1,7 @@
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Monocle;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
+namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.EntityActions {
     public class FlyFeatherRestoreAction : AbstractRestoreAction {
         public FlyFeatherRestoreAction() : base(typeof(FlyFeather)) { }
         
@@ -9,7 +9,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             FlyFeather loaded = (FlyFeather) loadedEntity;
             FlyFeather saved = (FlyFeather) savedEntity;
             
-            loaded.CopyEntity(saved);
             loaded.CopySprite(saved, "sprite");
             loaded.CopyImage(saved, "outline");
             loaded.CopyFields(saved,  "respawnTimer", "moveWiggleDir");

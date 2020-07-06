@@ -4,11 +4,7 @@ using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Actions;
-using Celeste.Mod.SpeedrunTool.SaveLoad.Actions.DSide;
-using Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Everest;
-using Celeste.Mod.SpeedrunTool.SaveLoad.Actions.FrostHelper;
-using Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Glyph;
-using Celeste.Mod.SpeedrunTool.SaveLoad.Actions.ShroomHelper;
+using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -20,82 +16,82 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // new PlayerAction(),
             new CoroutineAction(),
 
-            new AscendManagerAction(),
-            new AudioAction(),
-            new BadelineBoostAction(),
-            new BadelineDummyAction(),
-            new BadelineOldsiteAction(),
-            // new BoosterAction(),
-            new BounceBlockAction(),
-            new BumperAction(),
-            new CassetteBlockManagerAction(),
-            // new CloudAction(),
-            new ClutterSwitchAction(),
-            new CrumblePlatformAction(),
-            new CrumbleWallOnRumbleAction(),
-            new CrushBlockAction(),
-            new CrystalStaticSpinnerAction(),
-            new DashBlockAction(),
-            new DreamBlockAction(),
-            new DustStaticSpinnerAction(),
-            new DashSwitchAction(),
-            new FallingBlockAction(),
-            new FinalBossMovingBlockAction(),
-            new FinalBossAction(),
-            new FireBallAction(),
-            new FlingBirdAction(),
-            new FloatySpaceBlockAction(),
-            // new FlyFeatherAction(),
-            new ExitBlockAction(),
-            new GliderAction(),
-            new IntroCrusherAction(),
-            new JumpthruPlatformAction(),
-            // new KeyAction(),
-            new LightningAction(),
-            new LightningBreakerBoxAction(),
-            new MoveBlockAction(),
-            new MovingPlatformAction(),
-            new OshiroTriggerAction(),
-            new PlatformAction(),
-            new PufferAction(),
-            new ReflectionTentaclesAction(),
-            new RefillAction(),
-            new RisingLavaAction(),
-            new RotateSpinnerAction(),
-            new SandwichLavaAction(),
-            new SeekerAction(),
-            new SinkingPlatformAction(),
-            new SnowballAction(),
-            new SpikesAction(),
-            new SpringAction(),
-            new StarJumpBlockAction(),
-            new StaticMoverAction(),
-            // new StrawberryAction(),
-            new StrawberrySeedAction(),
-            new SwapBlockAction(),
-            new SwitchGateAction(),
-            new TalkComponentUIAction(),
-            new TempleCrackedBlockAction(),
-            new TempleGateAction(),
-            new TempleMirrorPortalAction(),
-            new TheoCrystalAction(),
-            new TouchSwitchAction(),
-            new TrackSpinnerAction(),
-            new TriggerSpikesAction(),
-            new WindControllerAction(),
-            new ZipMoverAction(),
-            // DSide
-            new FastOshiroTriggerAction(),
-            // Everest
-            new TriggerSpikesOriginalAction(),
-            // FrostHelper
-            new ToggleSwapBlockAction(),
-            new CustomCrystalSpinnerAction(),
-            // Glyph
-            new AttachedWallBoosterAction(),
-            // ShroomHelper
-            new AttachedIceWallAction(),
-            new CrumbleBlockOnTouchAction(),
+            // new AscendManagerAction(),
+            // new AudioAction(),
+            // new BadelineBoostAction(),
+            // new BadelineDummyAction(),
+            // new BadelineOldsiteAction(),
+            // // new BoosterAction(),
+            // new BounceBlockAction(),
+            // new BumperAction(),
+            // new CassetteBlockManagerAction(),
+            // // new CloudAction(),
+            // new ClutterSwitchAction(),
+            // new CrumblePlatformAction(),
+            // new CrumbleWallOnRumbleAction(),
+            // new CrushBlockAction(),
+            // new CrystalStaticSpinnerAction(),
+            // new DashBlockAction(),
+            // new DreamBlockAction(),
+            // new DustStaticSpinnerAction(),
+            // new DashSwitchAction(),
+            // new FallingBlockAction(),
+            // new FinalBossMovingBlockAction(),
+            // new FinalBossAction(),
+            // new FireBallAction(),
+            // new FlingBirdAction(),
+            // new FloatySpaceBlockAction(),
+            // // new FlyFeatherAction(),
+            // new ExitBlockAction(),
+            // new GliderAction(),
+            // new IntroCrusherAction(),
+            // new JumpthruPlatformAction(),
+            // // new KeyAction(),
+            // new LightningAction(),
+            // new LightningBreakerBoxAction(),
+            // new MoveBlockAction(),
+            // new MovingPlatformAction(),
+            // new OshiroTriggerAction(),
+            // new PlatformAction(),
+            // new PufferAction(),
+            // new ReflectionTentaclesAction(),
+            // new RefillAction(),
+            // new RisingLavaAction(),
+            // new RotateSpinnerAction(),
+            // new SandwichLavaAction(),
+            // new SeekerAction(),
+            // new SinkingPlatformAction(),
+            // new SnowballAction(),
+            // new SpikesAction(),
+            // new SpringAction(),
+            // new StarJumpBlockAction(),
+            // new StaticMoverAction(),
+            // // new StrawberryAction(),
+            // new StrawberrySeedAction(),
+            // new SwapBlockAction(),
+            // new SwitchGateAction(),
+            // new TalkComponentUIAction(),
+            // new TempleCrackedBlockAction(),
+            // new TempleGateAction(),
+            // new TempleMirrorPortalAction(),
+            // new TheoCrystalAction(),
+            // new TouchSwitchAction(),
+            // new TrackSpinnerAction(),
+            // new TriggerSpikesAction(),
+            // new WindControllerAction(),
+            // new ZipMoverAction(),
+            // // DSide
+            // new FastOshiroTriggerAction(),
+            // // Everest
+            // new TriggerSpikesOriginalAction(),
+            // // FrostHelper
+            // new ToggleSwapBlockAction(),
+            // new CustomCrystalSpinnerAction(),
+            // // Glyph
+            // new AttachedWallBoosterAction(),
+            // // ShroomHelper
+            // new AttachedIceWallAction(),
+            // new CrumbleBlockOnTouchAction(),
         };
 
         public Player SavedPlayer;
@@ -120,6 +116,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Celeste.Level.Update += LevelOnUpdate;
             On.Celeste.Overworld.ctor += ClearStateAndPbTimes;
             On.Celeste.Player.Die += PlayerOnDie;
+            AttachEntityId2Utils.Load();
             RestoreEntityUtils.Load();
             entityActions.ForEach(action => action.OnLoad());
         }
@@ -129,6 +126,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Celeste.Level.Update -= LevelOnUpdate;
             On.Celeste.Overworld.ctor -= ClearStateAndPbTimes;
             On.Celeste.Player.Die -= PlayerOnDie;
+            AttachEntityId2Utils.Load();
             RestoreEntityUtils.Unload();
             entityActions.ForEach(action => action.OnUnload());
         }
@@ -247,6 +245,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 return true;
             }
 
+            // Bug: 吃完心后删除存档会解除静止状态
             if (GetVirtualButton(Mappings.Clear).Pressed && !level.Paused) {
                 GetVirtualButton(Mappings.Clear).ConsumePress();
                 Clear();

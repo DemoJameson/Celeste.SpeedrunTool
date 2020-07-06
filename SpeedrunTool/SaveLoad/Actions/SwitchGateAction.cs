@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
 using Monocle;

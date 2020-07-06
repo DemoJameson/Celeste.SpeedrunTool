@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using FMOD;
+using On.FMOD.Studio;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class CassetteBlockManagerAction : AbstractEntityAction {
@@ -34,7 +35,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             orig(self);
         }
 
-        private RESULT EventInstanceOnSetParameterValue(On.FMOD.Studio.EventInstance.orig_setParameterValue orig, FMOD.Studio.EventInstance self, string name, float value) {
+        private RESULT EventInstanceOnSetParameterValue(EventInstance.orig_setParameterValue orig, FMOD.Studio.EventInstance self, string name, float value) {
             if (disableAudio && name == "sixteenth_note") {
                 return RESULT.OK;
             }
@@ -48,12 +49,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         public override void OnLoad() {
             On.Celeste.CassetteBlockManager.Update += RestoreCassetteBlockManager;
-            On.FMOD.Studio.EventInstance.setParameterValue += EventInstanceOnSetParameterValue;
+            EventInstance.setParameterValue += EventInstanceOnSetParameterValue;
         }
 
         public override void OnUnload() {
             On.Celeste.CassetteBlockManager.Update -= RestoreCassetteBlockManager;
-            On.FMOD.Studio.EventInstance.setParameterValue -= EventInstanceOnSetParameterValue;
+            EventInstance.setParameterValue -= EventInstanceOnSetParameterValue;
         }
     }
 }

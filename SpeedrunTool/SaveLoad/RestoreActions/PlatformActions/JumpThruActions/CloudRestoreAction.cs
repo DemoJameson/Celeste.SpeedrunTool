@@ -1,7 +1,7 @@
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Monocle;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
+namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.PlatformActions.JumpThruActions {
     public class CloudRestoreAction : AbstractRestoreAction {
         public CloudRestoreAction() : base(typeof(Cloud)) { }
         
@@ -9,7 +9,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             Cloud loaded = (Cloud) loadedEntity;
             Cloud saved = (Cloud) savedEntity;
             
-            loaded.CopyEntity(saved);
             loaded.CopySprite(saved, "sprite");
             loaded.CopyFields(saved, "waiting", "returning", "timer", "scale", "canRumble", "respawnTimer",
                 "speed");

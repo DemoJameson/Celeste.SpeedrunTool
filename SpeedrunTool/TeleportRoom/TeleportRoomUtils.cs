@@ -2,11 +2,12 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Celeste.Editor;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
 using Monocle;
+using On.Celeste.Editor;
 using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
+using LevelTemplate = Celeste.Editor.LevelTemplate;
 
 namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
     public static class TeleportRoomUtils {
@@ -21,7 +22,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
             On.Celeste.Level.TransitionRoutine += LevelOnTransitionRoutine;
             On.Celeste.LevelExit.ctor += LevelExitOnCtor;
             On.Celeste.Session.SetFlag += SessionOnSetFlag;
-            On.Celeste.Editor.MapEditor.LoadLevel += MapEditorOnLoadLevel;
+            MapEditor.LoadLevel += MapEditorOnLoadLevel;
             On.Celeste.LevelLoader.ctor += LevelLoaderOnCtor;
         }
 
@@ -31,7 +32,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
             On.Celeste.Level.TransitionRoutine -= LevelOnTransitionRoutine;
             On.Celeste.LevelExit.ctor -= LevelExitOnCtor;
             On.Celeste.Session.SetFlag -= SessionOnSetFlag;
-            On.Celeste.Editor.MapEditor.LoadLevel -= MapEditorOnLoadLevel;
+            MapEditor.LoadLevel -= MapEditorOnLoadLevel;
             On.Celeste.LevelLoader.ctor -= LevelLoaderOnCtor;
         }
 
@@ -43,7 +44,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
             }
         }
 
-        private static void MapEditorOnLoadLevel(On.Celeste.Editor.MapEditor.orig_LoadLevel orig, Editor.MapEditor self,
+        private static void MapEditorOnLoadLevel(MapEditor.orig_LoadLevel orig, Editor.MapEditor self,
             LevelTemplate level, Vector2 at) {
             AllowRecord = true;
             orig(self, level, at);

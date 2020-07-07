@@ -264,6 +264,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             On.Monocle.Entity.Add_Component += EntityOnAdd_Component;
         }
 
+        // Remove Duplicate Coroutine
         private void EntityOnAdd_Component(On.Monocle.Entity.orig_Add_Component orig, Entity self, Component component) {
             orig(self, component);
             if (self.TagCheck(Tags.Global) || self is PlayerDeadBody || !IsLoadStart) return;
@@ -274,14 +275,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     MethodBase methodBase = stackFrame.GetMethod();
                     string methodName = methodBase.Name;
                     if (methodBase.DeclaringType == self.GetType() &&
-                        methodName.Contains("Added") || methodName.Contains("Awake") || methodName.Contains(".ctor")) {
+                        methodName.Contains("Added") || methodName.Contains("Awake") || methodName.Contains(".ctor") &&
+                        coroutine.GetField("enumerators") is Stack<IEnumerator> stack && stack.Count > 0) {
                         coroutine.RemoveSelf();
                         self.Log("Remove Coroutine:");
                     }
                 }
             }
         }
-        
         
         public override void OnUnload() { }
     }

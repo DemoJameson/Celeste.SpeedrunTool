@@ -119,7 +119,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
 
         public static Dictionary<EntityId2, T> FindAllToDict<T>(this EntityList entityList) where T : Entity {
             Dictionary<EntityId2, T> result = new Dictionary<EntityId2, T>();
-            foreach (T entity in entityList.FindAll<T>()) {
+            List<T> findAll = entityList.FindAll<T>();
+            foreach (T entity in findAll) {
+                if(entity.TagCheck(Tags.Global)) continue;
                 if (entity.NoEntityId2()) {
                     continue;
                 }
@@ -139,10 +141,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         public static Dictionary<EntityId2, Entity> FindAllToDict(this EntityList entityList, Type type,
             bool includeSubclass = false) {
             Dictionary<EntityId2, Entity> result = new Dictionary<EntityId2, Entity>();
-            foreach (Entity entity in entityList.FindAll<Entity>()) {
-                if (entity.NoEntityId2()) {
-                    continue;
-                }
+            List<Entity> entities = entityList.FindAll<Entity>();
+            foreach (Entity entity in entities) {
+                if(entity.TagCheck(Tags.Global)) continue;
+                if (entity.NoEntityId2()) continue;;
 
                 if (includeSubclass && entity.GetType().IsSameOrSubclassOf(type) ||
                     !includeSubclass && entity.GetType() == type) {

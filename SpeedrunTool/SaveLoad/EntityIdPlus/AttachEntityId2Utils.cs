@@ -3,26 +3,27 @@ using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using Monocle;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
-using On.Monocle;
-using Scene = Monocle.Scene;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
     public static class AttachEntityId2Utils {
         private static ILHook origLoadLevelHook;
         private static ILHook LoadCustomEntityHook;
 
-        private static void EntityOnAdded(Entity.orig_Added orig, Monocle.Entity self, Scene scene) {
+        private static void EntityOnAdded(On.Monocle.Entity.orig_Added orig, Entity self, Scene scene) {
             orig(self, scene);
 
             if (self.HasEntityId2()) return;
             if (!(scene is Level)) return;
 
             EntityId2 entityId2 = self.CreateEntityId2(self.Position.ToString());
-            while (scene.FindFirst(entityId2) != null) {
-                entityId2 = new EntityId2(new EntityID(entityId2.EntityId.Level, entityId2.EntityId.ID.ToString().GetHashCode()), self.GetType());
-            }
+            // Too Slow
+            // var dict = scene.FindAllToDict(self.GetType());
+            // while (dict.ContainsKey(entityId2)) {
+            //     entityId2 = new EntityId2(new EntityID(entityId2.EntityId.Level, entityId2.EntityId.ID.ToString().GetHashCode()), self.GetType());
+            // }
 
             self.SetEntityId2(entityId2);
         }
@@ -52,11 +53,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
                 i => i.OpCode == OpCodes.Newobj && i.Operand.ToString().Contains("::.ctor(Celeste.EntityData"))) {
                 // cursor.Previous.Log();
                 cursor.Emit(OpCodes.Dup).Emit(OpCodes.Ldarg_0);
-                cursor.EmitDelegate<Action<Monocle.Entity, EntityData>>(AttachEntityId);
+                cursor.EmitDelegate<Action<Entity, EntityData>>(AttachEntityId);
             }
         }
 
-        private static void AttachEntityId(Monocle.Entity entity, EntityData data) {
+        private static void AttachEntityId(Entity entity, EntityData data) {
             entity.SetEntityId2(data.ToEntityId2(entity));
             entity.SetEntityData(data);
 
@@ -64,16 +65,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         }
 
         public static void Load() {
-            Entity.Added += EntityOnAdded;
+            On.Monocle.Entity.Added += EntityOnAdded;
             origLoadLevelHook = new ILHook(typeof(Level).GetMethod("orig_LoadLevel"), ModOrigLoadLevel);
             LoadCustomEntityHook = new ILHook(typeof(Level).GetMethod("LoadCustomEntity"), ModLoadCustomEntity);
         }
 
         public static void Unload() {
-            Entity.Added -= EntityOnAdded;
+            On.Monocle.Entity.Added -= EntityOnAdded;
             origLoadLevelHook.Dispose();
             LoadCustomEntityHook.Dispose();
         }
-
     }
 }

@@ -13,6 +13,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.ActorActions {
             Player loaded = (Player) loadedEntity;
             Player saved = (Player) savedEntity;
             
+            loaded.CopyEntity(saved);
+            
             // 避免复活时的光圈被背景遮住
             loaded.Depth = Depths.Top; 
 

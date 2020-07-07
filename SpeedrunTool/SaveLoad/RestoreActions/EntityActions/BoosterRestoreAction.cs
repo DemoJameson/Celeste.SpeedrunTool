@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -12,10 +11,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.EntityActions {
             Booster loaded = (Booster) loadedEntity;
             Booster saved = (Booster) savedEntity;
             
-            loaded.CopySprite(saved, "sprite");
-            loaded.Ch9HubTransition = saved.Ch9HubTransition;
-            loaded.SetProperty("BoostingPlayer", saved.BoostingPlayer);
-            loaded.CopyFields(saved, "respawnTimer", "cannotUseTimer");
+            // loaded.CopySprite(saved, "sprite");
+            // loaded.Ch9HubTransition = saved.Ch9HubTransition;
+            // loaded.SetProperty("BoostingPlayer", saved.BoostingPlayer);
+            // loaded.CopyFields(saved, "respawnTimer", "cannotUseTimer");
         }
 
         public override void NotLoadedEntitiesButSaved(Level level, List<Entity> savedEntityList) {

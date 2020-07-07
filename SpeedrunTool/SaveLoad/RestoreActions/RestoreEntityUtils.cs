@@ -9,6 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
         private static List<AbstractRestoreAction> AllRestoreActions => EntityRestoreAction.AllRestoreActions;
         private static bool IsLoadStart => StateManager.Instance.IsLoadStart;
         private static Level SavedLevel => StateManager.Instance.SavedLevel;
+        private static Dictionary<EntityId2, Entity> SavedEntitiesDict => StateManager.Instance.SavedEntitiesDict;
 
         private delegate void Found(AbstractRestoreAction restoreAction, Entity loaded, Entity saved);
 
@@ -16,11 +17,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
 
         private static void InvokeAction(Entity loaded, Found found, NotFound notFound = null) {
             AllRestoreActions.ForEach(restoreAction => {
+                if(loaded.TagCheck(Tags.Global)) return;
                 if (!loaded.GetType().IsSameOrSubclassOf(restoreAction.Type)) return;
                 if (loaded.NoEntityId2()) return;
 
-                if (SavedLevel.FindFirst(loaded.GetEntityId2()) is Entity saved) {
-                    found(restoreAction, loaded, saved);
+                if (SavedEntitiesDict.ContainsKey(loaded.GetEntityId2())) {
+                    found(restoreAction, loaded, SavedEntitiesDict[loaded.GetEntityId2()]);
                 } else {
                     notFound?.Invoke(restoreAction, loaded);
                 }
@@ -43,53 +45,50 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             }
         }
 
-        private static void LevelOnBegin(On.Celeste.Level.orig_Begin orig, Level self) {
-            orig(self);
+        private static void LevelOnBegin(On.Celeste.Level.orig_Begin orig, Level level) {
+            orig(level);
             if (!IsLoadStart) return;
 
+            Dictionary<EntityId2,Entity> loadedEntitiesDict = level.FindAllToDict<Entity>();
             AllRestoreActions.ForEach(restoreAction => {
-                List<Entity> loadedEntityList = self.Entities.FindAll<Entity>()
-                    .Where(entity => entity.GetType().IsSameOrSubclassOf(restoreAction.Type)).ToList();
-                List<Entity> savedEntityList = SavedLevel.Entities.FindAll<Entity>()
-                    .Where(entity => entity.GetType().IsSameOrSubclassOf(restoreAction.Type)).ToList();
+                var loadedDict = level.FindAllToDict(restoreAction.Type, true);
+                var savedDict = SavedLevel.FindAllToDict(restoreAction.Type, true);
 
-                List<Entity> entityNotExistInLevel = savedEntityList.Where(saved =>
-                    !loadedEntityList.Any(loaded => loaded.GetEntityId2().Equals(saved.GetEntityId2()))).ToList();
-                if (entityNotExistInLevel.Count > 0) {
-                    restoreAction.NotLoadedEntitiesButSaved(self, entityNotExistInLevel);
+                List<Entity> list = savedDict.Where(pair => !loadedDict.ContainsKey(pair.Key)).Select(pair => pair.Value).ToList();
+                if (list.Count > 0) {
+                    restoreAction.NotLoadedEntitiesButSaved(level, list);
                 }
             });
         }
 
         public static void AfterEntityCreateAndUpdate1Frame(Level level) {
+            Dictionary<EntityId2,Entity> loadedEntitiesDict = level.FindAllToDict<Entity>();
             AllRestoreActions.ForEach(restoreAction => {
                 var loadedDict = level.FindAllToDict(restoreAction.Type, true);
                 var savedDict = SavedLevel.FindAllToDict(restoreAction.Type, true);
-                
+
                 foreach (var loaded in loadedDict) {
                     if (savedDict.ContainsKey(loaded.Key)) {
                         restoreAction.AfterEntityCreateAndUpdate1Frame(loaded.Value, savedDict[loaded.Key]);
                     } else {
                         restoreAction.NotSavedEntityButLoaded(loaded.Value);
                     }
-
                 }
             });
         }
-        
+
         public static void AfterPlayerRespawn(Level level) {
             AllRestoreActions.ForEach(restoreAction => {
                 var loadedDict = level.FindAllToDict(restoreAction.Type, true);
                 var savedDict = SavedLevel.FindAllToDict(restoreAction.Type, true);
-                
+
                 foreach (var loaded in loadedDict) {
                     if (savedDict.ContainsKey(loaded.Key)) {
                         restoreAction.AfterPlayerRespawn(loaded.Value, savedDict[loaded.Key]);
                     }
-
                 }
             });
-        } 
+        }
 
         public static void Load() {
             On.Monocle.Entity.Added += EntityOnAdded;

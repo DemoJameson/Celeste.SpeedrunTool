@@ -95,6 +95,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         };
 
         public Player SavedPlayer;
+        public Dictionary<EntityId2, Entity> SavedEntitiesDict = new Dictionary<EntityId2, Entity>();
+
         public Level SavedLevel => SavedPlayer?.SceneAs<Level>();
         private LoadState loadState = SaveLoad.LoadState.None;
 
@@ -126,7 +128,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Celeste.Level.Update -= LevelOnUpdate;
             On.Celeste.Overworld.ctor -= ClearStateAndPbTimes;
             On.Celeste.Player.Die -= PlayerOnDie;
-            AttachEntityId2Utils.Load();
+            AttachEntityId2Utils.Unload();
             RestoreEntityUtils.Unload();
             entityActions.ForEach(action => action.OnUnload());
         }
@@ -270,6 +272,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedSession.CoreMode = level.CoreMode;
             level.Session.CoreMode = level.CoreMode;
             SavedPlayer = player;
+            SavedEntitiesDict = level.FindAllToDict<Entity>();
 
             // save all mod sessions
             savedModSessions = new Dictionary<EverestModule, EverestModuleSession>();
@@ -362,6 +365,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedSession = null;
             savedModSessions = null;
             SavedPlayer = null;
+            SavedEntitiesDict.Clear();
             loadState = SaveLoad.LoadState.None;
 
             entityActions.ForEach(action => action.OnClear());

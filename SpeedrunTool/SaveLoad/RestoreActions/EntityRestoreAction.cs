@@ -4,6 +4,7 @@ using System.Reflection;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.ActorActions;
+using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.EntityActions;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
@@ -27,13 +28,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
 
         private static readonly EntityRestoreAction Instance = new EntityRestoreAction(
             new List<AbstractRestoreAction> {
-                new PlayerRestoreAction(),
-                new TheoCrystalRestoreAction(),
-                // new ActorRestoreAction(),
+                // new PlayerRestoreAction(),
+                // new TestPlayerRestoreAction(),
+
+                new ActorRestoreAction(),
                 // new PlatformRestoreAction(),
 
                 // EntityActions
-                // new BoosterRestoreAction(),
+                new BoosterRestoreAction(),
                 // new FlyFeatherRestoreAction(),
                 // new KeyRestoreAction(),
                 // new SpikesRestoreAction(),
@@ -53,7 +55,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             // loadedEntity.Tag = savedEntity.Tag;
             // loadedEntity.Visible = savedEntity.Visible;
 
-            loadedEntity.CopyAll(savedEntity, typeof(Entity));
+            // loadedEntity.CopyAll(savedEntity, typeof(Entity));
+            // return;
+
+            if (loadedEntity is Player) {
+                return;
+            }
+
+            AutoMapperUtils.GetMapper(loadedEntity.GetType()).Map(savedEntity, loadedEntity,
+                savedEntity.GetType(), loadedEntity.GetType());
         }
     }
 
@@ -132,13 +142,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
         }
 
         public static void CopySpecifiedType(this object targetValue, object sourceValue) {
-            if (targetValue != null && sourceValue is Component && !(sourceValue is Coroutine) && !(sourceValue is StateMachine)) {
+            if (targetValue != null && sourceValue is Component && !(sourceValue is Coroutine) &&
+                !(sourceValue is StateMachine)) {
                 targetValue.CopyAll(sourceValue, typeof(Component));
             }
         }
 
         public static object CreateSpecifiedType(object sourceValue) {
-            if (sourceValue is Entity sourceEntity && Engine.Scene.FindFirst(sourceEntity.GetEntityId2()) is Entity targetEntity) {
+            if (sourceValue is Entity sourceEntity &&
+                Engine.Scene.FindFirst(sourceEntity.GetEntityId2()) is Entity targetEntity) {
                 return targetEntity;
             }
 

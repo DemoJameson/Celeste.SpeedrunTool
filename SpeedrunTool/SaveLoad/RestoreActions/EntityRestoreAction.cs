@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using Celeste.Mod.SpeedrunTool.Extensions;
-using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.ActorActions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.EntityActions;
 using Monocle;
@@ -28,18 +26,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
 
         private static readonly EntityRestoreAction Instance = new EntityRestoreAction(
             new List<AbstractRestoreAction> {
-                // new PlayerRestoreAction(),
-                // new TestPlayerRestoreAction(),
-
-                new ActorRestoreAction(),
-                // new PlatformRestoreAction(),
-
-                // EntityActions
-                new BoosterRestoreAction(),
-                // new FlyFeatherRestoreAction(),
-                // new KeyRestoreAction(),
-                // new SpikesRestoreAction(),
-                // new StrawberryRestoreAction(),
+                new PlayerRestoreAction(),
+                new KeyRestoreAction(),
+                new StrawberryRestoreAction(),
             }
         );
 
@@ -47,118 +36,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             subclassRestoreActions) { }
 
         public override void AfterEntityCreateAndUpdate1Frame(Entity loadedEntity, Entity savedEntity) {
-            // loadedEntity.Active = savedEntity.Active;
-            // loadedEntity.Depth = savedEntity.Depth;
-            // loadedEntity.Collidable = savedEntity.Collidable;
-            // loadedEntity.Collider = savedEntity.Collider;
-            // loadedEntity.Position = savedEntity.Position;
-            // loadedEntity.Tag = savedEntity.Tag;
-            // loadedEntity.Visible = savedEntity.Visible;
+            // Player 需要特殊处理，由 PlayerRestoreAction 负责
+            if (loadedEntity is Player) return;
 
-            // loadedEntity.CopyAll(savedEntity, typeof(Entity));
-            // return;
-
-            if (loadedEntity is Player) {
+            // CrystalStaticSpinner 看不见的地方等于不存在，这么处理就行了
+            if (loadedEntity is CrystalStaticSpinner spinner) {
+                loadedEntity.Position = savedEntity.Position;
+                loadedEntity.CopyFields(typeof(CrystalStaticSpinner), savedEntity, "expanded");
                 return;
             }
+            
+            loadedEntity.CopyAllFrom(savedEntity, typeof(Entity));
 
-            AutoMapperUtils.GetMapper(loadedEntity.GetType()).Map(savedEntity, loadedEntity,
-                savedEntity.GetType(), loadedEntity.GetType());
-        }
-    }
-
-
-    public static class EntityRestoreExtensions {
-        public static void CopyAll<T>(this T targetObj, T sourceObj, Type baseType) {
-            Type type = targetObj.GetType();
-
-            // Player 不能太早还原，需要等待复活
-            if (type == typeof(Player)) {
-                type = type.BaseType;
-            }
-
-            while (type.IsSameOrSubclassOf(baseType)) {
-                BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
-
-                // 必须先设置属性再设置字段，不然字段的值会在设置属性后发生改变
-                PropertyInfo[] properties = type.GetProperties(bindingFlags);
-                foreach (PropertyInfo propertyInfo in properties) {
-                    if (!propertyInfo.CanRead) continue;
-
-                    string name = propertyInfo.Name;
-                    object sourceValue = sourceObj.GetProperty(type, name);
-                    Type propertyType = propertyInfo.PropertyType;
-
-                    if (ShouldCopyDirectly(propertyType) && propertyInfo.CanWrite) {
-                        targetObj.SetProperty(type, name, sourceValue);
-                    } else if (sourceValue == null && propertyInfo.CanWrite) {
-                        // null 的意义
-                        targetObj.SetProperty(type, name, null);
-                        // $"Copy Property: type={type} propertyType={propertyType} name={name} value=null".Log();
-                    } else {
-                        // $"Not Copy Property: type={type} propertyType={propertyType} name={name} value={value}".Log();
-                        object targetValue = targetObj.GetField(type, name);
-                        if (targetValue != null) {
-                            CopySpecifiedType(targetValue, sourceValue);
-                        } else {
-                            if (propertyInfo.CanWrite) {
-                                targetValue = CreateSpecifiedType(sourceValue);
-                                if (targetValue != null) {
-                                    targetObj.SetProperty(type, name, targetValue);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                FieldInfo[] fields = type.GetFields(bindingFlags);
-                foreach (FieldInfo fieldInfo in fields) {
-                    Type fieldType = fieldInfo.FieldType;
-                    string name = fieldInfo.Name;
-                    object sourceValue = sourceObj.GetField(type, name);
-
-                    if (ShouldCopyDirectly(fieldType)) {
-                        targetObj.SetField(type, name, sourceValue);
-                    } else if (sourceValue == null) {
-                        // null 的意义
-                        fieldInfo.SetValue(targetObj, null);
-                        //     $"Copy Field: type={type} fieldType={fieldType} name={name} value=null".Log();
-                    } else {
-                        //  $"Not Copy Field: type={type} fieldType={fieldType} name={name} value={value}".Log();
-                        object targetValue = targetObj.GetField(type, name);
-                        if (targetValue != null) {
-                            CopySpecifiedType(targetValue, sourceValue);
-                        } else {
-                            targetValue = CreateSpecifiedType(sourceValue);
-                            if (targetValue != null) {
-                                targetObj.SetField(type, name, targetValue);
-                            }
-                        }
-                    }
-                }
-
-                type = type.BaseType;
-            }
-        }
-
-        public static void CopySpecifiedType(this object targetValue, object sourceValue) {
-            if (targetValue != null && sourceValue is Component && !(sourceValue is Coroutine) &&
-                !(sourceValue is StateMachine)) {
-                targetValue.CopyAll(sourceValue, typeof(Component));
-            }
-        }
-
-        public static object CreateSpecifiedType(object sourceValue) {
-            if (sourceValue is Entity sourceEntity &&
-                Engine.Scene.FindFirst(sourceEntity.GetEntityId2()) is Entity targetEntity) {
-                return targetEntity;
-            }
-
-            return null;
-        }
-
-        private static bool ShouldCopyDirectly(Type type) {
-            return type.IsPrimitive || type.IsValueType || type.IsEnum || type == typeof(string);
         }
     }
 }

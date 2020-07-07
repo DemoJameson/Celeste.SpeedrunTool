@@ -18,6 +18,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private static readonly Type DebrisListType =
             typeof(List<>).MakeGenericType(typeof(MoveBlock).GetNestedType("Debris", BindingFlags.NonPublic));
 
+        // TODO 假如 Coroutine 来自 Entity 的某个字段，记录下来以便恢复的时候还原
         private class Routine {
             public readonly EntityId2 ID;
             public readonly Type type;
@@ -53,9 +54,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private static readonly List<Type> ExcludeTypes = new List<Type> {
-            typeof(BirdNPC),
-            typeof(FlutterBird),
-            typeof(ForsakenCitySatellite),
+            // typeof(ForsakenCitySatellite),
             typeof(Lightning),
             typeof(LightningBreakerBox),
             typeof(Lookout),
@@ -65,7 +64,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             foreach (Entity e in level.Entities) {
                 if (ExcludeTypes.Contains(e.GetType())) continue;
                 if (e.NoEntityId2()) continue;
-
 
                 EntityId2 id = e.GetEntityId2();
 
@@ -220,7 +218,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 }
 
                 if (local is Entity entity) {
-                    if (entities.TryGetValue(entity.GetEntityId2(), out Entity e)) {
+                    if (entity.HasEntityId2() && entities.TryGetValue(entity.GetEntityId2(), out Entity e)) {
                         foundValue = e;
                     }
                     // If the entity doesn't store its ID, find the first entity of that type.

@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Monocle;
@@ -9,16 +12,42 @@ using MonoMod.RuntimeDetour;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
     public static class AttachEntityId2Utils {
+        private static readonly List<Type> ExcludeTypes = new List<Type> {
+            typeof(Entity),
+            typeof(Cobweb),
+            typeof(Decal),
+            typeof(HangingLamp),
+            typeof(Lamp),
+            typeof(ParticleSystem),
+            typeof(Wire),
+        };
+
+        private static readonly List<string> SpecialNestedPrivateTypes = new List<string> {
+            "Celeste.ForsakenCitySatellite+CodeBird",
+        };
+
         private static ILHook origLoadLevelHook;
-        private static ILHook LoadCustomEntityHook;
+        private static ILHook loadCustomEntityHook;
 
         private static void EntityOnAdded(On.Monocle.Entity.orig_Added orig, Entity self, Scene scene) {
             orig(self, scene);
 
-            if (self.HasEntityId2()) return;
-            if (!(scene is Level)) return;
+            Type type = self.GetType();
 
-            EntityId2 entityId2 = self.CreateEntityId2(self.Position.ToString());
+            if (!(scene is Level)) return;
+            if (self.HasEntityId2()) return;
+            if (ExcludeTypes.Contains(type)) return;
+
+            string entityIdParam = self.Position.ToString();
+            if (type.IsNestedPrivate) {
+                if (!SpecialNestedPrivateTypes.Contains(type.FullName)) return;
+                entityIdParam = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                    .Where(info => info.FieldType.IsSimpleType() && info.DeclaringType.IsNestedPrivate).Aggregate(
+                        entityIdParam,
+                        (current, fieldInfo) => current + (fieldInfo.GetValue(self)?.ToString() ?? "null"));
+            }
+
+            EntityId2 entityId2 = self.CreateEntityId2(entityIdParam);
             // Too Slow
             // var dict = scene.FindAllToDict(self.GetType());
             // while (dict.ContainsKey(entityId2)) {
@@ -60,20 +89,19 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         private static void AttachEntityId(Entity entity, EntityData data) {
             entity.SetEntityId2(data.ToEntityId2(entity));
             entity.SetEntityData(data);
-
             // entity.Log("IL Set EntityId2: ", entity.GetEntityId2().ToString());
         }
 
         public static void Load() {
             On.Monocle.Entity.Added += EntityOnAdded;
             origLoadLevelHook = new ILHook(typeof(Level).GetMethod("orig_LoadLevel"), ModOrigLoadLevel);
-            LoadCustomEntityHook = new ILHook(typeof(Level).GetMethod("LoadCustomEntity"), ModLoadCustomEntity);
+            loadCustomEntityHook = new ILHook(typeof(Level).GetMethod("LoadCustomEntity"), ModLoadCustomEntity);
         }
 
         public static void Unload() {
             On.Monocle.Entity.Added -= EntityOnAdded;
             origLoadLevelHook.Dispose();
-            LoadCustomEntityHook.Dispose();
+            loadCustomEntityHook.Dispose();
         }
     }
 }

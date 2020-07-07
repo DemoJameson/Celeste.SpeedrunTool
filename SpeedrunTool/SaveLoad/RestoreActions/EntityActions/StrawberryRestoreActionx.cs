@@ -1,8 +1,4 @@
-using System.Collections.Generic;
-using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
-using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
-using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.EntityActions {
@@ -13,27 +9,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.EntityActions {
             Strawberry loaded = (Strawberry) loadedEntity;
             Strawberry saved = (Strawberry) savedEntity;
             
-            loaded.CopySprite(saved, "sprite");
-            loaded.CopyFields(saved, 
-                "collected", "collectTimer",
-                "flyingAway", "flapSpeed",
-                "wobble");
-            loaded.SetProperty("Winged", saved.Winged);
-            loaded.ReturnHomeWhenLost = saved.ReturnHomeWhenLost;
-            loaded.WaitingOnSeeds = saved.WaitingOnSeeds;
             loaded.Follower.CopyFrom(saved.Follower);
 
             // TODO 还原 Seeds
             // public List<StrawberrySeed> Seeds;
-        }
-
-        public override void NotLoadedEntitiesButSaved(Level level, List<Entity> savedEntityList) {
-            foreach (Strawberry saved in savedEntityList.Cast<Strawberry>()) {
-                Strawberry loaded = new Strawberry(saved.GetEntityData(), Vector2.Zero, saved.ID);
-                loaded.CopyEntityId2(saved);
-                loaded.CopyEntityData(saved);
-                level.Add(loaded);
-            }
         }
     }
 

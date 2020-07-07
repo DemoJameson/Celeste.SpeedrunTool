@@ -17,7 +17,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
 
         private static void InvokeAction(Entity loaded, Found found, NotFound notFound = null) {
             AllRestoreActions.ForEach(restoreAction => {
-                if(loaded.TagCheck(Tags.Global)) return;
+                if (loaded.TagCheck(Tags.Global)) return;
                 if (!loaded.GetType().IsSameOrSubclassOf(restoreAction.Type)) return;
                 if (loaded.NoEntityId2()) return;
 
@@ -49,30 +49,27 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             orig(level);
             if (!IsLoadStart) return;
 
-            Dictionary<EntityId2,Entity> loadedEntitiesDict = level.FindAllToDict<Entity>();
-            AllRestoreActions.ForEach(restoreAction => {
-                var loadedDict = level.FindAllToDict(restoreAction.Type, true);
-                var savedDict = SavedLevel.FindAllToDict(restoreAction.Type, true);
+            var loadedDict = level.FindAllToDict<Entity>();
 
-                List<Entity> list = savedDict.Where(pair => !loadedDict.ContainsKey(pair.Key)).Select(pair => pair.Value).ToList();
-                if (list.Count > 0) {
-                    restoreAction.NotLoadedEntitiesButSaved(level, list);
-                }
-            });
+            var notLoadedEntities = SavedEntitiesDict.Where(pair => !loadedDict.ContainsKey(pair.Key))
+                .ToDictionary(p => p.Key, p => p.Value);
+            if (notLoadedEntities.Count > 0) {
+                AbstractRestoreAction.EntitiesSavedButNotLoaded(level, notLoadedEntities);
+            }
         }
 
         public static void AfterEntityCreateAndUpdate1Frame(Level level) {
-            Dictionary<EntityId2,Entity> loadedEntitiesDict = level.FindAllToDict<Entity>();
+            var allLoadedDict = level.FindAllToDict<Entity>();
+
+            var notSavedEntities = allLoadedDict.Where(pair => !SavedEntitiesDict.ContainsKey(pair.Key)).ToDictionary(p => p.Key, p => p.Value);;
+            AbstractRestoreAction.EntitiesLoadedButNotSaved(notSavedEntities);
+            
             AllRestoreActions.ForEach(restoreAction => {
                 var loadedDict = level.FindAllToDict(restoreAction.Type, true);
                 var savedDict = SavedLevel.FindAllToDict(restoreAction.Type, true);
 
-                foreach (var loaded in loadedDict) {
-                    if (savedDict.ContainsKey(loaded.Key)) {
-                        restoreAction.AfterEntityCreateAndUpdate1Frame(loaded.Value, savedDict[loaded.Key]);
-                    } else {
-                        restoreAction.NotSavedEntityButLoaded(loaded.Value);
-                    }
+                foreach (var loaded in loadedDict.Where(loaded => savedDict.ContainsKey(loaded.Key))) {
+                    restoreAction.AfterEntityCreateAndUpdate1Frame(loaded.Value, savedDict[loaded.Key]);
                 }
             });
         }
@@ -82,24 +79,22 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
                 var loadedDict = level.FindAllToDict(restoreAction.Type, true);
                 var savedDict = SavedLevel.FindAllToDict(restoreAction.Type, true);
 
-                foreach (var loaded in loadedDict) {
-                    if (savedDict.ContainsKey(loaded.Key)) {
-                        restoreAction.AfterPlayerRespawn(loaded.Value, savedDict[loaded.Key]);
-                    }
+                foreach (var loaded in loadedDict.Where(loaded => savedDict.ContainsKey(loaded.Key))) {
+                    restoreAction.AfterPlayerRespawn(loaded.Value, savedDict[loaded.Key]);
                 }
             });
         }
 
         public static void Load() {
-            On.Monocle.Entity.Added += EntityOnAdded;
-            On.Monocle.Entity.Awake += EntityOnAwake;
+            // On.Monocle.Entity.Added += EntityOnAdded;
+            // On.Monocle.Entity.Awake += EntityOnAwake;
             On.Celeste.Level.Begin += LevelOnBegin;
             AllRestoreActions.ForEach(action => action.Load());
         }
 
         public static void Unload() {
-            On.Monocle.Entity.Added -= EntityOnAdded;
-            On.Monocle.Entity.Awake -= EntityOnAwake;
+            // On.Monocle.Entity.Added -= EntityOnAdded;
+            // On.Monocle.Entity.Awake -= EntityOnAwake;
             On.Celeste.Level.Begin -= LevelOnBegin;
             AllRestoreActions.ForEach(action => action.Unload());
         }

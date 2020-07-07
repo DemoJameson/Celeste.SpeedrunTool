@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Celeste.Mod.SpeedrunTool</RootNamespace>
     <AssemblyName>SpeedrunTool</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
     <LangVersion>7.3</LangVersion>
@@ -34,10 +34,6 @@
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AutoMapper, Version=10.0.0.0, Culture=neutral, PublicKeyToken=be96cd2c38ef1005">
-      <HintPath>..\packages\AutoMapper.10.0.0\lib\net461\AutoMapper.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="Celeste">
       <HintPath>..\..\..\Celeste.exe</HintPath>
       <Private>False</Private>
@@ -121,24 +117,15 @@
     <Compile Include="SaveLoad\EntityIdPlus\AttachEntityId2Utils.cs" />
     <Compile Include="SaveLoad\EntityIdPlus\EntityId2.cs" />
     <Compile Include="SaveLoad\RestoreActions\AbstractRestoreAction.cs" />
-    <Compile Include="SaveLoad\RestoreActions\ActorActions\ActorRestoreAction.cs" />
     <Compile Include="SaveLoad\RestoreActions\ActorActions\PlayerRestoreAction.cs" />
-    <Compile Include="SaveLoad\RestoreActions\ActorActions\TheoCrystalRestoreAction.cs" />
-    <Compile Include="SaveLoad\RestoreActions\AutoMapperUtils.cs" />
-    <Compile Include="SaveLoad\RestoreActions\EntityActions\BoosterRestoreAction.cs" />
-    <Compile Include="SaveLoad\RestoreActions\EntityActions\FlyFeatherRestoreAction.cs" />
     <Compile Include="SaveLoad\RestoreActions\EntityActions\KeyRestoreAction.cs" />
-    <Compile Include="SaveLoad\RestoreActions\EntityActions\SpikesRestoreAction.cs" />
     <Compile Include="SaveLoad\RestoreActions\EntityActions\StrawberryRestoreActionx.cs" />
     <Compile Include="SaveLoad\RestoreActions\EntityRestoreAction.cs" />
-    <Compile Include="SaveLoad\RestoreActions\PlatformActions\JumpThruActions\CloudRestoreAction.cs" />
-    <Compile Include="SaveLoad\RestoreActions\PlatformActions\JumpThruActions\JumpThruRestoreAction.cs" />
+    <Compile Include="SaveLoad\RestoreActions\EntityRestoreExtensions.cs" />
     <Compile Include="SaveLoad\RestoreActions\PlatformActions\PlatformRestoreAction.cs" />
-    <Compile Include="SaveLoad\RestoreActions\PlatformActions\SolidActions\FloatySpaceBlockRestoreAction.cs" />
     <Compile Include="SaveLoad\RestoreActions\PlatformActions\SolidActions\MoveBlockRestoreAction.cs" />
     <Compile Include="SaveLoad\RestoreActions\PlatformActions\SolidActions\SolidRestoreAction.cs" />
     <Compile Include="SaveLoad\RestoreActions\RestoreEntityUtils.cs" />
-    <Compile Include="SaveLoad\RestoreActions\TestPlayerRestoreAction.cs" />
     <Compile Include="SpeedrunToolSaveData.cs" />
     <Compile Include="TeleportRoom\LevelDataReorderUtils.cs" />
     <Compile Include="TeleportRoom\TeleportRoomUtils.cs" />
@@ -216,7 +203,6 @@
     <None Include="everest.yaml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Dialog\English.txt">

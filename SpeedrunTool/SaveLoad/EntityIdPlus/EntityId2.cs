@@ -5,9 +5,12 @@ using Celeste.Mod.SpeedrunTool.Extensions;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
+    // 用来替换 EntityID 避免 ID 重复
+    // 官图中 Trigger 的 ID 与 Entity 的 ID 有很大几率重复
     public readonly struct EntityId2 {
-        // 用来替换 EntityID 避免 ID 重复
-        // 官图中 Trigger 的 ID 与 Entity 的 ID 有很大几率重复
+        public static readonly EntityId2 PlayerFixedEntityId2 = new EntityId2(new EntityID("You can do it. —— 《Celeste》", 20180125), typeof(Player));
+
+        
         public readonly EntityID EntityId;
         public readonly Type Type;
 
@@ -121,7 +124,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             Dictionary<EntityId2, T> result = new Dictionary<EntityId2, T>();
             List<T> findAll = entityList.FindAll<T>();
             foreach (T entity in findAll) {
-                if(entity.TagCheck(Tags.Global)) continue;
+                if (entity.TagCheck(Tags.Global)) continue;
                 if (entity.NoEntityId2()) {
                     continue;
                 }
@@ -143,8 +146,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             Dictionary<EntityId2, Entity> result = new Dictionary<EntityId2, Entity>();
             List<Entity> entities = entityList.FindAll<Entity>();
             foreach (Entity entity in entities) {
-                if(entity.TagCheck(Tags.Global)) continue;
-                if (entity.NoEntityId2()) continue;;
+                if (entity.TagCheck(Tags.Global)) continue;
+                if (entity.NoEntityId2()) continue;
 
                 if (includeSubclass && entity.GetType().IsSameOrSubclassOf(type) ||
                     !includeSubclass && entity.GetType() == type) {

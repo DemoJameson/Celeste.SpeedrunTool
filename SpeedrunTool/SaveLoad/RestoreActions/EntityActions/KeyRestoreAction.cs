@@ -23,23 +23,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.EntityActions {
             Key loaded = (Key) loadedEntity;
             Key saved = (Key) savedEntity;
             
-            loaded.CopySprite(saved, "sprite");
-            loaded.CopyFields(saved, "wobble", "wobbleActive");
             // TODO Restore Tween and Alarm
-            RestoreTween(loaded, saved);
-
-            loaded.IsUsed = saved.IsUsed;
-            loaded.StartedUsing = saved.StartedUsing;
-            loaded.IsUsed = saved.IsUsed;
-            loaded.IsUsed = saved.IsUsed;
-            loaded.IsUsed = saved.IsUsed;
-            loaded.IsUsed = saved.IsUsed;
-
-            Follower loadedFollower = loaded.GetField("follower") as Follower;
-            Follower savedFollower = saved.GetField("follower") as Follower;
-            if (loadedFollower != null && savedFollower != null) {
-                loadedFollower.CopyFrom(savedFollower);
-            }
+            // RestoreTween(loaded, saved);
         }
 
         private void RestoreTween(Key loaded, Key saved) {

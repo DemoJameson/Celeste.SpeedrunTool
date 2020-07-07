@@ -12,11 +12,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.ActorActions {
         public override void AfterEntityCreateAndUpdate1Frame(Entity loadedEntity, Entity savedEntity) {
             Player loaded = (Player) loadedEntity;
             Player saved = (Player) savedEntity;
-            
-            loaded.CopyEntity(saved);
-            
+
+            // 只还原父类字段，其他等到复活完恢复
+            loaded.CopyAllFrom(typeof(Actor), saved, typeof(Entity));
+
             // 避免复活时的光圈被背景遮住
-            loaded.Depth = Depths.Top; 
+            loaded.Depth = Depths.Top;
 
             loaded.JustRespawned = saved.JustRespawned;
             loaded.CameraAnchor = saved.CameraAnchor;
@@ -33,98 +34,101 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.ActorActions {
             Player loaded = (Player) loadedEntity;
             Player saved = (Player) savedEntity;
 
-            loaded.Facing = saved.Facing;
-            loaded.Ducking = saved.Ducking;
-            loaded.Speed = saved.Speed;
-            loaded.Stamina = saved.Stamina;
+            loaded.CopyAllFrom(saved, typeof(Entity));
 
-            loaded.AutoJump = saved.AutoJump;
-            loaded.AutoJumpTimer = saved.AutoJumpTimer;
-            loaded.DashDir = saved.DashDir;
-            loaded.StateMachine.SetField("state", saved.StateMachine.State);
-
-            // too lazy to restore private List<ChaserStateSound> activeSounds
-            loaded.ChaserStates.Clear();
-            loaded.ChaserStates.AddRange(saved.ChaserStates);
-
-            loaded.CopySprite(saved, "sweatSprite");
-            loaded.Hair.CopyPlayerHairAndSprite(saved.Hair);
-            loaded.Collidable = saved.Collidable;
-
-            loaded.StrawberriesBlocked = saved.StrawberriesBlocked;
-            loaded.StrawberryCollectIndex = saved.StrawberryCollectIndex;
-            loaded.StrawberryCollectResetTimer = saved.StrawberryCollectResetTimer;
-
-            loaded.OverrideHairColor = saved.OverrideHairColor;
-            loaded.Depth = saved.Depth;
-
-            loaded.DummyMoving = saved.DummyMoving;
-            loaded.DummyGravity = saved.DummyGravity;
-            loaded.DummyFriction = saved.DummyFriction;
-            loaded.DummyMaxspeed = saved.DummyMaxspeed;
-
-            loaded.SetProperty("OnSafeGround", saved.OnSafeGround);
-            loaded.SetProperty("StartedDashing", saved.StartedDashing);
-
-            loaded.CopyFields(saved,
-                "attractTo",
-                "boostRed", "boostTarget",
-                "beforeDashSpeed",
-                "canCurveDash",
-                "calledDashEvents",
-                "carryOffset",
-                "cassetteFlyCurve", "cassetteFlyLerp",
-                "climbHopSolidPosition", "climbNoMoveTimer", "climbTriggerDir",
-                "dashAttackTimer", "dashStartedOnGround", "dashTrailTimer", "dashTrailCounter", "dashCooldownTimer",
-                "dashRefillCooldownTimer",
-                "deadOffset",
-                "dreamDashCanEndTimer", "dreamJump",
-                "fastJump",
-                "flash",
-                "forceMoveX", "forceMoveXTimer",
-                "gliderBoostDir", "gliderBoostTimer",
-                "hairFlashTimer",
-                "hiccupTimer",
-                "highestAirY",
-                "hitSquashNoMoveTimer",
-                "holdCannotDuck",
-                "hopWaitX", "hopWaitXSpeed",
-                "hurtbox",
-                "idleTimer",
-                "jumpGraceTimer",
-                "lastAim",
-                "lastClimbMove",
-                "lastDashes",
-                "launched", "launchedTimer", "launchApproachX",
-                "lowFrictionStopTimer",
-                "maxFall",
-                "minHoldTimer",
-                "moveX",
-                "noWindTimer",
-                "onGround",
-                "playFootstepOnLand",
-                "starFlyTimer", "starFlyTransforming", "starFlySpeedLerp", "starFlyLastDir",
-                "startHairCalled", "startHairCount",
-                "summitLaunchTargetX", "summitLaunchParticleTimer",
-                "varJumpTimer", "varJumpSpeed",
-                "wallBoosting", "wallBoostDir", "wallBoostTimer",
-                "wallSlideDir", "wallSlideTimer",
-                "wallSpeedRetentionTimer", "wallSpeedRetained",
-                "wasDashB",
-                "wasDucking",
-                "wasOnGround",
-                "wasTired",
-                "windMovedUp", "windDirection", "windTimeout", "windHairTimer"
-            );
+            // loaded.StateMachine.SetField("state", saved.StateMachine.State);
+            
+            // loaded.Facing = saved.Facing;
+            // loaded.Ducking = saved.Ducking;
+            // loaded.Speed = saved.Speed;
+            // loaded.Stamina = saved.Stamina;
+            //
+            // loaded.AutoJump = saved.AutoJump;
+            // loaded.AutoJumpTimer = saved.AutoJumpTimer;
+            // loaded.DashDir = saved.DashDir;
+            //
+            // // too lazy to restore private List<ChaserStateSound> activeSounds
+            // loaded.ChaserStates.Clear();
+            // loaded.ChaserStates.AddRange(saved.ChaserStates);
+            //
+            // loaded.CopySprite(saved, "sweatSprite");
+            // loaded.Hair.CopyPlayerHairAndSprite(saved.Hair);
+            // loaded.Collidable = saved.Collidable;
+            //
+            // loaded.StrawberriesBlocked = saved.StrawberriesBlocked;
+            // loaded.StrawberryCollectIndex = saved.StrawberryCollectIndex;
+            // loaded.StrawberryCollectResetTimer = saved.StrawberryCollectResetTimer;
+            //
+            // loaded.OverrideHairColor = saved.OverrideHairColor;
+            // loaded.Depth = saved.Depth;
+            //
+            // loaded.DummyMoving = saved.DummyMoving;
+            // loaded.DummyGravity = saved.DummyGravity;
+            // loaded.DummyFriction = saved.DummyFriction;
+            // loaded.DummyMaxspeed = saved.DummyMaxspeed;
+            //
+            // loaded.SetProperty("OnSafeGround", saved.OnSafeGround);
+            // loaded.SetProperty("StartedDashing", saved.StartedDashing);
+            //
+            // loaded.CopyFields(saved,
+            //     "attractTo",
+            //     "boostRed", "boostTarget",
+            //     "beforeDashSpeed",
+            //     "canCurveDash",
+            //     "calledDashEvents",
+            //     "carryOffset",
+            //     "cassetteFlyCurve", "cassetteFlyLerp",
+            //     "climbHopSolidPosition", "climbNoMoveTimer", "climbTriggerDir",
+            //     "dashAttackTimer", "dashStartedOnGround", "dashTrailTimer", "dashTrailCounter", "dashCooldownTimer",
+            //     "dashRefillCooldownTimer",
+            //     "deadOffset",
+            //     "dreamDashCanEndTimer", "dreamJump",
+            //     "fastJump",
+            //     "flash",
+            //     "forceMoveX", "forceMoveXTimer",
+            //     "gliderBoostDir", "gliderBoostTimer",
+            //     "hairFlashTimer",
+            //     "hiccupTimer",
+            //     "highestAirY",
+            //     "hitSquashNoMoveTimer",
+            //     "holdCannotDuck",
+            //     "hopWaitX", "hopWaitXSpeed",
+            //     "hurtbox",
+            //     "idleTimer",
+            //     "jumpGraceTimer",
+            //     "lastAim",
+            //     "lastClimbMove",
+            //     "lastDashes",
+            //     "launched", "launchedTimer", "launchApproachX",
+            //     "lowFrictionStopTimer",
+            //     "maxFall",
+            //     "minHoldTimer",
+            //     "moveX",
+            //     "noWindTimer",
+            //     "onGround",
+            //     "playFootstepOnLand",
+            //     "starFlyTimer", "starFlyTransforming", "starFlySpeedLerp", "starFlyLastDir",
+            //     "startHairCalled", "startHairCount",
+            //     "summitLaunchTargetX", "summitLaunchParticleTimer",
+            //     "varJumpTimer", "varJumpSpeed",
+            //     "wallBoosting", "wallBoostDir", "wallBoostTimer",
+            //     "wallSlideDir", "wallSlideTimer",
+            //     "wallSpeedRetentionTimer", "wallSpeedRetained",
+            //     "wasDashB",
+            //     "wasDucking",
+            //     "wasOnGround",
+            //     "wasTired",
+            //     "windMovedUp", "windDirection", "windTimeout", "windHairTimer"
+            // );
 
             // too lazy to restore this field, hope its ok.
             // private HashSet<Trigger> triggersInside;
 
-            loaded.CopyEntity2(saved, "climbHopSolid");
-            loaded.CopyEntity2(saved, "CurrentBooster");
-            loaded.CopyEntity2(saved, "LastBooster");
-            loaded.CopyEntity2(saved, "flingBird");
-            loaded.CopyEntity2(saved, "dreamBlock");
+            // loaded.CopyEntity2(saved, "climbHopSolid");
+            // loaded.CopyEntity2(saved, "CurrentBooster");
+            // loaded.CopyEntity2(saved, "LastBooster");
+            // loaded.CopyEntity2(saved, "flingBird");
+            // loaded.CopyEntity2(saved, "dreamBlock");
 
             switch (saved.StateMachine.State) {
                 case Player.StDreamDash:
@@ -167,23 +171,31 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.ActorActions {
                     .FirstOrDefault(fieldInfo => fieldInfo.FieldType == typeof(Follower));
                 if (followerFieldInfo?.GetValue(entity) is Follower follower) {
                     loadedLeader.Followers.Add(follower);
-                }               
+                }
             });
         }
 
         public override void Load() {
             On.Celeste.Player.ctor += PlayerOnCtor;
+            On.Celeste.Level.LoadNewPlayer += LevelOnLoadNewPlayer;
         }
 
         public override void Unload() {
             On.Celeste.Player.ctor -= PlayerOnCtor;
+            On.Celeste.Level.LoadNewPlayer -= LevelOnLoadNewPlayer;
         }
 
         private static void PlayerOnCtor(On.Celeste.Player.orig_ctor orig, Player self, Vector2 position,
             PlayerSpriteMode spriteMode) {
-            // Give Player a fixed EntityId2.
-            self.SetEntityId2(new EntityID("You can do it. —— 《Celeste》", 20180125));
+            self.SetEntityId2(EntityId2.PlayerFixedEntityId2);
             orig(self, position, spriteMode);
+        }
+
+        private Player LevelOnLoadNewPlayer(On.Celeste.Level.orig_LoadNewPlayer orig, Vector2 position,
+            PlayerSpriteMode spriteMode) {
+            Player player = orig(position, spriteMode);
+            player.SetEntityId2(EntityId2.PlayerFixedEntityId2);
+            return player;
         }
     }
 }

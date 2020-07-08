@@ -6,15 +6,15 @@ using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
-    public abstract class AbstractRestoreAction {
+    public abstract class RestoreAction {
         protected static bool IsLoadStart => StateManager.Instance.IsLoadStart;
 
         public Type Type;
-        public List<AbstractRestoreAction> SubclassRestoreActions;
+        public List<RestoreAction> SubclassRestoreActions;
 
-        protected AbstractRestoreAction(Type type, List<AbstractRestoreAction> subclassRestoreActions = null) {
+        protected RestoreAction(Type type, List<RestoreAction> subclassRestoreActions = null) {
             Type = type;
-            SubclassRestoreActions = subclassRestoreActions ?? new List<AbstractRestoreAction>();
+            SubclassRestoreActions = subclassRestoreActions ?? new List<RestoreAction>();
         }
 
         public virtual void OnLoad() { }

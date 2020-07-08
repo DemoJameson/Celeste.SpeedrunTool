@@ -28,34 +28,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         private static ILHook origLoadLevelHook;
         private static ILHook loadCustomEntityHook;
 
-        private static void EntityOnAdded(On.Monocle.Entity.orig_Added orig, Entity self, Scene scene) {
-            orig(self, scene);
-
-            Type type = self.GetType();
-
-            if (!(scene is Level)) return;
-            if (self.HasEntityId2()) return;
-            if (ExcludeTypes.Contains(type)) return;
-
-            string entityIdParam = self.Position.ToString();
-            if (type.IsNestedPrivate) {
-                if (!SpecialNestedPrivateTypes.Contains(type.FullName)) return;
-                entityIdParam = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                    .Where(info => info.FieldType.IsSimple() && info.DeclaringType.IsNestedPrivate).Aggregate(
-                        entityIdParam,
-                        (current, fieldInfo) => current + (fieldInfo.GetValue(self)?.ToString() ?? "null"));
-            }
-
-            EntityId2 entityId2 = self.CreateEntityId2(entityIdParam);
-            // Too Slow
-            // var dict = scene.FindAllToDict(self.GetType());
-            // while (dict.ContainsKey(entityId2)) {
-            //     entityId2 = new EntityId2(new EntityID(entityId2.EntityId.Level, entityId2.EntityId.ID.ToString().GetHashCode()), self.GetType());
-            // }
-
-            self.SetEntityId2(entityId2);
-        }
-
         // 将 EntityData 与 EntityID 附加到 Entity 的实例上
         private static void ModOrigLoadLevel(ILContext il) {
             ILCursor cursor = new ILCursor(il);
@@ -86,21 +58,45 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         }
 
         private static void AttachEntityId(Entity entity, EntityData data) {
+            if (entity.TagCheck(Tags.Global)) return;
             entity.SetEntityId2(data.ToEntityId2(entity));
             entity.SetEntityData(data);
-            // entity.Log("IL Set EntityId2: ", entity.GetEntityId2().ToString());
+        }
+        
+        // 处理其他没有 EntityData 的物体
+        private static void EntityOnAdded(On.Monocle.Entity.orig_Added orig, Entity self, Scene scene) {
+            orig(self, scene);
+
+            Type type = self.GetType();
+
+            if (!(scene is Level)) return;
+            if (self.TagCheck(Tags.Global)) return;
+            if (self.HasEntityId2()) return;
+            if (ExcludeTypes.Contains(type)) return;
+
+            string entityIdParam = self.Position.ToString();
+            if (type.IsNestedPrivate) {
+                if (!SpecialNestedPrivateTypes.Contains(type.FullName)) return;
+                entityIdParam = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                    .Where(info => info.FieldType.IsSimple() && info.DeclaringType.IsNestedPrivate).Aggregate(
+                        entityIdParam,
+                        (current, fieldInfo) => current + (fieldInfo.GetValue(self)?.ToString() ?? "null"));
+            }
+
+            EntityId2 entityId2 = self.CreateEntityId2(entityIdParam);
+            self.SetEntityId2(entityId2);
         }
 
         public static void OnLoad() {
-            On.Monocle.Entity.Added += EntityOnAdded;
             origLoadLevelHook = new ILHook(typeof(Level).GetMethod("orig_LoadLevel"), ModOrigLoadLevel);
             loadCustomEntityHook = new ILHook(typeof(Level).GetMethod("LoadCustomEntity"), ModLoadCustomEntity);
+            On.Monocle.Entity.Added += EntityOnAdded;
         }
 
         public static void Unload() {
-            On.Monocle.Entity.Added -= EntityOnAdded;
             origLoadLevelHook.Dispose();
             loadCustomEntityHook.Dispose();
+            On.Monocle.Entity.Added -= EntityOnAdded;
         }
     }
 }

@@ -1,6 +1,7 @@
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
+    // TODO 删除
     public static class EntityExtensions {
         public static void CopyEntity<T>(this T entity, T otherEntity) where T : Entity {
             entity.Active = otherEntity.Active;

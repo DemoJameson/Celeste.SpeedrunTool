@@ -262,7 +262,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             IEnumerable<Entity> entities =
                 level.Entities.Where(entity => entity.HasEntityId2() && !ExcludeTypes.Contains(entity.GetType()));
             foreach (Entity entity in entities) {
-                if (entity.TagCheck(Tags.Global) || entity is PlayerDeadBody) continue;
+                if (entity.TagCheck(Tags.Global)) continue;
 
                 List<Component> duplicateCoroutine = entity.Components.Where(component =>
                     component is Coroutine coroutine &&

@@ -4,8 +4,6 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
     public static class CelesteExtensions {
-        private const string EntityDataKey = "SpeedrunToolEntityDataKey";
-
         // public static void AddToTracker(this Type type) {
         //     if (!Tracker.StoredEntityTypes.Contains(type)) {
         //         Tracker.StoredEntityTypes.Add(type);

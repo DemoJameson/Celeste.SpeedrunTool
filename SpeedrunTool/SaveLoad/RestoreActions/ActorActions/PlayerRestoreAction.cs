@@ -6,7 +6,7 @@ using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.ActorActions {
-    public class PlayerRestoreAction : AbstractRestoreAction {
+    public class PlayerRestoreAction : RestoreAction {
         public PlayerRestoreAction() : base(typeof(Player)) { }
 
         public override void AfterEntityCreateAndUpdate1Frame(Entity loadedEntity, Entity savedEntity) {
@@ -26,7 +26,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.ActorActions {
             loaded.CameraAnchorIgnoreY = saved.CameraAnchorIgnoreY;
             loaded.ForceCameraUpdate = saved.ForceCameraUpdate;
             loaded.EnforceLevelBounds = saved.EnforceLevelBounds;
-            loaded.MuffleLanding = saved.MuffleLanding;
             loaded.Dashes = saved.Dashes;
         }
 

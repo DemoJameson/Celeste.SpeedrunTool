@@ -4,7 +4,8 @@ using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.EntityActions {
-    public class KeyRestoreAction : AbstractRestoreAction {
+    // Bug: 吃下钥匙后马上保存会出现两把钥匙
+    public class KeyRestoreAction : RestoreAction {
         public KeyRestoreAction() : base(typeof(Key)) { }
         public override void OnLoad() {
             On.Celeste.Key.ctor_Player_EntityID += KeyOnCtor_Player_EntityID;

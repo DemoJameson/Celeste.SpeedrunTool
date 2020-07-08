@@ -2,7 +2,7 @@ using Celeste.Mod.SpeedrunTool.Extensions;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.EntityActions {
-    public class StrawberryRestoreAction : AbstractRestoreAction {
+    public class StrawberryRestoreAction : RestoreAction {
         public StrawberryRestoreAction() : base(typeof(Strawberry)) { }
 
         public override void AfterEntityCreateAndUpdate1Frame(Entity loadedEntity, Entity savedEntity) {

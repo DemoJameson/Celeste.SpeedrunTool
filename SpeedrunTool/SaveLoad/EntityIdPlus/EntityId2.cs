@@ -48,7 +48,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         private const string EntityId2Key = "SpeedrunTool_EntityId2_Key";
         private const string EntityDataKey = "SpeedrunTool_EntityData_Key";
 
-
         public static EntityId2 ToEntityId2(this EntityID entityId, Type type) {
             return new EntityId2(entityId, type);
         }
@@ -97,15 +96,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             }
         }
 
-        public static void CopyEntity2<T>(this T entity, T otherEntity, string fieldName)
-            where T : Entity {
-            if (otherEntity.GetField(fieldName) is Entity fieldValue &&
-                fieldValue.HasEntityId2() &&
-                entity.SceneAs<Level>().FindFirst(fieldValue.GetEntityId2()) is Entity found) {
-                entity.SetField(fieldName, found);
-            }
-        }
-
         public static bool HasEntityId2(this Entity entity) {
             return entity.GetEntityId2() != default;
         }
@@ -116,7 +106,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
 
         public static Entity FindFirst(this Scene scene, EntityId2 entityId2) {
             if (entityId2 == default) return null;
-            return scene.Entities.FindAll<Entity>().FirstOrDefault(e =>
+            return scene.Entities.FirstOrDefault(e =>
                 e.GetEntityId2() == entityId2);
         }
 
@@ -144,8 +134,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         public static Dictionary<EntityId2, Entity> FindAllToDict(this EntityList entityList, Type type,
             bool includeSubclass = false) {
             Dictionary<EntityId2, Entity> result = new Dictionary<EntityId2, Entity>();
-            List<Entity> entities = entityList.FindAll<Entity>();
-            foreach (Entity entity in entities) {
+            foreach (Entity entity in entityList) {
                 if (entity.TagCheck(Tags.Global)) continue;
                 if (entity.NoEntityId2()) continue;
 

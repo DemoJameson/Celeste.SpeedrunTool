@@ -6,14 +6,14 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
     public static class RestoreEntityUtils {
-        private static List<AbstractRestoreAction> AllRestoreActions => EntityRestoreAction.AllRestoreActions;
+        private static List<RestoreAction> AllRestoreActions => EntityRestoreAction.AllRestoreActions;
         private static bool IsLoadStart => StateManager.Instance.IsLoadStart;
         private static Level SavedLevel => StateManager.Instance.SavedLevel;
         private static Dictionary<EntityId2, Entity> SavedEntitiesDict => StateManager.Instance.SavedEntitiesDict;
 
-        private delegate void Found(AbstractRestoreAction restoreAction, Entity loaded, Entity saved);
+        private delegate void Found(RestoreAction restoreAction, Entity loaded, Entity saved);
 
-        private delegate void NotFound(AbstractRestoreAction restoreAction, Entity loaded);
+        private delegate void NotFound(RestoreAction restoreAction, Entity loaded);
 
         private static void InvokeAction(Entity loaded, Found found, NotFound notFound = null) {
             AllRestoreActions.ForEach(restoreAction => {
@@ -54,7 +54,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             var notLoadedEntities = SavedEntitiesDict.Where(pair => !loadedDict.ContainsKey(pair.Key))
                 .ToDictionary(p => p.Key, p => p.Value);
             if (notLoadedEntities.Count > 0) {
-                AbstractRestoreAction.EntitiesSavedButNotLoaded(level, notLoadedEntities);
+                RestoreAction.EntitiesSavedButNotLoaded(level, notLoadedEntities);
             }
         }
 
@@ -62,7 +62,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             var allLoadedDict = level.FindAllToDict<Entity>();
 
             var notSavedEntities = allLoadedDict.Where(pair => !SavedEntitiesDict.ContainsKey(pair.Key)).ToDictionary(p => p.Key, p => p.Value);;
-            AbstractRestoreAction.EntitiesLoadedButNotSaved(notSavedEntities);
+            RestoreAction.EntitiesLoadedButNotSaved(notSavedEntities);
             
             AllRestoreActions.ForEach(restoreAction => {
                 var loadedDict = level.FindAllToDict(restoreAction.Type, true);

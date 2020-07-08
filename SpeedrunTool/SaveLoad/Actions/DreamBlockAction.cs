@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class DreamBlockAction : AbstractEntityAction {
         private Dictionary<EntityId2, DreamBlock> savedDreamBlocks = new Dictionary<EntityId2, DreamBlock>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedDreamBlocks = level.Entities.FindAllToDict<DreamBlock>();
         }
 

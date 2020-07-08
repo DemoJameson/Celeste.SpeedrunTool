@@ -14,7 +14,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private static readonly PropertyInfo PercentPropertyInfo =
             typeof(TrackSpinner).GetProperty("Percent", BindingFlags.Public | BindingFlags.Instance);
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedTrackSpinners = level.Entities.FindAllToDict<TrackSpinner>();
         }
 

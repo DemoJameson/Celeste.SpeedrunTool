@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class FinalBossAction : AbstractEntityAction {
         private Dictionary<EntityId2, FinalBoss> savedFinalBosses = new Dictionary<EntityId2, FinalBoss>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedFinalBosses = level.Entities.FindAllToDict<FinalBoss>();
         }
 

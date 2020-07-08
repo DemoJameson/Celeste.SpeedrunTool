@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class BumperAction : AbstractEntityAction {
         private Dictionary<EntityId2, Bumper> savedBumpers = new Dictionary<EntityId2, Bumper>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedBumpers = level.Entities.FindAllToDict<Bumper>();
         }
 

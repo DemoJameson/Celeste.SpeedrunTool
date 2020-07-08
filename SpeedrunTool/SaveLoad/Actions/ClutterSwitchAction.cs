@@ -10,12 +10,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityId2, ClutterSwitch> savedClutterSwitches = new Dictionary<EntityId2, ClutterSwitch>();
         private ClutterAbsorbEffect savedClutterAbsorbEffect = null;
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedClutterSwitches = level.Entities.FindAllToDict<ClutterSwitch>();
             savedClutterAbsorbEffect = level.Entities.FindFirst<ClutterAbsorbEffect>();
         }
 
-        public override void OnQuickLoadStart(Level level, Player player, Player savedPlayer) {
+        public override void OnLoadStart(Level level, Player player, Player savedPlayer) {
             if (savedClutterAbsorbEffect != null && level.Entities.FindFirst<ClutterAbsorbEffect>() == null) {
                 level.Add(new ClutterAbsorbEffect());
             }

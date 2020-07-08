@@ -10,7 +10,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityId2, BadelineDummy> savedBadelineDummys =
             new Dictionary<EntityId2, BadelineDummy>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedBadelineDummys = level.Entities.FindAllToDict<BadelineDummy>();
         }
 
@@ -32,7 +32,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
         }
 
-        public override void OnQuickLoadStart(Level level, Player player, Player savedPlayer) {
+        public override void OnLoadStart(Level level, Player player, Player savedPlayer) {
             var addedDummy = level.Entities.FindAllToDict<BadelineDummy>();
 
             foreach (var pair in savedBadelineDummys) {

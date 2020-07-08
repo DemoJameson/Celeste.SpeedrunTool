@@ -6,11 +6,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private bool snowballOnAdded;
         private Snowball savedSnowball;
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedSnowball = level.Entities.FindFirst<Snowball>();
         }
 
-        public override void OnQuickLoadStart(Level level, Player player, Player savedPlayer) {
+        public override void OnLoadStart(Level level, Player player, Player savedPlayer) {
             if (savedSnowball != null) {
                 Snowball snowball = new Snowball();
                 snowballOnAdded = true;

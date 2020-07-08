@@ -13,7 +13,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         private ILHook addedHook;
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedBadelineOldsites = level.Entities.FindAllToDict<BadelineOldsite>();
         }
 

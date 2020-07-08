@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class MoveBlockAction : AbstractEntityAction {
         private Dictionary<EntityId2, MoveBlock> movingBlocks = new Dictionary<EntityId2, MoveBlock>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             movingBlocks = level.Entities.FindAllToDict<MoveBlock>();
         }
 

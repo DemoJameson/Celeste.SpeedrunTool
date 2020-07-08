@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class OshiroTriggerAction : AbstractEntityAction {
         private Dictionary<EntityId2, OshiroTrigger> savedOshiroTriggers = new Dictionary<EntityId2, OshiroTrigger>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedOshiroTriggers = level.Entities.FindAllToDict<OshiroTrigger>();
         }
 

@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class FireBallAction : AbstractEntityAction {
         private Dictionary<string, FireBall> savedFireBalls = new Dictionary<string, FireBall>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedFireBalls = level.Entities.FindAll<FireBall>()
                 .ToDictionary(ball => ball.GetExtendedDataValue<string>("nodesIndexKey"));
         }

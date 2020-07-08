@@ -32,7 +32,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             MuteAudioPathList.Remove(audioPath);
         }
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
         }
 
         public override void OnClear() {

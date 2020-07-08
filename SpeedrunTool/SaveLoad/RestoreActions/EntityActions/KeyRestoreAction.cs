@@ -6,11 +6,11 @@ using Monocle;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.EntityActions {
     public class KeyRestoreAction : AbstractRestoreAction {
         public KeyRestoreAction() : base(typeof(Key)) { }
-        public override void Load() {
+        public override void OnLoad() {
             On.Celeste.Key.ctor_Player_EntityID += KeyOnCtor_Player_EntityID;
         }
 
-        public override void Unload() {
+        public override void OnUnload() {
             On.Celeste.Key.ctor_Player_EntityID -= KeyOnCtor_Player_EntityID;
         }
 

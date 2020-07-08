@@ -10,7 +10,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityId2, FinalBossMovingBlock> savedFinalBossMovingBlocks =
             new Dictionary<EntityId2, FinalBossMovingBlock>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedFinalBossMovingBlocks = level.Entities.FindAllToDict<FinalBossMovingBlock>();
         }
 

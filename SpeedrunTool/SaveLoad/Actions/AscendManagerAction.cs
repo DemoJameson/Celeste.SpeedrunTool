@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class AscendManagerAction : AbstractEntityAction {
         private Dictionary<EntityId2, AscendManager> savedAscendManagers = new Dictionary<EntityId2, AscendManager>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedAscendManagers = level.Entities.FindAllToDict<AscendManager>();
         }
 

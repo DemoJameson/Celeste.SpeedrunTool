@@ -12,7 +12,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityId2, LightningBreakerBox> savedBreakerBoxes =
             new Dictionary<EntityId2, LightningBreakerBox>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedBreakerBoxes = level.Entities.FindAllToDict<LightningBreakerBox>();
         }
 

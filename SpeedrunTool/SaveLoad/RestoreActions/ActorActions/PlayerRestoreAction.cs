@@ -14,7 +14,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.ActorActions {
             Player saved = (Player) savedEntity;
 
             // 只还原父类字段，其他等到复活完恢复
-            loaded.CopyAllFrom(typeof(Actor), saved, typeof(Entity));
+            loaded.CopyAllFrom(saved, typeof(Entity), typeof(Actor));
 
             // 避免复活时的光圈被背景遮住
             loaded.Depth = Depths.Top;
@@ -175,12 +175,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.ActorActions {
             });
         }
 
-        public override void Load() {
+        public override void OnLoad() {
             On.Celeste.Player.ctor += PlayerOnCtor;
             On.Celeste.Level.LoadNewPlayer += LevelOnLoadNewPlayer;
         }
 
-        public override void Unload() {
+        public override void OnUnload() {
             On.Celeste.Player.ctor -= PlayerOnCtor;
             On.Celeste.Level.LoadNewPlayer -= LevelOnLoadNewPlayer;
         }

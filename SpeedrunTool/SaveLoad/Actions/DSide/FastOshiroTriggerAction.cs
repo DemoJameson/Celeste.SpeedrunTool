@@ -11,7 +11,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.DSide {
         private static string TypeFullName = "Celeste.Mod.RubysEntities.FastOshiroTrigger";
         private Dictionary<EntityId2, Trigger> savedTriggers = new Dictionary<EntityId2, Trigger>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedTriggers = level.Entities.FindAll<Trigger>()
                 .Where(entity => entity.GetType().FullName == TypeFullName).GetDictionary();
         }

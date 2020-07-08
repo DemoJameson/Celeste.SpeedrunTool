@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class SandwichLavaAction : AbstractEntityAction {
         private Dictionary<EntityId2, SandwichLava> savedSandwichLavas = new Dictionary<EntityId2, SandwichLava>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedSandwichLavas = level.Entities.FindAllToDict<SandwichLava>();
         }
 

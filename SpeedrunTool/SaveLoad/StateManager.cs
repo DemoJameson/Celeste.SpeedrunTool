@@ -12,88 +12,8 @@ using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class StateManager {
-        private readonly List<AbstractEntityAction> entityActions = new List<AbstractEntityAction> {
-            // new PlayerAction(),
-            new CoroutineAction(),
-
-            // new AscendManagerAction(),
-            // new AudioAction(),
-            // new BadelineBoostAction(),
-            // new BadelineDummyAction(),
-            // new BadelineOldsiteAction(),
-            // // new BoosterAction(),
-            // new BounceBlockAction(),
-            // new BumperAction(),
-            // new CassetteBlockManagerAction(),
-            // // new CloudAction(),
-            // new ClutterSwitchAction(),
-            // new CrumblePlatformAction(),
-            // new CrumbleWallOnRumbleAction(),
-            // new CrushBlockAction(),
-            // new CrystalStaticSpinnerAction(),
-            // new DashBlockAction(),
-            // new DreamBlockAction(),
-            // new DustStaticSpinnerAction(),
-            // new DashSwitchAction(),
-            // new FallingBlockAction(),
-            // new FinalBossMovingBlockAction(),
-            // new FinalBossAction(),
-            // new FireBallAction(),
-            // new FlingBirdAction(),
-            // new FloatySpaceBlockAction(),
-            // // new FlyFeatherAction(),
-            // new ExitBlockAction(),
-            // new GliderAction(),
-            // new IntroCrusherAction(),
-            // new JumpthruPlatformAction(),
-            // // new KeyAction(),
-            // new LightningAction(),
-            // new LightningBreakerBoxAction(),
-            // new MoveBlockAction(),
-            // new MovingPlatformAction(),
-            // new OshiroTriggerAction(),
-            // new PlatformAction(),
-            // new PufferAction(),
-            // new ReflectionTentaclesAction(),
-            // new RefillAction(),
-            // new RisingLavaAction(),
-            // new RotateSpinnerAction(),
-            // new SandwichLavaAction(),
-            // new SeekerAction(),
-            // new SinkingPlatformAction(),
-            // new SnowballAction(),
-            // new SpikesAction(),
-            // new SpringAction(),
-            // new StarJumpBlockAction(),
-            // new StaticMoverAction(),
-            // // new StrawberryAction(),
-            // new StrawberrySeedAction(),
-            // new SwapBlockAction(),
-            // new SwitchGateAction(),
-            // new TalkComponentUIAction(),
-            // new TempleCrackedBlockAction(),
-            // new TempleGateAction(),
-            // new TempleMirrorPortalAction(),
-            // new TheoCrystalAction(),
-            // new TouchSwitchAction(),
-            // new TrackSpinnerAction(),
-            // new TriggerSpikesAction(),
-            // new WindControllerAction(),
-            // new ZipMoverAction(),
-            // // DSide
-            // new FastOshiroTriggerAction(),
-            // // Everest
-            // new TriggerSpikesOriginalAction(),
-            // // FrostHelper
-            // new ToggleSwapBlockAction(),
-            // new CustomCrystalSpinnerAction(),
-            // // Glyph
-            // new AttachedWallBoosterAction(),
-            // // ShroomHelper
-            // new AttachedIceWallAction(),
-            // new CrumbleBlockOnTouchAction(),
-        };
-
+        private readonly CoroutineAction coroutineAction = new CoroutineAction();
+        
         public Player SavedPlayer;
         public Dictionary<EntityId2, Entity> SavedEntitiesDict = new Dictionary<EntityId2, Entity>();
 
@@ -113,27 +33,26 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private PlayerDeadBody currentPlayerDeadBody;
 
-        public void Load() {
+        public void OnLoad() {
             On.Celeste.AreaData.DoScreenWipe += QuickLoadWhenDeath;
             On.Celeste.Level.Update += LevelOnUpdate;
             On.Celeste.Overworld.ctor += ClearStateAndPbTimes;
             On.Celeste.Player.Die += PlayerOnDie;
-            AttachEntityId2Utils.Load();
-            RestoreEntityUtils.Load();
-            entityActions.ForEach(action => action.OnLoad());
+            AttachEntityId2Utils.OnLoad();
+            RestoreEntityUtils.OnLoad();
+            coroutineAction.OnLoad();
         }
 
-        public void Unload() {
+        public void OnUnload() {
             On.Celeste.AreaData.DoScreenWipe -= QuickLoadWhenDeath;
             On.Celeste.Level.Update -= LevelOnUpdate;
             On.Celeste.Overworld.ctor -= ClearStateAndPbTimes;
             On.Celeste.Player.Die -= PlayerOnDie;
             AttachEntityId2Utils.Unload();
             RestoreEntityUtils.Unload();
-            entityActions.ForEach(action => action.OnUnload());
         }
 
-        public void Init() {
+        public void OnInit() {
             // enter debug map auto clear state
             Engine.Commands.FunctionKeyActions[5] += Clear;
         }
@@ -173,6 +92,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 // 等待一帧是因为画面背景和许多 Entity 都需时间要绘制，即使等待里一帧第三章 dust 很多的时候依然能看出绘制不完全
                 // Wait for a frame so entities update, then freeze game.
                 orig(self);
+                
                 // 等所有 Entity 创建完毕并运行一帧后再统一在此时机还原状态
                 RestoreEntityUtils.AfterEntityCreateAndUpdate1Frame(self);
 
@@ -206,10 +126,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             orig(self);
-
-            if (IsLoadComplete) {
-                loadState = SaveLoad.LoadState.None;
-            }
         }
 
         private readonly List<int> disabledSaveStates = new List<int> {
@@ -255,6 +171,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     .All(gem => false == (bool) gem.GetField(typeof(HeartGem), "collected"))) {
                     level.Add(new MiniTextbox(DialogIds.DialogClear));
                 }
+
+                return false;
             }
 
             return false;
@@ -265,7 +183,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             loadState = SaveLoad.LoadState.Start;
 
-            entityActions.ForEach(action => action.OnQuickSave(level));
+            coroutineAction.OnSaveSate(level);
 
             sessionCoreModeBackup = level.Session.CoreMode;
             savedSession = level.Session.DeepClone();
@@ -336,13 +254,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             level.CoreMode = savedSession.CoreMode;
             level.Session.CoreMode = sessionCoreModeBackup;
 
-            entityActions.ForEach(action => action.OnQuickLoadStart(level, player, SavedPlayer));
+            coroutineAction.OnLoadStart(level, player, SavedPlayer);
         }
 
         // 人物复活完毕后设置人物相关属性
         // Set more player data after the player respawns
         private void Loading(Level level, Player player) {
-            entityActions.ForEach(action => action.OnQuickLoading(level, player, SavedPlayer));
+            coroutineAction.OnLoading(level, player, SavedPlayer);
 
             level.Frozen = false;
             level.PauseLock = false;
@@ -368,7 +286,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SavedEntitiesDict.Clear();
             loadState = SaveLoad.LoadState.None;
 
-            entityActions.ForEach(action => action.OnClear());
+            coroutineAction.OnClear();
         }
 
 

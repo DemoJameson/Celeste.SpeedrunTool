@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private IEnumerable<string> pressedDashSwitches = Enumerable.Empty<string>();
         private Dictionary<EntityId2, DashSwitch> savedDashSwitches = new Dictionary<EntityId2, DashSwitch>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedDashSwitches = level.Entities.FindAllToDict<DashSwitch>();
             
             pressedDashSwitches = level.Entities.FindAll<DashSwitch>()

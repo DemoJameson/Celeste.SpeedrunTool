@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class TempleMirrorPortalAction : AbstractEntityAction {
         private Dictionary<EntityId2, TempleMirrorPortal> savedTempleMirrorPortal = new Dictionary<EntityId2, TempleMirrorPortal>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedTempleMirrorPortal = level.Entities.FindAllToDict<TempleMirrorPortal>();
         }
 

@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class PlatformAction : AbstractEntityAction {
-        public override void OnQuickSave(Level level) { }
+        public override void OnSaveSate(Level level) { }
         public override void OnClear() { }
 
         private void PlatformOnCtor(On.Celeste.Platform.orig_ctor orig, Platform self, Vector2 position, bool safe) {

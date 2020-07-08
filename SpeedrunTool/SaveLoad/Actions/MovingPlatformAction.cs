@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class MovingPlatformAction : AbstractEntityAction {
         private Dictionary<EntityId2, MovingPlatform> savedMovingPlatforms = new Dictionary<EntityId2, MovingPlatform>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedMovingPlatforms = level.Entities.FindAllToDict<MovingPlatform>();
         }
 

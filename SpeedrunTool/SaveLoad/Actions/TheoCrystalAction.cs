@@ -5,7 +5,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class TheoCrystalAction : AbstractEntityAction {
         private TheoCrystal savedTheoCrystal;
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedTheoCrystal = level.Entities.FindFirst<TheoCrystal>();
         }
 

@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Glyph {
         private const string FullName = "Celeste.Mod.AcidHelper.Entities.AttachedWallBooster";
         private Dictionary<EntityId2, WallBooster> savedWallBoosters = new Dictionary<EntityId2, WallBooster>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedWallBoosters = level.Entities.FindAllToDict<WallBooster>();
         }
 

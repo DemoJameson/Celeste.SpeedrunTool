@@ -16,7 +16,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private static readonly FieldInfo CenterFieldInfo =
             typeof(RotateSpinner).GetField("center", BindingFlags.NonPublic | BindingFlags.Instance);
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedRotateSpinners = level.Entities.FindAllToDict<RotateSpinner>();
         }
 

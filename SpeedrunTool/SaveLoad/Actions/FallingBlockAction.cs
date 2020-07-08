@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class FallingBlockAction : AbstractEntityAction {
         private Dictionary<EntityId2, FallingBlock> fallingBlocks = new Dictionary<EntityId2, FallingBlock>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             fallingBlocks = level.Entities.FindAllToDict<FallingBlock>();
         }
 

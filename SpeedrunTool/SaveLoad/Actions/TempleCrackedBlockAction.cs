@@ -7,7 +7,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class TempleCrackedBlockAction : AbstractEntityAction {
         private Dictionary<EntityId2, TempleCrackedBlock> saveEntities = new Dictionary<EntityId2, TempleCrackedBlock>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             saveEntities = level.Entities.FindAllToDict<TempleCrackedBlock>();
         }
 

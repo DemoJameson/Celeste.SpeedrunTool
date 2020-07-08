@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityId2, CrystalStaticSpinner> savedSpinners =
             new Dictionary<EntityId2, CrystalStaticSpinner>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedSpinners = level.Entities.FindAllToDict<CrystalStaticSpinner>();
         }
 

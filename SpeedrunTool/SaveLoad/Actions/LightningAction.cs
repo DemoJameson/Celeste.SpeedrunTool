@@ -12,7 +12,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
         private Dictionary<EntityId2, Lightning> savedLightnings = new Dictionary<EntityId2, Lightning>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedLightnings = level.Entities.FindAllToDict<Lightning>();
         }
 

@@ -7,7 +7,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class SpringAction : AbstractEntityAction {
         private Dictionary<EntityId2, Spring> springs = new Dictionary<EntityId2, Spring>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             springs = level.Entities.FindAllToDict<Spring>();
         }
 

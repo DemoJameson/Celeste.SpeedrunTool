@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Celeste.Mod.SpeedrunTool.Extensions;
-using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Monocle;
@@ -42,7 +41,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             if (type.IsNestedPrivate) {
                 if (!SpecialNestedPrivateTypes.Contains(type.FullName)) return;
                 entityIdParam = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                    .Where(info => info.FieldType.IsSimpleType() && info.DeclaringType.IsNestedPrivate).Aggregate(
+                    .Where(info => info.FieldType.IsSimple() && info.DeclaringType.IsNestedPrivate).Aggregate(
                         entityIdParam,
                         (current, fieldInfo) => current + (fieldInfo.GetValue(self)?.ToString() ?? "null"));
             }
@@ -92,7 +91,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             // entity.Log("IL Set EntityId2: ", entity.GetEntityId2().ToString());
         }
 
-        public static void Load() {
+        public static void OnLoad() {
             On.Monocle.Entity.Added += EntityOnAdded;
             origLoadLevelHook = new ILHook(typeof(Level).GetMethod("orig_LoadLevel"), ModOrigLoadLevel);
             loadCustomEntityHook = new ILHook(typeof(Level).GetMethod("LoadCustomEntity"), ModLoadCustomEntity);

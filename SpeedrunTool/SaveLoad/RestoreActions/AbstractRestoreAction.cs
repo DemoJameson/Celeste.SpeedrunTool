@@ -17,8 +17,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             SubclassRestoreActions = subclassRestoreActions ?? new List<AbstractRestoreAction>();
         }
 
-        public virtual void Load() { }
-        public virtual void Unload() { }
+        public virtual void OnLoad() { }
+        public virtual void OnUnload() { }
 
         // 执行循序从上至下
         public virtual void Added(Entity loadedEntity, Entity savedEntity) { }

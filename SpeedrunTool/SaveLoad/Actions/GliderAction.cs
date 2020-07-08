@@ -10,7 +10,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private List<Glider> savedGliders = new List<Glider>();
         private List<Glider> savedGlidersCopy = new List<Glider>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedGliders = level.Entities.FindAll<Glider>().ToList();
             savedGlidersCopy = level.Entities.FindAll<Glider>().ToList();
         }
@@ -35,7 +35,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
         }
 
-        public override void OnQuickLoadStart(Level level, Player player, Player savedPlayer) {
+        public override void OnLoadStart(Level level, Player player, Player savedPlayer) {
             if (savedGlidersCopy.Count == 0) {
                 return;
             }

@@ -16,7 +16,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private readonly Dictionary<EntityId2, SeekerStatue> savedSeekerStatues =
             new Dictionary<EntityId2, SeekerStatue>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedSeekers.AddRange(level.Entities.FindAll<Seeker>());
             savedSeekerStatues.AddRange(level.Entities.FindAll<SeekerStatue>());
         }

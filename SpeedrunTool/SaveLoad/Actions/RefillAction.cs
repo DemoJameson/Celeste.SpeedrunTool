@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class RefillAction : AbstractEntityAction {
         private Dictionary<EntityId2, Refill> savedRefills = new Dictionary<EntityId2, Refill>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedRefills = level.Entities.FindAllToDict<Refill>();
         }
 

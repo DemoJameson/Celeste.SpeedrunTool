@@ -7,7 +7,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class CrumbleWallOnRumbleAction : AbstractEntityAction {
         private Dictionary<EntityId2, CrumbleWallOnRumble> savedCrumbleWallOnRumbles = new Dictionary<EntityId2, CrumbleWallOnRumble>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedCrumbleWallOnRumbles = level.Entities.FindAllToDict<CrumbleWallOnRumble>();
         }
 

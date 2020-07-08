@@ -11,7 +11,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class SwitchGateAction : AbstractEntityAction {
         private Dictionary<EntityId2, SwitchGate> savedSwitchGates = new Dictionary<EntityId2, SwitchGate>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedSwitchGates = level.Entities.FindAllToDict<SwitchGate>();
         }
 

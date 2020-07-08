@@ -35,11 +35,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.PlatformActions.Solid
             il.SkipAddCoroutine<MoveBlock>("Controller", () => IsLoadStart);
         }
 
-        public override void Load() {
+        public override void OnLoad() {
             IL.Celeste.MoveBlock.ctor_Vector2_int_int_Directions_bool_bool += BlockCoroutineStart;
         }
 
-        public override void Unload() {
+        public override void OnUnload() {
             IL.Celeste.MoveBlock.ctor_Vector2_int_int_Directions_bool_bool -= BlockCoroutineStart;
         }
     }

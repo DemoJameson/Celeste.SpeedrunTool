@@ -12,7 +12,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.ShroomHelper {
         private const string FullName2 = "Celeste.Mod.AcidHelper.Entities.CrumbleWallOnTouch";
         private Dictionary<EntityId2, Entity> savedBlocks = new Dictionary<EntityId2, Entity>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedBlocks = level.Entities.FindAll<Entity>()
                 .Where(entity => entity.GetType().FullName == FullName || entity.GetType().FullName == FullName2)
                 .GetDictionary();

@@ -10,7 +10,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityId2, StrawberrySeed> savedBerrySeeds = new Dictionary<EntityId2, StrawberrySeed>();
         private readonly Dictionary<EntityId2, StrawberrySeed> savedCollectedBerrySeeds = new Dictionary<EntityId2, StrawberrySeed>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             if (!(level.Entities.FindFirst<Player>() is Player player)) {
                 return;
             }
@@ -58,7 +58,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
         }
 
-        public override void OnQuickLoadStart(Level level, Player player, Player savedPlayer) {
+        public override void OnLoadStart(Level level, Player player, Player savedPlayer) {
             List<StrawberrySeed> addedBerrySeeds = level.Entities.FindAll<StrawberrySeed>();
 
             foreach (StrawberrySeed savedBerrySeed in savedCollectedBerrySeeds.Values) {

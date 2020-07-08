@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private const string CheckStaticMover = "CheckStaticMover";
         private readonly Dictionary<EntityId2, StaticMover> savedStaticMovers = new Dictionary<EntityId2, StaticMover>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             var staticMovers = level.Tracker.GetComponents<StaticMover>();
             foreach (StaticMover staticMover in staticMovers) {
                 var entityId = staticMover.Entity.GetEntityId2();

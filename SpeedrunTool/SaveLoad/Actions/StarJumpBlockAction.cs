@@ -7,7 +7,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class StarJumpBlockAction : AbstractEntityAction {
         private Dictionary<EntityId2, StarJumpBlock> savedStarJumpBlocks = new Dictionary<EntityId2, StarJumpBlock>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedStarJumpBlocks = level.Entities.FindAllToDict<StarJumpBlock>();
         }
 

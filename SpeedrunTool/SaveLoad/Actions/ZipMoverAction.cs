@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class ZipMoverAction : AbstractEntityAction {
         private Dictionary<EntityId2, ZipMover> savedZipMovers = new Dictionary<EntityId2, ZipMover>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedZipMovers = level.Entities.FindAllToDict<ZipMover>();
         }
 

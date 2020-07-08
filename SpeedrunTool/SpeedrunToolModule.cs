@@ -45,7 +45,7 @@ namespace Celeste.Mod.SpeedrunTool {
             RespawnSpeedUtils.Load();
             RoomTimerManager.Instance.Load();
             TeleportRoomUtils.Load();
-            StateManager.Instance.Load();
+            StateManager.Instance.OnLoad();
         }
 
         // Unload the entirety of your mod's content, remove any event listeners and undo all hooks.
@@ -55,13 +55,13 @@ namespace Celeste.Mod.SpeedrunTool {
             RespawnSpeedUtils.Unload();
             RoomTimerManager.Instance.Unload();
             TeleportRoomUtils.Unload();
-            StateManager.Instance.Unload();
+            StateManager.Instance.OnUnload();
         }
 
         // Optional, initialize anything after Celeste has initialized itself properly.
         public override void Initialize() {
             RoomTimerManager.Instance.Init();
-            StateManager.Instance.Init();
+            StateManager.Instance.OnInit();
             ButtonConfigUi.Init();
         }
     }

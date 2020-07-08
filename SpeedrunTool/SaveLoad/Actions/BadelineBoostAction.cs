@@ -12,7 +12,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class BadelineBoostAction : AbstractEntityAction {
         private Dictionary<EntityId2, BadelineBoost> savedBadelineBoosts = new Dictionary<EntityId2, BadelineBoost>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedBadelineBoosts = level.Entities.FindAllToDict<BadelineBoost>();
         }
 

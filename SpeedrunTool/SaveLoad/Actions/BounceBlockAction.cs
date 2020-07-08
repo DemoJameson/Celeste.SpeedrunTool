@@ -7,7 +7,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class BounceBlockAction : AbstractEntityAction {
         private Dictionary<EntityId2, BounceBlock> savedBounceBlocks = new Dictionary<EntityId2, BounceBlock>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedBounceBlocks = level.Entities.FindAllToDict<BounceBlock>();
         }
 

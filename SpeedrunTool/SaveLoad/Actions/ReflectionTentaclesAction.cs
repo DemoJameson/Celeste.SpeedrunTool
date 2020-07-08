@@ -10,7 +10,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityId2, ReflectionTentacles> savedReflectionTentacles =
             new Dictionary<EntityId2, ReflectionTentacles>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedReflectionTentacles = level.Entities.FindAllToDict<ReflectionTentacles>();
         }
 

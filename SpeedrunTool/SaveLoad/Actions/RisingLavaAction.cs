@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class RisingLavaAction : AbstractEntityAction {
         private Dictionary<EntityId2, RisingLava> savedRisingLavas = new Dictionary<EntityId2, RisingLava>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedRisingLavas = level.Entities.FindAllToDict<RisingLava>();
         }
 

@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private CassetteBlockManager savedCassetteBlockManager;
         private bool disableAudio;
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedCassetteBlockManager = level.Entities.FindFirst<CassetteBlockManager>();
         }
 

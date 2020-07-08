@@ -11,7 +11,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.FrostHelper {
         private const string FullName = "FrostHelper.CrystalStaticSpinner";
         private Dictionary<EntityId2, Entity> savedSpinners = new Dictionary<EntityId2, Entity>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedSpinners = level.Entities.FindAll<Entity>()
                 .Where(entity => entity.GetType().FullName == FullName).GetDictionary();
         }

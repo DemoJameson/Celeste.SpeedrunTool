@@ -11,7 +11,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.ShroomHelper {
         private const string FullName = "Celeste.Mod.ShroomHelper.Entities.AttachedIceWall";
         private Dictionary<EntityId2, Entity> savedIceWalls = new Dictionary<EntityId2, Entity>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedIceWalls = level.Entities.FindAll<Entity>()
                 .Where(entity => entity.GetType().FullName == FullName).GetDictionary();
         }

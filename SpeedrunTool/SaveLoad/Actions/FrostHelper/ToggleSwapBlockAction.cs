@@ -11,7 +11,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.FrostHelper {
         private const string FullName = "FrostHelper.ToggleSwapBlock";
         private Dictionary<EntityId2, Solid> savedSolids = new Dictionary<EntityId2, Solid>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedSolids = level.Entities.FindAll<Solid>()
                 .Where(entity => entity.GetType().FullName == FullName).GetDictionary();
         }

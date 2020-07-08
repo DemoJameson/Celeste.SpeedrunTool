@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class TempleGateAction : AbstractEntityAction {
         private Dictionary<EntityId2, TempleGate> savedTempleGates = new Dictionary<EntityId2, TempleGate>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedTempleGates = level.Entities.FindAllToDict<TempleGate>();
         }
 

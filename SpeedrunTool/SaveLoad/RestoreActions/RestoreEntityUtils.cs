@@ -85,18 +85,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             });
         }
 
-        public static void Load() {
+        public static void OnLoad() {
             // On.Monocle.Entity.Added += EntityOnAdded;
             // On.Monocle.Entity.Awake += EntityOnAwake;
             On.Celeste.Level.Begin += LevelOnBegin;
-            AllRestoreActions.ForEach(action => action.Load());
+            AllRestoreActions.ForEach(action => action.OnLoad());
         }
 
         public static void Unload() {
             // On.Monocle.Entity.Added -= EntityOnAdded;
             // On.Monocle.Entity.Awake -= EntityOnAwake;
             On.Celeste.Level.Begin -= LevelOnBegin;
-            AllRestoreActions.ForEach(action => action.Unload());
+            AllRestoreActions.ForEach(action => action.OnUnload());
         }
     }
 }

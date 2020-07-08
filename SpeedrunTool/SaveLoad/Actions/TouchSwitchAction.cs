@@ -7,7 +7,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class TouchSwitchAction : AbstractEntityAction {
         private Dictionary<EntityId2, TouchSwitch> savedTouchSwitchs = new Dictionary<EntityId2, TouchSwitch>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedTouchSwitchs = level.Entities.FindAllToDict<TouchSwitch>();
         }
 

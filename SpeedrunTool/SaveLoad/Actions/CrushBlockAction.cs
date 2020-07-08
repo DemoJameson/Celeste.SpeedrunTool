@@ -23,7 +23,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             IL.Celeste.CrushBlock.ctor_Vector2_float_float_Axes_bool -= BlockCoroutineStart;
         }
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedCrushBlocks = level.Entities.FindAllToDict<CrushBlock>();
         }
 

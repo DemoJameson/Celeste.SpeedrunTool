@@ -7,7 +7,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class SpikesAction : AbstractEntityAction {
         private Dictionary<EntityId2, Spikes> savedSpikes = new Dictionary<EntityId2, Spikes>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedSpikes = level.Entities.FindAllToDict<Spikes>();
         }
 

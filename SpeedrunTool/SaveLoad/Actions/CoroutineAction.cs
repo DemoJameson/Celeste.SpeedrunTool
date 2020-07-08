@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using Celeste.Mod.SpeedrunTool.Extensions;
@@ -60,7 +59,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             typeof(Lookout),
         };
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             foreach (Entity e in level.Entities) {
                 if (ExcludeTypes.Contains(e.GetType())) continue;
                 if (e.NoEntityId2()) continue;
@@ -149,12 +148,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             if (value == null) {
                 return null;
             }
+
             object foundValue = null;
             if (value is List<MTexture> mTextures) {
                 foundValue = new List<MTexture>(mTextures);
             } else if (value.GetType() == DebrisListType)
                 foundValue = Convert.ChangeType(value, DebrisListType);
-            else if (value.GetType() ==  typeof(Image)) {
+            else if (value.GetType() == typeof(Image)) {
                 foundValue = new Image(new MTexture());
             } else if (value is SoundEmitter soundEmitter) {
                 foundValue = SoundEmitter.Play(soundEmitter.Source.EventName, new Entity(soundEmitter.Position));
@@ -171,7 +171,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             return foundValue;
         }
 
-        public override void OnQuickLoading(Level level, Player player, Player savedPlayer) {
+        public override void OnLoading(Level level, Player player, Player savedPlayer) {
+            RemoveOriginalCoroutine(level);
+            
             var entities = level.Entities.FindAllToDict<Entity>();
             Coroutine coroutine = null;
             foreach (Routine routine in loadedRoutines) {
@@ -247,7 +249,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
 
                 if (foundValue != null) {
                     routineObj.SetField(routineObj.GetType(), field.Name, foundValue);
-                } else if(local == null) {
+                } else if (local == null) {
                     routineObj.SetField(routineObj.GetType(), field.Name, null);
                 } else {
                     Logger.Log("SpeedrunTool",
@@ -256,33 +258,26 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
         }
 
-        public override void OnClear() => loadedRoutines = new List<Routine>();
+        private void RemoveOriginalCoroutine(Level level) {
+            IEnumerable<Entity> entities =
+                level.Entities.Where(entity => entity.HasEntityId2() && !ExcludeTypes.Contains(entity.GetType()));
+            foreach (Entity entity in entities) {
+                if (entity.TagCheck(Tags.Global) || entity is PlayerDeadBody) continue;
 
-        public override void OnLoad() {
-            On.Monocle.Entity.Add_Component += EntityOnAdd_Component;
-        }
-
-        // Remove Duplicate Coroutine
-        private void EntityOnAdd_Component(On.Monocle.Entity.orig_Add_Component orig, Entity self, Component component) {
-            orig(self, component);
-            if (self.TagCheck(Tags.Global) || self is PlayerDeadBody || !IsLoadStart) return;
-            
-            if (component is Coroutine coroutine) {
-                StackTrace stackTrace = new StackTrace();
-                foreach (StackFrame stackFrame in stackTrace.GetFrames().Take(8)) {
-                    MethodBase methodBase = stackFrame.GetMethod();
-                    string methodName = methodBase.Name;
-                    if (methodBase.DeclaringType == self.GetType() &&
-                        methodName.Contains("Added") || methodName.Contains("Awake") || methodName.Contains(".ctor") &&
-                        coroutine.GetField("enumerators") is Stack<IEnumerator> stack && stack.Count > 0) {
-                        coroutine.RemoveSelf();
-                        self.Log("Remove Coroutine:");
-                    }
+                List<Component> duplicateCoroutine = entity.Components.Where(component =>
+                    component is Coroutine coroutine &&
+                    coroutine.GetField("enumerators") is Stack<IEnumerator> stack && stack.Count > 0).ToList();
+                    
+                foreach (Component coroutine in duplicateCoroutine) {
+                    coroutine.RemoveSelf();
                 }
             }
         }
-        
+
+        public override void OnClear() => loadedRoutines = new List<Routine>();
+
+        public override void OnLoad() { }
+
         public override void OnUnload() { }
     }
-
 }

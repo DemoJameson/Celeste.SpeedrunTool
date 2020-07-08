@@ -11,7 +11,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class TriggerSpikesAction : AbstractEntityAction {
         private Dictionary<EntityId2, TriggerSpikes> savedTriggerSpikes = new Dictionary<EntityId2, TriggerSpikes>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedTriggerSpikes = level.Entities.FindAllToDict<TriggerSpikes>();
         }
 

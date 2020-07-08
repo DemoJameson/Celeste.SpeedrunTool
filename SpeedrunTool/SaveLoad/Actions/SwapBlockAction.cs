@@ -7,7 +7,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class SwapBlockAction : AbstractEntityAction {
         private Dictionary<EntityId2, SwapBlock> swapBlocks = new Dictionary<EntityId2, SwapBlock>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             swapBlocks = level.Entities.FindAllToDict<SwapBlock>();
         }
 

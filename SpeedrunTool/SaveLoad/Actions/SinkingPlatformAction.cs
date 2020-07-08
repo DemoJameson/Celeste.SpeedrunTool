@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class SinkingPlatformAction : AbstractEntityAction {
         private readonly Dictionary<EntityId2, SinkingPlatform> sinkingPlatforms = new Dictionary<EntityId2, SinkingPlatform>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             sinkingPlatforms.AddRange(level.Entities.FindAll<SinkingPlatform>());
         }
 

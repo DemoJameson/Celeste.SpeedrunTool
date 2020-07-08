@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityId2, FloatySpaceBlock> savedFloatySpaceBlocks =
             new Dictionary<EntityId2, FloatySpaceBlock>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedFloatySpaceBlocks = level.Entities.FindAllToDict<FloatySpaceBlock>();
         }
 

@@ -7,7 +7,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class JumpthruPlatformAction : AbstractEntityAction {
         private Dictionary<EntityId2, JumpthruPlatform> savedJumpthruPlatforms = new Dictionary<EntityId2, JumpthruPlatform>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedJumpthruPlatforms = level.Entities.FindAllToDict<JumpthruPlatform>();
         }
 

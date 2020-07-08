@@ -7,7 +7,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class DashBlockAction : AbstractEntityAction {
         private Dictionary<EntityId2, DashBlock> savedDashBlocks = new Dictionary<EntityId2, DashBlock>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedDashBlocks = level.Entities.FindAllToDict<DashBlock>();
         }
 

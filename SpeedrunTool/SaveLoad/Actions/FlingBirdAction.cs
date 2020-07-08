@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         private Dictionary<EntityId2, FlingBird> savedFlingBirds = new Dictionary<EntityId2, FlingBird>();
         private const string RestoreBird = "RestoreBird";
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedFlingBirds = level.Entities.FindAllToDict<FlingBird>();
         }
 

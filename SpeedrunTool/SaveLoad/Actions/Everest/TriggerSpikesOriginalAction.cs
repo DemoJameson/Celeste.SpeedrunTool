@@ -12,7 +12,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Everest {
     public class TriggerSpikesOriginalAction : AbstractEntityAction {
         private Dictionary<EntityId2, Entity> savedTriggerSpikes = new Dictionary<EntityId2, Entity>();
 
-        public override void OnQuickSave(Level level) {
+        public override void OnSaveSate(Level level) {
             savedTriggerSpikes = level.Entities.FindAll<Entity>()
                 .Where(entity => entity.GetType().FullName == "Celeste.Mod.Entities.TriggerSpikesOriginal").GetDictionary();
         }

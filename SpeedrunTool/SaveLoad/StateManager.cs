@@ -12,8 +12,6 @@ using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class StateManager {
-        private readonly CoroutineAction coroutineAction = new CoroutineAction();
-        
         public Player SavedPlayer;
         public Dictionary<EntityId2, Entity> SavedEntitiesDict = new Dictionary<EntityId2, Entity>();
 
@@ -40,7 +38,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Celeste.Player.Die += PlayerOnDie;
             AttachEntityId2Utils.OnLoad();
             RestoreEntityUtils.OnLoad();
-            coroutineAction.OnLoad();
+            ComponentAction.All.ForEach(action => action.OnLoad());
         }
 
         public void OnUnload() {
@@ -92,7 +90,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 // 等待一帧是因为画面背景和许多 Entity 都需时间要绘制，即使等待里一帧第三章 dust 很多的时候依然能看出绘制不完全
                 // Wait for a frame so entities update, then freeze game.
                 orig(self);
-                
+
                 // 等所有 Entity 创建完毕并运行一帧后再统一在此时机还原状态
                 RestoreEntityUtils.AfterEntityCreateAndUpdate1Frame(self);
 
@@ -141,7 +139,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private bool CheckButton(Level level, Player player) {
             if (GetVirtualButton(Mappings.Save).Pressed && !level.Paused && !level.Transitioning && !level.PauseLock &&
                 !level.InCutscene &&
-                !level.SkippingCutscene && player != null && !player.Dead) {
+                !level.SkippingCutscene && player != null && !player.Dead
+                && level.Tracker.GetEntity<Lookout>()?.GetField("interacting") as bool? != true
+                ) {
                 GetVirtualButton(Mappings.Save).ConsumePress();
                 int state = player.StateMachine.State;
 
@@ -183,7 +183,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             loadState = SaveLoad.LoadState.Start;
 
-            coroutineAction.OnSaveSate(level);
+            ComponentAction.All.ForEach(action => action.OnSaveSate(level));
 
             sessionCoreModeBackup = level.Session.CoreMode;
             savedSession = level.Session.DeepClone();
@@ -254,13 +254,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             level.CoreMode = savedSession.CoreMode;
             level.Session.CoreMode = sessionCoreModeBackup;
 
-            coroutineAction.OnLoadStart(level, player, SavedPlayer);
+            ComponentAction.All.ForEach(action => action.OnLoadStart(level, player, SavedPlayer));
         }
 
         // 人物复活完毕后设置人物相关属性
         // Set more player data after the player respawns
         private void Loading(Level level, Player player) {
-            coroutineAction.OnLoading(level, player, SavedPlayer);
+            ComponentAction.All.ForEach(action => action.OnLoading(level, player, SavedPlayer));
 
             level.Frozen = false;
             level.PauseLock = false;
@@ -286,7 +286,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SavedEntitiesDict.Clear();
             loadState = SaveLoad.LoadState.None;
 
-            coroutineAction.OnClear();
+            ComponentAction.All.ForEach(action => action.OnClear());
         }
 
 

@@ -1,14 +1,17 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
+using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
-    class CoroutineAction : AbstractEntityAction {
+    class CoroutineAction : ComponentAction {
         private static readonly FieldInfo EnumeratorsFieldInfo =
             typeof(Coroutine).GetField("enumerators", BindingFlags.NonPublic | BindingFlags.Instance);
 
@@ -53,10 +56,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         }
 
         private static readonly List<Type> ExcludeTypes = new List<Type> {
-            // typeof(ForsakenCitySatellite),
-            typeof(Lightning),
-            typeof(LightningBreakerBox),
-            typeof(Lookout),
+            // typeof(Lightning),
+            // typeof(LightningBreakerBox),
         };
 
         public override void OnSaveSate(Level level) {
@@ -144,36 +145,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
         }
 
-        private object LocalsSpecialCases(object value) {
-            if (value == null) {
-                return null;
-            }
-
-            object foundValue = null;
-            if (value is List<MTexture> mTextures) {
-                foundValue = new List<MTexture>(mTextures);
-            } else if (value.GetType() == DebrisListType)
-                foundValue = Convert.ChangeType(value, DebrisListType);
-            else if (value.GetType() == typeof(Image)) {
-                foundValue = new Image(new MTexture());
-            } else if (value is SoundEmitter soundEmitter) {
-                foundValue = SoundEmitter.Play(soundEmitter.Source.EventName, new Entity(soundEmitter.Position));
-            } else if (value is Tween tween) {
-                var foundTween = Tween.Create(tween.Mode, tween.Easer, tween.Duration);
-                foundTween.CopyFrom(tween);
-                foundValue = foundTween;
-            }
-            //doesn't actually work properly i think
-            else if (value is Delegate @delegate) {
-                foundValue = @delegate.Clone();
-            }
-
-            return foundValue;
-        }
-
         public override void OnLoading(Level level, Player player, Player savedPlayer) {
             RemoveOriginalCoroutine(level);
-            
+
             var entities = level.Entities.FindAllToDict<Entity>();
             Coroutine coroutine = null;
             foreach (Routine routine in loadedRoutines) {
@@ -237,14 +211,17 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     // }
                 } else if (field.FieldType == typeof(Level))
                     foundValue = level;
-                else if (local is ValueType)
+                else if (field.FieldType.IsValueType)
                     foundValue = local;
                 // It isn't actually a routine but a object of a compiler-generated type stored as a routine.
                 else if (local is Routine _routine) {
                     ConstructorInfo routineCtor = _routine.type.GetConstructor(new Type[0]);
                     object obj = routineCtor.Invoke(new object[0]);
+                    // object obj = Activator.CreateInstance(_routine.type);
                     SetCoroutineLocals(level, entities, _routine, obj);
                     foundValue = obj;
+                } else if (field.FieldType == typeof(object)) {
+                    foundValue = local;
                 }
 
                 if (foundValue != null) {
@@ -252,10 +229,58 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 } else if (local == null) {
                     routineObj.SetField(routineObj.GetType(), field.Name, null);
                 } else {
+                    // TODO Temp workaround: create new uninitialized object
+                    // TODO MoveBlock crash when restore local, fieldType is EventInstance and Coroutine 
                     Logger.Log("SpeedrunTool",
                         $"\nCan't Restore Coroutine Locals:\nroutineType={routine.type}\nfield={field}\nlocal={local}");
+                    try {
+                        object value = Activator.CreateInstance(field.FieldType);
+                        routineObj.SetField(routineObj.GetType(), field.Name, value);
+                        value.CopyAllFrom(local, field.FieldType, field.FieldType);
+                    } catch (Exception e) {
+                        e.StackTrace.DebugLog();
+                        try {
+                            object value = FormatterServices.GetUninitializedObject(field.FieldType);
+                            routineObj.SetField(routineObj.GetType(), field.Name, value);
+                            value.CopyAllFrom(local, field.FieldType, field.FieldType);
+                        } catch (Exception) {
+                            e.StackTrace.DebugLog();
+                        }
+                    }
                 }
             }
+        }
+
+        private object LocalsSpecialCases(object value) {
+            if (value == null) {
+                return null;
+            }
+
+            object foundValue = null;
+            if (value is List<MTexture> mTextures) {
+                foundValue = new List<MTexture>(mTextures);
+            } else if (value.GetType() == DebrisListType)
+                foundValue = Convert.ChangeType(value, DebrisListType);
+            else if (value.GetType() == typeof(Image)) {
+                foundValue = new Image(new MTexture());
+            } else if (value is SoundEmitter soundEmitter) {
+                foundValue = SoundEmitter.Play(soundEmitter.Source.EventName, new Entity(soundEmitter.Position));
+            } else if (value is Tween tween) {
+                var foundTween = Tween.Create(tween.Mode, tween.Easer, tween.Duration);
+                foundTween.CopyFrom(tween);
+                foundValue = foundTween;
+            } else if (value is BadelineDummy badelineDummy) {
+                foundValue = new BadelineDummy(badelineDummy.Position);
+                Engine.Scene.Add((Entity) foundValue);
+            } else if (value is Stopwatch) {
+                foundValue = new Stopwatch();
+            }
+            //doesn't actually work properly i think
+            else if (value is Delegate @delegate) {
+                foundValue = @delegate.Clone();
+            }
+
+            return foundValue;
         }
 
         private void RemoveOriginalCoroutine(Level level) {
@@ -267,7 +292,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 List<Component> duplicateCoroutine = entity.Components.Where(component =>
                     component is Coroutine coroutine &&
                     coroutine.GetField("enumerators") is Stack<IEnumerator> stack && stack.Count > 0).ToList();
-                    
+
                 foreach (Component coroutine in duplicateCoroutine) {
                     coroutine.RemoveSelf();
                 }

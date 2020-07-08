@@ -12,7 +12,7 @@ using MonoMod.RuntimeDetour;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
     public static class AttachEntityId2Utils {
         private static readonly List<Type> ExcludeTypes = new List<Type> {
-            typeof(Entity),
+            // typeof(Entity),
             typeof(Cobweb),
             typeof(Decal),
             typeof(HangingLamp),

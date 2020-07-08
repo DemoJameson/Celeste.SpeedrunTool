@@ -1,14 +1,35 @@
 using System;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
+using Mono.Cecil.Cil;
 using Monocle;
+using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.EntityActions {
     // Bug: 吃下钥匙后马上保存会出现两把钥匙
     public class KeyRestoreAction : RestoreAction {
         public KeyRestoreAction() : base(typeof(Key)) { }
         public override void OnLoad() {
-            On.Celeste.Key.ctor_Player_EntityID += KeyOnCtor_Player_EntityID;
+            // On.Celeste.Key.ctor_Player_EntityID += KeyOnCtor_Player_EntityID;
+            IL.Celeste.Key.ctor_Player_EntityID += KeyOnCtor_Player_EntityID;
+        }
+
+        private void KeyOnCtor_Player_EntityID(ILContext il) {
+            ILCursor cursor = new ILCursor(il);
+
+            if (cursor.TryGotoNext(MoveType.After, i => i.MatchCallvirt<Leader>("GainFollower"))) {
+                Instruction skipInstruction = cursor.Next;
+
+                if (cursor.TryGotoPrev(i => i.OpCode == OpCodes.Ldarg_1)) {
+                    cursor.Emit(OpCodes.Ldarg_0).Emit(OpCodes.Ldarg_0).EmitDelegate<Action<Key, EntityID>>(
+                        (key, id) => {
+                            key.SetEntityId2(id);
+                        });
+                    cursor.EmitDelegate<Func<bool>>(() => IsLoadStart);
+                    cursor.Emit(OpCodes.Brtrue, skipInstruction);
+                    
+                }
+            }
         }
 
         public override void OnUnload() {

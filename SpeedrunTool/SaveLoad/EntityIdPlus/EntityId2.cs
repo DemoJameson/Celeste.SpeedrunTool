@@ -104,10 +104,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             return !entity.HasEntityId2();
         }
 
-        public static Entity FindFirst(this Scene scene, EntityId2 entityId2) {
-            if (entityId2 == default) return null;
-            return scene.Entities.FirstOrDefault(e =>
-                e.GetEntityId2() == entityId2);
+        public static Entity FindFirst(this Scene scene, EntityId2? entityId2) {
+            if (entityId2 == null) return null;
+            if (entityId2 == default(EntityId2)) return null;
+            return scene.Entities.FirstOrDefault(e => e.GetEntityId2() == entityId2);
         }
 
         public static Dictionary<EntityId2, T> FindAllToDict<T>(this EntityList entityList) where T : Entity {

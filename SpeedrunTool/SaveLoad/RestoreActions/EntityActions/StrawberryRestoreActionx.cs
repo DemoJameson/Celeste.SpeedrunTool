@@ -16,6 +16,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.EntityActions {
         }
     }
 
+    // TODO Auto Restore Follower
     public static class FollowerExtensions {
         public static void CopyFrom(this Follower follower, Follower otherFollower) {
             if (otherFollower.HasLeader && follower.Scene.GetPlayer() is Player player) {

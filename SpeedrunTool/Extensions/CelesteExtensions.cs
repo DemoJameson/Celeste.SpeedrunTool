@@ -61,11 +61,6 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return result;
         }
 
-        public static void SetTime(this SoundSource soundSource, int time) {
-            object eventInstance = soundSource.GetField("instance");
-            eventInstance.GetType().GetMethod("setTimelinePosition")?.Invoke(eventInstance, new object[] {time});
-        }
-
         public static void CopyFrom(this Tween tween, Tween otherTween) {
             tween.SetProperty("TimeLeft", otherTween.TimeLeft);
             tween.SetProperty("Reverse", otherTween.Reverse);

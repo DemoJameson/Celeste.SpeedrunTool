@@ -7,7 +7,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
     public static class TypeExtensions {
         public static bool IsSimple(this Type type) {
             // seems celeste not use decimal type.
-            return type.IsPrimitive || type.IsValueType || type.IsEnum || type == typeof(string) ||
+            return type.IsPrimitive || type.IsValueType && type.FullName != "Celeste.TriggerSpikes+SpikeInfo" || type.IsEnum || type == typeof(string) ||
                    type == typeof(decimal);
         }
 

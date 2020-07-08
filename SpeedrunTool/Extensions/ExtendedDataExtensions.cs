@@ -53,5 +53,13 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         public static void SetExtendedBoolean(this object o, string name, bool value) {
             SetExtendedDataValue(o, name, value);
         }
+        
+        public static int GetExtendedInt(this object o, string name) {
+            return GetExtendedDataValue<int>(o, name);
+        }
+
+        public static void SetExtendedInt(this object o, string name, int value) {
+            SetExtendedDataValue(o, name, value);
+        }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Microsoft.Xna.Framework;
@@ -7,6 +8,7 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
     public abstract class RestoreAction {
+        protected static Dictionary<EntityId2, Entity> SavedEntitiesDict => StateManager.Instance.SavedEntitiesDict;
         protected static bool IsLoadStart => StateManager.Instance.IsLoadStart;
 
         public Type Type;
@@ -64,8 +66,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
 
         // 与 AfterEntityCreateAndUpdate1Frame 是同样的时刻，用于处理不存在于保存数据中的 Entity，删除就好
         public static void EntitiesLoadedButNotSaved(Dictionary<EntityId2, Entity> notSavedEntities) {
-            foreach (var pair in notSavedEntities) {
-                Entity loadedEntity = pair.Value;
+            foreach (Entity loadedEntity in notSavedEntities.Select(pair => pair.Value)) {
                 if (loadedEntity.TagCheck(Tags.Global)) return;
                 loadedEntity.RemoveSelf();
             }

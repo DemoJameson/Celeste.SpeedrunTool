@@ -19,6 +19,14 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
             return result;
         }
+        
+        public static bool IsCompilerGenerated(this object obj) {
+            return IsCompilerGenerated(obj.GetType());
+        }
+        public static bool IsCompilerGenerated(this Type type) {
+            return type.Name.StartsWith("<");
+            // return type.GetCustomAttribute<System.Runtime.CompilerServices.CompilerGeneratedAttribute>() != null;
+        }
 
         public static bool IsProperty(this MemberInfo memberInfo) {
             return (memberInfo.MemberType & MemberTypes.Property) != 0;

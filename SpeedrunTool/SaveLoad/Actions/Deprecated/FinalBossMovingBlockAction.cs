@@ -54,7 +54,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Deprecated {
                         self.InvokeMethod("StopParticles", to - @from);
                     }
                 };
-                tween.CopyFrom(savedTween);
+                tween.TryCopyFrom(savedTween);
                 self.Add(tween);
             }
             else {

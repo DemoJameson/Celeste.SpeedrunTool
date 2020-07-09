@@ -3,8 +3,10 @@ using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
+    // TODO 可能 SoundSource 里的 Params 或者其他参数也需要保存还原
     public class SoundSourceAction : ComponentAction {
-        public static List<SoundSource> PausedSoundSources = new List<SoundSource>();
+        public static readonly List<SoundSource> PlayingSoundSources = new List<SoundSource>();
+        // 因为 SoundSource 里的值会因为保存操作发生改变，所以需要提前读取再附加到对象中
         public override void OnSaveSate(Level level) {
             foreach (SoundSource soundSource in level.Tracker.Components[typeof(SoundSource)].Cast<SoundSource>()) {
                 soundSource.SavePlayingValue();
@@ -12,12 +14,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
         }
 
+        // 等待 Player 复活完毕后再重新播放声音
         public override void OnLoading(Level level, Player player, Player savedPlayer) {
-            PausedSoundSources.ForEach(soundSource => soundSource.Resume());
+            PlayingSoundSources.ForEach(soundSource => soundSource.Resume());
         }
 
         public override void OnClear() {
-            PausedSoundSources.Clear();
+            PlayingSoundSources.Clear();
         }
     }
 

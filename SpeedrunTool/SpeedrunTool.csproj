@@ -97,6 +97,7 @@
     <Compile Include="Extensions\CelesteExtensions.cs" />
     <Compile Include="Extensions\CommonExtensions.cs" />
     <Compile Include="Extensions\DeepCloneExtensions.cs" />
+    <Compile Include="Extensions\EntityCopyExtensions.cs" />
     <Compile Include="Extensions\EntityExtensions.cs" />
     <Compile Include="Extensions\ExtendedDataExtensions.cs" />
     <Compile Include="Extensions\ILExtensions.cs" />
@@ -181,8 +182,8 @@
     <Compile Include="SaveLoad\RestoreActions\EntityActions\KeyRestoreAction.cs" />
     <Compile Include="SaveLoad\RestoreActions\EntityActions\StrawberryRestoreActionx.cs" />
     <Compile Include="SaveLoad\RestoreActions\EntityRestoreAction.cs" />
-    <Compile Include="SaveLoad\RestoreActions\EntityRestoreExtensions.cs" />
     <Compile Include="SaveLoad\RestoreActions\RestoreEntityUtils.cs" />
+    <Compile Include="SaveLoad\RestoreActions\ComponentRestoreAction.cs" />
     <Compile Include="SpeedrunToolSaveData.cs" />
     <Compile Include="TeleportRoom\LevelDataReorderUtils.cs" />
     <Compile Include="TeleportRoom\TeleportRoomUtils.cs" />

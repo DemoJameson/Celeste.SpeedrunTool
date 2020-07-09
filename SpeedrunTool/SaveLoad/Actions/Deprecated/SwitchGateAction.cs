@@ -53,7 +53,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Deprecated {
                         }
                     }
                 };
-                tween.CopyFrom(savedTween);
+                tween.TryCopyFrom(savedTween);
                 self.Add(tween);
             }
         }

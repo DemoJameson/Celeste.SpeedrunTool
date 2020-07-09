@@ -7,7 +7,6 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
-using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
@@ -181,37 +180,60 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
         }
 
+        private Tween RecreateTween(Tween savedTween, object thisObject) {
+            "RecreateTween".DebugLog();
+            Tween tween = Tween.Create(savedTween.Mode, savedTween.Easer, savedTween.Duration, savedTween.Active);
+            Action<Tween> savedOnUpdate = savedTween.OnUpdate;
+            if (savedOnUpdate != null) {
+                Type targetType = savedOnUpdate.Target.GetType();
+                object target = Activator.CreateInstance(targetType);
+                Action<Tween> onUpdate = (Action<Tween>) savedOnUpdate.Method.CreateDelegate(typeof(Action<Tween>), target);
+                foreach (FieldInfo fieldInfo in targetType.GetFields()) {
+                    fieldInfo.GetValue(savedOnUpdate.Target).DebugLog(fieldInfo.Name);
+                }
+            }
+            tween.CopySpecifiedType(savedTween);
+
+            return tween;
+        }
+
         private void SetCoroutineLocals(Level level, Dictionary<EntityId2, Entity> entities, Routine routine,
             object routineObj) {
             for (int i = 0; i < routine.fields.Length; i++) {
                 FieldInfo field = routine.fields[i];
+                Type fieldType = field.FieldType;
                 object local = routine.locals[i];
-                object foundValue = LocalsSpecialCases(local);
+                object foundValue = LocalsSpecialCases(local, routineObj);
 
                 if (foundValue != null) {
                     routineObj.SetField(routineObj.GetType(), field.Name, foundValue);
                     continue;
                 }
+                
+                if (local != null && fieldType.IsList(out Type genericType) && genericType.IsSameOrSubclassOf(typeof(Entity))) {
+                    IList list = Activator.CreateInstance(fieldType) as IList;
+                    IEnumerable<Entity> localList = local as IEnumerable<Entity>;
+                    foreach (Entity entity in localList) {
+                        if (entity.HasEntityId2() && entities.TryGetValue(entity.GetEntityId2(), out Entity e)) {
+                            list.Add(e);
+                        }
+                    }
 
-                if (local is Entity entity) {
+                    foundValue = list;
+                } else if (local is Entity entity) {
                     if (entity.HasEntityId2() && entities.TryGetValue(entity.GetEntityId2(), out Entity e)) {
                         foundValue = e;
                     }
                     // If the entity doesn't store its ID, find the first entity of that type.
                     // This may break some sound related stuff but I think that's it.
                     else {
-                        MethodInfo findFirst = FindFirstMethodInfo.MakeGenericMethod(field.FieldType);
+                        MethodInfo findFirst = FindFirstMethodInfo.MakeGenericMethod(fieldType);
                         object value = findFirst.Invoke(level.Entities, new object[0]);
                         foundValue = value;
                     }
-
-                    // if (foundValue == null) {
-                    // Logger.Log("SpeedrunTool",
-                    // $"\nCan't Restore Coroutine Locals:\nroutineType={routine.type}\nfield={field}\nlocal={local}");
-                    // }
-                } else if (field.FieldType == typeof(Level))
+                } else if (fieldType == typeof(Level))
                     foundValue = level;
-                else if (field.FieldType.IsValueType)
+                else if (fieldType.IsValueType)
                     foundValue = local;
                 // It isn't actually a routine but a object of a compiler-generated type stored as a routine.
                 else if (local is Routine _routine) {
@@ -220,7 +242,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     // object obj = Activator.CreateInstance(_routine.type);
                     SetCoroutineLocals(level, entities, _routine, obj);
                     foundValue = obj;
-                } else if (field.FieldType == typeof(object)) {
+                } else if (fieldType == typeof(object)) {
                     foundValue = local;
                 }
 
@@ -234,15 +256,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                     Logger.Log("SpeedrunTool",
                         $"\nCan't Restore Coroutine Locals:\nroutineType={routine.type}\nfield={field}\nlocal={local}");
                     try {
-                        object value = Activator.CreateInstance(field.FieldType);
+                        object value = Activator.CreateInstance(fieldType);
                         routineObj.SetField(routineObj.GetType(), field.Name, value);
-                        value.CopyAllFrom(local, field.FieldType, field.FieldType);
+                        value.CopyAllFrom(local, fieldType, fieldType);
                     } catch (Exception e) {
                         e.StackTrace.DebugLog();
                         try {
-                            object value = FormatterServices.GetUninitializedObject(field.FieldType);
+                            object value = FormatterServices.GetUninitializedObject(fieldType);
                             routineObj.SetField(routineObj.GetType(), field.Name, value);
-                            value.CopyAllFrom(local, field.FieldType, field.FieldType);
+                            value.CopyAllFrom(local, fieldType, fieldType);
                         } catch (Exception) {
                             e.StackTrace.DebugLog();
                         }
@@ -251,7 +273,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
         }
 
-        private object LocalsSpecialCases(object value) {
+        private object LocalsSpecialCases(object value, object routineObj) {
             if (value == null) {
                 return null;
             }
@@ -266,8 +288,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             } else if (value is SoundEmitter soundEmitter) {
                 foundValue = SoundEmitter.Play(soundEmitter.Source.EventName, new Entity(soundEmitter.Position));
             } else if (value is Tween tween) {
-                var foundTween = Tween.Create(tween.Mode, tween.Easer, tween.Duration);
-                foundTween.CopyFrom(tween);
+                var foundTween = RecreateTween(tween, routineObj);
                 foundValue = foundTween;
             } else if (value is BadelineDummy badelineDummy) {
                 foundValue = new BadelineDummy(badelineDummy.Position);

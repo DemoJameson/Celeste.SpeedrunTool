@@ -126,7 +126,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Deprecated {
                     Audio.Play("event:/char/badeline/booster_reappear", self.Position);
                 }
             };
-            tween.CopyFrom(savedTween);
+            tween.TryCopyFrom(savedTween);
             self.Add(tween);
         }
 

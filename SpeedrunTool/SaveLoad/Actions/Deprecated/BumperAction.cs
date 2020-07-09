@@ -38,7 +38,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Deprecated {
 
                 Tween savedTween = savedBumper.Get<Tween>();
                 if (savedTween != null) {
-                    self.Get<Tween>().CopyFrom(savedTween);
+                    self.Get<Tween>().TryCopyFrom(savedTween);
                 }
             }
         }

@@ -24,7 +24,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Deprecated {
                 self.Position = savedMovingPlatform.Position;
                 Tween tween = self.Get<Tween>();
                 Tween savedTween = savedMovingPlatform.Get<Tween>();
-                tween.CopyFrom(savedTween);
+                tween.TryCopyFrom(savedTween);
             }
         }
 

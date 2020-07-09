@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.ActorActions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.EntityActions;
 using Monocle;
@@ -29,6 +30,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
                 new KeyRestoreAction(),
                 new StrawberryRestoreAction(),
                 new TriggerSpikesRestoreAction(),
+                new ComponentRestoreAction(),
             }
         );
 
@@ -46,25 +48,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             }
 
             loadedEntity.CopyAllFrom(savedEntity, typeof(Entity));
-
-            IEnumerable<Tween> loadedTweens = loadedEntity.Components.GetAll<Tween>();
-            IEnumerable<Tween> savedTweens = savedEntity.Components.GetAll<Tween>();
-            foreach (Tween loadedTween in loadedTweens) {
-                foreach (Tween savedTween in savedTweens) {
-                    if ( loadedTween.OnStart?.Method == savedTween.OnStart?.Method &&
-                        loadedTween.OnUpdate?.Method == savedTween.OnUpdate?.Method &&
-                        loadedTween.OnComplete?.Method == savedTween.OnComplete?.Method) {
-                        loadedTween.CopySpecifiedType(savedTween);
-                    }
-                }
-            }
-
-            // if (loadedEntity is DreamBlock loadedBlock && savedEntity is DreamBlock savedBlock) {
-            //     Tween loadedTween = loadedBlock.Get<Tween>();
-            //     Tween savedTween = savedBlock.Get<Tween>();
-            //     if(loadedTween == null ||savedTween == null) return;
-            //     loadedTween.CopyAllFrom(savedTween, typeof(Component));
-            // }
         }
     }
 }

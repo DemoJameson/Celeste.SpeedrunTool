@@ -6,12 +6,16 @@ using Monocle;
 using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.EntityActions {
-    // Bug: 吃下钥匙后马上保存会出现两把钥匙
     public class KeyRestoreAction : RestoreAction {
         public KeyRestoreAction() : base(typeof(Key)) { }
         public override void OnLoad() {
-            // On.Celeste.Key.ctor_Player_EntityID += KeyOnCtor_Player_EntityID;
             IL.Celeste.Key.ctor_Player_EntityID += KeyOnCtor_Player_EntityID;
+        }
+
+        // 解决吃下钥匙马上保存后出现两把钥匙的问题
+
+        public override void OnUnload() {
+            IL.Celeste.Key.ctor_Player_EntityID -= KeyOnCtor_Player_EntityID;
         }
 
         private void KeyOnCtor_Player_EntityID(ILContext il) {
@@ -30,15 +34,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.EntityActions {
                     
                 }
             }
-        }
-
-        public override void OnUnload() {
-            On.Celeste.Key.ctor_Player_EntityID -= KeyOnCtor_Player_EntityID;
-        }
-
-        private static void KeyOnCtor_Player_EntityID(On.Celeste.Key.orig_ctor_Player_EntityID orig, Key self, Player player, EntityID id) {
-            self.SetEntityId2(id);
-            orig(self, player, id);
         }
 
         public override void AfterEntityCreateAndUpdate1Frame(Entity loadedEntity, Entity savedEntity) {
@@ -71,7 +66,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.EntityActions {
                 {
                     loaded.GetSprite("sprite").Rotation = t.Eased * ((float)Math.PI / 2f);
                 };
-                tween.CopyFrom(savedTween);
+                tween.TryCopyFrom(savedTween);
                 loaded.Add(tween);
                 loaded.SetField("tween", tween);
             }

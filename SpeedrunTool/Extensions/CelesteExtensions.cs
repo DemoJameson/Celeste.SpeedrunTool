@@ -32,15 +32,6 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return false;
         }
 
-        public static EntityId2 CreateEntityId2(this Entity entity, params string[] id) {
-            Session session = GetSession();
-            if (session?.Level == null) {
-                return default;
-            }
-
-            return new EntityID(session.Level, (string.Join("-", id)).GetHashCode()).ToEntityId2(entity);
-        }
-
         // TODO 重写，或许不需要这个方法
         public static Dictionary<EntityId2, T> GetDictionary<T>(this IEnumerable<T> enumerable) where T : Entity {
             Dictionary<EntityId2, T> result = new Dictionary<EntityId2, T>();
@@ -61,7 +52,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return result;
         }
 
-        public static void CopyFrom(this Tween tween, Tween otherTween) {
+        public static void TryCopyFrom(this Tween tween, Tween otherTween) {
             tween.SetProperty("TimeLeft", otherTween.TimeLeft);
             tween.SetProperty("Reverse", otherTween.Reverse);
         }

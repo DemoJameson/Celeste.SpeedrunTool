@@ -8,9 +8,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
     // 用来替换 EntityID 避免 ID 重复
     // 官图中 Trigger 的 ID 与 Entity 的 ID 有很大几率重复
     public readonly struct EntityId2 {
-        public static readonly EntityId2 PlayerFixedEntityId2 = new EntityId2(new EntityID("You can do it. —— 《Celeste》", 20180125), typeof(Player));
+        public static readonly EntityId2 PlayerFixedEntityId2 =
+            new EntityId2(new EntityID("You can do it. —— 《Celeste》", 20180125), typeof(Player));
 
-        
+
         public readonly EntityID EntityId;
         public readonly Type Type;
 
@@ -102,6 +103,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
 
         public static bool NoEntityId2(this Entity entity) {
             return !entity.HasEntityId2();
+        }
+
+        public static EntityId2 CreateEntityId2(this Entity entity, params string[] id) {
+            if (entity.SceneAs<Level>() is Level level && level.Session?.Level != null) {
+                return new EntityID(level.Session.Level, string.Join("-", id).GetHashCode()).ToEntityId2(entity);
+            }
+
+            return default;
         }
 
         public static Entity FindFirst(this Scene scene, EntityId2? entityId2) {

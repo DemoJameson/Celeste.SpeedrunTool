@@ -5,6 +5,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
         public static readonly List<ComponentAction> All = new List<ComponentAction> {
             new CoroutineAction(),
             new SoundSourceAction(),
+            new WindControllerAction(),
         };
 
         protected static bool IsLoadStart => StateManager.Instance.IsLoadStart;

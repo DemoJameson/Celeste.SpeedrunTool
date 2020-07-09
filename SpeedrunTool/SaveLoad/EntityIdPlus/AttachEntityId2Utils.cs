@@ -12,7 +12,7 @@ using MonoMod.RuntimeDetour;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
     public static class AttachEntityId2Utils {
         private static readonly List<Type> ExcludeTypes = new List<Type> {
-            // typeof(Entity),
+            // typeof(Entity), // Booster 红色气泡的虚线就是用 Entity 显示的，所以需要 EntityId2 来同步状态
             typeof(Cobweb),
             typeof(Decal),
             typeof(HangingLamp),
@@ -51,7 +51,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
 
             while (cursor.TryGotoNext(MoveType.After,
                 i => i.OpCode == OpCodes.Newobj && i.Operand.ToString().Contains("::.ctor(Celeste.EntityData"))) {
-                // cursor.Previous.Log();
                 cursor.Emit(OpCodes.Dup).Emit(OpCodes.Ldarg_0);
                 cursor.EmitDelegate<Action<Entity, EntityData>>(AttachEntityId);
             }
@@ -85,6 +84,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
 
             EntityId2 entityId2 = self.CreateEntityId2(entityIdParam);
             self.SetEntityId2(entityId2);
+            self.SetStartPosition(self.Position);
         }
 
         public static void OnLoad() {

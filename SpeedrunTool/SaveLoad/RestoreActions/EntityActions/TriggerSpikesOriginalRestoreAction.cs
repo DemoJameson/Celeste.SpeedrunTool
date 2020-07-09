@@ -1,15 +1,15 @@
 using System;
+using Celeste.Mod.Entities;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.EntityActions {
-    // TODO TriggerSpikesOriginal
-    public class TriggerSpikesRestoreAction : RestoreAction {
-        public TriggerSpikesRestoreAction() : base(typeof(TriggerSpikes)) { }
+    public class TriggerSpikesOriginalRestoreAction : RestoreAction {
+        public TriggerSpikesOriginalRestoreAction() : base(typeof(TriggerSpikesOriginal)) { }
 
         public override void AfterEntityCreateAndUpdate1Frame(Entity loadedEntity, Entity savedEntity) {
-            TriggerSpikes loaded = (TriggerSpikes) loadedEntity;
-            TriggerSpikes saved = (TriggerSpikes) savedEntity;
+            TriggerSpikesOriginal loaded = (TriggerSpikesOriginal) loadedEntity;
+            TriggerSpikesOriginal saved = (TriggerSpikesOriginal) savedEntity;
             
             Array loadedSpikes = loaded.GetField("spikes") as Array;
             Array savedSpikes = saved.GetField("spikes") as Array;

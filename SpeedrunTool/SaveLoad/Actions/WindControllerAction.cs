@@ -2,7 +2,7 @@ using System;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Deprecated {
+namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
     public class WindControllerAction : ComponentAction {
         private Vector2 levelWind = Vector2.Zero;
         private WindController savedWindController;

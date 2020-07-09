@@ -6,8 +6,10 @@ using System.Reflection;
 namespace Celeste.Mod.SpeedrunTool.Extensions {
     public static class TypeExtensions {
         public static bool IsSimple(this Type type) {
-            // seems celeste not use decimal type.
-            return type.IsPrimitive || type.IsValueType && type.FullName != "Celeste.TriggerSpikes+SpikeInfo" || type.IsEnum || type == typeof(string) ||
+            return type.IsPrimitive || 
+                   type.IsValueType && type.FullName != "Celeste.TriggerSpikes+SpikeInfo" &&
+                   type.FullName != "Celeste.Mod.Entities.TriggerSpikesOriginal+SpikeInfo" ||
+                   type.IsEnum || type == typeof(string) ||
                    type == typeof(decimal);
         }
 
@@ -19,10 +21,20 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
             return result;
         }
-        
+
+        public static bool IsHashSet(this Type type, out Type genericType) {
+            bool result = type.IsGenericType && type.GetGenericTypeDefinition().IsAssignableFrom(typeof(HashSet<>))
+                                             && type.GenericTypeArguments.Length == 1;
+
+            genericType = result ? type.GenericTypeArguments[0] : null;
+
+            return result;
+        }
+
         public static bool IsCompilerGenerated(this object obj) {
             return IsCompilerGenerated(obj.GetType());
         }
+
         public static bool IsCompilerGenerated(this Type type) {
             return type.Name.StartsWith("<");
             // return type.GetCustomAttribute<System.Runtime.CompilerServices.CompilerGeneratedAttribute>() != null;
@@ -46,6 +58,21 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                    || potentialBase == potentialDescendant;
         }
 
+        public static object ForceCreateInstance(this Type type, string Tag = "") {
+            object newObject = null;
+            try {
+                // 具有空参构造函数的类型可以创建
+                newObject = Activator.CreateInstance(type);
+            } catch (Exception) {
+                type.DebugLog("Activator.CreateInstance Failed:", Tag);
+            }
+
+            if (newObject != null) {
+                "ForceCreateInstance Success".DebugLog(type, Tag);
+            }
+
+            return newObject;
+        }
 
         private static MethodInfo GetMethodInfo(Type type, string name) {
             MethodInfo methodInfo = type.GetExtendedDataValue<MethodInfo>(name);

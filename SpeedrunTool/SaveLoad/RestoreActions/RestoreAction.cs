@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -29,33 +30,77 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
 
         // 用于处理保存了当是没有被重新创建的物体，一般是手动创建新的实例然后添加到 Level 中。
         // 例如草莓，红泡泡，Theo，水母等跨房间的物体就需要处理，也就是附加了 Tags.Persistent 的物体。
+        // 还有一些是游戏过程代码New出来的，没有 EntityData 的也需要处理，例如 BadelinDummy 和 SlashFx
         public static void EntitiesSavedButNotLoaded(Level level, Dictionary<EntityId2, Entity> savedEntities) {
             foreach (var pair in savedEntities) {
                 Entity savedEntity = pair.Value;
-                if (savedEntity.GetEntityData() == null) continue;
 
-                Type type = savedEntity.GetType();
-                ConstructorInfo constructorInfo = type.GetConstructor(new[] {typeof(EntityData), typeof(Vector2)});
-                if (constructorInfo == null) {
-                    constructorInfo =
-                        type.GetConstructor(new[] {typeof(EntityData), typeof(Vector2), typeof(EntityID)});
-                }
+                if (savedEntity.GetEntityData() != null) {
+                    Type type = savedEntity.GetType();
+                    ConstructorInfo constructorInfo = type.GetConstructor(new[] {typeof(EntityData), typeof(Vector2)});
+                    if (constructorInfo == null) {
+                        constructorInfo =
+                            type.GetConstructor(new[] {typeof(EntityData), typeof(Vector2), typeof(EntityID)});
+                    }
 
-                if (constructorInfo == null) {
-                    continue;
-                }
+                    if (constructorInfo == null) {
+                        continue;
+                    }
 
-                var parameters = new object[] {savedEntity.GetEntityData(), Vector2.Zero};
-                if (constructorInfo.GetParameters().Length == 3) {
-                    parameters = new object[]
-                        {savedEntity.GetEntityData(), Vector2.Zero, savedEntity.GetEntityId2().EntityId};
-                }
+                    var parameters = new object[] {savedEntity.GetEntityData(), Vector2.Zero};
+                    if (constructorInfo.GetParameters().Length == 3) {
+                        parameters = new object[]
+                            {savedEntity.GetEntityData(), Vector2.Zero, savedEntity.GetEntityId2().EntityId};
+                    }
 
-                object loaded = constructorInfo.Invoke(parameters);
-                if (loaded is Entity loadedEntity) {
+                    object loaded = constructorInfo.Invoke(parameters);
+                    if (loaded is Entity loadedEntity) {
+                        loadedEntity.Position = savedEntity.Position;
+                        loadedEntity.CopyEntityData(savedEntity);
+                        loadedEntity.CopyEntityId2(savedEntity);
+                        level.Add(loadedEntity);
+                    }
+                } else if (savedEntity.GetType().IsSubclassOf(typeof(Entity))) {
+                    Entity loadedEntity = null;
+                    switch (savedEntity) {
+                        // 先将范围限定在 Entity 的子类，如果出现问题再说
+                        case BadelineDummy dummy:
+                            loadedEntity = new BadelineDummy(dummy.GetStartPosition());
+                            break;
+                        case AngryOshiro oshiro:
+                            loadedEntity = new AngryOshiro(oshiro.GetStartPosition(), (bool)oshiro.GetField("fromCutscene"));
+                            break;
+                        case Snowball _:
+                            loadedEntity = new Snowball();
+                            break;
+                        case FinalBossShot shot:
+                            FinalBoss boss= shot.GetField("boss")?.FindOrCreateSpecifiedType() as FinalBoss;
+                            if (boss == null) continue;
+                            
+                            if (shot.GetField("target") == null) {
+                                loadedEntity = Engine.Pooler.Create<FinalBossShot>().Init(boss, (Vector2) shot.GetField("targetPt"));
+                            } else if(Engine.Scene.GetPlayer() is Player player) {
+                                loadedEntity = Engine.Pooler.Create<FinalBossShot>().Init(boss, player, (float) shot.GetField("angleOffset"));
+                            }
+                            break;
+                        // BUG: 多重声音？
+                        // case SoundEmitter soundEmitter:
+                            // loadedEntity = SoundEmitter.Play(soundEmitter.Source.EventName);
+                            // break;
+                        default:
+                            if (savedEntity.GetType().ForceCreateInstance("EntitiesSavedButNotLoaded") is Entity newEntity) {
+                                loadedEntity = newEntity;
+                            }
+                            break;
+                            
+                    }
+
+                    if (loadedEntity == null) continue;
+
                     loadedEntity.Position = savedEntity.Position;
-                    loadedEntity.CopyEntityData(savedEntity);
                     loadedEntity.CopyEntityId2(savedEntity);
+                    loadedEntity.CopyStartPosition(savedEntity);
+                        
                     level.Add(loadedEntity);
                 }
             }

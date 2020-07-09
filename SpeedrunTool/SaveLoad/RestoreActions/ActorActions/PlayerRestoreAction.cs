@@ -14,7 +14,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.ActorActions {
             Player saved = (Player) savedEntity;
 
             // 只还原父类字段，其他等到复活完恢复
-            loaded.CopyAllFrom(saved, typeof(Entity), typeof(Actor));
+            loaded.CopyAllFrom<Actor>(saved, typeof(Actor));
 
             // 避免复活时的光圈被背景遮住
             loaded.Depth = Depths.Top;
@@ -33,13 +33,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.ActorActions {
             Player loaded = (Player) loadedEntity;
             Player saved = (Player) savedEntity;
 
-            loaded.CopyAllFrom(saved, typeof(Entity));
+            loaded.CopyAllFrom(saved);
 
             // too lazy to restore private List<ChaserStateSound> activeSounds
             // too lazy to restore this field, hope its ok.
             // private HashSet<Trigger> triggersInside;
 
-            RestoreLeader(loaded, saved);
+            // RestoreLeader(loaded, saved);
         }
 
         private void RestoreLeader(Player loaded, Player saved) {

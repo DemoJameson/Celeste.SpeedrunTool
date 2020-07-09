@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
@@ -48,6 +49,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
     public static class EntityId2Extension {
         private const string EntityId2Key = "SpeedrunTool_EntityId2_Key";
         private const string EntityDataKey = "SpeedrunTool_EntityData_Key";
+        private const string StartPositionKey = "SpeedrunTool_StartPosition_Key";
 
         public static EntityId2 ToEntityId2(this EntityID entityId, Type type) {
             return new EntityId2(entityId, type);
@@ -111,6 +113,20 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             }
 
             return default;
+        }
+        
+        public static Vector2 GetStartPosition(this Entity entity) {
+            return entity.GetExtendedDataValue<Vector2>(StartPositionKey);
+        }
+
+        public static void SetStartPosition(this Entity entity, Vector2 startPosition) {
+            entity.SetExtendedDataValue(StartPositionKey, startPosition);
+        }
+        
+        public static void CopyStartPosition(this Entity entity, Entity otherEntity) {
+            if (otherEntity.GetStartPosition() != default) {
+                entity.SetStartPosition(otherEntity.GetStartPosition());
+            }
         }
 
         public static Entity FindFirst(this Scene scene, EntityId2? entityId2) {

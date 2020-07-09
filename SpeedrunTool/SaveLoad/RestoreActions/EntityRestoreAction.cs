@@ -28,9 +28,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             new List<RestoreAction> {
                 new PlayerRestoreAction(),
                 new KeyRestoreAction(),
-                new StrawberryRestoreAction(),
                 new TriggerSpikesRestoreAction(),
                 new ComponentRestoreAction(),
+                new FinalBossShotRestoreAction(),
             }
         );
 
@@ -46,8 +46,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
                 loadedEntity.Position = savedEntity.Position;
                 return;
             }
-
-            loadedEntity.CopyAllFrom(savedEntity, typeof(Entity));
+            
+            loadedEntity.CopyAllFrom(savedEntity);
         }
     }
 }

@@ -11,6 +11,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
         public override void AfterPlayerRespawn(Entity loadedEntity, Entity savedEntity) {
             loadedEntity.RestoreComponent<Tween>(savedEntity);
             loadedEntity.RestoreComponent<Alarm>(savedEntity);
+            // TODO Restore More Component
         }
     }
 
@@ -46,15 +47,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             foreach (T loadedComponent in loadedComponents) {
                 if (savedComponents.FirstOrDefault(component => component.IsSameAs(loadedComponent)) is Component savedComponent) {
                     loadedComponent.CopySpecifiedType(savedComponent);
-                    loadedComponent.DebugLog("相同类型的 Component 恢复状态", loaded);
                 }
             }
 
             // 查找需要重新创建还原的 Component
             foreach (T savedComponent in savedComponents) {
                 if (loadedComponents.Any(component => component.IsSameAs(savedComponent))) continue;
-                loaded.Add((Component) savedComponent.CreateOrFindSpecifiedType());
-                savedComponent.DebugLog("需要重新创建还原的 Component", loaded);
+                loaded.Add((Component) savedComponent.FindOrCreateSpecifiedType());
             }
         }
     }

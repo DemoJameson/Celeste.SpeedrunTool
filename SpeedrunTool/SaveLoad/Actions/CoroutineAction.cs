@@ -185,7 +185,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 FieldInfo field = routine.fields[i];
                 Type fieldType = field.FieldType;
                 object local = routine.locals[i];
-                object foundValue = LocalsSpecialCases(local, routineObj);
+                object foundValue = LocalsSpecialCases(local);
 
                 if (foundValue != null) {
                     routineObj.SetField(routineObj.GetType(), field.Name, foundValue);
@@ -246,7 +246,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
             }
         }
 
-        private object LocalsSpecialCases(object value, object routineObj) {
+        private object LocalsSpecialCases(object value) {
             if (value == null) {
                 return null;
             }
@@ -258,16 +258,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions {
                 foundValue = Convert.ChangeType(value, DebrisListType);
             else if (value.GetType() == typeof(Image)) {
                 foundValue = new Image(new MTexture());
-            } else if (value is SoundEmitter soundEmitter) {
-                foundValue = SoundEmitter.Play(soundEmitter.Source.EventName, new Entity(soundEmitter.Position));
-            } else if (value is Tween savedTween) {
-                Tween tween = Tween.Create(savedTween.Mode, savedTween.Easer, savedTween.Duration,
-                    savedTween.Active);
-                tween.CopySpecifiedType(savedTween);
-                foundValue = tween;
-            } else if (value is BadelineDummy badelineDummy) {
-                foundValue = new BadelineDummy(badelineDummy.Position);
-                Engine.Scene.Add((Entity) foundValue);
+            // } else if (value is SoundEmitter soundEmitter) {
+                // foundValue = SoundEmitter.Play(soundEmitter.Source.EventName, new Entity(soundEmitter.Position));
+            } else if (value is Tween) {
+                foundValue = value.FindOrCreateSpecifiedType();
+            // } else if (value is BadelineDummy badelineDummy) {
+                // foundValue = new BadelineDummy(badelineDummy.Position);
+                // Engine.Scene.Add((Entity) foundValue);
             } else if (value is Stopwatch) {
                 foundValue = new Stopwatch();
             } else if (value is Follower) {

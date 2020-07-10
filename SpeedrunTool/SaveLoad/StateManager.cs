@@ -122,7 +122,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 Loading(self, player);
                 loadState = SaveLoad.LoadState.Complete;
             }
-
+            
             orig(self);
         }
 

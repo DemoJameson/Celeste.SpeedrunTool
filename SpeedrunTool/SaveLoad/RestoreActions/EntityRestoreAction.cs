@@ -30,7 +30,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
                 new KeyRestoreAction(),
                 new TriggerSpikesRestoreAction(),
                 new ComponentRestoreAction(),
-                new FinalBossShotRestoreAction(),
             }
         );
 

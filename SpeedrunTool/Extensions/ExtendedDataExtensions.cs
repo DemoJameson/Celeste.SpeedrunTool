@@ -61,5 +61,13 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         public static void SetExtendedInt(this object o, string name, int value) {
             SetExtendedDataValue(o, name, value);
         }
+        
+        public static float GetExtendedFloat(this object o, string name) {
+            return GetExtendedDataValue<float>(o, name);
+        }
+
+        public static void SetExtendedFloat(this object o, string name, float value) {
+            SetExtendedDataValue(o, name, value);
+        }
     }
 }

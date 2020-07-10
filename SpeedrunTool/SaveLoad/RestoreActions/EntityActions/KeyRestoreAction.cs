@@ -14,7 +14,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.EntityActions {
             IL.Celeste.Key.ctor_Player_EntityID -= KeyOnCtor_Player_EntityID;
         }
 
-        // 解决吃下钥匙马上保存后出现两把钥匙的问题
+        // 跳过 player.Leader.GainFollower(this.follower); 语句
+        // 由 EntityRestoreAction 自行处理关联 Key 与 Player
         private void KeyOnCtor_Player_EntityID(ILContext il) {
             ILCursor cursor = new ILCursor(il);
 

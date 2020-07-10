@@ -10,7 +10,7 @@ using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
-    public static class AttachEntityId2Utils {
+    public static class AttachEntityId2Utils{
         private static readonly List<Type> ExcludeTypes = new List<Type> {
             // typeof(Entity), // Booster 红色气泡的虚线就是用 Entity 显示的，所以需要 EntityId2 来同步状态
             typeof(Cobweb),
@@ -61,7 +61,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             entity.SetEntityId2(data.ToEntityId2(entity));
             entity.SetEntityData(data);
         }
-        
+
         // 处理其他没有 EntityData 的物体
         private static void EntityOnAdded(On.Monocle.Entity.orig_Added orig, Entity self, Scene scene) {
             orig(self, scene);
@@ -91,12 +91,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             origLoadLevelHook = new ILHook(typeof(Level).GetMethod("orig_LoadLevel"), ModOrigLoadLevel);
             loadCustomEntityHook = new ILHook(typeof(Level).GetMethod("LoadCustomEntity"), ModLoadCustomEntity);
             On.Monocle.Entity.Added += EntityOnAdded;
+            CustomEntityId2Utils.OnLoad();
         }
 
         public static void Unload() {
             origLoadLevelHook.Dispose();
             loadCustomEntityHook.Dispose();
             On.Monocle.Entity.Added -= EntityOnAdded;
+            CustomEntityId2Utils.OnUnload();
         }
     }
 }

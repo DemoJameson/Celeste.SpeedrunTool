@@ -107,14 +107,28 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             return !entity.HasEntityId2();
         }
 
-        public static EntityId2 CreateEntityId2(this Entity entity, params string[] id) {
-            if (entity.SceneAs<Level>() is Level level && level.Session?.Level != null) {
+        public static EntityId2 CreateEntityId2(this Entity entity, params object[] id) {
+            Level level = null;
+            if (Engine.Scene is Level scene) {
+                level = scene;
+            } else if (Engine.Scene is LevelLoader levelLoader) {
+                level = levelLoader.Level;
+            }
+
+            if (level?.Session?.Level != null) {
                 return new EntityID(level.Session.Level, string.Join("-", id).GetHashCode()).ToEntityId2(entity);
             }
 
             return default;
         }
-        
+
+        public static bool TrySetEntityId2(this Entity entity, params object[] id) {
+            EntityId2 entityId = entity.CreateEntityId2(id);
+            if (entityId == default) return false;
+            entity.SetEntityId2(entityId);
+            return true;
+        }
+
         public static Vector2 GetStartPosition(this Entity entity) {
             return entity.GetExtendedDataValue<Vector2>(StartPositionKey);
         }
@@ -122,7 +136,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         public static void SetStartPosition(this Entity entity, Vector2 startPosition) {
             entity.SetExtendedDataValue(StartPositionKey, startPosition);
         }
-        
+
         public static void CopyStartPosition(this Entity entity, Entity otherEntity) {
             if (otherEntity.GetStartPosition() != default) {
                 entity.SetStartPosition(otherEntity.GetStartPosition());

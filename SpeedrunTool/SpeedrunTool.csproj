@@ -25,7 +25,7 @@
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>none</DebugType>
+    <DebugType>portable</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\..\..\Mods\SpeedrunTool\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
@@ -98,7 +98,6 @@
     <Compile Include="Extensions\CommonExtensions.cs" />
     <Compile Include="Extensions\DeepCloneExtensions.cs" />
     <Compile Include="Extensions\EntityCopyExtensions.cs" />
-    <Compile Include="Extensions\EntityExtensions.cs" />
     <Compile Include="Extensions\ExtendedDataExtensions.cs" />
     <Compile Include="Extensions\ILExtensions.cs" />
     <Compile Include="Extensions\LoggerExtensions.cs" />
@@ -109,13 +108,10 @@
     <Compile Include="SaveLoad\Actions\Deprecated\AscendManagerAction.cs" />
     <Compile Include="SaveLoad\Actions\Deprecated\AudioAction.cs" />
     <Compile Include="SaveLoad\Actions\Deprecated\BadelineBoostAction.cs" />
-    <Compile Include="SaveLoad\Actions\Deprecated\BadelineDummyAction.cs" />
-    <Compile Include="SaveLoad\Actions\Deprecated\BadelineOldsiteAction.cs" />
     <Compile Include="SaveLoad\Actions\Deprecated\BounceBlockAction.cs" />
     <Compile Include="SaveLoad\Actions\Deprecated\BumperAction.cs" />
     <Compile Include="SaveLoad\Actions\Deprecated\CassetteBlockManagerAction.cs" />
     <Compile Include="SaveLoad\Actions\Deprecated\ClutterSwitchAction.cs" />
-    <Compile Include="SaveLoad\Actions\Deprecated\CrumblePlatformAction.cs" />
     <Compile Include="SaveLoad\Actions\Deprecated\CrumbleWallOnRumbleAction.cs" />
     <Compile Include="SaveLoad\Actions\Deprecated\CrushBlockAction.cs" />
     <Compile Include="SaveLoad\Actions\Deprecated\CrystalStaticSpinnerAction.cs" />
@@ -129,7 +125,6 @@
     <Compile Include="SaveLoad\Actions\Deprecated\FallingBlockAction.cs" />
     <Compile Include="SaveLoad\Actions\Deprecated\FinalBossAction.cs" />
     <Compile Include="SaveLoad\Actions\Deprecated\FinalBossMovingBlockAction.cs" />
-    <Compile Include="SaveLoad\Actions\Deprecated\FireBallAction.cs" />
     <Compile Include="SaveLoad\Actions\Deprecated\FlingBirdAction.cs" />
     <Compile Include="SaveLoad\Actions\Deprecated\FloatySpaceBlockAction.cs" />
     <Compile Include="SaveLoad\Actions\Deprecated\FrostHelper\CustomCrystalSpinnerAction.cs" />
@@ -150,7 +145,6 @@
     <Compile Include="SaveLoad\Actions\Deprecated\RisingLavaAction.cs" />
     <Compile Include="SaveLoad\Actions\Deprecated\RotateSpinnerAction.cs" />
     <Compile Include="SaveLoad\Actions\Deprecated\SandwichLavaAction.cs" />
-    <Compile Include="SaveLoad\Actions\Deprecated\SeekerAction.cs" />
     <Compile Include="SaveLoad\Actions\Deprecated\ShroomHelper\AttachedIceWallAction.cs" />
     <Compile Include="SaveLoad\Actions\Deprecated\ShroomHelper\CrumbleBlockOnTouchAction.cs" />
     <Compile Include="SaveLoad\Actions\Deprecated\SinkingPlatformAction.cs" />
@@ -175,9 +169,8 @@
     <Compile Include="SaveLoad\Actions\WindControllerAction.cs" />
     <Compile Include="SaveLoad\Components\RestoreState.cs" />
     <Compile Include="SaveLoad\EntityIdPlus\AttachEntityId2Utils.cs" />
+    <Compile Include="SaveLoad\EntityIdPlus\CustomEntityId2Utils.cs" />
     <Compile Include="SaveLoad\EntityIdPlus\EntityId2.cs" />
-    <Compile Include="SaveLoad\RestoreActions\EntityActions\FinalBossShotRestoreAction.cs" />
-    <Compile Include="SaveLoad\RestoreActions\EntityActions\TriggerSpikesOriginalRestoreAction.cs" />
     <Compile Include="SaveLoad\RestoreActions\EntityActions\TriggerSpikesRestoreAction.cs" />
     <Compile Include="SaveLoad\RestoreActions\RestoreAction.cs" />
     <Compile Include="SaveLoad\RestoreActions\ActorActions\PlayerRestoreAction.cs" />

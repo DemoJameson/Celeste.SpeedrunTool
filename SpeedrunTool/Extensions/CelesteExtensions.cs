@@ -16,21 +16,9 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         //         Tracker.TrackedEntityTypes[type].Add(type);
         //     }
         // }
+        
 
-        public static bool TrySetEntityId2(this Entity entity, params string[] id) {
-            if (entity.NoEntityId2()) {
-                Session session = GetSession();
-                if (session?.Level == null) {
-                    return false;
-                }
-
-                EntityId2 entityId = entity.CreateEntityId2(id);
-                entity.SetEntityId2(entityId);
-                return true;
-            }
-
-            return false;
-        }
+        
 
         // TODO 重写，或许不需要这个方法
         public static Dictionary<EntityId2, T> GetDictionary<T>(this IEnumerable<T> enumerable) where T : Entity {
@@ -64,6 +52,22 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                     dict[entityId] = entity;
                 }
             }
+        }
+        
+        public static Level GetLevel(this Scene scene) {
+            if (scene is Level level) {
+                return level;
+            }
+
+            if (scene is LevelLoader levelLoader) {
+                return levelLoader.Level;
+            }
+
+            return null;
+        }
+
+        public static Session GetSession(this Scene scene) {
+            return scene.GetLevel()?.Session;
         }
 
         public static Player GetPlayer(this Scene scene) {
@@ -192,22 +196,6 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             for (var i = 0; i < imageList.Count; i++) {
                 imageList[i].CopyGraphicsComponent(otherImageList[i]);
             }
-        }
-
-        public static Level GetLevel() {
-            if (Engine.Scene is Level level) {
-                return level;
-            }
-
-            if (Engine.Scene is LevelLoader levelLoader) {
-                return levelLoader.Level;
-            }
-
-            return null;
-        }
-
-        public static Session GetSession() {
-            return GetLevel()?.Session;
         }
     }
 }

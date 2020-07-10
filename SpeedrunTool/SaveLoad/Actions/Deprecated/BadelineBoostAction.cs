@@ -29,7 +29,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Actions.Deprecated {
             bool finalCh9Dialog) {
             EntityId2 entityId = self.GetEntityId2();
 
-            Level level = CelesteExtensions.GetLevel();
+            Level level = Engine.Scene.GetLevel();
 
             if (level?.Session?.Level != null && entityId == default) {
                 entityId = self.CreateEntityId2(string.Join("", nodes), lockCamera.ToString(), canSkip.ToString(),

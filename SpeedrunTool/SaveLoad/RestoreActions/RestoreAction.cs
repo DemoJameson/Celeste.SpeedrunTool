@@ -62,37 +62,43 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
                     }
                 } else if (savedEntity.GetType().IsSubclassOf(typeof(Entity))) {
                     Entity loadedEntity = null;
+                    Player player = Engine.Scene.GetPlayer();
                     switch (savedEntity) {
                         // 先将范围限定在 Entity 的子类，如果出现问题再说
                         case BadelineDummy dummy:
                             loadedEntity = new BadelineDummy(dummy.GetStartPosition());
                             break;
                         case AngryOshiro oshiro:
-                            loadedEntity = new AngryOshiro(oshiro.GetStartPosition(), (bool)oshiro.GetField("fromCutscene"));
+                            loadedEntity = new AngryOshiro(oshiro.GetStartPosition(),
+                                (bool) oshiro.GetField("fromCutscene"));
                             break;
                         case Snowball _:
                             loadedEntity = new Snowball();
                             break;
-                        case FinalBossShot shot:
-                            FinalBoss boss= shot.GetField("boss")?.FindOrCreateSpecifiedType() as FinalBoss;
-                            if (boss == null) continue;
-                            
-                            if (shot.GetField("target") == null) {
-                                loadedEntity = Engine.Pooler.Create<FinalBossShot>().Init(boss, (Vector2) shot.GetField("targetPt"));
-                            } else if(Engine.Scene.GetPlayer() is Player player) {
-                                loadedEntity = Engine.Pooler.Create<FinalBossShot>().Init(boss, player, (float) shot.GetField("angleOffset"));
-                            }
+                        case SlashFx slashFx:
+                            loadedEntity = slashFx.Clone();
                             break;
-                        // BUG: 多重声音？
-                        // case SoundEmitter soundEmitter:
-                            // loadedEntity = SoundEmitter.Play(soundEmitter.Source.EventName);
-                            // break;
+                        case SpeedRing speedRing:
+                            loadedEntity = speedRing.Clone();
+                            break;
+                        case FinalBossShot finalBossShot:
+                            loadedEntity = finalBossShot.Clone();
+                            break;
+                        case FinalBossBeam finalBossBeam:
+                            loadedEntity = finalBossBeam.Clone();
+                            break;
+                        // BUG: 钥匙开门多重声音
+                        case SoundEmitter soundEmitter:
+                            loadedEntity = SoundEmitter.Play(soundEmitter.Source.EventName,
+                                new Entity(soundEmitter.Position), Vector2.Zero);
+                            break;
                         default:
-                            if (savedEntity.GetType().ForceCreateInstance("EntitiesSavedButNotLoaded") is Entity newEntity) {
+                            if (savedEntity.GetType().ForceCreateInstance("EntitiesSavedButNotLoaded") is Entity
+                                newEntity) {
                                 loadedEntity = newEntity;
                             }
+
                             break;
-                            
                     }
 
                     if (loadedEntity == null) continue;
@@ -100,7 +106,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
                     loadedEntity.Position = savedEntity.Position;
                     loadedEntity.CopyEntityId2(savedEntity);
                     loadedEntity.CopyStartPosition(savedEntity);
-                        
+
                     level.Add(loadedEntity);
                 }
             }

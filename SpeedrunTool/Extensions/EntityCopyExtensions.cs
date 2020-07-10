@@ -1,13 +1,16 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Actions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
+using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
     public static class EntityCopyExtensions {
+        private static readonly HashSet<object> CopyingObjects = new HashSet<object>();
         public static void CopyAllFrom<T>(this object destObj, object sourceObj, params Type[] skipTypes) {
             CopyAllFrom(destObj, typeof(T), sourceObj, skipTypes);
         }
@@ -16,7 +19,6 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             CopyAllFrom(destObj, destObj.GetType(), sourceObj, skipTypes);
         }
 
-        // ReSharper disable once MemberCanBePrivate.Global
         private static void CopyAllFrom(this object destObj, Type baseType, object sourceObj, params Type[] skipTypes) {
             if (destObj.GetType() != sourceObj.GetType()) {
                 throw new ArgumentException("destObj and sourceObj not the same type.");
@@ -27,6 +29,12 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             // 从给定的父类开始复制字段，直到 System.Object
             Type currentObjType = baseType;
 
+            if (CopyingObjects.Contains(destObj)) {
+                // StackOverflow Exception is watching you.
+                destObj.DebugLog("Prevents copying of an object that is being copied");
+                return;
+            }
+            CopyingObjects.Add(destObj);
             while (currentObjType.IsSubclassOf(typeof(object))) {
                 // 跳过特定子类型
                 if (skipTypes.Contains(currentObjType)) {
@@ -64,6 +72,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
                 currentObjType = currentObjType.BaseType;
             }
+            CopyingObjects.Remove(destObj);
         }
 
         private delegate void SetMember(object destObj, Type currentObjType, string memberName,
@@ -137,8 +146,8 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                             }
                         } else {
                             // TODO 其他类型
-                            genericType.DebugLog("TODO UnhandeTypel List element type ->",
-                                $"memberName={memberName} memberType={memberType} on {currentObjType}\tsourceValue={sourceValue}");
+                            // genericType.DebugLog("TODO UnhandeTypel List element type ->",
+                                // $"memberName={memberName} memberType={memberType} on {currentObjType}\tsourceValue={sourceValue}");
                         }
                     }
                 }
@@ -262,6 +271,12 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 }
             } else if (sourceValue is Holdable sourceHoldable) {
                 destValue = (FindSpecifiedType(sourceHoldable.Entity) as Entity)?.Get<Holdable>();
+            } else if (sourceValue is Component sourceComponent && sourceComponent.Entity != null && FindSpecifiedType(sourceComponent.Entity) is Entity componentEntity) {
+                if (sourceComponent.IsFindabel() &&
+                    componentEntity.FindComponent(sourceComponent) is Component foundComponent) {
+                    sourceValue.DebugLog("Find a component instead of recreating a new one");
+                    destValue = foundComponent;
+                }
             }
 
             return destValue;
@@ -276,6 +291,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             } else if (sourceValue is Delegate @delegate) {
                 destValue = @delegate.CloneDelegate();
             } else if (sourceValue is SoundEmitter soundEmitter) {
+                "CreateSpecifiedType".DebugLog();
                 destValue = SoundEmitter.Play(soundEmitter.Source.EventName, new Entity(soundEmitter.Position));
             } else if (sourceValue is Component sourceComponent) {
                 // TODO Recreate Other Component

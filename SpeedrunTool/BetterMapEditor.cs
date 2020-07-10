@@ -111,7 +111,7 @@ namespace Celeste.Mod.SpeedrunTool {
             orig(self, data, offset);
 
             Vector2 oshiro3C = new Vector2(1520, -272);
-            Level level = CelesteExtensions.GetLevel();
+            Level level = Engine.Scene.GetLevel();
 
             if (level != null && level.Session.Area.ToString() == "3HH" && level.StartPosition != null &&
                 level.Session.GetSpawnPoint((Vector2) level.StartPosition) == oshiro3C) {

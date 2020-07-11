@@ -153,10 +153,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             Dictionary<EntityId2, T> result = new Dictionary<EntityId2, T>();
             List<T> findAll = entityList.FindAll<T>();
             foreach (T entity in findAll) {
-                if (entity.TagCheck(Tags.Global)) continue;
-                if (entity.NoEntityId2()) {
-                    continue;
-                }
+                if (entity.IsGlobalButNotCassetteManager()) continue;
+                if (entity.NoEntityId2()) continue;
 
                 EntityId2 entityId2 = entity.GetEntityId2();
                 if (result.ContainsKey(entityId2)) {
@@ -174,7 +172,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             bool includeSubclass = false) {
             Dictionary<EntityId2, Entity> result = new Dictionary<EntityId2, Entity>();
             foreach (Entity entity in entityList) {
-                if (entity.TagCheck(Tags.Global)) continue;
+                if (entity.IsGlobalButNotCassetteManager()) continue;
                 if (entity.NoEntityId2()) continue;
 
                 if (includeSubclass && entity.GetType().IsSameOrSubclassOf(type) ||

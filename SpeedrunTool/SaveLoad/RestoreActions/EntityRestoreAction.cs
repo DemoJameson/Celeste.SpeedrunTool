@@ -1,42 +1,11 @@
-using System;
-using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
-using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.ActorActions;
-using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.EntityActions;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
     public class EntityRestoreAction : RestoreAction {
-        public static List<RestoreAction> AllRestoreActions => AllRestoreActionsLazy.Value;
+        public EntityRestoreAction() : base(typeof(Entity)) { }
 
-        private static readonly Lazy<List<RestoreAction>> AllRestoreActionsLazy =
-            new Lazy<List<RestoreAction>>(
-                () => {
-                    List<RestoreAction> result = new List<RestoreAction>();
-
-                    void AddThisAndSubclassRestoreActions(RestoreAction action) {
-                        result.Add(action);
-                        action.SubclassRestoreActions.ForEach(AddThisAndSubclassRestoreActions);
-                    }
-
-                    AddThisAndSubclassRestoreActions(Instance);
-
-                    return result;
-                });
-
-        private static readonly EntityRestoreAction Instance = new EntityRestoreAction(
-            new List<RestoreAction> {
-                new PlayerRestoreAction(),
-                new KeyRestoreAction(),
-                new TriggerSpikesRestoreAction(),
-                new ComponentRestoreAction(),
-            }
-        );
-
-        private EntityRestoreAction(List<RestoreAction> subclassRestoreActions) : base(typeof(Entity),
-            subclassRestoreActions) { }
-
-        public override void AfterEntityCreateAndUpdate1Frame(Entity loadedEntity, Entity savedEntity) {
+        public override void AfterEntityAwake(Entity loadedEntity, Entity savedEntity) {
             // Player 需要特殊处理，由 PlayerRestoreAction 负责
             if (loadedEntity is Player) return;
 
@@ -47,6 +16,22 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             }
             
             loadedEntity.CopyAllFrom(savedEntity);
+        }
+
+        // 解决第九章 g-06 石块砸在望远镜上后存档游戏崩溃的问题，是不是应该交给 Everest 解决
+        private void TalkComponentUIOnAwake(On.Celeste.TalkComponent.TalkComponentUI.orig_Awake orig, TalkComponent.TalkComponentUI self, Scene scene) {
+            if (StateManager.Instance.IsLoadFrozen && self.Handler?.Entity == null) {
+                return;
+            }
+            orig(self, scene);
+        }
+
+        public override void OnHook() {
+            On.Celeste.TalkComponent.TalkComponentUI.Awake += TalkComponentUIOnAwake;
+        }
+
+        public override void OnUnhook() {
+            On.Celeste.TalkComponent.TalkComponentUI.Awake -= TalkComponentUIOnAwake;
         }
     }
 }

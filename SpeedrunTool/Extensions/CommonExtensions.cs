@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
-    // from https://stackoverflow.com/a/17264480
     public static class CommonExtensions {
         public static T With<T>(this T item, Action<T> action) {
             action(item);

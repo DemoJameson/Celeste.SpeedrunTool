@@ -3,14 +3,14 @@ using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.EntityActions {
+namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
     public class KeyRestoreAction : RestoreAction {
         public KeyRestoreAction() : base(typeof(Key)) { }
-        public override void OnLoad() {
+        public override void OnHook() {
             IL.Celeste.Key.ctor_Player_EntityID += KeyOnCtor_Player_EntityID;
         }
 
-        public override void OnUnload() {
+        public override void OnUnhook() {
             IL.Celeste.Key.ctor_Player_EntityID -= KeyOnCtor_Player_EntityID;
         }
 
@@ -23,7 +23,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.EntityActions {
                 Instruction skipInstruction = cursor.Next;
 
                 if (cursor.TryGotoPrev(i => i.OpCode == OpCodes.Ldarg_1)) {
-                    cursor.Emit(OpCodes.Ldarg_0).Emit(OpCodes.Ldarg_0).EmitDelegate<Action<Key, EntityID>>(
+                    cursor.Emit(OpCodes.Ldarg_0).Emit(OpCodes.Ldarg_2).EmitDelegate<Action<Key, EntityID>>(
                         (key, id) => {
                             key.SetEntityId2(id);
                         });

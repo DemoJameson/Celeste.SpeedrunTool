@@ -57,7 +57,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         }
 
         private static void AttachEntityId(Entity entity, EntityData data) {
-            if (entity.TagCheck(Tags.Global)) return;
+            if (entity.IsGlobalButNotCassetteManager()) return;
             entity.SetEntityId2(data.ToEntityId2(entity));
             entity.SetEntityData(data);
         }
@@ -69,7 +69,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             Type type = self.GetType();
 
             if (!(scene is Level)) return;
-            if (self.TagCheck(Tags.Global)) return;
+            if (self.IsGlobalButNotCassetteManager()) return;
             if (self.HasEntityId2()) return;
             if (ExcludeTypes.Contains(type)) return;
 

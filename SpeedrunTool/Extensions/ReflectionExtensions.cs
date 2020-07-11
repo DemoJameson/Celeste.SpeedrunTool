@@ -2,19 +2,32 @@ using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
+using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
     public static class TypeExtensions {
         public static bool IsSimple(this Type type) {
             return type.IsPrimitive || 
-                   type.IsValueType && type.FullName != "Celeste.TriggerSpikes+SpikeInfo" &&
+                   type.IsValueType && type.FullName != "Celeste.TriggerSpikes+SpikeInfo" && //SpikeInfo 里有 Entity 所以不能算做简单数据类型
                    type.FullName != "Celeste.Mod.Entities.TriggerSpikesOriginal+SpikeInfo" ||
                    type.IsEnum || type == typeof(string) ||
-                   type == typeof(decimal);
+                   type == typeof(decimal) ||
+                   type == typeof(object) ||
+                   type.IsSameOrSubclassOf(typeof(Collider))
+                ;
         }
 
         public static bool IsList(this Type type, out Type genericType) {
             bool result = type.IsGenericType && type.GetGenericTypeDefinition().IsAssignableFrom(typeof(List<>))
+                                             && type.GenericTypeArguments.Length == 1;
+
+            genericType = result ? type.GenericTypeArguments[0] : null;
+
+            return result;
+        }
+        
+        public static bool IsStack(this Type type, out Type genericType) {
+            bool result = type.IsGenericType && type.GetGenericTypeDefinition().IsAssignableFrom(typeof(Stack<>))
                                              && type.GenericTypeArguments.Length == 1;
 
             genericType = result ? type.GenericTypeArguments[0] : null;
@@ -56,6 +69,10 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         public static bool IsSameOrSuperclassOf(this Type potentialBase, Type potentialDescendant) {
             return potentialDescendant.IsSubclassOf(potentialBase)
                    || potentialBase == potentialDescendant;
+        }
+
+        public static object ForceCreateInstance(this object obj, string Tag = "") {
+            return ForceCreateInstance(obj.GetType(), Tag);
         }
 
         public static object ForceCreateInstance(this Type type, string Tag = "") {

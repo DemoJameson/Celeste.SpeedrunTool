@@ -1,16 +1,18 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using Celeste.Mod.SpeedrunTool.SaveLoad.Actions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions;
 using Monocle;
+using EventInstance = FMOD.Studio.EventInstance;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
     public static class EntityCopyExtensions {
         private static readonly HashSet<object> CopyingObjects = new HashSet<object>();
+
         public static void CopyAllFrom<T>(this object destObj, object sourceObj, params Type[] skipTypes) {
             CopyAllFrom(destObj, typeof(T), sourceObj, skipTypes);
         }
@@ -34,14 +36,15 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 destObj.DebugLog("Prevents copying of an object that is being copied");
                 return;
             }
+
             CopyingObjects.Add(destObj);
             while (currentObjType.IsSubclassOf(typeof(object))) {
-                // 跳过特定子类型
+                // 跳过特定类型
                 if (skipTypes.Contains(currentObjType)) {
                     currentObjType = currentObjType.BaseType;
                     continue;
                 }
-
+                
                 // 必须先设置属性再设置字段，不然字段的值会在设置属性后发生改变
                 PropertyInfo[] properties = currentObjType.GetProperties(bindingFlags);
                 foreach (PropertyInfo propertyInfo in properties) {
@@ -53,7 +56,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                     string memberName = propertyInfo.Name;
                     object destValue = destObj.GetProperty(currentObjType, memberName);
                     object sourceValue = sourceObj.GetProperty(currentObjType, memberName);
-
+                    
                     CopyMember(currentObjType, memberType, memberName, destObj, destValue,
                         sourceValue, SetProperty);
                 }
@@ -72,6 +75,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
                 currentObjType = currentObjType.BaseType;
             }
+
             CopyingObjects.Remove(destObj);
         }
 
@@ -90,8 +94,12 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
         private static void CopyMember(Type currentObjType, Type memberType, string memberName, object destObj,
             object destValue, object sourceValue, SetMember setMember) {
+            if(destValue == sourceValue) return;
+
+            // Logger.Log("SpeedrunTool", $"currentObjType={currentObjType}\tmemberType={memberType}\tmemberName={memberName}\tdestValue={destValue}\tsourceValue={sourceValue}\tdestObj={destObj}");
+            
             if (sourceValue == null) {
-                // Component 需要从Entity中移除（适用于第六章 BOSS 在 Sprite 和 PlayerSprite 之前切换）
+                // Component 需要从Entity中移除（适用于第六章 Boss 会在 Sprite 和 PlayerSprite 之间切换，使字段变为 null）
                 if (destValue is Component component) {
                     component.RemoveSelf();
                 }
@@ -105,53 +113,13 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 // 简单类型直接复制
                 setMember(destObj, currentObjType, memberName, sourceValue);
             } else if (memberType.IsList(out Type genericType)) {
-                // 列表
-                // 列表为空则创建空列表
-                if (destValue == null) {
-                    destValue = Activator.CreateInstance(memberType);
+                bool destValueIsNull = destValue == null;
+                destValue = CopyList(destValue, sourceValue, genericType);
+                if (destValueIsNull) {
                     setMember(destObj, currentObjType, memberName, destValue);
                 }
-
-                if (genericType.IsSimple()) {
-                    // 列表里是简单数据，则清除后全部假如
-                    if (destValue is IList destList && sourceValue is IList sourceList) {
-                        destList.Clear();
-                        foreach (object obj in sourceList) {
-                            destList.Add(obj);
-                        }
-                    }
-                } else {
-                    // 列表里是复杂类型
-                    // 不为空
-                    if (destValue is IList destList && sourceValue is IList sourceList) {
-                        if (destList.Count == sourceList.Count) {
-                            // 数量一致
-                            for (int i = 0; i < destList.Count; i++) {
-                                CopySpecifiedType(destList[i], sourceList[i]);
-                            }
-                        } else if (sourceList.Count == 0) {
-                            // 数量不一致时
-                            // 例如 FinalBoos 的 fallingBlocks
-                            destList.Clear();
-                        } else if (genericType.IsSameOrSubclassOf(typeof(Entity)) &&
-                                   (sourceList[0] as Entity)?.HasEntityId2() == true ||
-                                   genericType == typeof(Follower)) {
-                            // 确保可以通过 EntityId2 查找才进行修改
-                            destList.Clear();
-                            foreach (object o in sourceList) {
-                                object destElement = FindOrCreateSpecifiedType(o);
-                                if (destElement != null) {
-                                    destList.Add(destElement);
-                                }
-                            }
-                        } else {
-                            // TODO 其他类型
-                            // genericType.DebugLog("TODO UnhandeTypel List element type ->",
-                                // $"memberName={memberName} memberType={memberType} on {currentObjType}\tsourceValue={sourceValue}");
-                        }
-                    }
-                }
             } else if (memberType.IsArray && memberType.GetElementType() is Type elementType) {
+                // 一维数组且数量相同
                 if (destValue is Array destArray && destArray.Rank == 1 && sourceValue is Array sourceArray &&
                     destArray.Length == sourceArray.Length) {
                     for (int i = 0; i < destArray.Length; i++) {
@@ -178,50 +146,111 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                         }
                     }
                 } else if (hashElementType.IsSameOrSubclassOf(typeof(Entity))) {
-                    // TODO Player.triggersInside Hashset<Trigger>
+                    // Player.triggersInside Hashset<Trigger>
+                    if (sourceValue is IEnumerable sourceEnumerable) {
+                        IEnumerator enumerator = sourceEnumerable.GetEnumerator();
+                        while (enumerator.MoveNext() &&
+                               enumerator.Current.FindOrCreateSpecifiedType() is Entity entity) {
+                            destValue.InvokeMethod("Add", entity);
+                        }
+                    }
+                }
+            } else if (destValue is Stack<IEnumerator> destEnumerators &&
+                       sourceValue is Stack<IEnumerator> sourceEnumerators) {
+                // 用于恢复 Coroutine
+                Stack<IEnumerator> temp = new Stack<IEnumerator>();
+                foreach (IEnumerator functionCall in sourceEnumerators) {
+                    if (FindOrCreateSpecifiedType(functionCall) is IEnumerator destFunctionCall) {
+                        temp.Push(destFunctionCall);
+                    }
+                }
+                destEnumerators.Clear();
+                foreach (IEnumerator enumerator in temp) {
+                    destEnumerators.Push(enumerator);
                 }
             } else {
                 // 复杂类型
-                if (destValue == null) {
-                    // 为空则根据情况创建新实例或者查找当前场景的实例
+                if (destValue != null) {
+                    // 不为空则复制里面的值
+                    CopySpecifiedType(destValue, sourceValue);
+                } else {
+                    // 为空则根据情况创建新实例或者查找当前场景的实例S
                     destValue = FindOrCreateSpecifiedType(sourceValue);
                     if (destValue != null) {
                         setMember(destObj, currentObjType, memberName, destValue);
                     } else {
-                        destObj.DebugLog("Copy",
-                            $"memberName={memberName} memberType={memberType} on {currentObjType} failed\t sourceValue={sourceValue}");
+                        Logger.Log("SpeedrunTool", $"FindOrCreateSpecifiedType Faild: currentObjType={currentObjType}\tmemberType={memberType}\tmemberName={memberName}\tdestValue=null\tsourceValue={sourceValue}\tdestObj={destObj}");
                     }
-                } else {
-                    // 不为空则复制里面的值
-                    CopySpecifiedType(destValue, sourceValue);
                 }
             }
         }
 
-        // destValue and sourceValue always are the same type.
+        private static object CopyList(object destValue, object sourceValue, Type genericType) {
+            // 列表
+            // 列表为空则创建空列表
+            if (destValue == null) {
+                destValue = Activator.CreateInstance(sourceValue.GetType());
+            }
+
+            if (!(destValue is IList destList) || !(sourceValue is IList sourceList)) {
+                return destValue;
+            }
+
+            if (genericType.IsSimple()) {
+                // 列表里是简单数据，则清除后全部假如
+                destList.Clear();
+                foreach (object obj in sourceList) {
+                    destList.Add(obj);
+                }
+            } else {
+                // 列表里是复杂类型
+                if (destList.Count == sourceList.Count) {
+                    // 数量一致
+                    for (int i = 0; i < destList.Count; i++) {
+                        CopySpecifiedType(destList[i], sourceList[i]);
+                    }
+                } else {
+                    // 数量不一致时
+                    // 例如 FinalBoos 的 fallingBlocks
+                    destList.Clear();
+                    foreach (object o in sourceList) {
+                        object destElement = FindOrCreateSpecifiedType(o);
+
+                        if (destElement != null) {
+                            destList.Add(destElement);
+                        }
+                    }
+                }
+            }
+
+            return destValue;
+        }
+
         public static void CopySpecifiedType(this object destValue, object sourceValue) {
             if (sourceValue.IsCompilerGenerated()) {
                 destValue.CopyAllFrom(sourceValue);
             } else if (sourceValue is Component) {
                 destValue.CopyAllFrom(sourceValue,
-                    // CoroutineAction takes care of them 
-                    typeof(Coroutine),
+                    // only copy some fields later.
                     typeof(StateMachine),
-                    // crash sometimes so skip it, only copy some fields later.
-                    typeof(DustGraphic)
+                    typeof(DustGraphic),
+                    // switch between room will make light disappear
+                    typeof(VertexLight)
                 );
                 switch (destValue) {
-                    case Sprite destSprite when sourceValue is Sprite sourceSprite:
-                        sourceSprite.InvokeMethod("CloneInto", destSprite);
-                        break;
                     case StateMachine destMachine when sourceValue is StateMachine sourceMachine:
-                        // Only Set the field, CoroutineAction takes care of the rest
+                        object destCoroutine = destMachine.GetField("currentCoroutine");
+                        object sourceCoroutine = sourceMachine.GetField("currentCoroutine");
+                        destCoroutine.CopyAllFrom(sourceCoroutine);
                         destMachine.SetField("state", sourceMachine.State);
                         break;
                     case DustGraphic destDustGraphic when sourceValue is DustGraphic sourceDustGraphic:
                         destDustGraphic.EyeDirection = sourceDustGraphic.EyeDirection;
                         destDustGraphic.EyeTargetDirection = sourceDustGraphic.EyeTargetDirection;
                         destDustGraphic.EyeFlip = sourceDustGraphic.EyeFlip;
+                        break;
+                    case Sprite destSprite when sourceValue is Sprite sourceSprite:
+                        sourceSprite.InvokeMethod("CloneInto", destSprite);
                         break;
                     case SoundSource destSound
                         when sourceValue is SoundSource sourceSound && sourceSound.LoadPlayingValue():
@@ -233,7 +262,11 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 }
             } else if (destValue is Entity destEntity && sourceValue is Entity sourceEntity &&
                        sourceEntity.GetEntityId2() != destEntity.GetEntityId2()) {
-                
+                sourceEntity.DebugLog("entity have different EntityId2");
+            } else if (destValue is Collider destCollider && sourceValue is Collider sourceCollider) {
+                // if (destCollider.Entity != null) {
+                //     destCollider.Entity.Collider = sourceCollider;
+                // }
             }
         }
 
@@ -242,18 +275,34 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             if (destValue != null) return destValue;
 
             destValue = CreateSpecifiedType(sourceValue);
+
+            if (destValue == null) {
+                sourceValue.DebugLog("FindOrCreateSpecifiedType Failed:");
+            }
             return destValue;
         }
 
         private static object FindSpecifiedType(object sourceValue) {
             object destValue = null;
-            if (sourceValue is Entity entity) {
-                if (Engine.Scene.FindFirst(entity.GetEntityId2()) is Entity destEntity) {
+            if (sourceValue is Delegate @delegate && @delegate.Target == null) {
+                // If mod Hook a method return IEnumerator will produce something like this.
+                // Still not know much about delegate, maybe because the delegate method orig is static.
+                destValue = sourceValue;
+            } else if (sourceValue is Entity entity) {
+                if (sourceValue is SolidTiles) {
+                    destValue = Engine.Scene.GetLevel()?.SolidTiles;
+                }else if (Engine.Scene.FindFirst(entity.GetEntityId2()) is Entity destEntity) {
                     destValue = destEntity;
+                } else if (sourceValue.GetType() == typeof(Entity)) {
+                    destValue = new Entity();
+                    destValue.CopySpecifiedType(sourceValue);
                 } else if (Engine.Scene.Entities.FirstOrDefault(e => e.GetType() == sourceValue.GetType()) is Entity
                     findFirstEntity) {
                     "Can't Find the match entity, so find the first same type one".DebugLog(findFirstEntity);
                     destValue = findFirstEntity;
+                } else {
+                    // 还原 Coroutine 时有些 Entity 创建了而未被添加到 Level 中，他们无法在 EntitiesSavedButNotLoaded 中还原，所以在这里克隆一个
+                    destValue = RestoreAction.CreateEntityCopy(entity);
                 }
             } else if (sourceValue is Level && Engine.Scene is Level level) {
                 destValue = level;
@@ -271,7 +320,8 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 }
             } else if (sourceValue is Holdable sourceHoldable) {
                 destValue = (FindSpecifiedType(sourceHoldable.Entity) as Entity)?.Get<Holdable>();
-            } else if (sourceValue is Component sourceComponent && sourceComponent.Entity != null && FindSpecifiedType(sourceComponent.Entity) is Entity componentEntity) {
+            } else if (sourceValue is Component sourceComponent && sourceComponent.Entity != null &&
+                       FindSpecifiedType(sourceComponent.Entity) is Entity componentEntity) {
                 if (sourceComponent.IsFindabel() &&
                     componentEntity.FindComponent(sourceComponent) is Component foundComponent) {
                     sourceValue.DebugLog("Find a component instead of recreating a new one");
@@ -290,11 +340,11 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 destValue = sourceValue.CreateCompilerGeneratedCopy();
             } else if (sourceValue is Delegate @delegate) {
                 destValue = @delegate.CloneDelegate();
-            } else if (sourceValue is SoundEmitter soundEmitter) {
-                "CreateSpecifiedType".DebugLog();
-                destValue = SoundEmitter.Play(soundEmitter.Source.EventName, new Entity(soundEmitter.Position));
+            } else if (sourceValue is Stopwatch) {
+                destValue = new Stopwatch();
+            } else if (sourceValue is EventInstance eventInstance) {
+                destValue = eventInstance.Clone();
             } else if (sourceValue is Component sourceComponent) {
-                // TODO Recreate Other Component
                 Component destComponent = null;
                 Entity sourceEntity = sourceComponent.Entity;
                 Entity destEntity = Engine.Scene.FindFirst(sourceEntity?.GetEntityId2());
@@ -323,11 +373,19 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                         sourceTween.Active);
                 } else if (sourceValue is Alarm sourceAlarm) {
                     destComponent = Alarm.Create(sourceAlarm.Mode, null, sourceAlarm.Duration, sourceAlarm.Active);
+                } else if (sourceValue is VertexLight) {
+                    destComponent = new VertexLight();
+                } else if (sourceValue is Image sourceImage) {
+                    destComponent = new Image(sourceImage.Texture);
+                    return destComponent;
+                } else if (sourceValue is Coroutine sourceCoroutine) {
+                    destComponent = new Coroutine(sourceCoroutine.RemoveOnComplete);
+                } else if (sourceValue is Follower sourceFollower) {
+                    destComponent = new Follower(sourceFollower.ParentEntityID);
                 }
 
-                if (sourceType != typeof(StateMachine) && sourceType != typeof(Coroutine)) {
-                    // 尝试给未处理的类型创建实例
-                    // destComponent = (Component) sourceType.ForceCreateInstance();
+                if (destComponent == null) {
+                    destComponent = sourceValue.ForceCreateInstance("CreateSpecifiedType Component") as Component;
                 }
 
                 if (destComponent != null) {
@@ -336,29 +394,40 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
                 destValue = destComponent;
             } else if (sourceValue is MTexture) {
-                destValue = new MTexture();
+                destValue = sourceValue;
+            }  else if (sourceType.IsList(out Type genericType)) {
+                destValue = CopyList(null, sourceValue, genericType);
             }
 
             // 尝试给未处理的类型创建实例
-            // if (destValue == null) {
-            //     destValue = sourceType.ForceCreateInstance();
-            // }
-
-            destValue?.CopySpecifiedType(sourceValue);
-
             if (destValue == null) {
-                destValue.DebugLog("Create Instance Failed", sourceValue);
+                destValue = sourceValue.ForceCreateInstance("CreateSpecifiedType End");
             }
 
+            destValue?.CopySpecifiedType(sourceValue);
             return destValue;
         }
 
 
         private static object CreateCompilerGeneratedCopy(Type type) {
             if (!type.IsCompilerGenerated()) return null;
-            object newObj = Activator.CreateInstance(type);
+            // Delegate
+            object newObj = type.GetConstructor(new Type[] { })?.Invoke(new object[] { });
+
+            // Coroutine
+            if (newObj == null) {
+                newObj = type.GetConstructor(new[] {typeof(int)})?.Invoke(new object[] {0});
+            }
+
+            if (newObj == null) {
+                type.DebugLog("CreateCompilerGeneratedCopy Failed:");
+                return null;
+            }
+
             foreach (FieldInfo fieldInfo in type.GetFields().Where(info => info.FieldType.IsCompilerGenerated())) {
-                object newFieldObj = CreateCompilerGeneratedCopy(fieldInfo.FieldType);
+                object newFieldObj = type == fieldInfo.FieldType
+                    ? newObj
+                    : CreateCompilerGeneratedCopy(fieldInfo.FieldType);
                 fieldInfo.SetValue(newObj, newFieldObj);
             }
 
@@ -374,6 +443,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         private static object CloneDelegate(this Delegate @delegate) {
+            if (@delegate.Target == null) return null;
             object target = @delegate.Target.FindOrCreateSpecifiedType();
             return @delegate.Method.CreateDelegate(@delegate.GetType(), target);
         }

@@ -84,14 +84,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             foreach (T loadedComponent in loadedComponents) {
                 if (savedComponents.FirstOrDefault(component => component.IsSameAs(loadedComponent)) is Component
                     savedComponent) {
-                    loadedComponent.CopySpecifiedType(savedComponent);
+                    loadedComponent.TryCopyObject(savedComponent);
                 }
             }
 
             // 查找需要重新创建还原的 Component
             foreach (T savedComponent in savedComponents) {
                 if (loadedComponents.Any(component => savedComponent.IsSameAs(component))) continue;
-                Component loadComponent = savedComponent.FindOrCreateSpecifiedType() as Component;
+                Component loadComponent = savedComponent.TryFindOrCloneObject() as Component;
                 if (loadComponent == null) continue;
                 loaded.Add(loadComponent);
             }

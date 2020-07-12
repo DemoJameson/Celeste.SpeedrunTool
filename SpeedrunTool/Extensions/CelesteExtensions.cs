@@ -27,8 +27,12 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return null;
         }
 
+        public static Session GetSession(this Scene scene) {
+            return scene.GetLevel()?.Session;
+        }
+
         public static Player GetPlayer(this Scene scene) {
-            if (scene is Level level && level.Entities.FindFirst<Player>() is Player player) {
+            if (scene.GetLevel()?.Entities.FindFirst<Player>() is Player player) {
                 return player;
             }
 

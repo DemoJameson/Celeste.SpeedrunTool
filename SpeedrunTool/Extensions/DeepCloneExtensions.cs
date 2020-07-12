@@ -15,7 +15,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         // deep clone an object using YAML (de)serialization.
-        public static T DeepCloneYAML<T>(this object obj, Type type) {
+        public static T DeepCloneYaml<T>(this object obj, Type type) {
             string yaml = YamlHelper.Serializer.Serialize(obj);
             return (T) YamlHelper.Deserializer.Deserialize(yaml, type);
         }

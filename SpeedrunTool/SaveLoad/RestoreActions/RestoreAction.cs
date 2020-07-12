@@ -38,7 +38,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
         public virtual void OnClearState() { }
 
         // 此时恢复 Entity 的状态可以避免很多问题，例如刺的依附和第九章鸟的节点处理
-        public virtual void AfterEntityAwake(Entity loadedEntity, Entity savedEntity) { }
+        public virtual void AfterEntityAwake(Entity loadedEntity, Entity savedEntity,
+            List<Entity> savedDuplicateIdList) { }
 
 
         // Madelin 复活完毕的时刻，主要用于恢复 Player 的状态
@@ -50,96 +51,98 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
         public static void EntitiesSavedButNotLoaded(Level level, Dictionary<EntityId2, Entity> savedEntities) {
             foreach (var pair in savedEntities) {
                 Entity savedEntity = pair.Value;
-
-                if (savedEntity.GetEntityData() != null) {
-                    Type type = savedEntity.GetType();
-
-                    object loaded = type.GetConstructor(new[] {typeof(EntityData), typeof(Vector2)})
-                        ?.Invoke(new object[] {savedEntity.GetEntityData(), Vector2.Zero}) ?? type
-                        .GetConstructor(new[] {typeof(EntityData), typeof(Vector2), typeof(EntityID)})
-                        ?.Invoke(new object[] {
-                            savedEntity.GetEntityData(), Vector2.Zero,
-                            savedEntity.GetEntityId2().EntityId
-                        });
-
-                    if (loaded is Entity loadedEntity) {
-                        loadedEntity.Position = savedEntity.Position;
-                        loadedEntity.CopyEntityData(savedEntity);
-                        loadedEntity.CopyEntityId2(savedEntity);
-                        level.Add(loadedEntity);
-                    }
-                } else if (savedEntity.GetType().IsSubclassOf(typeof(Entity))) {
-                    if (CreateEntityCopy(savedEntity) is Entity entity) {
-                        level.Add(entity);
-                    }
+                if (CreateEntityCopy(savedEntity) is Entity entity) {
+                    level.Add(entity);
                 }
             }
         }
 
-        public static Entity CreateEntityCopy(Entity savedEntity) {
+        public static Entity CreateEntityCopy(Entity savedEntity, string tag = "EntitiesSavedButNotLoaded") {
             Entity loadedEntity = null;
-            switch (savedEntity) {
-                // 先将范围限定在 Entity 的子类，如果出现问题再说
-                case AbsorbOrb absorbOrb:
-                    // TODO AbsorbOrb
-                    break;
-                case BadelineDummy dummy:
-                    loadedEntity = new BadelineDummy(dummy.GetStartPosition());
-                    break;
-                case AngryOshiro oshiro:
-                    loadedEntity = new AngryOshiro(oshiro.GetStartPosition(),
-                        (bool) oshiro.GetField("fromCutscene"));
-                    break;
-                case Snowball _:
-                    loadedEntity = new Snowball();
-                    break;
-                case SlashFx slashFx:
-                    loadedEntity = slashFx.Clone();
-                    break;
-                case SpeedRing speedRing:
-                    loadedEntity = speedRing.Clone();
-                    break;
-                case FinalBossShot finalBossShot:
-                    loadedEntity = finalBossShot.Clone();
-                    break;
-                case FinalBossBeam finalBossBeam:
-                    loadedEntity = finalBossBeam.Clone();
-                    break;
-                case BirdTutorialGui birdTutorialGui:
-                    loadedEntity = birdTutorialGui.Clone();
-                    break;
-                // BUG: SoundEmitter 不知道为何创建后也不能从 Level 里查找到，所以找出重复的只还原第一个
-                case SoundEmitter soundEmitter:
-                    loadedEntity = SoundEmitter.Play(soundEmitter.Source.EventName,
-                        new Entity(soundEmitter.Position));
-                    if (SoundSourceAction.PlayingSoundSources.FirstOrDefault(source =>
-                        source.EventName == soundEmitter.Source.EventName) == null) {
-                        (loadedEntity as SoundEmitter)?.Source.CopySpecifiedType(soundEmitter.Source);
-                    } else {
-                        (loadedEntity as SoundEmitter)?.Source.Stop();
-                    }
+            Type savedType = savedEntity.GetType();
 
-                    break;
-                case Debris debris:
-                    loadedEntity = Engine.Pooler.Create<Debris>()
-                        .Init(debris.GetStartPosition(), (char) debris.GetField("tileset"),
-                            (bool) debris.GetField("playSound"));
-                    break;
-                case Key _:
-                    // let's level create the key.
-                    // Level.orig_LoadLevel: foreach (EntityID key in Session.Keys) Add(new Key(player, key)); 
-                    break;
-                case TalkComponent.TalkComponentUI _:
-                    // ignore
-                    break;
-                default:
-                    if (savedEntity.GetType().FullName == "Celeste.MoveBlock+Debris") {
-                        loadedEntity = (savedEntity as Actor).CloneMoveBlockDebris();
-                    } else if (savedEntity.ForceCreateInstance("EntitiesSavedButNotLoaded") is Entity newEntity) {
-                        loadedEntity = newEntity;
-                    }
+            if (savedEntity.GetEntityData() != null) {
+                // 一般 Entity 都是 EntityData + Vector2
+                loadedEntity = (savedType.GetConstructor(new[] {typeof(EntityData), typeof(Vector2)})
+                    ?.Invoke(new object[] {savedEntity.GetEntityData(), Vector2.Zero})) as Entity;
 
-                    break;
+                if (loadedEntity == null) {
+                    // 部分例如草莓则是 EntityData + Vector2 + EntityID
+                    loadedEntity = savedType
+                        .GetConstructor(new[] {typeof(EntityData), typeof(Vector2), typeof(EntityID)})
+                        ?.Invoke(new object[] {
+                            savedEntity.GetEntityData(), Vector2.Zero, savedEntity.GetEntityId2().EntityId
+                        }) as Entity;
+                }
+
+                if (loadedEntity == null && savedType.IsType<CrystalStaticSpinner>()) {
+                    loadedEntity = new CrystalStaticSpinner(savedEntity.GetEntityData(), Vector2.Zero,
+                        (CrystalColor) savedEntity.GetField(typeof(CrystalStaticSpinner), "color"));
+                }
+
+                if (loadedEntity == null && savedType.IsType<TriggerSpikes>()) {
+                    loadedEntity = new TriggerSpikes(savedEntity.GetEntityData(), Vector2.Zero,
+                        (TriggerSpikes.Directions) savedEntity.GetField(typeof(TriggerSpikes), "direction"));
+                }
+                
+                if (loadedEntity == null && savedType.IsType<Spikes>()) {
+                    loadedEntity = new Spikes(savedEntity.GetEntityData(), Vector2.Zero,
+                        ((Spikes)savedEntity).Direction);
+                }
+                
+                if (loadedEntity == null && savedType.IsType<TriggerSpikes>()) {
+                    loadedEntity = new Spring(savedEntity.GetEntityData(), Vector2.Zero, ((Spring)savedEntity).Orientation);
+                }
+
+                if (loadedEntity != null) {
+                    loadedEntity.Position = savedEntity.Position;
+                    loadedEntity.CopyEntityData(savedEntity);
+                    loadedEntity.CopyEntityId2(savedEntity);
+                    return loadedEntity;
+                }
+            }
+
+            // TODO 如果是他们的子类该怎么办……
+            if (savedType.IsType<BadelineDummy>()) {
+                loadedEntity = new BadelineDummy(savedEntity.GetStartPosition());
+            } else if (savedType.IsType<AngryOshiro>()) {
+                loadedEntity = new AngryOshiro(savedEntity.GetStartPosition(),
+                    (bool) savedEntity.GetField("fromCutscene"));
+            } else if (savedType.IsType<Snowball>()) {
+                loadedEntity = new Snowball();
+            } else if (savedType.IsType<SlashFx>() && savedEntity is SlashFx slashFx) {
+                loadedEntity = slashFx.Clone();
+            } else if (savedType.IsType<SpeedRing>() && savedEntity is SpeedRing speedRing) {
+                loadedEntity = speedRing.Clone();
+            } else if (savedType.IsType<FinalBossShot>() && savedEntity is FinalBossShot finalBossShot) {
+                loadedEntity = finalBossShot.Clone();
+            } else if (savedType.IsType<FinalBossBeam>() && savedEntity is FinalBossBeam finalBossBeam) {
+                loadedEntity = finalBossBeam.Clone();
+            } else if (savedType.IsType<BirdTutorialGui>() && savedEntity is BirdTutorialGui birdTutorialGui) {
+                loadedEntity = birdTutorialGui.Clone();
+            } else if (savedType.IsType<SoundEmitter>() && savedEntity is SoundEmitter soundEmitter) {
+                loadedEntity = SoundEmitter.Play(soundEmitter.Source.EventName,
+                    new Entity(soundEmitter.Position));
+                if (SoundSourceAction.PlayingSoundSources.FirstOrDefault(source =>
+                    source.EventName == soundEmitter.Source.EventName) == null) {
+                    (loadedEntity as SoundEmitter)?.Source.TryCopyObject(soundEmitter.Source);
+                } else {
+                    (loadedEntity as SoundEmitter)?.Source.Stop();
+                }
+            } else if (savedType.IsType<Debris>() && savedEntity is Debris debris) {
+                loadedEntity = Engine.Pooler.Create<Debris>()
+                    .Init(debris.GetStartPosition(), (char) debris.GetField("tileset"),
+                        (bool) debris.GetField("playSound"));
+            } else if (savedType == typeof(TalkComponent.TalkComponentUI)) {
+                // ignore
+            } else if (savedType.IsType<Entity>()) {
+                loadedEntity = new Entity(savedEntity.GetStartPosition());
+            } else {
+                if (savedEntity.GetType().FullName == "Celeste.MoveBlock+Debris") {
+                    loadedEntity = (savedEntity as Actor).CloneMoveBlockDebris();
+                } else if (savedEntity.ForceCreateInstance(tag) is Entity newEntity) {
+                    loadedEntity = newEntity;
+                }
             }
 
 
@@ -148,6 +151,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             loadedEntity.Position = savedEntity.Position;
             loadedEntity.CopyEntityId2(savedEntity);
             loadedEntity.CopyStartPosition(savedEntity);
+
             return loadedEntity;
         }
 

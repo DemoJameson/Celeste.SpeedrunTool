@@ -55,7 +55,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
         }
 
         public static EventInstance Clone(this EventInstance eventInstance) {
-            EventInstance clone = Audio.CreateInstance(eventInstance.GetExtendedString(EventInstancePathKey));
+            string path = eventInstance.GetExtendedString(EventInstancePathKey);
+            EventInstance clone = Audio.CreateInstance(path);
             if (clone == null) return null;
 
             var parameters =
@@ -66,8 +67,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
                 }
             }
 
-            clone.start();
-            clone.release();
+            // clone.start();
+            // clone.release();
 
             return clone;
         }

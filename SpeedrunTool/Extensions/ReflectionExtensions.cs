@@ -2,18 +2,21 @@ using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.Serialization;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
     public static class TypeExtensions {
         public static bool IsSimple(this Type type) {
-            return type.IsPrimitive || 
-                   type.IsValueType && type.FullName != "Celeste.TriggerSpikes+SpikeInfo" && //SpikeInfo 里有 Entity 所以不能算做简单数据类型
+            return type.IsPrimitive ||
+                   type.IsValueType &&
+                   type.FullName != "Celeste.TriggerSpikes+SpikeInfo" && //SpikeInfo 里有 Entity 所以不能算做简单数据类型
                    type.FullName != "Celeste.Mod.Entities.TriggerSpikesOriginal+SpikeInfo" ||
                    type.IsEnum || type == typeof(string) ||
                    type == typeof(decimal) ||
                    type == typeof(object) ||
-                   type.IsSameOrSubclassOf(typeof(Collider))
+                   type.IsSameOrSubclassOf(typeof(Collider)) ||
+                   type == typeof(LevelData)
                 ;
         }
 
@@ -25,7 +28,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
             return result;
         }
-        
+
         public static bool IsStack(this Type type, out Type genericType) {
             bool result = type.IsGenericType && type.GetGenericTypeDefinition().IsAssignableFrom(typeof(Stack<>))
                                              && type.GenericTypeArguments.Length == 1;
@@ -61,6 +64,14 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return (memberInfo.MemberType & MemberTypes.Field) != 0;
         }
 
+        public static bool IsType<T>(this object obj) {
+            return obj.GetType() == typeof(T);
+        }
+
+        public static bool IsType<T>(this Type type) {
+            return type == typeof(T);
+        }
+
         public static bool IsSameOrSubclassOf(this Type potentialDescendant, Type potentialBase) {
             return potentialDescendant.IsSubclassOf(potentialBase)
                    || potentialDescendant == potentialBase;
@@ -71,21 +82,25 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                    || potentialBase == potentialDescendant;
         }
 
-        public static object ForceCreateInstance(this object obj, string Tag = "") {
-            return ForceCreateInstance(obj.GetType(), Tag);
+        public static object ForceCreateInstance(this object obj, string tag = "") {
+            return ForceCreateInstance(obj.GetType(), tag);
         }
 
-        public static object ForceCreateInstance(this Type type, string Tag = "") {
+        public static object ForceCreateInstance(this Type type, string tag = "") {
             object newObject = null;
             try {
                 // 具有空参构造函数的类型可以创建
                 newObject = Activator.CreateInstance(type);
             } catch (Exception) {
-                type.DebugLog("Activator.CreateInstance Failed:", Tag);
+                try {
+                    FormatterServices.GetUninitializedObject(type);
+                } catch (Exception) {
+                    "ForceCreateInstance Failed".DebugLog(type, tag);
+                }
             }
 
             if (newObject != null) {
-                "ForceCreateInstance Success".DebugLog(type, Tag);
+                "ForceCreateInstance Success".DebugLog(type, tag);
             }
 
             return newObject;

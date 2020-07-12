@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Celeste.Mod.Entities;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Monocle;
@@ -8,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
         public TriggerSpikesRestoreAction() : base(typeof(Entity)) { }
 
         // spikes 是个 ValueType 数组，所以不能单纯的修改元素内容，得整个替换
-        public override void AfterEntityAwake(Entity loadedEntity, Entity savedEntity) {
+        public override void AfterEntityAwake(Entity loadedEntity, Entity savedEntity, List<Entity> toList) {
             if (!(loadedEntity is TriggerSpikes) && !(loadedEntity is TriggerSpikesOriginal)) return;
             
             Type type = loadedEntity.GetType();

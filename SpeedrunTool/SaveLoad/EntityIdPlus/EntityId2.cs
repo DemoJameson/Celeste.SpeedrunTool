@@ -149,8 +149,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             return scene.Entities.FirstOrDefault(e => e.GetEntityId2() == entityId2);
         }
 
-        public static Dictionary<EntityId2, T> FindAllToDict<T>(this EntityList entityList) where T : Entity {
+        public static Dictionary<EntityId2, T> FindAllToDict<T>(this EntityList entityList, out List<T> duplicateIdList) where T : Entity {
             Dictionary<EntityId2, T> result = new Dictionary<EntityId2, T>();
+            duplicateIdList = new List<T>();
+            
             List<T> findAll = entityList.FindAll<T>();
             foreach (T entity in findAll) {
                 if (entity.IsGlobalButNotCassetteManager()) continue;
@@ -159,6 +161,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
                 EntityId2 entityId2 = entity.GetEntityId2();
                 if (result.ContainsKey(entityId2)) {
                     Logger.Log("SpeedrunTool", $"EntityId2 Duplication: {entityId2}");
+                    duplicateIdList.Add(entity);
                     continue;
                 }
 
@@ -168,35 +171,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             return result;
         }
 
-        public static Dictionary<EntityId2, Entity> FindAllToDict(this EntityList entityList, Type type,
-            bool includeSubclass = false) {
-            Dictionary<EntityId2, Entity> result = new Dictionary<EntityId2, Entity>();
-            foreach (Entity entity in entityList) {
-                if (entity.IsGlobalButNotCassetteManager()) continue;
-                if (entity.NoEntityId2()) continue;
-
-                if (includeSubclass && entity.GetType().IsSameOrSubclassOf(type) ||
-                    !includeSubclass && entity.GetType() == type) {
-                    EntityId2 entityId2 = entity.GetEntityId2();
-                    if (result.ContainsKey(entityId2)) {
-                        Logger.Log("SpeedrunTool", $"EntityId2 Duplication: {entityId2}");
-                        continue;
-                    }
-
-                    result[entityId2] = entity;
-                }
-            }
-
-            return result;
+        public static Dictionary<EntityId2, T> FindAllToDict<T>(this Scene scene, out List<T> duplicateIdList) where T : Entity {
+            return FindAllToDict(scene.Entities, out duplicateIdList);
         }
-
+        
         public static Dictionary<EntityId2, T> FindAllToDict<T>(this Scene scene) where T : Entity {
-            return FindAllToDict<T>(scene.Entities);
-        }
-
-        public static Dictionary<EntityId2, Entity> FindAllToDict(this Scene scene, Type type,
-            bool includeSubclass = false) {
-            return FindAllToDict(scene.Entities, type, includeSubclass);
+            return FindAllToDict(scene.Entities, out List<T> _);
         }
     }
 }

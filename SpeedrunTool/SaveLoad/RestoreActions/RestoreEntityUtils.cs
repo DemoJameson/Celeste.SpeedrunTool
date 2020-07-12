@@ -8,23 +8,25 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
     public static class RestoreEntityUtils {
         private static bool IsLoadStart => StateManager.Instance.IsLoadStart;
         private static Dictionary<EntityId2, Entity> SavedEntitiesDict => StateManager.Instance.SavedEntitiesDict;
+        private static List<Entity> SavedDuplicateIdList => StateManager.Instance.SavedDuplicateIdList;
 
         public static void OnSaveState(Level level) {
             RestoreAction.All.ForEach(restoreAction => restoreAction.OnSaveState(level));
         }
-        
+
         public static void OnLoadStart(Level level) {
+            EntityCopyCore.ClearCachedObjects();
             RestoreAction.All.ForEach(restoreAction => restoreAction.OnLoadStart(level));
         }
-        
+
         public static void OnLoadComplete(Level level) {
             RestoreAction.All.ForEach(restoreAction => restoreAction.OnLoadComplete(level));
         }
-        
+
         public static void OnClearState() {
             RestoreAction.All.ForEach(restoreAction => restoreAction.OnClearState());
         }
-        
+
         private static void LevelOnBegin(On.Celeste.Level.orig_Begin orig, Level level) {
             orig(level);
             if (!IsLoadStart) return;
@@ -49,8 +51,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             foreach (var pair in loadedEntitiesDict.Where(loaded => SavedEntitiesDict.ContainsKey(loaded.Key))) {
                 RestoreAction.All.ForEach(restoreAction => {
                     if (pair.Value.GetType().IsSameOrSubclassOf(restoreAction.EntityType)) {
-                        restoreAction.AfterEntityAwake(pair.Value, SavedEntitiesDict[pair.Key]);
-                    } 
+                        restoreAction.AfterEntityAwake(pair.Value, SavedEntitiesDict[pair.Key],
+                            SavedDuplicateIdList);
+                    }
                 });
             }
         }
@@ -62,7 +65,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
                 RestoreAction.All.ForEach(restoreAction => {
                     if (pair.Value.GetType().IsSameOrSubclassOf(restoreAction.EntityType)) {
                         restoreAction.AfterPlayerRespawn(pair.Value, SavedEntitiesDict[pair.Key]);
-                    } 
+                    }
                 });
             }
         }

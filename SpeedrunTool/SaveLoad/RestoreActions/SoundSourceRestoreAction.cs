@@ -16,12 +16,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             }
         }
 
-        // 等待Entity恢复活完毕后再重新播放声音
+        // 等待 Player 复活完毕后再重新播放声音
         public override void OnLoadComplete(Level level) {
             PlayingSoundSources.ForEach(soundSource => soundSource.Resume());
         }
 
-        public override void OnClearState() {
+        public override void OnLoadStart(Level level) {
             PlayingSoundSources.Clear();
         }
     }

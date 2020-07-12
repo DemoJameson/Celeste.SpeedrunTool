@@ -17,6 +17,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         public Level SavedLevel;
 
         public Dictionary<EntityId2, Entity> SavedEntitiesDict = new Dictionary<EntityId2, Entity>();
+        public List<Entity> SavedDuplicateIdList = new List<Entity>();
 
         private LoadState loadState = SaveLoad.LoadState.None;
 
@@ -144,16 +145,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private bool CheckButton(Level level, Player player) {
-            if (GetVirtualButton(Mappings.Save).Pressed && !level.Paused && !level.Transitioning && !level.PauseLock &&
-                !level.InCutscene &&
-                !level.SkippingCutscene && player != null && !player.Dead) {
+            if (GetVirtualButton(Mappings.Save).Pressed && IsAllowSave(level, player)) {
                 GetVirtualButton(Mappings.Save).ConsumePress();
-                int state = player.StateMachine.State;
-
-                if (!disabledSaveStates.Contains(state)) {
                     SaveState(level, player);
                     return true;
-                }
             }
 
             if (GetVirtualButton(Mappings.Load).Pressed && !level.Paused && !IsLoadFrozen) {
@@ -183,6 +178,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             return false;
         }
 
+        private bool IsAllowSave(Level level, Player player) {
+            return !level.Paused && !level.Transitioning && !level.PauseLock && !level.InCutscene &&
+                   !level.SkippingCutscene && player != null && !player.Dead &&
+                   !disabledSaveStates.Contains(player.StateMachine.State);
+        }
+
         private void SaveState(Level level, Player player) {
             ClearState();
 
@@ -194,13 +195,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             level.Session.CoreMode = level.CoreMode;
             SavedPlayer = player;
             SavedLevel = level;
-            SavedEntitiesDict = level.FindAllToDict<Entity>();
+            SavedEntitiesDict = level.FindAllToDict<Entity>(out SavedDuplicateIdList);
 
             // save all mod sessions
             savedModSessions = new Dictionary<EverestModule, EverestModuleSession>();
             foreach (EverestModule module in Everest.Modules) {
                 if (module._Session != null) {
-                    savedModSessions[module] = module._Session.DeepCloneYAML<EverestModuleSession>(module.SessionType);
+                    savedModSessions[module] = module._Session.DeepCloneYaml<EverestModuleSession>(module.SessionType);
                 }
             }
 
@@ -221,7 +222,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // restore all mod sessions
             foreach (EverestModule module in Everest.Modules) {
                 if (savedModSessions.TryGetValue(module, out EverestModuleSession savedModSession)) {
-                    module._Session = savedModSession.DeepCloneYAML<EverestModuleSession>(module.SessionType);
+                    module._Session = savedModSession.DeepCloneYaml<EverestModuleSession>(module.SessionType);
                 }
             }
         }
@@ -241,8 +242,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (player == null)
                 return false;
 
-            int state = player.StateMachine.State;
-            if (!disabledSaveStates.Contains(state)) {
+            if (IsAllowSave(level, player)) {
                 SaveState(level, player);
                 return true;
             }
@@ -291,6 +291,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SavedPlayer = null;
             SavedLevel = null;
             SavedEntitiesDict.Clear();
+            SavedDuplicateIdList.Clear();
             loadState = SaveLoad.LoadState.None;
 
             RestoreEntityUtils.OnClearState();

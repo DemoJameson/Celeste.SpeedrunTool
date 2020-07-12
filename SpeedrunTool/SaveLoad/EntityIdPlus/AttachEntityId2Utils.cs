@@ -38,9 +38,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
                 if (cursor.TryFindPrev(out var results,
                     i => i.OpCode == OpCodes.Ldloc_S && i.Operand is VariableDefinition v &&
                          v.VariableType.Name == "EntityData")) {
-                    // cursor.Previous.Log();
+                    // cursor.Previous.DebugLog();
                     cursor.Emit(OpCodes.Dup).Emit(OpCodes.Ldloc_S, results[0].Next.Operand);
-                    cursor.EmitDelegate<Action<Monocle.Entity, EntityData>>(AttachEntityId);
+                    cursor.EmitDelegate<Action<Entity, EntityData>>(AttachEntityId);
                 }
             }
         }
@@ -51,8 +51,30 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
 
             while (cursor.TryGotoNext(MoveType.After,
                 i => i.OpCode == OpCodes.Newobj && i.Operand.ToString().Contains("::.ctor(Celeste.EntityData"))) {
+                // cursor.Previous.DebugLog();
                 cursor.Emit(OpCodes.Dup).Emit(OpCodes.Ldarg_0);
                 cursor.EmitDelegate<Action<Entity, EntityData>>(AttachEntityId);
+            }
+
+            // TODO is possible to attach data to entity created by LoadEntity Event?
+            // if (Everest.Events.Level.LoadEntity(level, levelData, offset, entityData)) { return true; }
+            
+            /*
+            if (EntityLoaders.TryGetValue(entityData.Name, out EntityLoader value)) {
+				Entity entity = value(level, levelData, offset, entityData);
+				if (entity != null) {
+				    // insert AttachEntityId(entity, entityData);
+					level.Add(entity);
+					return true;
+				}
+			}
+            */
+            cursor.Goto(0);
+            if (cursor.TryGotoNext(i => i.OpCode == OpCodes.Callvirt && i.Operand.ToString().Contains("EntityLoader::Invoke"))) {
+                if (cursor.TryGotoNext(i => i.MatchCallvirt<Scene>("Add"))) {
+                    cursor.Emit(OpCodes.Dup).Emit(OpCodes.Ldarg_0);
+                    cursor.EmitDelegate<Action<Entity, EntityData>>(AttachEntityId);
+                }
             }
         }
 

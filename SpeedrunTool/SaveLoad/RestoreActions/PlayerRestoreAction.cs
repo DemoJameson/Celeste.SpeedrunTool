@@ -1,4 +1,4 @@
-using Celeste.Mod.SpeedrunTool.Extensions;
+using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -7,7 +7,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
     public class PlayerRestoreAction : RestoreAction {
         public PlayerRestoreAction() : base(typeof(Player)) { }
 
-        public override void AfterEntityAwake(Entity loadedEntity, Entity savedEntity) {
+        public override void AfterEntityAwake(Entity loadedEntity, Entity savedEntity, List<Entity> toList) {
             Player loaded = (Player) loadedEntity;
             Player saved = (Player) savedEntity;
 

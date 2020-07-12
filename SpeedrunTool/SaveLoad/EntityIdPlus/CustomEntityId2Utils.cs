@@ -157,7 +157,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         private const string BirdTutorialGuiControlsKey = "BirdTutorialGuiControlsKey";
 
         public static BirdTutorialGui Clone(this BirdTutorialGui birdTutorialGui) {
-            object entity = birdTutorialGui.Entity.FindOrCreateSpecifiedType();
+            object entity = birdTutorialGui.Entity.TryFindOrCloneObject();
             if (entity == null) return null;
             return new BirdTutorialGui((Entity) entity, birdTutorialGui.GetStartPosition(),
                 birdTutorialGui.GetField("info"),
@@ -177,7 +177,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         private const string FinalBossBeamPlayerPositionKey = "FinalBossBeamPlayerPositionKey";
 
         public static FinalBossShot Clone(this FinalBossShot finalBossShot) {
-            FinalBoss boss = finalBossShot.GetField("boss")?.FindOrCreateSpecifiedType() as FinalBoss;
+            FinalBoss boss = finalBossShot.GetField("boss")?.TryFindOrCloneObject() as FinalBoss;
             if (boss == null) return null;
 
             if (finalBossShot.GetField("target") == null) {
@@ -194,7 +194,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         }
 
         public static FinalBossBeam Clone(this FinalBossBeam finalBossBeam) {
-            FinalBoss boss = finalBossBeam.GetField("boss")?.FindOrCreateSpecifiedType() as FinalBoss;
+            FinalBoss boss = finalBossBeam.GetField("boss")?.TryFindOrCloneObject() as FinalBoss;
             if (boss == null) return null;
 
             return Engine.Pooler.Create<FinalBossBeam>().Init(boss,

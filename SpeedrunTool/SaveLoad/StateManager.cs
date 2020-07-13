@@ -162,13 +162,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 return true;
             }
 
-            // Bug: 吃完心后删除存档会解除静止状态
             if (GetVirtualButton(Mappings.Clear).Pressed && !level.Paused) {
                 GetVirtualButton(Mappings.Clear).ConsumePress();
                 ClearState();
                 RoomTimerManager.Instance.ClearPbTimes();
-                if (!level.Frozen && level.Entities.FindAll<HeartGem>()
-                    .All(gem => false == (bool) gem.GetField(typeof(HeartGem), "collected"))) {
+                if (IsNotCollectingHeart(level)) {
                     level.Add(new MiniTextbox(DialogIds.DialogClear));
                 }
 
@@ -179,9 +177,17 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private bool IsAllowSave(Level level, Player player) {
-            return !level.Paused && !level.Transitioning && !level.PauseLock && !level.InCutscene &&
+            bool result = !level.Paused && !level.Transitioning && !level.PauseLock && !level.InCutscene &&
                    !level.SkippingCutscene && player != null && !player.Dead &&
                    !disabledSaveStates.Contains(player.StateMachine.State);
+            if (!result) return false;
+
+            // Don't save when collecting heart.
+            return IsNotCollectingHeart(level);
+        }
+
+        private bool IsNotCollectingHeart(Level level) {
+            return !level.Entities.FindAll<HeartGem>().Any(heart => (bool) heart.GetField("collected")); 
         }
 
         private void SaveState(Level level, Player player) {
@@ -282,7 +288,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private void ClearState() {
-            if (Engine.Scene is Level level) {
+            if (Engine.Scene is Level level && IsNotCollectingHeart(level)) {
                 level.Frozen = false;
             }
 

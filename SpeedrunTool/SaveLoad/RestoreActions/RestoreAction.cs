@@ -107,7 +107,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
                 loadedEntity = new BadelineDummy(savedEntity.GetStartPosition());
             } else if (savedType.IsType<AngryOshiro>()) {
                 loadedEntity = new AngryOshiro(savedEntity.GetStartPosition(),
-                    (bool) savedEntity.GetField("fromCutscene"));
+                    (bool) savedEntity.GetField(savedType, "fromCutscene"));
             } else if (savedType.IsType<Snowball>()) {
                 loadedEntity = new Snowball();
             } else if (savedType.IsType<SlashFx>() && savedEntity is SlashFx slashFx) {

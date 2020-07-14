@@ -20,15 +20,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             CreatedObjectsDict.Clear();
         }
 
-        public static void CopyAllFrom<T>(this object destObj, object sourceObj, bool onlySimpleType = false, params Type[] skipTypes) {
-            CopyAllFrom(destObj, typeof(T), sourceObj, onlySimpleType, skipTypes);
+        public static void CopyAllFrom<T>(this object destObj, object sourceObj, bool onlySimpleType = false) {
+            CopyAllFrom(destObj, typeof(T), sourceObj, onlySimpleType);
         }
 
-        public static void CopyAllFrom(this object destObj, object sourceObj, bool onlySimpleType = false, params Type[] skipTypes) {
-            CopyAllFrom(destObj, destObj.GetType(), sourceObj,onlySimpleType, skipTypes);
+        public static void CopyAllFrom(this object destObj, object sourceObj, bool onlySimpleType = false) {
+            CopyAllFrom(destObj, destObj.GetType(), sourceObj, onlySimpleType);
         }
 
-        private static void CopyAllFrom(this object destObj, Type baseType, object sourceObj, bool onlySimpleType = false, params Type[] skipTypes) {
+        private static void CopyAllFrom(this object destObj, Type baseType, object sourceObj,
+            bool onlySimpleType = false) {
             if (destObj.GetType() != sourceObj.GetType()) {
                 throw new ArgumentException("destObj and sourceObj not the same type.");
             }
@@ -46,12 +47,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             CopyingObjects.Add(destObj);
             while (currentObjType.IsSubclassOf(typeof(object))) {
-                // 跳过特定类型
-                if (skipTypes.Contains(currentObjType)) {
-                    currentObjType = currentObjType.BaseType;
-                    continue;
-                }
-
                 // 必须先设置属性再设置字段，不然字段的值会在设置属性后发生改变
                 PropertyInfo[] properties = currentObjType.GetProperties(bindingFlags);
                 foreach (PropertyInfo propertyInfo in properties) {
@@ -59,7 +54,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     if (!propertyInfo.CanRead || !propertyInfo.CanWrite) continue;
 
                     Type memberType = propertyInfo.PropertyType;
-                    if(!memberType.IsSimple() && onlySimpleType) continue;
+                    if (!memberType.IsSimple() && onlySimpleType) continue;
 
                     string memberName = propertyInfo.Name;
                     object destValue = destObj.GetProperty(currentObjType, memberName);
@@ -72,7 +67,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 FieldInfo[] fields = currentObjType.GetFields(bindingFlags);
                 foreach (FieldInfo fieldInfo in fields) {
                     Type memberType = fieldInfo.FieldType;
-                    if(!memberType.IsSimple() && onlySimpleType) continue;
+                    if (!memberType.IsSimple() && onlySimpleType) continue;
 
                     string memberName = fieldInfo.Name;
                     object destValue = destObj.GetField(currentObjType, memberName);
@@ -242,14 +237,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (sourceValue.IsCompilerGenerated()) {
                 destValue.CopyAllFrom(sourceValue);
             } else if (sourceValue is Component) {
-                destValue.CopyAllFrom(sourceValue, onlySimpleType: false,
-                    // only copy some fields later
-                    typeof(StateMachine),
-                    // sometimes game crash after savestate
-                    typeof(DustGraphic),
-                    // switch between room will make light disappear
-                    typeof(VertexLight)
-                );
+                if (sourceValue is StateMachine || // only copy some fields later
+                    sourceValue is DustGraphic || // sometimes game crash after savestate
+                    sourceValue is VertexLight // switch between room will make light disappear
+                ) {
+                    destValue.CopyAllFrom<Component>(sourceValue);
+                } else {
+                    destValue.CopyAllFrom(sourceValue);
+                }
+
                 switch (destValue) {
                     case StateMachine destMachine when sourceValue is StateMachine sourceMachine:
                         object destCoroutine = destMachine.GetField("currentCoroutine");

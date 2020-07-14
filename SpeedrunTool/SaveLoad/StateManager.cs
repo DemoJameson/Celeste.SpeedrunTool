@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
@@ -102,6 +102,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 // 调用 Level.Update 多次使所有 Entity 更新绘完毕后后再冻结游戏
                 // Wait for some frames so entities can be updated and rendered, then freeze game.
                 for (int i = 0; i < 3; i++) orig(level);
+                
+                RestoreLevel(level);
 
                 // 等所有 Entity 创建完毕并渲染完成后再统一在此时机还原状态
                 RestoreEntityUtils.AfterEntityAwake(level);

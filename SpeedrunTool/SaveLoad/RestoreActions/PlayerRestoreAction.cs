@@ -12,19 +12,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             Player saved = (Player) savedEntity;
 
             // 只还原父类字段，其他等到复活完恢复
-            loaded.CopyAllFrom<Actor>(saved);
+            loaded.CopyAllFrom(saved, true);
 
+                        
+            // 不恢复速度，原地等待复活
+            loaded.Speed = Vector2.Zero;
+            
             // 避免复活时的光圈被背景遮住
             loaded.Depth = Depths.Top;
-
-            loaded.JustRespawned = saved.JustRespawned;
-            loaded.CameraAnchor = saved.CameraAnchor;
-            loaded.CameraAnchorLerp = saved.CameraAnchorLerp;
-            loaded.CameraAnchorIgnoreX = saved.CameraAnchorIgnoreX;
-            loaded.CameraAnchorIgnoreY = saved.CameraAnchorIgnoreY;
-            loaded.ForceCameraUpdate = saved.ForceCameraUpdate;
-            loaded.EnforceLevelBounds = saved.EnforceLevelBounds;
-            loaded.Dashes = saved.Dashes;
         }
 
         public override void AfterPlayerRespawn(Entity loadedEntity, Entity savedEntity) {

@@ -22,7 +22,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
 
             loadedEntity.CopyAllFrom(savedEntity);
 
-            // 通过切换房间复制的水母需要重建，放在原位无需还原状态
+            // 通过切换房间复制的水母需要重建
             RecreateDuplicateGlider(loadedEntity, savedDuplicateIdList);
         }
 

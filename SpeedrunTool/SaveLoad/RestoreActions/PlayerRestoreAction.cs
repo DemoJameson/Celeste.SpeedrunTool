@@ -12,7 +12,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             Player saved = (Player) savedEntity;
 
             // 只还原父类字段，其他等到复活完恢复
-            loaded.CopyAllFrom<Actor>(saved, typeof(Actor));
+            loaded.CopyAllFrom<Actor>(saved);
 
             // 避免复活时的光圈被背景遮住
             loaded.Depth = Depths.Top;

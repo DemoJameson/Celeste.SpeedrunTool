@@ -20,15 +20,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             CreatedObjectsDict.Clear();
         }
 
-        public static void CopyAllFrom<T>(this object destObj, object sourceObj, params Type[] skipTypes) {
-            CopyAllFrom(destObj, typeof(T), sourceObj, skipTypes);
+        public static void CopyAllFrom<T>(this object destObj, object sourceObj, bool onlySimpleType = false, params Type[] skipTypes) {
+            CopyAllFrom(destObj, typeof(T), sourceObj, onlySimpleType, skipTypes);
         }
 
-        public static void CopyAllFrom(this object destObj, object sourceObj, params Type[] skipTypes) {
-            CopyAllFrom(destObj, destObj.GetType(), sourceObj, skipTypes);
+        public static void CopyAllFrom(this object destObj, object sourceObj, bool onlySimpleType = false, params Type[] skipTypes) {
+            CopyAllFrom(destObj, destObj.GetType(), sourceObj,onlySimpleType, skipTypes);
         }
 
-        private static void CopyAllFrom(this object destObj, Type baseType, object sourceObj, params Type[] skipTypes) {
+        private static void CopyAllFrom(this object destObj, Type baseType, object sourceObj, bool onlySimpleType = false, params Type[] skipTypes) {
             if (destObj.GetType() != sourceObj.GetType()) {
                 throw new ArgumentException("destObj and sourceObj not the same type.");
             }
@@ -59,6 +59,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     if (!propertyInfo.CanRead || !propertyInfo.CanWrite) continue;
 
                     Type memberType = propertyInfo.PropertyType;
+                    if(!memberType.IsSimple() && onlySimpleType) continue;
 
                     string memberName = propertyInfo.Name;
                     object destValue = destObj.GetProperty(currentObjType, memberName);
@@ -71,6 +72,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 FieldInfo[] fields = currentObjType.GetFields(bindingFlags);
                 foreach (FieldInfo fieldInfo in fields) {
                     Type memberType = fieldInfo.FieldType;
+                    if(!memberType.IsSimple() && onlySimpleType) continue;
 
                     string memberName = fieldInfo.Name;
                     object destValue = destObj.GetField(currentObjType, memberName);
@@ -240,7 +242,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (sourceValue.IsCompilerGenerated()) {
                 destValue.CopyAllFrom(sourceValue);
             } else if (sourceValue is Component) {
-                destValue.CopyAllFrom(sourceValue,
+                destValue.CopyAllFrom(sourceValue, onlySimpleType: false,
                     // only copy some fields later
                     typeof(StateMachine),
                     // sometimes game crash after savestate

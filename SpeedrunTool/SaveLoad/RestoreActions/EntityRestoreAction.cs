@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
+    // TODO: MoveBlock 消失后保存会显示黑色方块直到玩家复活完毕为止
     public class EntityRestoreAction : RestoreAction {
         public EntityRestoreAction() : base(typeof(Entity)) { }
 

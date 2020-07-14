@@ -112,8 +112,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
                 loadedEntity = new Snowball();
             } else if (savedType.IsType<SlashFx>() && savedEntity is SlashFx slashFx) {
                 loadedEntity = slashFx.Clone();
+            } else if (savedType.IsType<Solid>() && savedEntity is Solid solid) {
+                loadedEntity = solid.Clone();
             } else if (savedType.IsType<SpeedRing>() && savedEntity is SpeedRing speedRing) {
                 loadedEntity = speedRing.Clone();
+            } else if (savedType.IsType<StrawberryPoints>() && savedEntity is StrawberryPoints points) {
+                loadedEntity = points.Clone();
             } else if (savedType.IsType<FinalBossShot>() && savedEntity is FinalBossShot finalBossShot) {
                 loadedEntity = finalBossShot.Clone();
             } else if (savedType.IsType<FinalBossBeam>() && savedEntity is FinalBossBeam finalBossBeam) {
@@ -121,14 +125,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             } else if (savedType.IsType<BirdTutorialGui>() && savedEntity is BirdTutorialGui birdTutorialGui) {
                 loadedEntity = birdTutorialGui.Clone();
             } else if (savedType.IsType<SoundEmitter>() && savedEntity is SoundEmitter soundEmitter) {
-                loadedEntity = SoundEmitter.Play(soundEmitter.Source.EventName,
-                    new Entity(soundEmitter.Position));
-                if (SoundSourceAction.PlayingSoundSources.FirstOrDefault(source =>
-                    source.EventName == soundEmitter.Source.EventName) == null) {
-                    (loadedEntity as SoundEmitter)?.Source.TryCopyObject(soundEmitter.Source);
-                } else {
+                loadedEntity = SoundEmitter.Play(soundEmitter.Source.EventName, new Entity(soundEmitter.Position));
                     (loadedEntity as SoundEmitter)?.Source.Stop();
-                }
             } else if (savedType.IsType<Debris>() && savedEntity is Debris debris) {
                 loadedEntity = Engine.Pooler.Create<Debris>()
                     .Init(debris.GetStartPosition(), (char) debris.GetField("tileset"),

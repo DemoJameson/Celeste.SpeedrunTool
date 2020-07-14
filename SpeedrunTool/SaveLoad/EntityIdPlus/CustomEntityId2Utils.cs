@@ -84,6 +84,40 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             orig(self, data, offset);
         }
 
+        private static Actor DebrisOnInit(On.Celeste.MoveBlock.Debris.orig_Init orig, Actor self, Vector2 position,
+            Vector2 center, Vector2 returnTo) {
+            Actor debris = orig(self, position, center, returnTo);
+            debris.TrySetEntityId2(position, center, returnTo);
+            debris.SetCenter(center);
+            return debris;
+        }
+        
+        
+        private static Debris DebrisOnInit_Vector2_char_bool(On.Celeste.Debris.orig_Init_Vector2_char_bool orig, Debris self, Vector2 pos, char tileset, bool playSound) {
+            orig(self, pos, tileset, playSound);
+            self.TrySetEntityId2(pos, tileset, playSound);
+            return self;
+        }
+
+        private static Debris DebrisOnInit_Vector2_char(On.Celeste.Debris.orig_Init_Vector2_char orig, Debris self, Vector2 pos, char tileset) {
+            orig(self, pos, tileset);
+            self.TrySetEntityId2(pos, tileset, true);
+            return self;
+        }
+
+        private static void StrawberryPointsOnCtor(On.Celeste.StrawberryPoints.orig_ctor orig, StrawberryPoints self, Vector2 position, bool ghostBerry, int index, bool moonBerry) {
+            orig(self, position, ghostBerry, index, moonBerry);
+            self.TrySetEntityId2(position, ghostBerry, index, moonBerry);
+            self.SetStartPosition(position);
+        }
+
+        private static void SolidOnCtor(On.Celeste.Solid.orig_ctor orig, Solid self, Vector2 position, float width, float height, bool safe) {
+            orig(self, position, width, height, safe);
+            self.TrySetEntityId2(position, width, height, safe);
+            self.SaveWidth(width);
+            self.SaveHeight(height);
+        }
+
         public static void OnLoad() {
             On.Celeste.FinalBossShot.Init_FinalBoss_Vector2 += FinalBossShotOnInit_FinalBoss_Vector2;
             On.Celeste.FinalBossShot.Init_FinalBoss_Player_float += FinalBossShotOnInit_FinalBoss_Player_float;
@@ -102,6 +136,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             On.Celeste.Seeker.ctor_EntityData_Vector2 += SeekerOnCtor_EntityData_Vector2;
 
             On.Celeste.MoveBlock.Debris.Init += DebrisOnInit;
+            
+            On.Celeste.Debris.Init_Vector2_char += DebrisOnInit_Vector2_char;
+            On.Celeste.Debris.Init_Vector2_char_bool += DebrisOnInit_Vector2_char_bool;
+            
+            On.Celeste.StrawberryPoints.ctor += StrawberryPointsOnCtor;
+            
+            On.Celeste.Solid.ctor += SolidOnCtor;
         }
 
         public static void OnUnload() {
@@ -122,14 +163,35 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             On.Celeste.Seeker.ctor_EntityData_Vector2 -= SeekerOnCtor_EntityData_Vector2;
 
             On.Celeste.MoveBlock.Debris.Init -= DebrisOnInit;
+            
+            On.Celeste.Debris.Init_Vector2_char -= DebrisOnInit_Vector2_char;
+            On.Celeste.Debris.Init_Vector2_char_bool -= DebrisOnInit_Vector2_char_bool;
+            
+            On.Celeste.StrawberryPoints.ctor -= StrawberryPointsOnCtor;
+            
+            On.Celeste.Solid.ctor -= SolidOnCtor;
         }
+    }
+    
+    public static class SolidExtensions {
+        private const string SolidWidthKey = "SolidWidthKey";
+        private const string SolidHeightKey = "SolidHeightKey";
 
-        private static Actor DebrisOnInit(On.Celeste.MoveBlock.Debris.orig_Init orig, Actor self, Vector2 position,
-            Vector2 center, Vector2 returnTo) {
-            Actor debris = orig(self, position, center, returnTo);
-            debris.TrySetEntityId2(position, center, returnTo);
-            debris.SetCenter(center);
-            return debris;
+        public static void SaveWidth(this Solid solid, float width) {
+            solid.SetExtendedFloat(SolidWidthKey, width);
+        }
+        public static void SaveHeight(this Solid solid, float height) {
+            solid.SetExtendedFloat(SolidHeightKey, height);
+        }
+        
+        public static Solid Clone(this Solid solid) {
+            return new Solid(solid.GetStartPosition(), solid.GetExtendedFloat(SolidWidthKey), solid.GetExtendedFloat(SolidHeightKey), solid.Safe);
+        }
+    }
+
+    public static class StrawberryPointsExtensions {
+        public static StrawberryPoints Clone(this StrawberryPoints points) {
+            return new StrawberryPoints(points.GetStartPosition(), (bool) points.GetField("ghostberry"), (int) points.GetField("index"), (bool) points.GetField("moonberry"));
         }
     }
 

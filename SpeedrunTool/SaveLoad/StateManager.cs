@@ -23,7 +23,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private Session savedSession;
         private Dictionary<EverestModule, EverestModuleSession> savedModSessions;
-        private Session.CoreModes sessionCoreModeBackup;
 
         public bool IsLoadStart => loadState == SaveLoad.LoadState.Start;
         public bool IsLoadFrozen => loadState == SaveLoad.LoadState.Frozen;
@@ -97,12 +96,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // 尽快设置人物的位置与镜头，然后冻结游戏等待人物复活
             // Set player position ASAP, then freeze game and wait for the player to respawn (? - euni)
             if (IsSaved && IsLoadStart && player != null) {
+                RestoreLevel(level);
+                
                 LoadStart(level);
 
                 // 调用 Level.Update 多次使所有 Entity 更新绘完毕后后再冻结游戏
                 // Wait for some frames so entities can be updated and rendered, then freeze game.
                 for (int i = 0; i < 3; i++) orig(level);
                 
+                // Restore Again For Camera
                 RestoreLevel(level);
 
                 // 等所有 Entity 创建完毕并渲染完成后再统一在此时机还原状态
@@ -138,6 +140,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 level.PauseLock = false;
                 // BadelinOldsite 追踪需要
                 level.TimeActive = SavedLevel.TimeActive;
+                level.RawTimeActive = SavedLevel.RawTimeActive;
                 loadState = SaveLoad.LoadState.Complete;
 
                 RestoreEntityUtils.OnLoadComplete(level);
@@ -197,10 +200,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             loadState = SaveLoad.LoadState.Start;
 
-            sessionCoreModeBackup = level.Session.CoreMode;
             savedSession = level.Session.DeepClone();
-            savedSession.CoreMode = level.CoreMode;
-            level.Session.CoreMode = level.CoreMode;
             SavedPlayer = player;
             SavedLevel = level;
             SavedEntitiesDict = level.FindAllToDict<Entity>(out SavedDuplicateIdList);
@@ -235,13 +235,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
         }
 
-        private void RestoreWind(Level level) {
-            level.Wind = Instance.SavedLevel.Wind;
-            WindController windController = level.Entities.FindFirst<WindController>();
-            WindController savedWindController = Instance.SavedLevel.Entities.FindFirst<WindController>();
-            windController.CopyFields(savedWindController, "pattern");
-        }
-
         // ReSharper disable once UnusedMember.Global
         // Public for TAS Mod
         public bool ExternalSave() {
@@ -268,14 +261,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         // 尽快设置人物的位置与镜头，然后冻结游戏等待人物复活
         // Set player position ASAP, then freeze game and wait for the player to respawn (? - euni)
         private void LoadStart(Level level) {
-            level.Session.Inventory = savedSession.Inventory;
-            level.Camera.CopyFrom(SavedLevel.Camera);
-            level.CameraLockMode = SavedLevel.CameraLockMode;
-            level.CameraOffset = SavedLevel.CameraOffset;
-            level.CoreMode = savedSession.CoreMode;
-            level.Session.CoreMode = sessionCoreModeBackup;
-            RestoreWind(level);
             RestoreEntityUtils.OnLoadStart(level);
+        }
+
+        private void RestoreLevel(Level level) {
+            level.Session.Inventory = savedSession.Inventory;
+            level.CopyAllFrom(SavedLevel, true);
+            level.Camera.CopyFrom(SavedLevel.Camera);
+            WindController windController = level.Entities.FindFirst<WindController>();
+            WindController savedWindController = Instance.SavedLevel.Entities.FindFirst<WindController>();
+            windController.CopyFields(savedWindController, "pattern");
         }
 
         // ReSharper disable once MemberCanBeMadeStatic.Local

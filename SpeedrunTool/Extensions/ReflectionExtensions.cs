@@ -72,6 +72,14 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return type == typeof(T);
         }
 
+        public static bool IsNotType<T>(this object obj) {
+            return !obj.IsType<T>();
+        }
+        
+        public static bool IsNotType<T>(this Type type) {
+            return !type.IsType<T>();
+        }
+
         public static bool IsSameOrSubclassOf(this Type potentialDescendant, Type potentialBase) {
             return potentialDescendant.IsSubclassOf(potentialBase)
                    || potentialDescendant == potentialBase;

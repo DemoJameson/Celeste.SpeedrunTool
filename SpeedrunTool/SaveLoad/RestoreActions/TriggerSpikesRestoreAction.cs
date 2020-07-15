@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Celeste.Mod.Entities;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
+using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base;
 using Microsoft.Xna.Framework;
 using Monocle;
 
@@ -11,9 +12,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             Player loaded = (Player) loadedEntity;
             Player saved = (Player) savedEntity;
 
-            // 只还原父类字段，其他等到复活完恢复
+            // 只恢复简单字段，其他等到复活完恢复
             loaded.CopyAllFrom(saved, true);
-
                         
             // 不恢复速度，原地等待复活
             loaded.Speed = Vector2.Zero;

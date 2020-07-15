@@ -6,45 +6,82 @@ using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Microsoft.Xna.Framework;
 using Monocle;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
-    public abstract class RestoreAction {
-        public static readonly List<RestoreAction> All = new List<RestoreAction> {
-            new EntityRestoreAction(),
-            new PlayerRestoreAction(),
-            new KeyRestoreAction(),
-            new TriggerSpikesRestoreAction(),
-            new ComponentRestoreAction(),
-            new SoundSourceAction(),
-            new EventInstanceRestoreAction(),
-        };
+namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
+    public static class RestoreEntityUtils {
+        private static bool IsLoadStart => StateManager.Instance.IsLoadStart;
+        private static Dictionary<EntityId2, Entity> SavedEntitiesDict => StateManager.Instance.SavedEntitiesDict;
+        private static List<Entity> SavedDuplicateIdList => StateManager.Instance.SavedDuplicateIdList;
 
-        protected static bool IsLoadStart => StateManager.Instance.IsLoadStart;
-
-        public readonly Type EntityType;
-
-        protected RestoreAction(Type entityType) {
-            EntityType = entityType;
+        public static void OnLoad() {
+            On.Celeste.Level.Begin += LevelOnBegin;
+            RestoreAction.All.ForEach(restoreAction => restoreAction.OnHook());
         }
 
-        public virtual void OnHook() { }
+        public static void Unload() {
+            On.Celeste.Level.Begin -= LevelOnBegin;
+            RestoreAction.All.ForEach(restoreAction => restoreAction.OnUnhook());
+        }
+        
+        public static void OnSaveState(Level level) {
+            RestoreAction.All.ForEach(restoreAction => restoreAction.OnSaveState(level));
+        }
 
-        public virtual void OnUnhook() { }
+        public static void OnLoadStart(Level level) {
+            EntityCopyCore.ClearCachedObjects();
+            RestoreAction.All.ForEach(restoreAction => restoreAction.OnLoadStart(level));
+        }
 
-        public virtual void OnSaveState(Level level) { }
-        public virtual void OnLoadStart(Level level) { }
+        public static void OnLoadComplete(Level level) {
+            RestoreAction.All.ForEach(restoreAction => restoreAction.OnLoadComplete(level));
+        }
 
-        public virtual void OnLoadComplete(Level level) { }
+        public static void OnClearState() {
+            RestoreAction.All.ForEach(restoreAction => restoreAction.OnClearState());
+        }
 
-        public virtual void OnClearState() { }
+        private static void LevelOnBegin(On.Celeste.Level.orig_Begin orig, Level level) {
+            orig(level);
+            if (!IsLoadStart) return;
 
-        // 此时恢复 Entity 的状态可以避免很多问题，例如刺的依附和第九章鸟的节点处理
-        public virtual void AfterEntityAwake(Entity loadedEntity, Entity savedEntity,
-            List<Entity> savedDuplicateIdList) { }
+            var loadedDict = level.FindAllToDict<Entity>();
 
+            var notLoadedEntities = SavedEntitiesDict.Where(pair => !loadedDict.ContainsKey(pair.Key))
+                .ToDictionary(p => p.Key, p => p.Value);
+            if (notLoadedEntities.Count > 0) {
+                EntitiesSavedButNotLoaded(level, notLoadedEntities);
+            }
+        }
 
-        // Madelin 复活完毕的时刻，主要用于恢复 Player 的状态
-        public virtual void AfterPlayerRespawn(Entity loadedEntity, Entity savedEntity) { }
+        public static void AfterEntityAwake(Level level) {
+            var loadedEntitiesDict = level.FindAllToDict<Entity>();
 
+            var notSavedEntities = loadedEntitiesDict.Where(pair => !SavedEntitiesDict.ContainsKey(pair.Key))
+                .ToDictionary(p => p.Key, p => p.Value);
+
+            EntitiesLoadedButNotSaved(notSavedEntities);
+
+            foreach (KeyValuePair<EntityId2, Entity> pair in loadedEntitiesDict.Where(loaded => SavedEntitiesDict.ContainsKey(loaded.Key))) {
+                RestoreAction.All.ForEach(restoreAction => {
+                    if (restoreAction.EntityType != null && pair.Value.GetType().IsSameOrSubclassOf(restoreAction.EntityType)) {
+                        restoreAction.AfterEntityAwake(pair.Value, SavedEntitiesDict[pair.Key],
+                            SavedDuplicateIdList);
+                    }
+                });
+            }
+        }
+
+        public static void AfterPlayerRespawn(Level level) {
+            Dictionary<EntityId2, Entity> loadedEntitiesDict = level.FindAllToDict<Entity>();
+
+            foreach (KeyValuePair<EntityId2, Entity> pair in loadedEntitiesDict.Where(loaded => SavedEntitiesDict.ContainsKey(loaded.Key))) {
+                RestoreAction.All.ForEach(restoreAction => {
+                    if (restoreAction.EntityType != null && pair.Value.GetType().IsSameOrSubclassOf(restoreAction.EntityType)) {
+                        restoreAction.AfterPlayerRespawn(pair.Value, SavedEntitiesDict[pair.Key]);
+                    }
+                });
+            }
+        }
+        
         // 用于处理保存了当是没有被重新创建的物体，一般是手动创建新的实例然后添加到 Level 中。
         // 例如草莓，红泡泡，Theo，水母等跨房间的物体就需要处理，也就是附加了 Tags.Persistent 的物体。
         // 还有一些是游戏过程代码New出来的，没有 EntityData 的也需要处理，例如 BadelinDummy 和 SlashFx
@@ -126,7 +163,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
                 loadedEntity = birdTutorialGui.Clone();
             } else if (savedType.IsType<SoundEmitter>() && savedEntity is SoundEmitter soundEmitter) {
                 loadedEntity = SoundEmitter.Play(soundEmitter.Source.EventName, new Entity(soundEmitter.Position));
-                    (loadedEntity as SoundEmitter)?.Source.Stop();
+                (loadedEntity as SoundEmitter)?.Source.Stop();
             } else if (savedType.IsType<Debris>() && savedEntity is Debris debris) {
                 loadedEntity = Engine.Pooler.Create<Debris>()
                     .Init(debris.GetStartPosition(), (char) debris.GetField("tileset"),
@@ -156,7 +193,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
         // 与 AfterEntityCreateAndUpdate1Frame 是同样的时刻，用于处理不存在于保存数据中的 Entity，删除就好
         public static void EntitiesLoadedButNotSaved(Dictionary<EntityId2, Entity> notSavedEntities) {
             foreach (Entity loadedEntity in notSavedEntities.Select(pair => pair.Value)) {
-                if (loadedEntity.IsGlobalButNotCassetteManager()) return;
+                if (loadedEntity.IsGlobalButExcludeSomeTypes()) return;
                 loadedEntity.RemoveSelf();
             }
         }

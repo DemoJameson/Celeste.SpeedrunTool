@@ -1,4 +1,5 @@
 using System;
+using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;

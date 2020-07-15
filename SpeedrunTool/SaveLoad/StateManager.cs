@@ -4,7 +4,7 @@ using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
-using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions;
+using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base;
 using Microsoft.Xna.Framework;
 using Monocle;
 using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
@@ -203,7 +203,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedSession = level.Session.DeepClone();
             SavedPlayer = player;
             SavedLevel = level;
-            SavedEntitiesDict = level.FindAllToDict<Entity>(out SavedDuplicateIdList);
+            SavedEntitiesDict = level.FindAllToDict(out SavedDuplicateIdList);
 
             // save all mod sessions
             savedModSessions = new Dictionary<EverestModule, EverestModuleSession>();

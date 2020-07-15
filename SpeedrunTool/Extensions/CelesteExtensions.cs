@@ -39,8 +39,10 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return null;
         }
 
-        public static bool IsGlobalButNotCassetteManager(this Entity entity) {
-            return entity.TagCheck(Tags.Global) && entity.GetType() != typeof(CassetteBlockManager);
+        public static bool IsGlobalButExcludeSomeTypes(this Entity entity) {
+            return entity.TagCheck(Tags.Global) 
+                   && entity.IsNotType<CassetteBlockManager>()
+                ;
         }
     }
 }

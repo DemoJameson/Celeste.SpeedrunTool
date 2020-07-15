@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
@@ -82,7 +83,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
 
             // 查找执行相同操作的 Component 恢复状态
             foreach (T loadedComponent in loadedComponents) {
-                if (savedComponents.FirstOrDefault(component => component.IsSameAs(loadedComponent)) is Component
+                if (savedComponents.FirstOrDefault(component => loadedComponent.IsSameAs(component)) is Component
                     savedComponent) {
                     loadedComponent.TryCopyObject(savedComponent);
                 }
@@ -91,9 +92,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             // 查找需要重新创建还原的 Component
             foreach (T savedComponent in savedComponents) {
                 if (loadedComponents.Any(component => savedComponent.IsSameAs(component))) continue;
-                Component loadComponent = savedComponent.TryFindOrCloneObject() as Component;
-                if (loadComponent == null) continue;
-                loaded.Add(loadComponent);
+                Component loadedComponent = savedComponent.TryFindOrCloneObject() as Component;
+                if (loadedComponent == null) continue;
+                loaded.Add(loadedComponent);
             }
         }
 

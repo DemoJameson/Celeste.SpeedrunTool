@@ -105,12 +105,13 @@
     <Compile Include="SaveLoad\EntityIdPlus\AttachEntityId2Utils.cs" />
     <Compile Include="SaveLoad\EntityIdPlus\CustomEntityId2Utils.cs" />
     <Compile Include="SaveLoad\EntityIdPlus\EntityId2.cs" />
+    <Compile Include="SaveLoad\RestoreActions\Base\RestoreAction.cs" />
+    <Compile Include="SaveLoad\RestoreActions\Base\RestoreEntityUtils.cs" />
+    <Compile Include="SaveLoad\RestoreActions\BurstRestoreAction.cs" />
     <Compile Include="SaveLoad\RestoreActions\EventInstanceRestoreAction.cs" />
     <Compile Include="SaveLoad\RestoreActions\KeyRestoreAction.cs" />
     <Compile Include="SaveLoad\RestoreActions\PlayerRestoreAction.cs" />
-    <Compile Include="SaveLoad\RestoreActions\RestoreAction.cs" />
     <Compile Include="SaveLoad\RestoreActions\EntityRestoreAction.cs" />
-    <Compile Include="SaveLoad\RestoreActions\RestoreEntityUtils.cs" />
     <Compile Include="SaveLoad\RestoreActions\ComponentRestoreAction.cs" />
     <Compile Include="SaveLoad\RestoreActions\SoundSourceRestoreAction.cs" />
     <Compile Include="SaveLoad\RestoreActions\TriggerSpikesRestoreAction.cs" />

@@ -49,7 +49,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
     public static class EntityId2Extension {
         private const string EntityId2Key = "SpeedrunTool_EntityId2_Key";
         private const string EntityDataKey = "SpeedrunTool_EntityData_Key";
-        private const string StartPositionKey = "SpeedrunTool_StartPosition_Key";
+        private const string EntityStartPositionKey = "SpeedrunTool_Entity_StartPosition_Key";
 
         public static EntityId2 ToEntityId2(this EntityID entityId, Type type) {
             return new EntityId2(entityId, type);
@@ -122,19 +122,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             return default;
         }
 
-        public static bool TrySetEntityId2(this Entity entity, params object[] id) {
+        public static void TrySetEntityId2(this Entity entity, params object[] id) {
             EntityId2 entityId = entity.CreateEntityId2(id);
-            if (entityId == default) return false;
+            if (entityId == default) return;
             entity.SetEntityId2(entityId);
-            return true;
         }
 
         public static Vector2 GetStartPosition(this Entity entity) {
-            return entity.GetExtendedDataValue<Vector2>(StartPositionKey);
+            return entity.GetExtendedDataValue<Vector2>(EntityStartPositionKey);
         }
 
         public static void SetStartPosition(this Entity entity, Vector2 startPosition) {
-            entity.SetExtendedDataValue(StartPositionKey, startPosition);
+            entity.SetExtendedDataValue(EntityStartPositionKey, startPosition);
         }
 
         public static void CopyStartPosition(this Entity entity, Entity otherEntity) {
@@ -155,7 +154,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             
             List<T> findAll = entityList.FindAll<T>();
             foreach (T entity in findAll) {
-                if (entity.IsGlobalButNotCassetteManager()) continue;
+                if (entity.IsGlobalButExcludeSomeTypes()) continue;
                 if (entity.NoEntityId2()) continue;
 
                 EntityId2 entityId2 = entity.GetEntityId2();

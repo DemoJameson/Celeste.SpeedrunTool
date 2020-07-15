@@ -1,14 +1,12 @@
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base;
 using FMOD;
 using FMOD.Studio;
 using Microsoft.Xna.Framework;
-using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
     public class EventInstanceRestoreAction : RestoreAction {
-        public EventInstanceRestoreAction() : base(typeof(Entity)) { }
-
         public override void OnHook() {
             On.Celeste.Audio.CreateInstance += AudioOnCreateInstance;
             On.FMOD.Studio.EventInstance.setParameterValue += EventInstanceOnsetParameterValue;

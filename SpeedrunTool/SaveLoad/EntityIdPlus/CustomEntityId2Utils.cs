@@ -136,12 +136,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             On.Celeste.Seeker.ctor_EntityData_Vector2 += SeekerOnCtor_EntityData_Vector2;
 
             On.Celeste.MoveBlock.Debris.Init += DebrisOnInit;
-            
+
             On.Celeste.Debris.Init_Vector2_char += DebrisOnInit_Vector2_char;
             On.Celeste.Debris.Init_Vector2_char_bool += DebrisOnInit_Vector2_char_bool;
-            
+
             On.Celeste.StrawberryPoints.ctor += StrawberryPointsOnCtor;
-            
+
             On.Celeste.Solid.ctor += SolidOnCtor;
         }
 

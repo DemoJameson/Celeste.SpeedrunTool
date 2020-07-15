@@ -7,6 +7,7 @@ using System.Reflection;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions;
+using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base;
 using Monocle;
 using EventInstance = FMOD.Studio.EventInstance;
 
@@ -129,7 +130,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     for (int i = 0; i < destArray.Length; i++) {
                         if (elementType.IsSimple()) {
                             destArray.SetValue(sourceArray.GetValue(i), i);
-                        } else {
+                        } else if (destArray.GetValue(i) != null && sourceArray.GetValue(i) != null) {
                             TryCopyObject(destArray.GetValue(i), sourceArray.GetValue(i));
                         }
                     }
@@ -177,7 +178,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             } else {
                 // 复杂类型
                 if (destValue != null) {
-                    // 不为空则复制里面的值
                     TryCopyObject(destValue, sourceValue);
                 } else {
                     // 为空则根据情况创建新实例或者查找当前场景的实例S
@@ -193,8 +193,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private static object CopyList(object destValue, object sourceValue, Type genericType) {
-            // 列表
-            // 列表为空则创建空列表
             if (destValue == null) {
                 destValue = Activator.CreateInstance(sourceValue.GetType());
             }
@@ -212,7 +210,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             } else {
                 // 列表里是复杂类型
                 if (destList.Count == sourceList.Count) {
-                    // 数量一致
                     for (int i = 0; i < destList.Count; i++) {
                         TryCopyObject(destList[i], sourceList[i]);
                     }
@@ -221,9 +218,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     // 例如 FinalBoos 的 fallingBlocks
                     destList.Clear();
                     foreach (object o in sourceList) {
-                        object destElement = TryFindOrCloneObject(o);
-
-                        if (destElement != null) {
+                        if (TryFindOrCloneObject(o) is object destElement) {
                             destList.Add(destElement);
                         }
                     }
@@ -289,7 +284,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             destValue = TryCloneObject(sourceValue);
 
             if (destValue == null) {
-                sourceValue.DebugLog("FindOrCreateSpecifiedType Failed:");
+                sourceValue.DebugLog("TryFindOrCloneObject Failed:");
             }
 
             return destValue;
@@ -356,9 +351,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 destValue = new Stopwatch();
             } else if (sourceValue is EventInstance eventInstance) {
                 destValue = eventInstance.Clone();
+            } else if (sourceValue is DisplacementRenderer.Burst burst) {
+               destValue = burst.Clone();
             } else if (sourceValue is Entity sourceEntity) {
                 // 还原 Coroutine 时有些 Entity 创建了而未被添加到 Level 中，所以他们无法在 EntitiesSavedButNotLoaded 中还原，所以在这里克隆一个添加进去
-                destValue = RestoreAction.CreateEntityCopy(sourceEntity, "FindSpecifiedType");
+                destValue = RestoreEntityUtils.CreateEntityCopy(sourceEntity, "TryCloneObject");
             } else if (sourceValue is Component sourceComponent) {
                 Component destComponent = null;
                 Entity sourceComponentEntityEntity = sourceComponent.Entity;
@@ -400,7 +397,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
 
                 if (destComponent == null) {
-                    destComponent = sourceValue.ForceCreateInstance("CreateSpecifiedType Component") as Component;
+                    destComponent = sourceValue.ForceCreateInstance("TryCloneObject Component") as Component;
                 }
 
                 if (destComponent != null) {
@@ -416,7 +413,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             // 尝试给未处理的类型创建实例
             if (destValue == null) {
-                destValue = sourceValue.ForceCreateInstance("CreateSpecifiedType End");
+                destValue = sourceValue.ForceCreateInstance("TryCloneObject End");
             }
 
             if (destValue != null) {
@@ -427,7 +424,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             return destValue;
         }
-
 
         private static object CreateCompilerGeneratedCopy(Type type) {
             if (!type.IsCompilerGenerated()) return null;

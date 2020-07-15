@@ -21,6 +21,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private LoadState loadState = SaveLoad.LoadState.None;
 
+        private float savedFreezeTimer;
+        private float savedTimeRate;
+        
         private Session savedSession;
         private Dictionary<EverestModule, EverestModuleSession> savedModSessions;
 
@@ -102,7 +105,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                 // 调用 Level.Update 多次使所有 Entity 更新绘完毕后后再冻结游戏
                 // Wait for some frames so entities can be updated and rendered, then freeze game.
-                for (int i = 0; i < 3; i++) orig(level);
+                orig(level);
+                orig(level);
+                
+                RestoreAllEntitiesPosition(level, player);
+                
+                // wait 1 frame let entities render at new position.
+                orig(level);
                 
                 // Restore Again For Camera
                 RestoreLevel(level);
@@ -141,12 +150,26 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 // BadelinOldsite 追踪需要
                 level.TimeActive = SavedLevel.TimeActive;
                 level.RawTimeActive = SavedLevel.RawTimeActive;
+                Engine.FreezeTimer = savedFreezeTimer;
+                Engine.TimeRate = savedTimeRate;
                 loadState = SaveLoad.LoadState.Complete;
 
                 RestoreEntityUtils.OnLoadComplete(level);
             }
 
             orig(level);
+        }
+
+        private void RestoreAllEntitiesPosition(Level level, Player player) {
+            var loadedEntitiesDict = level.FindAllToDict<Entity>();
+
+            player.Collidable = false;
+            foreach (var pair in loadedEntitiesDict.Where(loaded => SavedEntitiesDict.ContainsKey(loaded.Key))) {
+                var savedEntity = SavedEntitiesDict[pair.Key];
+                pair.Value.Position = savedEntity.Position;
+                pair.Value.Visible = savedEntity.Visible;
+            }
+            player.Collidable = true;
         }
 
         private bool CheckButton(Level level, Player player) {
@@ -204,6 +227,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SavedPlayer = player;
             SavedLevel = level;
             SavedEntitiesDict = level.FindAllToDict(out SavedDuplicateIdList);
+            savedFreezeTimer = Engine.FreezeTimer;
+            savedTimeRate = Engine.TimeRate;
 
             // save all mod sessions
             savedModSessions = new Dictionary<EverestModule, EverestModuleSession>();

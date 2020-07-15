@@ -53,14 +53,19 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 foreach (PropertyInfo propertyInfo in properties) {
                     // 只处理能读取+写入的属性
                     if (!propertyInfo.CanRead || !propertyInfo.CanWrite) continue;
-
+                
                     Type memberType = propertyInfo.PropertyType;
+                    
+                    // Component 的 Entity 不需要改动
+                    // FrostTemple ch1 e-cassette game crash. 因为保存后 ColoredWaterfall 的 PlayerCollider.Entity 为 null
+                    if (currentObjType.IsType<Component>() && propertyInfo.Name == "Entity") continue;           
+                
                     if (!memberType.IsSimple() && onlySimpleType) continue;
-
+                
                     string memberName = propertyInfo.Name;
                     object destValue = destObj.GetProperty(currentObjType, memberName);
                     object sourceValue = sourceObj.GetProperty(currentObjType, memberName);
-
+                    
                     CopyMember(currentObjType, memberType, memberName, destObj, destValue,
                         sourceValue, SetProperty);
                 }
@@ -68,6 +73,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 FieldInfo[] fields = currentObjType.GetFields(bindingFlags);
                 foreach (FieldInfo fieldInfo in fields) {
                     Type memberType = fieldInfo.FieldType;
+                    
+                    // Component 的 Entity 不需要改动
+                    // FrostTemple ch1 e-cassette game crash. 因为保存后 ColoredWaterfall 的 PlayerCollider.Entity 为 null
+                    if (currentObjType.IsType<Component>() && fieldInfo.Name == "<Entity>k__BackingField") continue;           
+                    
                     if (!memberType.IsSimple() && onlySimpleType) continue;
 
                     string memberName = fieldInfo.Name;
@@ -100,8 +110,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private static void CopyMember(Type currentObjType, Type memberType, string memberName, object destObj,
             object destValue, object sourceValue, SetMember setMember) {
             if (destValue == sourceValue) return;
-
-            // Logger.Log("SpeedrunTool", $"currentObjType={currentObjType}\tmemberType={memberType}\tmemberName={memberName}\tdestValue={destValue}\tsourceValue={sourceValue}\tdestObj={destObj}");
 
             if (sourceValue == null) {
                 // Component 需要从Entity中移除（适用于第六章 Boss 会在 Sprite 和 PlayerSprite 之间切换，使字段变为 null）
@@ -186,7 +194,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         setMember(destObj, currentObjType, memberName, destValue);
                     } else {
                         Logger.Log("SpeedrunTool",
-                            $"TryFindOrCloneObject Faild: currentObjType={currentObjType}\tmemberType={memberType}\tmemberName={memberName}\tdestValue=null\tsourceValue={sourceValue}\tdestObj={destObj}");
+                            $"TryFindOrCloneObject Faild: currentObjType={currentObjType}\tmemberType={memberType}\tmemberName={memberName}\tdestValue={destValue}\tsourceValue={sourceValue}\tdestObj={destObj}");
                     }
                 }
             }

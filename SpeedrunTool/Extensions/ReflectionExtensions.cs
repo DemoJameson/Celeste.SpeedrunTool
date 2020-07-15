@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Runtime.Serialization;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
@@ -100,11 +99,11 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 // 具有空参构造函数的类型可以创建
                 newObject = Activator.CreateInstance(type);
             } catch (Exception) {
-                try {
-                    FormatterServices.GetUninitializedObject(type);
-                } catch (Exception) {
-                    "ForceCreateInstance Failed".DebugLog(type, tag);
-                }
+                // try {
+                //     newObject = FormatterServices.GetUninitializedObject(type);
+                // } catch (Exception) {
+                "ForceCreateInstance Failed".DebugLog(type, tag);
+                // }
             }
 
             if (newObject != null) {

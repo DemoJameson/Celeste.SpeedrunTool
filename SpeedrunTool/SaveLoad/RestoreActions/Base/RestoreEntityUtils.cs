@@ -192,9 +192,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
 
         // 与 AfterEntityCreateAndUpdate1Frame 是同样的时刻，用于处理不存在于保存数据中的 Entity，删除就好
         public static void EntitiesLoadedButNotSaved(Dictionary<EntityId2, Entity> notSavedEntities) {
-            foreach (Entity loadedEntity in notSavedEntities.Select(pair => pair.Value)) {
-                if (loadedEntity.IsGlobalButExcludeSomeTypes()) return;
-                loadedEntity.RemoveSelf();
+            foreach (var pair in notSavedEntities) {
+                if (pair.Value.IsGlobalButExcludeSomeTypes()) return;
+                pair.Value.RemoveSelf();
+                pair.Key.DebugLog("EntitiesLoadedButNotSaved");
             }
         }
     }

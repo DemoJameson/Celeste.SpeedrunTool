@@ -17,32 +17,17 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
 
             if (TryRestoreCrystalStaticSpinner(loadedEntity, savedEntity)) return;
 
+            // if (loadedEntity.GetType().FullName == "FrozenWaterfall.ColoredWaterfall") return;
+
             loadedEntity.CopyAllFrom(savedEntity);
 
-
-            FixMoveBlockBlackBackground(loadedEntity, savedEntity);
             RecreateDuplicateGlider(loadedEntity, savedDuplicateIdList);
-        }
-        
-        // MoveBlock 消失后保存会显示黑色方块直到玩家复活完毕为止，手动更新一帧再次还原
-        private static void FixMoveBlockBlackBackground(Entity loadedEntity, Entity savedEntity) {
-            if (loadedEntity is MoveBlock && loadedEntity.Visible == false) {
-                loadedEntity.Update();
-                loadedEntity.CopyAllFrom(savedEntity);
-            }
         }
 
         // CrystalStaticSpinner 看不见的地方等于不存在，ch9 g-06 保存恢复后屏幕外的刺无法恢复显示，所以只恢复位置就好
         private static bool TryRestoreCrystalStaticSpinner(Entity loadedEntity, Entity savedEntity) {
             if (loadedEntity is CrystalStaticSpinner ||
                 loadedEntity.GetType().FullName == "FrostHelper.CustomSpinner") {
-                loadedEntity.Position = savedEntity.Position;
-                
-                // 移动之后保存刺之间的连接物会遗留在原地，直到 Player 复活完毕。所以更新一下刷新位置之后再次还原
-                loadedEntity.Collidable = false;
-                loadedEntity.Update();
-                loadedEntity.Collidable = true;
-                
                 loadedEntity.Position = savedEntity.Position;
                 return true;
             }

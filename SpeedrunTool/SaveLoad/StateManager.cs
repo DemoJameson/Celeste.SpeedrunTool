@@ -105,8 +105,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                 // 调用 Level.Update 多次使所有 Entity 更新绘完毕后后再冻结游戏
                 // Wait for some frames so entities can be updated and rendered, then freeze game.
-                orig(level);
-                orig(level);
+                for (int i = 0; i < 2; i++) orig(level);
 
                 // 预先还原位置与可见性，有些 Entity 需要 1 帧来渲染新的状态，例如 Spinner 的 border 和 MoveBlock 的销毁后不可见状态
                 RestoreAllEntitiesPosition(level);
@@ -167,9 +166,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             foreach (var pair in loadedEntitiesDict.Where(loaded => SavedEntitiesDict.ContainsKey(loaded.Key))) {
                 var savedEntity = SavedEntitiesDict[pair.Key];
-                pair.Value.Position = savedEntity.Position;
-                pair.Value.Visible = savedEntity.Visible;
-                pair.Value.Collidable = false;
+                var loadedEntity = pair.Value;
+                loadedEntity.Position = savedEntity.Position;
+                loadedEntity.Visible = savedEntity.Visible;
+                loadedEntity.Collidable = false;
             }
         }
 
@@ -301,6 +301,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 level.Frozen = false;
             } else if (player.StateMachine.State != Player.StNormal) {
                 player.Update();
+                // 某些情况会被墙壁弹开？
+                player.Position = SavedPlayer.Position;
                 level.Background.Update(level);
                 level.Foreground.Update(level);
             }

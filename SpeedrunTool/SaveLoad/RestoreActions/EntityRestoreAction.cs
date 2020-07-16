@@ -20,7 +20,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             loadedEntity.CopyAllFrom(savedEntity);
             
             // 避免复活期间与 Player 发生碰撞，例如保存时与 Spring 过近，恢复时会被弹起。
-            loadedEntity.Collidable = false;
+            loadedEntity.Collidable = loadedEntity.GetType().FullName == "FrostHelper.CustomFireBarrier";;
 
             RecreateDuplicateGlider(loadedEntity, savedDuplicateIdList);
         }

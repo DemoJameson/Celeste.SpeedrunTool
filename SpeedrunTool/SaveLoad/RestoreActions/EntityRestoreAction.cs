@@ -17,8 +17,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
 
             if (TryRestoreCrystalStaticSpinner(loadedEntity, savedEntity)) return;
 
-            // if (loadedEntity.GetType().FullName == "FrozenWaterfall.ColoredWaterfall") return;
-
             loadedEntity.CopyAllFrom(savedEntity);
 
             RecreateDuplicateGlider(loadedEntity, savedDuplicateIdList);

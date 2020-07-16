@@ -53,19 +53,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 foreach (PropertyInfo propertyInfo in properties) {
                     // 只处理能读取+写入的属性
                     if (!propertyInfo.CanRead || !propertyInfo.CanWrite) continue;
-                
+
                     Type memberType = propertyInfo.PropertyType;
-                    
-                    // Component 的 Entity 不需要改动
-                    // FrostTemple ch1 e-cassette game crash. 因为保存后 ColoredWaterfall 的 PlayerCollider.Entity 为 null
-                    if (currentObjType.IsType<Component>() && propertyInfo.Name == "Entity") continue;           
-                
+
                     if (!memberType.IsSimple() && onlySimpleType) continue;
-                
+
                     string memberName = propertyInfo.Name;
                     object destValue = destObj.GetProperty(currentObjType, memberName);
                     object sourceValue = sourceObj.GetProperty(currentObjType, memberName);
-                    
+
                     CopyMember(currentObjType, memberType, memberName, destObj, destValue,
                         sourceValue, SetProperty);
                 }
@@ -73,11 +69,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 FieldInfo[] fields = currentObjType.GetFields(bindingFlags);
                 foreach (FieldInfo fieldInfo in fields) {
                     Type memberType = fieldInfo.FieldType;
-                    
-                    // Component 的 Entity 不需要改动
-                    // FrostTemple ch1 e-cassette game crash. 因为保存后 ColoredWaterfall 的 PlayerCollider.Entity 为 null
-                    if (currentObjType.IsType<Component>() && fieldInfo.Name == "<Entity>k__BackingField") continue;           
-                    
+
                     if (!memberType.IsSimple() && onlySimpleType) continue;
 
                     string memberName = fieldInfo.Name;
@@ -112,6 +104,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (destValue == sourceValue) return;
 
             if (sourceValue == null) {
+                // sourceValue Component.Entity 为空代表 sourceObj 已经被 remove 了
+                if (currentObjType == typeof(Component) && destValue != null && memberType == typeof(Entity) &&
+                    destObj is Component removedComponent) {
+                    removedComponent.RemoveSelf();
+                    return;
+                }
+
                 // Component 需要从Entity中移除（适用于第六章 Boss 会在 Sprite 和 PlayerSprite 之间切换，使字段变为 null）
                 if (destValue is Component component) {
                     component.RemoveSelf();
@@ -360,9 +359,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             } else if (sourceValue is EventInstance eventInstance) {
                 destValue = eventInstance.Clone();
             } else if (sourceValue is DisplacementRenderer.Burst burst) {
-               destValue = burst.Clone();
+                destValue = burst.Clone();
             } else if (sourceValue is Entity sourceEntity) {
-                // 还原 Coroutine 时有些 Entity 创建了而未被添加到 Level 中，所以他们无法在 EntitiesSavedButNotLoaded 中还原，所以在这里克隆一个添加进去
+                // 还原 Coroutine 时有些 Entity 创建了而未被添加到 Level 中，他们无法在 EntitiesSavedButNotLoaded 中还原，
+                // 所以在这里克隆一个但是同样不添加到 Level 中
                 destValue = RestoreEntityUtils.CreateEntityCopy(sourceEntity, "TryCloneObject");
             } else if (sourceValue is Component sourceComponent) {
                 Component destComponent = null;

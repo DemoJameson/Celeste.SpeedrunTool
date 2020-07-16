@@ -85,15 +85,19 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
         // 用于处理保存了当是没有被重新创建的物体，一般是手动创建新的实例然后添加到 Level 中。
         // 例如草莓，红泡泡，Theo，水母等跨房间的物体就需要处理，也就是附加了 Tags.Persistent 的物体。
         // 还有一些是游戏过程代码New出来的，没有 EntityData 的也需要处理，例如 BadelinDummy 和 SlashFx
-        public static void EntitiesSavedButNotLoaded(Level level, Dictionary<EntityId2, Entity> savedEntities) {
+        private static void EntitiesSavedButNotLoaded(Level level, Dictionary<EntityId2, Entity> savedEntities) {
             foreach (var pair in savedEntities) {
                 Entity savedEntity = pair.Value;
                 if (CreateEntityCopy(savedEntity) is Entity entity) {
+                    // 创建添加到 Level 后还要 update 三次才会开始还原
+                    // 这时如果不停止 update 有可能出现异常
+                    // 用于修复：ch6 boss-00 撞击 boss 一次后等待 boss 发子弹再保存游戏会崩溃
+                    entity.Active = false;
                     level.Add(entity);
                 }
             }
         }
-
+        
         public static Entity CreateEntityCopy(Entity savedEntity, string tag = "EntitiesSavedButNotLoaded") {
             Entity loadedEntity = null;
             Type savedType = savedEntity.GetType();
@@ -157,6 +161,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
                 loadedEntity = points.Clone();
             } else if (savedType.IsType<FinalBossShot>() && savedEntity is FinalBossShot finalBossShot) {
                 loadedEntity = finalBossShot.Clone();
+                loadedEntity.Active = false;
             } else if (savedType.IsType<FinalBossBeam>() && savedEntity is FinalBossBeam finalBossBeam) {
                 loadedEntity = finalBossBeam.Clone();
             } else if (savedType.IsType<BirdTutorialGui>() && savedEntity is BirdTutorialGui birdTutorialGui) {
@@ -180,9 +185,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
                 }
             }
 
-
             if (loadedEntity == null) return null;
-
+            
             loadedEntity.Position = savedEntity.Position;
             loadedEntity.CopyEntityId2(savedEntity);
             loadedEntity.CopyStartPosition(savedEntity);
@@ -191,7 +195,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
         }
 
         // 与 AfterEntityCreateAndUpdate1Frame 是同样的时刻，用于处理不存在于保存数据中的 Entity，删除就好
-        public static void EntitiesLoadedButNotSaved(Dictionary<EntityId2, Entity> notSavedEntities) {
+        private static void EntitiesLoadedButNotSaved(Dictionary<EntityId2, Entity> notSavedEntities) {
             foreach (var pair in notSavedEntities) {
                 if (pair.Value.IsGlobalButExcludeSomeTypes()) return;
                 pair.Value.RemoveSelf();

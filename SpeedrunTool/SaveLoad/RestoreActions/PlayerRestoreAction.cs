@@ -20,6 +20,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             
             // 避免复活时的光圈被背景遮住
             loaded.Depth = Depths.Top;
+            loaded.Collidable = false;
         }
 
         public override void AfterPlayerRespawn(Entity loadedEntity, Entity savedEntity) {

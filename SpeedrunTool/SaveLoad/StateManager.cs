@@ -136,6 +136,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // Allow player to respawn while level is frozen
             if (IsSaved && IsLoadFrozen) {
                 UpdatePlayerWhenFreeze(level, player);
+                level.Session.Time = savedSession.Time;
             }
 
             // 人物复活完毕后设置人物相关属性
@@ -147,9 +148,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                 level.Frozen = false;
                 level.PauseLock = false;
-                // BadelinOldsite 追踪需要
                 level.TimeActive = SavedLevel.TimeActive;
                 level.RawTimeActive = SavedLevel.RawTimeActive;
+                level.Session.Time = savedSession.Time;
                 Engine.FreezeTimer = savedFreezeTimer;
                 Engine.TimeRate = savedTimeRate;
                 loadState = SaveLoad.LoadState.Complete;
@@ -168,8 +169,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 var savedEntity = SavedEntitiesDict[pair.Key];
                 pair.Value.Position = savedEntity.Position;
                 pair.Value.Visible = savedEntity.Visible;
+                pair.Value.Collidable = false;
             }
-            player.Collidable = true;
         }
 
         private bool CheckButton(Level level, Player player) {

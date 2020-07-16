@@ -23,7 +23,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private float savedFreezeTimer;
         private float savedTimeRate;
-        
+
         private Session savedSession;
         private Dictionary<EverestModule, EverestModuleSession> savedModSessions;
 
@@ -100,19 +100,20 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // Set player position ASAP, then freeze game and wait for the player to respawn (? - euni)
             if (IsSaved && IsLoadStart && player != null) {
                 RestoreLevel(level);
-                
+
                 LoadStart(level);
 
                 // 调用 Level.Update 多次使所有 Entity 更新绘完毕后后再冻结游戏
                 // Wait for some frames so entities can be updated and rendered, then freeze game.
                 orig(level);
                 orig(level);
-                
-                RestoreAllEntitiesPosition(level, player);
-                
+
+                // 预先还原位置与可见性，有些 Entity 需要 1 帧来渲染新的状态，例如 Spinner 的 border 和 MoveBlock 的销毁后不可见状态
+                RestoreAllEntitiesPosition(level);
+
                 // wait 1 frame let entities render at new position.
                 orig(level);
-                
+
                 // Restore Again For Camera
                 RestoreLevel(level);
 
@@ -161,10 +162,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             orig(level);
         }
 
-        private void RestoreAllEntitiesPosition(Level level, Player player) {
+        private void RestoreAllEntitiesPosition(Level level) {
             var loadedEntitiesDict = level.FindAllToDict<Entity>();
 
-            player.Collidable = false;
             foreach (var pair in loadedEntitiesDict.Where(loaded => SavedEntitiesDict.ContainsKey(loaded.Key))) {
                 var savedEntity = SavedEntitiesDict[pair.Key];
                 pair.Value.Position = savedEntity.Position;
@@ -176,8 +176,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private bool CheckButton(Level level, Player player) {
             if (GetVirtualButton(Mappings.Save).Pressed && IsAllowSave(level, player)) {
                 GetVirtualButton(Mappings.Save).ConsumePress();
-                    SaveState(level, player);
-                    return true;
+                SaveState(level, player);
+                return true;
             }
 
             if (GetVirtualButton(Mappings.Load).Pressed && !level.Paused && !IsLoadFrozen) {
@@ -206,17 +206,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private bool IsAllowSave(Level level, Player player) {
-            bool result = !level.Paused && !level.Transitioning && !level.PauseLock && !level.InCutscene &&
+            return !level.Paused && !level.Transitioning && !level.PauseLock && !level.InCutscene &&
                    !level.SkippingCutscene && player != null && !player.Dead &&
-                   !disabledSaveStates.Contains(player.StateMachine.State);
-            if (!result) return false;
-
-            // Don't save when collecting heart.
-            return IsNotCollectingHeart(level);
+                   !disabledSaveStates.Contains(player.StateMachine.State) && IsNotCollectingHeart(level);
         }
 
         private bool IsNotCollectingHeart(Level level) {
-            return !level.Entities.FindAll<HeartGem>().Any(heart => (bool) heart.GetField("collected")); 
+            return !level.Entities.FindAll<HeartGem>().Any(heart => (bool) heart.GetField("collected"));
         }
 
         private void SaveState(Level level, Player player) {

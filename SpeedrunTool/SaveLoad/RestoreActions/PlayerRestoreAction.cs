@@ -20,6 +20,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             
             // 避免复活时的光圈被背景遮住
             loaded.Depth = Depths.Top;
+            
+            // 避免复活期间与其他物体发生碰撞
             loaded.Collidable = false;
         }
 

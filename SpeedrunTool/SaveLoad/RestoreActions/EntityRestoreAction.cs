@@ -18,8 +18,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             if (TryRestoreCrystalStaticSpinner(loadedEntity, savedEntity)) return;
 
             loadedEntity.CopyAllFrom(savedEntity);
+            
+            // 避免复活期间与 Player 发生碰撞，例如保存时与 Spring 过近，恢复时会被弹起。
+            loadedEntity.Collidable = false;
 
             RecreateDuplicateGlider(loadedEntity, savedDuplicateIdList);
+        }
+
+        public override void AfterPlayerRespawn(Entity loadedEntity, Entity savedEntity) {
+            loadedEntity.Collidable = savedEntity.Collidable;
         }
 
         // CrystalStaticSpinner 看不见的地方等于不存在，ch9 g-06 保存恢复后屏幕外的刺无法恢复显示，所以只恢复位置就好

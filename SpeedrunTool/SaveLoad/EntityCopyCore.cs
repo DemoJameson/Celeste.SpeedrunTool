@@ -50,6 +50,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             while (currentObjType.IsSubclassOf(typeof(object))) {
                 // 必须先设置属性再设置字段，不然字段的值会在设置属性后发生改变
                 PropertyInfo[] properties = currentObjType.GetProperties(bindingFlags);
+                FieldInfo[] fields = currentObjType.GetFields(bindingFlags);
+                HashSet<string> fieldNameSet = new HashSet<string>(fields.Select(info => info.Name));
+
                 foreach (PropertyInfo propertyInfo in properties) {
                     // 只处理能读取+写入的属性
                     if (!propertyInfo.CanRead || !propertyInfo.CanWrite) continue;
@@ -57,6 +60,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     Type memberType = propertyInfo.PropertyType;
 
                     if (!memberType.IsSimple() && onlySimpleType) continue;
+
+                    // 有 backing field 则略过，不再重复处理
+                    if (fieldNameSet.Contains($"<{propertyInfo.Name}>k__BackingField")) {
+                        continue;
+                    }
 
                     string memberName = propertyInfo.Name;
                     object destValue = destObj.GetProperty(currentObjType, memberName);
@@ -66,7 +74,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         sourceValue, SetProperty);
                 }
 
-                FieldInfo[] fields = currentObjType.GetFields(bindingFlags);
                 foreach (FieldInfo fieldInfo in fields) {
                     Type memberType = fieldInfo.FieldType;
 

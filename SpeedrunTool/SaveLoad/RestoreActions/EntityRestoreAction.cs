@@ -50,7 +50,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
         // 解决第九章 g-06 石块砸在望远镜上后存档游戏崩溃的问题，是不是应该交给 Everest 解决
         private void TalkComponentUIOnAwake(On.Celeste.TalkComponent.TalkComponentUI.orig_Awake orig,
             TalkComponent.TalkComponentUI self, Scene scene) {
-            if (StateManager.Instance.IsLoadFrozen && self.Handler?.Entity == null) {
+            if (StateManager.Instance.IsLoadFrozen && self.Handler.Entity == null) {
                 return;
             }
 

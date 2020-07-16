@@ -15,7 +15,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
             new SoundSourceAction(),
             new ComponentRestoreAction(),
             
-            // Non Entity
+            // Other
             new EventInstanceRestoreAction(),
             new BurstRestoreAction(),
         };

@@ -7,7 +7,6 @@ using MonoMod.RuntimeDetour;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
     public class KeyRestoreAction : RestoreAction {
         private ILHook origLoadLevelHook;
-        public KeyRestoreAction() : base(typeof(Key)) { }
 
         public override void OnHook() {
             origLoadLevelHook = new ILHook(typeof(Level).GetMethod("orig_LoadLevel"), ModOrigLoadLevel);

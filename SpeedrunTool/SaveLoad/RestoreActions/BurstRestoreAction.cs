@@ -22,6 +22,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             burst.SetStartPosition(position);
             burst.SetRadiusFrom(radiusFrom);
             burst.SetRadiusTo(radiusTo);
+            burst.SetAlpha(alpha);
             return burst;
         }
     }
@@ -34,7 +35,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
 
         public static DisplacementRenderer.Burst Clone(this DisplacementRenderer.Burst burst) {
             return Engine.Scene.GetLevel()?.Displacement.AddBurst(burst.GetStartPosition(), burst.Duration,
-                burst.GetExtendedFloat(BurstRadiusFromKey), burst.GetExtendedFloat(BurstRadiusToKey), burst.GetExtendedFloat(BurstAlphaKey),
+                burst.GetExtendedFloat(BurstRadiusFromKey), burst.GetExtendedFloat(BurstRadiusToKey),
+                burst.GetExtendedFloat(BurstAlphaKey),
                 burst.AlphaEaser, null);
         }
 
@@ -45,7 +47,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
         public static void SetRadiusTo(this DisplacementRenderer.Burst burst, float radiusTo) {
             burst.SetExtendedFloat(BurstRadiusToKey, radiusTo);
         }
-        
+
         public static void SetAlpha(this DisplacementRenderer.Burst burst, float alpha) {
             burst.SetExtendedFloat(BurstAlphaKey, alpha);
         }

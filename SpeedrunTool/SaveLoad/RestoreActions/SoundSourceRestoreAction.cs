@@ -2,12 +2,10 @@ using System.Collections.Generic;
 using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base;
-using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
     public class SoundSourceAction : RestoreAction {
         public static readonly List<SoundSource> PlayingSoundSources = new List<SoundSource>();
-        public SoundSourceAction() : base(typeof(Entity)) { }
 
         // 因为 SoundSource 里的值会因为保存操作发生改变，所以需要提前读取再附加到对象中
         public override void OnSaveState(Level level) {

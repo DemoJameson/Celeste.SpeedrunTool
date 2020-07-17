@@ -169,7 +169,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 var loadedEntity = pair.Value;
                 loadedEntity.Position = savedEntity.Position;
                 loadedEntity.Visible = savedEntity.Visible;
-                loadedEntity.Collidable = false;
+                loadedEntity.Collidable = false; // 避免 orig(level) 时死亡，AfterEntitiesAwake 时会设置正确的值
             }
         }
 
@@ -300,9 +300,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (player == null) {
                 level.Frozen = false;
             } else if (player.StateMachine.State != Player.StNormal) {
-                player.Update();
+                // Don't call player.update, it will trigger playerCollider
+                // 不要使用 player.update 会触发其他 Entity 的 playerCollider
+                // 例如保存时与 Spring 过近，恢复时会被弹起。
+                player.Components.InvokeMethod("Update");
+                
                 // 某些情况会被墙壁弹开？
-                player.Position = SavedPlayer.Position;
+                // player.Position = SavedPlayer.Position;
                 level.Background.Update(level);
                 level.Foreground.Update(level);
             }

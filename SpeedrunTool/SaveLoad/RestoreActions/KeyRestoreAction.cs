@@ -1,4 +1,5 @@
 using System;
+using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
@@ -10,14 +11,21 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
 
         public override void OnHook() {
             origLoadLevelHook = new ILHook(typeof(Level).GetMethod("orig_LoadLevel"), ModOrigLoadLevel);
+            On.Celeste.Key.ctor_Player_EntityID += KeyOnCtor_Player_EntityID;
         }
 
         public override void OnUnhook() {
             origLoadLevelHook.Dispose();
+            On.Celeste.Key.ctor_Player_EntityID -= KeyOnCtor_Player_EntityID;
+        }
+
+        private void KeyOnCtor_Player_EntityID(On.Celeste.Key.orig_ctor_Player_EntityID orig, Key self, Player player, EntityID id) {
+            orig(self, player, id);
+            self.SetEntityId2(id);
         }
 
         // skip level.orig_LoadLevel: foreach (EntityID key in Session.Keys) Add(new Key(player, key)); 
-        // let's RestoreAction create the key.
+        // let's RestoreEntityUtils create the key.
         private void ModOrigLoadLevel(ILContext il) {
             ILCursor cursor = new ILCursor(il);
 

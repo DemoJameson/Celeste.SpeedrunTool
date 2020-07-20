@@ -23,6 +23,26 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             
             // 避免复活期间与其他物体发生碰撞
             loaded.Collidable = false;
+            
+            loaded.Hair.Color = GetRespawnHairColor(saved);
+        }
+
+        private static Color GetRespawnHairColor(Player player) {
+            if (player.Dashes > 1) {
+                return player.Sprite.Mode == PlayerSpriteMode.Madeline
+                    ? Player.TwoDashesHairColor
+                    : Player.TwoDashesBadelineHairColor;
+            }
+
+            if (player.Dashes == 1) {
+                return player.Sprite.Mode == PlayerSpriteMode.Madeline
+                    ? Player.NormalHairColor
+                    : Player.NormalBadelineHairColor;
+            }
+            
+            return player.Sprite.Mode == PlayerSpriteMode.Madeline
+                ? Player.UsedHairColor
+                : Player.UsedBadelineHairColor;
         }
 
         public override void AfterPlayerRespawn(Entity loadedEntity, Entity savedEntity) {

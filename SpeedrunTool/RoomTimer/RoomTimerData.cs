@@ -14,6 +14,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         private int numberOfRooms;
         private string pbTimeKey = "";
         private TimerState timerState;
+        private bool hasRespawned;
 
         public RoomTimerData(RoomTimerType roomTimerType) {
             this.roomTimerType = roomTimerType;
@@ -29,6 +30,11 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
 
         public void Timing(Session session) {
             if (timerState != TimerState.Timing) {
+                return;
+            }
+
+            if (!hasRespawned) {
+                hasRespawned = Engine.Scene.GetPlayer()?.StateMachine.State != Player.StIntroRespawn;
                 return;
             }
 
@@ -87,6 +93,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             numberOfRooms = SpeedrunToolModule.Settings.NumberOfRooms;
             Time = 0;
             LastPbTime = 0;
+            hasRespawned = false;
         }
 
         public void Clear() {

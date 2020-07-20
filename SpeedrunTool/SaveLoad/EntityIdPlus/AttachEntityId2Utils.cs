@@ -19,6 +19,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             typeof(Lamp),
             typeof(ParticleSystem),
             typeof(Wire),
+            typeof(WaterSurface)
         };
 
         private static readonly List<string> SpecialNestedPrivateTypes = new List<string> {
@@ -94,6 +95,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             if (self.IsGlobalButExcludeSomeTypes()) return;
             if (self.HasEntityId2()) return;
             if (ExcludeTypes.Contains(type)) return;
+            if (self.GetType().Assembly == Assembly.GetExecutingAssembly()) return;
 
             string entityIdParam = self.Position.ToString();
             if (type.IsNestedPrivate) {

@@ -108,8 +108,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             if (!self.Completed && self.TimerStarted) {
                 nextRoomTimerData.Timing(self.Session);
                 currentRoomTimerData.Timing(self.Session);
-            }
-            else if (self.Completed) {
+            } else if (self.Completed) {
                 UpdateTimerState();
             }
 

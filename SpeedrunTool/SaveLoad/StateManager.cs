@@ -108,9 +108,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 for (int i = 0; i < 2; i++) orig(level);
 
                 // 预先还原位置与可见性，有些 Entity 需要 1 帧来渲染新的状态，例如 Spinner 的 border 和 MoveBlock 的销毁后不可见状态
+                // wait 1 frame let some entities render at new position. ex spinner's border and moveblock.
                 RestoreAllEntitiesPosition(level);
-
-                // wait 1 frame let entities render at new position.
                 orig(level);
 
                 // Restore Again For Camera
@@ -167,9 +166,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             foreach (var pair in loadedEntitiesDict.Where(loaded => SavedEntitiesDict.ContainsKey(loaded.Key))) {
                 var savedEntity = SavedEntitiesDict[pair.Key];
                 var loadedEntity = pair.Value;
+                
+                // let player stay at the safe position. player does not need to be pre-rendered.
+                if(loadedEntity.IsType<Player>()) continue;
+                
                 loadedEntity.Position = savedEntity.Position;
                 loadedEntity.Visible = savedEntity.Visible;
-                loadedEntity.Collidable = false; // 避免 orig(level) 时死亡，AfterEntitiesAwake 时会设置正确的值
+                loadedEntity.Collidable = savedEntity.Collidable;
             }
         }
 
@@ -299,14 +302,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private void UpdatePlayerWhenFreeze(Level level, Player player) {
             if (player == null) {
                 level.Frozen = false;
+                level.PauseLock = false;
             } else if (player.StateMachine.State != Player.StNormal) {
                 // Don't call player.update, it will trigger playerCollider
                 // 不要使用 player.update 会触发其他 Entity 的 playerCollider
                 // 例如保存时与 Spring 过近，恢复时会被弹起。
                 player.Components.InvokeMethod("Update");
                 
-                // 某些情况会被墙壁弹开？
-                // player.Position = SavedPlayer.Position;
                 level.Background.Update(level);
                 level.Foreground.Update(level);
             }
@@ -315,6 +317,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private void ClearState() {
             if (Engine.Scene is Level level && IsNotCollectingHeart(level)) {
                 level.Frozen = false;
+                level.PauseLock = false;
             }
 
             savedSession = null;

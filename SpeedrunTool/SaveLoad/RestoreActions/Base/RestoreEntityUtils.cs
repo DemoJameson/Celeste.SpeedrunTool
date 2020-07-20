@@ -144,7 +144,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
             }
 
             // TODO 如果是他们的子类该怎么办……
-            if (savedType.IsType<BadelineDummy>()) {
+            if (savedType.IsType<Key>() && savedEntity is Key savedKey) {
+                loadedEntity = new Key(Engine.Scene.GetPlayer(), savedKey.ID);
+            } else if (savedType.IsType<BadelineDummy>()) {
                 loadedEntity = new BadelineDummy(savedEntity.GetStartPosition());
             } else if (savedType.IsType<AngryOshiro>()) {
                 loadedEntity = new AngryOshiro(savedEntity.GetStartPosition(),

@@ -10,8 +10,8 @@ using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
-    public static class AttachEntityId2Utils{
-        private static readonly List<Type> ExcludeTypes = new List<Type> {
+    public static class AttachEntityId2Utils {
+        private static readonly HashSet<Type> ExcludeTypes = new HashSet<Type> {
             // typeof(Entity), // Booster 红色气泡的虚线就是用 Entity 显示的，所以需要 EntityId2 来同步状态
             typeof(Cobweb),
             typeof(Decal),
@@ -22,7 +22,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             typeof(WaterSurface)
         };
 
-        private static readonly List<string> SpecialNestedPrivateTypes = new List<string> {
+        private static readonly HashSet<string> SpecialNestedPrivateTypes = new HashSet<string> {
             "Celeste.ForsakenCitySatellite+CodeBird",
         };
 
@@ -59,7 +59,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
 
             // TODO is possible to attach data to entity created by LoadEntity Event?
             // if (Everest.Events.Level.LoadEntity(level, levelData, offset, entityData)) { return true; }
-            
+
             /*
             if (EntityLoaders.TryGetValue(entityData.Name, out EntityLoader value)) {
 				Entity entity = value(level, levelData, offset, entityData);
@@ -71,7 +71,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
 			}
             */
             cursor.Goto(0);
-            if (cursor.TryGotoNext(i => i.OpCode == OpCodes.Callvirt && i.Operand.ToString().Contains("EntityLoader::Invoke"))) {
+            if (cursor.TryGotoNext(i =>
+                i.OpCode == OpCodes.Callvirt && i.Operand.ToString().Contains("EntityLoader::Invoke"))) {
                 if (cursor.TryGotoNext(i => i.MatchCallvirt<Scene>("Add"))) {
                     cursor.Emit(OpCodes.Dup).Emit(OpCodes.Ldarg_0);
                     cursor.EmitDelegate<Action<Entity, EntityData>>(AttachEntityId);

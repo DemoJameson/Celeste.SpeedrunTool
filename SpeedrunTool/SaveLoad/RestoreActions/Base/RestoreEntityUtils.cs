@@ -101,6 +101,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
         public static Entity CreateEntityCopy(Entity savedEntity, string tag = "EntitiesSavedButNotLoaded") {
             Entity loadedEntity = null;
             Type savedType = savedEntity.GetType();
+            
+            // Don't Recreate StaminaMeter
+            if (savedType.FullName == "Celeste.Mod.StaminaMeter.StaminaMeterEntity") return null;
 
             if (savedEntity.GetEntityData() != null) {
                 // 一般 Entity 都是 EntityData + Vector2

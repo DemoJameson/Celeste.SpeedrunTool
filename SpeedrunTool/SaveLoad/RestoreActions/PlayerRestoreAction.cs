@@ -31,19 +31,20 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
         }
 
         private static Color GetRespawnHairColor(Player player) {
+            bool madelineMode = player.Sprite.Mode == PlayerSpriteMode.Madeline || player.Sprite.Mode == PlayerSpriteMode.MadelineNoBackpack;
             if (player.Dashes > 1) {
-                return player.Sprite.Mode == PlayerSpriteMode.Madeline
+                return madelineMode
                     ? Player.TwoDashesHairColor
                     : Player.TwoDashesBadelineHairColor;
             }
 
             if (player.Dashes == 1) {
-                return player.Sprite.Mode == PlayerSpriteMode.Madeline
+                return madelineMode
                     ? Player.NormalHairColor
                     : Player.NormalBadelineHairColor;
             }
 
-            return player.Sprite.Mode == PlayerSpriteMode.Madeline
+            return madelineMode
                 ? Player.UsedHairColor
                 : Player.UsedBadelineHairColor;
         }

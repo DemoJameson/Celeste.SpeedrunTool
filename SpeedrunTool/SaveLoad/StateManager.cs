@@ -27,6 +27,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private Session savedSession;
         private Dictionary<EverestModule, EverestModuleSession> savedModSessions;
 
+        private int levelUpdateCounts = -1;
         public bool IsLoadStart => loadState == SaveLoad.LoadState.Start;
         public bool IsLoadFrozen => loadState == SaveLoad.LoadState.Frozen;
         public bool IsPlayerRespawned => loadState == SaveLoad.LoadState.PlayerRespawned;
@@ -99,36 +100,54 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // 尽快设置人物的位置与镜头，然后冻结游戏等待人物复活
             // Set player position ASAP, then freeze game and wait for the player to respawn (? - euni)
             if (IsSaved && IsLoadStart && player != null) {
-                RestoreLevel(level);
+                levelUpdateCounts++;
 
-                LoadStart(level);
+                if (levelUpdateCounts == 0) {
+                    // 避免触发复活区域的 Trigger，例如 Glyph 的 peace-24
+                    player.Collidable = player.Active = false;
 
-                // 调用 Level.Update 多次使所有 Entity 更新绘完毕后后再冻结游戏
-                // Wait for some frames so entities can be updated and rendered, then freeze game.
-                for (int i = 0; i < 2; i++) orig(level);
-
-                // 预先还原位置与可见性，有些 Entity 需要 1 帧来渲染新的状态，例如 Spinner 的 border 和 MoveBlock 的销毁后不可见状态
-                // wait 1 frame let some entities render at new position. ex spinner's border and moveblock.
-                RestoreAllEntitiesPosition(level);
-                orig(level);
-
-                // Restore Again For Camera
-                RestoreLevel(level);
-
-                // 等所有 Entity 创建完毕并渲染完成后再统一在此时机还原状态
-                RestoreEntityUtils.AfterEntityAwake(level);
-
-                // 冻结游戏等待 Madeline 复活
-                // Freeze the game wait for madeline respawn.
-                if (player.StateMachine.State == Player.StIntroRespawn) {
-                    level.Frozen = true;
-                    level.PauseLock = true;
-                    loadState = SaveLoad.LoadState.Frozen;
-                } else {
-                    loadState = SaveLoad.LoadState.PlayerRespawned;
+                    RestoreLevel(level);
+                    LoadStart(level);
+                    orig(level);
+                    return;
                 }
 
-                return;
+                // 等待 Level.Update 多次使所有 Entity 更新绘完毕后后再冻结游戏
+                // Wait for some frames so entities can be updated and rendered, then freeze game.
+                if (levelUpdateCounts == 1) {
+                    orig(level);
+                    return;
+                }
+
+                if (levelUpdateCounts == 2) {
+                    // 预先还原位置与可见性，有些 Entity 需要 1 帧来渲染新的状态，例如 Spinner 的 border 和 MoveBlock 的销毁后不可见状态
+                    // wait 1 frame let some entities render at new position. ex spinner's border and moveblock.
+                    RestoreAllEntitiesPosition(level);
+                    orig(level);
+
+                    // Restore Again For Camera
+                    RestoreLevel(level);
+
+                    // 等所有 Entity 创建完毕并渲染完成后再统一在此时机还原状态
+                    RestoreEntityUtils.AfterEntityAwake(level);
+
+                    // 冻结游戏等待 Madeline 复活
+                    // Freeze the game wait for madeline respawn.
+                    if (player.StateMachine.State == Player.StIntroRespawn) {
+                        level.Frozen = true;
+                        level.PauseLock = true;
+                        loadState = SaveLoad.LoadState.Frozen;
+
+                        // sync for tas
+                        for (int i = 0; i < 5; i++) {
+                            player.Components.InvokeMethod("Update");
+                        }
+                    } else {
+                        loadState = SaveLoad.LoadState.PlayerRespawned;
+                    }
+
+                    return;
+                }
             }
 
             // 冻结时允许人物 Update 以便复活
@@ -166,10 +185,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             foreach (var pair in loadedEntitiesDict.Where(loaded => SavedEntitiesDict.ContainsKey(loaded.Key))) {
                 var savedEntity = SavedEntitiesDict[pair.Key];
                 var loadedEntity = pair.Value;
-                
+
                 // let player stay at the safe position. player does not need to be pre-rendered.
-                if(loadedEntity.IsType<Player>()) continue;
-                
+                if (loadedEntity.IsType<Player>()) continue;
+
                 loadedEntity.Position = savedEntity.Position;
                 loadedEntity.Visible = savedEntity.Visible;
                 loadedEntity.Collidable = savedEntity.Collidable;
@@ -221,6 +240,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private void SaveState(Level level, Player player) {
             ClearState();
 
+            levelUpdateCounts = -1;
             loadState = SaveLoad.LoadState.Start;
 
             savedSession = level.Session.DeepClone();
@@ -248,6 +268,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 return;
             }
 
+            levelUpdateCounts = -1;
             loadState = SaveLoad.LoadState.Start;
             Session sessionCopy = savedSession.DeepClone();
             Engine.Scene = new LevelLoader(sessionCopy, sessionCopy.RespawnPoint);
@@ -308,7 +329,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 // 不要使用 player.update 会触发其他 Entity 的 playerCollider
                 // 例如保存时与 Spring 过近，恢复时会被弹起。
                 player.Components.InvokeMethod("Update");
-                
+
                 level.Background.Update(level);
                 level.Foreground.Update(level);
             }
@@ -327,6 +348,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SavedEntitiesDict.Clear();
             SavedDuplicateIdList.Clear();
             loadState = SaveLoad.LoadState.None;
+            levelUpdateCounts = -1;
 
             RestoreEntityUtils.OnClearState();
         }

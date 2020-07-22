@@ -8,17 +8,14 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
     public static class RestoreEntityUtils {
-        private static bool IsLoadStart => StateManager.Instance.IsLoadStart;
         private static Dictionary<EntityId2, Entity> SavedEntitiesDict => StateManager.Instance.SavedEntitiesDict;
         private static List<Entity> SavedDuplicateIdList => StateManager.Instance.SavedDuplicateIdList;
 
         public static void OnLoad() {
-            On.Celeste.Level.Begin += LevelOnBegin;
             RestoreAction.All.ForEach(restoreAction => restoreAction.OnHook());
         }
 
         public static void Unload() {
-            On.Celeste.Level.Begin -= LevelOnBegin;
             RestoreAction.All.ForEach(restoreAction => restoreAction.OnUnhook());
         }
         
@@ -29,6 +26,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
         public static void OnLoadStart(Level level) {
             EntityCopyCore.ClearCachedObjects();
             RestoreAction.All.ForEach(restoreAction => restoreAction.OnLoadStart(level));
+
+            FindNotLoadedEntities(level);
         }
 
         public static void OnLoadComplete(Level level) {
@@ -39,16 +38,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
             RestoreAction.All.ForEach(restoreAction => restoreAction.OnClearState());
         }
 
-        private static void LevelOnBegin(On.Celeste.Level.orig_Begin orig, Level level) {
-            orig(level);
-            if (!IsLoadStart) return;
-
+        private static void FindNotLoadedEntities(Level level) {
             var loadedDict = level.FindAllToDict<Entity>();
 
             var notLoadedEntities = SavedEntitiesDict.Where(pair => !loadedDict.ContainsKey(pair.Key))
                 .ToDictionary(p => p.Key, p => p.Value);
             if (notLoadedEntities.Count > 0) {
-                EntitiesSavedButNotLoaded(level, notLoadedEntities);
+                RecreateNotLoadedEntities(level, notLoadedEntities);
             }
         }
 
@@ -58,7 +54,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
             var notSavedEntities = loadedEntitiesDict.Where(pair => !SavedEntitiesDict.ContainsKey(pair.Key))
                 .ToDictionary(p => p.Key, p => p.Value);
 
-            EntitiesLoadedButNotSaved(notSavedEntities);
+            RemoveNotSavedEntities(notSavedEntities);
 
             foreach (KeyValuePair<EntityId2, Entity> pair in loadedEntitiesDict.Where(loaded => SavedEntitiesDict.ContainsKey(loaded.Key))) {
                 RestoreAction.All.ForEach(restoreAction => {
@@ -84,8 +80,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
         
         // 用于处理保存了当是没有被重新创建的物体，一般是手动创建新的实例然后添加到 Level 中。
         // 例如草莓，红泡泡，Theo，水母等跨房间的物体就需要处理，也就是附加了 Tags.Persistent 的物体。
-        // 还有一些是游戏过程代码New出来的，没有 EntityData 的也需要处理，例如 BadelinDummy 和 SlashFx
-        private static void EntitiesSavedButNotLoaded(Level level, Dictionary<EntityId2, Entity> savedEntities) {
+        // 还有一些是游戏过程中代码创建出来没有 EntityData 的，但是也需要处理，例如 BadelinDummy 和 SlashFx
+        private static void RecreateNotLoadedEntities(Level level, Dictionary<EntityId2, Entity> savedEntities) {
             foreach (var pair in savedEntities) {
                 Entity savedEntity = pair.Value;
                 if (CreateEntityCopy(savedEntity) is Entity entity) {
@@ -98,13 +94,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
             }
         }
         
-        public static Entity CreateEntityCopy(Entity savedEntity, string tag = "EntitiesSavedButNotLoaded") {
+        public static Entity CreateEntityCopy(Entity savedEntity, string tag = "RecreateNotLoadedEntities") {
             Entity loadedEntity = null;
             Type savedType = savedEntity.GetType();
             
-            // Don't Recreate StaminaMeter
-            if (savedType.FullName == "Celeste.Mod.StaminaMeter.StaminaMeterEntity") return null;
-
             if (savedEntity.GetEntityData() != null) {
                 // 一般 Entity 都是 EntityData + Vector2
                 loadedEntity = (savedType.GetConstructor(new[] {typeof(EntityData), typeof(Vector2)})
@@ -147,8 +140,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
             }
 
             // TODO 如果是他们的子类该怎么办……
-            if (savedType.IsType<Key>() && savedEntity is Key savedKey) {
-                loadedEntity = new Key(Engine.Scene.GetPlayer(), savedKey.ID);
+            if (savedType.IsType<Key>() && savedEntity is Key savedKey && Engine.Scene.GetPlayer() is Player player) {
+                loadedEntity =
+                    new Key(player.Position + new Vector2(-12 * (int) player.Facing, -8f), savedKey.ID, null) {
+                        Collidable = false, Depth = Depths.Top
+                    };
             } else if (savedType.IsType<BadelineDummy>()) {
                 loadedEntity = new BadelineDummy(savedEntity.GetStartPosition());
             } else if (savedType.IsType<AngryOshiro>()) {
@@ -199,12 +195,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
             return loadedEntity;
         }
 
-        // 与 AfterEntityCreateAndUpdate1Frame 是同样的时刻，用于处理不存在于保存数据中的 Entity，删除就好
-        private static void EntitiesLoadedButNotSaved(Dictionary<EntityId2, Entity> notSavedEntities) {
+        // 与 AfterEntityAwake 是同样的时刻，用于处理不存在于保存数据中的 Entity，删除就好
+        private static void RemoveNotSavedEntities(Dictionary<EntityId2, Entity> notSavedEntities) {
             foreach (var pair in notSavedEntities) {
                 if (pair.Value.IsGlobalButExcludeSomeTypes()) return;
                 pair.Value.RemoveSelf();
-                pair.Key.DebugLog("EntitiesLoadedButNotSaved");
             }
         }
     }

@@ -90,6 +90,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
                     // 用于修复：ch6 boss-00 撞击 boss 一次后等待 boss 发子弹再保存游戏会崩溃
                     entity.Active = false;
                     level.Add(entity);
+                    
+                    $"Recreate not loaded entity: {savedEntity}".DebugLog();
                 }
             }
         }
@@ -158,6 +160,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
                 loadedEntity = solid.Clone();
             } else if (savedType.IsType<SpeedRing>() && savedEntity is SpeedRing speedRing) {
                 loadedEntity = speedRing.Clone();
+            // } else if (savedType.IsType<TrailManager.Snapshot>() && savedEntity is TrailManager.Snapshot snapshot) {
+                // loadedEntity = snapshot.Clone();
             } else if (savedType.IsType<StrawberryPoints>() && savedEntity is StrawberryPoints points) {
                 loadedEntity = points.Clone();
             } else if (savedType.IsType<FinalBossShot>() && savedEntity is FinalBossShot finalBossShot) {
@@ -200,6 +204,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
             foreach (var pair in notSavedEntities) {
                 if (pair.Value.IsGlobalButExcludeSomeTypes()) return;
                 pair.Value.RemoveSelf();
+                $"Remove not saved entity: {pair.Value}".DebugLog();
             }
         }
     }

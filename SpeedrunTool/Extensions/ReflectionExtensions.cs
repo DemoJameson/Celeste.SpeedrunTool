@@ -102,12 +102,12 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 // try {
                 //     newObject = FormatterServices.GetUninitializedObject(type);
                 // } catch (Exception) {
-                "ForceCreateInstance Failed".DebugLog(type, tag);
+                $"ForceCreateInstance Failed: {type} at {tag}".Log();
                 // }
             }
 
             if (newObject != null) {
-                "ForceCreateInstance Success".DebugLog(type, tag);
+                $"ForceCreateInstance Success: {type} at {tag}".Log();
             }
 
             return newObject;

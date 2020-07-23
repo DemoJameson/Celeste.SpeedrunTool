@@ -145,7 +145,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         public static Entity FindFirst(this Scene scene, EntityId2? entityId2) {
             if (entityId2 == null) return null;
             if (entityId2 == default(EntityId2)) return null;
-            return scene.Entities.FirstOrDefault(e => e.GetEntityId2() == entityId2);
+            Entity entity = scene.Entities.FirstOrDefault(e => e.GetEntityId2() == entityId2);
+
+            if (entity == null) {
+                $"Can't find entity in scene: {entityId2}".DebugLog();
+            }
+            
+            return entity;
         }
 
         public static Dictionary<EntityId2, T> FindAllToDict<T>(this EntityList entityList, out List<T> duplicateIdList) where T : Entity {
@@ -159,7 +165,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
 
                 EntityId2 entityId2 = entity.GetEntityId2();
                 if (result.ContainsKey(entityId2)) {
-                    Logger.Log("SpeedrunTool", $"EntityId2 Duplication: {entityId2}");
+                    $"EntityId2 Duplication: {entityId2}".DebugLog();
                     duplicateIdList.Add(entity);
                     continue;
                 }

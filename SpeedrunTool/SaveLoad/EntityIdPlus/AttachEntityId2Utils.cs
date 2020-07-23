@@ -82,8 +82,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
 
         private static void AttachEntityId(Entity entity, EntityData data) {
             if (entity.IsGlobalButExcludeSomeTypes()) return;
-            entity.SetEntityId2(data.ToEntityId2(entity));
+            EntityId2 entityId2 = data.ToEntityId2(entity);
+            entity.SetEntityId2(entityId2);
             entity.SetEntityData(data);
+            $"AttachEntityId: {entityId2}".DebugLog();
         }
 
         // 处理其他没有 EntityData 的物体

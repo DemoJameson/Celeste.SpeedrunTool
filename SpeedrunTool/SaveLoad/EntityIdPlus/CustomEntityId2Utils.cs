@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Celeste.Mod.SpeedrunTool.Extensions;
@@ -91,31 +92,46 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             debris.SetCenter(center);
             return debris;
         }
-        
-        
-        private static Debris DebrisOnInit_Vector2_char_bool(On.Celeste.Debris.orig_Init_Vector2_char_bool orig, Debris self, Vector2 pos, char tileset, bool playSound) {
+
+        private static Debris DebrisOnInit_Vector2_char_bool(On.Celeste.Debris.orig_Init_Vector2_char_bool orig,
+            Debris self, Vector2 pos, char tileset, bool playSound) {
             orig(self, pos, tileset, playSound);
             self.TrySetEntityId2(pos, tileset, playSound);
             return self;
         }
 
-        private static Debris DebrisOnInit_Vector2_char(On.Celeste.Debris.orig_Init_Vector2_char orig, Debris self, Vector2 pos, char tileset) {
+        private static Debris DebrisOnInit_Vector2_char(On.Celeste.Debris.orig_Init_Vector2_char orig, Debris self,
+            Vector2 pos, char tileset) {
             orig(self, pos, tileset);
             self.TrySetEntityId2(pos, tileset, true);
             return self;
         }
 
-        private static void StrawberryPointsOnCtor(On.Celeste.StrawberryPoints.orig_ctor orig, StrawberryPoints self, Vector2 position, bool ghostBerry, int index, bool moonBerry) {
+        private static void StrawberryPointsOnCtor(On.Celeste.StrawberryPoints.orig_ctor orig, StrawberryPoints self,
+            Vector2 position, bool ghostBerry, int index, bool moonBerry) {
             orig(self, position, ghostBerry, index, moonBerry);
             self.TrySetEntityId2(position, ghostBerry, index, moonBerry);
             self.SetStartPosition(position);
         }
 
-        private static void SolidOnCtor(On.Celeste.Solid.orig_ctor orig, Solid self, Vector2 position, float width, float height, bool safe) {
+        private static void SolidOnCtor(On.Celeste.Solid.orig_ctor orig, Solid self, Vector2 position, float width,
+            float height, bool safe) {
             orig(self, position, width, height, safe);
             self.TrySetEntityId2(position, width, height, safe);
             self.SaveWidth(width);
             self.SaveHeight(height);
+        }
+
+        private static TrailManager.Snapshot
+            TrailManagerOnAdd_Vector2_Image_PlayerHair_Vector2_Color_int_float_bool_bool(
+                On.Celeste.TrailManager.orig_Add_Vector2_Image_PlayerHair_Vector2_Color_int_float_bool_bool orig,
+                Vector2 position, Image sprite, PlayerHair hair, Vector2 scale, Color color, int depth, float duration,
+                bool frozenUpdate, bool useRawDeltaTime) {
+            TrailManager.Snapshot snapshot = orig(position, sprite, hair, scale, color, depth, duration, frozenUpdate,
+                useRawDeltaTime);
+            snapshot.SetParameters(position, sprite, hair, scale, color, depth, duration, frozenUpdate, useRawDeltaTime);
+            snapshot.TrySetEntityId2(position, sprite, hair, scale, color, depth, duration, frozenUpdate, useRawDeltaTime);
+            return snapshot;
         }
 
         public static void OnLoad() {
@@ -143,6 +159,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             On.Celeste.StrawberryPoints.ctor += StrawberryPointsOnCtor;
 
             On.Celeste.Solid.ctor += SolidOnCtor;
+
+            // On.Celeste.TrailManager.Add_Vector2_Image_PlayerHair_Vector2_Color_int_float_bool_bool +=
+                // TrailManagerOnAdd_Vector2_Image_PlayerHair_Vector2_Color_int_float_bool_bool;
         }
 
         public static void OnUnload() {
@@ -163,16 +182,57 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             On.Celeste.Seeker.ctor_EntityData_Vector2 -= SeekerOnCtor_EntityData_Vector2;
 
             On.Celeste.MoveBlock.Debris.Init -= DebrisOnInit;
-            
+
             On.Celeste.Debris.Init_Vector2_char -= DebrisOnInit_Vector2_char;
             On.Celeste.Debris.Init_Vector2_char_bool -= DebrisOnInit_Vector2_char_bool;
-            
+
             On.Celeste.StrawberryPoints.ctor -= StrawberryPointsOnCtor;
-            
+
             On.Celeste.Solid.ctor -= SolidOnCtor;
+            
+            // On.Celeste.TrailManager.Add_Vector2_Image_PlayerHair_Vector2_Color_int_float_bool_bool -=
+                // TrailManagerOnAdd_Vector2_Image_PlayerHair_Vector2_Color_int_float_bool_bool;
         }
     }
-    
+
+    public static class SnapshotExtensions {
+        private const string SnapshotParametersKey = "SnapshotParametersKey";
+
+        public static void SetParameters(this TrailManager.Snapshot snapshot, Vector2 position, Image sprite,
+            PlayerHair hair, Vector2 scale, Color color, int depth, float duration,
+            bool frozenUpdate, bool useRawDeltaTime) {
+            Dictionary<string, object> parameters = new Dictionary<string, object> {
+                [nameof(position)] = position,
+                [nameof(sprite)] = sprite,
+                [nameof(hair)] = hair,
+                [nameof(scale)] = scale,
+                [nameof(color)] = color,
+                [nameof(depth)] = depth,
+                [nameof(duration)] = duration,
+                [nameof(frozenUpdate)] = frozenUpdate,
+                [nameof(useRawDeltaTime)] = useRawDeltaTime
+            };
+            snapshot.SetExtendedDataValue(SnapshotParametersKey, parameters);
+        }
+
+        public static TrailManager.Snapshot Clone(this TrailManager.Snapshot snapshot) {
+            Dictionary<string, object> parameters =
+                snapshot.GetExtendedDataValue<Dictionary<string, object>>(SnapshotParametersKey);
+            if (parameters == null) return null;
+            return TrailManager.Add(
+                (Vector2) parameters["position"],
+                (Image)parameters["sprite"],
+                (PlayerHair)parameters["hair"],
+                (Vector2)parameters["scale"],
+                (Color)parameters["color"],
+                (int)parameters["depth"],
+                (float)parameters["duration"],
+                (bool)parameters["frozenUpdate"],
+                (bool)parameters["useRawDeltaTime"]
+            );
+        }
+    }
+
     public static class SolidExtensions {
         private const string SolidWidthKey = "SolidWidthKey";
         private const string SolidHeightKey = "SolidHeightKey";
@@ -180,18 +240,21 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         public static void SaveWidth(this Solid solid, float width) {
             solid.SetExtendedFloat(SolidWidthKey, width);
         }
+
         public static void SaveHeight(this Solid solid, float height) {
             solid.SetExtendedFloat(SolidHeightKey, height);
         }
-        
+
         public static Solid Clone(this Solid solid) {
-            return new Solid(solid.GetStartPosition(), solid.GetExtendedFloat(SolidWidthKey), solid.GetExtendedFloat(SolidHeightKey), solid.Safe);
+            return new Solid(solid.GetStartPosition(), solid.GetExtendedFloat(SolidWidthKey),
+                solid.GetExtendedFloat(SolidHeightKey), solid.Safe);
         }
     }
 
     public static class StrawberryPointsExtensions {
         public static StrawberryPoints Clone(this StrawberryPoints points) {
-            return new StrawberryPoints(points.GetStartPosition(), (bool) points.GetField("ghostberry"), (int) points.GetField("index"), (bool) points.GetField("moonberry"));
+            return new StrawberryPoints(points.GetStartPosition(), (bool) points.GetField("ghostberry"),
+                (int) points.GetField("index"), (bool) points.GetField("moonberry"));
         }
     }
 
@@ -203,7 +266,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             .GetMethod("Create").MakeGenericMethod(typeof(MoveBlock).GetNestedType("Debris", BindingFlags.NonPublic));
 
         public static Actor CloneMoveBlockDebris(this Actor moveBlockDebris) {
-            return CreateDebris.Invoke(Engine.Pooler,new object[]{}).InvokeMethod("Init", moveBlockDebris.GetStartPosition(), moveBlockDebris.GetCenter(), moveBlockDebris.GetField("home")) as Actor;
+            return CreateDebris.Invoke(Engine.Pooler, new object[] { }).InvokeMethod("Init",
+                moveBlockDebris.GetStartPosition(), moveBlockDebris.GetCenter(),
+                moveBlockDebris.GetField("home")) as Actor;
         }
 
         public static Vector2 GetCenter(this Actor moveBlockDebris) {

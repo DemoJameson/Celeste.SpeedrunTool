@@ -42,7 +42,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             if (CopyingObjects.Contains(destObj)) {
                 // StackOverflow Exception is watching you.
-                destObj.DebugLog("Prevents copying of an object that is being copied");
+                $"Prevents copying {destObj} because it is being copied.".Log();
                 return;
             }
 
@@ -61,7 +61,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                     if (!memberType.IsSimple() && onlySimpleType) continue;
 
-                    // 有 backing field 则略过，不再重复处理
+                    // 存在对应的 BackingField 则略过，在下面的 FieldInfo 里处理
                     if (fieldNameSet.Contains($"<{propertyInfo.Name}>k__BackingField")) {
                         continue;
                     }
@@ -169,9 +169,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     destValue.InvokeMethod("Clear");
                     if (sourceValue is IEnumerable sourceEnumerable) {
                         IEnumerator enumerator = sourceEnumerable.GetEnumerator();
-                        while (enumerator.MoveNext() &&
-                               enumerator.Current.TryFindOrCloneObject() is Entity entity) {
-                            destValue.InvokeMethod("Add", entity);
+                        while (enumerator.MoveNext()) {
+                            if (enumerator.Current.TryFindOrCloneObject() is Entity entity) {
+                                destValue.InvokeMethod("Add", entity);
+                            } else {
+                                ($"Copy HashSet<{hashElementType}> element failed: {enumerator.Current}\n" +
+                                 $"destObj={destObj}\tcurrentObjType={currentObjType}\tmemberType={memberType}\tmemberName={memberName}\tdestValue={destValue ?? "null"}\tsourceValue={sourceValue}"
+                                    ).Log();
+                            }
                         }
                     }
                 }
@@ -199,8 +204,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     if (destValue != null) {
                         setMember(destObj, currentObjType, memberName, destValue);
                     } else {
-                        Logger.Log("SpeedrunTool",
-                            $"TryFindOrCloneObject Faild: currentObjType={currentObjType}\tmemberType={memberType}\tmemberName={memberName}\tdestValue={destValue}\tsourceValue={sourceValue}\tdestObj={destObj}");
+                        $"TryFindOrCloneObject Failed: destObj={destObj}\tcurrentObjType={currentObjType}\tmemberType={memberType}\tmemberName={memberName}\tdestValue={destValue ?? "null"}\tsourceValue={sourceValue}"
+                            .Log();
                     }
                 }
             }
@@ -287,7 +292,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
             } else if (destValue is Entity destEntity && sourceValue is Entity sourceEntity &&
                        sourceEntity.GetEntityId2() != destEntity.GetEntityId2()) {
-                sourceEntity.DebugLog("entity have different EntityId2");
+                $"{sourceEntity} have different EntityId2 at TryCopyObject()".Log();
             }
         }
 
@@ -298,7 +303,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             destValue = TryCloneObject(sourceValue);
 
             if (destValue == null) {
-                sourceValue.DebugLog("TryFindOrCloneObject Failed:");
+                $"TryFindOrCloneObject Failed: {sourceValue}".Log();
             }
 
             return destValue;
@@ -314,6 +319,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 destValue = Engine.Scene.GetLevel();
             } else if (sourceValue is Session) {
                 destValue = Engine.Scene.GetSession();
+            } else if (sourceValue is EntityData) {
+                destValue = sourceValue;
             } else if (sourceValue is Entity entity) {
                 if (sourceValue is SolidTiles) {
                     destValue = Engine.Scene.GetLevel()?.SolidTiles;
@@ -325,7 +332,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             } else if (sourceValue is Follower savedFollower) {
                 Entity followEntity = Engine.Scene.FindFirst(savedFollower.Entity.GetEntityId2());
                 if (followEntity == null) {
-                    savedFollower.Entity.DebugLog("Can't find the follower entity");
+                    $"Can't find the follower entity: {savedFollower.Entity}".Log();
                     return null;
                 }
 
@@ -341,7 +348,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                        TryFindObject(sourceComponent.Entity) is Entity componentEntity) {
                 if (sourceComponent.IsFindabel() &&
                     componentEntity.FindComponent(sourceComponent) is Component foundComponent) {
-                    sourceValue.DebugLog("Find a component instead of recreating a new one");
+                    $"Find {sourceValue} instead of recreating a new one".Log(LogLevel.Info);
                     destValue = foundComponent;
                 }
             }
@@ -451,7 +458,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             if (newObj == null) {
-                type.DebugLog("CreateCompilerGeneratedCopy Failed:");
+                $"CreateCompilerGeneratedCopy Failed: {type}".Log();
                 return null;
             }
 

@@ -42,6 +42,8 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         public static bool IsGlobalButExcludeSomeTypes(this Entity entity) {
             return entity.TagCheck(Tags.Global) 
                    && entity.IsNotType<CassetteBlockManager>()
+                   // && entity.IsNotType<TrailManager>()
+                   // && entity.IsNotType<TrailManager.Snapshot>()
                 ;
         }
     }

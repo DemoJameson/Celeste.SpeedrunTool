@@ -6,15 +6,24 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         private const string Tag = "SpeedrunTool";
 
         // TODO 增加记录信息到指定文件的功能，以便后台记录自己想要的调试信息
-        public static void DebugLog(this object message, object prefix = null, object suffix = null) {
-            int frames = 0;
-            if (Engine.Scene != null) {
-                frames = (int) Math.Round(Engine.Scene.RawTimeActive / 0.0166667);
+        public static void Log(this object message, LogLevel logLevel = LogLevel.Warn) {
+            string levelInfo = "";
+            if (Engine.Scene.GetSession() is Session session) {
+                levelInfo += $"[{session.Area.SID} {session.Level}] ";
             }
 
-            DateTime now = DateTime.Now;
-            Logger.Log(Tag,
-                $"Time: {now.ToLongTimeString()}.{now.Millisecond}\tFrame: {frames}\t{prefix}\t{message}\t{suffix}");
+            string frames = "";
+            if (Engine.Scene != null) {
+                frames = "[" + (int) Math.Round(Engine.Scene.RawTimeActive / 0.0166667) + "] ";
+            }
+
+            Logger.Log(Tag, $"{levelInfo}{frames}{message}");
+        }
+
+        public static void DebugLog(this object message, LogLevel logLevel = LogLevel.Info) {
+#if DEBUG
+            message.Log(logLevel);
+#endif
         }
     }
 }

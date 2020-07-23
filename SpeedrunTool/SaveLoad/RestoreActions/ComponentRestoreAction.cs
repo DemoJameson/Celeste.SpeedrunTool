@@ -47,12 +47,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
                     return sineWave.OnUpdate?.Method == otherTween.OnUpdate?.Method;
                 }
             }, {
-                typeof(TalkComponent), (component, otherComponent) => {
-                    TalkComponent talkComponent = (TalkComponent) component;
-                    TalkComponent otherTalkComponent = (TalkComponent) otherComponent;
-                    return talkComponent.OnTalk?.Method == otherTalkComponent.OnTalk?.Method;
-                }
-            }, {
                 typeof(Coroutine), (component, otherComponent) => {
                     Coroutine coroutine = (Coroutine) component;
                     Coroutine otherCoroutine = (Coroutine) otherComponent;
@@ -79,13 +73,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             List<T> savedComponents = saved.Components.GetAll<T>().ToList();
             if (loadedComponents.Count == 0 && savedComponents.Count == 0) return;
 
-            if (typeof(T) == typeof(TalkComponent)) {
-                loadedComponents.Count.DebugLog();
-                savedComponents.Count.DebugLog();
-            }
-
             // 把 loadedComponents 里不存在于 savedComponents 的 Component 都清掉
-            for (var i = loadedComponents.Count - 1; i >= 0; i--) {
+            for (int i = loadedComponents.Count - 1; i >= 0; i--) {
                 T loadedComponent = loadedComponents[i];
                 if (savedComponents.Any(component => loadedComponent.IsSameAs(component))) continue;
 

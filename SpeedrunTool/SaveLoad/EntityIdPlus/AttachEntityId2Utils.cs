@@ -12,14 +12,20 @@ using MonoMod.RuntimeDetour;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
     public static class AttachEntityId2Utils {
         private static readonly HashSet<Type> ExcludeTypes = new HashSet<Type> {
-            // typeof(Entity), // Booster 红色气泡的虚线就是用 Entity 显示的，所以需要 EntityId2 来同步状态
+            // Booster 红色气泡的虚线就是用 Entity 显示的，所以需要 EntityId2 来同步状态
+            // typeof(Entity),
+            
+            // 装饰
             typeof(Cobweb),
             typeof(Decal),
             typeof(HangingLamp),
             typeof(Lamp),
             typeof(ParticleSystem),
             typeof(Wire),
-            typeof(WaterSurface)
+            typeof(WaterSurface),
+            
+            // TalkComponent.UI 在保存后变为 null，导致 copyAll 之后出现两个对话图案
+            typeof(TalkComponent.TalkComponentUI),
         };
 
         private static readonly HashSet<string> SpecialNestedPrivateTypes = new HashSet<string> {
@@ -85,7 +91,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             EntityId2 entityId2 = data.ToEntityId2(entity);
             entity.SetEntityId2(entityId2);
             entity.SetEntityData(data);
-            $"AttachEntityId: {entityId2}".DebugLog();
+            // $"AttachEntityId: {entityId2}".DebugLog();
         }
 
         // 处理其他没有 EntityData 的物体

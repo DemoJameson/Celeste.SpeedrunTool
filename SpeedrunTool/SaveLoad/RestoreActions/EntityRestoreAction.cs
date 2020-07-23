@@ -18,7 +18,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             if (TryRestoreCrystalStaticSpinner(loadedEntity, savedEntity)) return;
 
             loadedEntity.CopyAllFrom(savedEntity);
-            
+
             RecreateDuplicateGlider(loadedEntity, savedDuplicateIdList);
         }
 

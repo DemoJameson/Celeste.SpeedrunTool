@@ -136,13 +136,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             return snapshot;
         }
 
-        private static void TalkComponentUIOnCtor(On.Celeste.TalkComponent.TalkComponentUI.orig_ctor orig,
-            TalkComponent.TalkComponentUI self, TalkComponent handler) {
-            orig(self, handler);
-
-            self.TrySetEntityId2(handler.Entity?.Position ?? Vector2.Zero, handler.OnTalk.Method);
-        }
-
         public static void OnLoad() {
             On.Celeste.FinalBossShot.Init_FinalBoss_Vector2 += FinalBossShotOnInit_FinalBoss_Vector2;
             On.Celeste.FinalBossShot.Init_FinalBoss_Player_float += FinalBossShotOnInit_FinalBoss_Player_float;
@@ -171,8 +164,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
 
             // On.Celeste.TrailManager.Add_Vector2_Image_PlayerHair_Vector2_Color_int_float_bool_bool +=
             // TrailManagerOnAdd_Vector2_Image_PlayerHair_Vector2_Color_int_float_bool_bool;
-
-            On.Celeste.TalkComponent.TalkComponentUI.ctor += TalkComponentUIOnCtor;
         }
 
         public static void OnUnload() {
@@ -203,8 +194,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
 
             // On.Celeste.TrailManager.Add_Vector2_Image_PlayerHair_Vector2_Color_int_float_bool_bool -=
             // TrailManagerOnAdd_Vector2_Image_PlayerHair_Vector2_Color_int_float_bool_bool;
-
-            On.Celeste.TalkComponent.TalkComponentUI.ctor -= TalkComponentUIOnCtor;
         }
     }
 

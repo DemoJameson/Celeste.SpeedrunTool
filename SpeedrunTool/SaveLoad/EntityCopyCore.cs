@@ -251,9 +251,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (sourceValue.IsCompilerGenerated()) {
                 destValue.CopyAllFrom(sourceValue);
             } else if (sourceValue is Component) {
-                if (sourceValue is StateMachine || // only copy some fields later
-                    sourceValue is DustGraphic || // sometimes game crash after savestate
-                    sourceValue is VertexLight // switch between room will make light disappear
+                if (sourceValue is StateMachine // only copy some fields later
+                    || sourceValue is DustGraphic // sometimes game crash after savestate
+                    || sourceValue is VertexLight // switch between room will make light disappear
+                    || sourceValue is TalkComponent // TalkComponent.UI 在保存后变为 null 导致重复创建出现两个对话图案
                 ) {
                     destValue.CopyAllFrom<Component>(sourceValue);
                 } else {

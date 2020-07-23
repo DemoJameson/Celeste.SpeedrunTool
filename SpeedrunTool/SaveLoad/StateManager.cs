@@ -115,6 +115,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 // 等待 Level.Update 多次使所有 Entity 更新绘完毕后后再冻结游戏
                 // Wait for some frames so entities can be updated and rendered, then freeze game.
                 if (levelUpdateCounts == 1) {
+                    // 等待大部分 Entity 创建添加到 Scene 中再检查是否有保留了但是没有创建的 Entity
+                    // 等待 Level.Update 一次是因为部分 Entity 是在第一次 Entity.Update 中创建的，例如 TalkComponentUI
+                    RestoreEntityUtils.FindNotLoadedEntities(level);
                     orig(level);
                     return;
                 }

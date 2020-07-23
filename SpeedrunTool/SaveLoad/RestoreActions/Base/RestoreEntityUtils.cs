@@ -26,8 +26,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
         public static void OnLoadStart(Level level) {
             EntityCopyCore.ClearCachedObjects();
             RestoreAction.All.ForEach(restoreAction => restoreAction.OnLoadStart(level));
-
-            FindNotLoadedEntities(level);
         }
 
         public static void OnLoadComplete(Level level) {
@@ -38,7 +36,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
             RestoreAction.All.ForEach(restoreAction => restoreAction.OnClearState());
         }
 
-        private static void FindNotLoadedEntities(Level level) {
+        public static void FindNotLoadedEntities(Level level) {
             var loadedDict = level.FindAllToDict<Entity>();
 
             var notLoadedEntities = SavedEntitiesDict.Where(pair => !loadedDict.ContainsKey(pair.Key))
@@ -178,9 +176,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
                 loadedEntity = Engine.Pooler.Create<Debris>()
                     .Init(debris.GetStartPosition(), (char) debris.GetField("tileset"),
                         (bool) debris.GetField("playSound"));
-            } else if (savedType == typeof(TalkComponent.TalkComponentUI) && savedEntity is TalkComponent.TalkComponentUI talkComponentUi && talkComponentUi.Handler.TryFindOrCloneObject() is TalkComponent talkComponent) {
-                // ignore
-                // loadedEntity = new TalkComponent.TalkComponentUI(talkComponent);
             } else if (savedType.IsType<Entity>()) {
                 loadedEntity = new Entity(savedEntity.GetStartPosition());
             } else {

@@ -178,8 +178,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
                 loadedEntity = Engine.Pooler.Create<Debris>()
                     .Init(debris.GetStartPosition(), (char) debris.GetField("tileset"),
                         (bool) debris.GetField("playSound"));
-            } else if (savedType == typeof(TalkComponent.TalkComponentUI)) {
+            } else if (savedType == typeof(TalkComponent.TalkComponentUI) && savedEntity is TalkComponent.TalkComponentUI talkComponentUi && talkComponentUi.Handler.TryFindOrCloneObject() is TalkComponent talkComponent) {
                 // ignore
+                // loadedEntity = new TalkComponent.TalkComponentUI(talkComponent);
             } else if (savedType.IsType<Entity>()) {
                 loadedEntity = new Entity(savedEntity.GetStartPosition());
             } else {

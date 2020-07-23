@@ -129,9 +129,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
                 bool frozenUpdate, bool useRawDeltaTime) {
             TrailManager.Snapshot snapshot = orig(position, sprite, hair, scale, color, depth, duration, frozenUpdate,
                 useRawDeltaTime);
-            snapshot.SetParameters(position, sprite, hair, scale, color, depth, duration, frozenUpdate, useRawDeltaTime);
-            snapshot.TrySetEntityId2(position, sprite, hair, scale, color, depth, duration, frozenUpdate, useRawDeltaTime);
+            snapshot.SetParameters(position, sprite, hair, scale, color, depth, duration, frozenUpdate,
+                useRawDeltaTime);
+            snapshot.TrySetEntityId2(position, sprite, hair, scale, color, depth, duration, frozenUpdate,
+                useRawDeltaTime);
             return snapshot;
+        }
+
+        private static void TalkComponentUIOnCtor(On.Celeste.TalkComponent.TalkComponentUI.orig_ctor orig,
+            TalkComponent.TalkComponentUI self, TalkComponent handler) {
+            orig(self, handler);
+
+            self.TrySetEntityId2(handler.Entity?.Position ?? Vector2.Zero, handler.OnTalk.Method);
         }
 
         public static void OnLoad() {
@@ -161,7 +170,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             On.Celeste.Solid.ctor += SolidOnCtor;
 
             // On.Celeste.TrailManager.Add_Vector2_Image_PlayerHair_Vector2_Color_int_float_bool_bool +=
-                // TrailManagerOnAdd_Vector2_Image_PlayerHair_Vector2_Color_int_float_bool_bool;
+            // TrailManagerOnAdd_Vector2_Image_PlayerHair_Vector2_Color_int_float_bool_bool;
+
+            On.Celeste.TalkComponent.TalkComponentUI.ctor += TalkComponentUIOnCtor;
         }
 
         public static void OnUnload() {
@@ -189,9 +200,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             On.Celeste.StrawberryPoints.ctor -= StrawberryPointsOnCtor;
 
             On.Celeste.Solid.ctor -= SolidOnCtor;
-            
+
             // On.Celeste.TrailManager.Add_Vector2_Image_PlayerHair_Vector2_Color_int_float_bool_bool -=
-                // TrailManagerOnAdd_Vector2_Image_PlayerHair_Vector2_Color_int_float_bool_bool;
+            // TrailManagerOnAdd_Vector2_Image_PlayerHair_Vector2_Color_int_float_bool_bool;
+
+            On.Celeste.TalkComponent.TalkComponentUI.ctor -= TalkComponentUIOnCtor;
         }
     }
 
@@ -221,14 +234,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             if (parameters == null) return null;
             return TrailManager.Add(
                 (Vector2) parameters["position"],
-                (Image)parameters["sprite"],
-                (PlayerHair)parameters["hair"],
-                (Vector2)parameters["scale"],
-                (Color)parameters["color"],
-                (int)parameters["depth"],
-                (float)parameters["duration"],
-                (bool)parameters["frozenUpdate"],
-                (bool)parameters["useRawDeltaTime"]
+                (Image) parameters["sprite"],
+                (PlayerHair) parameters["hair"],
+                (Vector2) parameters["scale"],
+                (Color) parameters["color"],
+                (int) parameters["depth"],
+                (float) parameters["duration"],
+                (bool) parameters["frozenUpdate"],
+                (bool) parameters["useRawDeltaTime"]
             );
         }
     }

@@ -416,6 +416,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     destComponent = new Coroutine(sourceCoroutine.RemoveOnComplete);
                 } else if (sourceValue is Follower sourceFollower) {
                     destComponent = new Follower(sourceFollower.ParentEntityID);
+                } else if (sourceValue is TalkComponent sourceTalkComponent) {
+                    destComponent = new TalkComponent(sourceTalkComponent.Bounds, sourceTalkComponent.DrawAt, sourceTalkComponent.OnTalk, sourceTalkComponent.HoverUI);
                 }
 
                 if (destComponent == null) {

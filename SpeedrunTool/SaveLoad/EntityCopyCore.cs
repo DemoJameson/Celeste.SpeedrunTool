@@ -35,7 +35,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 throw new ArgumentException("destObj and sourceObj not the same type.");
             }
 
-            const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+            const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly;
 
             // 从给定的父类开始复制字段，直到 System.Object
             Type currentObjType = baseType;
@@ -320,8 +320,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 destValue = Engine.Scene.GetLevel();
             } else if (sourceValue is Session) {
                 destValue = Engine.Scene.GetSession();
-            } else if (sourceValue is EntityData) {
-                destValue = sourceValue;
             } else if (sourceValue is Entity entity) {
                 if (sourceValue is SolidTiles) {
                     destValue = Engine.Scene.GetLevel()?.SolidTiles;

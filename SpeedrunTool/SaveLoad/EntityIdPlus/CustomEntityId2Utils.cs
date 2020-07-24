@@ -270,7 +270,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         public static Actor CloneMoveBlockDebris(this Actor moveBlockDebris) {
             return CreateDebris.Invoke(Engine.Pooler, new object[] { }).InvokeMethod("Init",
                 moveBlockDebris.GetStartPosition(), moveBlockDebris.GetCenter(),
-                moveBlockDebris.GetField("home")) as Actor;
+                moveBlockDebris.GetField(moveBlockDebris.GetType(), "home")) as Actor;
         }
 
         public static Vector2 GetCenter(this Actor moveBlockDebris) {

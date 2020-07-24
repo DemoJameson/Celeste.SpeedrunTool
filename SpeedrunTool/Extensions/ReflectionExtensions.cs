@@ -6,8 +6,9 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
     public static class ReflectionExtensions {
-        private const BindingFlags instanceFlags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
-        
+        private const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance |
+                                                  BindingFlags.DeclaredOnly;
+
         private enum MemberType {
             Field,
             Property
@@ -16,13 +17,17 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         public static bool IsSimple(this Type type) {
             return type.IsPrimitive ||
                    type.IsValueType &&
-                   type.FullName != "Celeste.TriggerSpikes+SpikeInfo" && //SpikeInfo 里有 Entity 所以不能算做简单数据类型
+                   type.FullName != "Celeste.TriggerSpikes+SpikeInfo" && // SpikeInfo 里有 Entity 所以不能算做简单数据类型
                    type.FullName != "Celeste.Mod.Entities.TriggerSpikesOriginal+SpikeInfo" ||
                    type.IsEnum || type == typeof(string) ||
                    type == typeof(decimal) ||
                    type == typeof(object) ||
                    type.IsSameOrSubclassOf(typeof(Collider)) ||
-                   type == typeof(LevelData)
+                   type == typeof(MapData) ||
+                   type == typeof(AreaData) ||
+                   type == typeof(LevelData) ||
+                   type == typeof(EntityData) ||
+                   type == typeof(DecalData)
                 ;
         }
 
@@ -59,7 +64,6 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
         public static bool IsCompilerGenerated(this Type type) {
             return type.Name.StartsWith("<");
-            // return type.GetCustomAttribute<System.Runtime.CompilerServices.CompilerGeneratedAttribute>() != null;
         }
 
         public static bool IsProperty(this MemberInfo memberInfo) {
@@ -121,7 +125,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         private static MethodInfo GetMethodInfo(Type type, string name) {
             MethodInfo methodInfo = type.GetExtendedDataValue<MethodInfo>(name);
             if (methodInfo == null) {
-                methodInfo = type.GetMethod(name, instanceFlags);
+                methodInfo = type.GetMethod(name, bindingFlags);
                 if (methodInfo != null) {
                     type.SetExtendedDataValue(name, methodInfo);
                 }
@@ -133,7 +137,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         private static FieldInfo GetFieldInfo(Type type, string name) {
             FieldInfo fieldInfo = type.GetExtendedDataValue<FieldInfo>(name);
             if (fieldInfo == null) {
-                fieldInfo = type.GetField(name, instanceFlags);
+                fieldInfo = type.GetField(name, bindingFlags);
                 if (fieldInfo != null) {
                     type.SetExtendedDataValue(name, fieldInfo);
                 } else {
@@ -147,7 +151,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         private static PropertyInfo GetPropertyInfo(Type type, string name) {
             PropertyInfo perpertyInfo = type.GetExtendedDataValue<PropertyInfo>(name);
             if (perpertyInfo == null) {
-                perpertyInfo = type.GetProperty(name, instanceFlags);
+                perpertyInfo = type.GetProperty(name, bindingFlags);
                 if (perpertyInfo != null) {
                     type.SetExtendedDataValue(name, perpertyInfo);
                 } else {
@@ -164,8 +168,8 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             MemberGetter memberGetter = type.GetExtendedDataValue<MemberGetter>(key);
             if (memberGetter == null) {
                 memberGetter = memberType == MemberType.Field
-                    ? type.DelegateForGetFieldValue(name, instanceFlags)
-                    : type.DelegateForGetPropertyValue(name, instanceFlags);
+                    ? type.DelegateForGetFieldValue(name, bindingFlags)
+                    : type.DelegateForGetPropertyValue(name, bindingFlags);
                 type.SetExtendedDataValue(key, memberGetter);
             }
 
@@ -178,8 +182,8 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             MemberSetter memberSetter = type.GetExtendedDataValue<MemberSetter>(key);
             if (memberSetter == null) {
                 memberSetter = memberType == MemberType.Field
-                    ? type.DelegateForSetFieldValue(name, instanceFlags)
-                    : type.DelegateForSetPropertyValue(name, instanceFlags);
+                    ? type.DelegateForSetFieldValue(name, bindingFlags)
+                    : type.DelegateForSetPropertyValue(name, bindingFlags);
                 type.SetExtendedDataValue(key, memberSetter);
             }
 
@@ -195,7 +199,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static object GetField(this object obj, Type type, string name) {
-            return GetMemberGetter(type, name, MemberType.Field)?.Invoke(obj);
+            return GetMemberGetter(type, name, MemberType.Field)?.Invoke(obj.WrapIfValueType());
         }
 
         public static void SetField(this object obj, string name, object value) {
@@ -207,7 +211,11 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static void SetField(this object obj, Type type, string name, object value) {
-            GetMemberSetter(type, name, MemberType.Field)?.Invoke(obj, value);
+            if (obj.GetType().IsValueType) {
+                GetFieldInfo(type, name)?.SetValue(obj, value);
+            } else {
+                GetMemberSetter(type, name, MemberType.Field)?.Invoke(obj, value);
+            }
         }
 
         public static void CopyFields(this object obj, object fromObj, params string[] names) {
@@ -219,8 +227,9 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static void CopyFields(this object obj, Type type, object fromObj, params string[] names) {
-            foreach (string name in names)
+            foreach (string name in names) {
                 obj.SetField(type, name, fromObj.GetField(type, name));
+            }
         }
 
         public static object GetProperty(this object obj, string name) {
@@ -232,7 +241,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static object GetProperty(this object obj, Type type, string name) {
-            return GetMemberGetter(type, name, MemberType.Property)?.Invoke(obj);
+            return GetMemberGetter(type, name, MemberType.Property)?.Invoke(obj.WrapIfValueType());
         }
 
         public static void SetProperty(this object obj, string name, object value) {
@@ -244,7 +253,11 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static void SetProperty(this object obj, Type type, string name, object value) {
-            GetMemberSetter(type, name, MemberType.Property)?.Invoke(obj, value);
+            if (obj.GetType().IsValueType) {
+                GetPropertyInfo(type, name)?.GetSetMethod(true)?.Invoke(obj, new[] {value});
+            } else {
+                GetMemberSetter(type, name, MemberType.Property)?.Invoke(obj.WrapIfValueType(), value);
+            }
         }
 
         public static void CopyProperties(this object obj, object fromObj, params string[] names) {
@@ -274,7 +287,6 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
             MethodInvoker methodInvoker = type.GetExtendedDataValue<MethodInvoker>(key);
             if (methodInvoker == null) {
-                $"{type}; {name}".DebugLog();
                 methodInvoker = GetMethodInfo(type, name).DelegateForCallMethod();
                 type.SetExtendedDataValue(key, methodInvoker);
             }

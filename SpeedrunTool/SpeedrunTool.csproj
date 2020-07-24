@@ -38,6 +38,10 @@
       <HintPath>..\..\..\Celeste.exe</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Fasterflect.Netstandard, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\Fasterflect.Netstandard.1.0.9\lib\net45\Fasterflect.Netstandard.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="FNA">
       <HintPath>..\..\..\FNA.dll</HintPath>
       <Private>False</Private>

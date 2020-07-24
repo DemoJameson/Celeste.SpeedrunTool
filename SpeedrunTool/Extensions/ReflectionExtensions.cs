@@ -1,11 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Fasterflect;
 using Monocle;
-using MonoMod.Utils;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
-    public static class TypeExtensions {
+    public static class ReflectionExtensions {
+        private const BindingFlags instanceFlags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
+        
+        private enum MemberType {
+            Field,
+            Property
+        }
+
         public static bool IsSimple(this Type type) {
             return type.IsPrimitive ||
                    type.IsValueType &&
@@ -80,13 +87,11 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static bool IsSameOrSubclassOf(this Type potentialDescendant, Type potentialBase) {
-            return potentialDescendant.IsSubclassOf(potentialBase)
-                   || potentialDescendant == potentialBase;
+            return potentialDescendant.IsSubclassOf(potentialBase) || potentialDescendant == potentialBase;
         }
 
-        public static bool IsSameOrSuperclassOf(this Type potentialBase, Type potentialDescendant) {
-            return potentialDescendant.IsSubclassOf(potentialBase)
-                   || potentialBase == potentialDescendant;
+        public static bool IsSameOrBaseclassOf(this Type potentialBase, Type potentialDescendant) {
+            return potentialDescendant.IsSubclassOf(potentialBase) || potentialBase == potentialDescendant;
         }
 
         public static object ForceCreateInstance(this object obj, string tag = "") {
@@ -116,7 +121,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         private static MethodInfo GetMethodInfo(Type type, string name) {
             MethodInfo methodInfo = type.GetExtendedDataValue<MethodInfo>(name);
             if (methodInfo == null) {
-                methodInfo = type.GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                methodInfo = type.GetMethod(name, instanceFlags);
                 if (methodInfo != null) {
                     type.SetExtendedDataValue(name, methodInfo);
                 }
@@ -128,7 +133,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         private static FieldInfo GetFieldInfo(Type type, string name) {
             FieldInfo fieldInfo = type.GetExtendedDataValue<FieldInfo>(name);
             if (fieldInfo == null) {
-                fieldInfo = type.GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                fieldInfo = type.GetField(name, instanceFlags);
                 if (fieldInfo != null) {
                     type.SetExtendedDataValue(name, fieldInfo);
                 } else {
@@ -142,8 +147,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         private static PropertyInfo GetPropertyInfo(Type type, string name) {
             PropertyInfo perpertyInfo = type.GetExtendedDataValue<PropertyInfo>(name);
             if (perpertyInfo == null) {
-                perpertyInfo = type.GetProperty(name,
-                    BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                perpertyInfo = type.GetProperty(name, instanceFlags);
                 if (perpertyInfo != null) {
                     type.SetExtendedDataValue(name, perpertyInfo);
                 } else {
@@ -152,6 +156,34 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             }
 
             return perpertyInfo;
+        }
+
+        private static MemberGetter GetMemberGetter(Type type, string name, MemberType memberType) {
+            string key = $"MemberGetter_{name}";
+
+            MemberGetter memberGetter = type.GetExtendedDataValue<MemberGetter>(key);
+            if (memberGetter == null) {
+                memberGetter = memberType == MemberType.Field
+                    ? type.DelegateForGetFieldValue(name, instanceFlags)
+                    : type.DelegateForGetPropertyValue(name, instanceFlags);
+                type.SetExtendedDataValue(key, memberGetter);
+            }
+
+            return memberGetter;
+        }
+
+        private static MemberSetter GetMemberSetter(Type type, string name, MemberType memberType) {
+            string key = $"MemberSetter_{name}";
+
+            MemberSetter memberSetter = type.GetExtendedDataValue<MemberSetter>(key);
+            if (memberSetter == null) {
+                memberSetter = memberType == MemberType.Field
+                    ? type.DelegateForSetFieldValue(name, instanceFlags)
+                    : type.DelegateForSetPropertyValue(name, instanceFlags);
+                type.SetExtendedDataValue(key, memberSetter);
+            }
+
+            return memberSetter;
         }
 
         public static object GetField(this object obj, string name) {
@@ -163,8 +195,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static object GetField(this object obj, Type type, string name) {
-            FieldInfo fieldInfo = GetFieldInfo(type, name);
-            return fieldInfo?.GetValue(obj);
+            return GetMemberGetter(type, name, MemberType.Field)?.Invoke(obj);
         }
 
         public static void SetField(this object obj, string name, object value) {
@@ -176,8 +207,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static void SetField(this object obj, Type type, string name, object value) {
-            FieldInfo fieldInfo = GetFieldInfo(type, name);
-            fieldInfo?.SetValue(obj, value);
+            GetMemberSetter(type, name, MemberType.Field)?.Invoke(obj, value);
         }
 
         public static void CopyFields(this object obj, object fromObj, params string[] names) {
@@ -202,16 +232,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static object GetProperty(this object obj, Type type, string name) {
-            FastReflectionDelegate getterDelegate = type.GetExtendedDataValue<FastReflectionDelegate>("getter" + name);
-            if (getterDelegate == null) {
-                var method = GetPropertyInfo(type, name)?.GetGetMethod(true);
-                if (method == null) return null;
-
-                getterDelegate = method.GetFastDelegate();
-                type.SetExtendedDataValue("getter" + name, getterDelegate);
-            }
-
-            return getterDelegate(obj);
+            return GetMemberGetter(type, name, MemberType.Property)?.Invoke(obj);
         }
 
         public static void SetProperty(this object obj, string name, object value) {
@@ -223,16 +244,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static void SetProperty(this object obj, Type type, string name, object value) {
-            FastReflectionDelegate setterDelegate = type.GetExtendedDataValue<FastReflectionDelegate>("setter" + name);
-            if (setterDelegate == null) {
-                var method = GetPropertyInfo(type, name)?.GetSetMethod(true);
-                if (method == null) return;
-
-                setterDelegate = method.GetFastDelegate();
-                type.SetExtendedDataValue("setter" + name, setterDelegate);
-            }
-
-            setterDelegate(obj, value);
+            GetMemberSetter(type, name, MemberType.Property)?.Invoke(obj, value);
         }
 
         public static void CopyProperties(this object obj, object fromObj, params string[] names) {
@@ -258,7 +270,16 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static object InvokeMethod(this object obj, Type type, string name, params object[] parameters) {
-            return GetMethodInfo(type, name)?.GetFastDelegate().Invoke(obj, parameters);
+            string key = $"MethodInvoker_{name}";
+
+            MethodInvoker methodInvoker = type.GetExtendedDataValue<MethodInvoker>(key);
+            if (methodInvoker == null) {
+                $"{type}; {name}".DebugLog();
+                methodInvoker = GetMethodInfo(type, name).DelegateForCallMethod();
+                type.SetExtendedDataValue(key, methodInvoker);
+            }
+
+            return methodInvoker?.Invoke(obj, parameters);
         }
     }
 }

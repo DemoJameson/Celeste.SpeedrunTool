@@ -42,10 +42,22 @@
       <HintPath>..\..\..\FNA.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="GrEmit, Version=3.2.2.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\GrEmit.3.2.2\lib\net45\GrEmit.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="GroBuf, Version=1.5.5.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\GroBuf.1.5.5\lib\net45\GroBuf.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="MMHOOK_Celeste">
       <HintPath>..\..\..\MMHOOK_Celeste.dll</HintPath>
       <Private>False</Private>
+    </Reference>
+    <Reference Include="Mono.Reflection, Version=1.1.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756">
+      <HintPath>..\packages\Mono.Reflection.Core.1.1.1\lib\net45\Mono.Reflection.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Runtime.Serialization" />
@@ -133,6 +145,7 @@
     <None Include="everest.yaml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Dialog\English.txt">

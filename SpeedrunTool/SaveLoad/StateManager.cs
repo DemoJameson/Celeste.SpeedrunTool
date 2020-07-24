@@ -279,7 +279,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // restore all mod sessions
             foreach (EverestModule module in Everest.Modules) {
                 if (savedModSessions.TryGetValue(module, out EverestModuleSession savedModSession)) {
-                    module._Session = savedModSession.DeepCloneYaml<EverestModuleSession>(module.SessionType);
+                    module._Session = savedModSession.DeepCloneYaml(module.SessionType);
                 }
             }
         }

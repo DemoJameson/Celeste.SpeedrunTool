@@ -11,10 +11,14 @@ using MonoMod.RuntimeDetour;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
     public static class AttachEntityId2Utils {
+        private static readonly List<ILHook> ilHooks = new List<ILHook>();
+        private static ILHook origLoadLevelHook;
+        private static ILHook loadCustomEntityHook;
+        
         private static readonly HashSet<Type> ExcludeTypes = new HashSet<Type> {
             // Booster 红色气泡的虚线就是用 Entity 显示的，所以需要 EntityId2 来同步状态
             // typeof(Entity),
-            
+
             // 装饰
             typeof(Cobweb),
             typeof(Decal),
@@ -23,7 +27,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             typeof(ParticleSystem),
             typeof(Wire),
             typeof(WaterSurface),
-            
+
             // TalkComponent.UI 在保存后变为 null，导致 copyAll 之后出现两个对话图案
             typeof(TalkComponent.TalkComponentUI),
         };
@@ -31,9 +35,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         private static readonly HashSet<string> SpecialNestedPrivateTypes = new HashSet<string> {
             "Celeste.ForsakenCitySatellite+CodeBird",
         };
-
-        private static ILHook origLoadLevelHook;
-        private static ILHook loadCustomEntityHook;
 
         // 将 EntityData 与 EntityID 附加到 Entity 的实例上
         private static void ModOrigLoadLevel(ILContext il) {
@@ -47,7 +48,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
                          v.VariableType.Name == "EntityData")) {
                     // cursor.Previous.DebugLog();
                     cursor.Emit(OpCodes.Dup).Emit(OpCodes.Ldloc_S, results[0].Next.Operand);
-                    cursor.EmitDelegate<Action<Entity, EntityData>>(AttachEntityId);
+                    cursor.EmitDelegate<Action<Entity, EntityData>>(AttachEntityIdFromLoadLevel);
                 }
             }
         }
@@ -60,37 +61,38 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
                 i => i.OpCode == OpCodes.Newobj && i.Operand.ToString().Contains("::.ctor(Celeste.EntityData"))) {
                 // cursor.Previous.DebugLog();
                 cursor.Emit(OpCodes.Dup).Emit(OpCodes.Ldarg_0);
-                cursor.EmitDelegate<Action<Entity, EntityData>>(AttachEntityId);
+                cursor.EmitDelegate<Action<Entity, EntityData>>(AttachEntityIdFromLoadLevel);
             }
 
-            // TODO is possible to attach data to entity created by LoadEntity Event?
-            // if (Everest.Events.Level.LoadEntity(level, levelData, offset, entityData)) { return true; }
-
-            /*
-            if (EntityLoaders.TryGetValue(entityData.Name, out EntityLoader value)) {
-				Entity entity = value(level, levelData, offset, entityData);
-				if (entity != null) {
-				    // insert AttachEntityId(entity, entityData);
-					level.Add(entity);
-					return true;
-				}
-			}
-            */
             cursor.Goto(0);
             if (cursor.TryGotoNext(i =>
                 i.OpCode == OpCodes.Callvirt && i.Operand.ToString().Contains("EntityLoader::Invoke"))) {
                 if (cursor.TryGotoNext(i => i.MatchCallvirt<Scene>("Add"))) {
                     cursor.Emit(OpCodes.Dup).Emit(OpCodes.Ldarg_0);
-                    cursor.EmitDelegate<Action<Entity, EntityData>>(AttachEntityId);
+                    cursor.EmitDelegate<Action<Entity, EntityData>>(AttachEntityIdFromLoadLevel);
                 }
             }
+        }
+
+        private static void AttachEntityIdFromLoadLevel(Entity entity, EntityData data) {
+            if (entity.IsGlobalButExcludeSomeTypes()) return;
+            if (entity.NoEntityId2()) {
+                $"{entity} No EntityId2".DebugLog();
+                EntityId2 entityId2 = data.ToEntityId2(entity);
+                entity.SetEntityId2(entityId2);
+                entity.SetEntityData(data);
+            }
+
+            // $"AttachEntityId: {entityId2}".DebugLog();
         }
 
         private static void AttachEntityId(Entity entity, EntityData data) {
             if (entity.IsGlobalButExcludeSomeTypes()) return;
             EntityId2 entityId2 = data.ToEntityId2(entity);
+
             entity.SetEntityId2(entityId2);
             entity.SetEntityData(data);
+
             // $"AttachEntityId: {entityId2}".DebugLog();
         }
 
@@ -125,6 +127,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             loadCustomEntityHook = new ILHook(typeof(Level).GetMethod("LoadCustomEntity"), ModLoadCustomEntity);
             On.Monocle.Entity.Added += EntityOnAdded;
             CustomEntityId2Utils.OnLoad();
+            ILHookAllEntity();
         }
 
         public static void Unload() {
@@ -132,6 +135,34 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             loadCustomEntityHook.Dispose();
             On.Monocle.Entity.Added -= EntityOnAdded;
             CustomEntityId2Utils.OnUnload();
+            ilHooks.ForEach(hook => hook.Dispose());
+            ilHooks.Clear();
+        }
+
+        // ReSharper disable once InconsistentNaming
+        private static void ILHookAllEntity() {
+            MethodInfo methodInfo =
+                typeof(AttachEntityId2Utils).GetMethod("AttachEntityId", BindingFlags.Static | BindingFlags.NonPublic);
+            Func<Assembly[]> assemblies = AppDomain.CurrentDomain.GetAssemblies;
+            foreach (Assembly assembly in assemblies()) {
+                IEnumerable<Type> entityTypes = assembly.GetTypes().Where(type => type.IsSubclassOf(typeof(Entity)));
+                foreach (Type entityType in entityTypes) {
+                    foreach (ConstructorInfo constructorInfo in entityType.GetConstructors()) {
+                        List<Type> parameterTypes = constructorInfo.GetParameters().Select(info => info.ParameterType).ToList();
+                        if (parameterTypes.All(type => type != typeof(EntityData)))
+                            continue;
+
+                        $"{constructorInfo.DeclaringType} = {string.Join(";\t", parameterTypes)}"
+                            .DebugLog();
+                        ilHooks.Add(new ILHook(constructorInfo, il => {
+                            ILCursor ilCursor = new ILCursor(il);
+                            ilCursor.Emit(OpCodes.Ldarg_0);
+                            ilCursor.Emit(OpCodes.Ldarg_S, (byte) (parameterTypes.IndexOf(typeof(EntityData)) + 1));
+                            ilCursor.Emit(OpCodes.Call, methodInfo);
+                        }));
+                    }
+                }
+            }
         }
     }
 }

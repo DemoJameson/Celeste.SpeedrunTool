@@ -60,7 +60,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         }
 
         public static EntityId2 ToEntityId2(this EntityData entityData, Type type) {
-            return new EntityId2(new EntityID(entityData.Level.Name, entityData.ID), type);
+            return new EntityId2(new EntityID(entityData.Level?.Name ?? Engine.Scene.GetSession()?.Level ?? "null", entityData.ID), type);
         }
 
         public static EntityId2 ToEntityId2(this EntityData entityData, Entity entity) {

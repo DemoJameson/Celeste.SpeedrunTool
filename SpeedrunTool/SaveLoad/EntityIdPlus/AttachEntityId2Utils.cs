@@ -14,7 +14,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         private static readonly List<ILHook> ilHooks = new List<ILHook>();
         private static ILHook origLoadLevelHook;
         private static ILHook loadCustomEntityHook;
-        
+
         private static readonly HashSet<Type> ExcludeTypes = new HashSet<Type> {
             // Booster 红色气泡的虚线就是用 Entity 显示的，所以需要 EntityId2 来同步状态
             // typeof(Entity),
@@ -96,36 +96,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             // $"AttachEntityId: {entityId2}".DebugLog();
         }
 
-        // 处理其他没有 EntityData 的物体
-        private static void EntityOnAdded(On.Monocle.Entity.orig_Added orig, Entity self, Scene scene) {
-            orig(self, scene);
-
-            Type type = self.GetType();
-
-            if (!(scene is Level)) return;
-            if (self.IsGlobalButExcludeSomeTypes()) return;
-            if (self.HasEntityId2()) return;
-            if (ExcludeTypes.Contains(type)) return;
-            if (self.GetType().Assembly == Assembly.GetExecutingAssembly()) return;
-
-            string entityIdParam = self.Position.ToString();
-            if (type.IsNestedPrivate) {
-                if (!SpecialNestedPrivateTypes.Contains(type.FullName)) return;
-                entityIdParam = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                    .Where(info => info.FieldType.IsSimple() && info.DeclaringType.IsNestedPrivate).Aggregate(
-                        entityIdParam,
-                        (current, fieldInfo) => current + (fieldInfo.GetValue(self)?.ToString() ?? "null"));
-            }
-
-            EntityId2 entityId2 = self.CreateEntityId2(entityIdParam);
-            self.SetEntityId2(entityId2);
-            self.SetStartPosition(self.Position);
-        }
-
         public static void OnLoad() {
             origLoadLevelHook = new ILHook(typeof(Level).GetMethod("orig_LoadLevel"), ModOrigLoadLevel);
             loadCustomEntityHook = new ILHook(typeof(Level).GetMethod("LoadCustomEntity"), ModLoadCustomEntity);
-            On.Monocle.Entity.Added += EntityOnAdded;
+            // On.Monocle.Entity.Added += EntityOnAdded;
             CustomEntityId2Utils.OnLoad();
             ILHookAllEntity();
         }
@@ -133,36 +107,155 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         public static void Unload() {
             origLoadLevelHook.Dispose();
             loadCustomEntityHook.Dispose();
-            On.Monocle.Entity.Added -= EntityOnAdded;
+            // On.Monocle.Entity.Added -= EntityOnAdded;
             CustomEntityId2Utils.OnUnload();
             ilHooks.ForEach(hook => hook.Dispose());
             ilHooks.Clear();
         }
 
+        private const BindingFlags constructorFlags = BindingFlags.Instance | BindingFlags.Public |
+                                                      BindingFlags.NonPublic | BindingFlags.DeclaredOnly |
+                                                      BindingFlags.CreateInstance;
+
         // ReSharper disable once InconsistentNaming
         private static void ILHookAllEntity() {
-            MethodInfo methodInfo =
-                typeof(AttachEntityId2Utils).GetMethod("AttachEntityId", BindingFlags.Static | BindingFlags.NonPublic);
+            MethodInfo attachConstructorInfoMethodInfo = typeof(AttachEntityId2Utils).GetMethod("AttachConstructorInfo",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            MethodBase getCurrentMethodMethodBase =
+                typeof(MethodBase).GetMethod("GetCurrentMethod", BindingFlags.Static | BindingFlags.Public);
             Func<Assembly[]> assemblies = AppDomain.CurrentDomain.GetAssemblies;
             foreach (Assembly assembly in assemblies()) {
-                IEnumerable<Type> entityTypes = assembly.GetTypes().Where(type => type.IsSubclassOf(typeof(Entity)));
-                foreach (Type entityType in entityTypes) {
-                    foreach (ConstructorInfo constructorInfo in entityType.GetConstructors()) {
-                        List<Type> parameterTypes = constructorInfo.GetParameters().Select(info => info.ParameterType).ToList();
-                        if (parameterTypes.All(type => type != typeof(EntityData)))
-                            continue;
+                if (assembly == Assembly.GetExecutingAssembly()) continue;
 
-                        $"{constructorInfo.DeclaringType} = {string.Join(";\t", parameterTypes)}"
-                            .DebugLog();
+                IEnumerable<Type> entityTypes = assembly.GetTypes().Where(type =>
+                    type.IsSameOrSubclassOf(typeof(Entity)) && !type.IsAbstract && !type.IsGenericType);
+                foreach (Type entityType in entityTypes) {
+                    foreach (ConstructorInfo constructorInfo in entityType.GetConstructors(constructorFlags)) {
+                        Type[] argTypes = constructorInfo.GetParameters().Select(info => info.ParameterType).ToArray();
+
                         ilHooks.Add(new ILHook(constructorInfo, il => {
                             ILCursor ilCursor = new ILCursor(il);
+
+                            // entity
                             ilCursor.Emit(OpCodes.Ldarg_0);
-                            ilCursor.Emit(OpCodes.Ldarg_S, (byte) (parameterTypes.IndexOf(typeof(EntityData)) + 1));
-                            ilCursor.Emit(OpCodes.Call, methodInfo);
+
+                            // MethodBase.GetCurrentMethod()
+                            ilCursor.Emit(OpCodes.Call, getCurrentMethodMethodBase);
+
+                            // object[] parameters
+                            ilCursor.Emit(OpCodes.Ldc_I4, argTypes.Length);
+                            ilCursor.Emit(OpCodes.Newarr, typeof(object));
+
+                            for (int i = 0; i < argTypes.Length; i++) {
+                                Type argType = argTypes[i];
+                                if (argType.IsByRef) {
+                                    argType = argType.GetElementType();
+                                }
+
+                                ilCursor.Emit(OpCodes.Dup);
+                                ilCursor.Emit(OpCodes.Ldc_I4, i);
+                                ilCursor.Emit(OpCodes.Ldarg, i + 1);
+                                if (argType.IsValueType) {
+                                    ilCursor.Emit(OpCodes.Box, argType);
+                                }
+
+                                ilCursor.Emit(OpCodes.Stelem_Ref);
+                            }
+
+                            // AttachConstructorInfo(Entity entity, MethodBase rtDynamicMethod, params object[] parameters)
+                            ilCursor.Emit(OpCodes.Call, attachConstructorInfoMethodInfo);
                         }));
                     }
                 }
             }
+        }
+
+        // ReSharper disable once UnusedMember.Local
+        private static void AttachConstructorInfo(Entity entity, MethodBase rtDynamicMethod,
+            params object[] parameters) {
+            if (Engine.Scene.IsNotType<LevelLoader>() && Engine.Scene.IsNotType<Level>()) return;
+
+            // rtDynamicMethod.GetType() = DynamicMethod+RTDynamicMethod
+            ParameterInfo[] parameterInfos =
+                (ParameterInfo[]) rtDynamicMethod.InvokeMethod(rtDynamicMethod.GetType(), "LoadParameters");
+
+            // 只在目标类型目标构造函数上执行下面的操作，重载的构造函数或者父类的构造函数不管
+            if (entity.GetConstructorInfo() != null) return;
+
+            // skip[1] because the first type is returnType
+            Type[] parameterTypes = parameterInfos.Skip(1).Select(info => info.ParameterType).ToArray();
+
+            ConstructorInfo constructor = rtDynamicMethod.GetConstructorInfo();
+            if (constructor == null &&
+                parameterInfos[0].ParameterType.GetConstructor(constructorFlags, null, parameterTypes, null) is
+                    ConstructorInfo
+                    constructorInfo) {
+                constructor = constructorInfo;
+                rtDynamicMethod.SetConstructorInfo(constructorInfo);
+            }
+
+            // 应该不可能发生
+            if (constructor == null) return;
+
+            entity.SetConstructorInfo(constructor);
+            entity.SetParameters(parameters);
+
+            if (parameters.FirstOrDefault(o => o.IsType<EntityData>()) is EntityData entityData) {
+                entity.SetEntityData(entityData);
+                entity.SetEntityId2(entityData.ToEntityId(), false);
+            } else if (parameters.FirstOrDefault(o => o.IsType<EntityID>()) is EntityID entityId) {
+                entity.SetEntityId2(entityId, false);
+            } else {
+                entity.SetEntityId2(parameters, false);
+            }
+        }
+    }
+
+    public static class ConstructorInfoExtensions {
+        private const string ConstructorInfoKey = "ConstructorInfoKey";
+        private const string ParametersKey = "ParametersKey";
+
+        public static ConstructorInfo GetConstructorInfo(this MethodBase methodBase) {
+            return methodBase.GetExtendedDataValue<ConstructorInfo>(ConstructorInfoKey);
+        }
+
+        public static void SetConstructorInfo(this MethodBase methodBase, ConstructorInfo constructorInfo) {
+            methodBase.SetExtendedDataValue(ConstructorInfoKey, constructorInfo);
+        }
+
+        public static ConstructorInfo GetConstructorInfo(this Entity entity) {
+            return entity.GetExtendedDataValue<ConstructorInfo>(ConstructorInfoKey);
+        }
+
+        public static void SetConstructorInfo(this Entity entity, ConstructorInfo constructorInfo) {
+            entity.SetExtendedDataValue(ConstructorInfoKey, constructorInfo);
+        }
+
+        public static object[] GetParameters(this Entity entity) {
+            return entity.GetExtendedDataValue<object[]>(ParametersKey);
+        }
+
+        public static void SetParameters(this Entity entity, object[] parameters) {
+            entity.SetExtendedDataValue(ParametersKey, parameters);
+        }
+
+        public static Entity Recreate(this Entity entity) {
+            object[] parameters = entity.GetParameters();
+            if (parameters == null) return null;
+            
+            object[] parametersCopy = new object[parameters.Length];
+            for (var i = 0; i < parameters.Length; i++) {
+                object parameter = parameters[i];
+                if (parameter == null || parameter.GetType().IsSimple()) {
+                    parametersCopy[i] = parameter;
+                } else if (parameter.TryFindOrCloneObject() is object objCopy){
+                    parametersCopy[i] = objCopy;
+                } else {
+                    return null;
+                }
+            }
+            
+            return entity.GetConstructorInfo()?.Invoke(parameters) as Entity;
         }
     }
 }

@@ -75,7 +75,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static bool IsType<T>(this object obj) {
-            return obj.GetType() == typeof(T);
+            return obj?.GetType() == typeof(T);
         }
 
         public static bool IsType<T>(this Type type) {
@@ -108,11 +108,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 // 具有空参构造函数的类型可以创建
                 newObject = Activator.CreateInstance(type);
             } catch (Exception) {
-                // try {
-                //     newObject = FormatterServices.GetUninitializedObject(type);
-                // } catch (Exception) {
                 $"ForceCreateInstance Failed: {type} at {tag}".Log();
-                // }
             }
 
             if (newObject != null) {

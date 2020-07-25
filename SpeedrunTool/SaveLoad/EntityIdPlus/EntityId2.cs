@@ -10,23 +10,27 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
     // 官图中 Trigger 的 ID 与 Entity 的 ID 有很大几率重复
     public readonly struct EntityId2 {
         public static readonly EntityId2 PlayerFixedEntityId2 =
-            new EntityId2(new EntityID("You can do it. —— 《Celeste》", 20180125), typeof(Player));
+            new EntityId2("You can do it. —— 《Celeste》", "2018-01-25", typeof(Player));
 
 
-        public readonly EntityID EntityId;
+        public readonly string RoomName;
+        public readonly string SID;
         public readonly Type Type;
 
-        public EntityId2(EntityID entityId, Type type) {
-            EntityId = entityId;
+        public EntityId2(string roomName, string sid, Type type) {
+            RoomName = roomName ?? Engine.Scene.GetSession()?.Level ?? "";
+            SID = sid ?? "";
             Type = type;
 
             if (!type.IsSameOrSubclassOf(typeof(Entity))) {
                 throw new ArgumentException("type must be Entity");
             }
         }
+        
+        public EntityId2(EntityID entityId, Type type): this(entityId.Level, entityId.ID.ToString(), type) {}
 
         public override bool Equals(object obj) {
-            return obj is EntityId2 id && id.EntityId.Equals(EntityId) && id.Type == Type;
+            return obj is EntityId2 entityId2 && entityId2.RoomName == RoomName && entityId2.SID == SID && entityId2.Type == Type;
         }
 
         public override int GetHashCode() {
@@ -34,7 +38,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         }
 
         public override string ToString() {
-            return $"EntityId2: Type={Type.FullName} Level={EntityId.Level} ID={EntityId.ID}";
+            return $"EntityId2: Type={Type.FullName} RoomName={RoomName} SID={SID}";
         }
 
         public static bool operator ==(EntityId2 value1, EntityId2 value2) {
@@ -52,32 +56,48 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         private const string EntityStartPositionKey = "SpeedrunTool_Entity_StartPosition_Key";
 
         public static EntityId2 ToEntityId2(this EntityID entityId, Type type) {
-            return new EntityId2(entityId, type);
-        }
-
-        public static EntityId2 ToEntityId2(this EntityID entityId, Entity entity) {
-            return entityId.ToEntityId2(entity.GetType());
+            return new EntityId2(entityId.Level, entityId.ID.ToString(), type);
         }
 
         public static EntityId2 ToEntityId2(this EntityData entityData, Type type) {
-            return new EntityId2(new EntityID(entityData.Level?.Name ?? Engine.Scene.GetSession()?.Level ?? "null", entityData.ID), type);
+            return new EntityId2(entityData.ToEntityId(), type);
         }
 
         public static EntityId2 ToEntityId2(this EntityData entityData, Entity entity) {
             return entityData.ToEntityId2(entity.GetType());
         }
 
+        public static EntityID ToEntityId(this EntityData entityData) {
+            return new EntityID(entityData.Level?.Name ?? Engine.Scene.GetSession()?.Level ?? "", entityData.ID);
+        }
+
         public static EntityId2 GetEntityId2(this Entity entity) {
             return entity.GetExtendedDataValue<EntityId2>(EntityId2Key);
         }
 
-        public static void SetEntityId2(this Entity entity, EntityId2 entityId2) {
-            entity.SetExtendedDataValue(EntityId2Key, entityId2);
+        public static void SetEntityId2(this Entity entity, EntityId2 entityId2, bool @override = true) {
+            if (@override || entity.NoEntityId2()) {
+                entity.SetExtendedDataValue(EntityId2Key, entityId2);
+            }
+        }
+        public static void SetEntityId2(this Entity entity, IEnumerable<object> id, bool @override = true) {
+            List<string> sid = id.Select(obj => {
+                if (obj is Entity e && e.HasEntityId2()) {
+                    return e.GetEntityId2().ToString();
+                }
+
+                return obj?.ToString() ?? "null";
+            }).ToList();
+            entity.SetEntityId2(null, string.Join(", ", sid), @override);
         }
 
-        public static void SetEntityId2(this Entity entity, EntityID entityId) {
-            entity.SetEntityId2(entityId.ToEntityId2(entity.GetType()));
+        public static void SetEntityId2(this Entity entity, EntityID entityId, bool @override = true) {
+            entity.SetEntityId2(entityId.ToEntityId2(entity.GetType()), @override);
         }
+        
+        public static void SetEntityId2(this Entity entity, string roomName, string sid, bool @override = true) {
+            entity.SetEntityId2(new EntityId2(roomName, sid, entity.GetType()), @override);
+        } 
 
         public static void CopyEntityId2(this Entity entity, Entity otherEntity) {
             if (otherEntity.HasEntityId2()) {
@@ -106,26 +126,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         public static bool NoEntityId2(this Entity entity) {
             return !entity.HasEntityId2();
         }
-
-        public static EntityId2 CreateEntityId2(this Entity entity, params object[] id) {
-            Level level = null;
-            if (Engine.Scene is Level scene) {
-                level = scene;
-            } else if (Engine.Scene is LevelLoader levelLoader) {
-                level = levelLoader.Level;
-            }
-
-            if (level?.Session?.Level != null) {
-                return new EntityID(level.Session.Level, string.Join("-", id).GetHashCode()).ToEntityId2(entity);
-            }
-
-            return default;
-        }
-
-        public static void TrySetEntityId2(this Entity entity, params object[] id) {
-            EntityId2 entityId = entity.CreateEntityId2(id);
-            if (entityId == default) return;
-            entity.SetEntityId2(entityId);
+        
+        public static bool IsSidEmpty(this Entity entity) {
+            return entity.NoEntityId2() || string.IsNullOrEmpty(entity.GetEntityId2().SID);
         }
 
         public static Vector2 GetStartPosition(this Entity entity) {
@@ -150,14 +153,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             if (entity == null) {
                 $"Can't find entity in scene: {entityId2}".DebugLog();
             }
-            
+
             return entity;
         }
 
-        public static Dictionary<EntityId2, T> FindAllToDict<T>(this EntityList entityList, out List<T> duplicateIdList) where T : Entity {
+        public static Dictionary<EntityId2, T> FindAllToDict<T>(this EntityList entityList, out List<T> duplicateIdList)
+            where T : Entity {
             Dictionary<EntityId2, T> result = new Dictionary<EntityId2, T>();
             duplicateIdList = new List<T>();
-            
+
             List<T> findAll = entityList.FindAll<T>();
             foreach (T entity in findAll) {
                 if (entity.IsGlobalButExcludeSomeTypes()) continue;
@@ -176,10 +180,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             return result;
         }
 
-        public static Dictionary<EntityId2, T> FindAllToDict<T>(this Scene scene, out List<T> duplicateIdList) where T : Entity {
+        public static Dictionary<EntityId2, T> FindAllToDict<T>(this Scene scene, out List<T> duplicateIdList)
+            where T : Entity {
             return FindAllToDict(scene.Entities, out duplicateIdList);
         }
-        
+
         public static Dictionary<EntityId2, T> FindAllToDict<T>(this Scene scene) where T : Entity {
             return FindAllToDict(scene.Entities, out List<T> _);
         }

@@ -16,21 +16,21 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
                 index = level.Entities.Count(entity => entity is FinalBossShot);
             }
 
-            self.TrySetEntityId2(boss.HasEntityId2() ? boss.GetEntityId2().ToString() : "null", target, index);
+            self.SetEntityId2(new object[]{boss.HasEntityId2() ? boss.GetEntityId2().ToString() : "null", target, index});
             return orig(self, boss, target);
         }
 
         private static FinalBossShot FinalBossShotOnInit_FinalBoss_Player_float(
             On.Celeste.FinalBossShot.orig_Init_FinalBoss_Player_float orig, FinalBossShot self, FinalBoss boss,
             Player target, float angleOffset) {
-            self.TrySetEntityId2(boss.HasEntityId2() ? boss.GetEntityId2().ToString() : "null", target.GetEntityId2(),
-                angleOffset);
+            self.SetEntityId2(new object[]{boss.HasEntityId2() ? boss.GetEntityId2().ToString() : "null", target.GetEntityId2(),
+                angleOffset});
             return orig(self, boss, target, angleOffset);
         }
 
         private static FinalBossBeam FinalBossBeamOnInit(On.Celeste.FinalBossBeam.orig_Init orig, FinalBossBeam self,
             FinalBoss boss, Player target) {
-            self.TrySetEntityId2(boss.HasEntityId2() ? boss.GetEntityId2().ToString() : "null", target.GetEntityId2());
+            self.SetEntityId2(new object[]{boss.HasEntityId2() ? boss.GetEntityId2().ToString() : "null", target.GetEntityId2()});
             self.SetPlayerPosition(target);
             return orig(self, boss, target);
         }
@@ -38,7 +38,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         private static SoundEmitter
             SoundEmitterOnPlay_string(On.Celeste.SoundEmitter.orig_Play_string orig, string sfx) {
             SoundEmitter soundEmitter = orig(sfx);
-            soundEmitter.TrySetEntityId2(sfx);
+            soundEmitter.SetEntityId2(new object[]{sfx});
             return soundEmitter;
         }
 
@@ -46,13 +46,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             On.Celeste.SoundEmitter.orig_Play_string_Entity_Nullable1 orig, string sfx, Entity follow,
             Vector2? offset) {
             SoundEmitter soundEmitter = orig(sfx, follow, offset);
-            soundEmitter.TrySetEntityId2(sfx);
+            soundEmitter.SetEntityId2(new object[]{sfx});
             return soundEmitter;
         }
 
         private static SlashFx SlashFxOnBurst(On.Celeste.SlashFx.orig_Burst orig, Vector2 position, float direction) {
             SlashFx slashFx = orig(position, direction);
-            slashFx.TrySetEntityId2(position, direction);
+            slashFx.SetEntityId2(new object[]{position, direction});
             slashFx.SetStartPosition(position);
             slashFx.SetDirection(direction);
             return slashFx;
@@ -61,7 +61,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         private static SpeedRing SpeedRingOnInit(On.Celeste.SpeedRing.orig_Init orig, SpeedRing self, Vector2 position,
             float angle, Color color) {
             SpeedRing speedRing = orig(self, position, angle, color);
-            speedRing.TrySetEntityId2(position, angle, color);
+            speedRing.SetEntityId2(new object[]{position, angle, color});
             speedRing.SetStartPosition(position);
             speedRing.SetAngle(angle);
             speedRing.SetColor(color);
@@ -71,7 +71,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
 
         private static void BirdTutorialGuiOnCtor(On.Celeste.BirdTutorialGui.orig_ctor orig, BirdTutorialGui self,
             Entity entity, Vector2 position, object info, object[] controls) {
-            self.TrySetEntityId2(entity, position, info, string.Join("-", controls));
+            self.SetEntityId2(new object[]{entity, position, info, string.Join("-", controls)});
             self.SetStartPosition(position);
             self.SetControls(controls);
             orig(self, entity, position, info, controls);
@@ -88,7 +88,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         private static Actor DebrisOnInit(On.Celeste.MoveBlock.Debris.orig_Init orig, Actor self, Vector2 position,
             Vector2 center, Vector2 returnTo) {
             Actor debris = orig(self, position, center, returnTo);
-            debris.TrySetEntityId2(position, center, returnTo);
+            debris.SetEntityId2(new object[]{position, center, returnTo});
             debris.SetCenter(center);
             return debris;
         }
@@ -96,28 +96,28 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         private static Debris DebrisOnInit_Vector2_char_bool(On.Celeste.Debris.orig_Init_Vector2_char_bool orig,
             Debris self, Vector2 pos, char tileset, bool playSound) {
             orig(self, pos, tileset, playSound);
-            self.TrySetEntityId2(pos, tileset, playSound);
+            self.SetEntityId2(new object[]{pos, tileset, playSound});
             return self;
         }
 
         private static Debris DebrisOnInit_Vector2_char(On.Celeste.Debris.orig_Init_Vector2_char orig, Debris self,
             Vector2 pos, char tileset) {
             orig(self, pos, tileset);
-            self.TrySetEntityId2(pos, tileset, true);
+            self.SetEntityId2(new object[]{pos, tileset, true});
             return self;
         }
 
         private static void StrawberryPointsOnCtor(On.Celeste.StrawberryPoints.orig_ctor orig, StrawberryPoints self,
             Vector2 position, bool ghostBerry, int index, bool moonBerry) {
             orig(self, position, ghostBerry, index, moonBerry);
-            self.TrySetEntityId2(position, ghostBerry, index, moonBerry);
+            self.SetEntityId2(new object[]{position, ghostBerry, index, moonBerry});
             self.SetStartPosition(position);
         }
 
         private static void SolidOnCtor(On.Celeste.Solid.orig_ctor orig, Solid self, Vector2 position, float width,
             float height, bool safe) {
             orig(self, position, width, height, safe);
-            self.TrySetEntityId2(position, width, height, safe);
+            self.SetEntityId2(new object[]{position, width, height, safe});
             self.SaveWidth(width);
             self.SaveHeight(height);
         }
@@ -131,66 +131,78 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
                 useRawDeltaTime);
             snapshot.SetParameters(position, sprite, hair, scale, color, depth, duration, frozenUpdate,
                 useRawDeltaTime);
-            snapshot.TrySetEntityId2(position, sprite, hair, scale, color, depth, duration, frozenUpdate,
-                useRawDeltaTime);
+            snapshot.SetEntityId2(new object[]{position, sprite, hair, scale, color, depth, duration, frozenUpdate,
+                useRawDeltaTime});
             return snapshot;
         }
 
+        private static void ReflectionTentaclesOnCreate(On.Celeste.ReflectionTentacles.orig_Create orig, ReflectionTentacles self, float feardistance, int slideuntilindex, int layer, List<Vector2> startnodes) {
+            if (self.IsSidEmpty()) {
+                self.SetEntityId2(new object[] {
+                    self, feardistance, slideuntilindex, layer, startnodes
+                });
+            }
+            orig(self, feardistance, slideuntilindex, layer, startnodes);
+        }
+
         public static void OnLoad() {
-            On.Celeste.FinalBossShot.Init_FinalBoss_Vector2 += FinalBossShotOnInit_FinalBoss_Vector2;
-            On.Celeste.FinalBossShot.Init_FinalBoss_Player_float += FinalBossShotOnInit_FinalBoss_Player_float;
-
-            On.Celeste.FinalBossBeam.Init += FinalBossBeamOnInit;
-
-            On.Celeste.SoundEmitter.Play_string += SoundEmitterOnPlay_string;
-            On.Celeste.SoundEmitter.Play_string_Entity_Nullable1 += SoundEmitterOnPlay_string_Entity_Nullable1;
-
-            On.Celeste.SlashFx.Burst += SlashFxOnBurst;
-
-            On.Celeste.SpeedRing.Init += SpeedRingOnInit;
-
-            On.Celeste.BirdTutorialGui.ctor += BirdTutorialGuiOnCtor;
-
-            On.Celeste.Seeker.ctor_EntityData_Vector2 += SeekerOnCtor_EntityData_Vector2;
-
-            On.Celeste.MoveBlock.Debris.Init += DebrisOnInit;
-
-            On.Celeste.Debris.Init_Vector2_char += DebrisOnInit_Vector2_char;
-            On.Celeste.Debris.Init_Vector2_char_bool += DebrisOnInit_Vector2_char_bool;
-
-            On.Celeste.StrawberryPoints.ctor += StrawberryPointsOnCtor;
-
-            On.Celeste.Solid.ctor += SolidOnCtor;
+            On.Celeste.ReflectionTentacles.Create += ReflectionTentaclesOnCreate;
+            // On.Celeste.FinalBossShot.Init_FinalBoss_Vector2 += FinalBossShotOnInit_FinalBoss_Vector2;
+            // On.Celeste.FinalBossShot.Init_FinalBoss_Player_float += FinalBossShotOnInit_FinalBoss_Player_float;
+            //
+            // On.Celeste.FinalBossBeam.Init += FinalBossBeamOnInit;
+            //
+            // On.Celeste.SoundEmitter.Play_string += SoundEmitterOnPlay_string;
+            // On.Celeste.SoundEmitter.Play_string_Entity_Nullable1 += SoundEmitterOnPlay_string_Entity_Nullable1;
+            //
+            // On.Celeste.SlashFx.Burst += SlashFxOnBurst;
+            //
+            // On.Celeste.SpeedRing.Init += SpeedRingOnInit;
+            //
+            // On.Celeste.BirdTutorialGui.ctor += BirdTutorialGuiOnCtor;
+            //
+            // On.Celeste.Seeker.ctor_EntityData_Vector2 += SeekerOnCtor_EntityData_Vector2;
+            //
+            // On.Celeste.MoveBlock.Debris.Init += DebrisOnInit;
+            //
+            // On.Celeste.Debris.Init_Vector2_char += DebrisOnInit_Vector2_char;
+            // On.Celeste.Debris.Init_Vector2_char_bool += DebrisOnInit_Vector2_char_bool;
+            //
+            // On.Celeste.StrawberryPoints.ctor += StrawberryPointsOnCtor;
+            //
+            // On.Celeste.Solid.ctor += SolidOnCtor;
 
             // On.Celeste.TrailManager.Add_Vector2_Image_PlayerHair_Vector2_Color_int_float_bool_bool +=
             // TrailManagerOnAdd_Vector2_Image_PlayerHair_Vector2_Color_int_float_bool_bool;
         }
 
         public static void OnUnload() {
-            On.Celeste.FinalBossShot.Init_FinalBoss_Vector2 -= FinalBossShotOnInit_FinalBoss_Vector2;
-            On.Celeste.FinalBossShot.Init_FinalBoss_Player_float -= FinalBossShotOnInit_FinalBoss_Player_float;
-
-            On.Celeste.FinalBossBeam.Init -= FinalBossBeamOnInit;
-
-            On.Celeste.SoundEmitter.Play_string -= SoundEmitterOnPlay_string;
-            On.Celeste.SoundEmitter.Play_string_Entity_Nullable1 -= SoundEmitterOnPlay_string_Entity_Nullable1;
-
-            On.Celeste.SlashFx.Burst -= SlashFxOnBurst;
-
-            On.Celeste.SpeedRing.Init -= SpeedRingOnInit;
-
-            On.Celeste.BirdTutorialGui.ctor -= BirdTutorialGuiOnCtor;
-
-            On.Celeste.Seeker.ctor_EntityData_Vector2 -= SeekerOnCtor_EntityData_Vector2;
-
-            On.Celeste.MoveBlock.Debris.Init -= DebrisOnInit;
-
-            On.Celeste.Debris.Init_Vector2_char -= DebrisOnInit_Vector2_char;
-            On.Celeste.Debris.Init_Vector2_char_bool -= DebrisOnInit_Vector2_char_bool;
-
-            On.Celeste.StrawberryPoints.ctor -= StrawberryPointsOnCtor;
-
-            On.Celeste.Solid.ctor -= SolidOnCtor;
+            On.Celeste.ReflectionTentacles.Create -= ReflectionTentaclesOnCreate;
+            
+            // On.Celeste.FinalBossShot.Init_FinalBoss_Vector2 -= FinalBossShotOnInit_FinalBoss_Vector2;
+            // On.Celeste.FinalBossShot.Init_FinalBoss_Player_float -= FinalBossShotOnInit_FinalBoss_Player_float;
+            //
+            // On.Celeste.FinalBossBeam.Init -= FinalBossBeamOnInit;
+            //
+            // On.Celeste.SoundEmitter.Play_string -= SoundEmitterOnPlay_string;
+            // On.Celeste.SoundEmitter.Play_string_Entity_Nullable1 -= SoundEmitterOnPlay_string_Entity_Nullable1;
+            //
+            // On.Celeste.SlashFx.Burst -= SlashFxOnBurst;
+            //
+            // On.Celeste.SpeedRing.Init -= SpeedRingOnInit;
+            //
+            // On.Celeste.BirdTutorialGui.ctor -= BirdTutorialGuiOnCtor;
+            //
+            // On.Celeste.Seeker.ctor_EntityData_Vector2 -= SeekerOnCtor_EntityData_Vector2;
+            //
+            // On.Celeste.MoveBlock.Debris.Init -= DebrisOnInit;
+            //
+            // On.Celeste.Debris.Init_Vector2_char -= DebrisOnInit_Vector2_char;
+            // On.Celeste.Debris.Init_Vector2_char_bool -= DebrisOnInit_Vector2_char_bool;
+            //
+            // On.Celeste.StrawberryPoints.ctor -= StrawberryPointsOnCtor;
+            //
+            // On.Celeste.Solid.ctor -= SolidOnCtor;
 
             // On.Celeste.TrailManager.Add_Vector2_Image_PlayerHair_Vector2_Color_int_float_bool_bool -=
             // TrailManagerOnAdd_Vector2_Image_PlayerHair_Vector2_Color_int_float_bool_bool;

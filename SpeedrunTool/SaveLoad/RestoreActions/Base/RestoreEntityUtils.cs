@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Microsoft.Xna.Framework;
@@ -95,46 +96,57 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
         }
         
         public static Entity CreateEntityCopy(Entity savedEntity, string tag = "RecreateNotLoadedEntities") {
-            Entity loadedEntity = null;
-            Type savedType = savedEntity.GetType();
+            Entity loadedEntity = savedEntity.Recreate();;
             
+            if (loadedEntity != null) {
+                loadedEntity.Position = savedEntity.Position;
+                
+                if (loadedEntity.GetType().GetCustomAttribute<Pooled>() != null) {
+                    loadedEntity.CopyAllFrom(savedEntity);
+                }
+            }
+            return loadedEntity;
+            
+            Type savedType = savedEntity.GetType();
             if (savedEntity.GetEntityData() != null) {
-                // 一般 Entity 都是 EntityData + Vector2
-                loadedEntity = (savedType.GetConstructor(new[] {typeof(EntityData), typeof(Vector2)})
-                    ?.Invoke(new object[] {savedEntity.GetEntityData(), Vector2.Zero})) as Entity;
+                // // 一般 Entity 都是 EntityData + Vector2
+                // loadedEntity = (savedType.GetConstructor(new[] {typeof(EntityData), typeof(Vector2)})
+                //     ?.Invoke(new object[] {savedEntity.GetEntityData(), Vector2.Zero})) as Entity;
+                //
+                // if (loadedEntity == null) {
+                //     // 部分例如草莓则是 EntityData + Vector2 + EntityID
+                //     loadedEntity = savedType
+                //         .GetConstructor(new[] {typeof(EntityData), typeof(Vector2), typeof(EntityID)})
+                //         ?.Invoke(new object[] {
+                //             savedEntity.GetEntityData(), Vector2.Zero, savedEntity.GetEntityId2().EntityId
+                //         }) as Entity;
+                // }
 
-                if (loadedEntity == null) {
-                    // 部分例如草莓则是 EntityData + Vector2 + EntityID
-                    loadedEntity = savedType
-                        .GetConstructor(new[] {typeof(EntityData), typeof(Vector2), typeof(EntityID)})
-                        ?.Invoke(new object[] {
-                            savedEntity.GetEntityData(), Vector2.Zero, savedEntity.GetEntityId2().EntityId
-                        }) as Entity;
-                }
-
-                if (loadedEntity == null && savedType.IsType<CrystalStaticSpinner>()) {
-                    loadedEntity = new CrystalStaticSpinner(savedEntity.GetEntityData(), Vector2.Zero,
-                        (CrystalColor) savedEntity.GetField(typeof(CrystalStaticSpinner), "color"));
-                }
-
-                if (loadedEntity == null && savedType.IsType<TriggerSpikes>()) {
-                    loadedEntity = new TriggerSpikes(savedEntity.GetEntityData(), Vector2.Zero,
-                        (TriggerSpikes.Directions) savedEntity.GetField(typeof(TriggerSpikes), "direction"));
-                }
+                // if (loadedEntity == null && savedType.IsType<CrystalStaticSpinner>()) {
+                //     loadedEntity = new CrystalStaticSpinner(savedEntity.GetEntityData(), Vector2.Zero,
+                //         (CrystalColor) savedEntity.GetField(typeof(CrystalStaticSpinner), "color"));
+                // }
+                //
+                // if (loadedEntity == null && savedType.IsType<TriggerSpikes>()) {
+                //     loadedEntity = new TriggerSpikes(savedEntity.GetEntityData(), Vector2.Zero,
+                //         (TriggerSpikes.Directions) savedEntity.GetField(typeof(TriggerSpikes), "direction"));
+                // }
+                //
+                // if (loadedEntity == null && savedType.IsType<Spikes>()) {
+                //     loadedEntity = new Spikes(savedEntity.GetEntityData(), Vector2.Zero,
+                //         ((Spikes)savedEntity).Direction);
+                // }
+                //
+                // if (loadedEntity == null && savedType.IsType<TriggerSpikes>()) {
+                //     loadedEntity = new Spring(savedEntity.GetEntityData(), Vector2.Zero, ((Spring)savedEntity).Orientation);
+                // }
                 
-                if (loadedEntity == null && savedType.IsType<Spikes>()) {
-                    loadedEntity = new Spikes(savedEntity.GetEntityData(), Vector2.Zero,
-                        ((Spikes)savedEntity).Direction);
-                }
-                
-                if (loadedEntity == null && savedType.IsType<TriggerSpikes>()) {
-                    loadedEntity = new Spring(savedEntity.GetEntityData(), Vector2.Zero, ((Spring)savedEntity).Orientation);
-                }
+                loadedEntity = savedEntity.Recreate();
 
                 if (loadedEntity != null) {
                     loadedEntity.Position = savedEntity.Position;
-                    loadedEntity.CopyEntityData(savedEntity);
-                    loadedEntity.CopyEntityId2(savedEntity);
+                    // loadedEntity.CopyEntityData(savedEntity);
+                    // loadedEntity.CopyEntityId2(savedEntity);
                     return loadedEntity;
                 }
             }

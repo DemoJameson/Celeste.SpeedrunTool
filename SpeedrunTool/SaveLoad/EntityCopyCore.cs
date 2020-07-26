@@ -12,7 +12,7 @@ using Monocle;
 using EventInstance = FMOD.Studio.EventInstance;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
-    public static class EntityCopyCore {
+    internal static class EntityCopyCore {
         private static readonly HashSet<object> CopyingObjects = new HashSet<object>();
         private static readonly Dictionary<object, object> CreatedObjectsDict = new Dictionary<object, object>();
 
@@ -49,26 +49,19 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             CopyingObjects.Add(destObj);
             while (currentObjType.IsSubclassOf(typeof(object))) {
                 // 必须先设置属性再设置字段，不然字段的值会在设置属性后发生改变
-                PropertyInfo[] properties = currentObjType.GetProperties(bindingFlags);
-                FieldInfo[] fields = currentObjType.GetFields(bindingFlags);
-                HashSet<string> fieldNameSet = new HashSet<string>(fields.Select(info => info.Name));
+                PropertyInfo[] properties = currentObjType.GetPropertyInfos(bindingFlags);
+                FieldInfo[] fields = currentObjType.GetFieldInfos(bindingFlags);
 
                 foreach (PropertyInfo propertyInfo in properties) {
                     // 只处理能读取+写入的属性
                     if (!propertyInfo.CanRead || !propertyInfo.CanWrite) continue;
 
                     Type memberType = propertyInfo.PropertyType;
-
-                    if (!memberType.IsSimple() && onlySimpleType) continue;
-
-                    // 存在对应的 BackingField 则略过，在下面的 FieldInfo 里处理
-                    if (fieldNameSet.Contains($"<{propertyInfo.Name}>k__BackingField")) {
-                        continue;
-                    }
-
                     string memberName = propertyInfo.Name;
                     object destValue = destObj.GetProperty(currentObjType, memberName);
                     object sourceValue = sourceObj.GetProperty(currentObjType, memberName);
+                    
+                    if (!memberType.IsSimple() && onlySimpleType) continue;
 
                     CopyMember(currentObjType, memberType, memberName, destObj, destValue,
                         sourceValue, SetProperty);
@@ -76,12 +69,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                 foreach (FieldInfo fieldInfo in fields) {
                     Type memberType = fieldInfo.FieldType;
-
-                    if (!memberType.IsSimple() && onlySimpleType) continue;
-
                     string memberName = fieldInfo.Name;
                     object destValue = destObj.GetField(currentObjType, memberName);
                     object sourceValue = sourceObj.GetField(currentObjType, memberName);
+                    
+                    if (!memberType.IsSimple() && onlySimpleType) continue;
 
                     CopyMember(currentObjType, memberType, memberName, destObj, destValue, sourceValue,
                         SetField);
@@ -113,8 +105,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (sourceValue == null) {
                 // sourceValue Component.Entity 为空代表 sourceObj 已经被 remove 了
                 if (currentObjType == typeof(Component) && destValue != null && memberType == typeof(Entity) &&
-                    destObj is Component removedComponent) {
-                    removedComponent.RemoveSelf();
+                    destObj is Component destComponent) {
+                    destComponent.RemoveSelf();
                     return;
                 }
 

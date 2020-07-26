@@ -28,16 +28,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
     }
 
     public static class BurstExtensions {
-        private const string BurstRadiusFromKey = "BurstRadiusFromKey";
-        private const string BurstRadiusToKey = "BurstRadiusToKey";
-        private const string BurstAlphaKey = "BurstAlphaKey";
-        private const string BurstStartPositionKey = "BurstStartPositionKey";
+        private const string BurstRadiusFromKey = "BurstRadiusFrom-Key";
+        private const string BurstRadiusToKey = "BurstRadiusTo-Key";
+        private const string BurstAlphaKey = "BurstAlpha-Key";
+        private const string BurstStartPositionKey = "BurstStartPosition-Key";
 
         public static DisplacementRenderer.Burst Clone(this DisplacementRenderer.Burst burst) {
             return Engine.Scene.GetLevel()?.Displacement.AddBurst(burst.GetStartPosition(), burst.Duration,
                 burst.GetExtendedFloat(BurstRadiusFromKey), burst.GetExtendedFloat(BurstRadiusToKey),
                 burst.GetExtendedFloat(BurstAlphaKey),
-                burst.AlphaEaser, null);
+                burst.AlphaEaser);
         }
 
         public static void SetRadiusFrom(this DisplacementRenderer.Burst burst, float radiusFrom) {

@@ -18,7 +18,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
         }
     }
 
-    public static class ComponentExtensions {
+    internal static class ComponentExtensions {
         private delegate bool IsSame(Component component, Component otherComponent);
 
         private static readonly Dictionary<Type, IsSame> FindableComponentTypes = new Dictionary<Type, IsSame> {

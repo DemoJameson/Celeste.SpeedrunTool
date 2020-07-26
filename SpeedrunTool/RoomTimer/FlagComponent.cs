@@ -4,7 +4,6 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.RoomTimer {
     public class FlagComponent : Component {
-//        private static readonly PropertyInfo WidthPropertyInfo = typeof(MTexture).GetProperty("Width");
         private readonly bool flagStyle;
         private readonly MTexture baseActive;
         private readonly MTexture baseEmpty;

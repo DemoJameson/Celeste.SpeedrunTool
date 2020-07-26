@@ -1,7 +1,7 @@
 ﻿using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
-    public static class CelesteExtensions {
+    internal static class CelesteExtensions {
         public static Level GetLevel(this Scene scene) {
             if (scene is Level level) {
                 return level;

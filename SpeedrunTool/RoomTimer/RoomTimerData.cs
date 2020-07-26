@@ -33,11 +33,6 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 return;
             }
 
-            if (!hasRespawned) {
-                hasRespawned = Engine.Scene.GetPlayer()?.StateMachine.State != Player.StIntroRespawn;
-                return;
-            }
-
             if (pbTimeKey == "") {
                 pbTimeKey = session.Area + session.Level;
                 string closestFlag = session.Flags.Where(flagName => flagName.StartsWith(RoomTimerManager.FlagPrefix))
@@ -47,6 +42,11 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                     }).FirstOrDefault();
                 pbTimeKey += closestFlag;
                 pbTimeKey += numberOfRooms;
+            }
+            
+            if (!hasRespawned) {
+                hasRespawned = Engine.Scene.GetPlayer()?.StateMachine.State != Player.StIntroRespawn;
+                return;
             }
 
             Time += TimeSpan.FromSeconds(Engine.RawDeltaTime).Ticks;

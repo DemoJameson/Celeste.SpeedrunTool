@@ -2,7 +2,7 @@ using System;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
-    public static class LoggerExtensions {
+    internal static class LoggerExtensions {
         private const string Tag = "SpeedrunTool";
 
         public static void Log(this object message, LogLevel logLevel = LogLevel.Warn) {

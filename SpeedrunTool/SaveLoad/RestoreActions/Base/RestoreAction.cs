@@ -8,7 +8,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
             // Entity
             new EntityRestoreAction(),
             new PlayerRestoreAction(),
-            new KeyRestoreAction(),
             new TriggerSpikesRestoreAction(),
             
             // Component
@@ -19,8 +18,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
             new EventInstanceRestoreAction(),
             new BurstRestoreAction(),
         };
-
-        protected static bool IsLoadStart => StateManager.Instance.IsLoadStart;
 
         public readonly Type EntityType;
 

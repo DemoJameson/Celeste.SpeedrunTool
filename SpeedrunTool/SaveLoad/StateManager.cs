@@ -143,7 +143,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                         // sync for tas
                         for (int i = 0; i < 5; i++) {
-                            player.Components.InvokeMethod("Update");
+                            (player.GetField("respawnTween") as Tween)?.Update();
                         }
                     } else {
                         loadState = SaveLoad.LoadState.PlayerRespawned;
@@ -331,7 +331,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 // Don't call player.update, it will trigger playerCollider
                 // 不要使用 player.update 会触发其他 Entity 的 playerCollider
                 // 例如保存时与 Spring 过近，恢复时会被弹起。
-                player.Components.InvokeMethod("Update");
+                (player.GetField("respawnTween") as Tween)?.Update();
 
                 level.Background.Update(level);
                 level.Foreground.Update(level);

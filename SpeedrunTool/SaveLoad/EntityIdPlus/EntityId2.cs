@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Celeste.Mod.SpeedrunTool.Extensions;
-using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
@@ -18,7 +18,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         public readonly Type Type;
 
         public EntityId2(string roomName, string sid, Type type) {
-            RoomName = roomName ?? Engine.Scene.GetSession()?.Level ?? "";
+            RoomName = roomName ?? "";
             SID = sid ?? "";
             Type = type;
 
@@ -50,10 +50,20 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         }
     }
 
-    public static class EntityId2Extension {
-        private const string EntityId2Key = "SpeedrunTool_EntityId2_Key";
-        private const string EntityDataKey = "SpeedrunTool_EntityData_Key";
-        private const string EntityStartPositionKey = "SpeedrunTool_Entity_StartPosition_Key";
+    internal static class EntityId2Extension {
+        private static readonly HashSet<Type> ExcludeTypes = new HashSet<Type> {
+            // 装饰
+            typeof(Decal),
+            typeof(ParticleSystem),
+            typeof(WaterSurface),
+            
+            // 对话
+            typeof(MiniTextbox),
+        };
+        
+        private const string EntityId2Key = "SpeedrunTool-EntityId2-Key";
+        private const string EntityDataKey = "SpeedrunTool-EntityData-Key";
+        private const string EntityStartPositionKey = "SpeedrunTool-Entity-StartPosition-Key";
 
         public static EntityId2 ToEntityId2(this EntityID entityId, Type type) {
             return new EntityId2(entityId.Level, entityId.ID.ToString(), type);
@@ -68,7 +78,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         }
 
         public static EntityID ToEntityId(this EntityData entityData) {
-            return new EntityID(entityData.Level?.Name ?? Engine.Scene.GetSession()?.Level ?? "", entityData.ID);
+            return new EntityID(entityData.Level?.Name, entityData.ID);
         }
 
         public static EntityId2 GetEntityId2(this Entity entity) {
@@ -76,6 +86,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         }
 
         public static void SetEntityId2(this Entity entity, EntityId2 entityId2, bool @override = true) {
+            Type type = entity.GetType();
+            if(ExcludeTypes.Contains(type)) return;
+            if (type.Assembly == Assembly.GetExecutingAssembly()) return;
+            
             if (@override || entity.NoEntityId2()) {
                 entity.SetExtendedDataValue(EntityId2Key, entityId2);
             }
@@ -85,18 +99,21 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
                 if (obj is Entity e && e.HasEntityId2()) {
                     return e.GetEntityId2().ToString();
                 }
+                if (obj is Component component && component.Entity.HasEntityId2()) {
+                    return component.Entity.GetEntityId2().ToString();
+                }
 
                 return obj?.ToString() ?? "null";
             }).ToList();
-            entity.SetEntityId2(null, string.Join(", ", sid), @override);
+            entity.SetEntityId2(string.Join(", ", sid), @override);
         }
 
         public static void SetEntityId2(this Entity entity, EntityID entityId, bool @override = true) {
             entity.SetEntityId2(entityId.ToEntityId2(entity.GetType()), @override);
         }
         
-        public static void SetEntityId2(this Entity entity, string roomName, string sid, bool @override = true) {
-            entity.SetEntityId2(new EntityId2(roomName, sid, entity.GetType()), @override);
+        public static void SetEntityId2(this Entity entity, string sid, bool @override = true) {
+            entity.SetEntityId2(new EntityId2(Engine.Scene.GetSession()?.Level, sid, entity.GetType()), @override);
         } 
 
         public static void CopyEntityId2(this Entity entity, Entity otherEntity) {
@@ -131,30 +148,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             return entity.NoEntityId2() || string.IsNullOrEmpty(entity.GetEntityId2().SID);
         }
 
-        public static Vector2 GetStartPosition(this Entity entity) {
-            return entity.GetExtendedDataValue<Vector2>(EntityStartPositionKey);
-        }
-
-        public static void SetStartPosition(this Entity entity, Vector2 startPosition) {
-            entity.SetExtendedDataValue(EntityStartPositionKey, startPosition);
-        }
-
-        public static void CopyStartPosition(this Entity entity, Entity otherEntity) {
-            if (otherEntity.GetStartPosition() != default) {
-                entity.SetStartPosition(otherEntity.GetStartPosition());
-            }
-        }
-
         public static Entity FindFirst(this Scene scene, EntityId2? entityId2) {
             if (entityId2 == null) return null;
             if (entityId2 == default(EntityId2)) return null;
-            Entity entity = scene.Entities.FirstOrDefault(e => e.GetEntityId2() == entityId2);
-
-            if (entity == null) {
-                $"Can't find entity in scene: {entityId2}".DebugLog();
-            }
-
-            return entity;
+            return scene.Entities.FirstOrDefault(e => e.GetEntityId2() == entityId2);
         }
 
         public static Dictionary<EntityId2, T> FindAllToDict<T>(this EntityList entityList, out List<T> duplicateIdList)

@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
     // source from: https://stackoverflow.com/a/17264480
-    public static class ExtendedDataExtensions {
+    internal static class ExtendedDataExtensions {
         private static readonly ConditionalWeakTable<object, object> ExtendedData =
             new ConditionalWeakTable<object, object>();
 

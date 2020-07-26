@@ -38,8 +38,8 @@
       <HintPath>..\..\..\Celeste.exe</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Fasterflect.Netstandard, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\packages\Fasterflect.Netstandard.1.0.9\lib\net45\Fasterflect.Netstandard.dll</HintPath>
+    <Reference Include="Fasterflect.Reflect, Version=3.1.0.0, Culture=neutral, PublicKeyToken=a1fa75de836f6938">
+      <HintPath>..\packages\Fasterflect.Reflect.3.1.0\lib\net45\Fasterflect.Reflect.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="FNA">
@@ -54,7 +54,6 @@
       <HintPath>..\packages\GroBuf.1.5.5\lib\net45\GroBuf.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.CSharp" />
     <Reference Include="MMHOOK_Celeste">
       <HintPath>..\..\..\MMHOOK_Celeste.dll</HintPath>
       <Private>False</Private>
@@ -125,7 +124,6 @@
     <Compile Include="SaveLoad\RestoreActions\Base\RestoreEntityUtils.cs" />
     <Compile Include="SaveLoad\RestoreActions\BurstRestoreAction.cs" />
     <Compile Include="SaveLoad\RestoreActions\EventInstanceRestoreAction.cs" />
-    <Compile Include="SaveLoad\RestoreActions\KeyRestoreAction.cs" />
     <Compile Include="SaveLoad\RestoreActions\PlayerRestoreAction.cs" />
     <Compile Include="SaveLoad\RestoreActions\EntityRestoreAction.cs" />
     <Compile Include="SaveLoad\RestoreActions\ComponentRestoreAction.cs" />

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
-using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
@@ -19,7 +18,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
         public static void Unload() {
             RestoreAction.All.ForEach(restoreAction => restoreAction.OnUnhook());
         }
-        
+
         public static void OnSaveState(Level level) {
             RestoreAction.All.ForEach(restoreAction => restoreAction.OnSaveState(level));
         }
@@ -55,9 +54,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
 
             RemoveNotSavedEntities(notSavedEntities);
 
-            foreach (KeyValuePair<EntityId2, Entity> pair in loadedEntitiesDict.Where(loaded => SavedEntitiesDict.ContainsKey(loaded.Key))) {
+            foreach (KeyValuePair<EntityId2, Entity> pair in loadedEntitiesDict.Where(loaded =>
+                SavedEntitiesDict.ContainsKey(loaded.Key))) {
                 RestoreAction.All.ForEach(restoreAction => {
-                    if (restoreAction.EntityType != null && pair.Value.GetType().IsSameOrSubclassOf(restoreAction.EntityType)) {
+                    if (restoreAction.EntityType != null &&
+                        pair.Value.GetType().IsSameOrSubclassOf(restoreAction.EntityType)) {
                         restoreAction.AfterEntityAwake(pair.Value, SavedEntitiesDict[pair.Key],
                             SavedDuplicateIdList);
                     }
@@ -68,142 +69,61 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
         public static void AfterPlayerRespawn(Level level) {
             Dictionary<EntityId2, Entity> loadedEntitiesDict = level.FindAllToDict<Entity>();
 
-            foreach (KeyValuePair<EntityId2, Entity> pair in loadedEntitiesDict.Where(loaded => SavedEntitiesDict.ContainsKey(loaded.Key))) {
+            foreach (KeyValuePair<EntityId2, Entity> pair in loadedEntitiesDict.Where(loaded =>
+                SavedEntitiesDict.ContainsKey(loaded.Key))) {
                 RestoreAction.All.ForEach(restoreAction => {
-                    if (restoreAction.EntityType != null && pair.Value.GetType().IsSameOrSubclassOf(restoreAction.EntityType)) {
+                    if (restoreAction.EntityType != null &&
+                        pair.Value.GetType().IsSameOrSubclassOf(restoreAction.EntityType)) {
                         restoreAction.AfterPlayerRespawn(pair.Value, SavedEntitiesDict[pair.Key]);
                     }
                 });
             }
         }
-        
+
         // 用于处理保存了当是没有被重新创建的物体，一般是手动创建新的实例然后添加到 Level 中。
         // 例如草莓，红泡泡，Theo，水母等跨房间的物体就需要处理，也就是附加了 Tags.Persistent 的物体。
         // 还有一些是游戏过程中代码创建出来没有 EntityData 的，但是也需要处理，例如 BadelinDummy 和 SlashFx
         private static void RecreateNotLoadedEntities(Level level, Dictionary<EntityId2, Entity> savedEntities) {
             foreach (var pair in savedEntities) {
                 Entity savedEntity = pair.Value;
-                if (CreateEntityCopy(savedEntity) is Entity entity) {
+                Type entityType = savedEntity.GetType();
+                
+                // Entity 与 CrystalStaticSpinner+Border 实在是太多了，重新创建影响性能
+                if (entityType != typeof(Entity) 
+                    && !entityType.IsNestedPrivate
+                    && CreateEntityCopy(savedEntity) is Entity entity) {
                     // 创建添加到 Level 后还要 update 三次才会开始还原
                     // 这时如果不停止 update 有可能出现异常
                     // 用于修复：ch6 boss-00 撞击 boss 一次后等待 boss 发子弹再保存游戏会崩溃
                     entity.Active = false;
                     level.Add(entity);
-                    
-                    $"Recreate not loaded entity: {savedEntity}".DebugLog();
                 }
             }
         }
-        
-        public static Entity CreateEntityCopy(Entity savedEntity, string tag = "RecreateNotLoadedEntities") {
-            Entity loadedEntity = savedEntity.Recreate();;
-            
-            if (loadedEntity != null) {
-                loadedEntity.Position = savedEntity.Position;
-                
-                if (loadedEntity.GetType().GetCustomAttribute<Pooled>() != null) {
-                    loadedEntity.CopyAllFrom(savedEntity);
-                }
-            }
-            return loadedEntity;
-            
-            Type savedType = savedEntity.GetType();
-            if (savedEntity.GetEntityData() != null) {
-                // // 一般 Entity 都是 EntityData + Vector2
-                // loadedEntity = (savedType.GetConstructor(new[] {typeof(EntityData), typeof(Vector2)})
-                //     ?.Invoke(new object[] {savedEntity.GetEntityData(), Vector2.Zero})) as Entity;
-                //
-                // if (loadedEntity == null) {
-                //     // 部分例如草莓则是 EntityData + Vector2 + EntityID
-                //     loadedEntity = savedType
-                //         .GetConstructor(new[] {typeof(EntityData), typeof(Vector2), typeof(EntityID)})
-                //         ?.Invoke(new object[] {
-                //             savedEntity.GetEntityData(), Vector2.Zero, savedEntity.GetEntityId2().EntityId
-                //         }) as Entity;
-                // }
 
-                // if (loadedEntity == null && savedType.IsType<CrystalStaticSpinner>()) {
-                //     loadedEntity = new CrystalStaticSpinner(savedEntity.GetEntityData(), Vector2.Zero,
-                //         (CrystalColor) savedEntity.GetField(typeof(CrystalStaticSpinner), "color"));
-                // }
-                //
-                // if (loadedEntity == null && savedType.IsType<TriggerSpikes>()) {
-                //     loadedEntity = new TriggerSpikes(savedEntity.GetEntityData(), Vector2.Zero,
-                //         (TriggerSpikes.Directions) savedEntity.GetField(typeof(TriggerSpikes), "direction"));
-                // }
-                //
-                // if (loadedEntity == null && savedType.IsType<Spikes>()) {
-                //     loadedEntity = new Spikes(savedEntity.GetEntityData(), Vector2.Zero,
-                //         ((Spikes)savedEntity).Direction);
-                // }
-                //
-                // if (loadedEntity == null && savedType.IsType<TriggerSpikes>()) {
-                //     loadedEntity = new Spring(savedEntity.GetEntityData(), Vector2.Zero, ((Spring)savedEntity).Orientation);
-                // }
-                
-                loadedEntity = savedEntity.Recreate();
+        public static Entity CreateEntityCopy(Entity savedEntity, string tag = "Recreate not loaded entity") {
+            Entity loadedEntity = savedEntity.Recreate();
 
-                if (loadedEntity != null) {
-                    loadedEntity.Position = savedEntity.Position;
-                    // loadedEntity.CopyEntityData(savedEntity);
-                    // loadedEntity.CopyEntityId2(savedEntity);
-                    return loadedEntity;
-                }
+            if (loadedEntity == null) {
+                $"{tag} failed: {(savedEntity.HasEntityId2() ? savedEntity.GetEntityId2().ToString() : savedEntity.ToString())}"
+                    .Log();
+                return null;
             }
 
-            // TODO 如果是他们的子类该怎么办……
-            if (savedType.IsType<Key>() && savedEntity is Key savedKey && Engine.Scene.GetPlayer() is Player player) {
-                loadedEntity =
-                    new Key(player.Position + new Vector2(-12 * (int) player.Facing, -8f), savedKey.ID, null) {
-                        Collidable = false, Depth = Depths.Top
-                    };
-            } else if (savedType.IsType<BadelineDummy>()) {
-                loadedEntity = new BadelineDummy(savedEntity.GetStartPosition());
-            } else if (savedType.IsType<AngryOshiro>()) {
-                loadedEntity = new AngryOshiro(savedEntity.GetStartPosition(),
-                    (bool) savedEntity.GetField(savedType, "fromCutscene"));
-            } else if (savedType.IsType<Snowball>()) {
-                loadedEntity = new Snowball();
-            } else if (savedType.IsType<SlashFx>() && savedEntity is SlashFx slashFx) {
-                loadedEntity = slashFx.Clone();
-            } else if (savedType.IsType<Solid>() && savedEntity is Solid solid) {
-                loadedEntity = solid.Clone();
-            } else if (savedType.IsType<SpeedRing>() && savedEntity is SpeedRing speedRing) {
-                loadedEntity = speedRing.Clone();
-            // } else if (savedType.IsType<TrailManager.Snapshot>() && savedEntity is TrailManager.Snapshot snapshot) {
-                // loadedEntity = snapshot.Clone();
-            } else if (savedType.IsType<StrawberryPoints>() && savedEntity is StrawberryPoints points) {
-                loadedEntity = points.Clone();
-            } else if (savedType.IsType<FinalBossShot>() && savedEntity is FinalBossShot finalBossShot) {
-                loadedEntity = finalBossShot.Clone();
-                loadedEntity.Active = false;
-            } else if (savedType.IsType<FinalBossBeam>() && savedEntity is FinalBossBeam finalBossBeam) {
-                loadedEntity = finalBossBeam.Clone();
-            } else if (savedType.IsType<BirdTutorialGui>() && savedEntity is BirdTutorialGui birdTutorialGui) {
-                loadedEntity = birdTutorialGui.Clone();
-            } else if (savedType.IsType<SoundEmitter>() && savedEntity is SoundEmitter soundEmitter) {
-                loadedEntity = SoundEmitter.Play(soundEmitter.Source.EventName, new Entity(soundEmitter.Position));
-                (loadedEntity as SoundEmitter)?.Source.Stop();
-            } else if (savedType.IsType<Debris>() && savedEntity is Debris debris) {
-                loadedEntity = Engine.Pooler.Create<Debris>()
-                    .Init(debris.GetStartPosition(), (char) debris.GetField("tileset"),
-                        (bool) debris.GetField("playSound"));
-            } else if (savedType.IsType<Entity>()) {
-                loadedEntity = new Entity(savedEntity.GetStartPosition());
-            } else {
-                if (savedEntity.GetType().FullName == "Celeste.MoveBlock+Debris") {
-                    loadedEntity = (savedEntity as Actor).CloneMoveBlockDebris();
-                } else if (savedEntity.ForceCreateInstance(tag) is Entity newEntity) {
-                    loadedEntity = newEntity;
-                }
+            $"{tag} succeed: {(savedEntity.HasEntityId2() ? savedEntity.GetEntityId2().ToString() : savedEntity.ToString())}"
+                .DebugLog();
+
+            // Pooled 的 Entity 一般都是空构造函数，需要 Init 方法初始化，这里直接用 CopyAll 代替
+            if (loadedEntity.GetType().GetCustomAttribute<Pooled>() != null) {
+                loadedEntity.CopyAllFrom(savedEntity);
             }
 
-            if (loadedEntity == null) return null;
-            
+            if (loadedEntity is SoundEmitter soundEmitter) {
+                soundEmitter.Source.Stop();
+            }
+
             loadedEntity.Position = savedEntity.Position;
             loadedEntity.CopyEntityId2(savedEntity);
-            loadedEntity.CopyStartPosition(savedEntity);
-
             return loadedEntity;
         }
 
@@ -212,7 +132,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
             foreach (var pair in notSavedEntities) {
                 if (pair.Value.IsGlobalButExcludeSomeTypes()) return;
                 pair.Value.RemoveSelf();
-                $"Remove not saved entity: {pair.Value}".DebugLog();
+                $"Remove not saved entity: {pair.Value.GetEntityId2()}".DebugLog();
             }
         }
     }

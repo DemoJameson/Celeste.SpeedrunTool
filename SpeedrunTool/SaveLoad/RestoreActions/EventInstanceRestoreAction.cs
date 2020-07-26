@@ -33,7 +33,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
     }
 
 
-    public static class EventInstanceExtensions {
+    internal static class EventInstanceExtensions {
         private const string EventInstancePathKey = "EventInstancePathKey";
         private const string EventInstanceParametersKey = "EventInstanceParametersKey";
 

@@ -25,7 +25,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
         }
     }
 
-    public static class SoundSourceExtensions {
+    internal static class SoundSourceExtensions {
         private const string SoundSourcePlayingKey = "SoundSourcePlayingKey";
         private const string SoundSourceTimelinePositionKey = "SoundSourceTimelinePositionKey";
 

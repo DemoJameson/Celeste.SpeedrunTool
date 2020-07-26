@@ -97,7 +97,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             if (Engine.Scene.IsNotType<LevelLoader>() && Engine.Scene.IsNotType<Level>()) return;
 
             // methodBase.GetType() = DynamicMethod+RTDynamicMethod || System.Reflection.MonoMethod
-            ParameterInfo[] parameterInfos = methodBase.GetParameters();;
+            ParameterInfo[] parameterInfos = methodBase.GetParameters();
 
             // 只在目标类型目标构造函数上执行下面的操作，重载的构造函数或者父类的构造函数不管
             if (entity.GetConstructorInvoker() != null) return;

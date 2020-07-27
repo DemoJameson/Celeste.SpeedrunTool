@@ -16,7 +16,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             Player saved = (Player) savedEntity;
 
             // 只恢复简单字段，其他等到复活完恢复
-            loaded.CopyAllFrom(saved, true);
+            CopyCore.DeepCopyMembers(loaded, saved, true);
 
             // 不恢复速度，原地等待复活
             loaded.Speed = Vector2.Zero;
@@ -53,7 +53,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             Player loaded = (Player) loadedEntity;
             Player saved = (Player) savedEntity;
 
-            loaded.CopyAllFrom(saved);
+            CopyCore.DeepCopyMembers(loaded, saved);
         }
 
         public override void OnLoadStart(Level level) {

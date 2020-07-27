@@ -86,7 +86,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             foreach (T loadedComponent in loadedComponents) {
                 if (savedComponents.FirstOrDefault(component => loadedComponent.IsSameAs(component)) is Component
                     savedComponent) {
-                    loadedComponent.TryCopyObject(savedComponent);
+                    CopyCore.TryDeepCopyMembers(loadedComponent, savedComponent);
                 }
             }
 

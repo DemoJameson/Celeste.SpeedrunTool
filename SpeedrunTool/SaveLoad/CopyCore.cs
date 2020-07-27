@@ -12,7 +12,7 @@ using Monocle;
 using EventInstance = FMOD.Studio.EventInstance;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
-    internal static class EntityCopyCore {
+    internal static class CopyCore {
         private static readonly HashSet<object> CopyingObjects = new HashSet<object>();
         private static readonly Dictionary<object, object> CreatedObjectsDict = new Dictionary<object, object>();
 
@@ -21,24 +21,25 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             CreatedObjectsDict.Clear();
         }
 
-        public static void CopyAllFrom<T>(this object destObj, object sourceObj, bool onlySimpleType = false) {
-            CopyAllFrom(destObj, typeof(T), sourceObj, onlySimpleType);
+        public static void DeepCopyMembers<T>(object destObj, object sourceObj, bool onlySimpleType = false) {
+            DeepCopyMembers(destObj, typeof(T), sourceObj, onlySimpleType);
         }
 
-        public static void CopyAllFrom(this object destObj, object sourceObj, bool onlySimpleType = false) {
-            CopyAllFrom(destObj, destObj.GetType(), sourceObj, onlySimpleType);
+        public static void DeepCopyMembers(object destObj, object sourceObj, bool onlySimpleType = false) {
+            DeepCopyMembers(destObj, destObj.GetType(), sourceObj, onlySimpleType);
         }
 
-        private static void CopyAllFrom(this object destObj, Type baseType, object sourceObj,
+        private static void DeepCopyMembers(object destObj, Type type, object sourceObj,
             bool onlySimpleType = false) {
             if (destObj.GetType() != sourceObj.GetType()) {
                 throw new ArgumentException("destObj and sourceObj not the same type.");
             }
 
-            const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly;
+            if (destObj.GetType() == typeof(object) || type == typeof(object)) return;
 
-            // 从给定的父类开始复制字段，直到 System.Object
-            Type currentObjType = baseType;
+            const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance |
+                                              BindingFlags.DeclaredOnly;
+
 
             if (CopyingObjects.Contains(destObj)) {
                 // StackOverflow Exception is watching you.
@@ -47,10 +48,20 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             CopyingObjects.Add(destObj);
-            while (currentObjType.IsSubclassOf(typeof(object))) {
+
+            List<Type> types = new List<Type>();
+            while (type.IsSubclassOf(typeof(object))) {
+                types.Add(type);
+                type = type.BaseType;
+            }
+
+            // 复制顺序改为从父类再到子类，这样就算属性是 override 自父类的也不要紧
+            types.Reverse();
+
+            foreach (Type declaringType in types) {
                 // 必须先设置属性再设置字段，不然字段的值会在设置属性后发生改变
-                PropertyInfo[] properties = currentObjType.GetPropertyInfos(bindingFlags);
-                FieldInfo[] fields = currentObjType.GetFieldInfos(bindingFlags);
+                PropertyInfo[] properties = declaringType.GetPropertyInfos(bindingFlags);
+                FieldInfo[] fields = declaringType.GetFieldInfos(bindingFlags);
 
                 foreach (PropertyInfo propertyInfo in properties) {
                     // 只处理能读取+写入的属性
@@ -58,28 +69,26 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                     Type memberType = propertyInfo.PropertyType;
                     string memberName = propertyInfo.Name;
-                    object destValue = destObj.GetProperty(currentObjType, memberName);
-                    object sourceValue = sourceObj.GetProperty(currentObjType, memberName);
-                    
+                    object destValue = destObj.GetProperty(declaringType, memberName);
+                    object sourceValue = sourceObj.GetProperty(declaringType, memberName);
+
                     if (!memberType.IsSimple() && onlySimpleType) continue;
 
-                    CopyMember(currentObjType, memberType, memberName, destObj, destValue,
+                    CopyMember(declaringType, memberType, memberName, destObj, destValue,
                         sourceValue, SetProperty);
                 }
 
                 foreach (FieldInfo fieldInfo in fields) {
                     Type memberType = fieldInfo.FieldType;
                     string memberName = fieldInfo.Name;
-                    object destValue = destObj.GetField(currentObjType, memberName);
-                    object sourceValue = sourceObj.GetField(currentObjType, memberName);
-                    
+                    object destValue = destObj.GetField(declaringType, memberName);
+                    object sourceValue = sourceObj.GetField(declaringType, memberName);
+
                     if (!memberType.IsSimple() && onlySimpleType) continue;
 
-                    CopyMember(currentObjType, memberType, memberName, destObj, destValue, sourceValue,
+                    CopyMember(declaringType, memberType, memberName, destObj, destValue, sourceValue,
                         SetField);
                 }
-
-                currentObjType = currentObjType.BaseType;
             }
 
             CopyingObjects.Remove(destObj);
@@ -137,7 +146,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         if (elementType.IsSimple()) {
                             destArray.SetValue(sourceArray.GetValue(i), i);
                         } else if (destArray.GetValue(i) != null && sourceArray.GetValue(i) != null) {
-                            TryCopyObject(destArray.GetValue(i), sourceArray.GetValue(i));
+                            TryDeepCopyMembers(destArray.GetValue(i), sourceArray.GetValue(i));
                         }
                     }
                 }
@@ -189,7 +198,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             } else {
                 // 复杂类型
                 if (destValue != null) {
-                    TryCopyObject(destValue, sourceValue);
+                    TryDeepCopyMembers(destValue, sourceValue);
                 } else {
                     // 为空则根据情况创建新实例或者查找当前场景的实例S
                     destValue = TryFindOrCloneObject(sourceValue);
@@ -222,7 +231,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 // 列表里是复杂类型
                 if (destList.Count == sourceList.Count) {
                     for (int i = 0; i < destList.Count; i++) {
-                        TryCopyObject(destList[i], sourceList[i]);
+                        TryDeepCopyMembers(destList[i], sourceList[i]);
                     }
                 } else {
                     // 数量不一致时
@@ -239,25 +248,25 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             return destValue;
         }
 
-        public static void TryCopyObject(this object destValue, object sourceValue) {
+        public static void TryDeepCopyMembers(object destValue, object sourceValue) {
             if (sourceValue.IsCompilerGenerated()) {
-                destValue.CopyAllFrom(sourceValue);
+                DeepCopyMembers(destValue, sourceValue);
             } else if (sourceValue is Component) {
                 if (sourceValue is StateMachine // only copy some fields later
                     || sourceValue is DustGraphic // sometimes game crash after savestate
                     || sourceValue is VertexLight // switch between room will make light disappear
                     || sourceValue is TalkComponent // TalkComponent.UI 在保存后变为 null 导致重复创建出现两个对话图案
                 ) {
-                    destValue.CopyAllFrom<Component>(sourceValue);
+                    DeepCopyMembers<Component>(destValue, sourceValue);
                 } else {
-                    destValue.CopyAllFrom(sourceValue);
+                    DeepCopyMembers(destValue, sourceValue);
                 }
 
                 switch (destValue) {
                     case StateMachine destMachine when sourceValue is StateMachine sourceMachine:
                         object destCoroutine = destMachine.GetField("currentCoroutine");
                         object sourceCoroutine = sourceMachine.GetField("currentCoroutine");
-                        destCoroutine.CopyAllFrom(sourceCoroutine);
+                        DeepCopyMembers(destCoroutine, sourceCoroutine);
                         destMachine.SetField("state", sourceMachine.State);
                         break;
                     case DustGraphic destDustGraphic when sourceValue is DustGraphic sourceDustGraphic:
@@ -285,7 +294,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
             } else if (destValue is Entity destEntity && sourceValue is Entity sourceEntity &&
                        sourceEntity.GetEntityId2() != destEntity.GetEntityId2()) {
-                $"{sourceEntity} have different EntityId2 at TryCopyObject()".Log();
+                $"{sourceEntity} have different EntityId2 at TryDeepCloneMembers()".Log();
             }
         }
 
@@ -356,7 +365,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             Type sourceType = sourceValue.GetType();
 
             if (sourceValue.IsCompilerGenerated()) {
-                destValue = sourceValue.CreateCompilerGeneratedCopy();
+                destValue = sourceValue.CloneCompilerGeneratedObject();
             } else if (sourceValue is Delegate @delegate) {
                 destValue = @delegate.CloneDelegate();
             } else if (sourceValue is Stopwatch) {
@@ -368,7 +377,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             } else if (sourceValue is Entity sourceEntity) {
                 // 还原 Coroutine 时有些 Entity 创建了而未被添加到 Level 中，他们无法在 EntitiesSavedButNotLoaded 中还原，
                 // 所以在这里克隆一个但是同样不添加到 Level 中
-                destValue = RestoreEntityUtils.CreateEntityCopy(sourceEntity, "TryCloneObject");
+                destValue = RestoreEntityUtils.CloneEntity(sourceEntity, "TryCloneObject");
             } else if (sourceValue is Component sourceComponent) {
                 Component destComponent = null;
                 Entity sourceComponentEntityEntity = sourceComponent.Entity;
@@ -387,7 +396,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         destComponent = new PlayerHair(destPlayerSprite);
                     } else {
                         destPlayerSprite = new PlayerSprite(sourcePlayerHair.Sprite.Mode);
-                        destPlayerSprite.TryCopyObject(sourcePlayerHair.Sprite);
+                        TryDeepCopyMembers(destPlayerSprite, sourcePlayerHair.Sprite);
                         destEntity?.Add(destPlayerSprite);
                         destComponent = new PlayerHair(destPlayerSprite);
                     }
@@ -408,7 +417,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 } else if (sourceValue is Follower sourceFollower) {
                     destComponent = new Follower(sourceFollower.ParentEntityID);
                 } else if (sourceValue is TalkComponent sourceTalkComponent) {
-                    destComponent = new TalkComponent(sourceTalkComponent.Bounds, sourceTalkComponent.DrawAt, sourceTalkComponent.OnTalk, sourceTalkComponent.HoverUI);
+                    destComponent = new TalkComponent(sourceTalkComponent.Bounds, sourceTalkComponent.DrawAt,
+                        sourceTalkComponent.OnTalk, sourceTalkComponent.HoverUI);
                 }
 
                 if (destComponent == null) {
@@ -435,12 +445,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 CreatedObjectsDict[sourceValue] = destValue;
             }
 
-            destValue?.TryCopyObject(sourceValue);
+            if (destValue != null) {
+                TryDeepCopyMembers(destValue, sourceValue);
+            }
 
             return destValue;
         }
 
-        private static object CreateCompilerGeneratedCopy(Type type) {
+        private static object CloneCompilerGeneratedObject(Type type) {
             if (!type.IsCompilerGenerated()) return null;
             // Delegate
             object newObj = type.GetConstructor(new Type[] { })?.Invoke(new object[] { });
@@ -458,7 +470,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             foreach (FieldInfo fieldInfo in type.GetFields().Where(info => info.FieldType.IsCompilerGenerated())) {
                 object newFieldObj = type == fieldInfo.FieldType
                     ? newObj
-                    : CreateCompilerGeneratedCopy(fieldInfo.FieldType);
+                    : CloneCompilerGeneratedObject(fieldInfo.FieldType);
                 fieldInfo.SetValue(newObj, newFieldObj);
             }
 
@@ -466,8 +478,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         // 编译器自动生成的类型，先创建实例，最后统一复制字段
-        private static object CreateCompilerGeneratedCopy(this object obj) {
-            return CreateCompilerGeneratedCopy(obj.GetType());
+        private static object CloneCompilerGeneratedObject(this object obj) {
+            return CloneCompilerGeneratedObject(obj.GetType());
         }
 
         private static object CloneDelegate(this Delegate @delegate) {

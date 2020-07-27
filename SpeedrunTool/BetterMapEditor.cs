@@ -63,8 +63,6 @@ namespace Celeste.Mod.SpeedrunTool {
             "9Ha-03", "9Ha-04", "9Ha-05", "9Hb-02", "9Hb-03", "9Hc-01", "9Hc-06"
         };
 
-        private long zoomWaitFrames;
-
         public void Load() {
             MapEditor.LoadLevel += MapEditorOnLoadLevel;
             On.Celeste.Level.Update += AddedOpenDebugMapButton;

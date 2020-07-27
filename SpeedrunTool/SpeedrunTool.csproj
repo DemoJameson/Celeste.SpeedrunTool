@@ -116,7 +116,7 @@
     <Compile Include="Extensions\LoggerExtensions.cs" />
     <Compile Include="Extensions\ReflectionExtensions.cs" />
     <Compile Include="RespawnSpeedUtils.cs" />
-    <Compile Include="SaveLoad\EntityCopyCore.cs" />
+    <Compile Include="SaveLoad\CopyCore.cs" />
     <Compile Include="SaveLoad\EntityIdPlus\AttachEntityId2Utils.cs" />
     <Compile Include="SaveLoad\EntityIdPlus\CustomEntityId2Utils.cs" />
     <Compile Include="SaveLoad\EntityIdPlus\EntityId2.cs" />

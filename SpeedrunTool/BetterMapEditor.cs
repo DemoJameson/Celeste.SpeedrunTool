@@ -1,22 +1,16 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
-using Celeste.Editor;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
 using Monocle;
+using On.Celeste.Editor;
 using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
 using LevelTemplate = Celeste.Editor.LevelTemplate;
-using MapEditor = On.Celeste.Editor.MapEditor;
 
 namespace Celeste.Mod.SpeedrunTool {
     public class BetterMapEditor {
         public static bool FixTeleportProblems = false;
-        private static readonly Lazy<bool> _EnableQoL = new Lazy<bool>(()=>Everest.Version <= new Version(1, 1078, 0));
-        private static bool EnableQoL => _EnableQoL.Value;
-        
         private const string StartChasingLevel = "3";
 
         // 3A 杂乱房间部分的光线调暗
@@ -73,7 +67,6 @@ namespace Celeste.Mod.SpeedrunTool {
 
         public void Load() {
             MapEditor.LoadLevel += MapEditorOnLoadLevel;
-            MapEditor.Update += MakeControllerWork;
             On.Celeste.Level.Update += AddedOpenDebugMapButton;
             On.Celeste.WindController.SetAmbienceStrength += FixWindSoundNotPlay;
             MapEditor.Update += PressCancelToReturnGame;
@@ -84,7 +77,6 @@ namespace Celeste.Mod.SpeedrunTool {
 
         public void Unload() {
             MapEditor.LoadLevel -= MapEditorOnLoadLevel;
-            MapEditor.Update -= MakeControllerWork;
             On.Celeste.Level.Update -= AddedOpenDebugMapButton;
             On.Celeste.WindController.SetAmbienceStrength -= FixWindSoundNotPlay;
             MapEditor.Update -= PressCancelToReturnGame;
@@ -149,55 +141,6 @@ namespace Celeste.Mod.SpeedrunTool {
             orig(self, strong);
         }
 
-        private void MakeControllerWork(MapEditor.orig_Update orig, Editor.MapEditor self) {
-            orig(self);
-            if (!SpeedrunToolModule.Enabled || !EnableQoL) {
-                return;
-            }
-
-            zoomWaitFrames--;
-
-            // pressed confirm button teleport to the select room
-            if (Input.MenuConfirm.Pressed) {
-                Input.MenuConfirm.ConsumePress();
-                Vector2 mousePosition = (Vector2) self.GetField("mousePosition");
-                LevelTemplate level =
-                    self.InvokeMethod("TestCheck", mousePosition) as LevelTemplate;
-                if (level != null) {
-                    if (level.Type == LevelTemplateType.Filler) {
-                        return;
-                    }
-
-                    self.InvokeMethod("LoadLevel", level, mousePosition * 8f);
-                }
-            }
-
-            // right stick zoom the map
-            GamePadState currentState = MInput.GamePads[Input.Gamepad].CurrentState;
-            Camera camera = typeof(Editor.MapEditor).GetField("Camera", BindingFlags.Static | BindingFlags.NonPublic)
-                ?.GetValue(null) as Camera;
-            if (zoomWaitFrames < 0 && camera != null) {
-                float newZoom = 0f;
-                if (Math.Abs(currentState.ThumbSticks.Right.X) >= 0.5f) {
-                    newZoom = camera.Zoom + Math.Sign(currentState.ThumbSticks.Right.X) * 1f;
-                }
-                else if (Math.Abs(currentState.ThumbSticks.Right.Y) >= 0.5f) {
-                    newZoom = camera.Zoom + Math.Sign(currentState.ThumbSticks.Right.Y) * 1f;
-                }
-
-                if (newZoom >= 1f) {
-                    camera.Zoom = newZoom;
-                    zoomWaitFrames = 5;
-                }
-            }
-
-            // move faster when zoom out
-            if (camera != null && camera.Zoom < 6f) {
-                camera.Position += new Vector2(Input.MoveX.Value, Input.MoveY.Value) * 300f * Engine.DeltaTime *
-                                   ((float) Math.Pow(1.3, 6 - camera.Zoom) - 1);
-            }
-        }
-
         private static void AddedOpenDebugMapButton(On.Celeste.Level.orig_Update orig, Level self) {
             orig(self);
             
@@ -238,14 +181,14 @@ namespace Celeste.Mod.SpeedrunTool {
                 FixCoreMode(session);
                 FixBadelineChase(session, spawnPoint);
                 FixHugeMessRoomLight(session);
-                FixFarewellCassetteRoomLight(session, spawnPoint);
+                FixFarewellCassetteRoomColorGrade(session, spawnPoint);
                 FixFarewellIntro02LaunchDashes(session);
             }
 
             orig(self, session, startPosition);
         }
 
-        private void FixFarewellCassetteRoomLight(Session session, Vector2 spawnPoint) {
+        private void FixFarewellCassetteRoomColorGrade(Session session, Vector2 spawnPoint) {
 //            Logger.Log("Exclude Respawn Point", $"new Vector2({spawnPoint.X}, {spawnPoint.Y}),");
             if (excludeFarewellCassettePoints.Contains(spawnPoint)) {
                 return;

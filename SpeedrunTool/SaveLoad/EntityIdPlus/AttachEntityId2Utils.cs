@@ -19,7 +19,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         public static void OnLoad() {
             On.Monocle.Entity.Awake += EntityOnAwake;
             CustomEntityId2Utils.OnLoad();
-            ILHookAllEntityConstructor();
         }
 
         public static void Unload() {
@@ -37,7 +36,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         }
 
         // ReSharper disable once InconsistentNaming
-        private static void ILHookAllEntityConstructor() {
+        public static void ILHookAllEntityConstructor() {
             MethodInfo attachConstructorInfoMethodInfo = typeof(AttachEntityId2Utils).GetMethod("AttachConstructorInfo",
                 BindingFlags.Static | BindingFlags.NonPublic);
             MethodBase getCurrentMethodMethodBase =

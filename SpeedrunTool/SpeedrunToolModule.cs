@@ -2,6 +2,7 @@
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
+using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Celeste.Mod.SpeedrunTool.TeleportRoom;
 
 namespace Celeste.Mod.SpeedrunTool {
@@ -63,6 +64,12 @@ namespace Celeste.Mod.SpeedrunTool {
             RoomTimerManager.Instance.Init();
             StateManager.Instance.OnInit();
             ButtonConfigUi.Init();
+        }
+
+        public override void LoadContent(bool firstLoad) {
+            if (firstLoad) {
+                AttachEntityId2Utils.ILHookAllEntityConstructor();
+            }
         }
     }
 }

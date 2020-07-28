@@ -264,7 +264,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             RestoreEntityUtils.OnSaveState(level);
 
-            Engine.Scene = new LevelLoader(level.Session, level.Session.RespawnPoint);
+            Session deepCloneSession = savedSession.DeepClone();
+            Engine.Scene = new LevelLoader(deepCloneSession, deepCloneSession.RespawnPoint);
         }
 
         private void LoadState() {

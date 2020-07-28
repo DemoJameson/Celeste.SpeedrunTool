@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions;
@@ -13,12 +14,25 @@ using EventInstance = FMOD.Studio.EventInstance;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     internal static class CopyCore {
-        private static readonly HashSet<object> CopyingObjects = new HashSet<object>();
-        private static readonly Dictionary<object, object> CreatedObjectsDict = new Dictionary<object, object>();
+        private static readonly HashSet<object> CopyingObjects = new HashSet<object>(new ReferenceEqualityComparer());
+        private static readonly Dictionary<object, object> CreatedObjectsDict = new Dictionary<object, object>(new ReferenceEqualityComparer());
 
         public static void ClearCachedObjects() {
             CopyingObjects.Clear();
             CreatedObjectsDict.Clear();
+        }
+        
+        public class ReferenceEqualityComparer : EqualityComparer<object> {
+            public override bool Equals(object x, object y) {
+                return ReferenceEquals(x, y);
+            }
+
+            public override int GetHashCode(object obj) {
+                if (obj == null) return 0;
+                // The RuntimeHelpers.GetHashCode method always calls the Object.GetHashCode method non-virtually, 
+                // even if the object's type has overridden the Object.GetHashCode method.
+                return RuntimeHelpers.GetHashCode(obj);
+            }
         }
 
         public static void DeepCopyFields<T>(object destObj, object sourceObj, bool onlySimpleType = false) {
@@ -54,6 +68,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 types.Add(type);
                 type = type.BaseType;
             }
+
+            types.Reverse();
 
             foreach (Type declaringType in types) {
                 FieldInfo[] fields = declaringType.GetFieldInfos(bindingFlags);
@@ -263,9 +279,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         SoundSourceAction.PlayingSoundSources.Add(destSound);
                         break;
                 }
-            } else if (destValue is Entity destEntity && sourceValue is Entity sourceEntity &&
-                       sourceEntity.GetEntityId2() != destEntity.GetEntityId2()) {
-                $"{sourceEntity} have different EntityId2 at TryDeepCloneMembers()".Log();
+            } else if (destValue is Collider) {
+                DeepCopyFields(destValue, sourceValue);
+            } else if (destValue is Entity destEntity
+                       && sourceValue is Entity sourceEntity
+                       ) {
+                if (destEntity.GetEntityId2() != sourceEntity.GetEntityId2()) {
+                    
+                }         
             }
         }
 

@@ -17,6 +17,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
 
             // 只恢复简单字段，其他等到复活完恢复
             CopyCore.DeepCopyFields(loaded, saved, true);
+            loaded.Ducking = saved.Ducking;
 
             // 不恢复速度，原地等待复活
             loaded.Speed = Vector2.Zero;

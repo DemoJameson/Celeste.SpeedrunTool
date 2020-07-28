@@ -115,7 +115,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
 
             // Pooled 的 Entity 一般都是空构造函数，需要 Init 方法初始化，这里直接用 CopyAll 代替
             if (loadedEntity.GetType().GetCustomAttribute<Pooled>() != null) {
-                CopyCore.DeepCopyMembers(loadedEntity, savedEntity);
+                CopyCore.DeepCopyFields(loadedEntity, savedEntity);
             }
 
             if (loadedEntity is SoundEmitter soundEmitter) {

@@ -118,11 +118,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             entity.SetConstructorInvoker(constructorInvoker);
             entity.SetParameters(parameters);
 
-            if (parameters.FirstOrDefault(o => o.IsType<EntityData>()) is EntityData entityData) {
-                entity.SetEntityData(entityData);
-                entity.SetEntityId2(entityData.ToEntityId(), false);
-            } else if (parameters.FirstOrDefault(o => o.IsType<EntityID>()) is EntityID entityId) {
+            if (parameters.FirstOrDefault(o => o.IsType<EntityID>()) is EntityID entityId) {
                 entity.SetEntityId2(entityId, false);
+            } else if (parameters.FirstOrDefault(o => o.IsType<EntityData>()) is EntityData entityData) {
+                entity.SetEntityId2(entityData.ToEntityId(), false);
             } else {
                 entity.SetEntityId2(parameters, false);
             }
@@ -157,7 +156,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             entity.SetExtendedDataValue(ParametersKey, parameters);
         }
 
-        public static Entity Recreate(this Entity entity) {
+        public static T Recreate<T>(this T entity) where T : Entity {
             object[] parameters = entity.GetParameters();
             if (parameters == null) return null;
 
@@ -173,7 +172,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
                 }
             }
 
-            return entity.GetConstructorInvoker()?.Invoke(parametersCopy) as Entity;
+            return entity.GetConstructorInvoker()?.Invoke(parametersCopy) as T;
         }
     }
 }

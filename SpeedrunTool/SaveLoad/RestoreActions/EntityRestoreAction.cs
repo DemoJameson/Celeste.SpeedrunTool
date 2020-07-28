@@ -3,7 +3,6 @@ using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base;
-using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
@@ -17,7 +16,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
 
             if (TryRestoreCrystalStaticSpinner(loadedEntity, savedEntity)) return;
 
-            CopyCore.DeepCopyMembers(loadedEntity, savedEntity);
+            CopyCore.DeepCopyFields(loadedEntity, savedEntity);
 
             RecreateDuplicateGlider(loadedEntity, savedDuplicateIdList);
         }
@@ -37,11 +36,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
         private static void RecreateDuplicateGlider(Entity loadedEntity, List<Entity> savedDuplicateIdList) {
             if (loadedEntity.IsType<Glider>() &&
                 savedDuplicateIdList.FirstOrDefault(entity => entity.IsType<Glider>()) is Glider savedGlider) {
-                if (savedGlider.GetEntityData() != null) {
-                    Glider newGlider = new Glider(savedGlider.GetEntityData(), Vector2.Zero);
-                    newGlider.CopyEntityData(savedGlider);
+                if (savedGlider.Recreate() is Glider newGlider) {
+                    CopyCore.DeepCopyFields(newGlider, savedGlider);
                     newGlider.CopyEntityId2(savedGlider);
-                    CopyCore.DeepCopyMembers(newGlider, savedGlider);
                     loadedEntity.SceneAs<Level>().Add(newGlider);
                 }
             }

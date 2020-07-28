@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using Fasterflect;
-using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
     internal static class ReflectionExtensions {
@@ -17,7 +15,6 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                    type.IsEnum || type == typeof(string) ||
                    type == typeof(decimal) ||
                    type == typeof(object) ||
-                   type.IsSameOrSubclassOf(typeof(Collider)) ||
                    type == typeof(MapData) ||
                    type == typeof(AreaData) ||
                    type == typeof(LevelData) ||
@@ -147,7 +144,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             
             FieldInfo[] fieldInfos = type.GetExtendedDataValue<FieldInfo[]>(key);
             if (fieldInfos == null) {
-                fieldInfos = type.GetFields(bindingFlags).Where(info => !info.Name.EndsWith("k__BackingField")).ToArray();
+                fieldInfos = type.GetFields(bindingFlags);
                 type.SetExtendedDataValue(key, fieldInfos);
             }
 

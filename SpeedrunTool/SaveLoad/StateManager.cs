@@ -315,7 +315,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private void RestoreLevel(Level level) {
             level.Session.Inventory = savedSession.Inventory;
-            CopyCore.DeepCopyMembers(level, SavedLevel, true);
+            CopyCore.DeepCopyFields(level, SavedLevel, true);
             level.Camera.CopyFrom(SavedLevel.Camera);
             WindController windController = level.Entities.FindFirst<WindController>();
             WindController savedWindController = Instance.SavedLevel.Entities.FindFirst<WindController>();

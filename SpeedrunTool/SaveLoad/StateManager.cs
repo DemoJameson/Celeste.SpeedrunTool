@@ -5,6 +5,7 @@ using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base;
+using Force.DeepCloner;
 using Microsoft.Xna.Framework;
 using Monocle;
 using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
@@ -257,7 +258,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedModSessions = new Dictionary<EverestModule, EverestModuleSession>();
             foreach (EverestModule module in Everest.Modules) {
                 if (module._Session != null) {
-                    savedModSessions[module] = module._Session.DeepCloneYaml<EverestModuleSession>(module.SessionType);
+                    savedModSessions[module] = module._Session.DeepCloneYaml(module.SessionType);
                 }
             }
 
@@ -273,8 +274,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             levelUpdateCounts = -1;
             loadState = SaveLoad.LoadState.Start;
-            Session sessionCopy = savedSession.DeepClone();
-            Engine.Scene = new LevelLoader(sessionCopy, sessionCopy.RespawnPoint);
+            Session deepCloneSession = savedSession.DeepClone();
+            Engine.Scene = new LevelLoader(deepCloneSession, deepCloneSession.RespawnPoint);
 
             // restore all mod sessions
             foreach (EverestModule module in Everest.Modules) {

@@ -46,6 +46,10 @@
       <HintPath>..\..\..\Celeste.exe</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="DeepCloner, Version=0.10.0.0, Culture=neutral, PublicKeyToken=dc0b95cf99bf4e99">
+      <HintPath>..\packages\DeepCloner.0.10.2\lib\net40\DeepCloner.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Fasterflect.Reflect, Version=3.1.0.0, Culture=neutral, PublicKeyToken=a1fa75de836f6938">
       <HintPath>..\packages\Fasterflect.Reflect.3.1.0\lib\net45\Fasterflect.Reflect.dll</HintPath>
       <Private>True</Private>
@@ -54,21 +58,9 @@
       <HintPath>..\..\..\FNA.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="GrEmit, Version=3.2.2.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\packages\GrEmit.3.2.2\lib\net45\GrEmit.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="GroBuf, Version=1.5.5.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\packages\GroBuf.1.5.5\lib\net45\GroBuf.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="MMHOOK_Celeste">
       <HintPath>..\..\..\MMHOOK_Celeste.dll</HintPath>
       <Private>False</Private>
-    </Reference>
-    <Reference Include="Mono.Reflection, Version=1.1.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756">
-      <HintPath>..\packages\Mono.Reflection.Core.1.1.1\lib\net45\Mono.Reflection.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Runtime.Serialization" />

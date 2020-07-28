@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Celeste.Mod.SpeedrunTool.Extensions;
+using Force.DeepCloner;
 using Microsoft.Xna.Framework;
 using Monocle;
 

@@ -69,7 +69,7 @@ namespace Celeste.Mod.SpeedrunTool {
                     SetButton = button => Settings.ControllerQuickClear = button,
                     GetKeys = () => Settings.KeyboardQuickClear,
                     SetKeys = keys => Settings.KeyboardQuickClear = keys,
-                    DefaultKeys = new[] {Keys.F3, Keys.F6},
+                    DefaultKeys = new[] {Keys.F1, Keys.F6},
                     FixedDefaultKeys = true,
                     GetLabel = () => DialogIds.Clear.DialogClean(),
                 }
@@ -136,6 +136,15 @@ namespace Celeste.Mod.SpeedrunTool {
                     SetKeys = keys => Settings.KeyboardNextRoom = keys,
                     DefaultKeys = new[] {Keys.PageDown},
                     GetLabel = () => DialogIds.TeleportToNextRoom.DialogClean(),
+                }
+            }, {
+                Mappings.SwitchAutoLoadState, new ButtonInfo {
+                    GetButton = () => Settings.ControllerAutoLoadStateAfterDeath,
+                    SetButton = button => Settings.ControllerAutoLoadStateAfterDeath = button,
+                    GetKeys = () => Settings.KeyboardAutoLoadStateAfterDeath,
+                    SetKeys = keys => Settings.KeyboardAutoLoadStateAfterDeath = keys,
+                    DefaultKeys = new Keys[]{} ,
+                    GetLabel = () => DialogIds.SwitchAutoLoadState.DialogClean(),
                 }
             }
         };
@@ -360,7 +369,8 @@ namespace Celeste.Mod.SpeedrunTool {
             SetEndPoint,
             CheckDeathStatistics,
             LastRoom,
-            NextRoom
+            NextRoom,
+            SwitchAutoLoadState,
         }
     }
 }

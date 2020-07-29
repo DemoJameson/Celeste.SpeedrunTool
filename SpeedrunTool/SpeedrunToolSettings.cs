@@ -27,12 +27,12 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingName(DialogIds.NumberOfRooms)]
         public int NumberOfRooms { get; set; } = 1;
 
+        [SettingName(DialogIds.AutoLoadAfterDeath)]
+        public bool AutoLoadAfterDeath { get; set; } = true;
+
         // -------------------------- More Option --------------------------
         // ReSharper disable once UnusedMember.Global
         [YamlIgnore] public string MoreOptions { get; set; } = "";
-
-        [SettingName(DialogIds.AutoLoadAfterDeath)]
-        public bool AutoLoadAfterDeath { get; set; } = true;
 
         public string EndPointStyle { get; set; } = EndPointStyleStrings.First();
 
@@ -40,8 +40,7 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingIgnore]
         public EndPoint.SpriteStyle EndPointSpriteStyle => GetEnumFromName<EndPoint.SpriteStyle>(EndPointStyle);
 
-        [SettingRange(1, 9)]
-        public int RespawnSpeed { get; set; } = 1;
+        [SettingRange(1, 9)] public int RespawnSpeed { get; set; } = 1;
 
         [SettingName(DialogIds.DeathStatistics)]
         public bool DeathStatistics { get; set; } = false;
@@ -56,6 +55,8 @@ namespace Celeste.Mod.SpeedrunTool {
         // ReSharper disable once UnusedMember.Global
         [YamlIgnore] public string ButtonConfig { get; set; } = "";
 
+        #region ButtonConfig
+
         [SettingIgnore] public Buttons? ControllerQuickSave { get; set; }
         [SettingIgnore] public Buttons? ControllerQuickLoad { get; set; }
         [SettingIgnore] public Buttons? ControllerQuickClear { get; set; }
@@ -67,25 +68,46 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingIgnore] public Buttons? ControllerLastRoom { get; set; }
         [SettingIgnore] public Buttons? ControllerNextRoom { get; set; }
 
-        [SettingIgnore] public List<Keys> KeyboardQuickSave { get; set; } = GetButtonInfo(Mappings.Save).DefaultKeys.ToList();
-        [SettingIgnore] public List<Keys> KeyboardQuickLoad { get; set; } =  GetButtonInfo(Mappings.Load).DefaultKeys.ToList();
-        [SettingIgnore] public List<Keys> KeyboardQuickClear { get; set; } =  GetButtonInfo(Mappings.Clear).DefaultKeys.ToList();
+        [SettingIgnore] public Buttons? ControllerAutoLoadStateAfterDeath { get; set; }
 
         [SettingIgnore]
-        public List<Keys> KeyboardOpenDebugMap { get; set; } =  GetButtonInfo(Mappings.OpenDebugMap).DefaultKeys.ToList();
-
-        [SettingIgnore] public List<Keys> KeyboardResetRoomPb { get; set; } =  GetButtonInfo(Mappings.ResetRoomPb).DefaultKeys.ToList();
+        public List<Keys> KeyboardQuickSave { get; set; } = GetButtonInfo(Mappings.Save).DefaultKeys.ToList();
 
         [SettingIgnore]
-        public List<Keys> KeyboardSwitchRoomTimer { get; set; } =  GetButtonInfo(Mappings.SwitchRoomTimer).DefaultKeys.ToList();
-
-        [SettingIgnore] public List<Keys> KeyboardSetEndPoint { get; set; } =  GetButtonInfo(Mappings.SetEndPoint).DefaultKeys.ToList();
+        public List<Keys> KeyboardQuickLoad { get; set; } = GetButtonInfo(Mappings.Load).DefaultKeys.ToList();
 
         [SettingIgnore]
-        public List<Keys> KeyboardCheckDeathStatistics { get; set; } =  GetButtonInfo(Mappings.CheckDeathStatistics).DefaultKeys.ToList();
+        public List<Keys> KeyboardQuickClear { get; set; } = GetButtonInfo(Mappings.Clear).DefaultKeys.ToList();
 
-        [SettingIgnore] public List<Keys> KeyboardLastRoom { get; set; } = GetButtonInfo(Mappings.LastRoom).DefaultKeys.ToList();
-        [SettingIgnore] public List<Keys> KeyboardNextRoom { get; set; } = GetButtonInfo(Mappings.NextRoom).DefaultKeys.ToList();
+        [SettingIgnore]
+        public List<Keys> KeyboardOpenDebugMap { get; set; } =
+            GetButtonInfo(Mappings.OpenDebugMap).DefaultKeys.ToList();
+
+        [SettingIgnore]
+        public List<Keys> KeyboardResetRoomPb { get; set; } = GetButtonInfo(Mappings.ResetRoomPb).DefaultKeys.ToList();
+
+        [SettingIgnore]
+        public List<Keys> KeyboardSwitchRoomTimer { get; set; } =
+            GetButtonInfo(Mappings.SwitchRoomTimer).DefaultKeys.ToList();
+
+        [SettingIgnore]
+        public List<Keys> KeyboardSetEndPoint { get; set; } = GetButtonInfo(Mappings.SetEndPoint).DefaultKeys.ToList();
+
+        [SettingIgnore]
+        public List<Keys> KeyboardCheckDeathStatistics { get; set; } =
+            GetButtonInfo(Mappings.CheckDeathStatistics).DefaultKeys.ToList();
+
+        [SettingIgnore]
+        public List<Keys> KeyboardLastRoom { get; set; } = GetButtonInfo(Mappings.LastRoom).DefaultKeys.ToList();
+
+        [SettingIgnore]
+        public List<Keys> KeyboardNextRoom { get; set; } = GetButtonInfo(Mappings.NextRoom).DefaultKeys.ToList();
+
+        [SettingIgnore]
+        public List<Keys> KeyboardAutoLoadStateAfterDeath { get; set; } = GetButtonInfo(Mappings.SwitchAutoLoadState).DefaultKeys.ToList();
+
+        #endregion ButtonConfig
+
 
         private TextMenu.Option<bool> firstTextMenu;
         private TextMenu.Item lastTextMenu;

@@ -62,7 +62,8 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string SetEndPoint = "SPEEDRUN_TOOL_SET_END_POINT";
         public const string TeleportToLastRoom = "SPEEDRUN_TOOL_TELEPORT_TO_LAST_ROOM";
         public const string TeleportToNextRoom = "SPEEDRUN_TOOL_TELEPORT_TO_NEXT_ROOM";
-        
+        public const string SwitchAutoLoadState = "SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE";
+
         // Death Statistics
         public const string ClearDeathStatistics = "SPEEDRUN_TOOL_CLEAR_DEATH_STATISTICS";
         public const string Chapter = "SPEEDRUN_TOOL_CHAPTER";

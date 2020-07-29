@@ -79,12 +79,13 @@ SPEEDRUN_TOOL_YURI=      Yuri
 SPEEDRUN_TOOL_RANDOM=    随机
 
 # ================================== Button Config ==================================
-SPEEDRUN_TOOL_OPEN_DEBUG_MAP=       打开地图 
-SPEEDRUN_TOOL_RESET_ROOM_PB=        重置房间记录
-SPEEDRUN_TOOL_SWITCH_ROOM_TIMER=    切换房间计时器
-SPEEDRUN_TOOL_SET_END_POINT=        标记房间计时器终点
-SPEEDRUN_TOOL_TELEPORT_TO_LAST_ROOM=飞到上个房间
-SPEEDRUN_TOOL_TELEPORT_TO_NEXT_ROOM=飞到下个房间
+SPEEDRUN_TOOL_OPEN_DEBUG_MAP=        打开地图
+SPEEDRUN_TOOL_RESET_ROOM_PB=         重置房间记录
+SPEEDRUN_TOOL_SWITCH_ROOM_TIMER=     切换房间计时器
+SPEEDRUN_TOOL_SET_END_POINT=         标记房间计时器终点
+SPEEDRUN_TOOL_TELEPORT_TO_LAST_ROOM= 飞到上个房间
+SPEEDRUN_TOOL_TELEPORT_TO_NEXT_ROOM= 飞到下个房间
+SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE=开关死亡自动加载状态
 
 # ================================== Death Statistics ==================================
 SPEEDRUN_TOOL_CLEAR_DEATH_STATISTICS=   清除数据

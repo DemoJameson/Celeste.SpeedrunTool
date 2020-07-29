@@ -228,6 +228,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 return false;
             }
 
+            if (GetVirtualButton(Mappings.SwitchAutoLoadState).Pressed && !level.Paused) {
+                GetVirtualButton(Mappings.SwitchAutoLoadState).ConsumePress();
+                SpeedrunToolModule.Settings.AutoLoadAfterDeath = !SpeedrunToolModule.Settings.AutoLoadAfterDeath;
+                SpeedrunToolModule.Instance.SaveSettings();
+                return false;
+            }
+
             return false;
         }
 

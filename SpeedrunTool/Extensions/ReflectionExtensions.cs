@@ -5,21 +5,34 @@ using Fasterflect;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
     internal static class ReflectionExtensions {
-        private const BindingFlags InstanceAnyVisibility = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+        private const BindingFlags InstanceAnyVisibility =
+            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
         public static bool IsSimple(this Type type) {
-            return type.IsPrimitive ||
-                   type.IsValueType &&
-                   type.FullName != "Celeste.TriggerSpikes+SpikeInfo" && // SpikeInfo 里有 Entity 所以不能算做简单数据类型
-                   type.FullName != "Celeste.Mod.Entities.TriggerSpikesOriginal+SpikeInfo" ||
-                   type.IsEnum || type == typeof(string) ||
-                   type == typeof(decimal) ||
-                   type == typeof(object) ||
-                   type == typeof(MapData) ||
-                   type == typeof(AreaData) ||
-                   type == typeof(LevelData) ||
-                   type == typeof(EntityData) ||
-                   type == typeof(DecalData)
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>)) {
+                // nullable type, check if the nested type is simple.
+                return IsSimple(type.GetGenericArguments()[0]);
+            }
+
+            return type.IsPrimitive
+                   || type.IsEnum
+                   || type == typeof(string)
+                   || type == typeof(decimal)
+
+                   || type.IsValueType
+                   && type.FullName != "Celeste.TriggerSpikes+SpikeInfo" // SpikeInfo 里有 Entity 所以不能算做简单数据类型
+                   && type.FullName != "Celeste.Mod.Entities.TriggerSpikesOriginal+SpikeInfo"
+
+                   || type == typeof(object) // Coroutine
+
+                   || type == typeof(MapData)
+                   || type == typeof(AreaData)
+                   || type == typeof(LevelData)
+                   || type == typeof(EntityData)
+                   || type == typeof(DecalData)
+
+                   || type == typeof(Type)
+                   || type.FullName != null && type.FullName.StartsWith("System.Reflection")
                 ;
         }
 
@@ -104,7 +117,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             }
 
             if (newObject != null) {
-                $"ForceCreateInstance Success: {type} at {tag}".Log();
+                $"ForceCreateInstance Success: {type} at {tag}".DebugLog();
             }
 
             return newObject;
@@ -138,10 +151,10 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
             return fieldInfo;
         }
-        
+
         public static FieldInfo[] GetFieldInfos(this Type type, BindingFlags bindingFlags) {
             string key = $"GetFieldInfos-{bindingFlags}";
-            
+
             FieldInfo[] fieldInfos = type.GetExtendedDataValue<FieldInfo[]>(key);
             if (fieldInfos == null) {
                 fieldInfos = type.GetFields(bindingFlags);
@@ -165,10 +178,10 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
             return propertyInfo;
         }
-        
+
         public static PropertyInfo[] GetPropertyInfos(this Type type, BindingFlags bindingFlags) {
             string key = $"GetPropertyInfos-{bindingFlags}";
-            
+
             PropertyInfo[] propertyInfos = type.GetExtendedDataValue<PropertyInfo[]>(key);
             if (propertyInfos == null) {
                 propertyInfos = type.GetProperties(bindingFlags);

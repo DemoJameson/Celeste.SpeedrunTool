@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -9,8 +8,8 @@ using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base;
+using FMOD.Studio;
 using Monocle;
-using EventInstance = FMOD.Studio.EventInstance;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     internal static class CopyCore {
@@ -22,7 +21,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             CreatedObjectsDict.Clear();
         }
         
-        public class ReferenceEqualityComparer : EqualityComparer<object> {
+        private class ReferenceEqualityComparer : EqualityComparer<object> {
             public override bool Equals(object x, object y) {
                 return ReferenceEquals(x, y);
             }
@@ -51,8 +50,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             if (destObj.GetType() == typeof(object) || type == typeof(object)) return;
 
-            const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance |
-                                              BindingFlags.DeclaredOnly;
+            const BindingFlags anyDeclaredOnlyFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance |
+                                                 BindingFlags.DeclaredOnly;
 
 
             if (CopyingObjects.Contains(destObj)) {
@@ -69,63 +68,59 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 type = type.BaseType;
             }
 
+            // 可能没有必要，反转顺序从顶层类型也就是父类开始到子类进行复制
             types.Reverse();
 
             foreach (Type declaringType in types) {
-                FieldInfo[] fields = declaringType.GetFieldInfos(bindingFlags);
+                FieldInfo[] fields = declaringType.GetFieldInfos(anyDeclaredOnlyFlags);
 
                 foreach (FieldInfo fieldInfo in fields) {
-                    Type memberType = fieldInfo.FieldType;
-                    string memberName = fieldInfo.Name;
-                    object destValue = destObj.GetField(declaringType, memberName);
-                    object sourceValue = sourceObj.GetField(declaringType, memberName);
+                    Type fieldType = fieldInfo.FieldType;
+                    string fieldName = fieldInfo.Name;
+                    object destValue = destObj.GetField(declaringType, fieldName);
+                    object sourceValue = sourceObj.GetField(declaringType, fieldName);
 
-                    if (!memberType.IsSimple() && onlySimpleType) continue;
+                    if (!fieldType.IsSimple() && onlySimpleType) continue;
 
-                    CopyField(declaringType, memberType, memberName, destObj, destValue, sourceValue);
+                    CopyField(declaringType, fieldType, fieldName, destObj, destValue, sourceValue);
                 }
             }
 
             CopyingObjects.Remove(destObj);
         }
 
-        private static void SetField(object destObj, Type currentObjType, string memberName,
-            object sourceValue) {
-            destObj.SetField(currentObjType, memberName, sourceValue);
-        }
-
-        private static void CopyField(Type currentObjType, Type memberType, string memberName, object destObj,
+        private static void CopyField(Type currentObjType, Type fieldType, string fieldName, object destObj,
             object destValue, object sourceValue) {
             if (destValue == sourceValue) return;
 
             if (sourceValue == null) {
-                // sourceValue Component.Entity 为空代表 sourceObj 已经被 remove 了
-                if (currentObjType == typeof(Component) && destValue != null && memberType == typeof(Entity) &&
-                    destObj is Component destComponent) {
-                    destComponent.RemoveSelf();
+                // sourceObj.sourceValue => Component.Entity 为空代表已经未添加到 Entity 中或已经被移除了
+                if (currentObjType == typeof(Component) && fieldName == "<Entity>k__BackingField" &&
+                    destObj is Component destObjComponent && destObjComponent.Entity != null) {
+                    destObjComponent.RemoveSelf();
                     return;
                 }
 
-                // Component 需要从Entity中移除（适用于第六章 Boss 会在 Sprite 和 PlayerSprite 之间切换，使字段变为 null）
-                if (destValue is Component component) {
-                    component.RemoveSelf();
+                // Component 需要从 Entity 中移除（适用于第六章 Boss 会在 Sprite 和 PlayerSprite 之间切换，使字段变为 null）
+                if (destValue is Component destComponent && destComponent.Entity != null) {
+                    destComponent.RemoveSelf();
                 }
 
                 // null 也是有意义的
-                SetField(destObj, currentObjType, memberName, null);
+                destObj.SetField(currentObjType, fieldName, null);
                 return;
             }
 
-            if (memberType.IsSimple()) {
+            if (fieldType.IsSimple()) {
                 // 简单类型直接复制
-                SetField(destObj, currentObjType, memberName, sourceValue);
-            } else if (memberType.IsList(out Type genericType)) {
+                destObj.SetField(currentObjType, fieldName, sourceValue);
+            } else if (fieldType.IsList(out Type genericType)) {
                 bool destValueIsNull = destValue == null;
                 destValue = CopyList(destValue, sourceValue, genericType);
                 if (destValueIsNull) {
-                    SetField(destObj, currentObjType, memberName, destValue);
+                    destObj.SetField(currentObjType, fieldName, destValue);
                 }
-            } else if (memberType.IsArray && memberType.GetElementType() is Type elementType) {
+            } else if (fieldType.IsArray && fieldType.GetElementType() is Type elementType) {
                 // 一维数组且数量相同
                 if (destValue is Array destArray && destArray.Rank == 1 && sourceValue is Array sourceArray &&
                     destArray.Length == sourceArray.Length) {
@@ -137,10 +132,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         }
                     }
                 }
-            } else if (memberType.IsHashSet(out Type hashElementType)) {
+            } else if (fieldType.IsHashSet(out Type hashElementType)) {
                 if (destValue == null) {
-                    destValue = Activator.CreateInstance(memberType);
-                    SetField(destObj, currentObjType, memberName, destValue);
+                    destValue = Activator.CreateInstance(fieldType);
+                    destObj.SetField(currentObjType, fieldName, destValue);
                 }
 
                 if (hashElementType.IsSimple()) {
@@ -162,7 +157,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                                 destValue.InvokeMethod("Add", entity);
                             } else {
                                 ($"Copy HashSet<{hashElementType}> element failed: {enumerator.Current}\n" +
-                                 $"destObj={destObj}\tcurrentObjType={currentObjType}\tmemberType={memberType}\tmemberName={memberName}\tdestValue={destValue ?? "null"}\tsourceValue={sourceValue}"
+                                 $"destObj={destObj}\tcurrentObjType={currentObjType}\tmemberType={fieldType}\tmemberName={fieldName}\tdestValue={destValue ?? "null"}\tsourceValue={sourceValue}"
                                     ).Log();
                             }
                         }
@@ -187,12 +182,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 if (destValue != null) {
                     TryDeepCopyMembers(destValue, sourceValue);
                 } else {
-                    // 为空则根据情况创建新实例或者查找当前场景的实例S
+                    // 为空则根据情况创建新实例或者查找当前场景的实例
                     destValue = TryFindOrCloneObject(sourceValue);
                     if (destValue != null) {
-                        SetField(destObj, currentObjType, memberName, destValue);
+                        destObj.SetField(currentObjType, fieldName, destValue);
                     } else {
-                        $"TryFindOrCloneObject Failed: destObj={destObj}\tcurrentObjType={currentObjType}\tmemberType={memberType}\tmemberName={memberName}\tdestValue={destValue ?? "null"}\tsourceValue={sourceValue}"
+                        $"TryFindOrCloneObject Failed: destObj={destObj}\tcurrentObjType={currentObjType}\tmemberType={fieldType}\tmemberName={fieldName}\tdestValue={destValue ?? "null"}\tsourceValue={sourceValue}"
                             .Log();
                     }
                 }
@@ -285,8 +280,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                        && sourceValue is Entity sourceEntity
                        ) {
                 if (destEntity.GetEntityId2() != sourceEntity.GetEntityId2()) {
-                    
-                }         
+                    $"TryDeepCopyMembers: {destEntity} has different EntityId2.".DebugLog();
+                }
             }
         }
 
@@ -337,9 +332,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             } else if (sourceValue is Holdable sourceHoldable) {
                 destValue = (TryFindObject(sourceHoldable.Entity) as Entity)?.Get<Holdable>();
             } else if (sourceValue is Component sourceComponent && sourceComponent.Entity != null &&
-                       TryFindObject(sourceComponent.Entity) is Entity componentEntity) {
+                       TryFindObject(sourceComponent.Entity) is Entity sourceComponentEntity) {
                 if (sourceComponent.IsFindabel() &&
-                    componentEntity.FindComponent(sourceComponent) is Component foundComponent) {
+                    sourceComponentEntity.FindComponent(sourceComponent) is Component foundComponent) {
                     $"Find {sourceValue} instead of recreating a new one".Log(LogLevel.Info);
                     destValue = foundComponent;
                 }
@@ -349,6 +344,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private static object TryCloneObject(object sourceValue) {
+            // 不要把这步移到 TryFindOrCloneObject 开头，钥匙开门时保存会出现重复的门
             if (CreatedObjectsDict.ContainsKey(sourceValue)) {
                 return CreatedObjectsDict[sourceValue];
             }
@@ -360,8 +356,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 destValue = sourceValue.CloneCompilerGeneratedObject();
             } else if (sourceValue is Delegate @delegate) {
                 destValue = @delegate.CloneDelegate();
-            } else if (sourceValue is Stopwatch) {
-                destValue = new Stopwatch();
             } else if (sourceValue is EventInstance eventInstance) {
                 destValue = eventInstance.Clone();
             } else if (sourceValue is DisplacementRenderer.Burst burst) {
@@ -374,11 +368,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 Component destComponent = null;
                 Entity sourceComponentEntityEntity = sourceComponent.Entity;
                 Entity destEntity = Engine.Scene.FindFirst(sourceComponentEntityEntity?.GetEntityId2());
-                if (sourceValue is SoundSource) {
-                    destComponent = new SoundSource();
-                } else if (sourceValue is LightOcclude) {
-                    destComponent = new LightOcclude();
-                } else if (sourceValue is BloomPoint sourceBloomPoint) {
+                if (sourceValue is BloomPoint sourceBloomPoint) {
                     destComponent = new BloomPoint(sourceBloomPoint.Position, sourceBloomPoint.Alpha,
                         sourceBloomPoint.Radius);
                 } else if (sourceValue is PlayerSprite sourcePlayerSprite) {
@@ -399,11 +389,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         sourceTween.Active);
                 } else if (sourceValue is Alarm sourceAlarm) {
                     destComponent = Alarm.Create(sourceAlarm.Mode, null, sourceAlarm.Duration, sourceAlarm.Active);
-                } else if (sourceValue is VertexLight) {
-                    destComponent = new VertexLight();
                 } else if (sourceValue is Image sourceImage) {
-                    destComponent = new Image(sourceImage.Texture);
-                    return destComponent;
+                    // TODO 找到更好的还原 Image 方法
+                    return new Image(sourceImage.Texture);
                 } else if (sourceValue is Coroutine sourceCoroutine) {
                     destComponent = new Coroutine(sourceCoroutine.RemoveOnComplete);
                 } else if (sourceValue is Follower sourceFollower) {

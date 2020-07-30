@@ -91,7 +91,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private static void CopyField(Type currentObjType, Type fieldType, string fieldName, object destObj,
             object destValue, object sourceValue) {
-            if (destValue == sourceValue) return;
+            if (destValue == sourceValue || (destValue?.Equals(sourceValue) ?? false)) return;
+
+            // $"CopyField: destObj={destObj}\tcurrentObjType={currentObjType}\tmemberType={fieldType}\tmemberName={fieldName}\tdestValue={destValue ?? "null"}\tsourceValue={sourceValue ?? "null"}"
+            //     .DebugLog();
 
             if (sourceValue == null) {
                 // sourceObj.sourceValue => Component.Entity 为空代表已经未添加到 Entity 中或已经被移除了

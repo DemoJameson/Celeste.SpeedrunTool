@@ -161,14 +161,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             if (parameters == null) return null;
 
             object[] parametersCopy = new object[parameters.Length];
-            for (var i = 0; i < parameters.Length; i++) {
+            for (int i = 0; i < parameters.Length; i++) {
                 object parameter = parameters[i];
                 if (parameter == null || parameter.GetType().IsSimple()) {
                     parametersCopy[i] = parameter;
                 } else if (parameter.TryFindOrCloneObject(tryForceCreateEntity) is object objCopy) {
                     parametersCopy[i] = objCopy;
-                } else if (tryForceCreateEntity && parameter.ForceCreateInstance() is object forcedCreatedObject) {
-                    parametersCopy[i] = forcedCreatedObject;
                 } else {
                     return null;
                 }

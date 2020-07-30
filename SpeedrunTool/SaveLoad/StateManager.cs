@@ -7,15 +7,16 @@ using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base;
 using Force.DeepCloner;
 using Microsoft.Xna.Framework;
+using Mono.Cecil.Cil;
 using Monocle;
+using MonoMod.Cil;
 using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class StateManager {
-        // ReSharper disable once MemberCanBePrivate.Global
-        // Public for TAS
-        public Player SavedPlayer;
-        public Level SavedLevel;
+        private static SpeedrunToolSettings Settings => SpeedrunToolModule.Settings;
+
+        private Level savedLevel;
 
         public Dictionary<EntityId2, Entity> SavedEntitiesDict = new Dictionary<EntityId2, Entity>();
         public List<Entity> SavedDuplicateIdList = new List<Entity>();
@@ -25,10 +26,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private float savedFreezeTimer;
         private float savedTimeRate;
 
-        private Session savedSession;
         private Dictionary<EverestModule, EverestModuleSession> savedModSessions;
 
         private int levelUpdateCounts = -1;
+
+        private Session savedSession => savedLevel?.Session;
+
+        // Public for TAS
+        public Player SavedPlayer;
         public bool IsLoadStart => loadState == SaveLoad.LoadState.Start;
         public bool IsLoadFrozen => loadState == SaveLoad.LoadState.Frozen;
         public bool IsPlayerRespawned => loadState == SaveLoad.LoadState.PlayerRespawned;
@@ -56,6 +61,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Celeste.Player.Die += PlayerOnDie;
             AttachEntityId2Utils.OnLoad();
             RestoreEntityUtils.OnLoad();
+
+            On.Celeste.Level.LoadLevel += LevelOnLoadLevel;
+            IL.Monocle.EntityList.UpdateLists += EntityListOnUpdateLists;
         }
 
         public void OnUnload() {
@@ -65,6 +73,32 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Celeste.Player.Die -= PlayerOnDie;
             AttachEntityId2Utils.Unload();
             RestoreEntityUtils.Unload();
+
+            On.Celeste.Level.LoadLevel -= LevelOnLoadLevel;
+            IL.Monocle.EntityList.UpdateLists -= EntityListOnUpdateLists;
+        }
+
+        private void EntityListOnUpdateLists(ILContext il) {
+            ILCursor cursor = new ILCursor(il);
+
+            if (cursor.TryGotoNext(
+                i => i.OpCode == OpCodes.Ldloc_3
+                , i => i.OpCode == OpCodes.Ldarg_0
+                , i => i.MatchCallvirt<EntityList>("get_Scene")
+                , i => i.MatchCallvirt<Entity>("Removed")
+            )) {
+                cursor.EmitReference<Func<bool>>(() => IsSaved && IsLoadStart && Settings.FastLoadState);
+                cursor.Emit(OpCodes.Brtrue, cursor.Instrs[cursor.Index + 4]);
+            }
+        }
+
+        private void LevelOnLoadLevel(On.Celeste.Level.orig_LoadLevel orig, Level self, Player.IntroTypes playerIntro,
+            bool isFromLoader) {
+            if (IsSaved && IsLoadStart && Settings.FastLoadState && playerIntro == Player.IntroTypes.Respawn && isFromLoader == false) {
+                savedSession.DeepCloneTo(self.Session);
+            }
+
+            orig(self, playerIntro, isFromLoader);
         }
 
         public void OnInit() {
@@ -170,8 +204,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                 level.Frozen = false;
                 level.PauseLock = false;
-                level.TimeActive = SavedLevel.TimeActive;
-                level.RawTimeActive = SavedLevel.RawTimeActive;
+                level.TimeActive = savedLevel.TimeActive;
+                level.RawTimeActive = savedLevel.RawTimeActive;
                 level.Session.Time = savedSession.Time;
                 Engine.FreezeTimer = savedFreezeTimer;
                 Engine.TimeRate = savedTimeRate;
@@ -230,7 +264,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             if (GetVirtualButton(Mappings.SwitchAutoLoadState).Pressed && !level.Paused) {
                 GetVirtualButton(Mappings.SwitchAutoLoadState).ConsumePress();
-                SpeedrunToolModule.Settings.AutoLoadAfterDeath = !SpeedrunToolModule.Settings.AutoLoadAfterDeath;
+                Settings.AutoLoadAfterDeath = !Settings.AutoLoadAfterDeath;
                 SpeedrunToolModule.Instance.SaveSettings();
                 return false;
             }
@@ -254,10 +288,19 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             levelUpdateCounts = -1;
             loadState = SaveLoad.LoadState.Start;
 
-            savedSession = level.Session.DeepClone();
+            if (Settings.FastLoadState) {
+                savedLevel = new Level {
+                    Session = level.Session.DeepClone(),
+                    Camera = level.Camera.DeepClone()
+                };
+            } else {
+                savedLevel = level;
+            }
+
+            CopyCore.DeepCopyFields(savedLevel, level, true);
             SavedPlayer = player;
-            SavedLevel = level;
             SavedEntitiesDict = level.FindAllToDict(out SavedDuplicateIdList);
+
             savedFreezeTimer = Engine.FreezeTimer;
             savedTimeRate = Engine.TimeRate;
 
@@ -271,25 +314,33 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             RestoreEntityUtils.OnSaveState(level);
 
-            Session deepCloneSession = savedSession.DeepClone();
-            Engine.Scene = new LevelLoader(deepCloneSession, deepCloneSession.RespawnPoint);
+            reloadLevel(level);
         }
 
         private void LoadState() {
-            if (!IsSaved) {
+            if (!IsSaved || !(Engine.Scene.GetLevel() is Level level)) {
                 return;
             }
 
             levelUpdateCounts = -1;
             loadState = SaveLoad.LoadState.Start;
-            Session deepCloneSession = savedSession.DeepClone();
-            Engine.Scene = new LevelLoader(deepCloneSession, deepCloneSession.RespawnPoint);
+
+            reloadLevel(level);
 
             // restore all mod sessions
             foreach (EverestModule module in Everest.Modules) {
                 if (savedModSessions.TryGetValue(module, out EverestModuleSession savedModSession)) {
                     module._Session = savedModSession.DeepCloneYaml(module.SessionType);
                 }
+            }
+        }
+
+        private void reloadLevel(Level level) {
+            if (Settings.FastLoadState) {
+                level.Reload();
+            } else {
+                Session deepCloneSession = savedSession.DeepClone();
+                Engine.Scene = new LevelLoader(deepCloneSession, deepCloneSession.RespawnPoint);
             }
         }
 
@@ -324,10 +375,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private void RestoreLevel(Level level) {
             level.Session.Inventory = savedSession.Inventory;
-            CopyCore.DeepCopyFields(level, SavedLevel, true);
-            level.Camera.CopyFrom(SavedLevel.Camera);
+            CopyCore.DeepCopyFields(level, savedLevel, true);
+            level.Camera.CopyFrom(savedLevel.Camera);
             WindController windController = level.Entities.FindFirst<WindController>();
-            WindController savedWindController = Instance.SavedLevel.Entities.FindFirst<WindController>();
+            WindController savedWindController =
+                (WindController) SavedEntitiesDict.FirstOrDefault(pair => pair.Value is WindController).Value;
             windController.CopyFields(savedWindController, "pattern");
         }
 
@@ -353,10 +405,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 level.PauseLock = false;
             }
 
-            savedSession = null;
             savedModSessions = null;
+            savedLevel = null;
             SavedPlayer = null;
-            SavedLevel = null;
             SavedEntitiesDict.Clear();
             SavedDuplicateIdList.Clear();
             loadState = SaveLoad.LoadState.None;
@@ -376,7 +427,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         // 所以改成了 Hook AreaData.DoScreenWipe 方法
         private void QuickLoadWhenDeath(On.Celeste.AreaData.orig_DoScreenWipe orig, AreaData self, Scene scene,
             bool wipeIn, Action onComplete) {
-            if (SpeedrunToolModule.Settings.Enabled && SpeedrunToolModule.Settings.AutoLoadAfterDeath && IsSaved &&
+            if (Settings.Enabled && Settings.AutoLoadAfterDeath && IsSaved &&
                 !wipeIn && scene is Level level &&
                 onComplete != null && (onComplete == level.Reload || currentPlayerDeadBody?.HasGolden == true)) {
                 Action complete = onComplete;

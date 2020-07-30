@@ -15,6 +15,7 @@ using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class StateManager {
         private static SpeedrunToolSettings Settings => SpeedrunToolModule.Settings;
+        private static bool FastLoadStateEnabled => Settings.FastLoadState;
 
         private Level savedLevel;
 
@@ -32,14 +33,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private Session SavedSession => savedLevel?.Session;
 
+        // ReSharper disable once MemberCanBePrivate.Global
         // Public for TAS
         public Player SavedPlayer;
+
+        // ReSharper disable MemberCanBePrivate.Global
         public bool IsLoadStart => loadState == SaveLoad.LoadState.Start;
         public bool IsLoadFrozen => loadState == SaveLoad.LoadState.Frozen;
-        public bool IsPlayerRespawned => loadState == SaveLoad.LoadState.PlayerRespawned;
+        public bool IsLoadPlayerRespawned => loadState == SaveLoad.LoadState.PlayerRespawned;
         public bool IsLoadComplete => loadState == SaveLoad.LoadState.Complete;
+        // ReSharper restore MemberCanBePrivate.Global
 
-        public bool IsSaved => SavedSession != null && SavedPlayer != null;
+        private bool IsSaved => SavedSession != null && SavedPlayer != null;
 
         private PlayerDeadBody currentPlayerDeadBody;
 
@@ -78,10 +83,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Celeste.Level.UnloadLevel -= LevelOnUnloadLevel;
         }
 
+        // TODO 现在是重写整个 UnloadLevel 方法，用 ILHook 修改 EntityList.UpdateLists 更简洁
         private void LevelOnUnloadLevel(On.Celeste.Level.orig_UnloadLevel orig, Level self) {
-            if (IsSaved && IsLoadStart && Settings.FastLoadState) {
+            if (IsSaved && IsLoadStart && FastLoadStateEnabled) {
                 List<Entity> entitiesExcludingTagMask = self.GetEntitiesExcludingTagMask(Tags.Global);
                 entitiesExcludingTagMask.AddRange(self.Tracker.GetEntities<Textbox>());
+
+                // CassetteBlockManager 需要移除出 Level 来让它的状态不再改变
+                if (self.Entities.FindFirst<CassetteBlockManager>() is Entity cassetteBlockManager) {
+                    entitiesExcludingTagMask.Add(cassetteBlockManager);
+                }
 
                 List<Entity> entities = (List<Entity>) self.Entities.GetField("entities");
                 HashSet<Entity> current = (HashSet<Entity>) self.Entities.GetField("current");
@@ -105,6 +116,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         // TODO 不懂，改完直接报错，现在是重写整个 UnloadLevel 方法
+        // ReSharper disable once UnusedMember.Local
         private void EntityListOnUpdateLists(ILContext il) {
             ILCursor cursor = new ILCursor(il);
 
@@ -119,7 +131,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private void LevelOnLoadLevel(On.Celeste.Level.orig_LoadLevel orig, Level self, Player.IntroTypes playerIntro,
             bool isFromLoader) {
-            if (IsSaved && IsLoadStart && Settings.FastLoadState && playerIntro == Player.IntroTypes.Respawn &&
+            if (IsSaved && IsLoadStart && FastLoadStateEnabled && playerIntro == Player.IntroTypes.Respawn &&
                 isFromLoader == false) {
                 SavedSession.DeepCloneTo(self.Session);
             }
@@ -223,7 +235,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             // 人物复活完毕后设置人物相关属性
             // Set more player data after the player respawns
-            if (IsSaved && (IsPlayerRespawned || IsLoadFrozen) && player != null &&
+            if (IsSaved && (IsLoadPlayerRespawned || IsLoadFrozen) && player != null &&
                 (player.StateMachine.State == Player.StNormal || player.StateMachine.State == Player.StSwim ||
                  player.StateMachine.State == Player.StFlingBird)) {
                 RestoreEntityUtils.AfterPlayerRespawn(level);
@@ -314,18 +326,26 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             levelUpdateCounts = -1;
             loadState = SaveLoad.LoadState.Start;
 
-            if (Settings.FastLoadState) {
+            SavedPlayer = player;
+            SavedEntitiesDict = level.FindAllToDict(out SavedDuplicateIdList);
+
+            if (FastLoadStateEnabled) {
                 savedLevel = new Level {
                     Session = level.Session.DeepClone(),
                     Camera = level.Camera.DeepClone()
                 };
                 CopyCore.DeepCopyMembers(savedLevel, level, true);
+
+                // 执行 SceneEnd 一般是停止播放声音，不过有时也会造成一些问题，例如导致 TalkComponent 的字段 UI 变成 null
+                foreach (var keyValuePair in SavedEntitiesDict) {
+                    keyValuePair.Value.SceneEnd(level);
+                }
+                foreach (Entity entity in SavedDuplicateIdList) {
+                    entity.SceneEnd(level);
+                }
             } else {
                 savedLevel = level;
             }
-
-            SavedPlayer = player;
-            SavedEntitiesDict = level.FindAllToDict(out SavedDuplicateIdList);
 
             savedFreezeTimer = Engine.FreezeTimer;
             savedTimeRate = Engine.TimeRate;
@@ -344,7 +364,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private bool NotAllowFastLoadState(Level level) {
-            if (!Settings.FastLoadState) return false;
+            if (!FastLoadStateEnabled) return false;
             return level.Paused || level.Transitioning;
         }
 
@@ -367,12 +387,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private void ReloadLevel(Level level) {
-            if (Settings.FastLoadState) {
+            if (FastLoadStateEnabled) {
                 level.Reload();
                 // 避免死亡时读档执行完，接着才触发正常的复活 Reload 方法
-                if (level.Entities.FindFirst<PlayerDeadBody>() is Entity entity) {
-                    level.Remove(entity);
-                }
+                level.Entities.FindFirst<PlayerDeadBody>()?.RemoveSelf();
             } else {
                 Session deepCloneSession = SavedSession.DeepClone();
                 Engine.Scene = new LevelLoader(deepCloneSession, deepCloneSession.RespawnPoint);

@@ -16,7 +16,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
 
             if (TryRestoreCrystalStaticSpinner(loadedEntity, savedEntity)) return;
 
-            CopyCore.DeepCopyFields(loadedEntity, savedEntity);
+            CopyCore.DeepCopyMembers(loadedEntity, savedEntity);
 
             RecreateDuplicateGlider(loadedEntity, savedDuplicateIdList);
         }
@@ -37,7 +37,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions {
             if (loadedEntity.IsType<Glider>() &&
                 savedDuplicateIdList.FirstOrDefault(entity => entity.IsType<Glider>()) is Glider savedGlider) {
                 if (savedGlider.Recreate() is Glider newGlider) {
-                    CopyCore.DeepCopyFields(newGlider, savedGlider);
+                    CopyCore.DeepCopyMembers(newGlider, savedGlider);
                     newGlider.CopyEntityId2(savedGlider);
                     loadedEntity.SceneAs<Level>().Add(newGlider);
                 }

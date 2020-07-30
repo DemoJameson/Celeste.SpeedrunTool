@@ -91,7 +91,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
                 // Entity 与 CrystalStaticSpinner+Border 实在是太多了，重新创建影响性能
                 if (entityType != typeof(Entity) 
                     && !entityType.IsNestedPrivate
-                    && CloneEntity(savedEntity) is Entity entity) {
+                    && CloneEntity(savedEntity, "Recreate not loaded entity", false) is Entity entity) {
                     // 创建添加到 Level 后还要 update 三次才会开始还原
                     // 这时如果不停止 update 有可能出现异常
                     // 用于修复：ch6 boss-00 撞击 boss 一次后等待 boss 发子弹再保存游戏会崩溃
@@ -101,8 +101,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
             }
         }
 
-        public static Entity CloneEntity(Entity savedEntity, string tag = "Recreate not loaded entity") {
-            Entity loadedEntity = savedEntity.Recreate();
+        public static Entity CloneEntity(Entity savedEntity, string tag = "Recreate not loaded entity", bool tryForceCreateEntity = true) {
+            Entity loadedEntity = savedEntity.Recreate(tryForceCreateEntity);
 
             if (loadedEntity == null) {
                 $"{tag} failed: {(savedEntity.HasEntityId2() ? savedEntity.GetEntityId2().ToString() : savedEntity.ToString())}"
@@ -115,7 +115,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
 
             // Pooled 的 Entity 一般都是空构造函数，需要 Init 方法初始化，这里直接用 CopyAll 代替
             if (loadedEntity.GetType().GetCustomAttribute<Pooled>() != null) {
-                CopyCore.DeepCopyFields(loadedEntity, savedEntity);
+                CopyCore.DeepCopyMembers(loadedEntity, savedEntity);
             }
 
             if (loadedEntity is SoundEmitter soundEmitter) {

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Fasterflect;
 
@@ -152,12 +153,15 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return fieldInfo;
         }
 
-        public static FieldInfo[] GetFieldInfos(this Type type, BindingFlags bindingFlags) {
-            string key = $"GetFieldInfos-{bindingFlags}";
+        public static FieldInfo[] GetFieldInfos(this Type type, BindingFlags bindingFlags, bool filterBackingField = false) {
+            string key = $"GetFieldInfos-{bindingFlags}-{filterBackingField}";
 
             FieldInfo[] fieldInfos = type.GetExtendedDataValue<FieldInfo[]>(key);
             if (fieldInfos == null) {
                 fieldInfos = type.GetFields(bindingFlags);
+                if (filterBackingField) {
+                    fieldInfos = fieldInfos.Where(info => !info.Name.EndsWith("k__BackingField")).ToArray();
+                }
                 type.SetExtendedDataValue(key, fieldInfos);
             }
 

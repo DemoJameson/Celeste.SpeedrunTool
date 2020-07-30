@@ -156,7 +156,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
             entity.SetExtendedDataValue(ParametersKey, parameters);
         }
 
-        public static T Recreate<T>(this T entity) where T : Entity {
+        public static T Recreate<T>(this T entity, bool tryForceCreateEntity = true) where T : Entity {
             object[] parameters = entity.GetParameters();
             if (parameters == null) return null;
 
@@ -165,8 +165,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
                 object parameter = parameters[i];
                 if (parameter == null || parameter.GetType().IsSimple()) {
                     parametersCopy[i] = parameter;
-                } else if (parameter.TryFindOrCloneObject() is object objCopy) {
+                } else if (parameter.TryFindOrCloneObject(tryForceCreateEntity) is object objCopy) {
                     parametersCopy[i] = objCopy;
+                } else if (tryForceCreateEntity && parameter.ForceCreateInstance() is object forcedCreatedObject) {
+                    parametersCopy[i] = forcedCreatedObject;
                 } else {
                     return null;
                 }

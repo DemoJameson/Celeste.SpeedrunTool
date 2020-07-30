@@ -34,6 +34,8 @@ namespace Celeste.Mod.SpeedrunTool {
         // ReSharper disable once UnusedMember.Global
         [YamlIgnore] public string MoreOptions { get; set; } = "";
 
+        [SettingName(DialogIds.FastLoadState)]
+        [SettingSubText(DialogIds.FastLoadStateDescription)]
         public bool FastLoadState { get; set; } = false;
 
         public string EndPointStyle { get; set; } = EndPointStyleStrings.First();

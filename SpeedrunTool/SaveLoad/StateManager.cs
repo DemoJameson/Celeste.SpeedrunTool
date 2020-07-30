@@ -30,7 +30,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private int levelUpdateCounts = -1;
 
-        private Session savedSession => savedLevel?.Session;
+        private Session SavedSession => savedLevel?.Session;
 
         // Public for TAS
         public Player SavedPlayer;
@@ -39,7 +39,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         public bool IsPlayerRespawned => loadState == SaveLoad.LoadState.PlayerRespawned;
         public bool IsLoadComplete => loadState == SaveLoad.LoadState.Complete;
 
-        public bool IsSaved => savedSession != null && SavedPlayer != null;
+        public bool IsSaved => SavedSession != null && SavedPlayer != null;
 
         private PlayerDeadBody currentPlayerDeadBody;
 
@@ -63,7 +63,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             RestoreEntityUtils.OnLoad();
 
             On.Celeste.Level.LoadLevel += LevelOnLoadLevel;
-            IL.Monocle.EntityList.UpdateLists += EntityListOnUpdateLists;
+            On.Celeste.Level.UnloadLevel += LevelOnUnloadLevel;
         }
 
         public void OnUnload() {
@@ -75,27 +75,53 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             RestoreEntityUtils.Unload();
 
             On.Celeste.Level.LoadLevel -= LevelOnLoadLevel;
-            IL.Monocle.EntityList.UpdateLists -= EntityListOnUpdateLists;
+            On.Celeste.Level.UnloadLevel -= LevelOnUnloadLevel;
         }
 
+        private void LevelOnUnloadLevel(On.Celeste.Level.orig_UnloadLevel orig, Level self) {
+            if (IsSaved && IsLoadStart && Settings.FastLoadState) {
+                List<Entity> entitiesExcludingTagMask = self.GetEntitiesExcludingTagMask(Tags.Global);
+                entitiesExcludingTagMask.AddRange(self.Tracker.GetEntities<Textbox>());
+
+                List<Entity> entities = (List<Entity>) self.Entities.GetField("entities");
+                HashSet<Entity> current = (HashSet<Entity>) self.Entities.GetField("current");
+                foreach (Entity entity in entitiesExcludingTagMask) {
+                    if (!entities.Contains(entity)) continue;
+                    current.Remove(entity);
+                    entities.Remove(entity);
+                    if (entity.Components != null) {
+                        foreach (Component component in entity.Components) {
+                            component.EntityRemoved(self.Entities.Scene);
+                        }
+                    }
+
+                    self.TagLists.InvokeMethod("EntityRemoved", entity);
+                    self.Tracker.InvokeMethod("EntityRemoved", entity);
+                    Engine.Pooler.InvokeMethod("EntityRemoved", entity);
+                }
+            } else {
+                orig(self);
+            }
+        }
+
+        // TODO 不懂，改完直接报错，现在是重写整个 UnloadLevel 方法
         private void EntityListOnUpdateLists(ILContext il) {
             ILCursor cursor = new ILCursor(il);
 
             if (cursor.TryGotoNext(
+                MoveType.After,
                 i => i.OpCode == OpCodes.Ldloc_3
                 , i => i.OpCode == OpCodes.Ldarg_0
                 , i => i.MatchCallvirt<EntityList>("get_Scene")
                 , i => i.MatchCallvirt<Entity>("Removed")
-            )) {
-                cursor.EmitReference<Func<bool>>(() => IsSaved && IsLoadStart && Settings.FastLoadState);
-                cursor.Emit(OpCodes.Brtrue, cursor.Instrs[cursor.Index + 4]);
-            }
+            )) { }
         }
 
         private void LevelOnLoadLevel(On.Celeste.Level.orig_LoadLevel orig, Level self, Player.IntroTypes playerIntro,
             bool isFromLoader) {
-            if (IsSaved && IsLoadStart && Settings.FastLoadState && playerIntro == Player.IntroTypes.Respawn && isFromLoader == false) {
-                savedSession.DeepCloneTo(self.Session);
+            if (IsSaved && IsLoadStart && Settings.FastLoadState && playerIntro == Player.IntroTypes.Respawn &&
+                isFromLoader == false) {
+                SavedSession.DeepCloneTo(self.Session);
             }
 
             orig(self, playerIntro, isFromLoader);
@@ -126,8 +152,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             // 章节切换时清除保存的状态以及房间计时器自定终点
             // Clear the savestate and custom end point when switching chapters
-            if (IsSaved && (savedSession.Area.ID != level.Session.Area.ID ||
-                            savedSession.Area.Mode != level.Session.Area.Mode)) {
+            if (IsSaved && (SavedSession.Area.ID != level.Session.Area.ID ||
+                            SavedSession.Area.Mode != level.Session.Area.Mode)) {
                 ClearState();
                 RoomTimerManager.Instance.ClearPbTimes();
             }
@@ -192,7 +218,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // Allow player to respawn while level is frozen
             if (IsSaved && IsLoadFrozen) {
                 UpdatePlayerWhenFreeze(level, player);
-                level.Session.Time = savedSession.Time;
+                level.Session.Time = SavedSession.Time;
             }
 
             // 人物复活完毕后设置人物相关属性
@@ -206,7 +232,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 level.PauseLock = false;
                 level.TimeActive = savedLevel.TimeActive;
                 level.RawTimeActive = savedLevel.RawTimeActive;
-                level.Session.Time = savedSession.Time;
+                level.Session.Time = SavedSession.Time;
                 Engine.FreezeTimer = savedFreezeTimer;
                 Engine.TimeRate = savedTimeRate;
                 loadState = SaveLoad.LoadState.Complete;
@@ -293,11 +319,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     Session = level.Session.DeepClone(),
                     Camera = level.Camera.DeepClone()
                 };
+                CopyCore.DeepCopyMembers(savedLevel, level, true);
             } else {
                 savedLevel = level;
             }
 
-            CopyCore.DeepCopyFields(savedLevel, level, true);
             SavedPlayer = player;
             SavedEntitiesDict = level.FindAllToDict(out SavedDuplicateIdList);
 
@@ -314,18 +340,23 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             RestoreEntityUtils.OnSaveState(level);
 
-            reloadLevel(level);
+            ReloadLevel(level);
+        }
+
+        private bool NotAllowFastLoadState(Level level) {
+            if (!Settings.FastLoadState) return false;
+            return level.Paused || level.Transitioning;
         }
 
         private void LoadState() {
-            if (!IsSaved || !(Engine.Scene.GetLevel() is Level level)) {
+            if (!IsSaved || !(Engine.Scene.GetLevel() is Level level) || NotAllowFastLoadState(level)) {
                 return;
             }
 
             levelUpdateCounts = -1;
             loadState = SaveLoad.LoadState.Start;
 
-            reloadLevel(level);
+            ReloadLevel(level);
 
             // restore all mod sessions
             foreach (EverestModule module in Everest.Modules) {
@@ -335,11 +366,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
         }
 
-        private void reloadLevel(Level level) {
+        private void ReloadLevel(Level level) {
             if (Settings.FastLoadState) {
                 level.Reload();
+                // 避免死亡时读档执行完，接着才触发正常的复活 Reload 方法
+                if (level.Entities.FindFirst<PlayerDeadBody>() is Entity entity) {
+                    level.Remove(entity);
+                }
             } else {
-                Session deepCloneSession = savedSession.DeepClone();
+                Session deepCloneSession = SavedSession.DeepClone();
                 Engine.Scene = new LevelLoader(deepCloneSession, deepCloneSession.RespawnPoint);
             }
         }
@@ -374,8 +409,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private void RestoreLevel(Level level) {
-            level.Session.Inventory = savedSession.Inventory;
-            CopyCore.DeepCopyFields(level, savedLevel, true);
+            level.Session.Inventory = SavedSession.Inventory;
+            CopyCore.DeepCopyMembers(level, savedLevel, true);
             level.Camera.CopyFrom(savedLevel.Camera);
             WindController windController = level.Entities.FindFirst<WindController>();
             WindController savedWindController =

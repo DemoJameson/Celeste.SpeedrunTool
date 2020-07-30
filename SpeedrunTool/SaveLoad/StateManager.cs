@@ -434,7 +434,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
         }
 
-        private void ClearState() {
+        public void ClearState() {
             if (Engine.Scene is Level level && IsNotCollectingHeart(level)) {
                 level.Frozen = false;
                 level.PauseLock = false;

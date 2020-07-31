@@ -356,6 +356,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private void ReloadLevel(Level level) {
             if (FastLoadStateEnabled) {
+                // 允许切换房间时读档
+                level.SetField("transition", null);
+                // TODO 保存后光线亮度问题
+                // TODO 第九章雷电样式问题
+                // TODO 初始房间保存后读档，冲刺线条缓慢移动的问题
                 level.Completed = false;
                 level.Displacement.Clear();
                 level.Reload();
@@ -449,7 +454,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private bool NotAllowFastLoadState(Level level) {
             if (!FastLoadStateEnabled) return false;
-            return level.Paused || level.Transitioning;
+            return level.Paused;
         }
 
         private void ClearStateAndPbTimes(On.Celeste.Overworld.orig_ctor orig, Overworld self, OverworldLoader loader) {

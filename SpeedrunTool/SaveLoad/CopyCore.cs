@@ -79,7 +79,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                 foreach (PropertyInfo propertyInfo in properties) {
                     // 只处理能读取+写入的属性
-                    if (!propertyInfo.CanRead || !propertyInfo.CanWrite) continue;
+                    if (!propertyInfo.CanRead || !propertyInfo.CanWrite || propertyInfo.GetGetMethod(true).IsAbstract || propertyInfo.GetSetMethod(true).IsAbstract) continue;
 
                     Type propertyType = propertyInfo.PropertyType;
                     string propertyName = propertyInfo.Name;

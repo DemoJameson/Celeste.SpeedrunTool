@@ -98,46 +98,43 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         // TODO 现在是重写整个 UnloadLevel 方法，用 ILHook 修改 EntityList.UpdateLists 更简洁
         private void LevelOnUnloadLevel(On.Celeste.Level.orig_UnloadLevel orig, Level self) {
-            if (IsSaved) {
-                if (IsFastSaveSate) {
-                    List<Entity> entitiesExcludingTagMask = self.GetEntitiesExcludingTagMask(Tags.Global);
-                    entitiesExcludingTagMask.AddRange(self.Tracker.GetEntities<Textbox>());
+            if (IsSaved && IsFastSaveSate) {
+                List<Entity> entitiesExcludingTagMask = self.GetEntitiesExcludingTagMask(Tags.Global);
+                entitiesExcludingTagMask.AddRange(self.Tracker.GetEntities<Textbox>());
 
-                    // CassetteBlockManager 需要移除出 Level 来让它的状态不再改变
-                    if (self.Entities.FindFirst<CassetteBlockManager>() is Entity cassetteBlockManager) {
-                        entitiesExcludingTagMask.Add(cassetteBlockManager);
-                    }
-
-                    List<Entity> entities = (List<Entity>) self.Entities.GetField("entities");
-                    HashSet<Entity> current = (HashSet<Entity>) self.Entities.GetField("current");
-                    foreach (Entity entity in entitiesExcludingTagMask) {
-                        if (!entities.Contains(entity)) continue;
-                        current.Remove(entity);
-                        entities.Remove(entity);
-                        if (entity.Components != null) {
-                            foreach (Component component in entity.Components) {
-                                component.EntityRemoved(self.Entities.Scene);
-                            }
-                        }
-
-                        self.TagLists.InvokeMethod("EntityRemoved", entity);
-                        self.Tracker.InvokeMethod("EntityRemoved", entity);
-                        Engine.Pooler.InvokeMethod("EntityRemoved", entity);
-
-                        // 执行 SceneEnd 一般是停止播放声音，不过有时也会造成一些问题，例如导致 TalkComponent 的字段 UI 变成 null
-                        entity.SceneEnd(self);
-                    }
-
-                    loadState = SaveLoad.LoadState.Start;
+                // CassetteBlockManager 需要移除出 Level 来让它的状态不再改变
+                if (self.Entities.FindFirst<CassetteBlockManager>() is Entity cassetteBlockManager) {
+                    entitiesExcludingTagMask.Add(cassetteBlockManager);
                 }
 
-                // 执行 UnloadLevel 前都需要先移除 Player
-                if (IsLoadStart) self.GetPlayer()?.Removed(self);
-                orig(self);
+                List<Entity> entities = (List<Entity>) self.Entities.GetField("entities");
+                HashSet<Entity> current = (HashSet<Entity>) self.Entities.GetField("current");
+                foreach (Entity entity in entitiesExcludingTagMask) {
+                    if (!entities.Contains(entity)) continue;
+                    current.Remove(entity);
+                    entities.Remove(entity);
+                    if (entity.Components != null) {
+                        foreach (Component component in entity.Components) {
+                            component.EntityRemoved(self.Entities.Scene);
+                        }
+                    }
 
-            } else {
-                orig(self);
+                    self.TagLists.InvokeMethod("EntityRemoved", entity);
+                    self.Tracker.InvokeMethod("EntityRemoved", entity);
+                    Engine.Pooler.InvokeMethod("EntityRemoved", entity);
+
+                    // 执行 SceneEnd 一般是停止播放声音，不过有时也会造成一些问题，例如导致 TalkComponent 的字段 UI 变成 null
+                    entity.SceneEnd(self);
+                }
+
+                loadState = SaveLoad.LoadState.Start;
+                return;
             }
+
+            // 读档执行 UnloadLevel 前需要先移除 Player 清空 Player 存着的 Trigger
+            if (IsSaved && IsLoadStart) self.GetPlayer()?.Removed(self);
+
+            orig(self);
         }
 
         // TODO 不懂，改完直接报错，现在是重写整个 UnloadLevel 方法

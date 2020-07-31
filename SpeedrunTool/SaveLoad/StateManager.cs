@@ -6,7 +6,6 @@ using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base;
 using Force.DeepCloner;
-using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
 using Monocle;
 using MonoMod.Cil;
@@ -44,9 +43,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         public bool IsLoadComplete => loadState == SaveLoad.LoadState.Complete;
         // ReSharper restore MemberCanBePrivate.Global
 
-        private bool IsSaved => SavedSession != null && SavedPlayer != null;
-
-        private PlayerDeadBody currentPlayerDeadBody;
+        public bool IsSaved => SavedSession != null && SavedPlayer != null;
 
         private readonly List<int> disabledSaveStates = new List<int> {
             Player.StReflectionFall,
@@ -59,29 +56,40 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             Player.StDummy,
         };
 
+        #region Hook
+
         public void OnLoad() {
-            On.Celeste.AreaData.DoScreenWipe += QuickLoadWhenDeath;
             On.Celeste.Level.Update += LevelOnUpdate;
             On.Celeste.Overworld.ctor += ClearStateAndPbTimes;
-            On.Celeste.Player.Die += PlayerOnDie;
             AttachEntityId2Utils.OnLoad();
             RestoreEntityUtils.OnLoad();
 
             On.Celeste.Level.LoadLevel += LevelOnLoadLevel;
             On.Celeste.Level.UnloadLevel += LevelOnUnloadLevel;
+
+            AutoLoadStateUtils.OnHook();
         }
 
         public void OnUnload() {
-            On.Celeste.AreaData.DoScreenWipe -= QuickLoadWhenDeath;
             On.Celeste.Level.Update -= LevelOnUpdate;
             On.Celeste.Overworld.ctor -= ClearStateAndPbTimes;
-            On.Celeste.Player.Die -= PlayerOnDie;
             AttachEntityId2Utils.Unload();
             RestoreEntityUtils.Unload();
 
             On.Celeste.Level.LoadLevel -= LevelOnLoadLevel;
             On.Celeste.Level.UnloadLevel -= LevelOnUnloadLevel;
+
+            AutoLoadStateUtils.OnUnhook();
         }
+
+        public void OnInit() {
+            // enter debug map auto clear state
+            Engine.Commands.FunctionKeyActions[5] += ClearState;
+        }
+
+        #endregion
+
+        #region Fast Load State
 
         // TODO 现在是重写整个 UnloadLevel 方法，用 ILHook 修改 EntityList.UpdateLists 更简洁
         private void LevelOnUnloadLevel(On.Celeste.Level.orig_UnloadLevel orig, Level self) {
@@ -139,16 +147,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             orig(self, playerIntro, isFromLoader);
         }
 
-        public void OnInit() {
-            // enter debug map auto clear state
-            Engine.Commands.FunctionKeyActions[5] += ClearState;
-        }
+        #endregion
 
-        private void ClearStateAndPbTimes(On.Celeste.Overworld.orig_ctor orig, Overworld self, OverworldLoader loader) {
-            orig(self, loader);
-            ClearState();
-            RoomTimerManager.Instance.ClearPbTimes();
-        }
+        #region Core
 
         private void LevelOnUpdate(On.Celeste.Level.orig_Update orig, Level level) {
             if (!SpeedrunToolModule.Enabled) {
@@ -255,6 +256,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             orig(level);
         }
 
+        #endregion
+
+
         private void RestoreAllEntitiesPosition(Level level) {
             var loadedEntitiesDict = level.FindAllToDict<Entity>();
 
@@ -269,55 +273,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 loadedEntity.Visible = savedEntity.Visible;
                 loadedEntity.Collidable = savedEntity.Collidable;
             }
-        }
-
-        private bool CheckButton(Level level, Player player) {
-            if (GetVirtualButton(Mappings.Save).Pressed && IsAllowSave(level, player)) {
-                GetVirtualButton(Mappings.Save).ConsumePress();
-                SaveState(level, player);
-                return true;
-            }
-
-            if (GetVirtualButton(Mappings.Load).Pressed && !level.Paused && !IsLoadFrozen) {
-                GetVirtualButton(Mappings.Load).ConsumePress();
-                if (IsSaved) {
-                    LoadState();
-                } else if (!level.Frozen) {
-                    level.Add(new MiniTextbox(DialogIds.DialogNotSaved));
-                }
-
-                return true;
-            }
-
-            if (GetVirtualButton(Mappings.Clear).Pressed && !level.Paused) {
-                GetVirtualButton(Mappings.Clear).ConsumePress();
-                ClearState();
-                RoomTimerManager.Instance.ClearPbTimes();
-                if (IsNotCollectingHeart(level)) {
-                    level.Add(new MiniTextbox(DialogIds.DialogClear));
-                }
-
-                return false;
-            }
-
-            if (GetVirtualButton(Mappings.SwitchAutoLoadState).Pressed && !level.Paused) {
-                GetVirtualButton(Mappings.SwitchAutoLoadState).ConsumePress();
-                Settings.AutoLoadAfterDeath = !Settings.AutoLoadAfterDeath;
-                SpeedrunToolModule.Instance.SaveSettings();
-                return false;
-            }
-
-            return false;
-        }
-
-        private bool IsAllowSave(Level level, Player player) {
-            return !level.Paused && !level.Transitioning && !level.PauseLock && !level.InCutscene &&
-                   !level.SkippingCutscene && player != null && !player.Dead &&
-                   !disabledSaveStates.Contains(player.StateMachine.State) && IsNotCollectingHeart(level);
-        }
-
-        private bool IsNotCollectingHeart(Level level) {
-            return !level.Entities.FindAll<HeartGem>().Any(heart => (bool) heart.GetField("collected"));
         }
 
         private void SaveState(Level level, Player player) {
@@ -340,6 +295,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 foreach (var keyValuePair in SavedEntitiesDict) {
                     keyValuePair.Value.SceneEnd(level);
                 }
+
                 foreach (Entity entity in SavedDuplicateIdList) {
                     entity.SceneEnd(level);
                 }
@@ -363,12 +319,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             ReloadLevel(level);
         }
 
-        private bool NotAllowFastLoadState(Level level) {
-            if (!FastLoadStateEnabled) return false;
-            return level.Paused || level.Transitioning;
-        }
-
-        private void LoadState() {
+        public void LoadState() {
             if (!IsSaved || !(Engine.Scene.GetLevel() is Level level) || NotAllowFastLoadState(level)) {
                 return;
             }
@@ -388,9 +339,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private void ReloadLevel(Level level) {
             if (FastLoadStateEnabled) {
-                level.Reload();
                 // 避免死亡时读档执行完，接着才触发正常的复活 Reload 方法
-                level.Entities.FindFirst<PlayerDeadBody>()?.RemoveSelf();
+                if (level.Entities.FindFirst<PlayerDeadBody>() is Entity entity) {
+                    level.Remove(entity);
+                }
+                level.Reload();
             } else {
                 Session deepCloneSession = SavedSession.DeepClone();
                 Engine.Scene = new LevelLoader(deepCloneSession, deepCloneSession.RespawnPoint);
@@ -469,32 +422,64 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             RestoreEntityUtils.OnClearState();
         }
 
-
-        private PlayerDeadBody PlayerOnDie(On.Celeste.Player.orig_Die orig, Player self, Vector2 direction,
-            bool evenIfInvincible, bool registerDeathInStats) {
-            currentPlayerDeadBody = orig(self, direction, evenIfInvincible, registerDeathInStats);
-            return currentPlayerDeadBody;
+        private bool IsAllowSave(Level level, Player player) {
+            return !level.Paused && !level.Transitioning && !level.PauseLock && !level.InCutscene &&
+                   !level.SkippingCutscene && player != null && !player.Dead &&
+                   !disabledSaveStates.Contains(player.StateMachine.State) && IsNotCollectingHeart(level);
         }
 
-        // Everest 的 Bug，另外的 Mod Hook 了 PlayerDeadBody.End 方法后 Level.DoScreenWipe Hook 的方法 wipeIn 为 false 时就不触发了
-        // 所以改成了 Hook AreaData.DoScreenWipe 方法
-        private void QuickLoadWhenDeath(On.Celeste.AreaData.orig_DoScreenWipe orig, AreaData self, Scene scene,
-            bool wipeIn, Action onComplete) {
-            if (Settings.Enabled && Settings.AutoLoadAfterDeath && IsSaved &&
-                !wipeIn && scene is Level level &&
-                onComplete != null && (onComplete == level.Reload || currentPlayerDeadBody?.HasGolden == true)) {
-                Action complete = onComplete;
-                currentPlayerDeadBody = null;
-                onComplete = () => {
-                    if (IsSaved) {
-                        LoadState();
-                    } else {
-                        complete();
-                    }
-                };
+        private bool IsNotCollectingHeart(Level level) {
+            return !level.Entities.FindAll<HeartGem>().Any(heart => (bool) heart.GetField("collected"));
+        }
+
+        private bool NotAllowFastLoadState(Level level) {
+            if (!FastLoadStateEnabled) return false;
+            return level.Paused || level.Transitioning;
+        }
+
+        private void ClearStateAndPbTimes(On.Celeste.Overworld.orig_ctor orig, Overworld self, OverworldLoader loader) {
+            orig(self, loader);
+            ClearState();
+            RoomTimerManager.Instance.ClearPbTimes();
+        }
+
+        private bool CheckButton(Level level, Player player) {
+            if (GetVirtualButton(Mappings.Save).Pressed && IsAllowSave(level, player)) {
+                GetVirtualButton(Mappings.Save).ConsumePress();
+                SaveState(level, player);
+                return true;
             }
 
-            orig(self, scene, wipeIn, onComplete);
+            if (GetVirtualButton(Mappings.Load).Pressed && !level.Paused && !IsLoadFrozen) {
+                GetVirtualButton(Mappings.Load).ConsumePress();
+                if (IsSaved) {
+                    LoadState();
+                } else if (!level.Frozen) {
+                    level.Add(new MiniTextbox(DialogIds.DialogNotSaved));
+                }
+
+                return true;
+            }
+
+            if (GetVirtualButton(Mappings.Clear).Pressed && !level.Paused) {
+                GetVirtualButton(Mappings.Clear).ConsumePress();
+                ClearState();
+                RoomTimerManager.Instance.ClearPbTimes();
+                if (IsNotCollectingHeart(level)) {
+                    level.Add(new MiniTextbox(DialogIds.DialogClear));
+                }
+
+                return false;
+            }
+
+            if (GetVirtualButton(Mappings.SwitchAutoLoadState).Pressed && !level.Paused) {
+                GetVirtualButton(Mappings.SwitchAutoLoadState).ConsumePress();
+                Settings.AutoLoadAfterDeath = !Settings.AutoLoadAfterDeath;
+                SpeedrunToolModule.Instance.SaveSettings();
+                return false;
+            }
+
+            return false;
         }
 
         // @formatter:off

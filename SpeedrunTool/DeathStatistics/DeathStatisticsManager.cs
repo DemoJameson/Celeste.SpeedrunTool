@@ -274,8 +274,9 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         }
 
         private string GetCauseOfDeath() {
-            StackTrace stackTrace = new StackTrace();
-            MethodBase deathMethod = stackTrace.GetFrame(9).GetMethod();
+            // TODO 似乎总是在变，寻找稳定的方法
+            StackTrace stackTrace = new StackTrace(3);
+            MethodBase deathMethod = stackTrace.GetFrame(0).GetMethod();
             string death = deathMethod.ReflectedType?.Name ?? "";
 
             if (death == "Level") {

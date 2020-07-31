@@ -96,14 +96,28 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
         }
         public static void SetEntityId2(this Entity entity, IEnumerable<object> id, bool @override = true) {
             List<string> sid = id.Select(obj => {
+                if (obj == null) return "null";
+
                 if (obj is Entity e && e.HasEntityId2()) {
                     return e.GetEntityId2().ToString();
                 }
+
                 if (obj is Component component && component.Entity.HasEntityId2()) {
                     return component.Entity.GetEntityId2().ToString();
                 }
 
-                return obj?.ToString() ?? "null";
+                if (obj.GetType().IsArray && obj.GetType().GetArrayRank() == 1 && obj is Array array) {
+                    string result = "[";
+                    for (int i = 0; i < array.Length; i++) {
+                        if (i > 0) {
+                            result += ", ";
+                        }
+                        result += array.GetValue(i).ToString();
+                    }
+                    return result + "]";
+                }
+
+                return obj.ToString();
             }).ToList();
             entity.SetEntityId2(string.Join(", ", sid), @override);
         }

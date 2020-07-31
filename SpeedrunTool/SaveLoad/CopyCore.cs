@@ -153,9 +153,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 if (destValueIsNull) {
                     setMember(destObj, currentObjType, memberName, destValue);
                 }
-            } else if (memberType.IsArray && memberType.GetElementType() is Type elementType) {
+            } else if (memberType.IsArray && memberType.GetArrayRank() == 1 && memberType.GetElementType() is Type elementType) {
                 // 一维数组且数量相同
-                if (destValue is Array destArray && destArray.Rank == 1 && sourceValue is Array sourceArray &&
+                if (destValue is Array destArray && sourceValue is Array sourceArray &&
                     destArray.Length == sourceArray.Length) {
                     for (int i = 0; i < destArray.Length; i++) {
                         if (elementType.IsSimple()) {

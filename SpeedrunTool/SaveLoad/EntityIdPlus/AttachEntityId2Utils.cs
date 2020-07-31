@@ -53,6 +53,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus {
                 ).SelectMany(type => type.GetConstructors(ConstructorFlags));
 
                 foreach (ConstructorInfo constructorInfo in constructorInfos) {
+                    // $"{constructorInfo.DeclaringType}={string.Join(", ", constructorInfo.GetParameters().Select(info => info.ParameterType.Name))}".DebugLog();
                     Type[] argTypes = constructorInfo.GetParameters().Select(info => info.ParameterType).ToArray();
                     IlHooks.Add(new ILHook(constructorInfo, il => {
                         ILCursor ilCursor = new ILCursor(il);

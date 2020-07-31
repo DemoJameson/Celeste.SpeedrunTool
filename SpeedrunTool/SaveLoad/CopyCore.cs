@@ -128,7 +128,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             if (sourceValue == null) {
                 // sourceObj.sourceValue => Component.Entity 为空代表已经未添加到 Entity 中或已经被移除了
-                if (currentObjType == typeof(Component) && memberName == "<Entity>k__BackingField" &&
+                if (currentObjType == typeof(Component) && memberName == "Entity" &&
                     destObj is Component destObjComponent && destObjComponent.Entity != null) {
                     destObjComponent.RemoveSelf();
                     return;

@@ -25,6 +25,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private float savedFreezeTimer;
         private float savedTimeRate;
+        private float savedGlitchValue;
+        private float savedDistortAnxiety;
+        private float savedDistortGameRate;
 
         private Dictionary<EverestModule, EverestModuleSession> savedModSessions;
 
@@ -253,8 +256,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 level.TimeActive = savedLevel.TimeActive;
                 level.RawTimeActive = savedLevel.RawTimeActive;
                 level.Session.Time = SavedSession.Time;
+
                 Engine.FreezeTimer = savedFreezeTimer;
                 Engine.TimeRate = savedTimeRate;
+                Glitch.Value = savedGlitchValue;
+                Distort.Anxiety = savedDistortAnxiety;
+                Distort.GameRate = savedDistortGameRate;
+
                 loadState = SaveLoad.LoadState.Complete;
 
                 RestoreEntityUtils.OnLoadComplete(level);
@@ -307,6 +315,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             savedFreezeTimer = Engine.FreezeTimer;
             savedTimeRate = Engine.TimeRate;
+            savedGlitchValue = Glitch.Value;
+            savedDistortAnxiety = Distort.Anxiety;
+            savedDistortGameRate = Distort.GameRate;
 
             // save all mod sessions
             savedModSessions = new Dictionary<EverestModule, EverestModuleSession>();

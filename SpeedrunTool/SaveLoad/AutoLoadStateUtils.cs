@@ -22,6 +22,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 onComplete != null && (onComplete == level.Reload || scene.Entities.FindFirst<PlayerDeadBody>()?.HasGolden == true)) {
                 Action complete = onComplete;
                 onComplete = () => {
+                    // 死亡时快速读档，这时候候已经恢复完毕，无需再次读档
+                    if (scene.Entities.FindFirst<Player>() != null) return;
+
                     if (Manager.IsSaved) {
                         Manager.LoadState();
                     } else {

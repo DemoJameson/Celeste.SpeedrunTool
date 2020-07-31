@@ -1,5 +1,5 @@
 - Name: SpeedrunTool
-  Version: 2.1.4
+  Version: 2.1.5
   DLL: SpeedrunTool.dll
   Dependencies:
     - Name: Everest

@@ -37,6 +37,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         public Player SavedPlayer;
 
         // ReSharper disable MemberCanBePrivate.Global
+        public bool IsFastSaveSate => loadState == SaveLoad.LoadState.FastSaveState;
         public bool IsLoadStart => loadState == SaveLoad.LoadState.Start;
         public bool IsLoadFrozen => loadState == SaveLoad.LoadState.Frozen;
         public bool IsLoadPlayerRespawned => loadState == SaveLoad.LoadState.PlayerRespawned;
@@ -93,7 +94,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         // TODO 现在是重写整个 UnloadLevel 方法，用 ILHook 修改 EntityList.UpdateLists 更简洁
         private void LevelOnUnloadLevel(On.Celeste.Level.orig_UnloadLevel orig, Level self) {
-            if (IsSaved && IsLoadStart && FastLoadStateEnabled) {
+            if (IsSaved && IsFastSaveSate) {
                 List<Entity> entitiesExcludingTagMask = self.GetEntitiesExcludingTagMask(Tags.Global);
                 entitiesExcludingTagMask.AddRange(self.Tracker.GetEntities<Textbox>());
 
@@ -117,7 +118,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     self.TagLists.InvokeMethod("EntityRemoved", entity);
                     self.Tracker.InvokeMethod("EntityRemoved", entity);
                     Engine.Pooler.InvokeMethod("EntityRemoved", entity);
+
+                    // 执行 SceneEnd 一般是停止播放声音，不过有时也会造成一些问题，例如导致 TalkComponent 的字段 UI 变成 null
+                    entity.SceneEnd(self);
                 }
+
+                loadState = SaveLoad.LoadState.Start;
             } else {
                 orig(self);
             }
@@ -279,7 +285,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             ClearState();
 
             levelUpdateCounts = -1;
-            loadState = SaveLoad.LoadState.Start;
+            if (FastLoadStateEnabled) {
+                loadState = SaveLoad.LoadState.FastSaveState;
+            } else {
+                loadState = SaveLoad.LoadState.Start;
+            }
 
             SavedPlayer = player;
             SavedEntitiesDict = level.FindAllToDict(out SavedDuplicateIdList);
@@ -290,15 +300,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     Camera = level.Camera.DeepClone()
                 };
                 CopyCore.DeepCopyMembers(savedLevel, level, true);
-
-                // 执行 SceneEnd 一般是停止播放声音，不过有时也会造成一些问题，例如导致 TalkComponent 的字段 UI 变成 null
-                foreach (var keyValuePair in SavedEntitiesDict) {
-                    keyValuePair.Value.SceneEnd(level);
-                }
-
-                foreach (Entity entity in SavedDuplicateIdList) {
-                    entity.SceneEnd(level);
-                }
             } else {
                 savedLevel = level;
             }
@@ -340,9 +341,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private void ReloadLevel(Level level) {
             if (FastLoadStateEnabled) {
                 // 避免死亡时读档执行完，接着才触发正常的复活 Reload 方法
-                if (level.Entities.FindFirst<PlayerDeadBody>() is Entity entity) {
-                    level.Remove(entity);
-                }
+                level.Entities.FindFirst<PlayerDeadBody>()?.RemoveSelf();
                 level.Reload();
             } else {
                 Session deepCloneSession = SavedSession.DeepClone();
@@ -489,8 +488,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         // @formatter:on
     }
 
-    public enum LoadState {
+    internal enum LoadState {
         None,
+        FastSaveState,
         Start,
         Frozen,
         PlayerRespawned,

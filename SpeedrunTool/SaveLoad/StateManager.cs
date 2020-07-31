@@ -41,6 +41,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         public bool IsLoadStart => loadState == SaveLoad.LoadState.Start;
         public bool IsLoadFrozen => loadState == SaveLoad.LoadState.Frozen;
         public bool IsLoadPlayerRespawned => loadState == SaveLoad.LoadState.PlayerRespawned;
+
         public bool IsLoadComplete => loadState == SaveLoad.LoadState.Complete;
         // ReSharper restore MemberCanBePrivate.Global
 
@@ -340,8 +341,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private void ReloadLevel(Level level) {
             if (FastLoadStateEnabled) {
-                // 避免死亡时读档执行完，接着才触发正常的复活 Reload 方法
-                level.Entities.FindFirst<PlayerDeadBody>()?.RemoveSelf();
+                level.Completed = false;
+                level.Displacement.Clear();
                 level.Reload();
             } else {
                 Session deepCloneSession = SavedSession.DeepClone();

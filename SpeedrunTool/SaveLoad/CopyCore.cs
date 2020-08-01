@@ -9,6 +9,7 @@ using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base;
 using FMOD.Studio;
+using Force.DeepCloner;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
@@ -449,12 +450,19 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 destValue = CopyList(null, sourceValue, genericType);
             }
 
+            bool createByDeepClone = false;
+            // 如果一个对象都是简单类型的字段或者简单数组，那么可以直接用 DeepCloner
+            if (sourceType.IsSimpleReference()) {
+                destValue = sourceValue.DeepClone();
+                createByDeepClone = true;
+            }
+
             // 尝试给未处理的类型创建实例
             if (destValue == null && forceCreateObject) {
                 destValue = sourceValue.ForceCreateInstance("TryCloneObject End");
             }
 
-            if (destValue != null) {
+            if (destValue != null && !createByDeepClone) {
                 CreatedObjectsDict[sourceValue] = destValue;
             }
 

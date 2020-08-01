@@ -3,11 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Fasterflect;
+using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
     internal static class ReflectionExtensions {
         private const BindingFlags InstanceAnyVisibility =
             BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+
+        private const BindingFlags InstanceAnyVisibilityDeclaredOnly =
+            InstanceAnyVisibility | BindingFlags.DeclaredOnly;
 
         public static bool IsSimple(this Type type) {
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>)) {
@@ -19,22 +23,50 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                    || type.IsEnum
                    || type == typeof(string)
                    || type == typeof(decimal)
-
                    || type.IsValueType
                    && type.FullName != "Celeste.TriggerSpikes+SpikeInfo" // SpikeInfo 里有 Entity 所以不能算做简单数据类型
                    && type.FullName != "Celeste.Mod.Entities.TriggerSpikesOriginal+SpikeInfo"
-
                    || type == typeof(object) // Coroutine
-
                    || type == typeof(MapData)
                    || type == typeof(AreaData)
                    || type == typeof(LevelData)
                    || type == typeof(EntityData)
                    || type == typeof(DecalData)
-
                    || type == typeof(Type)
                    || type.FullName != null && type.FullName.StartsWith("System.Reflection")
                 ;
+        }
+
+        public static bool IsSimpleArray(this Type type) {
+            return type.IsArray && type.GetArrayRank() == 1 && type.GetElementType().IsSimple();
+        }
+
+        public static bool IsSimpleEnumerable(this Type type) {
+            return type.IsEnumerable(out Type genericType) && genericType.IsSimple();
+        }
+
+        public static bool IsSimpleReference(this Type type) {
+            if (type.IsSimple()) return true;
+
+            // 常见非简单引用类型，先排除
+            if (type.IsSameOrSubclassOf(typeof(Scene))
+                || type.IsSameOrSubclassOf(typeof(Entity))
+                || type.IsSameOrSubclassOf(typeof(Component))
+                || type.IsSameOrSubclassOf(typeof(Collide))
+                || type.IsSameOrSubclassOf(typeof(ComponentList))
+                || type.IsSameOrSubclassOf(typeof(EntityList))
+            ) return false;
+
+            // TODO 现在只做了简单的判断，引用了其他简单的引用类型也会被判断为复杂类型
+            var allFieldTypes = type.GetAllFieldTypes(InstanceAnyVisibilityDeclaredOnly);
+            return allFieldTypes.All(fieldType =>
+                fieldType.IsSimple()
+                || fieldType.IsSameOrBaseclassOf(type)
+                || fieldType.IsSimpleArray()
+                || fieldType.IsSimpleEnumerable()
+                || fieldType.IsArray && fieldType.GetArrayRank() ==1 && type.IsSameOrSubclassOf(fieldType.GetElementType())
+                || fieldType.IsEnumerable(out Type genericType) && type.IsSameOrSubclassOf(genericType)
+            );
         }
 
         public static bool IsList(this Type type, out Type genericType) {
@@ -58,6 +90,17 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         public static bool IsHashSet(this Type type, out Type genericType) {
             bool result = type.IsGenericType && type.GetGenericTypeDefinition().IsAssignableFrom(typeof(HashSet<>))
                                              && type.GenericTypeArguments.Length == 1;
+
+            genericType = result ? type.GenericTypeArguments[0] : null;
+
+            return result;
+        }
+
+        public static bool IsEnumerable(this Type type, out Type genericType) {
+            bool result = type.IsGenericType
+                          && type.GetGenericTypeDefinition().GetInterfaces()
+                              .Any(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                          && type.GenericTypeArguments.Length == 1;
 
             genericType = result ? type.GenericTypeArguments[0] : null;
 
@@ -153,7 +196,8 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return fieldInfo;
         }
 
-        public static FieldInfo[] GetFieldInfos(this Type type, BindingFlags bindingFlags, bool filterBackingField = false) {
+        public static FieldInfo[] GetFieldInfos(this Type type, BindingFlags bindingFlags,
+            bool filterBackingField = false) {
             string key = $"GetFieldInfos-{bindingFlags}-{filterBackingField}";
 
             FieldInfo[] fieldInfos = type.GetExtendedDataValue<FieldInfo[]>(key);
@@ -162,10 +206,27 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 if (filterBackingField) {
                     fieldInfos = fieldInfos.Where(info => !info.Name.EndsWith("k__BackingField")).ToArray();
                 }
+
                 type.SetExtendedDataValue(key, fieldInfos);
             }
 
             return fieldInfos;
+        }
+
+        public static HashSet<Type> GetAllFieldTypes(this Type type, BindingFlags bindingFlags,
+            bool filterBackingField = false) {
+            HashSet<Type> result = new HashSet<Type>();
+            while (type.IsSubclassOf(typeof(object))) {
+                var fieldTypes = type.GetFieldInfos(bindingFlags, filterBackingField).Select(info => info.FieldType);
+                foreach (Type fieldType in fieldTypes) {
+                    if (result.Contains(fieldType)) continue;
+                    result.Add(fieldType);
+                }
+
+                type = type.BaseType;
+            }
+
+            return result;
         }
 
         private static PropertyInfo GetPropertyInfo(Type type, string name) {

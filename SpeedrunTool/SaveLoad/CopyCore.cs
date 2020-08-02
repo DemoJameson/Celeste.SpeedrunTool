@@ -212,7 +212,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         sourceValue.DeepCloneTo(destValue);
                     } else {
                         for (int i = 0; i < destArray.Length; i++) {
-                            TryDeepCopyMembers(destArray.GetValue(i), sourceArray.GetValue(i));
+                            if (sourceArray.GetValue(i) == null) {
+                                destArray.SetValue(null, i);
+                            } else {
+                                TryDeepCopyMembers(destArray.GetValue(i), sourceArray.GetValue(i));
+                            }
                         }
                     }
                 }

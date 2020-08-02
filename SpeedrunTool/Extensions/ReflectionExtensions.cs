@@ -37,12 +37,16 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 ;
         }
 
-        public static bool IsSimpleArray(this Type type) {
-            return type.IsArray && type.GetArrayRank() == 1 && type.GetElementType().IsSimple();
+        public static bool IsSingleRankArray(this Type type) {
+            return type.IsArray && type.GetArrayRank() == 1;
         }
 
-        public static bool IsSimpleEnumerable(this Type type) {
-            return type.IsEnumerable(out Type genericType) && genericType.IsSimple();
+        public static bool IsSimpleArray(this Type type) {
+            return type.IsSingleRankArray() && type.GetElementType().IsSimple();
+        }
+
+        public static bool IsSimpleList(this Type type) {
+            return type.IsList(out Type genericType) && genericType.IsSimple();
         }
 
         public static bool IsSimpleReference(this Type type) {
@@ -55,6 +59,8 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 || type.IsSameOrSubclassOf(typeof(Collide))
                 || type.IsSameOrSubclassOf(typeof(ComponentList))
                 || type.IsSameOrSubclassOf(typeof(EntityList))
+                || typeof(Delegate).IsAssignableFrom(type.BaseType)
+                || type.IsArray
             ) return false;
 
             // TODO 现在只做了简单的判断，引用了其他简单的引用类型也会被判断为复杂类型
@@ -63,9 +69,9 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 fieldType.IsSimple()
                 || fieldType.IsSameOrBaseclassOf(type)
                 || fieldType.IsSimpleArray()
-                || fieldType.IsSimpleEnumerable()
+                || fieldType.IsSimpleList()
                 || fieldType.IsArray && fieldType.GetArrayRank() ==1 && type.IsSameOrSubclassOf(fieldType.GetElementType())
-                || fieldType.IsEnumerable(out Type genericType) && type.IsSameOrSubclassOf(genericType)
+                || fieldType.IsList(out Type genericType) && type.IsSameOrSubclassOf(genericType)
             );
         }
 
@@ -96,16 +102,6 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return result;
         }
 
-        public static bool IsEnumerable(this Type type, out Type genericType) {
-            bool result = type.IsGenericType
-                          && type.GetGenericTypeDefinition().GetInterfaces()
-                              .Any(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IEnumerable<>))
-                          && type.GenericTypeArguments.Length == 1;
-
-            genericType = result ? type.GenericTypeArguments[0] : null;
-
-            return result;
-        }
 
         public static bool IsCompilerGenerated(this object obj) {
             return IsCompilerGenerated(obj.GetType());

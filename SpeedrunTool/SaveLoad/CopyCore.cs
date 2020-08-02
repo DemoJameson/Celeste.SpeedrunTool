@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions;
@@ -15,13 +16,15 @@ using Monocle;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     internal static class CopyCore {
         private static readonly HashSet<object> CopyingObjects = new HashSet<object>(new ReferenceEqualityComparer());
-        private static readonly Dictionary<object, object> CreatedObjectsDict = new Dictionary<object, object>(new ReferenceEqualityComparer());
+
+        private static readonly Dictionary<object, object> CreatedObjectsDict =
+            new Dictionary<object, object>(new ReferenceEqualityComparer());
 
         public static void ClearCachedObjects() {
             CopyingObjects.Clear();
             CreatedObjectsDict.Clear();
         }
-        
+
         private class ReferenceEqualityComparer : EqualityComparer<object> {
             public override bool Equals(object x, object y) {
                 return ReferenceEquals(x, y);
@@ -51,8 +54,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             if (destObj.GetType() == typeof(object) || type == typeof(object)) return;
 
-            const BindingFlags anyDeclaredOnlyFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance |
-                                                 BindingFlags.DeclaredOnly;
+            const BindingFlags anyDeclaredOnlyFlags =
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance |
+                BindingFlags.DeclaredOnly;
 
 
             if (CopyingObjects.Contains(destObj)) {
@@ -80,10 +84,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                 foreach (PropertyInfo propertyInfo in properties) {
                     // 只处理能读取+写入的属性
-                    if (!propertyInfo.CanRead || !propertyInfo.CanWrite || propertyInfo.GetGetMethod(true).IsAbstract || propertyInfo.GetSetMethod(true).IsAbstract) continue;
+                    if (!propertyInfo.CanRead || !propertyInfo.CanWrite || propertyInfo.GetGetMethod(true).IsAbstract ||
+                        propertyInfo.GetSetMethod(true).IsAbstract) continue;
 
                     Type propertyType = propertyInfo.PropertyType;
                     string propertyName = propertyInfo.Name;
+
+                    // $"DeepCopyMembers: destObj={destObj}\tcurrentObjType={declaringType}\tmemberType={propertyType}\tmemberName={propertyName}".DebugLog();
+
                     object destValue = destObj.GetProperty(declaringType, propertyName);
                     object sourceValue = sourceObj.GetProperty(declaringType, propertyName);
 
@@ -124,7 +132,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             object destValue, object sourceValue, SetMember setMember) {
             if (destValue == sourceValue || (destValue?.Equals(sourceValue) ?? false)) return;
 
-            // $"CopyField: destObj={destObj}\tcurrentObjType={currentObjType}\tmemberType={fieldType}\tmemberName={fieldName}\tdestValue={destValue ?? "null"}\tsourceValue={sourceValue ?? "null"}"
+            // $"CopyMember: destObj={destObj}\tcurrentObjType={currentObjType}\tmemberType={fieldType}\tmemberName={fieldName}\tdestValue={destValue ?? "null"}\tsourceValue={sourceValue ?? "null"}"
             //     .DebugLog();
 
             if (sourceValue == null) {
@@ -148,63 +156,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (memberType.IsSimple()) {
                 // 简单类型直接复制
                 setMember(destObj, currentObjType, memberName, sourceValue);
-            } else if (memberType.IsArray && memberType.GetArrayRank() == 1 && memberType.GetElementType() is Type elementType) {
-                // 一维数组且数量相同
-                if (destValue is Array destArray && sourceValue is Array sourceArray &&
-                    destArray.Length == sourceArray.Length) {
-                    for (int i = 0; i < destArray.Length; i++) {
-                        if (elementType.IsSimple()) {
-                            destArray.SetValue(sourceArray.GetValue(i), i);
-                        } else if (destArray.GetValue(i) != null && sourceArray.GetValue(i) != null) {
-                            TryDeepCopyMembers(destArray.GetValue(i), sourceArray.GetValue(i));
-                        }
-                    }
-                }
-            } else if (memberType.IsHashSet(out Type hashElementType)) {
-                if (destValue == null) {
-                    destValue = Activator.CreateInstance(memberType);
-                    setMember(destObj, currentObjType, memberName, destValue);
-                }
-
-                if (hashElementType.IsSimple()) {
-                    // 列表里是简单数据，则清除后全部加入
-                    destValue.InvokeMethod("Clear");
-                    if (sourceValue is IEnumerable sourceEnumerable) {
-                        IEnumerator enumerator = sourceEnumerable.GetEnumerator();
-                        while (enumerator.MoveNext()) {
-                            destValue.InvokeMethod("Add", enumerator.Current);
-                        }
-                    }
-                } else if (hashElementType.IsSameOrSubclassOf(typeof(Entity))) {
-                    // Player.triggersInside Hashset<Trigger>
-                    destValue.InvokeMethod("Clear");
-                    if (sourceValue is IEnumerable sourceEnumerable) {
-                        IEnumerator enumerator = sourceEnumerable.GetEnumerator();
-                        while (enumerator.MoveNext()) {
-                            if (enumerator.Current.TryFindOrCloneObject() is Entity entity) {
-                                destValue.InvokeMethod("Add", entity);
-                            } else {
-                                ($"Copy HashSet<{hashElementType}> element failed: {enumerator.Current}\n" +
-                                 $"destObj={destObj}\tcurrentObjType={currentObjType}\tmemberType={memberType}\tmemberName={memberName}\tdestValue={destValue ?? "null"}\tsourceValue={sourceValue}"
-                                    ).Log();
-                            }
-                        }
-                    }
-                }
-            } else if (destValue is Stack<IEnumerator> destEnumerators &&
-                       sourceValue is Stack<IEnumerator> sourceEnumerators) {
-                // 用于恢复 Coroutine
-                Stack<IEnumerator> temp = new Stack<IEnumerator>();
-                foreach (IEnumerator functionCall in sourceEnumerators) {
-                    if (TryFindOrCloneObject(functionCall) is IEnumerator destFunctionCall) {
-                        temp.Push(destFunctionCall);
-                    }
-                }
-
-                destEnumerators.Clear();
-                foreach (IEnumerator enumerator in temp) {
-                    destEnumerators.Push(enumerator);
-                }
             } else {
                 // 复杂类型
                 if (destValue != null) {
@@ -222,17 +173,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
         }
 
-        private static object CopyList(object destValue, object sourceValue, Type genericType) {
+        private static void CopyList(object destValue, object sourceValue, Type genericType) {
             if (!(destValue is IList destList) || !(sourceValue is IList sourceList)) {
-                return destValue;
+                return;
             }
 
             if (genericType.IsSimple()) {
                 // 列表里是简单数据，则清除后全部假如
-                destList.Clear();
-                foreach (object obj in sourceList) {
-                    destList.Add(obj);
-                }
+                sourceList.DeepCloneTo(destList);
             } else {
                 // 列表里是复杂类型
                 if (destList.Count == sourceList.Count) {
@@ -250,16 +198,45 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     }
                 }
             }
-
-            return destValue;
         }
 
         public static void TryDeepCopyMembers(object destValue, object sourceValue) {
+            Type type = sourceValue.GetType();
             if (sourceValue.IsCompilerGenerated()) {
                 DeepCopyMembers(destValue, sourceValue);
+            } else if (type.IsSingleRankArray()) {
+                // 一维数组且数量相同
+                if (destValue is Array destArray && sourceValue is Array sourceArray &&
+                    destArray.Length == sourceArray.Length) {
+                    if (type.IsSimpleArray()) {
+                        sourceValue.DeepCloneTo(destValue);
+                    } else {
+                        for (int i = 0; i < destArray.Length; i++) {
+                            TryDeepCopyMembers(destArray.GetValue(i), sourceArray.GetValue(i));
+                        }
+                    }
+                }
             } else if (sourceValue.GetType().IsList(out Type listElementType)) {
                 CopyList(destValue, sourceValue, listElementType);
-            }else if (sourceValue is Component) {
+            } else if (type.IsHashSet(out Type hashElementType)) {
+                if (hashElementType.IsSimple()) {
+                    sourceValue.DeepCloneTo(destValue);
+                } else {
+                    // Player.triggersInside Hashset<Trigger>
+                    destValue.InvokeMethod("Clear");
+                    if (sourceValue is IEnumerable sourceEnumerable) {
+                        IEnumerator enumerator = sourceEnumerable.GetEnumerator();
+                        while (enumerator.MoveNext()) {
+                            if (TryFindOrCloneObject(enumerator.Current) is object obj) {
+                                destValue.InvokeMethod("Add", obj);
+                            }
+                        }
+                    }
+                }
+            } else if (type.IsSimpleReference()) {
+                $"TryDeepCopyMembers: {type}.IsSimpleReference".DebugLog();
+                DeepCopyMembers(destValue, sourceValue);
+            } else if (sourceValue is Component) {
                 if (sourceValue is StateMachine // only copy some fields later
                     || sourceValue is DustGraphic // sometimes game crash after savestate
                     || sourceValue is VertexLight // switch between room will make light disappear
@@ -304,9 +281,23 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 DeepCopyMembers(destValue, sourceValue);
             } else if (destValue is Entity destEntity
                        && sourceValue is Entity sourceEntity
-                       ) {
+            ) {
                 if (destEntity.GetEntityId2() != sourceEntity.GetEntityId2()) {
                     $"TryDeepCopyMembers: {destEntity} has different EntityId2.".DebugLog();
+                }
+            } else if (destValue is Stack<IEnumerator> destEnumerators &&
+                       sourceValue is Stack<IEnumerator> sourceEnumerators) {
+                // 用于恢复 Coroutine
+                Stack<IEnumerator> temp = new Stack<IEnumerator>();
+                foreach (IEnumerator functionCall in sourceEnumerators) {
+                    if (TryFindOrCloneObject(functionCall) is IEnumerator destFunctionCall) {
+                        temp.Push(destFunctionCall);
+                    }
+                }
+
+                destEnumerators.Clear();
+                foreach (IEnumerator enumerator in temp) {
+                    destEnumerators.Push(enumerator);
                 }
             }
         }
@@ -440,13 +431,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 destValue = sourceValue;
             } else if (sourceType.IsList(out Type _)) {
                 destValue = Activator.CreateInstance(sourceType);
-            }
-
-            bool createByDeepClone = false;
-            // 如果一个对象都是简单类型的字段或者简单数组，那么可以直接用 DeepCloner
-            if (destValue == null && sourceType.FullName == "Celeste.LightningStrike+Node") {
-                destValue = sourceValue.DeepClone();
-                createByDeepClone = true;
+            } else if (sourceType.IsHashSet(out Type _)) {
+                destValue = Activator.CreateInstance(sourceType);
+            } else if (sourceType.IsSingleRankArray()) {
+                destValue = Activator.CreateInstance(sourceType, ((Array) sourceValue).Length);
+            } else if (sourceType.IsSimpleReference()) {
+                $"TryCloneObject: {sourceType}.IsSimpleReference".DebugLog();
+                destValue = FormatterServices.GetUninitializedObject(sourceType);
             }
 
             // 尝试给未处理的类型创建实例
@@ -454,7 +445,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 destValue = sourceValue.ForceCreateInstance("TryCloneObject End");
             }
 
-            if (destValue != null && !createByDeepClone) {
+            if (destValue != null) {
                 CreatedObjectsDict[sourceValue] = destValue;
             }
 

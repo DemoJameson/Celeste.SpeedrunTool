@@ -148,12 +148,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (memberType.IsSimple()) {
                 // 简单类型直接复制
                 setMember(destObj, currentObjType, memberName, sourceValue);
-            } else if (memberType.IsList(out Type genericType)) {
-                bool destValueIsNull = destValue == null;
-                destValue = CopyList(destValue, sourceValue, genericType);
-                if (destValueIsNull) {
-                    setMember(destObj, currentObjType, memberName, destValue);
-                }
             } else if (memberType.IsArray && memberType.GetArrayRank() == 1 && memberType.GetElementType() is Type elementType) {
                 // 一维数组且数量相同
                 if (destValue is Array destArray && sourceValue is Array sourceArray &&
@@ -229,10 +223,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private static object CopyList(object destValue, object sourceValue, Type genericType) {
-            if (destValue == null) {
-                destValue = Activator.CreateInstance(sourceValue.GetType());
-            }
-
             if (!(destValue is IList destList) || !(sourceValue is IList sourceList)) {
                 return destValue;
             }
@@ -267,7 +257,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         public static void TryDeepCopyMembers(object destValue, object sourceValue) {
             if (sourceValue.IsCompilerGenerated()) {
                 DeepCopyMembers(destValue, sourceValue);
-            } else if (sourceValue is Component) {
+            } else if (sourceValue.GetType().IsList(out Type listElementType)) {
+                CopyList(destValue, sourceValue, listElementType);
+            }else if (sourceValue is Component) {
                 if (sourceValue is StateMachine // only copy some fields later
                     || sourceValue is DustGraphic // sometimes game crash after savestate
                     || sourceValue is VertexLight // switch between room will make light disappear
@@ -446,13 +438,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 destValue = destComponent;
             } else if (sourceValue is MTexture) {
                 destValue = sourceValue;
-            } else if (sourceType.IsList(out Type genericType)) {
-                destValue = CopyList(null, sourceValue, genericType);
+            } else if (sourceType.IsList(out Type _)) {
+                destValue = Activator.CreateInstance(sourceType);
             }
 
             bool createByDeepClone = false;
             // 如果一个对象都是简单类型的字段或者简单数组，那么可以直接用 DeepCloner
-            if (sourceType.IsSimpleReference()) {
+            if (destValue == null && sourceType.FullName == "Celeste.LightningStrike+Node") {
                 destValue = sourceValue.DeepClone();
                 createByDeepClone = true;
             }

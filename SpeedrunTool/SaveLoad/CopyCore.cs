@@ -200,7 +200,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
         }
 
-        public static void TryDeepCopyMembers(object destValue, object sourceValue) {
+        private static void TryDeepCopyMembers(object destValue, object sourceValue) {
             Type type = sourceValue.GetType();
             if (sourceValue.IsCompilerGenerated()) {
                 DeepCopyMembers(destValue, sourceValue);
@@ -281,8 +281,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         SoundSourceAction.PlayingSoundSources.Add(destSound);
                         break;
                 }
-            } else if (destValue is Collider) {
-                DeepCopyMembers(destValue, sourceValue);
             } else if (destValue is Entity destEntity
                        && sourceValue is Entity sourceEntity
             ) {

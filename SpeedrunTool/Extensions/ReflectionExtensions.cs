@@ -27,6 +27,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                    && type.FullName != "Celeste.TriggerSpikes+SpikeInfo" // SpikeInfo 里有 Entity 所以不能算做简单数据类型
                    && type.FullName != "Celeste.Mod.Entities.TriggerSpikesOriginal+SpikeInfo"
                    || type == typeof(object) // Coroutine
+                   || type.IsSameOrSubclassOf(typeof(Collider)) // 通过 Property 直接操作 Collider 会帮我们处理里面的 Entity，这样我们就不需要自己创建 Collider 了
                    || type == typeof(MapData)
                    || type == typeof(AreaData)
                    || type == typeof(LevelData)
@@ -50,17 +51,17 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static bool IsSimpleReference(this Type type) {
-            if (type.IsSimple()) return true;
-
             // 常见非简单引用类型，先排除
-            if (type.IsSameOrSubclassOf(typeof(Scene))
+            if (type.IsSimple()
+                || type.IsArray
+                || type.IsList(out _)
+                || typeof(Delegate).IsAssignableFrom(type.BaseType)
+                || type.IsSameOrSubclassOf(typeof(Scene))
                 || type.IsSameOrSubclassOf(typeof(Entity))
                 || type.IsSameOrSubclassOf(typeof(Component))
                 || type.IsSameOrSubclassOf(typeof(Collide))
                 || type.IsSameOrSubclassOf(typeof(ComponentList))
                 || type.IsSameOrSubclassOf(typeof(EntityList))
-                || typeof(Delegate).IsAssignableFrom(type.BaseType)
-                || type.IsArray
             ) return false;
 
             // TODO 现在只做了简单的判断，引用了其他简单的引用类型也会被判断为复杂类型

@@ -7,6 +7,17 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
     internal static class ReflectionExtensions {
+        private static readonly HashSet<Type> SimpleTypes = new HashSet<Type> {
+            typeof(byte), typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong),
+            typeof(float), typeof(double), typeof(decimal), typeof(char), typeof(string), typeof(bool), typeof(DateTime),
+            typeof(IntPtr), typeof(UIntPtr), typeof(Guid),
+            // do not clone such native type
+            Type.GetType("System.RuntimeType"),
+            Type.GetType("System.RuntimeTypeHandle"),
+        };
+
+        private static readonly Dictionary<Type, bool> KnownSimpleReferenceTypes = new Dictionary<Type, bool>();
+
         private const BindingFlags InstanceAnyVisibility =
             BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
@@ -20,9 +31,8 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             }
 
             return type.IsPrimitive
-                   || type.IsEnum
-                   || type == typeof(string)
-                   || type == typeof(decimal)
+                   || type.IsEnum || type.IsPointer
+                   || SimpleTypes.Contains(type)
                    || type.IsValueType
                    && type.FullName != "Celeste.TriggerSpikes+SpikeInfo" // SpikeInfo 里有 Entity 所以不能算做简单数据类型
                    && type.FullName != "Celeste.Mod.Entities.TriggerSpikesOriginal+SpikeInfo"
@@ -51,29 +61,41 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static bool IsSimpleReference(this Type type) {
+            if (KnownSimpleReferenceTypes.ContainsKey(type)) {
+                return KnownSimpleReferenceTypes[type];
+            }
+
             // 常见非简单引用类型，先排除
             if (type.IsSimple()
                 || type.IsArray
-                || type.IsList(out _)
+                || type.IsAbstract
+                || !type.IsClass
                 || typeof(Delegate).IsAssignableFrom(type.BaseType)
+                || type.IsList(out _)
                 || type.IsSameOrSubclassOf(typeof(Scene))
                 || type.IsSameOrSubclassOf(typeof(Entity))
                 || type.IsSameOrSubclassOf(typeof(Component))
                 || type.IsSameOrSubclassOf(typeof(Collide))
                 || type.IsSameOrSubclassOf(typeof(ComponentList))
                 || type.IsSameOrSubclassOf(typeof(EntityList))
-            ) return false;
+            ) {
+                KnownSimpleReferenceTypes[type] = false;
+                return false;
+            }
 
             // TODO 现在只做了简单的判断，引用了其他简单的引用类型也会被判断为复杂类型
-            var allFieldTypes = type.GetAllFieldTypes(InstanceAnyVisibilityDeclaredOnly);
-            return allFieldTypes.All(fieldType =>
+            HashSet<Type> allFieldTypes = type.GetAllFieldTypes(InstanceAnyVisibilityDeclaredOnly);
+            bool result = allFieldTypes.All(fieldType =>
                 fieldType.IsSimple()
                 || fieldType.IsSameOrBaseclassOf(type)
                 || fieldType.IsSimpleArray()
                 || fieldType.IsSimpleList()
-                || fieldType.IsArray && fieldType.GetArrayRank() ==1 && type.IsSameOrSubclassOf(fieldType.GetElementType())
+                || fieldType.IsArray && fieldType.GetArrayRank() == 1 && type.IsSameOrSubclassOf(fieldType.GetElementType())
                 || fieldType.IsList(out Type genericType) && type.IsSameOrSubclassOf(genericType)
             );
+
+            KnownSimpleReferenceTypes.Add(type, result);
+            return result;
         }
 
         public static bool IsList(this Type type, out Type genericType) {

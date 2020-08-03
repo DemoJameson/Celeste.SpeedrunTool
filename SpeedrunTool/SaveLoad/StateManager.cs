@@ -7,9 +7,7 @@ using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base;
 using FMOD.Studio;
 using Force.DeepCloner;
-using Mono.Cecil.Cil;
 using Monocle;
-using MonoMod.Cil;
 using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
@@ -74,27 +72,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Celeste.Level.LoadLevel += LevelOnLoadLevel;
             On.Celeste.Level.UnloadLevel += LevelOnUnloadLevel;
 
-            AutoLoadStateUtils.OnHook();
-
             On.Monocle.Scene.End += SceneOnEnd;
             On.Celeste.Player.SceneEnd += PlayerOnSceneEnd;
+
+            AutoLoadStateUtils.OnHook();
         }
 
-        private void SceneOnEnd(On.Monocle.Scene.orig_End orig, Scene self) {
-            orig(self);
-            if (self is Level && IsSaveSate) {
-                loadState = SaveLoad.LoadState.Start;
-            }
-        }
-
-        // 避免 triggersInside 与 temp 被清空，从 Everest v1883 开始被清除了
-        private void PlayerOnSceneEnd(On.Celeste.Player.orig_SceneEnd orig, Player self, Scene scene) {
-            if (IsSaveSate || IsFastSaveSate) {
-                Audio.Stop(self.GetField("conveyorLoopSfx") as EventInstance);
-            } else {
-                orig(self, scene);
-            }
-        }
 
         public void OnUnload() {
             On.Celeste.Level.Update -= LevelOnUpdate;
@@ -105,11 +88,37 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Celeste.Level.LoadLevel -= LevelOnLoadLevel;
             On.Celeste.Level.UnloadLevel -= LevelOnUnloadLevel;
 
+            On.Monocle.Scene.End += SceneOnEnd;
+            On.Celeste.Player.SceneEnd += PlayerOnSceneEnd;
+
             AutoLoadStateUtils.OnUnhook();
+        }
+
+        // 用于普通读档模式设置状态，避免在 Scene.End 之前就改变状态为 Start
+        private void SceneOnEnd(On.Monocle.Scene.orig_End orig, Scene self) {
+            orig(self);
+            if (self is Level && IsSaveSate) {
+                loadState = SaveLoad.LoadState.Start;
+            }
+        }
+
+        // 避免 triggersInside 与 temp 被清空，从 Everest v1883 开始被清除了
+        private void PlayerOnSceneEnd(On.Celeste.Player.orig_SceneEnd orig, Player self, Scene scene) {
+            if (IsSaveSate || IsFastSaveSate) {
+                if (self.Components != null) {
+                    foreach (Component component in self.Components) {
+                        component.SceneEnd(scene);
+                    }
+                }
+                Audio.Stop(self.GetField("conveyorLoopSfx") as EventInstance);
+            } else {
+                orig(self, scene);
+            }
         }
 
         public void OnInit() {
             // reload map and enter debug map auto clear state
+            Engine.Commands.FunctionKeyActions[2] += ClearState;
             Engine.Commands.FunctionKeyActions[4] += ClearState;
             Engine.Commands.FunctionKeyActions[5] += ClearState;
         }
@@ -118,7 +127,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         #region Fast Load State
 
-        // TODO 现在是重写整个 UnloadLevel 方法，用 ILHook 修改 EntityList.UpdateLists 更简洁
+        // 用于 FastLoadState 的处理，使得移除的 Entity 能够尽量维持保存时的状态
         private void LevelOnUnloadLevel(On.Celeste.Level.orig_UnloadLevel orig, Level self) {
             if (IsSaved && IsFastSaveSate) {
                 List<Entity> entitiesExcludingTagMask = self.GetEntitiesExcludingTagMask(Tags.Global);
@@ -157,20 +166,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (IsSaved && IsLoadStart) self.GetPlayer()?.Removed(self);
 
             orig(self);
-        }
-
-        // TODO 不懂，改完直接报错，现在是重写整个 UnloadLevel 方法
-        // ReSharper disable once UnusedMember.Local
-        private void EntityListOnUpdateLists(ILContext il) {
-            ILCursor cursor = new ILCursor(il);
-
-            if (cursor.TryGotoNext(
-                MoveType.After,
-                i => i.OpCode == OpCodes.Ldloc_3
-                , i => i.OpCode == OpCodes.Ldarg_0
-                , i => i.MatchCallvirt<EntityList>("get_Scene")
-                , i => i.MatchCallvirt<Entity>("Removed")
-            )) { }
         }
 
         private void LevelOnLoadLevel(On.Celeste.Level.orig_LoadLevel orig, Level self, Player.IntroTypes playerIntro,

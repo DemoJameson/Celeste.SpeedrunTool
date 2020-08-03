@@ -69,7 +69,7 @@ namespace Celeste.Mod.SpeedrunTool {
                     SetButton = button => Settings.ControllerQuickClear = button,
                     GetKeys = () => Settings.KeyboardQuickClear,
                     SetKeys = keys => Settings.KeyboardQuickClear = keys,
-                    DefaultKeys = new[] {Keys.F1, Keys.F6},
+                    DefaultKeys = new[] {Keys.F3, Keys.F6},
                     FixedDefaultKeys = true,
                     GetLabel = () => DialogIds.Clear.DialogClean(),
                 }

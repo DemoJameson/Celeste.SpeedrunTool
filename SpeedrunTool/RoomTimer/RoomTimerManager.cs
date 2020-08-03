@@ -14,6 +14,10 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         public SpeedrunType? OriginalSpeedrunType;
         public EndPoint SavedEndPoint;
 
+        public void Init() {
+            OriginalSpeedrunType = Settings.Instance.SpeedrunClock;
+        }
+
         public void Load() {
             On.Celeste.SpeedrunTimerDisplay.Render += Render;
             On.Celeste.MenuOptions.SetSpeedrunClock += SaveOriginalSpeedrunClock;
@@ -22,11 +26,6 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             On.Celeste.Level.LoadLevel += RestoreEndPoint;
             On.Celeste.Level.NextLevel += UpdateTimerStateOnNextLevel;
             On.Celeste.Session.SetFlag += UpdateTimerStateOnTouchFlag;
-            On.Celeste.LevelLoader.ctor += ResetTime;
-        }
-
-        public void Init() {
-            OriginalSpeedrunType = Settings.Instance.SpeedrunClock;
         }
 
         public void Unload() {
@@ -37,7 +36,6 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             On.Celeste.Level.LoadLevel -= RestoreEndPoint;
             On.Celeste.Level.NextLevel -= UpdateTimerStateOnNextLevel;
             On.Celeste.Session.SetFlag -= UpdateTimerStateOnTouchFlag;
-            On.Celeste.LevelLoader.ctor -= ResetTime;
         }
 
         private void ProcessButtons(On.Celeste.Level.orig_Update orig, Level self) {
@@ -148,10 +146,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             }
         }
 
-        private void ResetTime(On.Celeste.LevelLoader.orig_ctor orig, LevelLoader self, Session session,
-            Vector2? startPosition) {
-            orig(self, session, startPosition);
-
+        public void ResetTime() {
             nextRoomTimerData.ResetTime();
             currentRoomTimerData.ResetTime();
         }

@@ -376,6 +376,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private void ReloadLevel(Level level) {
+            RoomTimerManager.Instance.ResetTime();
             if (FastLoadStateEnabled) {
                 // 允许切换房间时读档
                 level.SetField("transition", null);

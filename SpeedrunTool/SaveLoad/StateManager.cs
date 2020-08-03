@@ -144,6 +144,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     if (!entities.Contains(entity)) continue;
                     current.Remove(entity);
                     entities.Remove(entity);
+                    switch (entity) {
+                        case SeekerBarrier seekerBarrier:
+                            self.Tracker.GetEntity<SeekerBarrierRenderer>().Untrack(seekerBarrier);
+                            break;
+                        case Lightning lightning:
+                            self.Tracker.GetEntity<LightningRenderer>().Untrack(lightning);
+                            break;
+                    }
                     if (entity.Components != null) {
                         foreach (Component component in entity.Components) {
                             component.EntityRemoved(self.Entities.Scene);

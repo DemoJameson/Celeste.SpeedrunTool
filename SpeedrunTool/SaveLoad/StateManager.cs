@@ -5,6 +5,7 @@ using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base;
+using FMOD.Studio;
 using Force.DeepCloner;
 using Mono.Cecil.Cil;
 using Monocle;
@@ -75,15 +76,24 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             AutoLoadStateUtils.OnHook();
 
+            On.Monocle.Scene.End += SceneOnEnd;
             On.Celeste.Player.SceneEnd += PlayerOnSceneEnd;
         }
 
-        // TODO 存储 triggersInside 与 temp
-        // 因为他们在最新的 Everest 里被清除了
+        private void SceneOnEnd(On.Monocle.Scene.orig_End orig, Scene self) {
+            orig(self);
+            if (self is Level && IsSaveSate) {
+                loadState = SaveLoad.LoadState.Start;
+            }
+        }
+
+        // 避免 triggersInside 与 temp 被清空，从 Everest v1883 开始被清除了
         private void PlayerOnSceneEnd(On.Celeste.Player.orig_SceneEnd orig, Player self, Scene scene) {
-            $"PlayerOnSceneEnd Start {loadState}".DebugLog();
-            orig(self, scene);
-            $"PlayerOnSceneEnd End {loadState}".DebugLog();
+            if (IsSaveSate || IsFastSaveSate) {
+                Audio.Stop(self.GetField("conveyorLoopSfx") as EventInstance);
+            } else {
+                orig(self, scene);
+            }
         }
 
         public void OnUnload() {
@@ -99,7 +109,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         public void OnInit() {
-            // enter debug map auto clear state
+            // reload map and enter debug map auto clear state
+            Engine.Commands.FunctionKeyActions[4] += ClearState;
             Engine.Commands.FunctionKeyActions[5] += ClearState;
         }
 
@@ -136,10 +147,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                     // 执行 SceneEnd 一般是停止播放声音，不过有时也会造成一些问题，例如导致 TalkComponent 的字段 UI 变成 null
                     entity.SceneEnd(self);
-
-                    loadState = SaveLoad.LoadState.Start;
                 }
 
+                loadState = SaveLoad.LoadState.Start;
                 return;
             }
 
@@ -378,7 +388,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             } else {
                 Session deepCloneSession = SavedSession.DeepClone();
                 Engine.Scene = new LevelLoader(deepCloneSession, deepCloneSession.RespawnPoint);
-                loadState = SaveLoad.LoadState.Start;
             }
         }
 

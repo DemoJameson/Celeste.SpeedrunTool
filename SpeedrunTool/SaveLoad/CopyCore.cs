@@ -10,7 +10,6 @@ using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions;
 using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base;
 using FMOD.Studio;
-using Force.DeepCloner;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
@@ -84,13 +83,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                 foreach (PropertyInfo propertyInfo in properties) {
                     // 只处理能读取+写入的属性
-                    if (!propertyInfo.CanRead || !propertyInfo.CanWrite || propertyInfo.GetGetMethod(true).IsAbstract ||
+                    if (!propertyInfo.CanRead || !propertyInfo.CanWrite ||
+                        propertyInfo.GetGetMethod(true).IsAbstract ||
                         propertyInfo.GetSetMethod(true).IsAbstract) continue;
 
                     Type propertyType = propertyInfo.PropertyType;
                     string propertyName = propertyInfo.Name;
 
-                    // $"DeepCopyMembers: destObj={destObj}\tcurrentObjType={declaringType}\tmemberType={propertyType}\tmemberName={propertyName}".DebugLog();
+                    // $"DeepCopyMembers PropertyInfo: destObj={destObj}\tcurrentObjType={declaringType}\tmemberType={propertyType}\tmemberName={propertyName}".DebugLog();
 
                     object destValue = destObj.GetProperty(declaringType, propertyName);
                     object sourceValue = sourceObj.GetProperty(declaringType, propertyName);
@@ -180,7 +180,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             if (genericType.IsSimple()) {
                 // 列表里是简单数据，则清除后全部假如
-                sourceList.DeepCloneTo(destList);
+                destList.Clear();
+                foreach (object obj in sourceList) {
+                    destList.Add(obj);
+                }
             } else {
                 // 列表里是复杂类型
                 if (destList.Count == sourceList.Count) {
@@ -200,43 +203,55 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
         }
 
-        private static void TryDeepCopyMembers(object destValue, object sourceValue) {
+        private static bool IsCollection(Type type) {
+            return type.IsSingleRankArray() || type.IsList(out Type _) || type.IsHashSet(out Type _);
+        }
+
+        private static void CopyCollection(object destValue, object sourceValue) {
             Type type = sourceValue.GetType();
-            if (sourceValue.IsCompilerGenerated()) {
-                DeepCopyMembers(destValue, sourceValue);
-            } else if (type.IsSingleRankArray()) {
+            if (type.IsSingleRankArray()) {
                 // 一维数组且数量相同
                 if (destValue is Array destArray && sourceValue is Array sourceArray &&
                     destArray.Length == sourceArray.Length) {
-                    if (type.IsSimpleArray()) {
-                        sourceValue.DeepCloneTo(destValue);
-                    } else {
-                        for (int i = 0; i < destArray.Length; i++) {
-                            if (sourceArray.GetValue(i) == null) {
-                                destArray.SetValue(null, i);
-                            } else {
+                    for (int i = 0; i < destArray.Length; i++) {
+                        if (sourceArray.GetValue(i) == null) {
+                            destArray.SetValue(null, i);
+                        } else if (type.IsSimpleArray()) {
+                            destArray.SetValue(sourceArray.GetValue(i), i);
+                        } else {
+                            if (destArray.GetValue(i) != null) {
                                 TryDeepCopyMembers(destArray.GetValue(i), sourceArray.GetValue(i));
+                            } else {
+                                destArray.SetValue(sourceArray.GetValue(i).TryFindOrCloneObject(), i);
                             }
                         }
                     }
                 }
-            } else if (sourceValue.GetType().IsList(out Type listElementType)) {
+            } else if (type.IsList(out Type listElementType)) {
                 CopyList(destValue, sourceValue, listElementType);
             } else if (type.IsHashSet(out Type hashElementType)) {
-                if (hashElementType.IsSimple()) {
-                    sourceValue.DeepCloneTo(destValue);
-                } else {
-                    // Player.triggersInside Hashset<Trigger>
-                    destValue.InvokeMethod("Clear");
-                    if (sourceValue is IEnumerable sourceEnumerable) {
-                        IEnumerator enumerator = sourceEnumerable.GetEnumerator();
-                        while (enumerator.MoveNext()) {
+                destValue.InvokeMethod("Clear");
+                if (sourceValue is IEnumerable sourceEnumerable) {
+                    IEnumerator enumerator = sourceEnumerable.GetEnumerator();
+                    while (enumerator.MoveNext()) {
+                        if (hashElementType.IsSimple()) {
+                            destValue.InvokeMethod("Add", enumerator.Current);
+                        } else {
                             if (TryFindOrCloneObject(enumerator.Current) is object obj) {
                                 destValue.InvokeMethod("Add", obj);
                             }
                         }
                     }
                 }
+            }
+        }
+
+        private static void TryDeepCopyMembers(object destValue, object sourceValue) {
+            Type type = sourceValue.GetType();
+            if (sourceValue.IsCompilerGenerated()) {
+                DeepCopyMembers(destValue, sourceValue);
+            } else if (IsCollection(type)) {
+                CopyCollection(destValue, sourceValue);
             } else if (type.IsSimpleReference()) {
                 $"TryDeepCopyMembers: {type}.IsSimpleReference".DebugLog();
                 DeepCopyMembers(destValue, sourceValue);
@@ -397,7 +412,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         destComponent = new PlayerHair(destPlayerSprite);
                     } else {
                         destPlayerSprite = new PlayerSprite(sourcePlayerHair.Sprite.Mode);
-                        TryDeepCopyMembers(destPlayerSprite, sourcePlayerHair.Sprite);
+                        DeepCopyMembers(destPlayerSprite, sourcePlayerHair.Sprite);
                         destEntity?.Add(destPlayerSprite);
                         destComponent = new PlayerHair(destPlayerSprite);
                     }

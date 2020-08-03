@@ -41,6 +41,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         // ReSharper disable MemberCanBePrivate.Global
         public bool IsFastSaveSate => loadState == SaveLoad.LoadState.FastSaveState;
+        public bool IsSaveSate => loadState == SaveLoad.LoadState.SaveState;
         public bool IsLoadStart => loadState == SaveLoad.LoadState.Start;
         public bool IsLoadFrozen => loadState == SaveLoad.LoadState.Frozen;
         public bool IsLoadPlayerRespawned => loadState == SaveLoad.LoadState.PlayerRespawned;
@@ -73,6 +74,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Celeste.Level.UnloadLevel += LevelOnUnloadLevel;
 
             AutoLoadStateUtils.OnHook();
+
+            On.Celeste.Player.SceneEnd += PlayerOnSceneEnd;
+        }
+
+        // TODO 存储 triggersInside 与 temp
+        // 因为他们在最新的 Everest 里被清除了
+        private void PlayerOnSceneEnd(On.Celeste.Player.orig_SceneEnd orig, Player self, Scene scene) {
+            $"PlayerOnSceneEnd Start {loadState}".DebugLog();
+            orig(self, scene);
+            $"PlayerOnSceneEnd End {loadState}".DebugLog();
         }
 
         public void OnUnload() {
@@ -125,9 +136,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                     // 执行 SceneEnd 一般是停止播放声音，不过有时也会造成一些问题，例如导致 TalkComponent 的字段 UI 变成 null
                     entity.SceneEnd(self);
+
+                    loadState = SaveLoad.LoadState.Start;
                 }
 
-                loadState = SaveLoad.LoadState.Start;
                 return;
             }
 
@@ -301,7 +313,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (FastLoadStateEnabled) {
                 loadState = SaveLoad.LoadState.FastSaveState;
             } else {
-                loadState = SaveLoad.LoadState.Start;
+                loadState = SaveLoad.LoadState.SaveState;
             }
 
             SavedPlayer = player;
@@ -343,7 +355,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             levelUpdateCounts = -1;
             loadState = SaveLoad.LoadState.Start;
-
             ReloadLevel(level);
 
             // restore all mod sessions
@@ -367,6 +378,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             } else {
                 Session deepCloneSession = SavedSession.DeepClone();
                 Engine.Scene = new LevelLoader(deepCloneSession, deepCloneSession.RespawnPoint);
+                loadState = SaveLoad.LoadState.Start;
             }
         }
 
@@ -512,6 +524,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     internal enum LoadState {
         None,
         FastSaveState,
+        SaveState,
         Start,
         Frozen,
         PlayerRespawned,

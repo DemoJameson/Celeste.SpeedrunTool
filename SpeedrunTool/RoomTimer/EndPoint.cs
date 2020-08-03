@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework;
 using Monocle;
 
@@ -109,10 +108,6 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         }
 
         private static void OnCollidePlayer(Player _) {
-            if (StateManager.Instance.IsLoadStart || StateManager.Instance.IsLoadFrozen) {
-                return;
-            }
-            
             RoomTimerManager.Instance.UpdateTimerState(true);
         }
 

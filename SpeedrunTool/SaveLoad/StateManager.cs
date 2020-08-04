@@ -85,7 +85,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             AutoLoadStateUtils.OnHook();
         }
 
-
         public void OnUnload() {
             On.Celeste.Level.Update -= LevelOnUpdate;
             On.Celeste.Overworld.ctor -= ClearStateAndPbTimes;

@@ -89,7 +89,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
                 Type entityType = savedEntity.GetType();
                 
                 // Entity 与 CrystalStaticSpinner+Border 实在是太多了，重新创建影响性能
-                if (entityType != typeof(Entity) 
+                if (entityType != typeof(Entity)
                     && !entityType.IsNestedPrivate
                     && CloneEntity(savedEntity, "Recreate not loaded entity", false) is Entity entity) {
                     // 创建添加到 Level 后还要 update 三次才会开始还原
@@ -130,9 +130,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base {
         // 与 AfterEntityAwake 是同样的时刻，用于处理不存在于保存数据中的 Entity，删除就好
         private static void RemoveNotSavedEntities(Dictionary<EntityId2, Entity> notSavedEntities) {
             foreach (var pair in notSavedEntities) {
-                if (pair.Value.IsGlobalButExcludeSomeTypes()) return;
-                pair.Value.RemoveSelf();
-                $"Remove not saved entity: {pair.Value.GetEntityId2()}".DebugLog();
+                Entity entity = pair.Value;
+                if (entity.IsGlobalButExcludeSomeTypes()) return;
+                if (entity.GetType().FullName == "Celeste.CrystalStaticSpinner+Border"
+                || entity.GetType().FullName == "FrostHelper.CustomSpinner+Border") return; // 修复读档后视线外的刺失去连接物
+                entity.RemoveSelf();
+                $"Remove not saved entity: {entity.GetEntityId2()}".DebugLog();
             }
         }
     }

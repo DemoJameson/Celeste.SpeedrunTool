@@ -377,8 +377,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (FastLoadStateEnabled) {
                 // 允许切换房间时读档
                 level.SetField("transition", null);
-                // TODO 保存后光线亮度问题
-                // TODO 第九章雷电样式问题
                 // TODO 初始房间保存后读档，冲刺线条缓慢移动的问题
                 level.Completed = false;
                 level.Displacement.Clear();

@@ -121,8 +121,6 @@ namespace Celeste.Mod.SpeedrunTool {
         private static void PressCancelToReturnGame(MapEditor.orig_Update orig, Editor.MapEditor self) {
             Session currentSession = (Engine.Scene as Level)?.Session ?? SaveData.Instance?.CurrentSession;
             if ((Input.ESC.Pressed || Input.MenuCancel.Pressed) && currentSession != null) {
-                Input.ESC.ConsumePress();
-                Input.MenuCancel.ConsumePress();
                 Engine.Scene = new LevelLoader(currentSession);
             }
 
@@ -147,7 +145,6 @@ namespace Celeste.Mod.SpeedrunTool {
             }
 
             if (GetVirtualButton(Mappings.OpenDebugMap).Pressed && !self.Paused) {
-                GetVirtualButton(Mappings.OpenDebugMap).ConsumePress();
                 Engine.Commands.FunctionKeyActions[5]();
             }
         }

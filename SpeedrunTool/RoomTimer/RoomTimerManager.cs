@@ -45,19 +45,16 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             }
 
             if (GetVirtualButton(Mappings.ResetRoomPb).Pressed && !self.Paused) {
-                GetVirtualButton(Mappings.ResetRoomPb).ConsumePress();
                 ClearPbTimes();
             }
             
             if (GetVirtualButton(Mappings.SwitchRoomTimer).Pressed && !self.Paused) {
-                GetVirtualButton(Mappings.SwitchRoomTimer).ConsumePress();
                 RoomTimerType roomTimerType = SpeedrunToolModule.Settings.RoomTimerType;
                 SwitchRoomTimer(((int) roomTimerType + 1) % Enum.GetNames(typeof(RoomTimerType)).Length);
                 SpeedrunToolModule.Instance.SaveSettings();
             }
 
             if (GetVirtualButton(Mappings.SetEndPoint).Pressed && !self.Paused) {
-                GetVirtualButton(Mappings.SetEndPoint).ConsumePress();
                 ClearPbTimes();
                 CreateEndPoint(self);
             }

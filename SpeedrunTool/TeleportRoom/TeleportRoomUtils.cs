@@ -96,10 +96,8 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
             }
 
             if (GetVirtualButton(Mappings.LastRoom).Pressed && !self.Paused) {
-                GetVirtualButton(Mappings.LastRoom).ConsumePress();
                 TeleportToLastRoom(self);
             } else if (GetVirtualButton(Mappings.NextRoom).Pressed && !self.Paused) {
-                GetVirtualButton(Mappings.NextRoom).ConsumePress();
                 TeleportToNextRoom(self);
             }
         }

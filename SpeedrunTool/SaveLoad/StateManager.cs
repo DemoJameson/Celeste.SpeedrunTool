@@ -152,12 +152,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                             self.Tracker.GetEntity<LightningRenderer>().Untrack(lightning);
                             break;
                     }
-                    if (entity.Components != null) {
-                        foreach (Component component in entity.Components) {
-                            component.EntityRemoved(self.Entities.Scene);
-                        }
-                    }
-
+                    entity.Components?.ToList().ForEach(component => self.Tracker.InvokeMethod("ComponentRemoved", component));
                     self.TagLists.InvokeMethod("EntityRemoved", entity);
                     self.Tracker.InvokeMethod("EntityRemoved", entity);
                     Engine.Pooler.InvokeMethod("EntityRemoved", entity);

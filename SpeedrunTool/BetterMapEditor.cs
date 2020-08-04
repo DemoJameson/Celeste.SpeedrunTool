@@ -134,6 +134,7 @@ namespace Celeste.Mod.SpeedrunTool {
             }
 
             if (GetVirtualButton(Mappings.OpenDebugMap).Pressed && !self.Paused) {
+                GetVirtualButton(Mappings.OpenDebugMap).ConsumePress();
                 Engine.Commands.FunctionKeyActions[5]();
             }
         }

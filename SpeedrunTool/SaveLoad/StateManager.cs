@@ -475,11 +475,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private bool CheckButton(Level level, Player player) {
             if (GetVirtualButton(Mappings.Save).Pressed && IsAllowSave(level, player)) {
+                GetVirtualButton(Mappings.Save).ConsumePress();
                 SaveState(level, player);
                 return true;
             }
 
             if (GetVirtualButton(Mappings.Load).Pressed && !level.Paused && !IsLoadFrozen) {
+                GetVirtualButton(Mappings.Load).ConsumePress();
                 if (IsSaved) {
                     LoadState();
                 } else if (!level.Frozen) {
@@ -490,6 +492,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             if (GetVirtualButton(Mappings.Clear).Pressed && !level.Paused) {
+                GetVirtualButton(Mappings.Clear).ConsumePress();
                 ClearState();
                 RoomTimerManager.Instance.ClearPbTimes();
                 if (IsNotCollectingHeart(level)) {
@@ -506,6 +509,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             if (GetVirtualButton(Mappings.SwitchAutoLoadState).Pressed && !level.Paused) {
+                GetVirtualButton(Mappings.SwitchAutoLoadState).ConsumePress();
                 Settings.AutoLoadAfterDeath = !Settings.AutoLoadAfterDeath;
                 SpeedrunToolModule.Instance.SaveSettings();
                 return false;

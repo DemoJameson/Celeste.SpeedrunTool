@@ -80,6 +80,8 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         private void CheckDeathStatisticsButton(Level level) {
             VirtualButton virtualButton = GetVirtualButton(Mappings.CheckDeathStatistics);
             if (virtualButton.Pressed) {
+                virtualButton.ConsumePress();
+
                 level.Paused = true;
                 DeathStatisticsUi buttonConfigUi = new DeathStatisticsUi {
                     OnClose = () => level.Paused = false

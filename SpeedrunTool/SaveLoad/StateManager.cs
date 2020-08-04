@@ -7,6 +7,7 @@ using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
 using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base;
 using FMOD.Studio;
 using Force.DeepCloner;
+using Microsoft.Xna.Framework.Input;
 using Monocle;
 using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
 
@@ -63,6 +64,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         #region Hook
 
+        public void OnInit() {
+            // reload map and enter debug map auto clear state
+            Engine.Commands.FunctionKeyActions[2] += ClearState;
+            Engine.Commands.FunctionKeyActions[5] += ClearState;
+        }
+
         public void OnLoad() {
             On.Celeste.Level.Update += LevelOnUpdate;
             On.Celeste.Overworld.ctor += ClearStateAndPbTimes;
@@ -94,6 +101,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             AutoLoadStateUtils.OnUnhook();
         }
 
+        #endregion
+
+        #region Fast Load State
+
         // 用于普通读档模式设置状态，避免在 Scene.End 之前就改变状态为 Start
         private void SceneOnEnd(On.Monocle.Scene.orig_End orig, Scene self) {
             orig(self);
@@ -115,17 +126,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 orig(self, scene);
             }
         }
-
-        public void OnInit() {
-            // reload map and enter debug map auto clear state
-            Engine.Commands.FunctionKeyActions[2] += ClearState;
-            Engine.Commands.FunctionKeyActions[4] += ClearState;
-            Engine.Commands.FunctionKeyActions[5] += ClearState;
-        }
-
-        #endregion
-
-        #region Fast Load State
 
         // 用于 FastLoadState 的处理，使得移除的 Entity 能够尽量维持保存时的状态
         private void LevelOnUnloadLevel(On.Celeste.Level.orig_UnloadLevel orig, Level self) {
@@ -515,6 +515,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
 
                 return false;
+            }
+
+            if (MInput.Keyboard.Check(Keys.F5)) {
+                ClearState();
+                RoomTimerManager.Instance.ClearPbTimes();
+                return true;
             }
 
             if (GetVirtualButton(Mappings.SwitchAutoLoadState).Pressed && !level.Paused) {

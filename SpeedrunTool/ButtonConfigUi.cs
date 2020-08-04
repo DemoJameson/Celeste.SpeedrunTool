@@ -157,10 +157,6 @@ namespace Celeste.Mod.SpeedrunTool {
             return ButtonInfos[mappings].VirtualButton.Value;
         }
 
-        public static void UpdateVirtualButton(Mappings mappings) {
-            ButtonInfos[mappings].UpdateVirtualButton();
-        }
-
         public static void Init() {
             foreach (ButtonInfo buttonInfo in ButtonInfos.Values) {
                 buttonInfo.UpdateVirtualButton();

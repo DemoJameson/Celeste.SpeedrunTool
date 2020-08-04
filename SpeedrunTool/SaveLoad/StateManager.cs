@@ -114,6 +114,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         component.SceneEnd(scene);
                     }
                 }
+
                 Audio.Stop(self.GetField("conveyorLoopSfx") as EventInstance);
             } else {
                 orig(self, scene);
@@ -145,7 +146,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                             self.Tracker.GetEntity<LightningRenderer>().Untrack(lightning);
                             break;
                     }
-                    entity.Components?.ToList().ForEach(component => self.Tracker.InvokeMethod("ComponentRemoved", component));
+
+                    entity.Components?.ToList()
+                        .ForEach(component => self.Tracker.InvokeMethod("ComponentRemoved", component));
                     self.TagLists.InvokeMethod("EntityRemoved", entity);
                     self.Tracker.InvokeMethod("EntityRemoved", entity);
                     Engine.Pooler.InvokeMethod("EntityRemoved", entity);
@@ -368,11 +371,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private void ReloadLevel(Level level) {
             RoomTimerManager.Instance.ResetTime();
             if (FastLoadStateEnabled) {
-                // 允许切换房间时读档
-                level.SetField("transition", null);
-                // TODO 初始房间保存后读档，冲刺线条缓慢移动的问题
-                level.Completed = false;
-                level.Displacement.Clear();
+                // 避免复活时读档重复复活
+                if (level.Entities.FindFirst<PlayerDeadBody>() != null) {
+                    if (level.RendererList.Renderers.FirstOrDefault(renderer => renderer is ScreenWipe) is ScreenWipe wipe) {
+                        wipe.OnComplete = () => { };
+                    }
+                }
+
+                level.SetField("transition", null); // 允许切换房间时读档
+                level.Completed = false; // 避免通关后不执行 Reload 方法
+                level.Displacement.Clear(); // 避免冲刺后读档残留爆破效果
                 level.Reload();
             } else {
                 Session deepCloneSession = SavedSession.DeepClone();

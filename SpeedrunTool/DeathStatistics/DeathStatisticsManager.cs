@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Celeste.Mod.SpeedrunTool.Extensions;
 using Force.DeepCloner;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -69,7 +70,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
                 return;
             }
 
-            if (level.Paused) {
+            if (level.Paused || level.GetPlayer() == null || level.GetPlayer().Dead) {
                 return;
             }
 

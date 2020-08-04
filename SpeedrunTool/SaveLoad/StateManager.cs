@@ -64,12 +64,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         #region Hook
 
-        public void OnInit() {
-            // reload map and enter debug map auto clear state
-            Engine.Commands.FunctionKeyActions[2] += ClearState;
-            Engine.Commands.FunctionKeyActions[5] += ClearState;
-        }
-
         public void OnLoad() {
             On.Celeste.Level.Update += LevelOnUpdate;
             On.Celeste.Overworld.ctor += ClearStateAndPbTimes;

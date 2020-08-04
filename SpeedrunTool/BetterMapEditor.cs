@@ -67,7 +67,6 @@ namespace Celeste.Mod.SpeedrunTool {
             MapEditor.LoadLevel += MapEditorOnLoadLevel;
             On.Celeste.Level.Update += AddedOpenDebugMapButton;
             On.Celeste.WindController.SetAmbienceStrength += FixWindSoundNotPlay;
-            MapEditor.Update += PressCancelToReturnGame;
             On.Celeste.OshiroTrigger.ctor += RestoreOshiroTrigger;
             On.Celeste.Commands.CmdLoad += CommandsOnCmdLoad;
             On.Celeste.LevelLoader.ctor += LevelLoaderOnCtor;
@@ -77,7 +76,6 @@ namespace Celeste.Mod.SpeedrunTool {
             MapEditor.LoadLevel -= MapEditorOnLoadLevel;
             On.Celeste.Level.Update -= AddedOpenDebugMapButton;
             On.Celeste.WindController.SetAmbienceStrength -= FixWindSoundNotPlay;
-            MapEditor.Update -= PressCancelToReturnGame;
             On.Celeste.OshiroTrigger.ctor -= RestoreOshiroTrigger;
             On.Celeste.Commands.CmdLoad -= CommandsOnCmdLoad;
             On.Celeste.LevelLoader.ctor -= LevelLoaderOnCtor;
@@ -100,6 +98,8 @@ namespace Celeste.Mod.SpeedrunTool {
             Vector2 offset) {
             orig(self, data, offset);
 
+            if (!SpeedrunToolModule.Enabled) return;
+
             Vector2 oshiro3C = new Vector2(1520, -272);
             Level level = Engine.Scene.GetLevel();
 
@@ -118,19 +118,8 @@ namespace Celeste.Mod.SpeedrunTool {
             yield break;
         }
 
-        private static void PressCancelToReturnGame(MapEditor.orig_Update orig, Editor.MapEditor self) {
-            Session currentSession = (Engine.Scene as Level)?.Session ?? SaveData.Instance?.CurrentSession;
-            if ((Input.ESC.Pressed || Input.MenuCancel.Pressed) && currentSession != null) {
-                Engine.Scene = new LevelLoader(currentSession);
-            }
-
-            orig(self);
-        }
-
-        private static void FixWindSoundNotPlay(On.Celeste.WindController.orig_SetAmbienceStrength orig,
-            WindController self,
-            bool strong) {
-            if (Audio.CurrentAmbienceEventInstance == null) {
+        private static void FixWindSoundNotPlay(On.Celeste.WindController.orig_SetAmbienceStrength orig, WindController self, bool strong) {
+            if (SpeedrunToolModule.Enabled && Audio.CurrentAmbienceEventInstance == null) {
                 Audio.SetAmbience("event:/env/amb/04_main");
             }
 
@@ -163,7 +152,7 @@ namespace Celeste.Mod.SpeedrunTool {
 
         private void LevelLoaderOnCtor(On.Celeste.LevelLoader.orig_ctor orig, LevelLoader self, Session session,
             Vector2? startPosition) {
-            if (FixTeleportProblems && session.StartCheckpoint == null && session.LevelData != null) {
+            if (SpeedrunToolModule.Enabled && FixTeleportProblems && session.StartCheckpoint == null && session.LevelData != null) {
                 Vector2 spawnPoint;
                 if (startPosition != null) {
                     spawnPoint = session.GetSpawnPoint((Vector2) startPosition);

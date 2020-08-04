@@ -243,7 +243,6 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
             HistoryIndex = 0;
         }
 
-
         private static IEnumerator LevelOnTransitionRoutine(On.Celeste.Level.orig_TransitionRoutine orig, Level self,
             LevelData next, Vector2 direction) {
             IEnumerator enumerator = orig(self, next, direction);

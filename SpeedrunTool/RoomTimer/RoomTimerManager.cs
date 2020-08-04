@@ -40,21 +40,21 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
 
         private void ProcessButtons(On.Celeste.Level.orig_Update orig, Level self) {
             orig(self);
-            if (!SpeedrunToolModule.Enabled) {
+            if (!SpeedrunToolModule.Enabled || self.Paused) {
                 return;
             }
 
-            if (GetVirtualButton(Mappings.ResetRoomPb).Pressed && !self.Paused) {
+            if (GetVirtualButton(Mappings.ResetRoomPb).Pressed) {
                 ClearPbTimes();
             }
             
-            if (GetVirtualButton(Mappings.SwitchRoomTimer).Pressed && !self.Paused) {
+            if (GetVirtualButton(Mappings.SwitchRoomTimer).Pressed) {
                 RoomTimerType roomTimerType = SpeedrunToolModule.Settings.RoomTimerType;
                 SwitchRoomTimer(((int) roomTimerType + 1) % Enum.GetNames(typeof(RoomTimerType)).Length);
                 SpeedrunToolModule.Instance.SaveSettings();
             }
 
-            if (GetVirtualButton(Mappings.SetEndPoint).Pressed && !self.Paused) {
+            if (GetVirtualButton(Mappings.SetEndPoint).Pressed) {
                 ClearPbTimes();
                 CreateEndPoint(self);
             }
@@ -63,6 +63,8 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         private void RestoreEndPoint(On.Celeste.Level.orig_LoadLevel orig, Level self, Player.IntroTypes playerIntro,
             bool isFromLoader) {
             orig(self, playerIntro, isFromLoader);
+
+            if (!SpeedrunToolModule.Enabled) return;
 
             EndPoint end = self.Entities.FindFirst<EndPoint>();
             if (end == null && SavedEndPoint != null && self.Session.Level == SavedEndPoint.LevelName) {

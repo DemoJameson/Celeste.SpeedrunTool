@@ -78,7 +78,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             foreach (Type declaringType in types) {
                 // 如果是完成的 DeepCopy 是不需要操作属性的，不过在这里先复制属性再复制字段更适合
                 // 必须先设置属性再设置字段，不然字段的值会在设置属性后发生改变
-                PropertyInfo[] properties = declaringType.GetPropertyInfos(anyDeclaredOnlyFlags);
+                // 不支持 Indexer 语法的属性 public int this[int index]
+                PropertyInfo[] properties = declaringType.GetPropertyInfos(anyDeclaredOnlyFlags).Where(info => info.GetIndexParameters().Length == 0).ToArray();
                 FieldInfo[] fields = declaringType.GetFieldInfos(anyDeclaredOnlyFlags, true);
 
                 foreach (PropertyInfo propertyInfo in properties) {
@@ -158,9 +159,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 setMember(destObj, currentObjType, memberName, sourceValue);
             } else {
                 // 复杂类型
-                if (destValue != null) {
+                if (destValue != null && destValue.GetType() == sourceValue.GetType()) {
                     TryDeepCopyMembers(destValue, sourceValue);
                 } else {
+                    // ReSharper disable once RedundantAssignment
+                    // destValue.GetType() != sourceValue.GetType() 时，强制 destValue 为 null 复制 sourceValue
+                    destValue = null;
+
                     // 为空则根据情况创建新实例或者查找当前场景的实例
                     destValue = TryFindOrCloneObject(sourceValue);
                     if (destValue != null) {
@@ -252,9 +257,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 DeepCopyMembers(destValue, sourceValue);
             } else if (IsCollection(type)) {
                 CopyCollection(destValue, sourceValue);
-            } else if (type.IsSimpleReference()) {
-                $"TryDeepCopyMembers: {type}.IsSimpleReference".DebugLog();
-                DeepCopyMembers(destValue, sourceValue);
             } else if (sourceValue is Component) {
                 if (sourceValue is StateMachine // only copy some fields later
                     || sourceValue is DustGraphic // sometimes game crash after savestate
@@ -316,6 +318,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 foreach (IEnumerator enumerator in temp) {
                     destEnumerators.Push(enumerator);
                 }
+            } else if (destValue is Collider) {
+                DeepCopyMembers(destValue, sourceValue);
+            } else if (type.IsSimpleReference()) {
+                $"TryDeepCopyMembers: {type}.IsSimpleReference".DebugLog();
+                DeepCopyMembers(destValue, sourceValue);
             }
         }
 
@@ -446,6 +453,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 destValue = destComponent;
             } else if (sourceValue is MTexture) {
                 destValue = sourceValue;
+            } else if (sourceValue is Collider sourceCollider) {
+                destValue = sourceCollider.Clone();
             } else if (sourceType.IsList(out Type _)) {
                 destValue = Activator.CreateInstance(sourceType);
             } else if (sourceType.IsHashSet(out Type _)) {

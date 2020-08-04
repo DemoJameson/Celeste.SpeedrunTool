@@ -37,7 +37,6 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                    && type.FullName != "Celeste.TriggerSpikes+SpikeInfo" // SpikeInfo 里有 Entity 所以不能算做简单数据类型
                    && type.FullName != "Celeste.Mod.Entities.TriggerSpikesOriginal+SpikeInfo"
                    || type == typeof(object) // Coroutine
-                   || type.IsSameOrSubclassOf(typeof(Collider)) // 通过 Property 直接操作 Collider 会帮我们处理里面的 Entity，这样我们就不需要自己创建 Collider 了
                    || type == typeof(MapData)
                    || type == typeof(AreaData)
                    || type == typeof(LevelData)

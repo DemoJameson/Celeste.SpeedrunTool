@@ -324,10 +324,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SavedEntitiesDict = level.FindAllToDict(out SavedDuplicateIdList);
 
             if (FastLoadStateEnabled) {
-                savedLevel = new Level();
+                savedLevel = new Level {
+                    Camera =  level.Camera.DeepClone(),
+                    Session = level.Session.DeepClone()
+                };
                 CopyCore.DeepCopyMembers(savedLevel, level, true);
-                savedLevel.Camera = level.Camera.DeepClone();
-                savedLevel.Session = level.Session.DeepClone();
             } else {
                 savedLevel = level;
             }

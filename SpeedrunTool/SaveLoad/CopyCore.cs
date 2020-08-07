@@ -193,7 +193,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 // 列表里是复杂类型
                 if (destList.Count == sourceList.Count) {
                     for (int i = 0; i < destList.Count; i++) {
-                        TryDeepCopyMembers(destList[i], sourceList[i]);
+                        if (destList[i].GetType() == sourceList[i].GetType()) {
+                            TryDeepCopyMembers(destList[i], sourceList[i]);
+                        } else if (TryFindOrCloneObject(sourceList[i]) is object destElement) {
+                            destList[i] = destElement;
+                        }
                     }
                 } else {
                     // 数量不一致时
@@ -224,7 +228,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         } else if (type.IsSimpleArray()) {
                             destArray.SetValue(sourceArray.GetValue(i), i);
                         } else {
-                            if (destArray.GetValue(i) != null) {
+                            if (destArray.GetValue(i) != null && destArray.GetValue(i).GetType() == sourceArray.GetValue(i).GetType()) {
                                 TryDeepCopyMembers(destArray.GetValue(i), sourceArray.GetValue(i));
                             } else {
                                 destArray.SetValue(sourceArray.GetValue(i).TryFindOrCloneObject(), i);

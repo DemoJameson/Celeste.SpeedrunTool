@@ -73,7 +73,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Celeste.Level.LoadLevel += LevelOnLoadLevel;
             On.Celeste.Level.UnloadLevel += LevelOnUnloadLevel;
 
-            On.Monocle.Scene.End += SceneOnEnd;
+            On.Celeste.Level.End += LevelOnEnd;
             On.Celeste.Player.SceneEnd += PlayerOnSceneEnd;
 
             AutoLoadStateUtils.OnHook();
@@ -88,8 +88,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Celeste.Level.LoadLevel -= LevelOnLoadLevel;
             On.Celeste.Level.UnloadLevel -= LevelOnUnloadLevel;
 
-            On.Monocle.Scene.End += SceneOnEnd;
-            On.Celeste.Player.SceneEnd += PlayerOnSceneEnd;
+            On.Celeste.Level.End -= LevelOnEnd;
+            On.Celeste.Player.SceneEnd -= PlayerOnSceneEnd;
 
             AutoLoadStateUtils.OnUnhook();
         }
@@ -99,22 +99,20 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         #region Fast Load State
 
         // 用于普通读档模式设置状态，避免在 Scene.End 之前就改变状态为 Start
-        private void SceneOnEnd(On.Monocle.Scene.orig_End orig, Scene self) {
-            orig(self);
-            if (self is Level && IsSaveSate) {
+        // 避免 Entities 被清空，从 Everest v1889 开始
+        private void LevelOnEnd(On.Celeste.Level.orig_End orig, Level self) {
+            if (IsSaveSate) {
+                self.orig_End();
                 loadState = SaveLoad.LoadState.Start;
+            } else {
+                orig(self);
             }
         }
 
         // 避免 triggersInside 与 temp 被清空，从 Everest v1883 开始被清除了
         private void PlayerOnSceneEnd(On.Celeste.Player.orig_SceneEnd orig, Player self, Scene scene) {
             if (IsSaveSate || IsFastSaveSate) {
-                if (self.Components != null) {
-                    foreach (Component component in self.Components) {
-                        component.SceneEnd(scene);
-                    }
-                }
-
+                self.Components?.ToList().ForEach(component => component.SceneEnd(scene));
                 Audio.Stop(self.GetField("conveyorLoopSfx") as EventInstance);
             } else {
                 orig(self, scene);

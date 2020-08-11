@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
 using Monocle;
 
@@ -26,14 +27,14 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         private static readonly Color StarFlyColor = Calc.HexToColor("ffd65c");
         private readonly Facings facing;
         public readonly string LevelName;
-        private readonly Player player;
         public bool Activated;
         private PlayerHair playerHair;
         private PlayerSprite playerSprite;
         private SpriteStyle spriteStyle;
 
         public EndPoint(Player player) {
-            this.player = player;
+            Tag = Tags.Global;
+
             facing = player.Facing;
             LevelName = player.SceneAs<Level>().Session.Level;
 
@@ -42,15 +43,15 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             Position = player.Position;
             Depth = player.Depth + 1;
             Add(new PlayerCollider(OnCollidePlayer));
-            Add(new BloomPoint(Vector2.UnitY * -8 , 0.5f, 18f));
+            Add(new BloomPoint(Vector2.UnitY * -8, 0.5f, 18f));
             Add(new VertexLight(Vector2.UnitY * -8, Color.White, 1f, 24, 48));
 
             // saved madeline sprite
-            CreateMadelineSprite();
-            SetSprite();
+            CreateMadelineSprite(player);
+            SetSprite(player);
         }
 
-        private void SetSprite() {
+        private void SetSprite(Player player) {
             spriteStyle = SpeedrunToolModule.Settings.EndPointSpriteStyle;
             if (spriteStyle == SpriteStyle.Random) {
                 spriteStyle = (SpriteStyle) new Random().Next(Enum.GetNames(typeof(SpriteStyle)).Length - 1);
@@ -61,11 +62,11 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                     CreateFlag();
                     break;
                 case SpriteStyle.Madeline:
-                    CreateMadelineSprite();
+                    CreateMadelineSprite(player);
                     AddMadelineSprite();
                     break;
                 case SpriteStyle.Badeline:
-                    CreateMadelineSprite(true);
+                    CreateMadelineSprite(player, true);
                     AddMadelineSprite();
                     break;
                 case SpriteStyle.GoldBerry:
@@ -94,17 +95,18 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         }
 
         public void ResetSprite() {
-            Get<Sprite>()?.RemoveSelf();
-            Get<PlayerHair>()?.RemoveSelf();
-            Get<PlayerSprite>()?.RemoveSelf();
-            Get<FlagComponent>()?.RemoveSelf();
-            SetSprite();
+            if (Engine.Scene.GetPlayer() is Player player) {
+                Get<Sprite>()?.RemoveSelf();
+                Get<PlayerHair>()?.RemoveSelf();
+                Get<PlayerSprite>()?.RemoveSelf();
+                Get<FlagComponent>()?.RemoveSelf();
+                SetSprite(player);
+            }
         }
 
-        public void ReAdded(Level level) {
+        public void ReadyForTime() {
             Collidable = true;
             Activated = false;
-            level.Add(this);
         }
 
         private static void OnCollidePlayer(Player _) {
@@ -120,12 +122,11 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             }
         }
 
-        private void CreateMadelineSprite(bool badeline = false) {
+        private void CreateMadelineSprite(Player player, bool badeline = false) {
             PlayerSpriteMode mode;
             if (badeline) {
                 mode = PlayerSpriteMode.Badeline;
-            }
-            else {
+            } else {
                 bool backpack = player.SceneAs<Level>()?.Session.Inventory.Backpack ?? true;
                 mode = backpack ? PlayerSpriteMode.Madeline : PlayerSpriteMode.MadelineNoBackpack;
             }
@@ -185,8 +186,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                         hairColor = badeline ? Player.TwoDashesBadelineHairColor : Player.TwoDashesHairColor;
                         break;
                 }
-            }
-            else {
+            } else {
                 hairColor = StarFlyColor;
             }
 

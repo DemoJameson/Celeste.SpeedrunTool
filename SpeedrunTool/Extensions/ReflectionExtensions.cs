@@ -2,27 +2,21 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Fasterflect;
-using Monocle;
+using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
     internal static class ReflectionExtensions {
+        private static readonly object[] NoArg = {};
         private static readonly HashSet<Type> SimpleTypes = new HashSet<Type> {
             typeof(byte), typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong),
-            typeof(float), typeof(double), typeof(decimal), typeof(char), typeof(string), typeof(bool), typeof(DateTime),
-            typeof(IntPtr), typeof(UIntPtr), typeof(Guid),
-            // do not clone such native type
-            Type.GetType("System.RuntimeType"),
-            Type.GetType("System.RuntimeTypeHandle"),
+            typeof(float), typeof(double), typeof(decimal), typeof(char), typeof(string), typeof(bool),
+            typeof(DateTime), typeof(TimeSpan), typeof(DateTimeOffset), typeof(Vector2)
         };
 
-        private static readonly Dictionary<Type, bool> KnownSimpleReferenceTypes = new Dictionary<Type, bool>();
 
-        private const BindingFlags InstanceAnyVisibility =
-            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
-
-        private const BindingFlags InstanceAnyVisibilityDeclaredOnly =
-            InstanceAnyVisibility | BindingFlags.DeclaredOnly;
+        private const BindingFlags InstanceAnyVisibility = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+        private const BindingFlags InstanceAnyVisibilityDeclaredOnly = InstanceAnyVisibility | BindingFlags.DeclaredOnly;
+        private const BindingFlags StaticInstanceAnyVisibility = InstanceAnyVisibility | BindingFlags.Static;
 
         public static bool IsSimple(this Type type) {
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>)) {
@@ -30,21 +24,19 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 return IsSimple(type.GetGenericArguments()[0]);
             }
 
-            return type.IsPrimitive
-                   || type.IsEnum || type.IsPointer
-                   || SimpleTypes.Contains(type)
-                   || type.IsValueType
-                   && type.FullName != "Celeste.TriggerSpikes+SpikeInfo" // SpikeInfo 里有 Entity 所以不能算做简单数据类型
-                   && type.FullName != "Celeste.Mod.Entities.TriggerSpikesOriginal+SpikeInfo"
-                   || type == typeof(object) // Coroutine
-                   || type == typeof(MapData)
-                   || type == typeof(AreaData)
-                   || type == typeof(LevelData)
-                   || type == typeof(EntityData)
-                   || type == typeof(DecalData)
-                   || type == typeof(Type)
-                   || type.FullName != null && type.FullName.StartsWith("System.Reflection")
-                ;
+            return SimpleTypes.Contains(type) || type.IsEnum;
+        }
+
+        public static void CopyAllSimpleTypeFields(this object to, object from) {
+            if (to.GetType() != from.GetType()) throw new ArgumentException("object to and from not the same type");
+
+            foreach (FieldInfo fieldInfo in to.GetType().GetAllFieldInfos()) {
+                if (fieldInfo.FieldType.IsSimple()) {
+                    to.CopyFieldValues(fieldInfo.DeclaringType, from, fieldInfo.Name);
+                } else if (from.GetFieldValue(fieldInfo.DeclaringType, fieldInfo.Name) == null) {
+                    fieldInfo.SetValue(to, null);
+                }
+            }
         }
 
         public static bool IsSingleRankArray(this Type type) {
@@ -57,44 +49,6 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
         public static bool IsSimpleList(this Type type) {
             return type.IsList(out Type genericType) && genericType.IsSimple();
-        }
-
-        public static bool IsSimpleReference(this Type type) {
-            if (KnownSimpleReferenceTypes.ContainsKey(type)) {
-                return KnownSimpleReferenceTypes[type];
-            }
-
-            // 常见非简单引用类型，先排除
-            if (type.IsSimple()
-                || type.IsArray
-                || type.IsAbstract
-                || !type.IsClass
-                || typeof(Delegate).IsAssignableFrom(type.BaseType)
-                || type.IsList(out _)
-                || type.IsSameOrSubclassOf(typeof(Scene))
-                || type.IsSameOrSubclassOf(typeof(Entity))
-                || type.IsSameOrSubclassOf(typeof(Component))
-                || type.IsSameOrSubclassOf(typeof(Collide))
-                || type.IsSameOrSubclassOf(typeof(ComponentList))
-                || type.IsSameOrSubclassOf(typeof(EntityList))
-            ) {
-                KnownSimpleReferenceTypes[type] = false;
-                return false;
-            }
-
-            // TODO 现在只做了简单的判断，引用了其他简单的引用类型也会被判断为复杂类型
-            HashSet<Type> allFieldTypes = type.GetAllFieldTypes(InstanceAnyVisibilityDeclaredOnly);
-            bool result = allFieldTypes.All(fieldType =>
-                fieldType.IsSimple()
-                || fieldType.IsSameOrBaseclassOf(type)
-                || fieldType.IsSimpleArray()
-                || fieldType.IsSimpleList()
-                || fieldType.IsArray && fieldType.GetArrayRank() == 1 && type.IsSameOrSubclassOf(fieldType.GetElementType())
-                || fieldType.IsList(out Type genericType) && type.IsSameOrSubclassOf(genericType)
-            );
-
-            KnownSimpleReferenceTypes.Add(type, result);
-            return result;
         }
 
         public static bool IsList(this Type type, out Type genericType) {
@@ -124,6 +78,15 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return result;
         }
 
+        public static bool IsDictionary(this Type type, out Type keyType, out Type valueType) {
+            bool result = type.IsGenericType && type.GetGenericTypeDefinition().IsAssignableFrom(typeof(Dictionary<,>))
+                                             && type.GenericTypeArguments.Length == 2;
+
+            keyType = result ? type.GenericTypeArguments[0] : null;
+            valueType = result ? type.GenericTypeArguments[1] : null;
+
+            return result;
+        }
 
         public static bool IsCompilerGenerated(this object obj) {
             return IsCompilerGenerated(obj.GetType());
@@ -165,32 +128,12 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return potentialDescendant.IsSubclassOf(potentialBase) || potentialBase == potentialDescendant;
         }
 
-        public static object ForceCreateInstance(this object obj, string tag = "") {
-            return ForceCreateInstance(obj.GetType(), tag);
-        }
-
-        public static object ForceCreateInstance(this Type type, string tag = "") {
-            object newObject = null;
-            try {
-                // 具有空参构造函数的类型可以创建
-                newObject = Activator.CreateInstance(type);
-            } catch (Exception) {
-                $"ForceCreateInstance Failed: {type} at {tag}".Log();
-            }
-
-            if (newObject != null) {
-                $"ForceCreateInstance Success: {type} at {tag}".DebugLog();
-            }
-
-            return newObject;
-        }
-
-        private static MethodInfo GetMethodInfo(Type type, string name) {
-            string key = $"GetMethodInfo-{name}";
+        public static MethodInfo GetMethodInfo(Type type, string name, BindingFlags bindingFlags = InstanceAnyVisibility) {
+            string key = $"ReflectionExtensions-GetMethodInfo-{name}-{bindingFlags}";
 
             MethodInfo methodInfo = type.GetExtendedDataValue<MethodInfo>(key);
             if (methodInfo == null) {
-                methodInfo = type.GetMethod(name, InstanceAnyVisibility);
+                methodInfo = type.GetMethod(name, bindingFlags);
                 if (methodInfo != null) {
                     type.SetExtendedDataValue(key, methodInfo);
                 }
@@ -199,11 +142,11 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return methodInfo;
         }
 
-        private static FieldInfo GetFieldInfo(Type type, string name) {
-            string key = $"GetFieldInfo-{name}";
+        public static FieldInfo GetFieldInfo(Type type, string name, BindingFlags bindingFlags = InstanceAnyVisibility) {
+            string key = $"ReflectionExtensions-GetFieldInfo-{name}-{bindingFlags}";
             FieldInfo fieldInfo = type.GetExtendedDataValue<FieldInfo>(key);
             if (fieldInfo == null) {
-                fieldInfo = type.GetField(name, InstanceAnyVisibility);
+                fieldInfo = type.GetField(name, bindingFlags);
                 if (fieldInfo != null) {
                     type.SetExtendedDataValue(key, fieldInfo);
                 } else {
@@ -214,9 +157,8 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return fieldInfo;
         }
 
-        public static FieldInfo[] GetFieldInfos(this Type type, BindingFlags bindingFlags,
-            bool filterBackingField = false) {
-            string key = $"GetFieldInfos-{bindingFlags}-{filterBackingField}";
+        public static FieldInfo[] GetFieldInfos(this Type type, BindingFlags bindingFlags = InstanceAnyVisibility, bool filterBackingField = false) {
+            string key = $"ReflectionExtensions-GetFieldInfos-{bindingFlags}-{filterBackingField}";
 
             FieldInfo[] fieldInfos = type.GetExtendedDataValue<FieldInfo[]>(key);
             if (fieldInfos == null) {
@@ -231,14 +173,14 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return fieldInfos;
         }
 
-        public static HashSet<Type> GetAllFieldTypes(this Type type, BindingFlags bindingFlags,
+        public static List<FieldInfo> GetAllFieldInfos(this Type type, BindingFlags bindingFlags = InstanceAnyVisibilityDeclaredOnly,
             bool filterBackingField = false) {
-            HashSet<Type> result = new HashSet<Type>();
-            while (type.IsSubclassOf(typeof(object))) {
-                var fieldTypes = type.GetFieldInfos(bindingFlags, filterBackingField).Select(info => info.FieldType);
-                foreach (Type fieldType in fieldTypes) {
-                    if (result.Contains(fieldType)) continue;
-                    result.Add(fieldType);
+            List<FieldInfo> result = new List<FieldInfo>();
+            while (type != null && type.IsSubclassOf(typeof(object))) {
+                var fieldInfos = type.GetFieldInfos(bindingFlags, filterBackingField);
+                foreach (FieldInfo fieldInfo in fieldInfos) {
+                    if (result.Contains(fieldInfo)) continue;
+                    result.Add(fieldInfo);
                 }
 
                 type = type.BaseType;
@@ -247,11 +189,11 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return result;
         }
 
-        private static PropertyInfo GetPropertyInfo(Type type, string name) {
-            string key = $"GetPropertyInfo-{name}";
+        public static PropertyInfo GetPropertyInfo(this Type type, string name, BindingFlags bindingFlags = InstanceAnyVisibility) {
+            string key = $"ReflectionExtensions-GetPropertyInfo-{name}-{bindingFlags}";
             PropertyInfo propertyInfo = type.GetExtendedDataValue<PropertyInfo>(key);
             if (propertyInfo == null) {
-                propertyInfo = type.GetProperty(name, InstanceAnyVisibility);
+                propertyInfo = type.GetProperty(name, bindingFlags);
                 if (propertyInfo != null) {
                     type.SetExtendedDataValue(key, propertyInfo);
                 } else {
@@ -262,8 +204,8 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return propertyInfo;
         }
 
-        public static PropertyInfo[] GetPropertyInfos(this Type type, BindingFlags bindingFlags) {
-            string key = $"GetPropertyInfos-{bindingFlags}";
+        public static PropertyInfo[] GetPropertyInfos(this Type type, BindingFlags bindingFlags = InstanceAnyVisibility) {
+            string key = $"ReflectionExtensions-GetPropertyInfos-{bindingFlags}";
 
             PropertyInfo[] propertyInfos = type.GetExtendedDataValue<PropertyInfo[]>(key);
             if (propertyInfos == null) {
@@ -274,111 +216,103 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return propertyInfos;
         }
 
-        private static MemberGetter GetMemberGetter(Type type, string name) {
-            string key = $"GetMemberGetter-{name}";
+        public static MethodInfo GetPropertyGetMethod(this Type type, string name) {
+            string key = $"ReflectionExtensions-GetPropertyGetMethod-{name}";
 
-            MemberGetter memberGetter = type.GetExtendedDataValue<MemberGetter>(key);
-            if (memberGetter == null) {
-                memberGetter = Reflect.Getter(type, name, InstanceAnyVisibility);
-                type.SetExtendedDataValue(key, memberGetter);
+            MethodInfo methodInfo = type.GetExtendedDataValue<MethodInfo>(key);
+            if (methodInfo == null) {
+                methodInfo = type.GetPropertyInfo(name)?.GetGetMethod(true);
+                type.SetExtendedDataValue(key, methodInfo);
             }
 
-            return memberGetter;
+            return methodInfo;
         }
 
-        private static MemberSetter GetMemberSetter(Type type, string name) {
-            string key = $"GetMemberSetter-{name}";
+        public static MethodInfo GetPropertySetMethod(this Type type, string name) {
+            string key = $"ReflectionExtensions-GetPropertySetMethod-{name}";
 
-            MemberSetter memberSetter = type.GetExtendedDataValue<MemberSetter>(key);
-            if (memberSetter == null) {
-                memberSetter = Reflect.Setter(type, name, InstanceAnyVisibility);
-                type.SetExtendedDataValue(key, memberSetter);
+            MethodInfo methodInfo = type.GetExtendedDataValue<MethodInfo>(key);
+            if (methodInfo == null) {
+                methodInfo = type.GetPropertyInfo(name)?.GetSetMethod(true);
+                type.SetExtendedDataValue(key, methodInfo);
             }
 
-            return memberSetter;
+            return methodInfo;
         }
 
-        public static object GetField(this object obj, string name) {
-            return obj.GetField(obj.GetType(), name);
+        public static object GetFieldValue(this object obj, string name) {
+            return obj.GetFieldValue(obj.GetType(), name);
         }
 
-        public static object GetField<T>(this T obj, string name) {
-            return obj.GetField(typeof(T), name);
+        public static object GetFieldValue<T>(this T obj, string name) {
+            return obj.GetFieldValue(typeof(T), name);
         }
 
-        public static object GetField(this object obj, Type type, string name) {
-            return GetMemberGetter(type, name)?.Invoke(obj.GetType().IsValueType ? new ValueTypeHolder(obj) : obj);
+        public static object GetFieldValue(this object obj, Type type, string name) {
+            return GetFieldInfo(type, name)?.GetValue(obj);
         }
 
-        public static void SetField(this object obj, string name, object value) {
-            obj.SetField(obj.GetType(), name, value);
+        public static void SetFieldValue(this object obj, string name, object value) {
+            obj.SetFieldValue(obj.GetType(), name, value);
         }
 
-        public static void SetField<T>(this T obj, string name, object value) {
-            obj.SetField(typeof(T), name, value);
+        public static void SetFieldValue<T>(this T obj, string name, object value) {
+            obj.SetFieldValue(typeof(T), name, value);
         }
 
-        public static void SetField(this object obj, Type type, string name, object value) {
-            if (obj.GetType().IsValueType) {
-                GetFieldInfo(type, name)?.SetValue(obj, value);
-            } else {
-                GetMemberSetter(type, name)?.Invoke(obj, value);
-            }
+        public static void SetFieldValue(this object obj, Type type, string name, object value) {
+            GetFieldInfo(type, name)?.SetValue(obj, value);
         }
 
-        public static void CopyFields(this object obj, object fromObj, params string[] names) {
-            obj.CopyFields(obj.GetType(), fromObj, names);
+        public static void CopyFieldValues(this object obj, object fromObj, params string[] names) {
+            obj.CopyFieldValues(obj.GetType(), fromObj, names);
         }
 
-        public static void CopyFields<T>(this T obj, T fromObj, params string[] names) {
-            obj.CopyFields(typeof(T), fromObj, names);
+        public static void CopyFieldValues<T>(this T obj, T fromObj, params string[] names) {
+            obj.CopyFieldValues(typeof(T), fromObj, names);
         }
 
-        public static void CopyFields(this object obj, Type type, object fromObj, params string[] names) {
+        public static void CopyFieldValues(this object obj, Type type, object fromObj, params string[] names) {
             foreach (string name in names) {
-                obj.SetField(type, name, fromObj.GetField(type, name));
+                obj.SetFieldValue(type, name, fromObj.GetFieldValue(type, name));
             }
         }
 
-        public static object GetProperty(this object obj, string name) {
-            return obj.GetProperty(obj.GetType(), name);
+        public static object GetPropertyValue(this object obj, string name) {
+            return obj.GetPropertyValue(obj.GetType(), name);
         }
 
-        public static object GetProperty<T>(this T obj, string name) {
-            return obj.GetProperty(typeof(T), name);
+        public static object GetPropertyValue<T>(this T obj, string name) {
+            return obj.GetPropertyValue(typeof(T), name);
         }
 
-        public static object GetProperty(this object obj, Type type, string name) {
-            return GetMemberGetter(type, name)?.Invoke(obj.GetType().IsValueType ? new ValueTypeHolder(obj) : obj);
+        public static object GetPropertyValue(this object obj, Type type, string name) {
+            return GetPropertyGetMethod(type, name)?.Invoke(obj, NoArg);
         }
 
-        public static void SetProperty(this object obj, string name, object value) {
-            obj.SetProperty(obj.GetType(), name, value);
+        public static void SetPropertyValue(this object obj, string name, object value) {
+            obj.SetPropertyValue(obj.GetType(), name, value);
         }
 
-        public static void SetProperty<T>(this T obj, string name, object value) {
-            obj.SetProperty(typeof(T), name, value);
+        public static void SetPropertyValue<T>(this T obj, string name, object value) {
+            obj.SetPropertyValue(typeof(T), name, value);
         }
 
-        public static void SetProperty(this object obj, Type type, string name, object value) {
-            if (obj.GetType().IsValueType) {
-                GetPropertyInfo(type, name)?.GetSetMethod(true)?.Invoke(obj, new[] {value});
-            } else {
-                GetMemberSetter(type, name)?.Invoke(obj, value);
-            }
+        public static void SetPropertyValue(this object obj, Type type, string name, object value) {
+            GetPropertySetMethod(type, name)?.Invoke(obj, new []{value});
         }
 
-        public static void CopyProperties(this object obj, object fromObj, params string[] names) {
-            obj.CopyProperties(obj.GetType(), fromObj, names);
+        public static void CopyPropertyValues(this object obj, object fromObj, params string[] names) {
+            obj.CopyPropertyValues(obj.GetType(), fromObj, names);
         }
 
-        public static void CopyProperties<T>(this T obj, T fromObj, params string[] names) {
-            obj.CopyProperties(typeof(T), fromObj, names);
+        public static void CopyPropertyValues<T>(this T obj, T fromObj, params string[] names) {
+            obj.CopyPropertyValues(typeof(T), fromObj, names);
         }
 
-        public static void CopyProperties(this object obj, Type type, object fromObj, params string[] names) {
+        public static void CopyPropertyValues(this object obj, Type type, object fromObj, params string[] names) {
             foreach (string name in names) {
-                obj.SetProperty(type, name, fromObj.GetProperty(type, name));
+                obj.SetPropertyValue(type, name, fromObj.GetPropertyValue(type, name));
             }
         }
 
@@ -391,15 +325,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static object InvokeMethod(this object obj, Type type, string name, params object[] parameters) {
-            string key = $"InvokeMethod-{name}";
-
-            MethodInvoker methodInvoker = type.GetExtendedDataValue<MethodInvoker>(key);
-            if (methodInvoker == null) {
-                methodInvoker = Reflect.Method(GetMethodInfo(type, name));
-                type.SetExtendedDataValue(key, methodInvoker);
-            }
-
-            return methodInvoker?.Invoke(obj, parameters);
+            return GetMethodInfo(type, name)?.Invoke(obj, parameters);
         }
     }
 }

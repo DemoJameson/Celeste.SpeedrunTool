@@ -23,7 +23,6 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             On.Celeste.MenuOptions.SetSpeedrunClock += SaveOriginalSpeedrunClock;
             On.Celeste.Level.Update += Timing;
             On.Celeste.Level.Update += ProcessButtons;
-            On.Celeste.Level.LoadLevel += RestoreEndPoint;
             On.Celeste.Level.NextLevel += UpdateTimerStateOnNextLevel;
             On.Celeste.Session.SetFlag += UpdateTimerStateOnTouchFlag;
         }
@@ -33,7 +32,6 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             On.Celeste.MenuOptions.SetSpeedrunClock -= SaveOriginalSpeedrunClock;
             On.Celeste.Level.Update -= Timing;
             On.Celeste.Level.Update -= ProcessButtons;
-            On.Celeste.Level.LoadLevel -= RestoreEndPoint;
             On.Celeste.Level.NextLevel -= UpdateTimerStateOnNextLevel;
             On.Celeste.Session.SetFlag -= UpdateTimerStateOnTouchFlag;
         }
@@ -48,7 +46,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 GetVirtualButton(Mappings.ResetRoomPb).ConsumePress();
                 ClearPbTimes();
             }
-            
+
             if (GetVirtualButton(Mappings.SwitchRoomTimer).Pressed && !self.Paused) {
                 GetVirtualButton(Mappings.SwitchRoomTimer).ConsumePress();
                 RoomTimerType roomTimerType = SpeedrunToolModule.Settings.RoomTimerType;
@@ -63,25 +61,13 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             }
         }
 
-        private void RestoreEndPoint(On.Celeste.Level.orig_LoadLevel orig, Level self, Player.IntroTypes playerIntro,
-            bool isFromLoader) {
-            orig(self, playerIntro, isFromLoader);
-
-            if (!SpeedrunToolModule.Enabled) return;
-
-            EndPoint end = self.Entities.FindFirst<EndPoint>();
-            if (end == null && SavedEndPoint != null && self.Session.Level == SavedEndPoint.LevelName) {
-                SavedEndPoint.ReAdded(self);
-            }
-        }
-
         private void CreateEndPoint(Level level) {
             if (level.Entities.FindFirst<Player>() is Player player && !player.Dead) {
                 SavedEndPoint?.RemoveSelf();
                 level.Add(SavedEndPoint = new EndPoint(player));
             }
         }
-        
+
         public void SwitchRoomTimer(int index) {
             SpeedrunToolSettings speedrunToolSettings = SpeedrunToolModule.Settings;
             speedrunToolSettings.RoomTimer = SpeedrunToolSettings.RoomTimerStrings[index];
@@ -97,17 +83,19 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             }
         }
 
-        public void ClearPbTimes() {
+        public void ClearPbTimes(bool clearEndPoint = true) {
             nextRoomTimerData.Clear();
             currentRoomTimerData.Clear();
-            SavedEndPoint?.RemoveSelf();
-            SavedEndPoint = null;
+            if (clearEndPoint) {
+                SavedEndPoint?.RemoveSelf();
+                SavedEndPoint = null;
+            }
         }
 
         private void Timing(On.Celeste.Level.orig_Update orig, Level self) {
             if (!self.Completed && self.TimerStarted) {
-                nextRoomTimerData.Timing(self.Session);
-                currentRoomTimerData.Timing(self.Session);
+                nextRoomTimerData.Timing(self);
+                currentRoomTimerData.Timing(self);
             } else if (self.Completed) {
                 UpdateTimerState();
             }
@@ -168,10 +156,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             Settings.Instance.SpeedrunClock = SpeedrunType.File;
 
             RoomTimerType roomTimeType = SpeedrunToolModule.Settings.RoomTimerType;
-
-            RoomTimerData roomTimerData = roomTimeType == RoomTimerType.NextRoom
-                ? nextRoomTimerData
-                : currentRoomTimerData;
+            RoomTimerData roomTimerData = roomTimeType == RoomTimerType.NextRoom ? nextRoomTimerData : currentRoomTimerData;
 
             string roomTimeString = roomTimerData.TimeString;
             string pbTimeString = roomTimerData.PbTimeString;
@@ -191,7 +176,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
 
             float roomTimeScale = 1f;
             if (roomTimerData.IsCompleted) {
-                Wiggler wiggler = (Wiggler) self.GetField("wiggler");
+                Wiggler wiggler = (Wiggler) self.GetFieldValue("wiggler");
                 if (wiggler != null) {
                     roomTimeScale = 1f + wiggler.Value * 0.15f;
                 }
@@ -266,12 +251,10 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             if (!valid) {
                 color1 = Calc.HexToColor("918988") * alpha;
                 color2 = Calc.HexToColor("7a6f6d") * alpha;
-            }
-            else if (bestTime) {
+            } else if (bestTime) {
                 color1 = Calc.HexToColor("fad768") * alpha;
                 color2 = Calc.HexToColor("cfa727") * alpha;
-            }
-            else if (finished) {
+            } else if (finished) {
                 color1 = Calc.HexToColor("6ded87") * alpha;
                 color2 = Calc.HexToColor("43d14c") * alpha;
             }

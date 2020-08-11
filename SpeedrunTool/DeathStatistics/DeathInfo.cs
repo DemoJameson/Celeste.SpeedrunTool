@@ -21,7 +21,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
 
         // Session
         public AreaKey Area { get; set; }
-        public Vector2 RespawnPoint { get; set; }
+        public Vector2? RespawnPoint { get; set; }
         public PlayerInventory Inventory { get; set; } = PlayerInventory.Default;
         public HashSet<string> Flags { get; set; } = new HashSet<string>();
         public HashSet<string> LevelFlags { get; set; } = new HashSet<string>();

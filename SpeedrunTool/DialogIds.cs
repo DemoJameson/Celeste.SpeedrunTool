@@ -18,8 +18,6 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string SpeedrunTool = "SPEEDRUN_TOOL";
         public const string Enabled = "SPEEDRUN_TOOL_ENABLED";
         public const string AutoLoadAfterDeath = "SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH";
-        public const string FastLoadState = "SPEEDRUN_TOOL_FAST_LOAD_STATE";
-        public const string FastLoadStateDescription = "SPEEDRUN_TOOL_FAST_LOAD_STATE_DESCRIPTION";
         public const string DeathStatistics = "SPEEDRUN_TOOL_DEATH_STATISTICS";
         public const string MaxNumberOfDeathData = "SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA";
         public const string CheckDeathStatistics = "SPEEDRUN_TOOL_CHECK_DEATH_STATISTICS";

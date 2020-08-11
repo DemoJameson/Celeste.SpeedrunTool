@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
-using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework.Input;
 using Monocle;
 using YamlDotNet.Serialization;
@@ -34,10 +33,6 @@ namespace Celeste.Mod.SpeedrunTool {
         // -------------------------- More Option --------------------------
         // ReSharper disable once UnusedMember.Global
         [YamlIgnore] public string MoreOptions { get; set; } = "";
-
-        [SettingName(DialogIds.FastLoadState)]
-        [SettingSubText(DialogIds.FastLoadStateDescription)]
-        public bool FastLoadState { get; set; } = false;
 
         public string EndPointStyle { get; set; } = EndPointStyleStrings.First();
 
@@ -184,18 +179,6 @@ namespace Celeste.Mod.SpeedrunTool {
                     isAfterMoreOptionsTextMenu = false;
                 }
             }
-        }
-
-        // ReSharper disable once UnusedMember.Global
-        public void CreateFastLoadStateEntry(TextMenu textMenu, bool inGame) {
-            var item =
-                new TextMenu.OnOff(DialogIds.FastLoadState.DialogClean(), FastLoadState).Change(
-                    value => {
-                        FastLoadState = value;
-                        StateManager.Instance.ClearState();
-                    });
-            textMenu.Add(item);
-            item.AddDescription(textMenu, DialogIds.FastLoadStateDescription.DialogClean());
         }
 
         // ReSharper disable once UnusedMember.Global

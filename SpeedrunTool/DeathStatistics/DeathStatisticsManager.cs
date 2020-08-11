@@ -182,7 +182,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
                 CauseOfDeath = causeOfDeath,
                 DeathPosition = deathPosition,
                 Area = cloneSession.Area,
-                RespawnPoint = (Vector2) cloneSession.RespawnPoint,
+                RespawnPoint = cloneSession.RespawnPoint,
                 Inventory = cloneSession.Inventory,
                 Flags = cloneSession.Flags,
                 LevelFlags = cloneSession.LevelFlags,

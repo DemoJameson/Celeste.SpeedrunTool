@@ -46,13 +46,6 @@
       <HintPath>..\..\..\Celeste.exe</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="DeepCloner, Version=0.10.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>libs\DeepCloner.dll</HintPath>
-    </Reference>
-    <Reference Include="Fasterflect.Reflect, Version=3.1.0.0, Culture=neutral, PublicKeyToken=a1fa75de836f6938">
-      <HintPath>..\packages\Fasterflect.Reflect.3.1.0\lib\net45\Fasterflect.Reflect.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="FNA">
       <HintPath>..\..\..\FNA.dll</HintPath>
       <Private>False</Private>
@@ -115,20 +108,6 @@
     <Compile Include="Extensions\LoggerExtensions.cs" />
     <Compile Include="Extensions\ReflectionExtensions.cs" />
     <Compile Include="RespawnSpeedUtils.cs" />
-    <Compile Include="SaveLoad\AutoLoadStateUtils.cs" />
-    <Compile Include="SaveLoad\CopyCore.cs" />
-    <Compile Include="SaveLoad\EntityIdPlus\AttachEntityId2Utils.cs" />
-    <Compile Include="SaveLoad\EntityIdPlus\CustomEntityId2Utils.cs" />
-    <Compile Include="SaveLoad\EntityIdPlus\EntityId2.cs" />
-    <Compile Include="SaveLoad\RestoreActions\Base\RestoreAction.cs" />
-    <Compile Include="SaveLoad\RestoreActions\Base\RestoreEntityUtils.cs" />
-    <Compile Include="SaveLoad\RestoreActions\BurstRestoreAction.cs" />
-    <Compile Include="SaveLoad\RestoreActions\EventInstanceRestoreAction.cs" />
-    <Compile Include="SaveLoad\RestoreActions\PlayerRestoreAction.cs" />
-    <Compile Include="SaveLoad\RestoreActions\EntityRestoreAction.cs" />
-    <Compile Include="SaveLoad\RestoreActions\ComponentRestoreAction.cs" />
-    <Compile Include="SaveLoad\RestoreActions\SoundSourceRestoreAction.cs" />
-    <Compile Include="SaveLoad\RestoreActions\TriggerSpikesRestoreAction.cs" />
     <Compile Include="SpeedrunToolSaveData.cs" />
     <Compile Include="TeleportRoom\LevelDataReorderUtils.cs" />
     <Compile Include="TeleportRoom\TeleportRoomUtils.cs" />
@@ -147,7 +126,6 @@
     <None Include="everest.yaml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Dialog\English.txt">
@@ -159,6 +137,12 @@
     <Content Include="Graphics\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DeepCloner\DeepCloner\DeepCloner.csproj">
+      <Project>{6bb0a0ab-67f9-45e4-b60c-4ceed098d463}</Project>
+      <Name>DeepCloner</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

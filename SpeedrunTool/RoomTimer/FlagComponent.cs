@@ -12,7 +12,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         private readonly List<MTexture> numbersEmpty;
         private Vector2 offset;
 
-        public FlagComponent( bool flagStyle) : base(false, true) {
+        public FlagComponent(bool flagStyle) : base(false, true) {
             this.flagStyle = flagStyle;
             
             baseEmpty = GFX.Game["scenery/speedrun_tool_summitcheckpoints/base00"];

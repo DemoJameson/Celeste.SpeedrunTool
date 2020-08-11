@@ -14,7 +14,6 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         private int numberOfRooms;
         private string pbTimeKey = "";
         private TimerState timerState;
-        private bool hasRespawned;
 
         public RoomTimerData(RoomTimerType roomTimerType) {
             this.roomTimerType = roomTimerType;
@@ -28,12 +27,11 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         public bool IsCompleted => timerState == TimerState.Completed;
         public bool BeatBestTime => timerState == TimerState.Completed && (Time < LastPbTime || LastPbTime == 0);
 
-        public void Timing(Session session) {
-            if (timerState != TimerState.Timing) {
-                return;
-            }
+        public void Timing(Level level) {
+            if (timerState != TimerState.Timing) return;
 
             if (pbTimeKey == "") {
+                Session session = level.Session;
                 pbTimeKey = session.Area + session.Level;
                 string closestFlag = session.Flags.Where(flagName => flagName.StartsWith(RoomTimerManager.FlagPrefix))
                     .OrderBy(flagName => {
@@ -43,11 +41,8 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 pbTimeKey += closestFlag;
                 pbTimeKey += numberOfRooms;
             }
-            
-            if (!hasRespawned) {
-                hasRespawned = Engine.Scene.GetPlayer()?.StateMachine.State != Player.StIntroRespawn;
-                return;
-            }
+
+            if (level.TimerStopped) return;
 
             Time += TimeSpan.FromSeconds(Engine.RawDeltaTime).Ticks;
         }
@@ -93,7 +88,6 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             numberOfRooms = SpeedrunToolModule.Settings.NumberOfRooms;
             Time = 0;
             LastPbTime = 0;
-            hasRespawned = false;
         }
 
         public void Clear() {

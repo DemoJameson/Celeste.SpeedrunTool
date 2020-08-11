@@ -69,6 +69,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
         }
 
         private static void TeleportTo(Session session) {
+            // TODO: 用 level.TeleportTo 代替 LevelLoader
             BetterMapEditor.FixTeleportProblems = true;
             Engine.Scene = new LevelLoader(session.DeepClone());
             BetterMapEditor.FixTeleportProblems = false;

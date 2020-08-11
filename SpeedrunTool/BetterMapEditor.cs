@@ -10,7 +10,7 @@ using LevelTemplate = Celeste.Editor.LevelTemplate;
 
 namespace Celeste.Mod.SpeedrunTool {
     public class BetterMapEditor {
-        public static bool FixTeleportProblems = false;
+        public static bool FixTeleportProblems;
         private const string StartChasingLevel = "3";
 
         // 3A 杂乱房间部分的光线调暗
@@ -174,7 +174,7 @@ namespace Celeste.Mod.SpeedrunTool {
         }
 
         private void FixFarewellCassetteRoomColorGrade(Session session, Vector2 spawnPoint) {
-//            Logger.Log("Exclude Respawn Point", $"new Vector2({spawnPoint.X}, {spawnPoint.Y}),");
+            // Logger.Log("Exclude Respawn Point", $"new Vector2({spawnPoint.X}, {spawnPoint.Y}),");
             if (excludeFarewellCassettePoints.Contains(spawnPoint)) {
                 return;
             }

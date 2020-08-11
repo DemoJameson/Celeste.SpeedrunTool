@@ -1,27 +1,26 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
-using Celeste.Mod.SpeedrunTool.SaveLoad.EntityIdPlus;
-using Celeste.Mod.SpeedrunTool.SaveLoad.RestoreActions.Base;
-using FMOD.Studio;
 using Force.DeepCloner;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Monocle;
+using MonoMod.Utils;
 using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class StateManager {
         private static SpeedrunToolSettings Settings => SpeedrunToolModule.Settings;
-        private static bool FastLoadStateEnabled => Settings.FastLoadState;
 
         private Level savedLevel;
-
-        public Dictionary<EntityId2, Entity> SavedEntitiesDict = new Dictionary<EntityId2, Entity>();
-        public List<Entity> SavedDuplicateIdList = new List<Entity>();
-
-        private LoadState loadState = SaveLoad.LoadState.None;
+        private List<Entity> savedEntities;
+        private CassetteBlockManager savedCassetteBlockManager;
+        private bool IsSaved => savedLevel != null;
 
         private float savedFreezeTimer;
         private float savedTimeRate;
@@ -31,25 +30,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private Dictionary<EverestModule, EverestModuleSession> savedModSessions;
 
-        private int levelUpdateCounts = -1;
+        private States state = States.None;
 
-        private Session SavedSession => savedLevel?.Session;
-
-        // ReSharper disable once MemberCanBePrivate.Global
-        // Public for TAS
-        public Player SavedPlayer;
-
-        // ReSharper disable MemberCanBePrivate.Global
-        public bool IsFastSaveSate => loadState == SaveLoad.LoadState.FastSaveState;
-        public bool IsSaveSate => loadState == SaveLoad.LoadState.SaveState;
-        public bool IsLoadStart => loadState == SaveLoad.LoadState.Start;
-        public bool IsLoadFrozen => loadState == SaveLoad.LoadState.Frozen;
-        public bool IsLoadPlayerRespawned => loadState == SaveLoad.LoadState.PlayerRespawned;
-
-        public bool IsLoadComplete => loadState == SaveLoad.LoadState.Complete;
-        // ReSharper restore MemberCanBePrivate.Global
-
-        public bool IsSaved => SavedSession != null && SavedPlayer != null;
+        private enum States {
+            None,
+            Loading,
+        }
 
         private readonly List<int> disabledSaveStates = new List<int> {
             Player.StReflectionFall,
@@ -62,274 +48,130 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             Player.StDummy,
         };
 
+        public void OnInit() {
+            // Clone 开始时，判断哪些类型是直接使用原对象而不 DeepClone 的
+            DeepCloner.AddKnownTypesProcessor((type) => {
+                if (
+                    // Celeste Singleton
+                    type == typeof(Celeste)
+                    || type == typeof(Settings)
+
+                    // Everest
+                    || type == typeof(ModAsset)
+
+                    // Monocle
+                    || type == typeof(GraphicsDevice)
+                    || type == typeof(GraphicsDeviceManager)
+                    || type == typeof(Monocle.Commands)
+                    || type == typeof(Pooler)
+                    || type == typeof(BitTag)
+                    || type == typeof(Atlas)
+                    || type == typeof(VirtualTexture)
+
+                    // XNA GraphicsResource
+                    || type.IsSubclassOf(typeof(GraphicsResource))
+                ) {
+                    return true;
+                }
+
+                return null;
+            });
+
+            // Clone 对象的字段前，判断哪些类型是直接使用原对象而不 DeepClone 的
+            DeepCloner.AddPreCloneProcessor(sourceObj => {
+                if (sourceObj is Level) {
+                    // 金草莓死亡或者 PageDown/Up 切换房间后等等改变 Level 实例的情况
+                    if (Engine.Scene is Level level) return level;
+                    return sourceObj;
+                }
+
+                if (sourceObj is Entity entity && entity.TagCheck(Tags.Global)
+                                               && !(entity is Textbox)
+                                               && !(entity is SeekerBarrierRenderer)
+                                               && !(entity is LightningRenderer)
+                ) return sourceObj;
+
+                return null;
+            });
+
+            // Clone 对象的字段后，进行自定的处理
+            DeepCloner.AddPostCloneProcessor((sourceObj, clonedObj) => {
+                if (clonedObj == null) return null;
+
+                // 修复：DeepClone 的 hashSet.Containes(里面存在的引用对象) 总是返回 False，Dictionary 无此问题
+                if (clonedObj.GetType().IsHashSet(out Type type) && !type.IsSimple()) {
+                    IEnumerator enumerator = ((IEnumerable) clonedObj).GetEnumerator();
+
+                    List<object> backup = new List<object>();
+                    while (enumerator.MoveNext()) {
+                        backup.Add(enumerator.Current);
+                    }
+
+                    clonedObj.InvokeMethod("Clear");
+
+                    backup.ForEach(obj => { clonedObj.InvokeMethod("Add", obj); });
+                }
+
+                return clonedObj;
+            });
+        }
+
         #region Hook
 
         public void OnLoad() {
-            On.Celeste.Level.Update += LevelOnUpdate;
-            On.Celeste.Overworld.ctor += ClearStateAndPbTimes;
-            AttachEntityId2Utils.OnLoad();
-            RestoreEntityUtils.OnLoad();
-
-            On.Celeste.Level.LoadLevel += LevelOnLoadLevel;
-            On.Celeste.Level.UnloadLevel += LevelOnUnloadLevel;
-
-            On.Celeste.Level.End += LevelOnEnd;
-            On.Celeste.Player.SceneEnd += PlayerOnSceneEnd;
-
-            AutoLoadStateUtils.OnHook();
+            On.Celeste.Level.Update += CheckButtonsOnLevelUpdate;
+            On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
+            On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
         }
 
         public void OnUnload() {
-            On.Celeste.Level.Update -= LevelOnUpdate;
-            On.Celeste.Overworld.ctor -= ClearStateAndPbTimes;
-            AttachEntityId2Utils.Unload();
-            RestoreEntityUtils.Unload();
-
-            On.Celeste.Level.LoadLevel -= LevelOnLoadLevel;
-            On.Celeste.Level.UnloadLevel -= LevelOnUnloadLevel;
-
-            On.Celeste.Level.End -= LevelOnEnd;
-            On.Celeste.Player.SceneEnd -= PlayerOnSceneEnd;
-
-            AutoLoadStateUtils.OnUnhook();
+            On.Celeste.Level.Update -= CheckButtonsOnLevelUpdate;
+            On.Monocle.Scene.Begin -= ClearStateWhenSwitchScene;
+            On.Celeste.PlayerDeadBody.End -= AutoLoadStateWhenDeath;
         }
 
-        #endregion
+        private void CheckButtonsOnLevelUpdate(On.Celeste.Level.orig_Update orig, Level self) {
+            orig(self);
+            CheckButton(self, self.GetPlayer());
+        }
 
-        #region Fast Load State
+        private void ClearStateWhenSwitchScene(On.Monocle.Scene.orig_Begin orig, Scene self) {
+            if (self is Overworld) ClearState();
+            if (IsSaved) {
+                if (self is Level) state = States.None; // 修复：读档途中按下 PageDown/Up 后无法存档
+                if (self.GetSession() is Session session && session.Area != savedLevel.Session.Area) {
+                    ClearState();
+                }
+            }
+        }
 
-        // 用于普通读档模式设置状态，避免在 Scene.End 之前就改变状态为 Start
-        // 避免 Entities 被清空，从 Everest v1889 开始
-        private void LevelOnEnd(On.Celeste.Level.orig_End orig, Level self) {
-            if (IsSaveSate) {
-                self.orig_End();
-                loadState = SaveLoad.LoadState.Start;
+        private void AutoLoadStateWhenDeath(On.Celeste.PlayerDeadBody.orig_End orig, PlayerDeadBody self) {
+            if (SpeedrunToolModule.Settings.Enabled
+                && SpeedrunToolModule.Settings.AutoLoadAfterDeath
+                && IsSaved
+                && !(bool) self.GetFieldValue("finished")
+            ) {
+                if (self.Scene is Level level) {
+                    level.OnEndOfFrame += () => LoadState(level);
+                    self.RemoveSelf();
+                }
             } else {
                 orig(self);
             }
         }
 
-        // 避免 triggersInside 与 temp 被清空，从 Everest v1883 开始被清除了
-        private void PlayerOnSceneEnd(On.Celeste.Player.orig_SceneEnd orig, Player self, Scene scene) {
-            if (IsSaveSate || IsFastSaveSate) {
-                self.Components?.ToList().ForEach(component => component.SceneEnd(scene));
-                Audio.Stop(self.GetField("conveyorLoopSfx") as EventInstance);
-            } else {
-                orig(self, scene);
-            }
-        }
-
-        // 用于 FastLoadState 的处理，使得移除的 Entity 能够尽量维持保存时的状态
-        private void LevelOnUnloadLevel(On.Celeste.Level.orig_UnloadLevel orig, Level self) {
-            if (IsSaved && IsFastSaveSate) {
-                List<Entity> entitiesExcludingTagMask = self.GetEntitiesExcludingTagMask(Tags.Global);
-                entitiesExcludingTagMask.AddRange(self.Tracker.GetEntities<Textbox>());
-
-                // CassetteBlockManager 需要移除出 Level 来让它的状态不再改变
-                if (self.Entities.FindFirst<CassetteBlockManager>() is Entity cassetteBlockManager) {
-                    entitiesExcludingTagMask.Add(cassetteBlockManager);
-                }
-
-                List<Entity> entities = (List<Entity>) self.Entities.GetField("entities");
-                HashSet<Entity> current = (HashSet<Entity>) self.Entities.GetField("current");
-                foreach (Entity entity in entitiesExcludingTagMask) {
-                    if (!entities.Contains(entity)) continue;
-                    current.Remove(entity);
-                    entities.Remove(entity);
-                    switch (entity) {
-                        case SeekerBarrier seekerBarrier:
-                            self.Tracker.GetEntity<SeekerBarrierRenderer>().Untrack(seekerBarrier);
-                            break;
-                        case Lightning lightning:
-                            self.Tracker.GetEntity<LightningRenderer>().Untrack(lightning);
-                            break;
-                    }
-
-                    entity.Components?.ToList()
-                        .ForEach(component => self.Tracker.InvokeMethod("ComponentRemoved", component));
-                    self.TagLists.InvokeMethod("EntityRemoved", entity);
-                    self.Tracker.InvokeMethod("EntityRemoved", entity);
-                    Engine.Pooler.InvokeMethod("EntityRemoved", entity);
-
-                    // 执行 SceneEnd 一般是停止播放声音，不过有时也会造成一些问题，例如导致 TalkComponent 的字段 UI 变成 null
-                    entity.SceneEnd(self);
-                }
-
-                loadState = SaveLoad.LoadState.Start;
-                return;
-            }
-
-            // 读档执行 UnloadLevel 前需要先移除 Player 清空 Player 存着的 Trigger
-            if (IsSaved && IsLoadStart) self.GetPlayer()?.Removed(self);
-
-            orig(self);
-        }
-
-        private void LevelOnLoadLevel(On.Celeste.Level.orig_LoadLevel orig, Level self, Player.IntroTypes playerIntro,
-            bool isFromLoader) {
-            if (IsSaved && IsLoadStart && FastLoadStateEnabled && playerIntro == Player.IntroTypes.Respawn &&
-                isFromLoader == false) {
-                SavedSession.DeepCloneTo(self.Session);
-            }
-
-            orig(self, playerIntro, isFromLoader);
-        }
-
         #endregion
 
-        #region Core
+        private void SaveState(Level level) {
+            ClearState(false);
 
-        private void LevelOnUpdate(On.Celeste.Level.orig_Update orig, Level level) {
-            if (!SpeedrunToolModule.Enabled) {
-                orig(level);
-                return;
-            }
+            savedLevel = level.ShallowClone();
+            savedLevel.Session = level.Session.DeepClone();
+            savedLevel.Camera = level.Camera.DeepClone();
 
-            Player player = level.Entities.FindFirst<Player>();
+            savedEntities = DeepCloneEntities(GetEntitiesExcludingGlobal(level));
 
-            if (CheckButton(level, player)) {
-                return;
-            }
-
-            // 章节切换时清除保存的状态以及房间计时器自定终点
-            // Clear the savestate and custom end point when switching chapters
-            if (IsSaved && (SavedSession.Area.ID != level.Session.Area.ID ||
-                            SavedSession.Area.Mode != level.Session.Area.Mode)) {
-                ClearState();
-                RoomTimerManager.Instance.ClearPbTimes();
-            }
-
-            // 尽快设置人物的位置与镜头，然后冻结游戏等待人物复活
-            // Set player position ASAP, then freeze game and wait for the player to respawn (? - euni)
-            if (IsSaved && IsLoadStart && player != null) {
-                levelUpdateCounts++;
-
-                if (levelUpdateCounts == 0) {
-                    // 避免触发复活区域的 Trigger，例如 Glyph 的 peace-24
-                    player.Collidable = player.Active = false;
-
-                    RestoreLevel(level);
-                    LoadStart(level);
-                    orig(level);
-                    return;
-                }
-
-                // 等待 Level.Update 多次使所有 Entity 更新绘完毕后后再冻结游戏
-                // Wait for some frames so entities can be updated and rendered, then freeze game.
-                if (levelUpdateCounts == 1) {
-                    // 等待大部分 Entity 创建添加到 Scene 中再检查是否有保留了但是没有创建的 Entity
-                    // 等待 Level.Update 一次是因为部分 Entity 是在第一次 Entity.Update 中创建的，例如 TalkComponentUI
-                    RestoreEntityUtils.FindNotLoadedEntities(level);
-                    orig(level);
-                    return;
-                }
-
-                if (levelUpdateCounts == 2) {
-                    // 预先还原位置与可见性，有些 Entity 需要 1 帧来渲染新的状态，例如 Spinner 的 border 和 MoveBlock 的销毁后不可见状态
-                    // wait 1 frame let some entities render at new position. ex spinner's border and moveblock.
-                    RestoreAllEntitiesPosition(level);
-                    orig(level);
-
-                    // Restore Again For Camera
-                    RestoreLevel(level);
-
-                    // 等所有 Entity 创建完毕并渲染完成后再统一在此时机还原状态
-                    RestoreEntityUtils.AfterEntityAwake(level);
-
-                    // 冻结游戏等待 Madeline 复活
-                    // Freeze the game wait for madeline respawn.
-                    if (player.StateMachine.State == Player.StIntroRespawn) {
-                        level.Frozen = true;
-                        level.PauseLock = true;
-                        loadState = SaveLoad.LoadState.Frozen;
-
-                        // sync for tas
-                        for (int i = 0; i < 5; i++) {
-                            (player.GetField("respawnTween") as Tween)?.Update();
-                        }
-                    } else {
-                        loadState = SaveLoad.LoadState.PlayerRespawned;
-                    }
-
-                    return;
-                }
-            }
-
-            // 冻结时允许人物 Update 以便复活
-            // Allow player to respawn while level is frozen
-            if (IsSaved && IsLoadFrozen) {
-                UpdatePlayerWhenFreeze(level, player);
-                level.Session.Time = SavedSession.Time;
-            }
-
-            // 人物复活完毕后设置人物相关属性
-            // Set more player data after the player respawns
-            if (IsSaved && (IsLoadPlayerRespawned || IsLoadFrozen) && player != null &&
-                (player.StateMachine.State == Player.StNormal || player.StateMachine.State == Player.StSwim ||
-                 player.StateMachine.State == Player.StFlingBird)) {
-                RestoreEntityUtils.AfterPlayerRespawn(level);
-
-                level.Frozen = false;
-                level.PauseLock = false;
-                level.TimeActive = savedLevel.TimeActive;
-                level.RawTimeActive = savedLevel.RawTimeActive;
-                level.Session.Time = SavedSession.Time;
-
-                Engine.FreezeTimer = savedFreezeTimer;
-                Engine.TimeRate = savedTimeRate;
-                Glitch.Value = savedGlitchValue;
-                Distort.Anxiety = savedDistortAnxiety;
-                Distort.GameRate = savedDistortGameRate;
-
-                loadState = SaveLoad.LoadState.Complete;
-
-                RestoreEntityUtils.OnLoadComplete(level);
-            }
-
-            orig(level);
-        }
-
-        #endregion
-
-
-        private void RestoreAllEntitiesPosition(Level level) {
-            var loadedEntitiesDict = level.FindAllToDict<Entity>();
-
-            foreach (var pair in loadedEntitiesDict.Where(loaded => SavedEntitiesDict.ContainsKey(loaded.Key))) {
-                var savedEntity = SavedEntitiesDict[pair.Key];
-                var loadedEntity = pair.Value;
-
-                // let player stay at the safe position. player does not need to be pre-rendered.
-                if (loadedEntity.IsType<Player>()) continue;
-
-                loadedEntity.Position = savedEntity.Position;
-                loadedEntity.Visible = savedEntity.Visible;
-                loadedEntity.Collidable = savedEntity.Collidable;
-            }
-        }
-
-        private void SaveState(Level level, Player player) {
-            ClearState();
-
-            levelUpdateCounts = -1;
-            if (FastLoadStateEnabled) {
-                loadState = SaveLoad.LoadState.FastSaveState;
-            } else {
-                loadState = SaveLoad.LoadState.SaveState;
-            }
-
-            SavedPlayer = player;
-            SavedEntitiesDict = level.FindAllToDict(out SavedDuplicateIdList);
-
-            if (FastLoadStateEnabled) {
-                savedLevel = new Level {
-                    Camera =  level.Camera.DeepClone(),
-                    Session = level.Session.DeepClone()
-                };
-                CopyCore.DeepCopyMembers(savedLevel, level, true);
-            } else {
-                savedLevel = level;
-            }
+            savedCassetteBlockManager = level.Entities.FindFirst<CassetteBlockManager>()?.ShallowClone();
 
             savedFreezeTimer = Engine.FreezeTimer;
             savedTimeRate = Engine.TimeRate;
@@ -345,19 +187,24 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
             }
 
-            RestoreEntityUtils.OnSaveState(level);
-
-            ReloadLevel(level);
+            LoadState(level);
         }
 
-        public void LoadState() {
-            if (!IsSaved || !(Engine.Scene.GetLevel() is Level level) || NotAllowFastLoadState(level)) {
-                return;
-            }
+        private void LoadState(Level level) {
+            if (!IsSaved) return;
 
-            levelUpdateCounts = -1;
-            loadState = SaveLoad.LoadState.Start;
-            ReloadLevel(level);
+            state = States.Loading;
+
+            RoomTimerManager.Instance.ResetTime();
+
+            level.SetFieldValue("transition", null); // 允许切换房间时读档
+            level.Displacement.Clear(); // 避免冲刺后读档残留爆破效果
+            TrailManager.Clear(); // 清除冲刺的残影
+
+            UnloadLevelEntities(level);
+            RestoreLevelEntities(level);
+            RestoreCassetteBlockManager(level);
+            RestoreLevel(level);
 
             // restore all mod sessions
             foreach (EverestModule module in Everest.Modules) {
@@ -365,165 +212,192 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     module._Session = savedModSession.DeepCloneYaml(module.SessionType);
                 }
             }
+
+            level.Frozen = true; // 加一个转场等待，避免太突兀
+            level.TimerStopped = true; // 停止计时器
+
+            // 修复问题：未打开自动读档时，死掉按下确认键后读档完成会接着执行 Reload 复活方法
+            if (level.RendererList.Renderers.FirstOrDefault(renderer => renderer is ScreenWipe) is ScreenWipe wipe) {
+                wipe.Cancel();
+            }
+
+            level.DoScreenWipe(true, () => {
+                level.Frozen = false;
+                state = States.None;
+                RestoreLevel(level);
+                RoomTimerManager.Instance.SavedEndPoint?.ReadyForTime();
+            });
         }
 
-        private void ReloadLevel(Level level) {
-            RoomTimerManager.Instance.ResetTime();
-            if (FastLoadStateEnabled) {
-                // 避免复活时读档重复复活
-                if (level.Entities.FindFirst<PlayerDeadBody>() != null) {
-                    if (level.RendererList.Renderers.FirstOrDefault(renderer => renderer is ScreenWipe) is ScreenWipe wipe) {
-                        wipe.OnComplete = () => { };
+        private List<Entity> DeepCloneEntities(List<Entity> entities) {
+            Dictionary<int, Dictionary<string, object>> dynDataDict = new Dictionary<int, Dictionary<string, object>>();
+            EntitiesWrapper entitiesWrapper = new EntitiesWrapper(entities, dynDataDict);
+
+            // Find the dynData.Data that need to be cloned
+            for (int i = 0; i < entities.Count; i++) {
+                Entity entity = entities[i];
+                if (DynDataUtils.GetDataMap(entity.GetType())?.Count == 0) continue;
+
+                if (DynDataUtils.GetDate(entity) is Dictionary<string, object> data && data.Count > 0) {
+                    dynDataDict.Add(i, data);
+                }
+            }
+
+            // DeepClone together make them share same object.
+            EntitiesWrapper clonedEntitiesWrapper = entitiesWrapper.DeepClone();
+
+            // Copy dynData.Data
+            Dictionary<int, Dictionary<string, object>> clonedDynDataDict = entitiesWrapper.DynDataDict;
+            foreach (int i in clonedDynDataDict.Keys) {
+                Entity clonedEntity = clonedEntitiesWrapper.Entities[i];
+                if (DynDataUtils.GetDate(clonedEntity) is Dictionary<string, object> data) {
+                    Dictionary<string, object> clonedData = clonedEntitiesWrapper.DynDataDict[i];
+                    foreach (string key in clonedData.Keys) {
+                        data[key] = clonedData[key];
                     }
                 }
+            }
 
-                level.SetField("transition", null); // 允许切换房间时读档
-                level.Completed = false; // 避免通关后不执行 Reload 方法
-                level.Displacement.Clear(); // 避免冲刺后读档残留爆破效果
-                level.Reload();
-            } else {
-                Session deepCloneSession = SavedSession.DeepClone();
-                Engine.Scene = new LevelLoader(deepCloneSession, deepCloneSession.RespawnPoint);
+            return clonedEntitiesWrapper.Entities;
+        }
+
+        private void UnloadLevelEntities(Level level) {
+            List<Entity> entities = GetEntitiesExcludingGlobal(level);
+            level.Remove(entities);
+            level.Entities.UpdateLists();
+            // 修复：Retry 后读档依然执行 PlayerDeadBody.End 的问题
+            // 由 level.CopyAllSimpleTypeFields(savedLevel) 自动处理了
+            // level.RetryPlayerCorpse = null;
+        }
+
+        private void RestoreLevelEntities(Level level) {
+            List<Entity> deepCloneEntities = DeepCloneEntities(savedEntities);
+
+            // Re Add Entities
+            List<Entity> entities = (List<Entity>) level.Entities.GetFieldValue("entities");
+            HashSet<Entity> current = (HashSet<Entity>) level.Entities.GetFieldValue("current");
+            foreach (Entity entity in deepCloneEntities) {
+                if (entities.Contains(entity)) continue;
+                if (entity is ConfettiRenderer) continue; // 不恢复自定义终点的触碰效果
+
+                current.Add(entity);
+                entities.Add(entity);
+
+                level.TagLists.InvokeMethod("EntityAdded", entity);
+                level.Tracker.InvokeMethod("EntityAdded", entity);
+                entity.Components?.ToList()
+                    .ForEach(component => {
+                        // LightingRenderer 需要，不然不会发光
+                        if (component is VertexLight vertexLight) vertexLight.Index = -1;
+                        level.Tracker.InvokeMethod("ComponentAdded", component);
+                    });
+                level.InvokeMethod("SetActualDepth", entity);
+                Dictionary<Type, Queue<Entity>> pools =
+                    (Dictionary<Type, Queue<Entity>>) Engine.Pooler.GetPropertyValue("Pools");
+                Type type = entity.GetType();
+                if (pools.ContainsKey(type) && pools[type].Count > 0) {
+                    pools[type].Dequeue();
+                }
             }
         }
 
-        // ReSharper disable once UnusedMember.Global
-        // Public for TAS Mod
-        public bool ExternalSave() {
-            Level level = Engine.Scene as Level;
-            Player player = level?.Entities.FindFirst<Player>();
-            if (player == null)
-                return false;
-
-            if (IsAllowSave(level, player)) {
-                SaveState(level, player);
-                return true;
+        private void RestoreCassetteBlockManager(Level level) {
+            if (savedCassetteBlockManager != null) {
+                level.Entities.FindFirst<CassetteBlockManager>()?.CopyAllSimpleTypeFields(savedCassetteBlockManager);
             }
-
-            return false;
-        }
-
-        // ReSharper disable once UnusedMember.Global
-        // Public for TAS Mod
-        public bool ExternalLoad() {
-            LoadState();
-            return IsSaved;
-        }
-
-        // 尽快设置人物的位置与镜头，然后冻结游戏等待人物复活
-        // Set player position ASAP, then freeze game and wait for the player to respawn (? - euni)
-        private void LoadStart(Level level) {
-            RestoreEntityUtils.OnLoadStart(level);
         }
 
         private void RestoreLevel(Level level) {
-            level.Session.Inventory = SavedSession.Inventory;
-            CopyCore.DeepCopyMembers(level, savedLevel, true);
+            savedLevel.Session.DeepCloneTo(level.Session);
             level.Camera.CopyFrom(savedLevel.Camera);
-            WindController windController = level.Entities.FindFirst<WindController>();
-            WindController savedWindController =
-                (WindController) SavedEntitiesDict.FirstOrDefault(pair => pair.Value is WindController).Value;
-            windController.CopyFields(savedWindController, "pattern");
+            level.CopyAllSimpleTypeFields(savedLevel);
+
+            // External Instance Value
+            Engine.FreezeTimer = savedFreezeTimer;
+            Engine.TimeRate = savedTimeRate;
+            Glitch.Value = savedGlitchValue;
+            Distort.Anxiety = savedDistortAnxiety;
+            Distort.GameRate = savedDistortGameRate;
         }
 
-        // ReSharper disable once MemberCanBeMadeStatic.Local
-        private void UpdatePlayerWhenFreeze(Level level, Player player) {
-            if (player == null) {
-                level.Frozen = false;
-                level.PauseLock = false;
-            } else if (player.StateMachine.State != Player.StNormal) {
-                // Don't call player.update, it will trigger playerCollider
-                // 不要使用 player.update 会触发其他 Entity 的 playerCollider
-                // 例如保存时与 Spring 过近，恢复时会被弹起。
-                (player.GetField("respawnTween") as Tween)?.Update();
-
-                level.Background.Update(level);
-                level.Foreground.Update(level);
+        private List<Entity> GetEntitiesExcludingGlobal(Level level) {
+            var result = new List<Entity>();
+            foreach (Entity entity in level.Entities) {
+                if (!entity.TagCheck(Tags.Global) || entity is Textbox) {
+                    result.Add(entity);
+                }
             }
+
+            if (level.GetPlayer() is Player player) {
+                // Player 被 Remove 时会触发其他 Trigger，所以必须最早清除
+                result.Remove(player);
+                result.Insert(0, player);
+            }
+
+            // 存储的 Entity 被清除时会调用 Renderer，所以 Renderer 应该放到最后
+            if (level.Entities.FindFirst<SeekerBarrierRenderer>() is Entity seekerBarrierRenderer) {
+                result.Add(seekerBarrierRenderer);
+            }
+
+            if (level.Entities.FindFirst<LightningRenderer>() is Entity lightningRenderer) {
+                result.Add(lightningRenderer);
+            }
+
+            return result;
         }
 
-        public void ClearState() {
+        private void ClearState(bool clearEndPoint = true) {
             if (Engine.Scene is Level level && IsNotCollectingHeart(level)) {
                 level.Frozen = false;
                 level.PauseLock = false;
             }
 
+            RoomTimerManager.Instance.ClearPbTimes(clearEndPoint);
+
             savedModSessions = null;
             savedLevel = null;
-            SavedPlayer = null;
-            SavedEntitiesDict.Clear();
-            SavedDuplicateIdList.Clear();
-            loadState = SaveLoad.LoadState.None;
-            levelUpdateCounts = -1;
+            savedEntities = null;
+            savedCassetteBlockManager = null;
 
-            RestoreEntityUtils.OnClearState();
+            state = States.None;
         }
 
         private bool IsAllowSave(Level level, Player player) {
             return !level.Paused && !level.Transitioning && !level.PauseLock && !level.InCutscene &&
-                   !level.SkippingCutscene && player != null && !player.Dead &&
+                   !level.SkippingCutscene && player != null && !player.Dead && state != States.Loading &&
                    !disabledSaveStates.Contains(player.StateMachine.State) && IsNotCollectingHeart(level);
         }
 
         private bool IsNotCollectingHeart(Level level) {
-            return !level.Entities.FindAll<HeartGem>().Any(heart => (bool) heart.GetField("collected"));
+            return !level.Entities.FindAll<HeartGem>().Any(heart => (bool) heart.GetFieldValue("collected"));
         }
 
-        private bool NotAllowFastLoadState(Level level) {
-            if (!FastLoadStateEnabled) return false;
-            return level.Paused;
-        }
-
-        private void ClearStateAndPbTimes(On.Celeste.Overworld.orig_ctor orig, Overworld self, OverworldLoader loader) {
-            orig(self, loader);
-            ClearState();
-            RoomTimerManager.Instance.ClearPbTimes();
-        }
-
-        private bool CheckButton(Level level, Player player) {
+        private void CheckButton(Level level, Player player) {
             if (GetVirtualButton(Mappings.Save).Pressed && IsAllowSave(level, player)) {
                 GetVirtualButton(Mappings.Save).ConsumePress();
-                SaveState(level, player);
-                return true;
-            }
-
-            if (GetVirtualButton(Mappings.Load).Pressed && !level.Paused && !IsLoadFrozen) {
+                SaveState(level);
+            } else if (GetVirtualButton(Mappings.Load).Pressed && !level.Paused && state == States.None) {
                 GetVirtualButton(Mappings.Load).ConsumePress();
                 if (IsSaved) {
-                    LoadState();
+                    LoadState(level);
                 } else if (!level.Frozen) {
                     level.Add(new MiniTextbox(DialogIds.DialogNotSaved));
                 }
-
-                return true;
-            }
-
-            if (GetVirtualButton(Mappings.Clear).Pressed && !level.Paused) {
+            } else if (GetVirtualButton(Mappings.Clear).Pressed && !level.Paused) {
                 GetVirtualButton(Mappings.Clear).ConsumePress();
                 ClearState();
-                RoomTimerManager.Instance.ClearPbTimes();
                 if (IsNotCollectingHeart(level)) {
                     level.Add(new MiniTextbox(DialogIds.DialogClear));
                 }
-
-                return false;
-            }
-
-            if (MInput.Keyboard.Check(Keys.F5)) {
+            } else if (MInput.Keyboard.Check(Keys.F5)) {
                 ClearState();
-                RoomTimerManager.Instance.ClearPbTimes();
-                return true;
-            }
-
-            if (GetVirtualButton(Mappings.SwitchAutoLoadState).Pressed && !level.Paused) {
+            } else if (GetVirtualButton(Mappings.SwitchAutoLoadState).Pressed && !level.Paused) {
                 GetVirtualButton(Mappings.SwitchAutoLoadState).ConsumePress();
                 Settings.AutoLoadAfterDeath = !Settings.AutoLoadAfterDeath;
                 SpeedrunToolModule.Instance.SaveSettings();
-                return false;
             }
-
-            return false;
         }
+
 
         // @formatter:off
         private static readonly Lazy<StateManager> Lazy = new Lazy<StateManager>(() => new StateManager());
@@ -532,13 +406,46 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         // @formatter:on
     }
 
-    internal enum LoadState {
-        None,
-        FastSaveState,
-        SaveState,
-        Start,
-        Frozen,
-        PlayerRespawned,
-        Complete
+    internal static class DynDataUtils {
+        private static object CreateDynData(object obj) {
+            Type type = obj.GetType();
+            string key = $"DynDataUtils-CreateDynData-{type.FullName}";
+
+            ConstructorInfo constructorInfo = type.GetExtendedDataValue<ConstructorInfo>(key);
+
+            if (constructorInfo == null) {
+                constructorInfo = typeof(DynData<>).MakeGenericType(type).GetConstructor(new[] {type});
+                type.SetExtendedDataValue(key, constructorInfo);
+            }
+
+            return constructorInfo?.Invoke(new[] {obj});
+        }
+
+        public static IDictionary GetDataMap(Type type) {
+            string key = $"DynDataUtils-GetDataMap-{type}";
+
+            FieldInfo fieldInfo = type.GetExtendedDataValue<FieldInfo>(key);
+
+            if (fieldInfo == null) {
+                fieldInfo = typeof(DynData<>).MakeGenericType(type).GetField("_DataMap", BindingFlags.Static | BindingFlags.NonPublic);
+                type.SetExtendedDataValue(key, fieldInfo);
+            }
+
+            return fieldInfo?.GetValue(null) as IDictionary;
+        }
+
+        public static Dictionary<string, object> GetDate(object obj) {
+            return CreateDynData(obj)?.GetPropertyValue("Data") as Dictionary<string, object>;
+        }
+    }
+
+    internal class EntitiesWrapper {
+        public readonly List<Entity> Entities;
+        public readonly Dictionary<int, Dictionary<string, object>> DynDataDict;
+
+        public EntitiesWrapper(List<Entity> entities, Dictionary<int, Dictionary<string, object>> dynDataDict) {
+            Entities = entities;
+            DynDataDict = dynDataDict;
+        }
     }
 }

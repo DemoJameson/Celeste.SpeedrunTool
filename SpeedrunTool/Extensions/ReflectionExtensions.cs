@@ -32,7 +32,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
             foreach (FieldInfo fieldInfo in to.GetType().GetAllFieldInfos()) {
                 if (fieldInfo.FieldType.IsSimple()) {
-                    to.CopyFieldValues(fieldInfo.DeclaringType, from, fieldInfo.Name);
+                    to.CopyFieldValue(fieldInfo.DeclaringType, from, fieldInfo.Name);
                 } else if (from.GetFieldValue(fieldInfo.DeclaringType, fieldInfo.Name) == null) {
                     fieldInfo.SetValue(to, null);
                 }
@@ -264,15 +264,15 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             GetFieldInfo(type, name)?.SetValue(obj, value);
         }
 
-        public static void CopyFieldValues(this object obj, object fromObj, params string[] names) {
-            obj.CopyFieldValues(obj.GetType(), fromObj, names);
+        public static void CopyFieldValue(this object obj, object fromObj, params string[] names) {
+            obj.CopyFieldValue(obj.GetType(), fromObj, names);
         }
 
-        public static void CopyFieldValues<T>(this T obj, T fromObj, params string[] names) {
-            obj.CopyFieldValues(typeof(T), fromObj, names);
+        public static void CopyFieldValue<T>(this T obj, T fromObj, params string[] names) {
+            obj.CopyFieldValue(typeof(T), fromObj, names);
         }
 
-        public static void CopyFieldValues(this object obj, Type type, object fromObj, params string[] names) {
+        public static void CopyFieldValue(this object obj, Type type, object fromObj, params string[] names) {
             foreach (string name in names) {
                 obj.SetFieldValue(type, name, fromObj.GetFieldValue(type, name));
             }
@@ -302,15 +302,15 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             GetPropertySetMethod(type, name)?.Invoke(obj, new []{value});
         }
 
-        public static void CopyPropertyValues(this object obj, object fromObj, params string[] names) {
-            obj.CopyPropertyValues(obj.GetType(), fromObj, names);
+        public static void CopyPropertyValue(this object obj, object fromObj, params string[] names) {
+            obj.CopyPropertyValue(obj.GetType(), fromObj, names);
         }
 
-        public static void CopyPropertyValues<T>(this T obj, T fromObj, params string[] names) {
-            obj.CopyPropertyValues(typeof(T), fromObj, names);
+        public static void CopyPropertyValue<T>(this T obj, T fromObj, params string[] names) {
+            obj.CopyPropertyValue(typeof(T), fromObj, names);
         }
 
-        public static void CopyPropertyValues(this object obj, Type type, object fromObj, params string[] names) {
+        public static void CopyPropertyValue(this object obj, Type type, object fromObj, params string[] names) {
             foreach (string name in names) {
                 obj.SetPropertyValue(type, name, fromObj.GetPropertyValue(type, name));
             }

@@ -27,14 +27,15 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return SimpleTypes.Contains(type) || type.IsEnum;
         }
 
-        public static void CopyAllSimpleTypeFields(this object to, object from) {
+        public static void CopyAllSimpleTypeFieldsAndNull(this object to, object from) {
             if (to.GetType() != from.GetType()) throw new ArgumentException("object to and from not the same type");
 
             foreach (FieldInfo fieldInfo in to.GetType().GetAllFieldInfos()) {
-                if (fieldInfo.FieldType.IsSimple()) {
-                    to.CopyFieldValue(fieldInfo.DeclaringType, from, fieldInfo.Name);
-                } else if (from.GetFieldValue(fieldInfo.DeclaringType, fieldInfo.Name) == null) {
+                object fromValue = fieldInfo.GetValue(from);
+                if (fromValue == null) {
                     fieldInfo.SetValue(to, null);
+                } else if (fieldInfo.FieldType.IsSimple()) {
+                    fieldInfo.SetValue(to, fromValue);
                 }
             }
         }

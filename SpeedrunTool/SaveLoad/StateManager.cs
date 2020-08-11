@@ -303,14 +303,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private void RestoreCassetteBlockManager(Level level) {
             if (savedCassetteBlockManager != null) {
-                level.Entities.FindFirst<CassetteBlockManager>()?.CopyAllSimpleTypeFields(savedCassetteBlockManager);
+                level.Entities.FindFirst<CassetteBlockManager>()?.CopyAllSimpleTypeFieldsAndNull(savedCassetteBlockManager);
             }
         }
 
         private void RestoreLevel(Level level) {
             savedLevel.Session.DeepCloneTo(level.Session);
             level.Camera.CopyFrom(savedLevel.Camera);
-            level.CopyAllSimpleTypeFields(savedLevel);
+            level.CopyAllSimpleTypeFieldsAndNull(savedLevel);
 
             // External Instance Value
             Engine.FreezeTimer = savedFreezeTimer;

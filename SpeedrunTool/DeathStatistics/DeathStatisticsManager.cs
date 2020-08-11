@@ -17,7 +17,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         // @formatter:on
 
         private long lastTime;
-        private bool died;
+        public bool Died;
         private string causeOfDeath;
         private Vector2 deathPosition;
 
@@ -26,6 +26,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
 
         public void Load() {
             On.Celeste.Player.Die += PlayerOnDie;
+            On.Celeste.PlayerDeadBody.End += PlayerDeadBodyOnEnd;
             On.Celeste.Level.NextLevel += LevelOnNextLevel;
             On.Celeste.Player.Update += PlayerOnUpdate;
             On.Celeste.OuiFileSelectSlot.EnterFirstArea += OuiFileSelectSlotOnEnterFirstArea;
@@ -34,11 +35,12 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             On.Celeste.LevelLoader.ctor += LevelLoaderOnCtor;
             On.Celeste.Level.Update += LevelOnUpdate;
             On.Celeste.Player.Added += PlayerOnAdded;
-            On.Celeste.LevelExit.ctor += LevelExitOnCtor;
+            On.Monocle.Scene.Begin += SceneOnBegin;
         }
 
         public void Unload() {
             On.Celeste.Player.Die -= PlayerOnDie;
+            On.Celeste.PlayerDeadBody.End -= PlayerDeadBodyOnEnd;
             On.Celeste.Level.NextLevel -= LevelOnNextLevel;
             On.Celeste.Player.Update -= PlayerOnUpdate;
             On.Celeste.OuiFileSelectSlot.EnterFirstArea -= OuiFileSelectSlotOnEnterFirstArea;
@@ -47,13 +49,13 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             On.Celeste.LevelLoader.ctor -= LevelLoaderOnCtor;
             On.Celeste.Level.Update -= LevelOnUpdate;
             On.Celeste.Player.Added -= PlayerOnAdded;
-            On.Celeste.LevelExit.ctor -= LevelExitOnCtor;
+            On.Monocle.Scene.Begin -= SceneOnBegin;
         }
 
-        private void LevelExitOnCtor(On.Celeste.LevelExit.orig_ctor orig, LevelExit self, LevelExit.Mode mode, Session session, HiresSnow snow) {
-            orig(self, mode, session, snow);
-            
-            Clear();
+        private void SceneOnBegin(On.Monocle.Scene.orig_Begin orig, Scene self) {
+            orig(self);
+            if(self is Overworld || self is LevelExit) Clear();
+            // TODO 死亡后按确认键再按 PageDown/Up 会产生一条错误的死亡记录，等待 Teleport 功能改版时一并修改
         }
 
         private void PlayerOnAdded(On.Celeste.Player.orig_Added orig, Player self, Scene scene) {
@@ -132,8 +134,8 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         private void PlayerOnUpdate(On.Celeste.Player.orig_Update orig, Player self) {
             orig(self);
 
-            if (Enabled && died && (self.StateMachine.State == Player.StNormal || self.StateMachine.State == Player.StSwim)) {
-                died = false;
+            if (Enabled && Died && (self.StateMachine.State == Player.StNormal || self.StateMachine.State == Player.StSwim)) {
+                Died = false;
                 LoggingData(self);
             }
         }
@@ -151,12 +153,18 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             PlayerDeadBody playerDeadBody = orig(self, direction, evenIfInvincible, registerDeathInStats);
 
             if (playerDeadBody != null && Enabled) {
-                died = true;
                 causeOfDeath = GetCauseOfDeath();
                 deathPosition = self.Position;
             }
 
             return playerDeadBody;
+        }
+
+        private void PlayerDeadBodyOnEnd(On.Celeste.PlayerDeadBody.orig_End orig, PlayerDeadBody self) {
+            orig(self);
+            if (Enabled) {
+                Died = true;
+            }
         }
 
         private void LoggingData(Player player) {
@@ -305,6 +313,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         }
 
         public void Clear() {
+            Died = false;
             teleportDeathInfo = null;
         }
     }

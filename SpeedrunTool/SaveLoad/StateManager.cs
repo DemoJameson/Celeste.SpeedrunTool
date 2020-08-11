@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Force.DeepCloner;
@@ -136,6 +137,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private void ClearStateWhenSwitchScene(On.Monocle.Scene.orig_Begin orig, Scene self) {
+            orig(self);
             if (self is Overworld) ClearState();
             if (IsSaved) {
                 if (self is Level) state = States.None; // 修复：读档途中按下 PageDown/Up 后无法存档
@@ -195,7 +197,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             state = States.Loading;
 
+            // External
             RoomTimerManager.Instance.ResetTime();
+            DeathStatisticsManager.Instance.Died = false;
 
             level.SetFieldValue("transition", null); // 允许切换房间时读档
             level.Displacement.Clear(); // 避免冲刺后读档残留爆破效果
@@ -230,6 +234,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private List<Entity> DeepCloneEntities(List<Entity> entities) {
+            entities = entities.Where(entity => {
+                // 不恢复自定义终点的触碰效果
+                if (entity is ConfettiRenderer)
+                    return false;
+
+                // 不恢复 CelesteNet 的物体
+                if (entity.GetType().FullName is string name && name.StartsWith("Celeste.Mod.CelesteNet"))
+                    return false;
+
+                return true;
+            }).ToList();
+
             Dictionary<int, Dictionary<string, object>> dynDataDict = new Dictionary<int, Dictionary<string, object>>();
             EntitiesWrapper entitiesWrapper = new EntitiesWrapper(entities, dynDataDict);
 
@@ -278,7 +294,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             HashSet<Entity> current = (HashSet<Entity>) level.Entities.GetFieldValue("current");
             foreach (Entity entity in deepCloneEntities) {
                 if (entities.Contains(entity)) continue;
-                if (entity is ConfettiRenderer) continue; // 不恢复自定义终点的触碰效果
 
                 current.Add(entity);
                 entities.Add(entity);
@@ -303,7 +318,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private void RestoreCassetteBlockManager(Level level) {
             if (savedCassetteBlockManager != null) {
-                level.Entities.FindFirst<CassetteBlockManager>()?.CopyAllSimpleTypeFieldsAndNull(savedCassetteBlockManager);
+                level.Entities.FindFirst<CassetteBlockManager>()
+                    ?.CopyAllSimpleTypeFieldsAndNull(savedCassetteBlockManager);
             }
         }
 
@@ -427,7 +443,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             FieldInfo fieldInfo = type.GetExtendedDataValue<FieldInfo>(key);
 
             if (fieldInfo == null) {
-                fieldInfo = typeof(DynData<>).MakeGenericType(type).GetField("_DataMap", BindingFlags.Static | BindingFlags.NonPublic);
+                fieldInfo = typeof(DynData<>).MakeGenericType(type)
+                    .GetField("_DataMap", BindingFlags.Static | BindingFlags.NonPublic);
                 type.SetExtendedDataValue(key, fieldInfo);
             }
 

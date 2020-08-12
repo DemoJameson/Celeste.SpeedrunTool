@@ -18,25 +18,29 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             OnLoadState = onLoadState;
         }
 
-        public static void InvokeSaveState(Level level) {
+        public static void Add(SaveLoadAction saveLoadAction) {
+            all.Add(saveLoadAction);
+        }
+
+        internal static void InvokeSaveState(Level level) {
             foreach (SaveLoadAction saveLoadAction in all) {
                 saveLoadAction.OnSaveState(saveLoadAction.savedValues, level);
             }
         }
 
-        public static void InvokeLoadState(Level level) {
+        internal static void InvokeLoadState(Level level) {
             foreach (SaveLoadAction saveLoadAction in all) {
                 saveLoadAction.OnLoadState(saveLoadAction.savedValues, level);
             }
         }
 
-        public static void InvokeClearState() {
+        internal static void InvokeClearState() {
             foreach (SaveLoadAction saveLoadAction in all) {
                 saveLoadAction.savedValues.Clear();
             }
         }
 
-        public static void OnInit() {
+        internal static void OnInit() {
             bool extendedVariantModeInstalled = Everest.Loader.DependencyLoaded(new EverestModuleMetadata
                 {Name = "ExtendedVariantMode", Version = new Version(0, 15, 20)});
             if (extendedVariantModeInstalled) {

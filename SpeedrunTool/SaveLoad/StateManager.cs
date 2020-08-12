@@ -18,6 +18,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class StateManager {
         private static SpeedrunToolSettings Settings => SpeedrunToolModule.Settings;
 
+        private bool extendedVariantModeInstalled;
+
         private Level savedLevel;
         private List<Entity> savedEntities;
         private CassetteBlockManager savedCassetteBlockManager;
@@ -115,6 +117,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                 return clonedObj;
             });
+
+            SaveLoadAction.OnInit();
         }
 
         #region Hook
@@ -174,11 +178,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             savedCassetteBlockManager = level.Entities.FindFirst<CassetteBlockManager>()?.ShallowClone();
 
+            // External
             savedFreezeTimer = Engine.FreezeTimer;
             savedTimeRate = Engine.TimeRate;
             savedGlitchValue = Glitch.Value;
             savedDistortAnxiety = Distort.Anxiety;
             savedDistortGameRate = Distort.GameRate;
+
+            // Mod
+            SaveLoadAction.InvokeSaveState(level);
 
             // save all mod sessions
             savedModSessions = new Dictionary<EverestModule, EverestModuleSession>();
@@ -199,6 +207,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // External
             RoomTimerManager.Instance.ResetTime();
             DeathStatisticsManager.Instance.Died = false;
+
+            // Mod
+            SaveLoadAction.InvokeLoadState(level);
 
             level.SetFieldValue("transition", null); // 允许切换房间时读档
             level.Displacement.Clear(); // 避免冲刺后读档残留爆破效果
@@ -232,11 +243,32 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             });
         }
 
+        private void ClearState(bool clearEndPoint = true) {
+            if (Engine.Scene is Level level && IsNotCollectingHeart(level)) {
+                level.Frozen = false;
+                level.PauseLock = false;
+            }
+
+            RoomTimerManager.Instance.ClearPbTimes(clearEndPoint);
+
+            savedModSessions = null;
+            savedLevel = null;
+            savedEntities = null;
+            savedCassetteBlockManager = null;
+
+            // Mod
+            SaveLoadAction.InvokeClearState();
+
+            state = States.None;
+        }
+
         private List<Entity> DeepCloneEntities(List<Entity> entities) {
             entities = entities.Where(entity => {
                 // 不恢复自定义终点的触碰效果
                 if (entity is ConfettiRenderer)
                     return false;
+
+                if(entity is MiniTextbox miniTextbox)
 
                 // 不恢复 CelesteNet 的物体
                 if (entity.GetType().FullName is string name && name.StartsWith("Celeste.Mod.CelesteNet"))
@@ -327,7 +359,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             level.Camera.CopyFrom(savedLevel.Camera);
             level.CopyAllSimpleTypeFieldsAndNull(savedLevel);
 
-            // External Instance Value
+            // External Static Field
             Engine.FreezeTimer = savedFreezeTimer;
             Engine.TimeRate = savedTimeRate;
             Glitch.Value = savedGlitchValue;
@@ -359,22 +391,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             return result;
-        }
-
-        private void ClearState(bool clearEndPoint = true) {
-            if (Engine.Scene is Level level && IsNotCollectingHeart(level)) {
-                level.Frozen = false;
-                level.PauseLock = false;
-            }
-
-            RoomTimerManager.Instance.ClearPbTimes(clearEndPoint);
-
-            savedModSessions = null;
-            savedLevel = null;
-            savedEntities = null;
-            savedCassetteBlockManager = null;
-
-            state = States.None;
         }
 
         private bool IsAllowSave(Level level, Player player) {

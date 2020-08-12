@@ -18,10 +18,23 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class StateManager {
         private static SpeedrunToolSettings Settings => SpeedrunToolModule.Settings;
 
+        private static readonly List<int> DisabledSaveStates = new List<int> {
+            Player.StReflectionFall,
+            Player.StTempleFall,
+            Player.StCassetteFly,
+            Player.StIntroJump,
+            Player.StIntroWalk,
+            Player.StIntroRespawn,
+            Player.StIntroWakeUp,
+        };
+
+        // public for TAS Mod
+        // ReSharper disable once MemberCanBePrivate.Global
+        public bool IsSaved => savedLevel != null;
+
         private Level savedLevel;
         private List<Entity> savedEntities;
         private CassetteBlockManager savedCassetteBlockManager;
-        private bool IsSaved => savedLevel != null;
 
         private float savedFreezeTimer;
         private float savedTimeRate;
@@ -37,16 +50,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             None,
             Loading,
         }
-
-        private readonly List<int> disabledSaveStates = new List<int> {
-            Player.StReflectionFall,
-            Player.StTempleFall,
-            Player.StCassetteFly,
-            Player.StIntroJump,
-            Player.StIntroWalk,
-            Player.StIntroRespawn,
-            Player.StIntroWakeUp,
-        };
 
         public void OnInit() {
             // Clone 开始时，判断哪些类型是直接使用原对象而不 DeepClone 的
@@ -133,7 +136,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private void CheckButtonsOnLevelUpdate(On.Celeste.Level.orig_Update orig, Level self) {
             orig(self);
-            CheckButton(self, self.GetPlayer());
+            CheckButton(self);
         }
 
         private void ClearStateWhenSwitchScene(On.Monocle.Scene.orig_Begin orig, Scene self) {
@@ -154,7 +157,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 && !(bool) self.GetFieldValue("finished")
                 && Engine.Scene is Level level
             ) {
-                level.OnEndOfFrame += () => LoadState(level);
+                level.OnEndOfFrame += () => LoadState();
                 self.RemoveSelf();
             } else {
                 orig(self);
@@ -163,7 +166,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         #endregion
 
-        private void SaveState(Level level) {
+        // public for TAS Mod
+        // ReSharper disable once MemberCanBePrivate.Global UnusedMethodReturnValue.Global
+        public bool SaveState() {
+            if (!(Engine.Scene is Level level)) return false;
+            if (!IsAllowSave(level, level.GetPlayer())) return false;
+
             ClearState(false);
 
             savedLevel = level.ShallowClone();
@@ -182,7 +190,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedDistortGameRate = Distort.GameRate;
 
             // Mod
-            SaveLoadAction.InvokeSaveState(level);
+            SaveLoadAction.OnSaveState(level);
 
             // save all mod sessions
             savedModSessions = new Dictionary<EverestModule, EverestModuleSession>();
@@ -192,11 +200,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
             }
 
-            LoadState(level);
+            return LoadState();
         }
 
-        private void LoadState(Level level) {
-            if (!IsSaved) return;
+        // public for TAS Mod
+        // ReSharper disable once MemberCanBePrivate.Global
+        public bool LoadState() {
+            if (!(Engine.Scene is Level level)) return false;
+            if (level.Paused || state != States.None || !IsSaved) return false;
 
             state = States.Loading;
 
@@ -205,7 +216,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             DeathStatisticsManager.Instance.Died = false;
 
             // Mod
-            SaveLoadAction.InvokeLoadState(level);
+            SaveLoadAction.OnLoadState(level);
 
             level.SetFieldValue("transition", null); // 允许切换房间时读档
             level.Displacement.Clear(); // 避免冲刺后读档残留爆破效果
@@ -237,6 +248,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 RestoreLevel(level);
                 RoomTimerManager.Instance.SavedEndPoint?.ReadyForTime();
             });
+
+            return true;
         }
 
         private void ClearState(bool clearEndPoint = true) {
@@ -253,7 +266,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedCassetteBlockManager = null;
 
             // Mod
-            SaveLoadAction.InvokeClearState();
+            SaveLoadAction.OnClearState();
 
             state = States.None;
         }
@@ -383,9 +396,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private bool IsAllowSave(Level level, Player player) {
-            return state != States.Loading
+            return state == States.None
                    && !level.Paused && !level.Transitioning && !level.InCutscene && !level.SkippingCutscene
-                   && player != null && !player.Dead && !disabledSaveStates.Contains(player.StateMachine.State)
+                   && player != null && !player.Dead && !DisabledSaveStates.Contains(player.StateMachine.State)
                    && IsNotCollectingHeart(level);
         }
 
@@ -393,14 +406,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             return !level.Entities.FindAll<HeartGem>().Any(heart => (bool) heart.GetFieldValue("collected"));
         }
 
-        private void CheckButton(Level level, Player player) {
-            if (GetVirtualButton(Mappings.Save).Pressed && IsAllowSave(level, player)) {
+        private void CheckButton(Level level) {
+            if (GetVirtualButton(Mappings.Save).Pressed) {
                 GetVirtualButton(Mappings.Save).ConsumePress();
-                SaveState(level);
+                SaveState();
             } else if (GetVirtualButton(Mappings.Load).Pressed && !level.Paused && state == States.None) {
                 GetVirtualButton(Mappings.Load).ConsumePress();
                 if (IsSaved) {
-                    LoadState(level);
+                    LoadState();
                 } else if (!level.Frozen) {
                     level.Add(new MiniTextbox(DialogIds.DialogNotSaved).IgnoreSaveLoad());
                 }

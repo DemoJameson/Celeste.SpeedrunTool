@@ -8,33 +8,33 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private static readonly List<SaveLoadAction> all = new List<SaveLoadAction>();
 
         private readonly Dictionary<string, object> savedValues = new Dictionary<string, object>();
-        private readonly Action<Dictionary<string, object>, Level> OnSaveState;
-        private readonly Action<Dictionary<string, object>, Level> OnLoadState;
+        private readonly Action<Dictionary<string, object>, Level> saveState;
+        private readonly Action<Dictionary<string, object>, Level> loadState;
 
         public SaveLoadAction(
-            Action<Dictionary<string, object>, Level> onSaveState,
-            Action<Dictionary<string, object>, Level> onLoadState) {
-            OnSaveState = onSaveState;
-            OnLoadState = onLoadState;
+            Action<Dictionary<string, object>, Level> saveState,
+            Action<Dictionary<string, object>, Level> loadState) {
+            this.saveState = saveState;
+            this.loadState = loadState;
         }
 
         public static void Add(SaveLoadAction saveLoadAction) {
             all.Add(saveLoadAction);
         }
 
-        internal static void InvokeSaveState(Level level) {
+        internal static void OnSaveState(Level level) {
             foreach (SaveLoadAction saveLoadAction in all) {
-                saveLoadAction.OnSaveState(saveLoadAction.savedValues, level);
+                saveLoadAction.saveState(saveLoadAction.savedValues, level);
             }
         }
 
-        internal static void InvokeLoadState(Level level) {
+        internal static void OnLoadState(Level level) {
             foreach (SaveLoadAction saveLoadAction in all) {
-                saveLoadAction.OnLoadState(saveLoadAction.savedValues, level);
+                saveLoadAction.loadState(saveLoadAction.savedValues, level);
             }
         }
 
-        internal static void InvokeClearState() {
+        internal static void OnClearState() {
             foreach (SaveLoadAction saveLoadAction in all) {
                 saveLoadAction.savedValues.Clear();
             }

@@ -18,8 +18,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class StateManager {
         private static SpeedrunToolSettings Settings => SpeedrunToolModule.Settings;
 
-        private bool extendedVariantModeInstalled;
-
         private Level savedLevel;
         private List<Entity> savedEntities;
         private CassetteBlockManager savedCassetteBlockManager;
@@ -264,11 +262,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private List<Entity> DeepCloneEntities(List<Entity> entities) {
             entities = entities.Where(entity => {
-                // 不恢复自定义终点的触碰效果
-                if (entity is ConfettiRenderer)
-                    return false;
-
-                if(entity is MiniTextbox miniTextbox)
+                // 不恢复设置了 IgnoreSaveLoadComponent 的物体
+                // SpeedrunTool 里有 ConfettiRenderer 和一些 MiniTextbox
+                if (entity.IsIgnoreSaveLoad()) return false;
 
                 // 不恢复 CelesteNet 的物体
                 if (entity.GetType().FullName is string name && name.StartsWith("Celeste.Mod.CelesteNet"))
@@ -412,13 +408,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 if (IsSaved) {
                     LoadState(level);
                 } else if (!level.Frozen) {
-                    level.Add(new MiniTextbox(DialogIds.DialogNotSaved));
+                    level.Add(new MiniTextbox(DialogIds.DialogNotSaved).IgnoreSaveLoad());
                 }
             } else if (GetVirtualButton(Mappings.Clear).Pressed && !level.Paused) {
                 GetVirtualButton(Mappings.Clear).ConsumePress();
                 ClearState();
                 if (IsNotCollectingHeart(level)) {
-                    level.Add(new MiniTextbox(DialogIds.DialogClear));
+                    level.Add(new MiniTextbox(DialogIds.DialogClear).IgnoreSaveLoad());
                 }
             } else if (MInput.Keyboard.Check(Keys.F5)) {
                 ClearState();

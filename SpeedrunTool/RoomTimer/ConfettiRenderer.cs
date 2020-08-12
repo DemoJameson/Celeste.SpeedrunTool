@@ -1,4 +1,5 @@
 using System;
+using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework;
 using Monocle;
 
@@ -14,6 +15,8 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
 
         public ConfettiRenderer(Vector2 position)
             : base(position) {
+            Add(new IgnoreSaveLoadComponent());
+
             Depth = -10010;
             for (int index = 0; index < particles.Length; ++index) {
                 particles[index].Position = Position + new Vector2(Calc.Random.Range(-3, 3), Calc.Random.Range(-3, 3));

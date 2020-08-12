@@ -46,7 +46,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             Player.StIntroWalk,
             Player.StIntroRespawn,
             Player.StIntroWakeUp,
-            Player.StDummy,
         };
 
         public void OnInit() {
@@ -87,7 +86,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
 
                 if (sourceObj is Entity entity && entity.TagCheck(Tags.Global)
-                                               && !(entity is Textbox)
                                                && !(entity is SeekerBarrierRenderer)
                                                && !(entity is LightningRenderer)
                 ) return sourceObj;
@@ -364,12 +362,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private List<Entity> GetEntitiesExcludingGlobal(Level level) {
-            var result = new List<Entity>();
-            foreach (Entity entity in level.Entities) {
-                if (!entity.TagCheck(Tags.Global) || entity is Textbox) {
-                    result.Add(entity);
-                }
-            }
+            var result = level.Entities.Where(entity => !entity.TagCheck(Tags.Global)).ToList();
 
             if (level.GetPlayer() is Player player) {
                 // Player 被 Remove 时会触发其他 Trigger，所以必须最早清除
@@ -390,9 +383,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private bool IsAllowSave(Level level, Player player) {
-            return !level.Paused && !level.Transitioning && !level.PauseLock && !level.InCutscene &&
-                   !level.SkippingCutscene && player != null && !player.Dead && state != States.Loading &&
-                   !disabledSaveStates.Contains(player.StateMachine.State) && IsNotCollectingHeart(level);
+            return state != States.Loading
+                   && !level.Paused && !level.Transitioning && !level.InCutscene && !level.SkippingCutscene
+                   && player != null && !player.Dead && !disabledSaveStates.Contains(player.StateMachine.State)
+                   && IsNotCollectingHeart(level);
         }
 
         private bool IsNotCollectingHeart(Level level) {

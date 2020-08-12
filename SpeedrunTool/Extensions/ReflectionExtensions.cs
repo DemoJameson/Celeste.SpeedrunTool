@@ -6,17 +6,17 @@ using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
     internal static class ReflectionExtensions {
+        private const BindingFlags InstanceAnyVisibility = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+        private const BindingFlags InstanceAnyVisibilityDeclaredOnly = InstanceAnyVisibility | BindingFlags.DeclaredOnly;
+        private const BindingFlags StaticInstanceAnyVisibility = InstanceAnyVisibility | BindingFlags.Static;
+
         private static readonly object[] NoArg = {};
+
         private static readonly HashSet<Type> SimpleTypes = new HashSet<Type> {
             typeof(byte), typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong),
             typeof(float), typeof(double), typeof(decimal), typeof(char), typeof(string), typeof(bool),
             typeof(DateTime), typeof(TimeSpan), typeof(DateTimeOffset), typeof(Vector2)
         };
-
-
-        private const BindingFlags InstanceAnyVisibility = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
-        private const BindingFlags InstanceAnyVisibilityDeclaredOnly = InstanceAnyVisibility | BindingFlags.DeclaredOnly;
-        private const BindingFlags StaticInstanceAnyVisibility = InstanceAnyVisibility | BindingFlags.Static;
 
         public static bool IsSimple(this Type type) {
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>)) {
@@ -30,7 +30,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         public static void CopyAllSimpleTypeFieldsAndNull(this object to, object from) {
             if (to.GetType() != from.GetType()) throw new ArgumentException("object to and from not the same type");
 
-            foreach (FieldInfo fieldInfo in to.GetType().GetAllFieldInfos()) {
+            foreach (FieldInfo fieldInfo in to.GetType().GetAllFieldInfos(InstanceAnyVisibilityDeclaredOnly)) {
                 object fromValue = fieldInfo.GetValue(from);
                 if (fromValue == null) {
                     fieldInfo.SetValue(to, null);
@@ -129,7 +129,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return potentialDescendant.IsSubclassOf(potentialBase) || potentialBase == potentialDescendant;
         }
 
-        public static MethodInfo GetMethodInfo(Type type, string name, BindingFlags bindingFlags = InstanceAnyVisibility) {
+        public static MethodInfo GetMethodInfo(Type type, string name, BindingFlags bindingFlags = StaticInstanceAnyVisibility) {
             string key = $"ReflectionExtensions-GetMethodInfo-{name}-{bindingFlags}";
 
             MethodInfo methodInfo = type.GetExtendedDataValue<MethodInfo>(key);
@@ -143,7 +143,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return methodInfo;
         }
 
-        public static FieldInfo GetFieldInfo(Type type, string name, BindingFlags bindingFlags = InstanceAnyVisibility) {
+        public static FieldInfo GetFieldInfo(Type type, string name, BindingFlags bindingFlags = StaticInstanceAnyVisibility) {
             string key = $"ReflectionExtensions-GetFieldInfo-{name}-{bindingFlags}";
             FieldInfo fieldInfo = type.GetExtendedDataValue<FieldInfo>(key);
             if (fieldInfo == null) {
@@ -158,7 +158,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return fieldInfo;
         }
 
-        public static FieldInfo[] GetFieldInfos(this Type type, BindingFlags bindingFlags = InstanceAnyVisibility, bool filterBackingField = false) {
+        public static FieldInfo[] GetFieldInfos(this Type type, BindingFlags bindingFlags = StaticInstanceAnyVisibility, bool filterBackingField = false) {
             string key = $"ReflectionExtensions-GetFieldInfos-{bindingFlags}-{filterBackingField}";
 
             FieldInfo[] fieldInfos = type.GetExtendedDataValue<FieldInfo[]>(key);
@@ -174,7 +174,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return fieldInfos;
         }
 
-        public static List<FieldInfo> GetAllFieldInfos(this Type type, BindingFlags bindingFlags = InstanceAnyVisibilityDeclaredOnly,
+        public static List<FieldInfo> GetAllFieldInfos(this Type type, BindingFlags bindingFlags = StaticInstanceAnyVisibility,
             bool filterBackingField = false) {
             List<FieldInfo> result = new List<FieldInfo>();
             while (type != null && type.IsSubclassOf(typeof(object))) {
@@ -190,7 +190,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return result;
         }
 
-        public static PropertyInfo GetPropertyInfo(this Type type, string name, BindingFlags bindingFlags = InstanceAnyVisibility) {
+        public static PropertyInfo GetPropertyInfo(this Type type, string name, BindingFlags bindingFlags = StaticInstanceAnyVisibility) {
             string key = $"ReflectionExtensions-GetPropertyInfo-{name}-{bindingFlags}";
             PropertyInfo propertyInfo = type.GetExtendedDataValue<PropertyInfo>(key);
             if (propertyInfo == null) {
@@ -205,7 +205,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return propertyInfo;
         }
 
-        public static PropertyInfo[] GetPropertyInfos(this Type type, BindingFlags bindingFlags = InstanceAnyVisibility) {
+        public static PropertyInfo[] GetPropertyInfos(this Type type, BindingFlags bindingFlags = StaticInstanceAnyVisibility) {
             string key = $"ReflectionExtensions-GetPropertyInfos-{bindingFlags}";
 
             PropertyInfo[] propertyInfos = type.GetExtendedDataValue<PropertyInfo[]>(key);
@@ -245,8 +245,12 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return obj.GetFieldValue(obj.GetType(), name);
         }
 
-        public static object GetFieldValue<T>(this T obj, string name) {
+        public static object GetFieldValue<T>(this T obj, string name) where T : class {
             return obj.GetFieldValue(typeof(T), name);
+        }
+
+        public static object GetFieldValue(this Type type, string name) {
+            return GetFieldValue(null, type, name);
         }
 
         public static object GetFieldValue(this object obj, Type type, string name) {
@@ -259,6 +263,10 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
         public static void SetFieldValue<T>(this T obj, string name, object value) {
             obj.SetFieldValue(typeof(T), name, value);
+        }
+
+        public static void SetFieldValue(this Type type, string name, object value) {
+            SetFieldValue(null, type, name, value);
         }
 
         public static void SetFieldValue(this object obj, Type type, string name, object value) {

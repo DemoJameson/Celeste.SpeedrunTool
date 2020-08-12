@@ -152,11 +152,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 && SpeedrunToolModule.Settings.AutoLoadAfterDeath
                 && IsSaved
                 && !(bool) self.GetFieldValue("finished")
+                && Engine.Scene is Level level
             ) {
-                if (self.Scene is Level level) {
-                    level.OnEndOfFrame += () => LoadState(level);
-                    self.RemoveSelf();
-                }
+                level.OnEndOfFrame += () => LoadState(level);
+                self.RemoveSelf();
             } else {
                 orig(self);
             }

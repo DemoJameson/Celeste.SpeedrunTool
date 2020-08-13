@@ -295,6 +295,10 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return obj.GetPropertyValue(typeof(T), name);
         }
 
+        public static object GetPropertyValue(this Type type, string name) {
+            return GetPropertyValue(null, type, name);
+        }
+
         public static object GetPropertyValue(this object obj, Type type, string name) {
             return GetPropertyGetMethod(type, name)?.Invoke(obj, NoArg);
         }
@@ -305,6 +309,10 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
         public static void SetPropertyValue<T>(this T obj, string name, object value) {
             obj.SetPropertyValue(typeof(T), name, value);
+        }
+
+        public static void SetPropertyValue(this Type type, string name, object value) {
+            SetPropertyValue(null, type, name, value);
         }
 
         public static void SetPropertyValue(this object obj, Type type, string name, object value) {

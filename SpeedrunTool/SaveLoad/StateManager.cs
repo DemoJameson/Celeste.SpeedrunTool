@@ -51,6 +51,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         public void OnInit() {
             // Clone 开始时，判断哪些类型是直接使用原对象而不 DeepClone 的
+            // Before cloning, determine which types use the original object directly
             DeepCloner.AddKnownTypesProcessor((type) => {
                 if (
                     // Celeste Singleton
@@ -79,9 +80,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             });
 
             // Clone 对象的字段前，判断哪些类型是直接使用原对象而不 DeepClone 的
+            // Before cloning, determine which types are directly used by the original object
             DeepCloner.AddPreCloneProcessor(sourceObj => {
                 if (sourceObj is Level) {
                     // 金草莓死亡或者 PageDown/Up 切换房间后等等改变 Level 实例的情况
+                    // After golden strawberry deaths or changing rooms w/ Page Down / Up
                     if (Engine.Scene is Level level) return level;
                     return sourceObj;
                 }
@@ -96,10 +99,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             });
 
             // Clone 对象的字段后，进行自定的处理
+            // After cloning, perform custom processing
             DeepCloner.AddPostCloneProcessor((sourceObj, clonedObj) => {
                 if (clonedObj == null) return null;
 
-                // 修复：DeepClone 的 hashSet.Containes(里面存在的引用对象) 总是返回 False，Dictionary 无此问题
+                // 修复：DeepClone 的 hashSet.Contains(里面存在的引用对象) 总是返回 False，Dictionary 无此问题
+                // Fix: DeepClone's hashSet.Contains (ReferenceType) always returns false, Dictionary has no such problem
                 if (clonedObj.GetType().IsHashSet(out Type type) && !type.IsSimple()) {
                     IEnumerator enumerator = ((IEnumerable) clonedObj).GetEnumerator();
 
@@ -201,9 +206,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             RoomTimerManager.Instance.ResetTime();
             DeathStatisticsManager.Instance.Died = false;
 
-            level.SetFieldValue("transition", null); // 允许切换房间时读档
-            level.Displacement.Clear(); // 避免冲刺后读档残留爆破效果
-            TrailManager.Clear(); // 清除冲刺的残影
+            level.SetFieldValue("transition", null); // 允许切换房间时读档   // Allow reading fields when switching rooms
+            level.Displacement.Clear(); // 避免冲刺后读档残留爆破效果   // Remove dash displacement effect
+            TrailManager.Clear(); // 清除冲刺的残影   // Remove dash trail
 
             UnloadLevelEntities(level);
             RestoreLevelEntities(level);
@@ -217,10 +222,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
             }
 
-            level.Frozen = true; // 加一个转场等待，避免太突兀
-            level.TimerStopped = true; // 停止计时器
+            level.Frozen = true; // 加一个转场等待，避免太突兀   // Add a pause to avoid being too abrupt
+            level.TimerStopped = true; // 停止计时器   // Stop timer
 
             // 修复问题：未打开自动读档时，死掉按下确认键后读档完成会接着执行 Reload 复活方法
+            // Fix: When automatic file reading is off, Reload() will be executed after the file is read. (? - euni)
+
             if (level.RendererList.Renderers.FirstOrDefault(renderer => renderer is ScreenWipe) is ScreenWipe wipe) {
                 wipe.Cancel();
             }
@@ -233,14 +240,35 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             });
         }
 
+        public bool ExternalSave() {
+            Level level = Engine.Scene as Level;
+            Player player = level?.Entities.FindFirst<Player>();
+
+            if (IsAllowSave(level, player)) {
+                SaveState(level);
+                return true;
+            }
+            return false;
+        }
+
+        public bool ExternalLoad() {
+            if (IsSaved && Engine.Scene is Level level) {
+                LoadState(level);
+                return true;
+            }
+            return false;
+        }
+
         private List<Entity> DeepCloneEntities(List<Entity> entities) {
             entities = entities.Where(entity => {
                 // 不恢复自定义终点的触碰效果
+                // Do not restore the confetti effect of custom endpoints
                 if (entity is ConfettiRenderer)
                     return false;
 
-                // 不恢复 CelesteNet 的物体
-                if (entity.GetType().FullName is string name && name.StartsWith("Celeste.Mod.CelesteNet"))
+                // 不恢复 CelesteNet || CelesteTAS 的物体
+                // Do not restore CelesteNet/CelesteTAS objects
+                if (entity.GetType().FullName is string name && (name.StartsWith("Celeste.Mod.CelesteNet") || name.StartsWith("TAS")))
                     return false;
 
                 return true;
@@ -391,11 +419,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private void CheckButton(Level level, Player player) {
             if (GetVirtualButton(Mappings.Save).Pressed && IsAllowSave(level, player)) {
                 GetVirtualButton(Mappings.Save).ConsumePress();
-                SaveState(level);
+				SaveState(level);
             } else if (GetVirtualButton(Mappings.Load).Pressed && !level.Paused && state == States.None) {
                 GetVirtualButton(Mappings.Load).ConsumePress();
                 if (IsSaved) {
-                    LoadState(level);
+					LoadState(level);
                 } else if (!level.Frozen) {
                     level.Add(new MiniTextbox(DialogIds.DialogNotSaved));
                 }

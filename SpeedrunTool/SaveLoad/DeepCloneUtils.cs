@@ -40,7 +40,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             });
 
             // Clone 对象的字段前，判断哪些类型是直接使用原对象而不 DeepClone 的
-            DeepCloner.AddPreCloneProcessor(sourceObj => {
+            DeepCloner.AddPreCloneProcessor((sourceObj, deepCloneState) => {
                 if (sourceObj is Level) {
                     // 金草莓死亡或者 PageDown/Up 切换房间后等等改变 Level 实例的情况
                     if (Engine.Scene is Level level) return level;
@@ -56,12 +56,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 if (sourceObj is SoundSource source && source.Playing && source.GetFieldValue("instance") is EventInstance instance) {
                     if (string.IsNullOrEmpty(source.EventName)) return null;
                     instance.SavePath(source.EventName);
-                    instance.SaveTimelinePositionValue();
+                    instance.SaveTimelinePosition(instance.LoadTimelinePosition());
                 }
 
                 // 重新创建正在播放的 EventInstance 实例
-                if (sourceObj is EventInstance eventInstance) {
-                    return eventInstance.Clone() ?? sourceObj;
+                if (sourceObj is EventInstance eventInstance && eventInstance.Clone() is EventInstance clonedInstance) {
+                    deepCloneState.AddKnownRef(sourceObj, clonedInstance);
+                    return clonedInstance;
                 }
 
                 return null;

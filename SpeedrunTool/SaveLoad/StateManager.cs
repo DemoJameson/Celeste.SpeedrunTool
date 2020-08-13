@@ -50,6 +50,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             Loading,
         }
 
+        private readonly HashSet<EventInstance> playingEventInstances = new HashSet<EventInstance>();
+
         #region Hook
 
         public void OnLoad() {
@@ -181,6 +183,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             level.DoScreenWipe(true, () => {
                 RestoreLevel(level);
                 RoomTimerManager.Instance.SavedEndPoint?.ReadyForTime();
+                foreach (EventInstance instance in playingEventInstances)  instance.start();
                 state = States.None;
             });
 
@@ -275,12 +278,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 level.Tracker.InvokeMethod("EntityAdded", entity);
                 entity.Components?.ToList()
                     .ForEach(component => {
-                        // LightingRenderer 需要，不然不会发光
-                        if (component is VertexLight vertexLight) vertexLight.Index = -1;
                         level.Tracker.InvokeMethod("ComponentAdded", component);
 
-                        if (component is SoundSource source && source.GetFieldValue("instance") is EventInstance eventInstance) {
-                            eventInstance.start();
+                        // LightingRenderer 需要，不然不会发光
+                        if (component is VertexLight vertexLight) vertexLight.Index = -1;
+
+                        // 等带 ScreenWipe 完毕再重新播放
+                        if (component is SoundSource source && source.Playing && source.GetFieldValue("instance") is EventInstance eventInstance) {
+                            playingEventInstances.Add(eventInstance);
                         }
                     });
                 level.InvokeMethod("SetActualDepth", entity);

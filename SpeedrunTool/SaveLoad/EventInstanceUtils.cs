@@ -22,52 +22,50 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     }
 
     internal static class EventInstanceExtensions {
-        private const string EventInstancePathKey = "EventInstanceExtensions-EventInstancePathKey";
-        private const string EventInstanceParametersKey = "EventInstanceExtensions-EventInstanceParametersKey";
-        private const string EventInstanceTimelinePositionKey = "EventInstanceExtensions-EventInstanceTimelinePositionKey";
-
-
-        public static bool IsPlaying(this EventInstance eventInstance) {
-            if (eventInstance == null) return false;
-            eventInstance.getPlaybackState(out PLAYBACK_STATE state);
-            return state == PLAYBACK_STATE.PLAYING || state == PLAYBACK_STATE.STARTING || state == PLAYBACK_STATE.SUSTAINING;
-        }
+        private const string PathKey = "EventInstanceExtensions-PathKey";
+        private const string ParametersKey = "EventInstanceExtensions-ParametersKey";
+        private const string TimelinePositionKey = "EventInstanceExtensions-TimelinePositionKey";
 
         public static void SavePath(this EventInstance eventInstance, string path) {
-            eventInstance.SetExtendedString(EventInstancePathKey, path);
+            eventInstance.SetExtendedString(PathKey, path);
         }
 
         public static void SaveParameters(this EventInstance eventInstance, string param, float value) {
             if (param == null) return;
 
             Dictionary<string, float> parameters =
-                eventInstance.GetExtendedDataValue<Dictionary<string, float>>(EventInstanceParametersKey);
+                eventInstance.GetExtendedDataValue<Dictionary<string, float>>(ParametersKey);
             if (parameters == null) {
                 parameters = new Dictionary<string, float>();
             }
 
             parameters[param] = value;
-            eventInstance.SetExtendedDataValue(EventInstanceParametersKey, parameters);
+            eventInstance.SetExtendedDataValue(ParametersKey, parameters);
         }
 
+        public static int LoadTimelinePosition(this EventInstance eventInstance) {
+            int saved = eventInstance.GetExtendedInt(TimelinePositionKey);
+            if (saved > 0) return saved;
 
-        public static int LoadTimelinePositionValue(this EventInstance eventInstance) {
-            return eventInstance.GetExtendedInt(EventInstanceTimelinePositionKey);
-        }
-
-        public static void SaveTimelinePositionValue(this EventInstance eventInstance) {
             object[] args = {0};
             eventInstance.InvokeMethod("getTimelinePosition", args);
-            eventInstance.SetExtendedInt(EventInstanceTimelinePositionKey, (int) args[0]);
+            return (int) args[0];
         }
 
-        public static void CopyTimelinePosition(this EventInstance eventInstance, EventInstance otherEventInstance) {
-            eventInstance.InvokeMethod("setTimelinePosition", otherEventInstance.LoadTimelinePositionValue());
-            eventInstance.SaveTimelinePositionValue();
+        public static void SaveTimelinePosition(this EventInstance eventInstance, int timelinePosition) {
+            eventInstance.SetExtendedInt(TimelinePositionKey, timelinePosition);
+        }
+
+        private static void CopyTimelinePosition(this EventInstance eventInstance, EventInstance otherEventInstance) {
+            int timelinePosition = otherEventInstance.LoadTimelinePosition();
+            if (timelinePosition > 0) {
+                eventInstance.InvokeMethod("setTimelinePosition", timelinePosition);
+                eventInstance.SaveTimelinePosition(otherEventInstance.LoadTimelinePosition());
+            }
         }
 
         public static EventInstance Clone(this EventInstance eventInstance) {
-            string path = eventInstance.GetExtendedString(EventInstancePathKey);
+            string path = eventInstance.GetExtendedString(PathKey);
             if (string.IsNullOrEmpty(path)) return null;
 
             EventInstance cloneInstance = Audio.CreateInstance(path);
@@ -76,7 +74,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             cloneInstance.SavePath(path);
 
             var parameters =
-                eventInstance.GetExtendedDataValue<Dictionary<string, float>>(EventInstanceParametersKey);
+                eventInstance.GetExtendedDataValue<Dictionary<string, float>>(ParametersKey);
             if (parameters != null) {
                 foreach (var pair in parameters) {
                     cloneInstance.setParameterValue(pair.Key, pair.Value);
@@ -88,18 +86,5 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             return cloneInstance;
         }
-    }
-
-    internal static class SoundSourceExtensions {
-        private const string SoundSourcePlayingKey = "SoundSourceExtensions-SoundSourcePlayingKey";
-
-        public static bool LoadPlayingValue(this SoundSource soundSource) {
-            return soundSource.GetExtendedBoolean(SoundSourcePlayingKey);
-        }
-
-        public static void SavePlayingValue(this SoundSource soundSource) {
-            soundSource.SetExtendedBoolean(SoundSourcePlayingKey, soundSource.Playing);
-        }
-
     }
 }

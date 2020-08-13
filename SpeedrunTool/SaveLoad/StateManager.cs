@@ -195,8 +195,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 level.Frozen = false;
                 level.PauseLock = false;
             }
-
-            RoomTimerManager.Instance.ClearPbTimes(clearEndPoint);
+            try { RoomTimerManager.Instance.ClearPbTimes(clearEndPoint); }
+            catch (NullReferenceException) { }
 
             savedModSessions = null;
             savedLevel = null;

@@ -40,7 +40,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
         }
 
-        internal static void OnInit() {
+        internal static void OnLoad() {
             bool extendedVariantModeInstalled = Everest.Loader.DependencyLoaded(new EverestModuleMetadata
                 {Name = "ExtendedVariantMode", Version = new Version(0, 15, 20)});
             if (extendedVariantModeInstalled) {
@@ -53,6 +53,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     }
                 ));
             }
+        }
+
+        internal static void OnUnload() {
+            all.Clear();
         }
     }
 }

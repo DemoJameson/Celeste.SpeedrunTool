@@ -6,9 +6,8 @@ using System.Reflection;
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
+using FMOD.Studio;
 using Force.DeepCloner;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Monocle;
 using MonoMod.Utils;
@@ -51,84 +50,21 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             Loading,
         }
 
-        public void OnInit() {
-            // Clone 开始时，判断哪些类型是直接使用原对象而不 DeepClone 的
-            DeepCloner.AddKnownTypesProcessor((type) => {
-                if (
-                    // Celeste Singleton
-                    type == typeof(Celeste)
-                    || type == typeof(Settings)
-
-                    // Everest
-                    || type == typeof(ModAsset)
-
-                    // Monocle
-                    || type == typeof(GraphicsDevice)
-                    || type == typeof(GraphicsDeviceManager)
-                    || type == typeof(Monocle.Commands)
-                    || type == typeof(Pooler)
-                    || type == typeof(BitTag)
-                    || type == typeof(Atlas)
-                    || type == typeof(VirtualTexture)
-
-                    // XNA GraphicsResource
-                    || type.IsSubclassOf(typeof(GraphicsResource))
-                ) {
-                    return true;
-                }
-
-                return null;
-            });
-
-            // Clone 对象的字段前，判断哪些类型是直接使用原对象而不 DeepClone 的
-            DeepCloner.AddPreCloneProcessor(sourceObj => {
-                if (sourceObj is Level) {
-                    // 金草莓死亡或者 PageDown/Up 切换房间后等等改变 Level 实例的情况
-                    if (Engine.Scene is Level level) return level;
-                    return sourceObj;
-                }
-
-                if (sourceObj is Entity entity && entity.TagCheck(Tags.Global)
-                                               && !(entity is SeekerBarrierRenderer)
-                                               && !(entity is LightningRenderer)
-                ) return sourceObj;
-
-                return null;
-            });
-
-            // Clone 对象的字段后，进行自定的处理
-            DeepCloner.AddPostCloneProcessor((sourceObj, clonedObj) => {
-                if (clonedObj == null) return null;
-
-                // 修复：DeepClone 的 hashSet.Containes(里面存在的引用对象) 总是返回 False，Dictionary 无此问题
-                if (clonedObj.GetType().IsHashSet(out Type type) && !type.IsSimple()) {
-                    IEnumerator enumerator = ((IEnumerable) clonedObj).GetEnumerator();
-
-                    List<object> backup = new List<object>();
-                    while (enumerator.MoveNext()) {
-                        backup.Add(enumerator.Current);
-                    }
-
-                    clonedObj.InvokeMethod("Clear");
-
-                    backup.ForEach(obj => { clonedObj.InvokeMethod("Add", obj); });
-                }
-
-                return clonedObj;
-            });
-
-            SaveLoadAction.OnInit();
-        }
-
         #region Hook
 
         public void OnLoad() {
+            DeepCloneUtils.Config();
+            SaveLoadAction.OnLoad();
+            EventInstanceUtils.OnHook();
             On.Celeste.Level.Update += CheckButtonsOnLevelUpdate;
             On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
         }
 
         public void OnUnload() {
+            DeepCloneUtils.Clear();
+            SaveLoadAction.OnUnload();
+            EventInstanceUtils.OnUnhook();
             On.Celeste.Level.Update -= CheckButtonsOnLevelUpdate;
             On.Monocle.Scene.Begin -= ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End -= AutoLoadStateWhenDeath;
@@ -234,19 +170,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
             }
 
-            level.Frozen = true; // 加一个转场等待，避免太突兀
-            level.TimerStopped = true; // 停止计时器
-
             // 修复问题：未打开自动读档时，死掉按下确认键后读档完成会接着执行 Reload 复活方法
             if (level.RendererList.Renderers.FirstOrDefault(renderer => renderer is ScreenWipe) is ScreenWipe wipe) {
                 wipe.Cancel();
             }
 
+            level.Frozen = true; // 加一个转场等待，避免太突兀
+            level.TimerStopped = true; // 停止计时器
+
             level.DoScreenWipe(true, () => {
-                level.Frozen = false;
-                state = States.None;
                 RestoreLevel(level);
                 RoomTimerManager.Instance.SavedEndPoint?.ReadyForTime();
+                state = States.None;
             });
 
             return true;
@@ -343,6 +278,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         // LightingRenderer 需要，不然不会发光
                         if (component is VertexLight vertexLight) vertexLight.Index = -1;
                         level.Tracker.InvokeMethod("ComponentAdded", component);
+
+                        if (component is SoundSource source && source.GetFieldValue("instance") is EventInstance eventInstance) {
+                            eventInstance.start();
+                        }
                     });
                 level.InvokeMethod("SetActualDepth", entity);
                 Dictionary<Type, Queue<Entity>> pools =

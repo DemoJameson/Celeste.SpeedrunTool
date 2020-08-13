@@ -7,6 +7,11 @@ using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
 
 namespace Celeste.Mod.SpeedrunTool.RoomTimer {
     public sealed class RoomTimerManager {
+        private static readonly Color bestColor1 = Calc.HexToColor("fad768");
+        private static readonly Color bestColor2 = Calc.HexToColor("cfa727");
+        private static readonly Color finishedColor1 = Calc.HexToColor("6ded87");
+        private static readonly Color finishedColor2 = Calc.HexToColor("43d14c");
+
         public const string FlagPrefix = "summit_checkpoint_";
         private readonly RoomTimerData currentRoomTimerData = new RoomTimerData(RoomTimerType.CurrentRoom);
         private readonly RoomTimerData nextRoomTimerData = new RoomTimerData(RoomTimerType.NextRoom);
@@ -191,7 +196,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 DrawTime(
                     new Vector2(x + timeMarginLeft + SpeedrunTimerDisplay.GetTimeWidth(roomTimeString) + 10,
                         self.Y + 36f),
-                    comparePbString, 0.5f, true,
+                    comparePbString, 0.5f,
                     roomTimerData.IsCompleted, roomTimerData.BeatBestTime);
             }
 
@@ -200,8 +205,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
 
             Draw.Rect(x, self.Y + topTimeHeight, pbWidth + 2, bg.Height * pbScale + 1f, Color.Black);
             bg.Draw(new Vector2(x + pbWidth, self.Y + topTimeHeight), Vector2.Zero, Color.White, pbScale);
-            DrawTime(new Vector2(x + timeMarginLeft, (float) (self.Y + 66.4)), pbTimeString, pbScale,
-                true, false, false, 0.6f);
+            DrawTime(new Vector2(x + timeMarginLeft, (float) (self.Y + 66.4)), pbTimeString, pbScale, false, false, 0.6f);
         }
 
         private void SaveOriginalSpeedrunClock(On.Celeste.MenuOptions.orig_SetSpeedrunClock orig, int val) {
@@ -226,7 +230,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             return result;
         }
 
-        private static void DrawTime(Vector2 position, string timeString, float scale = 1f, bool valid = true,
+        private static void DrawTime(Vector2 position, string timeString, float scale = 1f,
             bool finished = false, bool bestTime = false, float alpha = 1f) {
             float numberWidth = 0f;
             float spacerWidth = 0f;
@@ -248,15 +252,12 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             float y = position.Y;
             Color color1 = Color.White * alpha;
             Color color2 = Color.LightGray * alpha;
-            if (!valid) {
-                color1 = Calc.HexToColor("918988") * alpha;
-                color2 = Calc.HexToColor("7a6f6d") * alpha;
-            } else if (bestTime) {
-                color1 = Calc.HexToColor("fad768") * alpha;
-                color2 = Calc.HexToColor("cfa727") * alpha;
+            if (bestTime) {
+                color1 = bestColor1 * alpha;
+                color2 = bestColor2 * alpha;
             } else if (finished) {
-                color1 = Calc.HexToColor("6ded87") * alpha;
-                color2 = Calc.HexToColor("43d14c") * alpha;
+                color1 = finishedColor1 * alpha;
+                color2 = finishedColor2 * alpha;
             }
 
             for (int index = 0; index < timeString.Length; ++index) {

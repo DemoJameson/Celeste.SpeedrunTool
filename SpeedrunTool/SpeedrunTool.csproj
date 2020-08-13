@@ -46,6 +46,10 @@
       <HintPath>..\lib-stripped\Celeste.exe</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="ExtendedVariantMode, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\lib-stripped\ExtendedVariantMode.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="FNA, Version=19.9.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>..\lib-stripped\FNA.dll</HintPath>
       <Private>False</Private>
@@ -96,6 +100,10 @@
     <Compile Include="Extensions\LoggerExtensions.cs" />
     <Compile Include="Extensions\ReflectionExtensions.cs" />
     <Compile Include="RespawnSpeedUtils.cs" />
+    <Compile Include="SaveLoad\DeepCloneUtils.cs" />
+    <Compile Include="SaveLoad\EventInstanceUtils.cs" />
+    <Compile Include="SaveLoad\IgnoreSaveLoadComponent.cs" />
+    <Compile Include="SaveLoad\SaveLoadAction.cs" />
     <Compile Include="SpeedrunToolSaveData.cs" />
     <Compile Include="TeleportRoom\LevelDataReorderUtils.cs" />
     <Compile Include="TeleportRoom\TeleportRoomUtils.cs" />

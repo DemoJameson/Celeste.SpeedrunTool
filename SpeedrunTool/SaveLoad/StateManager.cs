@@ -6,9 +6,8 @@ using System.Reflection;
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
+using FMOD.Studio;
 using Force.DeepCloner;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Monocle;
 using MonoMod.Utils;
@@ -18,10 +17,23 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class StateManager {
         private static SpeedrunToolSettings Settings => SpeedrunToolModule.Settings;
 
+        private static readonly List<int> DisabledSaveStates = new List<int> {
+            Player.StReflectionFall,
+            Player.StTempleFall,
+            Player.StCassetteFly,
+            Player.StIntroJump,
+            Player.StIntroWalk,
+            Player.StIntroRespawn,
+            Player.StIntroWakeUp,
+        };
+
+        // public for TAS Mod
+        // ReSharper disable once MemberCanBePrivate.Global
+        public bool IsSaved => savedLevel != null;
+
         private Level savedLevel;
         private List<Entity> savedEntities;
         private CassetteBlockManager savedCassetteBlockManager;
-        private bool IsSaved => savedLevel != null;
 
         private float savedFreezeTimer;
         private float savedTimeRate;
@@ -38,99 +50,23 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             Loading,
         }
 
-        private readonly List<int> disabledSaveStates = new List<int> {
-            Player.StReflectionFall,
-            Player.StTempleFall,
-            Player.StCassetteFly,
-            Player.StIntroJump,
-            Player.StIntroWalk,
-            Player.StIntroRespawn,
-            Player.StIntroWakeUp,
-            Player.StDummy,
-        };
-
-        public void OnInit() {
-            // Clone 开始时，判断哪些类型是直接使用原对象而不 DeepClone 的
-            // Before cloning, determine which types use the original object directly
-            DeepCloner.AddKnownTypesProcessor((type) => {
-                if (
-                    // Celeste Singleton
-                    type == typeof(Celeste)
-                    || type == typeof(Settings)
-
-                    // Everest
-                    || type == typeof(ModAsset)
-
-                    // Monocle
-                    || type == typeof(GraphicsDevice)
-                    || type == typeof(GraphicsDeviceManager)
-                    || type == typeof(Monocle.Commands)
-                    || type == typeof(Pooler)
-                    || type == typeof(BitTag)
-                    || type == typeof(Atlas)
-                    || type == typeof(VirtualTexture)
-
-                    // XNA GraphicsResource
-                    || type.IsSubclassOf(typeof(GraphicsResource))
-                ) {
-                    return true;
-                }
-
-                return null;
-            });
-
-            // Clone 对象的字段前，判断哪些类型是直接使用原对象而不 DeepClone 的
-            // Before cloning, determine which types are directly used by the original object
-            DeepCloner.AddPreCloneProcessor(sourceObj => {
-                if (sourceObj is Level) {
-                    // 金草莓死亡或者 PageDown/Up 切换房间后等等改变 Level 实例的情况
-                    // After golden strawberry deaths or changing rooms w/ Page Down / Up
-                    if (Engine.Scene is Level level) return level;
-                    return sourceObj;
-                }
-
-                if (sourceObj is Entity entity && entity.TagCheck(Tags.Global)
-                                               && !(entity is Textbox)
-                                               && !(entity is SeekerBarrierRenderer)
-                                               && !(entity is LightningRenderer)
-                ) return sourceObj;
-
-                return null;
-            });
-
-            // Clone 对象的字段后，进行自定的处理
-            // After cloning, perform custom processing
-            DeepCloner.AddPostCloneProcessor((sourceObj, clonedObj) => {
-                if (clonedObj == null) return null;
-
-                // 修复：DeepClone 的 hashSet.Contains(里面存在的引用对象) 总是返回 False，Dictionary 无此问题
-                // Fix: DeepClone's hashSet.Contains (ReferenceType) always returns false, Dictionary has no such problem
-                if (clonedObj.GetType().IsHashSet(out Type type) && !type.IsSimple()) {
-                    IEnumerator enumerator = ((IEnumerable) clonedObj).GetEnumerator();
-
-                    List<object> backup = new List<object>();
-                    while (enumerator.MoveNext()) {
-                        backup.Add(enumerator.Current);
-                    }
-
-                    clonedObj.InvokeMethod("Clear");
-
-                    backup.ForEach(obj => { clonedObj.InvokeMethod("Add", obj); });
-                }
-
-                return clonedObj;
-            });
-        }
+        private readonly HashSet<EventInstance> playingEventInstances = new HashSet<EventInstance>();
 
         #region Hook
 
         public void OnLoad() {
+            DeepCloneUtils.Config();
+            SaveLoadAction.OnLoad();
+            EventInstanceUtils.OnHook();
             On.Celeste.Level.Update += CheckButtonsOnLevelUpdate;
             On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
         }
 
         public void OnUnload() {
+            DeepCloneUtils.Clear();
+            SaveLoadAction.OnUnload();
+            EventInstanceUtils.OnUnhook();
             On.Celeste.Level.Update -= CheckButtonsOnLevelUpdate;
             On.Monocle.Scene.Begin -= ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End -= AutoLoadStateWhenDeath;
@@ -138,7 +74,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private void CheckButtonsOnLevelUpdate(On.Celeste.Level.orig_Update orig, Level self) {
             orig(self);
-            CheckButton(self, self.GetPlayer());
+            CheckButton(self);
         }
 
         private void ClearStateWhenSwitchScene(On.Monocle.Scene.orig_Begin orig, Scene self) {
@@ -157,11 +93,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 && SpeedrunToolModule.Settings.AutoLoadAfterDeath
                 && IsSaved
                 && !(bool) self.GetFieldValue("finished")
+                && Engine.Scene is Level level
             ) {
-                if (self.Scene is Level level) {
-                    level.OnEndOfFrame += () => LoadState(level);
-                    self.RemoveSelf();
-                }
+                level.OnEndOfFrame += () => LoadState();
+                self.RemoveSelf();
             } else {
                 orig(self);
             }
@@ -169,7 +104,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         #endregion
 
-        private void SaveState(Level level) {
+        // public for TAS Mod
+        // ReSharper disable once MemberCanBePrivate.Global UnusedMethodReturnValue.Global
+        public bool SaveState() {
+            if (!(Engine.Scene is Level level)) return false;
+            if (!IsAllowSave(level, level.GetPlayer())) return false;
+
             ClearState(false);
 
             savedLevel = level.ShallowClone();
@@ -180,11 +120,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             savedCassetteBlockManager = level.Entities.FindFirst<CassetteBlockManager>()?.ShallowClone();
 
+            // External
             savedFreezeTimer = Engine.FreezeTimer;
             savedTimeRate = Engine.TimeRate;
             savedGlitchValue = Glitch.Value;
             savedDistortAnxiety = Distort.Anxiety;
             savedDistortGameRate = Distort.GameRate;
+
+            // Mod
+            SaveLoadAction.OnSaveState(level);
 
             // save all mod sessions
             savedModSessions = new Dictionary<EverestModule, EverestModuleSession>();
@@ -194,11 +138,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
             }
 
-            LoadState(level);
+            return LoadState();
         }
 
-        private void LoadState(Level level) {
-            if (!IsSaved) return;
+        // public for TAS Mod
+        // ReSharper disable once MemberCanBePrivate.Global
+        public bool LoadState() {
+            if (!(Engine.Scene is Level level)) return false;
+            if (level.Paused || state != States.None || !IsSaved) return false;
 
             state = States.Loading;
 
@@ -206,9 +153,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             RoomTimerManager.Instance.ResetTime();
             DeathStatisticsManager.Instance.Died = false;
 
-            level.SetFieldValue("transition", null); // 允许切换房间时读档   // Allow reading fields when switching rooms
-            level.Displacement.Clear(); // 避免冲刺后读档残留爆破效果   // Remove dash displacement effect
-            TrailManager.Clear(); // 清除冲刺的残影   // Remove dash trail
+            // Mod
+            SaveLoadAction.OnLoadState(level);
+
+            level.SetFieldValue("transition", null); // 允许切换房间时读档
+            level.Displacement.Clear(); // 避免冲刺后读档残留爆破效果
+            TrailManager.Clear(); // 清除冲刺的残影
 
             UnloadLevelEntities(level);
             RestoreLevelEntities(level);
@@ -222,53 +172,51 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
             }
 
-            level.Frozen = true; // 加一个转场等待，避免太突兀   // Add a pause to avoid being too abrupt
-            level.TimerStopped = true; // 停止计时器   // Stop timer
-
             // 修复问题：未打开自动读档时，死掉按下确认键后读档完成会接着执行 Reload 复活方法
-            // Fix: When automatic file reading is off, Reload() will be executed after the file is read. (? - euni)
-
             if (level.RendererList.Renderers.FirstOrDefault(renderer => renderer is ScreenWipe) is ScreenWipe wipe) {
                 wipe.Cancel();
             }
 
+            level.Frozen = true; // 加一个转场等待，避免太突兀
+            level.TimerStopped = true; // 停止计时器
+
             level.DoScreenWipe(true, () => {
-                level.Frozen = false;
-                state = States.None;
                 RestoreLevel(level);
                 RoomTimerManager.Instance.SavedEndPoint?.ReadyForTime();
+                foreach (EventInstance instance in playingEventInstances)  instance.start();
+                state = States.None;
             });
+
+            return true;
         }
 
-        public bool ExternalSave() {
-            Level level = Engine.Scene as Level;
-            Player player = level?.Entities.FindFirst<Player>();
-
-            if (IsAllowSave(level, player)) {
-                SaveState(level);
-                return true;
+        private void ClearState(bool clearEndPoint = true) {
+            if (Engine.Scene is Level level && IsNotCollectingHeart(level)) {
+                level.Frozen = false;
+                level.PauseLock = false;
             }
-            return false;
-        }
 
-        public bool ExternalLoad() {
-            if (IsSaved && Engine.Scene is Level level) {
-                LoadState(level);
-                return true;
-            }
-            return false;
+            RoomTimerManager.Instance.ClearPbTimes(clearEndPoint);
+
+            savedModSessions = null;
+            savedLevel = null;
+            savedEntities = null;
+            savedCassetteBlockManager = null;
+
+            // Mod
+            SaveLoadAction.OnClearState();
+
+            state = States.None;
         }
 
         private List<Entity> DeepCloneEntities(List<Entity> entities) {
             entities = entities.Where(entity => {
-                // 不恢复自定义终点的触碰效果
-                // Do not restore the confetti effect of custom endpoints
-                if (entity is ConfettiRenderer)
-                    return false;
+                // 不恢复设置了 IgnoreSaveLoadComponent 的物体
+                // SpeedrunTool 里有 ConfettiRenderer 和一些 MiniTextbox
+                if (entity.IsIgnoreSaveLoad()) return false;
 
-                // 不恢复 CelesteNet || CelesteTAS 的物体
-                // Do not restore CelesteNet/CelesteTAS objects
-                if (entity.GetType().FullName is string name && (name.StartsWith("Celeste.Mod.CelesteNet") || name.StartsWith("TAS")))
+                // 不恢复 CelesteNet 的物体
+                if (entity.GetType().FullName is string name && name.StartsWith("Celeste.Mod.CelesteNet"))
                     return false;
 
                 return true;
@@ -330,9 +278,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 level.Tracker.InvokeMethod("EntityAdded", entity);
                 entity.Components?.ToList()
                     .ForEach(component => {
+                        level.Tracker.InvokeMethod("ComponentAdded", component);
+
                         // LightingRenderer 需要，不然不会发光
                         if (component is VertexLight vertexLight) vertexLight.Index = -1;
-                        level.Tracker.InvokeMethod("ComponentAdded", component);
+
+                        // 等带 ScreenWipe 完毕再重新播放
+                        if (component is SoundSource source && source.Playing && source.GetFieldValue("instance") is EventInstance eventInstance) {
+                            playingEventInstances.Add(eventInstance);
+                        }
                     });
                 level.InvokeMethod("SetActualDepth", entity);
                 Dictionary<Type, Queue<Entity>> pools =
@@ -356,7 +310,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             level.Camera.CopyFrom(savedLevel.Camera);
             level.CopyAllSimpleTypeFieldsAndNull(savedLevel);
 
-            // External Instance Value
+            // External Static Field
             Engine.FreezeTimer = savedFreezeTimer;
             Engine.TimeRate = savedTimeRate;
             Glitch.Value = savedGlitchValue;
@@ -365,12 +319,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private List<Entity> GetEntitiesExcludingGlobal(Level level) {
-            var result = new List<Entity>();
-            foreach (Entity entity in level.Entities) {
-                if (!entity.TagCheck(Tags.Global) || entity is Textbox) {
-                    result.Add(entity);
-                }
-            }
+            var result = level.Entities.Where(entity => !entity.TagCheck(Tags.Global)).ToList();
 
             if (level.GetPlayer() is Player player) {
                 // Player 被 Remove 时会触发其他 Trigger，所以必须最早清除
@@ -390,48 +339,33 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             return result;
         }
 
-        private void ClearState(bool clearEndPoint = true) {
-            if (Engine.Scene is Level level && IsNotCollectingHeart(level)) {
-                level.Frozen = false;
-                level.PauseLock = false;
-            }
-
-            RoomTimerManager.Instance.ClearPbTimes(clearEndPoint);
-
-            savedModSessions = null;
-            savedLevel = null;
-            savedEntities = null;
-            savedCassetteBlockManager = null;
-
-            state = States.None;
-        }
-
         private bool IsAllowSave(Level level, Player player) {
-            return !level.Paused && !level.Transitioning && !level.PauseLock && !level.InCutscene &&
-                   !level.SkippingCutscene && player != null && !player.Dead && state != States.Loading &&
-                   !disabledSaveStates.Contains(player.StateMachine.State) && IsNotCollectingHeart(level);
+            return state == States.None
+                   && !level.Paused && !level.Transitioning && !level.InCutscene && !level.SkippingCutscene
+                   && player != null && !player.Dead && !DisabledSaveStates.Contains(player.StateMachine.State)
+                   && IsNotCollectingHeart(level);
         }
 
         private bool IsNotCollectingHeart(Level level) {
             return !level.Entities.FindAll<HeartGem>().Any(heart => (bool) heart.GetFieldValue("collected"));
         }
 
-        private void CheckButton(Level level, Player player) {
-            if (GetVirtualButton(Mappings.Save).Pressed && IsAllowSave(level, player)) {
+        private void CheckButton(Level level) {
+            if (GetVirtualButton(Mappings.Save).Pressed) {
                 GetVirtualButton(Mappings.Save).ConsumePress();
-				SaveState(level);
+                SaveState();
             } else if (GetVirtualButton(Mappings.Load).Pressed && !level.Paused && state == States.None) {
                 GetVirtualButton(Mappings.Load).ConsumePress();
                 if (IsSaved) {
-					LoadState(level);
+                    LoadState();
                 } else if (!level.Frozen) {
-                    level.Add(new MiniTextbox(DialogIds.DialogNotSaved));
+                    level.Add(new MiniTextbox(DialogIds.DialogNotSaved).IgnoreSaveLoad());
                 }
             } else if (GetVirtualButton(Mappings.Clear).Pressed && !level.Paused) {
                 GetVirtualButton(Mappings.Clear).ConsumePress();
                 ClearState();
                 if (IsNotCollectingHeart(level)) {
-                    level.Add(new MiniTextbox(DialogIds.DialogClear));
+                    level.Add(new MiniTextbox(DialogIds.DialogClear).IgnoreSaveLoad());
                 }
             } else if (MInput.Keyboard.Check(Keys.F5)) {
                 ClearState();

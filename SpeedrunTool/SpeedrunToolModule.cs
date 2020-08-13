@@ -60,7 +60,6 @@ namespace Celeste.Mod.SpeedrunTool {
 
         // Optional, initialize anything after Celeste has initialized itself properly.
         public override void Initialize() {
-            StateManager.Instance.OnInit();
             RoomTimerManager.Instance.Init();
             ButtonConfigUi.Init();
         }

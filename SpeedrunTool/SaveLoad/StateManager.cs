@@ -115,6 +115,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedLevel = level.ShallowClone();
             savedLevel.Session = level.Session.DeepClone();
             savedLevel.Camera = level.Camera.DeepClone();
+            savedLevel.Bloom = level.Bloom.ShallowClone();
 
             savedEntities = DeepCloneEntities(GetEntitiesExcludingGlobal(level));
 
@@ -184,7 +185,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             level.DoScreenWipe(true, () => {
                 RestoreLevel(level);
                 RoomTimerManager.Instance.SavedEndPoint?.ReadyForTime();
-                foreach (EventInstance instance in playingEventInstances)  instance.start();
+                foreach (EventInstance instance in playingEventInstances) instance.start();
                 playingEventInstances.Clear();
 
                 state = States.None;
@@ -198,8 +199,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 level.Frozen = false;
                 level.PauseLock = false;
             }
-            try { RoomTimerManager.Instance.ClearPbTimes(clearEndPoint); }
-            catch (NullReferenceException) { }
+
+            try {
+                RoomTimerManager.Instance.ClearPbTimes(clearEndPoint);
+            } catch (NullReferenceException) {
+                // Don't know why it happened
+                // SpeedrunToolModule.Instance = null Exception
+            }
+
+            playingEventInstances.Clear();
 
             savedModSessions = null;
             savedLevel = null;
@@ -220,7 +228,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                 // 不恢复 CelesteNet/CelesteTAS 的物体
                 // Do not restore CelesteNet/CelesteTAS objects
-                if (entity.GetType().FullName is string name && (name.StartsWith("Celeste.Mod.CelesteNet.") || name.StartsWith("TAS.")))
+                if (entity.GetType().FullName is string name &&
+                    (name.StartsWith("Celeste.Mod.CelesteNet.") || name.StartsWith("TAS.")))
                     return false;
 
                 return true;
@@ -288,7 +297,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         if (component is VertexLight vertexLight) vertexLight.Index = -1;
 
                         // 等 ScreenWipe 完毕再重新播放
-                        if (component is SoundSource source && source.Playing && source.GetFieldValue("instance") is EventInstance eventInstance) {
+                        if (component is SoundSource source && source.Playing &&
+                            source.GetFieldValue("instance") is EventInstance eventInstance) {
                             playingEventInstances.Add(eventInstance);
                         }
                     });
@@ -312,6 +322,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private void RestoreLevel(Level level) {
             savedLevel.Session.DeepCloneTo(level.Session);
             level.Camera.CopyFrom(savedLevel.Camera);
+            level.Bloom.CopyAllSimpleTypeFieldsAndNull(savedLevel.Bloom);
             level.CopyAllSimpleTypeFieldsAndNull(savedLevel);
 
             // External Static Field

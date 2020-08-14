@@ -20,7 +20,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     || type == typeof(Settings)
 
                     // Everest
-                    || type == typeof(ModAsset)
+                    || type.IsSubclassOf(typeof(ModAsset))
+                    || type.IsSubclassOf(typeof(EverestModule))
+                    || type == typeof(EverestModuleMetadata)
 
                     // Monocle
                     || type == typeof(GraphicsDevice)

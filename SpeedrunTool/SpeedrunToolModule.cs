@@ -25,6 +25,7 @@ namespace Celeste.Mod.SpeedrunTool {
         }
 
         public static SpeedrunToolSettings Settings => (SpeedrunToolSettings) Instance._Settings;
+        public static bool Enabled => Settings.Enabled;
 
         public SpeedrunToolModule() {
             Instance = this;
@@ -32,7 +33,6 @@ namespace Celeste.Mod.SpeedrunTool {
 
         // If you don't need to store any settings, => null
         public override Type SettingsType => typeof(SpeedrunToolSettings);
-        public static bool Enabled => Settings.Enabled;
 
         // If you don't need to store any save data, => null
         public override Type SaveDataType => typeof(SpeedrunToolSaveData);

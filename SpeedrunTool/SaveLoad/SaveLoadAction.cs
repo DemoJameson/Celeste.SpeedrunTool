@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using ExtendedVariants.Variants;
+using FMOD.Studio;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public class SaveLoadAction {
@@ -41,18 +42,33 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         internal static void OnLoad() {
+            // ExtendedVariantMode JumpCount
             bool extendedVariantModeInstalled = Everest.Loader.DependencyLoaded(new EverestModuleMetadata
                 {Name = "ExtendedVariantMode", Version = new Version(0, 15, 20)});
             if (extendedVariantModeInstalled) {
                 all.Add(new SaveLoadAction(
-                    (savedValues, level) => {
-                        savedValues.Add("jumpBuffer", JumpCount.GetJumpBuffer());
-                    },
+                    (savedValues, level) => { savedValues.Add("jumpBuffer", JumpCount.GetJumpBuffer()); },
                     (savedValues, level) => {
                         typeof(JumpCount).SetFieldValue("jumpBuffer", savedValues["jumpBuffer"]);
                     }
                 ));
             }
+
+            // Audio Music
+            all.Add(new SaveLoadAction(
+                (savedValues, level) => {
+                    savedValues.Add("CurrentMusic", Audio.CurrentMusic);
+                    savedValues.Add("CurrentAmbience", Audio.GetEventName(Audio.CurrentAmbienceEventInstance));
+                    savedValues.Add("CurrentAltMusic", Audio.GetEventName(typeof(Audio).GetFieldValue("currentAltMusicEvent") as EventInstance));
+                    savedValues.Add("MusicUnderwater", Audio.MusicUnderwater);
+                },
+                (savedValues, level) => {
+                    Audio.SetMusic(savedValues["CurrentMusic"] as string);
+                    Audio.SetAmbience(savedValues["CurrentAmbience"] as string);
+                    Audio.SetAltMusic(savedValues["CurrentAltMusic"] as string);
+                    Audio.MusicUnderwater = (bool) savedValues["MusicUnderwater"];
+                }
+            ));
         }
 
         internal static void OnUnload() {

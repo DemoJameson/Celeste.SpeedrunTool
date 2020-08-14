@@ -53,6 +53,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
 
                 if (sourceObj is Entity entity && entity.TagCheck(Tags.Global)
+                                               && !(entity is CassetteBlockManager)
                                                && !(entity is SeekerBarrierRenderer)
                                                && !(entity is LightningRenderer)
                 ) return sourceObj;

@@ -31,7 +31,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private Level savedLevel;
         private List<Entity> savedEntities;
-        private CassetteBlockManager savedCassetteBlockManager;
 
         private float savedFreezeTimer;
         private float savedTimeRate;
@@ -119,8 +118,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             savedEntities = DeepCloneEntities(GetEntitiesExcludingGlobal(level));
 
-            savedCassetteBlockManager = level.Entities.FindFirst<CassetteBlockManager>()?.ShallowClone();
-
             // External
             savedFreezeTimer = Engine.FreezeTimer;
             savedTimeRate = Engine.TimeRate;
@@ -155,7 +152,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             DeathStatisticsManager.Instance.Died = false;
 
             // Mod
-            SaveLoadAction.OnLoadState(level);
+            SaveLoadAction.OnLoadState(level, savedEntities);
 
             level.SetFieldValue("transition", null); // 允许切换房间时读档  // Allow reading fields when switching rooms
             level.Displacement.Clear(); // 避免冲刺后读档残留爆破效果  // Remove dash displacement effect
@@ -166,7 +163,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             UnloadLevelEntities(level);
             RestoreLevelEntities(level);
-            RestoreCassetteBlockManager(level);
             RestoreLevel(level);
 
             // restore all mod sessions
@@ -215,7 +211,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedModSessions = null;
             savedLevel = null;
             savedEntities = null;
-            savedCassetteBlockManager = null;
 
             // Mod
             SaveLoadAction.OnClearState();
@@ -287,6 +282,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             foreach (Entity entity in deepCloneEntities) {
                 if (entities.Contains(entity)) continue;
 
+                if (entity is CassetteBlockManager cassetteBlockManager) {
+                    cassetteBlockManager.SetFieldValue("sfx", null);
+                    if (!(bool) cassetteBlockManager.GetFieldValue("isLevelMusic")) {
+                        cassetteBlockManager.SetFieldValue("snapshot",
+                            Audio.CreateSnapshot("snapshot:/music_mains_mute"));
+                    }
+                }
+
                 current.Add(entity);
                 entities.Add(entity);
 
@@ -315,13 +318,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
         }
 
-        private void RestoreCassetteBlockManager(Level level) {
-            if (savedCassetteBlockManager != null) {
-                level.Entities.FindFirst<CassetteBlockManager>()
-                    ?.CopyAllSimpleTypeFieldsAndNull(savedCassetteBlockManager);
-            }
-        }
-
         private void RestoreLevel(Level level) {
             level.Camera.CopyFrom(savedLevel.Camera);
             savedLevel.Session.DeepCloneTo(level.Session);
@@ -339,7 +335,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private List<Entity> GetEntitiesExcludingGlobal(Level level) {
-            var result = level.Entities.Where(entity => !entity.TagCheck(Tags.Global)).ToList();
+            var result = level.Entities.Where(
+                entity => !entity.TagCheck(Tags.Global) || entity is CassetteBlockManager).ToList();
 
             if (level.GetPlayer() is Player player) {
                 // Player 被 Remove 时会触发其他 Trigger，所以必须最早清除

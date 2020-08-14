@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using ExtendedVariants.Variants;
 using FMOD.Studio;
+using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public class SaveLoadAction {
@@ -10,11 +11,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private readonly Dictionary<string, object> savedValues = new Dictionary<string, object>();
         private readonly Action<Dictionary<string, object>, Level> saveState;
-        private readonly Action<Dictionary<string, object>, Level> loadState;
+        private readonly Action<Dictionary<string, object>, Level, List<Entity>> loadState;
 
         public SaveLoadAction(
             Action<Dictionary<string, object>, Level> saveState,
-            Action<Dictionary<string, object>, Level> loadState) {
+            Action<Dictionary<string, object>, Level, List<Entity>> loadState) {
             this.saveState = saveState;
             this.loadState = loadState;
         }
@@ -29,9 +30,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
         }
 
-        internal static void OnLoadState(Level level) {
+        internal static void OnLoadState(Level level, List<Entity> savedEntities) {
             foreach (SaveLoadAction saveLoadAction in all) {
-                saveLoadAction.loadState(saveLoadAction.savedValues, level);
+                saveLoadAction.loadState(saveLoadAction.savedValues, level, savedEntities);
             }
         }
 
@@ -48,7 +49,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (extendedVariantModeInstalled) {
                 all.Add(new SaveLoadAction(
                     (savedValues, level) => { savedValues.Add("jumpBuffer", JumpCount.GetJumpBuffer()); },
-                    (savedValues, level) => {
+                    (savedValues, level, savedEntities) => {
                         typeof(JumpCount).SetFieldValue("jumpBuffer", savedValues["jumpBuffer"]);
                     }
                 ));
@@ -62,7 +63,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     savedValues.Add("CurrentAltMusic", Audio.GetEventName(typeof(Audio).GetFieldValue("currentAltMusicEvent") as EventInstance));
                     savedValues.Add("MusicUnderwater", Audio.MusicUnderwater);
                 },
-                (savedValues, level) => {
+                (savedValues, level, savedEntities) => {
                     Audio.SetMusic(savedValues["CurrentMusic"] as string);
                     Audio.SetAmbience(savedValues["CurrentAmbience"] as string);
                     Audio.SetAltMusic(savedValues["CurrentAltMusic"] as string);

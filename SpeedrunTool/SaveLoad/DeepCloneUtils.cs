@@ -12,6 +12,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     internal static class DeepCloneUtils {
         public static void Config() {
             // Clone 开始时，判断哪些类型是直接使用原对象而不 DeepClone 的
+            // Before cloning, determine which types use the original object directly
             DeepCloner.AddKnownTypesProcessor((type) => {
                 if (
                     // Celeste Singleton
@@ -39,10 +40,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 return null;
             });
 
-            // Clone 对象的字段前，判断哪些类型是直接使用原对象而不 DeepClone 的
+            // Clone 对象的字段前，判断哪些类型是直接使用原对象或者自行通过其它方法 clone
+            // Before cloning object's field, determine which types are directly used by the original object
             DeepCloner.AddPreCloneProcessor((sourceObj, deepCloneState) => {
                 if (sourceObj is Level) {
                     // 金草莓死亡或者 PageDown/Up 切换房间后等等改变 Level 实例的情况
+                    // After golden strawberry deaths or changing rooms w/ Page Down / Up
                     if (Engine.Scene is Level level) return level;
                     return sourceObj;
                 }
@@ -69,10 +72,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             });
 
             // Clone 对象的字段后，进行自定的处理
+            // After cloning, perform custom processing
             DeepCloner.AddPostCloneProcessor((sourceObj, clonedObj) => {
                 if (clonedObj == null) return null;
 
                 // 修复：DeepClone 的 hashSet.Containes(里面存在的引用对象) 总是返回 False，Dictionary 无此问题
+                // Fix: DeepClone's hashSet.Contains (ReferenceType) always returns false, Dictionary has no such problem
                 if (clonedObj.GetType().IsHashSet(out Type type) && !type.IsSimple()) {
                     IEnumerator enumerator = ((IEnumerable) clonedObj).GetEnumerator();
 

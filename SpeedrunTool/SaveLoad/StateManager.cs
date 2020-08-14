@@ -156,9 +156,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // Mod
             SaveLoadAction.OnLoadState(level);
 
-            level.SetFieldValue("transition", null); // 允许切换房间时读档
-            level.Displacement.Clear(); // 避免冲刺后读档残留爆破效果
-            TrailManager.Clear(); // 清除冲刺的残影
+            level.SetFieldValue("transition", null); // 允许切换房间时读档  // Allow reading fields when switching rooms
+            level.Displacement.Clear(); // 避免冲刺后读档残留爆破效果  // Remove dash displacement effect
+            TrailManager.Clear(); // 清除冲刺的残影  // Remove dash trail
 
             UnloadLevelEntities(level);
             RestoreLevelEntities(level);
@@ -173,17 +173,20 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             // 修复问题：未打开自动读档时，死掉按下确认键后读档完成会接着执行 Reload 复活方法
+            // Fix: When AutoLoadStateAfterDeath is off, if manually LoadState() after death, level.Reload() will still be executed.
             if (level.RendererList.Renderers.FirstOrDefault(renderer => renderer is ScreenWipe) is ScreenWipe wipe) {
                 wipe.Cancel();
             }
 
-            level.Frozen = true; // 加一个转场等待，避免太突兀
-            level.TimerStopped = true; // 停止计时器
+            level.Frozen = true; // 加一个转场等待，避免太突兀   // Add a pause to avoid being too abrupt
+            level.TimerStopped = true; // 停止计时器  // Stop timer
 
             level.DoScreenWipe(true, () => {
                 RestoreLevel(level);
                 RoomTimerManager.Instance.SavedEndPoint?.ReadyForTime();
                 foreach (EventInstance instance in playingEventInstances)  instance.start();
+                playingEventInstances.Clear();
+
                 state = States.None;
             });
 
@@ -215,8 +218,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 // SpeedrunTool 里有 ConfettiRenderer 和一些 MiniTextbox
                 if (entity.IsIgnoreSaveLoad()) return false;
 
-                // 不恢复 CelesteNet 的物体
-                if (entity.GetType().FullName is string name && name.StartsWith("Celeste.Mod.CelesteNet"))
+                // 不恢复 CelesteNet/CelesteTAS 的物体
+                // Do not restore CelesteNet/CelesteTAS objects
+                if (entity.GetType().FullName is string name && (name.StartsWith("Celeste.Mod.CelesteNet.") || name.StartsWith("TAS.")))
                     return false;
 
                 return true;
@@ -283,7 +287,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         // LightingRenderer 需要，不然不会发光
                         if (component is VertexLight vertexLight) vertexLight.Index = -1;
 
-                        // 等带 ScreenWipe 完毕再重新播放
+                        // 等 ScreenWipe 完毕再重新播放
                         if (component is SoundSource source && source.Playing && source.GetFieldValue("instance") is EventInstance eventInstance) {
                             playingEventInstances.Add(eventInstance);
                         }

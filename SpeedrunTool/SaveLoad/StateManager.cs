@@ -27,9 +27,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             Player.StIntroWakeUp,
         };
 
-        // public for TAS Mod
-        // ReSharper disable once MemberCanBePrivate.Global
-        public bool IsSaved => savedLevel != null;
+        private bool IsSaved => savedLevel != null;
 
         private Level savedLevel;
         private List<Entity> savedEntities;
@@ -115,7 +113,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedLevel = level.ShallowClone();
             savedLevel.Session = level.Session.DeepClone();
             savedLevel.Camera = level.Camera.DeepClone();
-            savedLevel.Bloom = level.Bloom.ShallowClone();
+            savedLevel.Bloom = level.Bloom.DeepClone();
+            savedLevel.Background = level.Background.DeepClone();
+            savedLevel.Foreground = level.Foreground.DeepClone();
 
             savedEntities = DeepCloneEntities(GetEntitiesExcludingGlobal(level));
 
@@ -159,6 +159,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             level.SetFieldValue("transition", null); // 允许切换房间时读档  // Allow reading fields when switching rooms
             level.Displacement.Clear(); // 避免冲刺后读档残留爆破效果  // Remove dash displacement effect
+            level.ParticlesBG.Clear();
+            level.Particles.Clear();
+            level.ParticlesFG.Clear();
             TrailManager.Clear(); // 清除冲刺的残影  // Remove dash trail
 
             UnloadLevelEntities(level);
@@ -320,9 +323,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private void RestoreLevel(Level level) {
-            savedLevel.Session.DeepCloneTo(level.Session);
             level.Camera.CopyFrom(savedLevel.Camera);
-            level.Bloom.CopyAllSimpleTypeFieldsAndNull(savedLevel.Bloom);
+            savedLevel.Session.DeepCloneTo(level.Session);
+            savedLevel.Bloom.DeepCloneTo(level.Bloom);
+            savedLevel.Background.DeepCloneTo(level.Background);
+            savedLevel.Foreground.DeepCloneTo(level.Foreground);
             level.CopyAllSimpleTypeFieldsAndNull(savedLevel);
 
             // External Static Field

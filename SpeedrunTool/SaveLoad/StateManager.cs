@@ -206,7 +206,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private void RestoreCassetteBlockManager2(Level level) {
             if (level.Entities.FindFirst<CassetteBlockManager>() is CassetteBlockManager manager) {
-                if (manager.GetFieldValue("sfx") is EventInstance sfx && !(bool) manager.GetFieldValue("isLevelMusic")) {
+                if (manager.GetFieldValue("sfx") is EventInstance sfx &&
+                    !(bool) manager.GetFieldValue("isLevelMusic")) {
                     if ((int) manager.GetFieldValue("leadBeats") <= 0) {
                         sfx.start();
                     }
@@ -385,6 +386,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private void CheckButton(Level level) {
+            if (!SpeedrunToolModule.Enabled) return;
+
             if (GetVirtualButton(Mappings.Save).Pressed) {
                 GetVirtualButton(Mappings.Save).ConsumePress();
                 SaveState();

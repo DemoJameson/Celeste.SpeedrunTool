@@ -59,14 +59,25 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 ) return sourceObj;
 
                 // 稍后重新创建正在播放的 SoundSource 里的 EventInstance 实例
-                if (sourceObj is SoundSource source && source.Playing && source.GetFieldValue("instance") is EventInstance instance) {
+                if (sourceObj is SoundSource source && source.Playing &&
+                    source.GetFieldValue("instance") is EventInstance instance) {
                     if (string.IsNullOrEmpty(source.EventName)) return null;
-                    instance.SavePath(source.EventName);
+                    instance.NeedManualClone(true);
                     instance.SaveTimelinePosition(instance.LoadTimelinePosition());
                 }
 
+                if (sourceObj is CassetteBlockManager manager) {
+                    if (manager.GetFieldValue("sfx") is EventInstance sfx) {
+                        sfx.NeedManualClone(true);
+                    }
+                    if (manager.GetFieldValue("snapshot") is EventInstance snapshot) {
+                        snapshot.NeedManualClone(true);
+                    }
+                }
+
                 // 重新创建正在播放的 EventInstance 实例
-                if (sourceObj is EventInstance eventInstance && eventInstance.Clone() is EventInstance clonedInstance) {
+                if (sourceObj is EventInstance eventInstance && eventInstance.IsNeedManualClone() &&
+                    eventInstance.Clone() is EventInstance clonedInstance) {
                     deepCloneState.AddKnownRef(sourceObj, clonedInstance);
                     return clonedInstance;
                 }
@@ -92,6 +103,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     clonedObj.InvokeMethod("Clear");
 
                     backup.ForEach(obj => { clonedObj.InvokeMethod("Add", obj); });
+                }
+
+                // LightingRenderer 需要，不然不会发光
+                if (clonedObj is VertexLight vertexLight) {
+                    vertexLight.Index = -1;
                 }
 
                 return clonedObj;

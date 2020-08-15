@@ -163,6 +163,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             UnloadLevelEntities(level);
             RestoreLevelEntities(level);
+            RestoreCassetteBlockManager1(level); // 停止播放主音乐，等待播放节奏音乐
             RestoreLevel(level);
 
             // restore all mod sessions
@@ -183,6 +184,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             level.DoScreenWipe(true, () => {
                 RestoreLevel(level);
+                RestoreCassetteBlockManager2(level);
                 RoomTimerManager.Instance.SavedEndPoint?.ReadyForTime();
                 foreach (EventInstance instance in playingEventInstances) instance.start();
                 playingEventInstances.Clear();
@@ -191,6 +193,24 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             });
 
             return true;
+        }
+
+        private void RestoreCassetteBlockManager1(Level level) {
+            if (level.Entities.FindFirst<CassetteBlockManager>() is CassetteBlockManager manager) {
+                if (manager.GetFieldValue("snapshot") is EventInstance snapshot) {
+                    snapshot.start();
+                }
+            }
+        }
+
+        private void RestoreCassetteBlockManager2(Level level) {
+            if (level.Entities.FindFirst<CassetteBlockManager>() is CassetteBlockManager manager) {
+                if (manager.GetFieldValue("sfx") is EventInstance sfx && !(bool) manager.GetFieldValue("isLevelMusic")) {
+                    if ((int) manager.GetFieldValue("leadBeats") <= 0) {
+                        sfx.start();
+                    }
+                }
+            }
         }
 
         private void ClearState(bool clearEndPoint = true) {
@@ -282,14 +302,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             foreach (Entity entity in deepCloneEntities) {
                 if (entities.Contains(entity)) continue;
 
-                if (entity is CassetteBlockManager cassetteBlockManager) {
-                    cassetteBlockManager.SetFieldValue("sfx", null);
-                    if (!(bool) cassetteBlockManager.GetFieldValue("isLevelMusic")) {
-                        cassetteBlockManager.SetFieldValue("snapshot",
-                            Audio.CreateSnapshot("snapshot:/music_mains_mute"));
-                    }
-                }
-
                 current.Add(entity);
                 entities.Add(entity);
 
@@ -298,9 +310,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 entity.Components?.ToList()
                     .ForEach(component => {
                         level.Tracker.InvokeMethod("ComponentAdded", component);
-
-                        // LightingRenderer 需要，不然不会发光
-                        if (component is VertexLight vertexLight) vertexLight.Index = -1;
 
                         // 等 ScreenWipe 完毕再重新播放
                         if (component is SoundSource source && source.Playing &&

@@ -22,12 +22,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     }
 
     internal static class EventInstanceExtensions {
-        private const string PathKey = "EventInstanceExtensions-PathKey";
+        private const string NeedManualCloneKey = "EventInstanceExtensions-NeedManualCloneKey";
         private const string ParametersKey = "EventInstanceExtensions-ParametersKey";
         private const string TimelinePositionKey = "EventInstanceExtensions-TimelinePositionKey";
 
-        public static void SavePath(this EventInstance eventInstance, string path) {
-            eventInstance.SetExtendedString(PathKey, path);
+        public static void NeedManualClone(this EventInstance eventInstance, bool needClone) {
+            eventInstance.SetExtendedBoolean(NeedManualCloneKey, needClone);
+        }
+
+        public static bool IsNeedManualClone(this EventInstance eventInstance) {
+            return eventInstance.GetExtendedBoolean(NeedManualCloneKey);
         }
 
         public static void SaveParameters(this EventInstance eventInstance, string param, float value) {
@@ -65,13 +69,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         public static EventInstance Clone(this EventInstance eventInstance) {
-            string path = eventInstance.GetExtendedString(PathKey);
+            string path = Audio.GetEventName(eventInstance);
             if (string.IsNullOrEmpty(path)) return null;
 
             EventInstance cloneInstance = Audio.CreateInstance(path);
             if (cloneInstance == null) return null;
 
-            cloneInstance.SavePath(path);
+            cloneInstance.NeedManualClone(eventInstance.IsNeedManualClone());
 
             var parameters =
                 eventInstance.GetExtendedDataValue<Dictionary<string, float>>(ParametersKey);

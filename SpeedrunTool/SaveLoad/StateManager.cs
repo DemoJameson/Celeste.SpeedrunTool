@@ -110,6 +110,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             ClearState(false);
 
             savedLevel = level.ShallowClone();
+            savedLevel.Lighting = level.Lighting.ShallowClone();
             savedLevel.Session = level.Session.DeepClone();
             savedLevel.Camera = level.Camera.DeepClone();
             savedLevel.Bloom = level.Bloom.DeepClone();
@@ -334,6 +335,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedLevel.Background.DeepCloneTo(level.Background);
             savedLevel.Foreground.DeepCloneTo(level.Foreground);
             level.CopyAllSimpleTypeFieldsAndNull(savedLevel);
+            level.Lighting.CopyAllSimpleTypeFieldsAndNull(savedLevel.Lighting);
 
             // External Static Field
             Engine.FreezeTimer = savedFreezeTimer;

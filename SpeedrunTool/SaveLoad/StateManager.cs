@@ -362,6 +362,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 result.Add(lightningRenderer);
             }
 
+            if (level.Entities.FirstOrDefault(entity =>
+                    entity.GetType().FullName == "Celeste.Mod.AcidHelper.Entities.InstantTeleporterRenderer") is Entity
+                teleporterRenderer) {
+                result.Add(teleporterRenderer);
+            }
+
             return result;
         }
 

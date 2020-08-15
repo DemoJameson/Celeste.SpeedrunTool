@@ -56,6 +56,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                                                && !(entity is CassetteBlockManager)
                                                && !(entity is SeekerBarrierRenderer)
                                                && !(entity is LightningRenderer)
+                                               // Fixes: Glyph Teleport Area Effect
+                                               && entity.GetType().FullName != "Celeste.Mod.AcidHelper.Entities.InstantTeleporterRenderer"
                 ) return sourceObj;
 
                 // 稍后重新创建正在播放的 SoundSource 里的 EventInstance 实例

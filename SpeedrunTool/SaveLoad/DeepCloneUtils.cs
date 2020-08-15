@@ -61,8 +61,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 ) return sourceObj;
 
                 // 稍后重新创建正在播放的 SoundSource 里的 EventInstance 实例
-                if (sourceObj is SoundSource source && source.Playing &&
-                    source.GetFieldValue("instance") is EventInstance instance) {
+                if (sourceObj is SoundSource source
+                    // TODO SoundEmitter 的声音会存留在关卡中，切换房间后保存依然会播放
+                    && !(source.Entity is SoundEmitter)
+                    && source.Playing
+                    && source.GetFieldValue("instance") is EventInstance instance) {
                     if (string.IsNullOrEmpty(source.EventName)) return null;
                     instance.NeedManualClone(true);
                     instance.SaveTimelinePosition(instance.LoadTimelinePosition());

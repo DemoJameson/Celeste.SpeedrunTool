@@ -8,6 +8,7 @@ using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using FMOD.Studio;
 using Force.DeepCloner;
+using Force.DeepCloner.Helpers;
 using Microsoft.Xna.Framework.Input;
 using Monocle;
 using MonoMod.Utils;
@@ -41,6 +42,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private Dictionary<EverestModule, EverestModuleSession> savedModSessions;
 
         private States state = States.None;
+
+        // 共用 DeepCloneState 可使多次 DeepClone 复用想同对象避免多次克隆同一对象
+        public DeepCloneState SharedCloneState { get; private set; }
 
         private enum States {
             None,
@@ -109,15 +113,17 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             ClearState(false);
 
+            SharedCloneState = new DeepCloneState();
+
             savedLevel = level.ShallowClone();
             savedLevel.Lighting = level.Lighting.ShallowClone();
-            savedLevel.Session = level.Session.DeepClone();
-            savedLevel.Camera = level.Camera.DeepClone();
-            savedLevel.Bloom = level.Bloom.DeepClone();
-            savedLevel.Background = level.Background.DeepClone();
-            savedLevel.Foreground = level.Foreground.DeepClone();
+            savedLevel.Session = level.Session.DeepClone(SharedCloneState);
+            savedLevel.Camera = level.Camera.DeepClone(SharedCloneState);
+            savedLevel.Bloom = level.Bloom.DeepClone(SharedCloneState);
+            savedLevel.Background = level.Background.DeepClone(SharedCloneState);
+            savedLevel.Foreground = level.Foreground.DeepClone(SharedCloneState);
 
-            savedEntities = DeepCloneEntities(GetEntitiesExcludingGlobal(level));
+            savedEntities = DeepCloneEntities(GetEntitiesNeedDeepClone(level));
 
             // External
             savedFreezeTimer = Engine.FreezeTimer;
@@ -147,6 +153,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (level.Paused || state != States.None || !IsSaved) return false;
 
             state = States.Loading;
+
+            SharedCloneState = new DeepCloneState();
 
             // External
             RoomTimerManager.Instance.ResetTime();
@@ -234,6 +242,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedLevel = null;
             savedEntities = null;
 
+            SharedCloneState = null;
+
             // Mod
             SaveLoadAction.OnClearState();
 
@@ -241,22 +251,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private List<Entity> DeepCloneEntities(List<Entity> entities) {
-            entities = entities.Where(entity => {
-                // 不恢复设置了 IgnoreSaveLoadComponent 的物体
-                // SpeedrunTool 里有 ConfettiRenderer 和一些 MiniTextbox
-                if (entity.IsIgnoreSaveLoad()) return false;
-
-                // 不恢复 CelesteNet/CelesteTAS 的物体
-                // Do not restore CelesteNet/CelesteTAS objects
-                if (entity.GetType().FullName is string name &&
-                    (name.StartsWith("Celeste.Mod.CelesteNet.") || name.StartsWith("TAS.")))
-                    return false;
-
-                return true;
-            }).ToList();
-
-            Dictionary<int, Dictionary<string, object>> dynDataDict = new Dictionary<int, Dictionary<string, object>>();
-            EntitiesWrapper entitiesWrapper = new EntitiesWrapper(entities, dynDataDict);
+            List<Entity> clonedEntities = entities.DeepClone(SharedCloneState);
 
             // Find the dynData.Data that need to be cloned
             for (int i = 0; i < entities.Count; i++) {
@@ -264,26 +259,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 if (DynDataUtils.GetDataMap(entity.GetType())?.Count == 0) continue;
 
                 if (DynDataUtils.GetDate(entity) is Dictionary<string, object> data && data.Count > 0) {
-                    dynDataDict.Add(i, data);
-                }
-            }
-
-            // DeepClone together make them share same object.
-            EntitiesWrapper clonedEntitiesWrapper = entitiesWrapper.DeepClone();
-
-            // Copy dynData.Data
-            Dictionary<int, Dictionary<string, object>> clonedDynDataDict = entitiesWrapper.DynDataDict;
-            foreach (int i in clonedDynDataDict.Keys) {
-                Entity clonedEntity = clonedEntitiesWrapper.Entities[i];
-                if (DynDataUtils.GetDate(clonedEntity) is Dictionary<string, object> data) {
-                    Dictionary<string, object> clonedData = clonedEntitiesWrapper.DynDataDict[i];
-                    foreach (string key in clonedData.Keys) {
-                        data[key] = clonedData[key];
+                    Entity clonedEntity = clonedEntities[i];
+                    if (DynDataUtils.GetDate(clonedEntity) is Dictionary<string, object> needClonedData) {
+                        data.DeepCloneTo(needClonedData, SharedCloneState);
                     }
                 }
             }
 
-            return clonedEntitiesWrapper.Entities;
+            return clonedEntities;
         }
 
         private void UnloadLevelEntities(Level level) {
@@ -335,10 +318,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private void RestoreLevel(Level level) {
             level.Camera.CopyFrom(savedLevel.Camera);
-            savedLevel.Session.DeepCloneTo(level.Session);
-            savedLevel.Bloom.DeepCloneTo(level.Bloom);
-            savedLevel.Background.DeepCloneTo(level.Background);
-            savedLevel.Foreground.DeepCloneTo(level.Foreground);
+            savedLevel.Session.DeepCloneTo(level.Session, SharedCloneState);
+            savedLevel.Bloom.DeepCloneTo(level.Bloom, SharedCloneState);
+            savedLevel.Background.DeepCloneTo(level.Background, SharedCloneState);
+            savedLevel.Foreground.DeepCloneTo(level.Foreground, SharedCloneState);
             level.CopyAllSimpleTypeFieldsAndNull(savedLevel);
             level.Lighting.CopyAllSimpleTypeFieldsAndNull(savedLevel.Lighting);
 
@@ -376,6 +359,22 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             return result;
+        }
+
+        private List<Entity> GetEntitiesNeedDeepClone(Level level) {
+            return GetEntitiesExcludingGlobal(level).Where(entity => {
+                // 不恢复设置了 IgnoreSaveLoadComponent 的物体
+                // SpeedrunTool 里有 ConfettiRenderer 和一些 MiniTextbox
+                if (entity.IsIgnoreSaveLoad()) return false;
+
+                // 不恢复 CelesteNet/CelesteTAS 的物体
+                // Do not restore CelesteNet/CelesteTAS objects
+                if (entity.GetType().FullName is string name &&
+                    (name.StartsWith("Celeste.Mod.CelesteNet.") || name.StartsWith("TAS.")))
+                    return false;
+
+                return true;
+            }).ToList();
         }
 
         private bool IsAllowSave(Level level, Player player) {
@@ -456,16 +455,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         public static Dictionary<string, object> GetDate(object obj) {
             return CreateDynData(obj)?.GetPropertyValue("Data") as Dictionary<string, object>;
-        }
-    }
-
-    internal class EntitiesWrapper {
-        public readonly List<Entity> Entities;
-        public readonly Dictionary<int, Dictionary<string, object>> DynDataDict;
-
-        public EntitiesWrapper(List<Entity> entities, Dictionary<int, Dictionary<string, object>> dynDataDict) {
-            Entities = entities;
-            DynDataDict = dynDataDict;
         }
     }
 }

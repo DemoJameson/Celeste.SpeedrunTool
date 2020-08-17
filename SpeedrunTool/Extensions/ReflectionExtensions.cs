@@ -341,6 +341,10 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return obj.InvokeMethod(typeof(T), name, parameters);
         }
 
+        public static object InvokeMethod(this Type type, string name, params object[] parameters) {
+            return InvokeMethod(null, type, name, parameters);
+        }
+
         public static object InvokeMethod(this object obj, Type type, string name, params object[] parameters) {
             return GetMethodInfo(type, name)?.Invoke(obj, parameters);
         }

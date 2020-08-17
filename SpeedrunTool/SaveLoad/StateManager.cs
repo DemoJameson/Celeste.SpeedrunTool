@@ -160,9 +160,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             RoomTimerManager.Instance.ResetTime();
             DeathStatisticsManager.Instance.Died = false;
 
-            // Mod
-            SaveLoadAction.OnLoadState(level, savedEntities);
-
             level.SetFieldValue("transition", null); // 允许切换房间时读档  // Allow reading fields when switching rooms
             level.Displacement.Clear(); // 避免冲刺后读档残留爆破效果  // Remove dash displacement effect
             level.ParticlesBG.Clear();
@@ -174,6 +171,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             RestoreLevelEntities(level);
             RestoreCassetteBlockManager1(level); // 停止播放主音乐，等待播放节奏音乐
             RestoreLevel(level);
+
+            // Mod
+            SaveLoadAction.OnLoadState(level);
 
             // restore all mod sessions
             foreach (EverestModule module in Everest.Modules) {
@@ -290,6 +290,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             HashSet<Entity> current = (HashSet<Entity>) level.Entities.GetFieldValue("current");
             foreach (Entity entity in deepCloneEntities) {
                 if (entities.Contains(entity)) continue;
+
+                if (entity.GetType().FullName.EndsWith("RainbowSpinnerColorController")) {
+                    $"RainbowSpinnerColorController={entity.GetHashCode()}".DebugLog();
+                }
 
                 current.Add(entity);
                 entities.Add(entity);

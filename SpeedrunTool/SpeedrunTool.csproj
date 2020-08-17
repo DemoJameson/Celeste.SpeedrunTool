@@ -46,10 +46,6 @@
       <HintPath>..\lib-stripped\Celeste.exe</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="ExtendedVariantMode, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\lib-stripped\ExtendedVariantMode.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="FNA, Version=19.9.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>..\lib-stripped\FNA.dll</HintPath>
       <Private>False</Private>

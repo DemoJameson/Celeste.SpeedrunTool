@@ -291,10 +291,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             foreach (Entity entity in deepCloneEntities) {
                 if (entities.Contains(entity)) continue;
 
-                if (entity.GetType().FullName.EndsWith("RainbowSpinnerColorController")) {
-                    $"RainbowSpinnerColorController={entity.GetHashCode()}".DebugLog();
-                }
-
                 current.Add(entity);
                 entities.Add(entity);
 

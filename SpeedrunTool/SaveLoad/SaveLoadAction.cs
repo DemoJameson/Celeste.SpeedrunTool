@@ -7,7 +7,7 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public class SaveLoadAction {
-        private static readonly List<SaveLoadAction> all = new List<SaveLoadAction>();
+        private static readonly List<SaveLoadAction> All = new List<SaveLoadAction>();
 
         private readonly Dictionary<string, object> savedValues = new Dictionary<string, object>();
         private readonly Action<Dictionary<string, object>, Level> saveState;
@@ -21,34 +21,35 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         public static void Add(SaveLoadAction saveLoadAction) {
-            all.Add(saveLoadAction);
+            All.Add(saveLoadAction);
         }
 
         internal static void OnSaveState(Level level) {
-            foreach (SaveLoadAction saveLoadAction in all) {
+            foreach (SaveLoadAction saveLoadAction in All) {
                 saveLoadAction.saveState(saveLoadAction.savedValues, level);
             }
         }
 
         internal static void OnLoadState(Level level) {
-            foreach (SaveLoadAction saveLoadAction in all) {
+            foreach (SaveLoadAction saveLoadAction in All) {
                 saveLoadAction.loadState(saveLoadAction.savedValues, level);
             }
         }
 
         internal static void OnClearState() {
-            foreach (SaveLoadAction saveLoadAction in all) {
+            foreach (SaveLoadAction saveLoadAction in All) {
                 saveLoadAction.savedValues.Clear();
             }
         }
 
-        private static void saveStaticFieldValues(Dictionary<string, object> values, Type type, params string[] fieldNames) {
+        private static void SaveStaticFieldValues(Dictionary<string, object> values, Type type,
+            params string[] fieldNames) {
             foreach (var fieldName in fieldNames) {
                 values[fieldName] = type.GetFieldValue(fieldName).DeepClone(StateManager.Instance.SharedCloneState);
             }
         }
 
-        private static void loadStaticFieldValues(Dictionary<string, object> values, Type type) {
+        private static void LoadStaticFieldValues(Dictionary<string, object> values, Type type) {
             foreach (string fieldName in values.Keys) {
                 type.SetFieldValue(fieldName, values[fieldName].DeepClone(StateManager.Instance.SharedCloneState));
             }
@@ -56,49 +57,84 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         internal static void OnLoad() {
             // ExtendedVariantMode JumpCount
-            bool extendedVariantModeInstalled = Everest.Loader.DependencyLoaded(new EverestModuleMetadata
-                {Name = "ExtendedVariantMode", Version = new Version(0, 15, 20)});
-            if (extendedVariantModeInstalled) {
-                Type type = Type.GetType("ExtendedVariants.Variants.JumpCount, ExtendedVariantMode");
-                if (type == null) return;
-
-                all.Add(new SaveLoadAction(
-                    (savedValues, level) => { saveStaticFieldValues(savedValues, type, "jumpBuffer"); },
-                    (savedValues, level) => { loadStaticFieldValues(savedValues, type); }
+            if (Type.GetType("ExtendedVariants.Variants.JumpCount, ExtendedVariantMode") is Type jumpCountType) {
+                All.Add(new SaveLoadAction(
+                    (savedValues, level) => { SaveStaticFieldValues(savedValues, jumpCountType, "jumpBuffer"); },
+                    (savedValues, level) => { LoadStaticFieldValues(savedValues, jumpCountType); }
                 ));
             }
 
             // MaxHelpingHand RainbowSpinnerColorController
-            bool maxHelpingHandInstalled = Everest.Loader.DependencyLoaded(new EverestModuleMetadata
-                {Name = "MaxHelpingHand", Version = new Version(1, 5, 2)});
-            if (maxHelpingHandInstalled) {
-                Type type = Type.GetType("Celeste.Mod.MaxHelpingHand.Entities.RainbowSpinnerColorController, MaxHelpingHand");
-                if (type == null) return;
-
-                all.Add(new SaveLoadAction(
+            if (Type.GetType("Celeste.Mod.MaxHelpingHand.Entities.RainbowSpinnerColorController, MaxHelpingHand") is
+                Type colorControllerType) {
+                All.Add(new SaveLoadAction(
                     (savedValues, level) => {
-                        saveStaticFieldValues(savedValues, type,
-                            "rainbowSpinnerHueHooked", "transitionProgress", "spinnerControllerOnScreen", "nextSpinnerController");
+                        SaveStaticFieldValues(savedValues, colorControllerType,
+                            "rainbowSpinnerHueHooked", "transitionProgress", "spinnerControllerOnScreen",
+                            "nextSpinnerController");
                     },
                     (savedValues, level) => {
-                        loadStaticFieldValues(savedValues, type);
-                        if ((bool) savedValues["rainbowSpinnerHueHooked"] && type.GetFieldValue("spinnerControllerOnScreen") is Entity entity) {
-                            object nextSpinnerController = type.GetFieldValue("nextSpinnerController");
-                            type.SetFieldValue("rainbowSpinnerHueHooked", false);
+                        LoadStaticFieldValues(savedValues, colorControllerType);
+                        if ((bool) savedValues["rainbowSpinnerHueHooked"] &&
+                            colorControllerType.GetFieldValue("spinnerControllerOnScreen") is Entity entity) {
+                            object nextSpinnerController = colorControllerType.GetFieldValue("nextSpinnerController");
+                            colorControllerType.SetFieldValue("rainbowSpinnerHueHooked", false);
                             // 借助 awake 方法 执行 On.Celeste.CrystalStaticSpinner.GetHue += getRainbowSpinnerHue;
                             entity.Awake(entity.Scene);
-                            type.SetFieldValue("nextSpinnerController", nextSpinnerController);
+                            colorControllerType.SetFieldValue("nextSpinnerController", nextSpinnerController);
                         }
                     }
                 ));
             }
 
+            // PandorasBox TimeField
+            // if (Type.GetType("Celeste.Mod.PandorasBox.TimeField, PandorasBox") is Type timeFieldType) {
+            //     var targetPlayerReference = timeFieldType.GetFieldValue("targetPlayer") as WeakReference<Player>;
+            //     var lingeringTargetReference = timeFieldType.GetFieldValue("lingeringTarget");
+            //
+            //     all.Add(new SaveLoadAction(
+            //         (savedValues, level) => {
+            //             saveStaticFieldValues(savedValues, timeFieldType,
+            //                 "baseTimeRate",
+            //                 "ourLastTimeRate",
+            //                 "playerTimeRate",
+            //                 "hookAdded",
+            //                 "targetPlayer",
+            //                 "lingeringTarget"
+            //                 );
+            //             targetPlayerReference.TryGetTarget(out Player player);
+            //             targetPlayerReference.SetTarget(player.DeepClone(StateManager.Instance.SharedCloneState));
+            //
+            //             object[] args = {FormatterServices.GetUninitializedObject(timeFieldType)};
+            //             lingeringTargetReference.InvokeMethod("TrgGetTarget", args);
+            //             lingeringTargetReference.InvokeMethod("SetTarget",
+            //                 args[0].DeepClone(StateManager.Instance.SharedCloneState));
+            //         },
+            //         (savedValues, level) => {
+            //             targetPlayerReference.TryGetTarget(out Player player);
+            //             Player deepClone = player.DeepClone(StateManager.Instance.SharedCloneState);
+            //             targetPlayerReference.SetTarget(deepClone);
+            //
+            //             object[] args = {FormatterServices.GetUninitializedObject(timeFieldType)};
+            //             lingeringTargetReference.InvokeMethod("TrgGetTarget", args);
+            //             lingeringTargetReference.InvokeMethod("SetTarget", args[0].DeepClone(StateManager.Instance.SharedCloneState));
+            //
+            //             if ((bool) savedValues["hookAdded"]) {
+            //                 timeFieldType.InvokeMethod("AddHook");
+            //             }
+            //
+            //             loadStaticFieldValues(savedValues, timeFieldType);
+            //         }
+            //     ));
+            // }
+
             // Audio Music
-            all.Add(new SaveLoadAction(
+            All.Add(new SaveLoadAction(
                 (savedValues, level) => {
                     savedValues.Add("CurrentMusic", Audio.CurrentMusic);
                     savedValues.Add("CurrentAmbience", Audio.GetEventName(Audio.CurrentAmbienceEventInstance));
-                    savedValues.Add("CurrentAltMusic", Audio.GetEventName(typeof(Audio).GetFieldValue("currentAltMusicEvent") as EventInstance));
+                    savedValues.Add("CurrentAltMusic",
+                        Audio.GetEventName(typeof(Audio).GetFieldValue("currentAltMusicEvent") as EventInstance));
                     savedValues.Add("MusicUnderwater", Audio.MusicUnderwater);
                 },
                 (savedValues, level) => {
@@ -111,7 +147,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         internal static void OnUnload() {
-            all.Clear();
+            All.Clear();
         }
     }
 }

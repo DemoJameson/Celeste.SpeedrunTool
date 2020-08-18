@@ -188,6 +188,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 wipe.Cancel();
             }
 
+            // 修复问题：死亡瞬间读档 PlayerDeadBody 没被清除，导致读档完毕后 madeline 自动 retry
+            level.OnEndOfFrame += () => level.Entities.FindFirst<PlayerDeadBody>()?.RemoveSelf();
+
             level.Frozen = true; // 加一个转场等待，避免太突兀   // Add a pause to avoid being too abrupt
             level.TimerStopped = true; // 停止计时器  // Stop timer
 

@@ -89,6 +89,15 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return result;
         }
 
+        public static bool IsWeakReference(this Type type, out Type genericType) {
+            bool result = type.IsGenericType && type.GetGenericTypeDefinition().IsAssignableFrom(typeof(WeakReference<>))
+                                             && type.GenericTypeArguments.Length == 1;
+
+            genericType = result ? type.GenericTypeArguments[0] : null;
+
+            return result;
+        }
+
         public static bool IsCompilerGenerated(this object obj) {
             return IsCompilerGenerated(obj.GetType());
         }

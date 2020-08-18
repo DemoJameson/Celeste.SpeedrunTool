@@ -7,6 +7,7 @@ using Force.DeepCloner;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
+using NLua;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     internal static class DeepCloneUtils {
@@ -35,20 +36,20 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                     // XNA GraphicsResource
                     || type.IsSubclassOf(typeof(GraphicsResource))
+
+                    // NLua
+                    || type == typeof(Lua)
+                    || type.IsSubclassOf(typeof(LuaBase))
                 ) {
                     return true;
                 }
-
-                // if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(WeakReference<>)) {
-                //     return false;
-                // }
 
                 return null;
             });
 
             // Clone 对象的字段前，判断哪些类型是直接使用原对象或者自行通过其它方法 clone
             // Before cloning object's field, determine which types are directly used by the original object
-            DeepCloner.AddPreCloneProcessor((sourceObj, deepCloneState, cloner) => {
+            DeepCloner.AddPreCloneProcessor((sourceObj, deepCloneState) => {
                 if (sourceObj is Level) {
                     // 金草莓死亡或者 PageDown/Up 切换房间后等等改变 Level 实例的情况
                     // After golden strawberry deaths or changing rooms w/ Page Down / Up
@@ -91,20 +92,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     return clonedInstance;
                 }
 
-                // Type type = sourceObj.GetType();
-                // if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(WeakReference<>)) {
-                //     object[] args = {FormatterServices.GetUninitializedObject(type.GenericTypeArguments[0])};
-                //     sourceObj.InvokeMethod("TrgGetTarget", args);
-                //     sourceObj.InvokeMethod("SetTarget", cloner(args[0], deepCloneState));
-                //     return sourceObj;
-                // }
-
                 return null;
             });
 
             // Clone 对象的字段后，进行自定的处理
             // After cloning, perform custom processing
-            DeepCloner.AddPostCloneProcessor((sourceObj, clonedObj) => {
+            DeepCloner.AddPostCloneProcessor((sourceObj, clonedObj, deepCloneState) => {
                 if (clonedObj == null) return null;
 
                 // 修复：DeepClone 的 hashSet.Containes(里面存在的引用对象) 总是返回 False，Dictionary 无此问题

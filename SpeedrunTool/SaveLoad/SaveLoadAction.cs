@@ -88,45 +88,32 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             // PandorasBox TimeField
-            // if (Type.GetType("Celeste.Mod.PandorasBox.TimeField, PandorasBox") is Type timeFieldType) {
-            //     var targetPlayerReference = timeFieldType.GetFieldValue("targetPlayer") as WeakReference<Player>;
-            //     var lingeringTargetReference = timeFieldType.GetFieldValue("lingeringTarget");
-            //
-            //     all.Add(new SaveLoadAction(
-            //         (savedValues, level) => {
-            //             saveStaticFieldValues(savedValues, timeFieldType,
-            //                 "baseTimeRate",
-            //                 "ourLastTimeRate",
-            //                 "playerTimeRate",
-            //                 "hookAdded",
-            //                 "targetPlayer",
-            //                 "lingeringTarget"
-            //                 );
-            //             targetPlayerReference.TryGetTarget(out Player player);
-            //             targetPlayerReference.SetTarget(player.DeepClone(StateManager.Instance.SharedCloneState));
-            //
-            //             object[] args = {FormatterServices.GetUninitializedObject(timeFieldType)};
-            //             lingeringTargetReference.InvokeMethod("TrgGetTarget", args);
-            //             lingeringTargetReference.InvokeMethod("SetTarget",
-            //                 args[0].DeepClone(StateManager.Instance.SharedCloneState));
-            //         },
-            //         (savedValues, level) => {
-            //             targetPlayerReference.TryGetTarget(out Player player);
-            //             Player deepClone = player.DeepClone(StateManager.Instance.SharedCloneState);
-            //             targetPlayerReference.SetTarget(deepClone);
-            //
-            //             object[] args = {FormatterServices.GetUninitializedObject(timeFieldType)};
-            //             lingeringTargetReference.InvokeMethod("TrgGetTarget", args);
-            //             lingeringTargetReference.InvokeMethod("SetTarget", args[0].DeepClone(StateManager.Instance.SharedCloneState));
-            //
-            //             if ((bool) savedValues["hookAdded"]) {
-            //                 timeFieldType.InvokeMethod("AddHook");
-            //             }
-            //
-            //             loadStaticFieldValues(savedValues, timeFieldType);
-            //         }
-            //     ));
-            // }
+            if (Type.GetType("Celeste.Mod.PandorasBox.TimeField, PandorasBox") is Type timeFieldType) {
+                All.Add(new SaveLoadAction(
+                    (savedValues, level) => {
+                        SaveStaticFieldValues(savedValues, timeFieldType,
+                            "baseTimeRate",
+                            "ourLastTimeRate",
+                            "playerTimeRate",
+                            "hookAdded"
+                            );
+                        // 直接克隆 WeakReference 里面的 Target 不会被克隆，而且似乎会造成一些问题原因未知，体现为保存状态后自杀报错：
+                        // player.collider 的类型都变了
+                        // System.Exception: Collisions against the collider type are not implemented!
+                        // 在 Monocle.Collider.Collide(Collider collider)
+                        savedValues["-player-"] = timeFieldType.GetFieldValue("targetPlayer").GetPropertyValue("Target").DeepClone(StateManager.Instance.SharedCloneState);
+                        savedValues["-timeField-"] = timeFieldType.GetFieldValue("lingeringTarget").GetPropertyValue("Target").DeepClone(StateManager.Instance.SharedCloneState);
+                    },
+                    (savedValues, level) => {
+                        if ((bool) savedValues["hookAdded"]) {
+                            timeFieldType.InvokeMethod("AddHook");
+                        }
+                        LoadStaticFieldValues(savedValues, timeFieldType);
+                        timeFieldType.GetFieldValue("targetPlayer").SetPropertyValue("Target", savedValues["-player-"].DeepClone(StateManager.Instance.SharedCloneState));
+                        timeFieldType.GetFieldValue("lingeringTarget").SetPropertyValue("Target", savedValues["-timeField-"].DeepClone(StateManager.Instance.SharedCloneState));
+                    }
+                ));
+            }
 
             // Audio Music
             All.Add(new SaveLoadAction(

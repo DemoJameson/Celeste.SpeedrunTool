@@ -132,7 +132,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedDistortAnxiety = Distort.Anxiety;
             savedDistortGameRate = Distort.GameRate;
 
-            // Mod
+            // Mod 和其他
             SaveLoadAction.OnSaveState(level);
 
             // save all mod sessions
@@ -172,7 +172,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             RestoreCassetteBlockManager1(level); // 停止播放主音乐，等待播放节奏音乐
             RestoreLevel(level);
 
-            // Mod
+            // Mod 和其他
             SaveLoadAction.OnLoadState(level);
 
             // restore all mod sessions
@@ -207,6 +207,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             return true;
         }
 
+        // 分两步的原因是更早的停止音乐，听起来更舒服更好一点
         private void RestoreCassetteBlockManager1(Level level) {
             if (level.Entities.FindFirst<CassetteBlockManager>() is CassetteBlockManager manager) {
                 if (manager.GetFieldValue("snapshot") is EventInstance snapshot) {

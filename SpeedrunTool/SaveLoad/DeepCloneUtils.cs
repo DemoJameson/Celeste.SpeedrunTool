@@ -77,7 +77,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
 
                 if (sourceObj is CassetteBlockManager manager) {
-                    if (manager.GetFieldValue("sfx") is EventInstance sfx) {
+                    // isLevelMusic = true 时 sfx 自动等于 Audio.CurrentMusicEventInstance，无需重建
+                    if (manager.GetFieldValue("sfx") is EventInstance sfx && !(bool) manager.GetFieldValue("isLevelMusic")) {
                         sfx.NeedManualClone(true);
                     }
                     if (manager.GetFieldValue("snapshot") is EventInstance snapshot) {

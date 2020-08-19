@@ -1,8 +1,6 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
@@ -11,7 +9,6 @@ using Force.DeepCloner;
 using Force.DeepCloner.Helpers;
 using Microsoft.Xna.Framework.Input;
 using Monocle;
-using MonoMod.Utils;
 using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
@@ -123,7 +120,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedLevel.Background = level.Background.DeepClone(SharedCloneState);
             savedLevel.Foreground = level.Foreground.DeepClone(SharedCloneState);
 
-            savedEntities = DeepCloneEntities(GetEntitiesNeedDeepClone(level));
+            savedEntities = GetEntitiesNeedDeepClone(level).DeepClone(SharedCloneState);
 
             // External
             savedFreezeTimer = Engine.FreezeTimer;
@@ -254,25 +251,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             state = States.None;
         }
 
-        private List<Entity> DeepCloneEntities(List<Entity> entities) {
-            List<Entity> clonedEntities = entities.DeepClone(SharedCloneState);
-
-            // Find the dynData.Data that need to be cloned
-            for (int i = 0; i < entities.Count; i++) {
-                Entity entity = entities[i];
-                if (DynDataUtils.GetDataMap(entity.GetType())?.Count == 0) continue;
-
-                if (DynDataUtils.GetDate(entity) is Dictionary<string, object> data && data.Count > 0) {
-                    Entity clonedEntity = clonedEntities[i];
-                    if (DynDataUtils.GetDate(clonedEntity) is Dictionary<string, object> needClonedData) {
-                        data.DeepCloneTo(needClonedData, SharedCloneState);
-                    }
-                }
-            }
-
-            return clonedEntities;
-        }
-
         private void UnloadLevelEntities(Level level) {
             List<Entity> entities = GetEntitiesExcludingGlobal(level);
             level.Remove(entities);
@@ -283,7 +261,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private void RestoreLevelEntities(Level level) {
-            List<Entity> deepCloneEntities = DeepCloneEntities(savedEntities);
+            List<Entity> deepCloneEntities = savedEntities.DeepClone(SharedCloneState);
 
             // just follow the level.LoadLevel add player last. There must some black magic in it.
             // fixed: Player can't perform a really spike jump when wind blow up.
@@ -426,39 +404,5 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         public static StateManager Instance => Lazy.Value;
         private StateManager() { }
         // @formatter:on
-    }
-
-    internal static class DynDataUtils {
-        private static object CreateDynData(object obj) {
-            Type type = obj.GetType();
-            string key = $"DynDataUtils-CreateDynData-{type.FullName}";
-
-            ConstructorInfo constructorInfo = type.GetExtendedDataValue<ConstructorInfo>(key);
-
-            if (constructorInfo == null) {
-                constructorInfo = typeof(DynData<>).MakeGenericType(type).GetConstructor(new[] {type});
-                type.SetExtendedDataValue(key, constructorInfo);
-            }
-
-            return constructorInfo?.Invoke(new[] {obj});
-        }
-
-        public static IDictionary GetDataMap(Type type) {
-            string key = $"DynDataUtils-GetDataMap-{type}";
-
-            FieldInfo fieldInfo = type.GetExtendedDataValue<FieldInfo>(key);
-
-            if (fieldInfo == null) {
-                fieldInfo = typeof(DynData<>).MakeGenericType(type)
-                    .GetField("_DataMap", BindingFlags.Static | BindingFlags.NonPublic);
-                type.SetExtendedDataValue(key, fieldInfo);
-            }
-
-            return fieldInfo?.GetValue(null) as IDictionary;
-        }
-
-        public static Dictionary<string, object> GetDate(object obj) {
-            return CreateDynData(obj)?.GetPropertyValue("Data") as Dictionary<string, object>;
-        }
     }
 }

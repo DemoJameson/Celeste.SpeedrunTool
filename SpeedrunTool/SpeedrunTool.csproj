@@ -109,6 +109,7 @@
     <Compile Include="Extensions\ReflectionExtensions.cs" />
     <Compile Include="RespawnSpeedUtils.cs" />
     <Compile Include="SaveLoad\DeepCloneUtils.cs" />
+    <Compile Include="SaveLoad\DynDataUtils.cs" />
     <Compile Include="SaveLoad\EventInstanceUtils.cs" />
     <Compile Include="SaveLoad\IgnoreSaveLoadComponent.cs" />
     <Compile Include="SaveLoad\SaveLoadAction.cs" />

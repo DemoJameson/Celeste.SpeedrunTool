@@ -81,6 +81,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     if (manager.GetFieldValue("sfx") is EventInstance sfx && !(bool) manager.GetFieldValue("isLevelMusic")) {
                         sfx.NeedManualClone(true);
                     }
+
                     if (manager.GetFieldValue("snapshot") is EventInstance snapshot) {
                         snapshot.NeedManualClone(true);
                     }
@@ -103,7 +104,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                 // 修复：DeepClone 的 hashSet.Containes(里面存在的引用对象) 总是返回 False，Dictionary 无此问题
                 // Fix: DeepClone's hashSet.Contains (ReferenceType) always returns false, Dictionary has no such problem
-                if (clonedObj.GetType().IsHashSet(out Type type) && !type.IsSimple()) {
+                if (clonedObj.GetType().IsHashSet(out Type hashSetElementType) && !hashSetElementType.IsSimple()) {
                     IEnumerator enumerator = ((IEnumerable) clonedObj).GetEnumerator();
 
                     List<object> backup = new List<object>();
@@ -119,6 +120,19 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 // LightingRenderer 需要，不然不会发光
                 if (clonedObj is VertexLight vertexLight) {
                     vertexLight.Index = -1;
+                }
+
+                // Clone dynData.Data
+                if (sourceObj.GetType() is Type objType && objType.IsClass) {
+                    IDictionary dataMap = DynDataUtils.GetDataMap(objType);
+                    if (dataMap == null || dataMap.Count == 0) return clonedObj;
+                    WeakReference weakReference = new WeakReference(sourceObj);
+
+                    if (!dataMap.Contains(weakReference)) return clonedObj;
+                    if (!(dataMap[weakReference].GetFieldValue("Data") is Dictionary<string, object> data) || data.Count == 0) return clonedObj;
+                    if (!(DynDataUtils.GetDate(clonedObj) is Dictionary<string, object> needClonedData)) return clonedObj;
+
+                    data.DeepCloneTo(needClonedData, deepCloneState);
                 }
 
                 return clonedObj;

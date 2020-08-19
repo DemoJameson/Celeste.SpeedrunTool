@@ -108,6 +108,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             savedLevel = level.ShallowClone();
             savedLevel.Lighting = level.Lighting.ShallowClone();
+            savedLevel.FormationBackdrop = level.FormationBackdrop.ShallowClone();
             savedLevel.Session = level.Session.DeepCloneShared();
             savedLevel.Camera = level.Camera.DeepCloneShared();
             savedLevel.Bloom = level.Bloom.DeepCloneShared();
@@ -179,9 +180,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             // 修复问题：未打开自动读档时，死掉按下确认键后读档完成会接着执行 Reload 复活方法
             // Fix: When AutoLoadStateAfterDeath is off, if manually LoadState() after death, level.Reload() will still be executed.
-            if (level.RendererList.Renderers.FirstOrDefault(renderer => renderer is ScreenWipe) is ScreenWipe wipe) {
-                wipe.Cancel();
-            }
+            ClearScreenWipe(level);
 
             level.Frozen = true; // 加一个转场等待，避免太突兀   // Add a pause to avoid being too abrupt
             level.TimerStopped = true; // 停止计时器  // Stop timer
@@ -193,11 +192,29 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 foreach (EventInstance instance in playingEventInstances) instance.start();
                 playingEventInstances.Clear();
                 DeepClonerUtils.ClearSharedDeepCloneState();
+                if (level.RendererList.Renderers.FirstOrDefault(renderer => renderer is ScreenWipe) is ScreenWipe
+                    screenWipe) {
+                    $"level.DoScreenWipe={screenWipe.OnComplete.Method}".DebugLog();
+                    level.RendererList.Renderers.Count(renderer => renderer is ScreenWipe).DebugLog();
+                    // screenWipe.Cancel();
+                }
+
+                // 修复问题：死亡后出现黑屏的一瞬间手动读档后游戏崩溃，因为 ScreenWipe 执行了 level.Reload() 方法
+                // System.NullReferenceException: 未将对象引用设置到对象的实例。
+                // 在 Celeste.CameraTargetTrigger.OnLeave(Player player)
+                // 在 Celeste.Player.Removed(Scene scene)
+                ClearScreenWipe(level);
 
                 state = States.None;
             });
 
             return true;
+        }
+
+        private void ClearScreenWipe(Level level) {
+            level.RendererList.Renderers.ForEach(renderer => {
+                if (renderer is ScreenWipe wipe) wipe.Cancel();
+            });
         }
 
         // 分两步的原因是更早的停止音乐，听起来更舒服更好一点
@@ -302,6 +319,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedLevel.Foreground.DeepCloneToShared(level.Foreground);
             level.CopyAllSimpleTypeFieldsAndNull(savedLevel);
             level.Lighting.CopyAllSimpleTypeFieldsAndNull(savedLevel.Lighting);
+            level.FormationBackdrop.CopyAllSimpleTypeFieldsAndNull(savedLevel.FormationBackdrop);
 
             // External Static Field
             Engine.FreezeTimer = savedFreezeTimer;

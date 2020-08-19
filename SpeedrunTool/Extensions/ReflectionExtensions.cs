@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Xna.Framework;
+using MonoMod.Utils;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
     internal static class ReflectionExtensions {
@@ -355,7 +356,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static object InvokeMethod(this object obj, Type type, string name, params object[] parameters) {
-            return GetMethodInfo(type, name)?.Invoke(obj, parameters);
+            return GetMethodInfo(type, name)?.CreateFastDelegate().Invoke(obj, parameters);
         }
     }
 }

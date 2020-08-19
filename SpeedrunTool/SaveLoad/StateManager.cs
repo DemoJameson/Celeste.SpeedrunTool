@@ -192,12 +192,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 foreach (EventInstance instance in playingEventInstances) instance.start();
                 playingEventInstances.Clear();
                 DeepClonerUtils.ClearSharedDeepCloneState();
-                if (level.RendererList.Renderers.FirstOrDefault(renderer => renderer is ScreenWipe) is ScreenWipe
-                    screenWipe) {
-                    $"level.DoScreenWipe={screenWipe.OnComplete.Method}".DebugLog();
-                    level.RendererList.Renderers.Count(renderer => renderer is ScreenWipe).DebugLog();
-                    // screenWipe.Cancel();
-                }
 
                 // 修复问题：死亡后出现黑屏的一瞬间手动读档后游戏崩溃，因为 ScreenWipe 执行了 level.Reload() 方法
                 // System.NullReferenceException: 未将对象引用设置到对象的实例。

@@ -89,7 +89,6 @@ namespace Celeste.Mod.SpeedrunTool {
 
             FixTeleportProblems = true;
             orig(id, level);
-            FixTeleportProblems = false;
         }
 
         // 修复 3C 第三面最后的传送点 Oshiro 不出现的问题
@@ -148,26 +147,27 @@ namespace Celeste.Mod.SpeedrunTool {
 
             FixTeleportProblems = true;
             orig(self, level, at);
-            FixTeleportProblems = false;
         }
 
         private void LevelLoaderOnCtor(On.Celeste.LevelLoader.orig_ctor orig, LevelLoader self, Session session,
             Vector2? startPosition) {
-            if (SpeedrunToolModule.Enabled && FixTeleportProblems && session.StartCheckpoint == null && session.LevelData != null) {
-                Vector2 spawnPoint;
-                if (startPosition != null) {
-                    spawnPoint = session.GetSpawnPoint((Vector2) startPosition);
-                }
-                else {
-                    Rectangle bounds = session.LevelData.Bounds;
-                    spawnPoint = session.GetSpawnPoint(new Vector2(bounds.Left, bounds.Bottom));
-                }
+            if (FixTeleportProblems) {
+                FixTeleportProblems = false;
+                if (SpeedrunToolModule.Enabled && session.StartCheckpoint == null && session.LevelData != null) {
+                    Vector2 spawnPoint;
+                    if (startPosition != null) {
+                        spawnPoint = session.GetSpawnPoint(startPosition.Value);
+                    } else {
+                        Rectangle bounds = session.LevelData.Bounds;
+                        spawnPoint = session.GetSpawnPoint(new Vector2(bounds.Left, bounds.Bottom));
+                    }
 
-                FixCoreMode(session);
-                FixBadelineChase(session, spawnPoint);
-                FixHugeMessRoomLight(session);
-                FixFarewellCassetteRoomColorGrade(session, spawnPoint);
-                FixFarewellIntro02LaunchDashes(session);
+                    FixCoreMode(session);
+                    FixBadelineChase(session, spawnPoint);
+                    FixHugeMessRoomLight(session);
+                    FixFarewellCassetteRoomColorGrade(session, spawnPoint);
+                    FixFarewellIntro02LaunchDashes(session);
+                }
             }
 
             orig(self, session, startPosition);

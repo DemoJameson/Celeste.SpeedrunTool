@@ -72,7 +72,6 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
             // TODO: 用 level.TeleportTo 代替 LevelLoader
             BetterMapEditor.FixTeleportProblems = true;
             Engine.Scene = new LevelLoader(session.DeepClone());
-            BetterMapEditor.FixTeleportProblems = false;
         }
 
         private static void LevelExitOnCtor(On.Celeste.LevelExit.orig_ctor orig, LevelExit self, LevelExit.Mode mode,
@@ -211,6 +210,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
             flagList.Sort((first, second) => second.Number - first.Number);
             if (flagList.Count > 0 && flagList[0].Number < currentFlagNumber) {
                 level.Session.RespawnPoint = level.GetSpawnPoint(flagList[0].Position);
+                level.Session.SetFlag(FlagPrefix + flagList[0].Number);
                 return true;
             }
 
@@ -223,6 +223,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
 
             flagList.Sort((first, second) => second.Int("number") - first.Int("number"));
             if (flagList.Count > 0) {
+                level.Session.SetFlag(FlagPrefix + flagList[0].Int("number"));
                 level.Session.RespawnPoint = level.GetSpawnPoint(flagList[0].Position);
             }
         }

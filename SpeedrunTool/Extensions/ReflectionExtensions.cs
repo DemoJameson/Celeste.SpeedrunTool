@@ -310,7 +310,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static object GetPropertyValue(this object obj, Type type, string name) {
-            return GetPropertyGetMethod(type, name)?.Invoke(obj, NoArg);
+            return GetPropertyGetMethod(type, name)?.CreateFastDelegate().Invoke(obj, NoArg);
         }
 
         public static void SetPropertyValue(this object obj, string name, object value) {
@@ -326,7 +326,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static void SetPropertyValue(this object obj, Type type, string name, object value) {
-            GetPropertySetMethod(type, name)?.Invoke(obj, new []{value});
+            GetPropertySetMethod(type, name)?.CreateFastDelegate().Invoke(obj, value);
         }
 
         public static void CopyPropertyValue(this object obj, object fromObj, params string[] names) {

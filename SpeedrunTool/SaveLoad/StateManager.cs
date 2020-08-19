@@ -6,7 +6,6 @@ using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using FMOD.Studio;
 using Force.DeepCloner;
-using Force.DeepCloner.Helpers;
 using Microsoft.Xna.Framework.Input;
 using Monocle;
 using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
@@ -40,9 +39,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private States state = States.None;
 
-        // 共用 DeepCloneState 可使多次 DeepClone 复用想同对象避免多次克隆同一对象
-        public DeepCloneState SharedCloneState { get; private set; }
-
         private enum States {
             None,
             Loading,
@@ -53,7 +49,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         #region Hook
 
         public void OnLoad() {
-            DeepCloneUtils.Config();
+            DeepClonerUtils.Config();
             SaveLoadAction.OnLoad();
             EventInstanceUtils.OnHook();
             On.Celeste.Level.Update += CheckButtonsOnLevelUpdate;
@@ -62,7 +58,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         public void OnUnload() {
-            DeepCloneUtils.Clear();
+            DeepClonerUtils.Clear();
             SaveLoadAction.OnUnload();
             EventInstanceUtils.OnUnhook();
             On.Celeste.Level.Update -= CheckButtonsOnLevelUpdate;
@@ -110,17 +106,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             ClearState(false);
 
-            SharedCloneState = new DeepCloneState();
-
             savedLevel = level.ShallowClone();
             savedLevel.Lighting = level.Lighting.ShallowClone();
-            savedLevel.Session = level.Session.DeepClone(SharedCloneState);
-            savedLevel.Camera = level.Camera.DeepClone(SharedCloneState);
-            savedLevel.Bloom = level.Bloom.DeepClone(SharedCloneState);
-            savedLevel.Background = level.Background.DeepClone(SharedCloneState);
-            savedLevel.Foreground = level.Foreground.DeepClone(SharedCloneState);
+            savedLevel.Session = level.Session.DeepCloneShared();
+            savedLevel.Camera = level.Camera.DeepCloneShared();
+            savedLevel.Bloom = level.Bloom.DeepCloneShared();
+            savedLevel.Background = level.Background.DeepCloneShared();
+            savedLevel.Foreground = level.Foreground.DeepCloneShared();
 
-            savedEntities = GetEntitiesNeedDeepClone(level).DeepClone(SharedCloneState);
+            savedEntities = GetEntitiesNeedDeepClone(level).DeepCloneShared();
 
             // External
             savedFreezeTimer = Engine.FreezeTimer;
@@ -140,6 +134,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
             }
 
+            DeepClonerUtils.ClearSharedDeepCloneState();
+
             return LoadState();
         }
 
@@ -150,7 +146,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (level.Paused || state != States.None || !IsSaved) return false;
 
             state = States.Loading;
-            SharedCloneState = new DeepCloneState();
+            DeepClonerUtils.ClearSharedDeepCloneState();
 
             // 修复问题：死亡瞬间读档 PlayerDeadBody 没被清除，导致读档完毕后 madeline 自动 retry
             level.Entities.UpdateLists();
@@ -196,6 +192,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 RoomTimerManager.Instance.SavedEndPoint?.ReadyForTime();
                 foreach (EventInstance instance in playingEventInstances) instance.start();
                 playingEventInstances.Clear();
+                DeepClonerUtils.ClearSharedDeepCloneState();
 
                 state = States.None;
             });
@@ -242,7 +239,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedLevel = null;
             savedEntities = null;
 
-            SharedCloneState = null;
+            DeepClonerUtils.ClearSharedDeepCloneState();
 
             // Mod
             SaveLoadAction.OnClearState();
@@ -260,7 +257,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private void RestoreLevelEntities(Level level) {
-            List<Entity> deepCloneEntities = savedEntities.DeepClone(SharedCloneState);
+            List<Entity> deepCloneEntities = savedEntities.DeepCloneShared();
 
             // just follow the level.LoadLevel add player last. There must some black magic in it.
             // fixed: Player can't perform a really spike jump when wind blow up.
@@ -299,10 +296,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private void RestoreLevel(Level level) {
             level.Camera.CopyFrom(savedLevel.Camera);
-            savedLevel.Session.DeepCloneTo(level.Session, SharedCloneState);
-            savedLevel.Bloom.DeepCloneTo(level.Bloom, SharedCloneState);
-            savedLevel.Background.DeepCloneTo(level.Background, SharedCloneState);
-            savedLevel.Foreground.DeepCloneTo(level.Foreground, SharedCloneState);
+            savedLevel.Session.DeepCloneToShared(level.Session);
+            savedLevel.Bloom.DeepCloneToShared(level.Bloom);
+            savedLevel.Background.DeepCloneToShared(level.Background);
+            savedLevel.Foreground.DeepCloneToShared(level.Foreground);
             level.CopyAllSimpleTypeFieldsAndNull(savedLevel);
             level.Lighting.CopyAllSimpleTypeFieldsAndNull(savedLevel.Lighting);
 

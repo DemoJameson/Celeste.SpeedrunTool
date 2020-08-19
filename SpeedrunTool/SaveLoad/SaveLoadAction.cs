@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using FMOD.Studio;
-using Force.DeepCloner;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
@@ -45,13 +44,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private static void SaveStaticFieldValues(Dictionary<string, object> values, Type type,
             params string[] fieldNames) {
             foreach (var fieldName in fieldNames) {
-                values[fieldName] = type.GetFieldValue(fieldName).DeepClone(StateManager.Instance.SharedCloneState);
+                values[fieldName] = type.GetFieldValue(fieldName).DeepCloneShared();
             }
         }
 
         private static void LoadStaticFieldValues(Dictionary<string, object> values, Type type) {
             foreach (string fieldName in values.Keys) {
-                type.SetFieldValue(fieldName, values[fieldName].DeepClone(StateManager.Instance.SharedCloneState));
+                type.SetFieldValue(fieldName, values[fieldName].DeepCloneShared());
             }
         }
 
@@ -101,16 +100,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         // player.collider 的类型都变了
                         // System.Exception: Collisions against the collider type are not implemented!
                         // 在 Monocle.Collider.Collide(Collider collider)
-                        savedValues["-player-"] = timeFieldType.GetFieldValue("targetPlayer").GetPropertyValue("Target").DeepClone(StateManager.Instance.SharedCloneState);
-                        savedValues["-timeField-"] = timeFieldType.GetFieldValue("lingeringTarget").GetPropertyValue("Target").DeepClone(StateManager.Instance.SharedCloneState);
+                        savedValues["-player-"] = timeFieldType.GetFieldValue("targetPlayer").GetPropertyValue("Target").DeepCloneShared();
+                        savedValues["-timeField-"] = timeFieldType.GetFieldValue("lingeringTarget").GetPropertyValue("Target").DeepCloneShared();
                     },
                     (savedValues, level) => {
                         if ((bool) savedValues["hookAdded"]) {
                             timeFieldType.InvokeMethod("AddHook");
                         }
                         LoadStaticFieldValues(savedValues, timeFieldType);
-                        timeFieldType.GetFieldValue("targetPlayer").SetPropertyValue("Target", savedValues["-player-"].DeepClone(StateManager.Instance.SharedCloneState));
-                        timeFieldType.GetFieldValue("lingeringTarget").SetPropertyValue("Target", savedValues["-timeField-"].DeepClone(StateManager.Instance.SharedCloneState));
+                        timeFieldType.GetFieldValue("targetPlayer").SetPropertyValue("Target", savedValues["-player-"].DeepCloneShared());
+                        timeFieldType.GetFieldValue("lingeringTarget").SetPropertyValue("Target", savedValues["-timeField-"].DeepCloneShared());
                     }
                 ));
             }

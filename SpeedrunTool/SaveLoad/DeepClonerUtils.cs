@@ -4,13 +4,14 @@ using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using FMOD.Studio;
 using Force.DeepCloner;
+using Force.DeepCloner.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
 using NLua;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
-    internal static class DeepCloneUtils {
+    internal static class DeepClonerUtils {
         public static void Config() {
             // Clone 开始时，判断哪些类型是直接使用原对象而不 DeepClone 的
             // Before cloning, determine which types use the original object directly
@@ -143,6 +144,34 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             DeepCloner.ClearKnownTypesProcessors();
             DeepCloner.ClearPreCloneProcessors();
             DeepCloner.ClearPostCloneProcessors();
+        }
+
+        // 共用 DeepCloneState 可使多次 DeepClone 复用相同对象避免多次克隆同一对象
+        private static DeepCloneState sharedDeepCloneState = new DeepCloneState();
+
+        private static void InitSharedDeepCloneState() {
+            if (sharedDeepCloneState == null) {
+                sharedDeepCloneState = new DeepCloneState();
+            }
+        }
+
+        public static void ClearSharedDeepCloneState() {
+            sharedDeepCloneState = null;
+        }
+
+        public static T DeepCloneShared<T>(this T obj) {
+            InitSharedDeepCloneState();
+            return obj.DeepClone(sharedDeepCloneState);
+        }
+
+        public static TTo DeepCloneToShared<TFrom, TTo>(this TFrom objFrom, TTo objTo) where TTo : class, TFrom {
+            InitSharedDeepCloneState();
+            return objFrom.DeepCloneTo(objTo, sharedDeepCloneState);
+        }
+
+        public static TTo ShallowCloneToShared<TFrom, TTo>(this TFrom objFrom, TTo objTo) where TTo : class, TFrom {
+            InitSharedDeepCloneState();
+            return objFrom.ShallowCloneTo(objTo, sharedDeepCloneState);
         }
     }
 }

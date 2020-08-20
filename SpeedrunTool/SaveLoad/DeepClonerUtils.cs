@@ -75,6 +75,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     if (string.IsNullOrEmpty(source.EventName)) return null;
                     instance.NeedManualClone(true);
                     instance.SaveTimelinePosition(instance.LoadTimelinePosition());
+
+                    return null;
                 }
 
                 if (sourceObj is CassetteBlockManager manager) {
@@ -86,6 +88,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     if (manager.GetFieldValue("snapshot") is EventInstance snapshot) {
                         snapshot.NeedManualClone(true);
                     }
+
+                    return null;
                 }
 
                 // 重新创建正在播放的 EventInstance 实例
@@ -93,6 +97,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     eventInstance.Clone() is EventInstance clonedInstance) {
                     deepCloneState.AddKnownRef(sourceObj, clonedInstance);
                     return clonedInstance;
+                }
+
+                // Fixes: 克隆 WeakReference 后 Target 没有一起被克隆的问题，修复 dynData.Weak 克隆不完整导致的一些报错
+                // System.Reflection.TargetException: 非静态字段需要一个目标。
+                // 在 System.Reflection.RtFieldInfo.CheckConsistency(Object target)
+                // 在 System.Reflection.RtFieldInfo.InternalGetValue(Object obj, StackCrawlMark& stackMark)
+                // 在 System.Reflection.RtFieldInfo.GetValue(Object obj)
+                // 在 MonoMod.Utils.DynData`1.<>c__DisplayClass19_0.<.cctor>b__1(TTarget obj)
+                // 在 MonoMod.Utils.DynData`1.get_Item(String name)
+                // 在 Celeste.Mod.MaxHelpingHand.Entities.CustomizableRefill.<>c__DisplayClass0_0.<.ctor>b__0(Player player)
+                if (sourceObj is WeakReference weakReference) {
+                    return new WeakReference(weakReference.Target.DeepClone(deepCloneState));
                 }
 
                 return null;

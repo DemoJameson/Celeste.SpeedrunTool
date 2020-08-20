@@ -96,7 +96,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                             "playerTimeRate",
                             "hookAdded"
                             );
-                        // 直接克隆 WeakReference 里面的 Target 不会被克隆，而且似乎会造成一些问题原因未知，体现为保存状态后自杀报错：
+                        // 直接克隆 WeakReference<T> 里面的 Target 不会被克隆，而且似乎会造成一些问题原因未知，体现为 Remirrored 3C 保存状态后自杀报错：
                         // player.collider 的类型都变了
                         // System.Exception: Collisions against the collider type are not implemented!
                         // 在 Monocle.Collider.Collide(Collider collider)

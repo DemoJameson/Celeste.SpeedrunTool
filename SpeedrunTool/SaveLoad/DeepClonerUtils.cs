@@ -155,7 +155,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         if (!(DynDataUtils.GetDate(clonedObj, objType) is Dictionary<string, object> needClonedData))
                             continue;
                         data.DeepCloneTo(needClonedData, deepCloneState);
-                    } while ((objType = objType.BaseType) != null && objType.IsSubclassOf(typeof(object)));
+                        dataMap.Remove(weakReference);
+                    } while ((objType = objType.BaseType) != null && objType.IsSameOrSubclassOf(typeof(object)));
                 }
 
                 return clonedObj;

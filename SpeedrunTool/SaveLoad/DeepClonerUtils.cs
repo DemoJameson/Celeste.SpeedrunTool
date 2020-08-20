@@ -63,7 +63,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                                                && !(entity is SeekerBarrierRenderer)
                                                && !(entity is LightningRenderer)
                                                // Fixes: Glyph Teleport Area Effect
-                                               && entity.GetType().FullName != "Celeste.Mod.AcidHelper.Entities.InstantTeleporterRenderer"
+                                               && entity.GetType().FullName !=
+                                               "Celeste.Mod.AcidHelper.Entities.InstantTeleporterRenderer"
                 ) return sourceObj;
 
                 // 稍后重新创建正在播放的 SoundSource 里的 EventInstance 实例
@@ -81,7 +82,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                 if (sourceObj is CassetteBlockManager manager) {
                     // isLevelMusic = true 时 sfx 自动等于 Audio.CurrentMusicEventInstance，无需重建
-                    if (manager.GetFieldValue("sfx") is EventInstance sfx && !(bool) manager.GetFieldValue("isLevelMusic")) {
+                    if (manager.GetFieldValue("sfx") is EventInstance sfx &&
+                        !(bool) manager.GetFieldValue("isLevelMusic")) {
                         sfx.NeedManualClone(true);
                     }
 
@@ -140,16 +142,20 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
 
                 // Clone dynData.Data
-                if (sourceObj.GetType() is Type objType && objType.IsClass) {
-                    IDictionary dataMap = DynDataUtils.GetDataMap(objType);
-                    if (dataMap == null || dataMap.Count == 0) return clonedObj;
-                    WeakReference weakReference = new WeakReference(sourceObj);
+                Type objType = sourceObj.GetType();
+                if (objType.IsClass) {
+                    do {
+                        IDictionary dataMap = DynDataUtils.GetDataMap(objType);
+                        if (dataMap == null || dataMap.Count == 0) continue;
+                        WeakReference weakReference = new WeakReference(sourceObj);
 
-                    if (!dataMap.Contains(weakReference)) return clonedObj;
-                    if (!(dataMap[weakReference].GetFieldValue("Data") is Dictionary<string, object> data) || data.Count == 0) return clonedObj;
-                    if (!(DynDataUtils.GetDate(clonedObj) is Dictionary<string, object> needClonedData)) return clonedObj;
-
-                    data.DeepCloneTo(needClonedData, deepCloneState);
+                        if (!dataMap.Contains(weakReference)) continue;
+                        if (!(dataMap[weakReference].GetFieldValue("Data") is Dictionary<string, object> data) ||
+                            data.Count == 0) continue;
+                        if (!(DynDataUtils.GetDate(clonedObj, objType) is Dictionary<string, object> needClonedData))
+                            continue;
+                        data.DeepCloneTo(needClonedData, deepCloneState);
+                    } while ((objType = objType.BaseType) != null && objType.IsSubclassOf(typeof(object)));
                 }
 
                 return clonedObj;

@@ -7,15 +7,14 @@ using MonoMod.Utils;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     internal static class DynDataUtils {
-        private static object CreateDynData(object obj) {
-            Type type = obj.GetType();
-            string key = $"DynDataUtils-CreateDynData-{type.FullName}";
+        private static object CreateDynData(object obj, Type targetType) {
+            string key = $"DynDataUtils-CreateDynData-{targetType.FullName}";
 
-            ConstructorInfo constructorInfo = type.GetExtendedDataValue<ConstructorInfo>(key);
+            ConstructorInfo constructorInfo = targetType.GetExtendedDataValue<ConstructorInfo>(key);
 
             if (constructorInfo == null) {
-                constructorInfo = typeof(DynData<>).MakeGenericType(type).GetConstructor(new[] {type});
-                type.SetExtendedDataValue(key, constructorInfo);
+                constructorInfo = typeof(DynData<>).MakeGenericType(targetType).GetConstructor(new[] {targetType});
+                targetType.SetExtendedDataValue(key, constructorInfo);
             }
 
             return constructorInfo?.Invoke(new[] {obj});
@@ -35,8 +34,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             return fieldInfo?.GetValue(null) as IDictionary;
         }
 
-        public static Dictionary<string, object> GetDate(object obj) {
-            return CreateDynData(obj)?.GetPropertyValue("Data") as Dictionary<string, object>;
+        public static Dictionary<string, object> GetDate(object obj, Type targetType) {
+            return CreateDynData(obj, targetType)?.GetPropertyValue("Data") as Dictionary<string, object>;
         }
     }
 }

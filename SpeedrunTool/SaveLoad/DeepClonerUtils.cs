@@ -147,15 +147,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     do {
                         IDictionary dataMap = DynDataUtils.GetDataMap(objType);
                         if (dataMap == null || dataMap.Count == 0) continue;
-                        WeakReference weakReference = new WeakReference(sourceObj);
+                        WeakReference sourceWeak = new WeakReference(sourceObj);
 
-                        if (!dataMap.Contains(weakReference)) continue;
-                        if (!(dataMap[weakReference].GetFieldValue("Data") is Dictionary<string, object> data) ||
-                            data.Count == 0) continue;
-                        if (!(DynDataUtils.GetDate(clonedObj, objType) is Dictionary<string, object> needClonedData))
-                            continue;
-                        data.DeepCloneTo(needClonedData, deepCloneState);
-                        dataMap.Remove(weakReference);
+                        if (!dataMap.Contains(sourceWeak)) continue;
+                        if (!(dataMap[sourceWeak].GetFieldValue("Data") is Dictionary<string, object> data) || data.Count == 0) continue;
+
+                        WeakReference clonedWeak = new WeakReference(clonedObj);
+                        dataMap[clonedWeak] = dataMap[sourceWeak].DeepClone(deepCloneState);
                     } while ((objType = objType.BaseType) != null && objType.IsSameOrSubclassOf(typeof(object)));
                 }
 

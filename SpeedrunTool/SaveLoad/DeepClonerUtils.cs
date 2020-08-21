@@ -58,13 +58,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     return sourceObj;
                 }
 
-                if (sourceObj is Entity entity && entity.TagCheck(Tags.Global)
-                                               && !(entity is CassetteBlockManager)
-                                               && !(entity is SeekerBarrierRenderer)
-                                               && !(entity is LightningRenderer)
-                                               // Fixes: Glyph Teleport Area Effect
-                                               && entity.GetType().FullName !=
-                                               "Celeste.Mod.AcidHelper.Entities.InstantTeleporterRenderer"
+                if (sourceObj is Entity entity
+                    && entity.TagCheck(Tags.Global)
+                    && !(entity is CassetteBlockManager)
+                    && !(entity is SeekerBarrierRenderer)
+                    && !(entity is LightningRenderer)
+                    // Fixes: Glyph Teleport Area Effect
+                    && entity.GetType().FullName != "Celeste.Mod.AcidHelper.Entities.InstantTeleporterRenderer"
                 ) return sourceObj;
 
                 // 稍后重新创建正在播放的 SoundSource 里的 EventInstance 实例
@@ -95,10 +95,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
 
                 // 重新创建正在播放的 EventInstance 实例
-                if (sourceObj is EventInstance eventInstance && eventInstance.IsNeedManualClone() &&
-                    eventInstance.Clone() is EventInstance clonedInstance) {
-                    deepCloneState.AddKnownRef(sourceObj, clonedInstance);
-                    return clonedInstance;
+                if (sourceObj is EventInstance eventInstance && eventInstance.IsNeedManualClone()) {
+                    return eventInstance.Clone();
                 }
 
                 // Fixes: 克隆 WeakReference 后 Target 没有一起被克隆的问题，修复 dynData.Weak 克隆不完整导致的一些报错
@@ -109,8 +107,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 // 在 MonoMod.Utils.DynData`1.<>c__DisplayClass19_0.<.cctor>b__1(TTarget obj)
                 // 在 MonoMod.Utils.DynData`1.get_Item(String name)
                 // 在 Celeste.Mod.MaxHelpingHand.Entities.CustomizableRefill.<>c__DisplayClass0_0.<.ctor>b__0(Player player)
-                if (sourceObj is WeakReference weakReference) {
-                    return new WeakReference(weakReference.Target.DeepClone(deepCloneState));
+                if (sourceObj is WeakReference sourceWeak) {
+                    return new WeakReference(sourceWeak.Target.DeepClone(deepCloneState));
                 }
 
                 return null;

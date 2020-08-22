@@ -139,7 +139,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return potentialDescendant.IsSubclassOf(potentialBase) || potentialBase == potentialDescendant;
         }
 
-        public static MethodInfo GetMethodInfo(Type type, string name, BindingFlags bindingFlags = StaticInstanceAnyVisibility) {
+        public static MethodInfo GetMethodInfo(this Type type, string name, BindingFlags bindingFlags = StaticInstanceAnyVisibility) {
             string key = $"ReflectionExtensions-GetMethodInfo-{name}-{bindingFlags}";
 
             MethodInfo methodInfo = type.GetExtendedDataValue<MethodInfo>(key);
@@ -153,7 +153,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return methodInfo;
         }
 
-        public static FieldInfo GetFieldInfo(Type type, string name, BindingFlags bindingFlags = StaticInstanceAnyVisibility) {
+        public static FieldInfo GetFieldInfo(this Type type, string name, BindingFlags bindingFlags = StaticInstanceAnyVisibility) {
             string key = $"ReflectionExtensions-GetFieldInfo-{name}-{bindingFlags}";
             FieldInfo fieldInfo = type.GetExtendedDataValue<FieldInfo>(key);
             if (fieldInfo == null) {

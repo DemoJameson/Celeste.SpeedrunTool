@@ -42,6 +42,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private static void SaveStaticFieldValues(Dictionary<Type, Dictionary<string, object>> values, Type type,
             params string[] fieldNames) {
+            if (type == null) return;
+
             if (!values.ContainsKey(type)) {
                 values[type] = new Dictionary<string, object>();
             }
@@ -64,10 +66,29 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SupportExtendedVariants();
             SupportMaxHelpingHand();
             SupportPandorasBox();
+            SupportCrystallineHelper();
+        }
+
+        private static void SupportCrystallineHelper() {
+            Type vitModuleType = Type.GetType("vitmod.VitModule, vitmod");
+            Type timeCrystalType = Type.GetType("vitmod.TimeCrystal, vitmod");
+            Type noMoveTriggerType = Type.GetType("vitmod.NoMoveTrigger, vitmod");
+            Type starCrystalType = Type.GetType("vitmod.StarCrystal, vitmod");
+
+            if (vitModuleType == null && timeCrystalType == null && noMoveTriggerType == null && starCrystalType == null) return;
+
+            All.Add(new SaveLoadAction(
+                (savedValues, level) => {
+                    SaveStaticFieldValues(savedValues, vitModuleType, "timeStopScaleTimer", "noMoveScaleTimer");
+                    SaveStaticFieldValues(savedValues, timeCrystalType, "stopTimer", "stopStage");
+                    SaveStaticFieldValues(savedValues, noMoveTriggerType, "stopTimer", "stopStage", "alreadyIn");
+                    SaveStaticFieldValues(savedValues, starCrystalType, "starTimer");
+                },
+                (savedValues, level) => LoadStaticFieldValues(savedValues)
+            ));
         }
 
         private static void SupportAudioMusic() {
-            // Audio Music
             All.Add(new SaveLoadAction(
                 (savedValues, level) => {
                     Dictionary<string, object> saved = new Dictionary<string, object>();
@@ -88,7 +109,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private static void SupportPandorasBox() {
-            // PandorasBox TimeField
             if (Type.GetType("Celeste.Mod.PandorasBox.TimeField, PandorasBox") is Type timeFieldType
                 && Delegate.CreateDelegate(typeof(On.Celeste.Player.hook_Update), timeFieldType.GetMethodInfo("PlayerUpdateHook")) is
                     On.Celeste.Player.hook_Update hookUpdate) {
@@ -125,7 +145,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private static void SupportMaxHelpingHand() {
-            // MaxHelpingHand RainbowSpinnerColorController
             if (Type.GetType("Celeste.Mod.MaxHelpingHand.Entities.RainbowSpinnerColorController, MaxHelpingHand") is Type colorControllerType
                 && Delegate.CreateDelegate(typeof(On.Celeste.CrystalStaticSpinner.hook_GetHue),
                         colorControllerType.GetMethodInfo("getRainbowSpinnerHue")) is
@@ -141,6 +160,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         if ((bool) savedValues[colorControllerType]["rainbowSpinnerHueHooked"]) {
                             On.Celeste.CrystalStaticSpinner.GetHue += hookGetHue;
                         }
+
                         LoadStaticFieldValues(savedValues);
                     }
                 ));
@@ -148,11 +168,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private static void SupportExtendedVariants() {
-            // ExtendedVariantMode JumpCount
             if (Type.GetType("ExtendedVariants.Variants.JumpCount, ExtendedVariantMode") is Type jumpCountType) {
                 All.Add(new SaveLoadAction(
-                    (savedValues, level) => { SaveStaticFieldValues(savedValues, jumpCountType, "jumpBuffer"); },
-                    (savedValues, level) => { LoadStaticFieldValues(savedValues); }
+                    (savedValues, level) => SaveStaticFieldValues(savedValues, jumpCountType, "jumpBuffer"),
+                    (savedValues, level) => LoadStaticFieldValues(savedValues)
                 ));
             }
         }

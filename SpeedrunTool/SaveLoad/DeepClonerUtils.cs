@@ -120,6 +120,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 if (clonedObj == null) return null;
 
                 // 修复：DeepClone 的 hashSet.Containes(里面存在的引用对象) 总是返回 False，Dictionary 无此问题
+                // 原因：没有重写 GetHashCode 方法 https://github.com/force-net/DeepCloner/issues/17#issuecomment-678650032
                 // Fix: DeepClone's hashSet.Contains (ReferenceType) always returns false, Dictionary has no such problem
                 if (clonedObj.GetType().IsHashSet(out Type hashSetElementType) && !hashSetElementType.IsSimple()) {
                     IEnumerator enumerator = ((IEnumerable) clonedObj).GetEnumerator();
@@ -128,9 +129,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     while (enumerator.MoveNext()) {
                         backup.Add(enumerator.Current);
                     }
+                    if (backup.Count == 0) return clonedObj;
 
                     clonedObj.InvokeMethod("Clear");
-
                     backup.ForEach(obj => { clonedObj.InvokeMethod("Add", obj); });
                 }
 

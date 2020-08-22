@@ -139,6 +139,10 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return potentialDescendant.IsSubclassOf(potentialBase) || potentialBase == potentialDescendant;
         }
 
+        public static bool IsOverride(this MethodInfo methodInfo) {
+            return methodInfo.GetBaseDefinition().DeclaringType != methodInfo.DeclaringType;
+        }
+
         public static MethodInfo GetMethodInfo(this Type type, string name, BindingFlags bindingFlags = StaticInstanceAnyVisibility) {
             string key = $"ReflectionExtensions-GetMethodInfo-{name}-{bindingFlags}";
 

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using FMOD.Studio;
-using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public class SaveLoadAction {
@@ -64,8 +63,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             // MaxHelpingHand RainbowSpinnerColorController
-            if (Type.GetType("Celeste.Mod.MaxHelpingHand.Entities.RainbowSpinnerColorController, MaxHelpingHand") is
-                Type colorControllerType) {
+            if (Type.GetType("Celeste.Mod.MaxHelpingHand.Entities.RainbowSpinnerColorController, MaxHelpingHand") is Type colorControllerType
+            && Delegate.CreateDelegate(typeof(On.Celeste.CrystalStaticSpinner.hook_GetHue), colorControllerType.GetMethodInfo("getRainbowSpinnerHue")) is
+                On.Celeste.CrystalStaticSpinner.hook_GetHue hookGetHue
+            ) {
                 All.Add(new SaveLoadAction(
                     (savedValues, level) => {
                         SaveStaticFieldValues(savedValues, colorControllerType,
@@ -73,21 +74,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                             "nextSpinnerController");
                     },
                     (savedValues, level) => {
-                        LoadStaticFieldValues(savedValues, colorControllerType);
-                        if ((bool) savedValues["rainbowSpinnerHueHooked"] &&
-                            colorControllerType.GetFieldValue("spinnerControllerOnScreen") is Entity entity) {
-                            object nextSpinnerController = colorControllerType.GetFieldValue("nextSpinnerController");
-                            colorControllerType.SetFieldValue("rainbowSpinnerHueHooked", false);
-                            // 借助 awake 方法 执行 On.Celeste.CrystalStaticSpinner.GetHue += getRainbowSpinnerHue;
-                            entity.Awake(entity.Scene);
-                            colorControllerType.SetFieldValue("nextSpinnerController", nextSpinnerController);
+                        if ((bool) savedValues["rainbowSpinnerHueHooked"]) {
+                            On.Celeste.CrystalStaticSpinner.GetHue += hookGetHue;
                         }
+                        LoadStaticFieldValues(savedValues, colorControllerType);
                     }
                 ));
             }
 
             // PandorasBox TimeField
-            if (Type.GetType("Celeste.Mod.PandorasBox.TimeField, PandorasBox") is Type timeFieldType) {
+            if (Type.GetType("Celeste.Mod.PandorasBox.TimeField, PandorasBox") is Type timeFieldType
+                && Delegate.CreateDelegate(typeof(On.Celeste.Player.hook_Update), timeFieldType.GetMethodInfo("PlayerUpdateHook")) is
+                    On.Celeste.Player.hook_Update hookUpdate) {
                 All.Add(new SaveLoadAction(
                     (savedValues, level) => {
                         SaveStaticFieldValues(savedValues, timeFieldType,
@@ -95,7 +93,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                             "ourLastTimeRate",
                             "playerTimeRate",
                             "hookAdded"
-                            );
+                        );
                         // 直接克隆 WeakReference<T> 里面的 Target 不会被克隆，而且似乎会造成一些问题原因未知，体现为 Remirrored 3C 保存状态后自杀报错：
                         // player.collider 的类型都变了
                         // System.Exception: Collisions against the collider type are not implemented!
@@ -105,7 +103,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     },
                     (savedValues, level) => {
                         if ((bool) savedValues["hookAdded"]) {
-                            timeFieldType.InvokeMethod("AddHook");
+                            On.Celeste.Player.Update += hookUpdate;
                         }
                         LoadStaticFieldValues(savedValues, timeFieldType);
                         timeFieldType.GetFieldValue("targetPlayer").SetPropertyValue("Target", savedValues["-player-"].DeepCloneShared());

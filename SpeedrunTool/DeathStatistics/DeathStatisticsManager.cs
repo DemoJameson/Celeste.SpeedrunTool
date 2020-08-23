@@ -62,7 +62,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             orig(self, scene);
             if (scene is Level level && teleportDeathInfo != null && teleportDeathInfo.Area == level.Session.Area &&
                 teleportDeathInfo.Room == level.Session.Level) {
-                scene.Add(new DeathMarker(teleportDeathInfo.DeathPosition));
+                scene.Add(new DeathMark(teleportDeathInfo.DeathPosition));
             }
         }
 

@@ -34,6 +34,7 @@ SPEEDRUN_TOOL_ALL=ALL
 # ================================== Mod Options Menu ==================================
 SPEEDRUN_TOOL=                            Speedrun Tool
 SPEEDRUN_TOOL_ENABLED=                    Enabled
+SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE=    Freeze After Load State
 SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH=      Auto Load State After Death
 SPEEDRUN_TOOL_DEATH_STATISTICS=           Death Statistics
 SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA=   Max Number of Death Data

@@ -6,6 +6,7 @@ using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using FMOD.Studio;
 using Force.DeepCloner;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Monocle;
 using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
@@ -182,6 +183,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             RestoreCassetteBlockManager1(level); // 停止播放主音乐，等待播放节奏音乐
             RestoreLevel(level);
 
+            // AddSaveStateMark(level);
+
             // Mod 和其他
             SaveLoadAction.OnLoadState(level);
 
@@ -206,11 +209,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 // 在 Celeste.Player.Removed(Scene scene)
                 ClearScreenWipe(level);
 
-                if (tas) {
-                    LoadStateComplete(level);
-                } else {
+                if (!tas && Settings.FreezeAfterLoadState) {
                     state = States.Waiting;
                     level.PauseLock = true;
+                } else {
+                    LoadStateComplete(level);
                 }
             });
 
@@ -429,16 +432,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 Settings.AutoLoadAfterDeath = !Settings.AutoLoadAfterDeath;
                 SpeedrunToolModule.Instance.SaveSettings();
             } else if (state == States.Waiting && !level.Paused
-                       && (Input.Dash.Pressed
-                           || Input.Grab.Pressed
-                           || Input.Jump.Pressed
-                           || Input.Pause.Pressed
-                           || Input.Talk.Pressed
-                           || Input.MenuDown
-                           || Input.MenuLeft
-                           || Input.MenuRight
-                           || Input.MenuUp
-                           )) {
+                                               && (Input.Dash.Pressed
+                                                   || Input.Grab.Pressed
+                                                   || Input.Jump.Pressed
+                                                   || Input.Pause.Pressed
+                                                   || Input.Talk.Pressed
+                                                   || Input.MenuDown
+                                                   || Input.MenuLeft
+                                                   || Input.MenuRight
+                                                   || Input.MenuUp
+                                               )) {
                 LoadStateComplete(level);
             }
         }

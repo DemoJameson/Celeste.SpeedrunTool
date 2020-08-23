@@ -2,9 +2,9 @@ using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
-    public class DeathMarker : Entity {
+    public class DeathMark : Entity {
         private const string Id = "youdied";
-        public DeathMarker(Vector2 position) : base(position) {
+        public DeathMark(Vector2 position) : base(position) {
             Sprite sprite = new Sprite(GFX.Game, $"objects/speedrun_tool_deathmarker/{Id}");
             sprite.AddLoop(Id, "", 1f);
             sprite.Play(Id);

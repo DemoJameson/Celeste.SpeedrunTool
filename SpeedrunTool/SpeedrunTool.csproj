@@ -84,7 +84,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ButtonConfigUi.cs" />
-    <Compile Include="DeathStatistics\DeathMarker.cs" />
+    <Compile Include="DeathStatistics\DeathMark.cs" />
     <Compile Include="DeathStatistics\DeathStatisticsUi.cs" />
     <Compile Include="DeathStatistics\DeathInfo.cs" />
     <Compile Include="DeathStatistics\DeathStatisticsManager.cs" />

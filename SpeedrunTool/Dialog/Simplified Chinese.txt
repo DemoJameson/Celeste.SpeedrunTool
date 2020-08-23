@@ -34,6 +34,7 @@ SPEEDRUN_TOOL_ALL=全部
 # ================================== Mod Options Menu ==================================
 SPEEDRUN_TOOL=                            速通辅助工具
 SPEEDRUN_TOOL_ENABLED=                    开关
+SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE=    加载状态后冻结游戏
 SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH=      死亡后自动加载状态
 SPEEDRUN_TOOL_DEATH_STATISTICS=           统计死亡数据
 SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA=   死亡数据数量

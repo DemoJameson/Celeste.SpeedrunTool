@@ -17,6 +17,7 @@ namespace Celeste.Mod.SpeedrunTool {
         // Mod Options
         public const string SpeedrunTool = "SPEEDRUN_TOOL";
         public const string Enabled = "SPEEDRUN_TOOL_ENABLED";
+        public const string FreezeAfterLoadState = "SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE";
         public const string AutoLoadAfterDeath = "SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH";
         public const string DeathStatistics = "SPEEDRUN_TOOL_DEATH_STATISTICS";
         public const string MaxNumberOfDeathData = "SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA";

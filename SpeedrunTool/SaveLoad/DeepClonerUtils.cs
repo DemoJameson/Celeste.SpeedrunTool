@@ -33,7 +33,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     || type == typeof(Pooler)
                     || type == typeof(BitTag)
                     || type == typeof(Atlas)
-                    || type == typeof(VirtualTexture)
 
                     // XNA GraphicsResource
                     || type.IsSubclassOf(typeof(GraphicsResource))
@@ -129,6 +128,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     while (enumerator.MoveNext()) {
                         backup.Add(enumerator.Current);
                     }
+
                     if (backup.Count == 0) return clonedObj;
 
                     clonedObj.InvokeMethod("Clear");
@@ -154,6 +154,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         WeakReference clonedWeak = new WeakReference(clonedObj);
                         dataMap[clonedWeak] = dataMap[sourceWeak].DeepClone(deepCloneState);
                     } while ((objType = objType.BaseType) != null && objType.IsSameOrSubclassOf(typeof(object)));
+                }
+
+                if (clonedObj is VirtualTexture virtualTexture && virtualTexture.IsDisposed) {
+                    virtualTexture.Reload();
+                }
+
+                if (clonedObj is VirtualRenderTarget virtualRenderTarget && virtualRenderTarget.IsDisposed) {
+                    virtualRenderTarget.Reload();
                 }
 
                 return clonedObj;

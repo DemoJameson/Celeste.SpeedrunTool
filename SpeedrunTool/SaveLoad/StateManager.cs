@@ -254,7 +254,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private void ClearState(bool clearEndPoint = true) {
-            if (Engine.Scene is Level level && IsNotCollectingHeart(level)) {
+            if (Engine.Scene is Level level && IsNotCollectingHeart(level) && !level.Completed) {
                 level.Frozen = false;
                 level.PauseLock = false;
             }
@@ -419,7 +419,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             } else if (GetVirtualButton(Mappings.Clear).Pressed && !level.Paused) {
                 GetVirtualButton(Mappings.Clear).ConsumePress();
                 ClearState();
-                if (IsNotCollectingHeart(level)) {
+                if (IsNotCollectingHeart(level) && !level.Completed) {
                     level.Add(new MiniTextbox(DialogIds.DialogClear).IgnoreSaveLoad());
                 }
             } else if (MInput.Keyboard.Check(Keys.F5)) {

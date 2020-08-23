@@ -42,6 +42,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private enum States {
             None,
             Loading,
+            Waiting,
         }
 
         private readonly HashSet<EventInstance> playingEventInstances = new HashSet<EventInstance>();
@@ -52,7 +53,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             DeepClonerUtils.Config();
             SaveLoadAction.OnLoad();
             EventInstanceUtils.OnHook();
-            On.Celeste.Level.Update += CheckButtonsOnLevelUpdate;
+            On.Celeste.Level.Update += CheckButtonsAndUpdateBackdrop;
             On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
         }
@@ -61,14 +62,19 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             DeepClonerUtils.Clear();
             SaveLoadAction.OnUnload();
             EventInstanceUtils.OnUnhook();
-            On.Celeste.Level.Update -= CheckButtonsOnLevelUpdate;
+            On.Celeste.Level.Update -= CheckButtonsAndUpdateBackdrop;
             On.Monocle.Scene.Begin -= ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End -= AutoLoadStateWhenDeath;
         }
 
-        private void CheckButtonsOnLevelUpdate(On.Celeste.Level.orig_Update orig, Level self) {
+        private void CheckButtonsAndUpdateBackdrop(On.Celeste.Level.orig_Update orig, Level self) {
             orig(self);
             CheckButton(self);
+
+            if (state == States.Waiting && self.Frozen) {
+                self.Foreground.Update(self);
+                self.Background.Update(self);
+            }
         }
 
         private void ClearStateWhenSwitchScene(On.Monocle.Scene.orig_Begin orig, Scene self) {
@@ -89,7 +95,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 && !(bool) self.GetFieldValue("finished")
                 && Engine.Scene is Level level
             ) {
-                level.OnEndOfFrame += () => LoadState();
+                level.OnEndOfFrame += () => LoadState(false);
                 self.RemoveSelf();
             } else {
                 orig(self);
@@ -101,6 +107,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         // public for TAS Mod
         // ReSharper disable once MemberCanBePrivate.Global UnusedMethodReturnValue.Global
         public bool SaveState() {
+            return SaveState(true);
+        }
+
+        private bool SaveState(bool tas) {
             if (!(Engine.Scene is Level level)) return false;
             if (!IsAllowSave(level, level.GetPlayer())) return false;
 
@@ -137,12 +147,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             DeepClonerUtils.ClearSharedDeepCloneState();
 
-            return LoadState();
+            return LoadState(tas);
         }
 
         // public for TAS Mod
         // ReSharper disable once MemberCanBePrivate.Global
         public bool LoadState() {
+            return LoadState(true);
+        }
+
+        private bool LoadState(bool tas) {
             if (!(Engine.Scene is Level level)) return false;
             if (level.Paused || state != States.None || !IsSaved) return false;
 
@@ -186,23 +200,31 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             level.TimerStopped = true; // 停止计时器  // Stop timer
 
             level.DoScreenWipe(true, () => {
-                RestoreLevel(level);
-                RestoreCassetteBlockManager2(level);
-                RoomTimerManager.Instance.SavedEndPoint?.ReadyForTime();
-                foreach (EventInstance instance in playingEventInstances) instance.start();
-                playingEventInstances.Clear();
-                DeepClonerUtils.ClearSharedDeepCloneState();
-
                 // 修复问题：死亡后出现黑屏的一瞬间手动读档后游戏崩溃，因为 ScreenWipe 执行了 level.Reload() 方法
                 // System.NullReferenceException: 未将对象引用设置到对象的实例。
                 // 在 Celeste.CameraTargetTrigger.OnLeave(Player player)
                 // 在 Celeste.Player.Removed(Scene scene)
                 ClearScreenWipe(level);
 
-                state = States.None;
+                if (tas) {
+                    LoadStateComplete(level);
+                } else {
+                    state = States.Waiting;
+                    level.PauseLock = true;
+                }
             });
 
             return true;
+        }
+
+        private void LoadStateComplete(Level level) {
+            RestoreLevel(level);
+            RestoreCassetteBlockManager2(level);
+            RoomTimerManager.Instance.SavedEndPoint?.ReadyForTime();
+            foreach (EventInstance instance in playingEventInstances) instance.start();
+            playingEventInstances.Clear();
+            DeepClonerUtils.ClearSharedDeepCloneState();
+            state = States.None;
         }
 
         private void ClearScreenWipe(Level level) {
@@ -271,8 +293,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             List<Entity> deepCloneEntities = savedEntities.DeepCloneShared();
 
             // just follow the level.LoadLevel add player last. There must some black magic in it.
-            // fixed: Player can't perform a really spike jump when wind blow up.
-            deepCloneEntities.Reverse();
+            // fixed: Player can't perform a really spike jump when wind blow down.
+            if (deepCloneEntities.FirstOrDefault(entity => entity is Player) is Player player) {
+                deepCloneEntities.Remove(player);
+                deepCloneEntities.Add(player);
+            }
 
             // Re Add Entities
             List<Entity> entities = (List<Entity>) level.Entities.GetFieldValue("entities");
@@ -383,11 +408,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             if (GetVirtualButton(Mappings.Save).Pressed) {
                 GetVirtualButton(Mappings.Save).ConsumePress();
-                SaveState();
+                SaveState(false);
             } else if (GetVirtualButton(Mappings.Load).Pressed && !level.Paused && state == States.None) {
                 GetVirtualButton(Mappings.Load).ConsumePress();
                 if (IsSaved) {
-                    LoadState();
+                    LoadState(false);
                 } else if (!level.Frozen) {
                     level.Add(new MiniTextbox(DialogIds.DialogNotSaved).IgnoreSaveLoad());
                 }
@@ -403,6 +428,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 GetVirtualButton(Mappings.SwitchAutoLoadState).ConsumePress();
                 Settings.AutoLoadAfterDeath = !Settings.AutoLoadAfterDeath;
                 SpeedrunToolModule.Instance.SaveSettings();
+            } else if (state == States.Waiting && !level.Paused
+                       && (Input.Dash.Pressed
+                           || Input.Grab.Pressed
+                           || Input.Jump.Pressed
+                           || Input.Pause.Pressed
+                           || Input.Talk.Pressed
+                           || Input.MenuDown
+                           || Input.MenuLeft
+                           || Input.MenuRight
+                           || Input.MenuUp
+                           )) {
+                LoadStateComplete(level);
             }
         }
 

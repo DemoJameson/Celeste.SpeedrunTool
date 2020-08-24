@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Mono.Cecil.Cil;
 using Monocle;
 using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public static class StateMarkUtils {
         private const string START_FROM_SAVE_SATE = "startFromSaveState";
+
         public static void OnLoad() {
             IL.Celeste.SpeedrunTimerDisplay.DrawTime += SetSaveStateColor;
 
@@ -37,7 +39,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 return;
             }
 
-            if (!cursor.TryGotoNext(MoveType.Before, instr => instr.MatchLdcI4(0))) {
+            if (!cursor.TryGotoNext(MoveType.Before
+                ,instr => instr.MatchLdcI4(0)
+                ,instr => instr.OpCode == OpCodes.Stloc_S)) {
                 return;
             }
 
@@ -52,7 +56,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 SpeedrunToolModule.Settings.RoomTimerType == RoomTimerType.Off
                 && Engine.Scene is Level level && !level.Completed
                 && level.GetExtendedBoolean(START_FROM_SAVE_SATE)
-                );
+            );
 
             var beforeInstr = cursor.DefineLabel();
             cursor.Emit(Mono.Cecil.Cil.OpCodes.Brfalse, beforeInstr);

@@ -421,7 +421,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 } else if (!level.Frozen) {
                     level.Add(new MiniTextbox(DialogIds.DialogNotSaved).IgnoreSaveLoad());
                 }
-            } else if (GetVirtualButton(Mappings.Clear).Pressed && !level.Paused) {
+            } else if (GetVirtualButton(Mappings.Clear).Pressed && !level.Paused && state == States.None) {
                 GetVirtualButton(Mappings.Clear).ConsumePress();
                 ClearState();
                 if (IsNotCollectingHeart(level) && !level.Completed) {

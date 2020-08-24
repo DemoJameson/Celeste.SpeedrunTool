@@ -3,11 +3,13 @@ using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Celeste.Mod.SpeedrunTool.TeleportRoom;
+using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool {
     // ReSharper disable once ClassNeverInstantiated.Global
     public class SpeedrunToolModule : EverestModule {
         public static SpeedrunToolModule Instance { get; private set; }
+        public static SpriteBank SpriteBank { get; private set; }
 
         public static SpeedrunToolSaveData SaveData {
             get {
@@ -62,6 +64,12 @@ namespace Celeste.Mod.SpeedrunTool {
         public override void Initialize() {
             RoomTimerManager.Instance.Init();
             ButtonConfigUi.Init();
+        }
+
+        public override void LoadContent(bool firstLoad) {
+            if (firstLoad) {
+                SpriteBank = new SpriteBank(GFX.Game, "Graphics/SpeedrunToolSprites.xml");
+            }
         }
     }
 }

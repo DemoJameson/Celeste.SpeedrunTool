@@ -25,7 +25,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             Player.StIntroWakeUp,
         };
 
-        private bool IsSaved => savedLevel != null;
+        public bool IsSaved => savedLevel != null;
 
         private Level savedLevel;
         private List<Entity> savedEntities;
@@ -54,6 +54,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             DeepClonerUtils.Config();
             SaveLoadAction.OnLoad();
             EventInstanceUtils.OnHook();
+            StateMarkUtils.OnLoad();
             On.Celeste.Level.Update += CheckButtonsAndUpdateBackdrop;
             On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
@@ -63,6 +64,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             DeepClonerUtils.Clear();
             SaveLoadAction.OnUnload();
             EventInstanceUtils.OnUnhook();
+            StateMarkUtils.OnUnload();
             On.Celeste.Level.Update -= CheckButtonsAndUpdateBackdrop;
             On.Monocle.Scene.Begin -= ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End -= AutoLoadStateWhenDeath;
@@ -450,6 +452,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         // @formatter:off
         private static readonly Lazy<StateManager> Lazy = new Lazy<StateManager>(() => new StateManager());
         public static StateManager Instance => Lazy.Value;
+
         private StateManager() { }
         // @formatter:on
     }

@@ -12,8 +12,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private readonly Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState;
 
         public SaveLoadAction(
-            Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState,
-            Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState) {
+            Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState = null,
+            Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState = null) {
             this.saveState = saveState;
             this.loadState = loadState;
         }
@@ -24,13 +24,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         internal static void OnSaveState(Level level) {
             foreach (SaveLoadAction saveLoadAction in All) {
-                saveLoadAction.saveState(saveLoadAction.savedValues, level);
+                saveLoadAction.saveState?.Invoke(saveLoadAction.savedValues, level);
             }
         }
 
         internal static void OnLoadState(Level level) {
             foreach (SaveLoadAction saveLoadAction in All) {
-                saveLoadAction.loadState(saveLoadAction.savedValues, level);
+                saveLoadAction.loadState?.Invoke(saveLoadAction.savedValues, level);
             }
         }
 

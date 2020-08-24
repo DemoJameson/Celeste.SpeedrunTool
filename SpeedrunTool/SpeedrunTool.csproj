@@ -101,6 +101,7 @@
     <Compile Include="SaveLoad\EventInstanceUtils.cs" />
     <Compile Include="SaveLoad\IgnoreSaveLoadComponent.cs" />
     <Compile Include="SaveLoad\SaveLoadAction.cs" />
+    <Compile Include="SaveLoad\StateMarkUtils.cs" />
     <Compile Include="SpeedrunToolSaveData.cs" />
     <Compile Include="TeleportRoom\LevelDataReorderUtils.cs" />
     <Compile Include="TeleportRoom\TeleportRoomUtils.cs" />

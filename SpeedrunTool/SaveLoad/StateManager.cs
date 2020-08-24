@@ -433,14 +433,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 SpeedrunToolModule.Instance.SaveSettings();
             } else if (state == States.Waiting && !level.Paused
                                                && (Input.Dash.Pressed
-                                                   || Input.Grab.Pressed
-                                                   || Input.Jump.Pressed
-                                                   || Input.Pause.Pressed
-                                                   || Input.Talk.Pressed
-                                                   || Input.MenuDown
-                                                   || Input.MenuLeft
-                                                   || Input.MenuRight
-                                                   || Input.MenuUp
+                                                   || Input.Grab.Check
+                                                   || Input.Jump.Check
+                                                   || Input.Pause.Check
+                                                   || Input.Talk.Check
+                                                   || Input.MoveX != 0
+                                                   || Input.MoveY != 0
+                                                   || Input.Aim.Value != Vector2.Zero
+                                                   || GetVirtualButton(Mappings.Load).Released
                                                )) {
                 LoadStateComplete(level);
             }

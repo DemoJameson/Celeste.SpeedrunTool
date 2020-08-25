@@ -25,9 +25,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             Player.StIntroWakeUp,
         };
 
-        public bool IsSaved => savedLevel != null;
-
         private Level savedLevel;
+        private bool IsSaved => savedLevel != null;
         private List<Entity> savedEntities;
 
         private float savedFreezeTimer;
@@ -105,10 +104,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
         }
 
-        #endregion
+        #endregion Hook
 
         // public for TAS Mod
-        // ReSharper disable once MemberCanBePrivate.Global UnusedMethodReturnValue.Global
+        // ReSharper disable once UnusedMember.Global
         public bool SaveState() {
             return SaveState(true);
         }
@@ -154,7 +153,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         // public for TAS Mod
-        // ReSharper disable once MemberCanBePrivate.Global
+        // ReSharper disable once UnusedMember.Global
         public bool LoadState() {
             return LoadState(true);
         }

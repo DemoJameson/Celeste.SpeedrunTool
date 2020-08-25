@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
 using Monocle;
 using MonoMod.Cil;
@@ -55,21 +56,21 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             );
 
             var beforeInstr = cursor.DefineLabel();
-            cursor.Emit(Mono.Cecil.Cil.OpCodes.Brfalse, beforeInstr);
+            cursor.Emit(OpCodes.Brfalse, beforeInstr);
 
-            cursor.Emit(Mono.Cecil.Cil.OpCodes.Ldstr, "c2e6f2");
-            cursor.Emit(Mono.Cecil.Cil.OpCodes.Call, typeof(Monocle.Calc).GetMethod("HexToColor", new[] {typeof(string)}));
-            cursor.Emit(Mono.Cecil.Cil.OpCodes.Ldarg, 6);
-            cursor.Emit(Mono.Cecil.Cil.OpCodes.Call, typeof(Microsoft.Xna.Framework.Color).GetMethod("op_Multiply"));
-            cursor.Emit(Mono.Cecil.Cil.OpCodes.Stloc, 5);
+            cursor.Emit(OpCodes.Ldstr, "c2e6f2");
+            cursor.Emit(OpCodes.Call, typeof(Calc).GetMethod("HexToColor", new[] {typeof(string)}));
+            cursor.Emit(OpCodes.Ldarg, 6);
+            cursor.Emit(OpCodes.Call, typeof(Color).GetMethod("op_Multiply"));
+            cursor.Emit(OpCodes.Stloc, 5);
 
-            cursor.Emit(Mono.Cecil.Cil.OpCodes.Ldstr, "93c0cf");
-            cursor.Emit(Mono.Cecil.Cil.OpCodes.Call, typeof(Monocle.Calc).GetMethod("HexToColor", new[] {typeof(string)}));
-            cursor.Emit(Mono.Cecil.Cil.OpCodes.Ldarg, 6);
-            cursor.Emit(Mono.Cecil.Cil.OpCodes.Call, typeof(Microsoft.Xna.Framework.Color).GetMethod("op_Multiply"));
-            cursor.Emit(Mono.Cecil.Cil.OpCodes.Stloc, 6);
+            cursor.Emit(OpCodes.Ldstr, "93c0cf");
+            cursor.Emit(OpCodes.Call, typeof(Calc).GetMethod("HexToColor", new[] {typeof(string)}));
+            cursor.Emit(OpCodes.Ldarg, 6);
+            cursor.Emit(OpCodes.Call, typeof(Color).GetMethod("op_Multiply"));
+            cursor.Emit(OpCodes.Stloc, 6);
 
-            cursor.Emit(Mono.Cecil.Cil.OpCodes.Br, afterInstr);
+            cursor.Emit(OpCodes.Br, afterInstr);
             cursor.MarkLabel(beforeInstr);
         }
     }

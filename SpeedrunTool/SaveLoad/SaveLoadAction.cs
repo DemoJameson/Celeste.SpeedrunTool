@@ -142,6 +142,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     }
                 ));
             }
+
+            // Fixed: Game crashes after save DustSpriteColorController
+            All.Add(new SaveLoadAction(
+                (savedValues, level) => {
+                    SaveStaticFieldValues(savedValues, typeof(DustStyles), "Styles");
+                },
+                (savedValues, level) => LoadStaticFieldValues(savedValues)
+            ));
         }
 
         private static void SupportMaxHelpingHand() {

@@ -16,11 +16,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 // recolor golden berry
                 foreach (Strawberry berry in level.Entities.FindAll<Strawberry>().Where(strawberry => strawberry.Golden)) {
                     if (!(berry.GetFieldValue("sprite") is Sprite sprite)) return;
-                    sprite.RemoveSelf();
-
-                    sprite = SpeedrunToolModule.SpriteBank.Create("speedrun_tool_goldberry");
-                    berry.SetFieldValue("sprite", sprite);
-                    berry.Add(sprite);
+                    GFX.SpriteBank.CreateOn(sprite, "speedrun_tool_goldberry");
                 }
 
                 // recolor timer

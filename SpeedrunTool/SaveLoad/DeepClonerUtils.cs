@@ -137,12 +137,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
 
                 // 同上
-                if (clonedObj.GetType().IsDictionary(out Type dictKeyType, out Type _) && !dictKeyType.IsSimple()) {
-                    IDictionary clonedDict = (IDictionary) clonedObj;
-                    Dictionary<object, object> backupDict =  new Dictionary<object, object>();
-                    foreach (DictionaryEntry entry in clonedDict) {
-                        backupDict[entry.Key] = entry.Value;
-                    }
+                if (clonedObj.GetType().IsDictionary(out Type dictKeyType, out Type _)
+                    && !dictKeyType.IsSimple() && clonedObj is IDictionary clonedDict && clonedDict.Count > 0
+                ) {
+                    Dictionary<object, object> backupDict = new Dictionary<object, object>();
+                    backupDict.AddRange(clonedDict);
                     clonedDict.Clear();
                     clonedDict.AddRange(backupDict);
                 }

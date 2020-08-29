@@ -8,6 +8,7 @@ using Force.DeepCloner.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
+using MonoMod.Utils;
 using NLua;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
@@ -133,6 +134,17 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                     clonedObj.InvokeMethod("Clear");
                     backup.ForEach(obj => { clonedObj.InvokeMethod("Add", obj); });
+                }
+
+                // 同上
+                if (clonedObj.GetType().IsDictionary(out Type dictKeyType, out Type _) && !dictKeyType.IsSimple()) {
+                    IDictionary clonedDict = (IDictionary) clonedObj;
+                    Dictionary<object, object> backupDict =  new Dictionary<object, object>();
+                    foreach (DictionaryEntry entry in clonedDict) {
+                        backupDict[entry.Key] = entry.Value;
+                    }
+                    clonedDict.Clear();
+                    clonedDict.AddRange(backupDict);
                 }
 
                 // LightingRenderer 需要，不然不会发光

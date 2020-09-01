@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.Extensions;
@@ -30,8 +31,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private Level savedLevel;
         private bool IsSaved => savedLevel != null;
         private List<Entity> savedEntities;
-        private List<Entity> preClonedSavedEntities;
+
         private DeepCloneState preClonedState;
+        private Thread preCloneThread;
 
         private float savedFreezeTimer;
         private float savedTimeRate;
@@ -87,7 +89,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             orig(self);
             if (self is Overworld) ClearState();
             if (IsSaved) {
-                if (self is Level) state = States.None; // 修复：读档途中按下 PageDown/Up 后无法存档
+                if (self is Level) {
+                    state = States.None; // 修复：读档途中按下 PageDown/Up 后无法存档
+                    PreCloneEntities();
+                }
+
                 if (self.GetSession() is Session session && session.Area != savedLevel.Session.Area) {
                     ClearState();
                 }
@@ -280,7 +286,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedLevel = null;
             savedEntities = null;
 
-            preClonedSavedEntities = null;
             preClonedState = null;
 
             DeepClonerUtils.ClearSharedDeepCloneState();
@@ -300,21 +305,23 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // level.RetryPlayerCorpse = null;
         }
 
-        private void PreClonedEntities() {
-            Task.Run(() => {
-                preClonedSavedEntities = null;
+        private void PreCloneEntities() {
+            preCloneThread?.Abort();
+            preCloneThread = new Thread(() => {
+                preCloneThread.IsBackground = true;
                 preClonedState = null;
-
                 DeepCloneState deepCloneState = new DeepCloneState();
-
-                preClonedSavedEntities = savedEntities.DeepClone(deepCloneState);
+                savedEntities.DeepClone(deepCloneState);
                 preClonedState = deepCloneState;
+                // TODO 检查线程是否真的被终结了
+                "preClonedState = deepCloneState;".DebugLog();
             });
+            preCloneThread.Start();
         }
 
         private void RestoreLevelEntities(Level level) {
-            List<Entity> deepCloneEntities = preClonedSavedEntities ?? savedEntities.DeepCloneShared();
-            PreClonedEntities();
+            List<Entity> deepCloneEntities = savedEntities.DeepCloneShared();
+            PreCloneEntities();
 
             // just follow the level.LoadLevel add player last. There must some black magic in it.
             // fixed: Player can't perform a really spike jump when wind blow down.
@@ -345,8 +352,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         }
                     });
                 level.InvokeMethod("SetActualDepth", entity);
-                Dictionary<Type, Queue<Entity>> pools =
-                    (Dictionary<Type, Queue<Entity>>) Engine.Pooler.GetPropertyValue("Pools");
+                Dictionary<Type, Queue<Entity>> pools = (Dictionary<Type, Queue<Entity>>) Engine.Pooler.GetPropertyValue("Pools");
                 Type type = entity.GetType();
                 if (pools.ContainsKey(type) && pools[type].Count > 0) {
                     pools[type].Dequeue();

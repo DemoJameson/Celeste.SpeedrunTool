@@ -198,6 +198,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             sharedDeepCloneState = null;
         }
 
+        public static void SetSharedDeepCloneState(DeepCloneState deepCloneState) {
+            sharedDeepCloneState = deepCloneState;
+        }
+
         public static T DeepCloneShared<T>(this T obj) {
             InitSharedDeepCloneState();
             return obj.DeepClone(sharedDeepCloneState);

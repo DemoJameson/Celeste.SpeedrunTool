@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using FMOD.Studio;
 using Force.DeepCloner;
+using Force.DeepCloner.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Monocle;
@@ -28,6 +30,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private Level savedLevel;
         private bool IsSaved => savedLevel != null;
         private List<Entity> savedEntities;
+        private List<Entity> preClonedSavedEntities;
+        private DeepCloneState preClonedState;
 
         private float savedFreezeTimer;
         private float savedTimeRate;
@@ -163,7 +167,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (level.Paused || state != States.None || !IsSaved) return false;
 
             state = States.Loading;
-            DeepClonerUtils.ClearSharedDeepCloneState();
+            DeepClonerUtils.SetSharedDeepCloneState(preClonedState);
 
             // 修复问题：死亡瞬间读档 PlayerDeadBody 没被清除，导致读档完毕后 madeline 自动 retry
             level.Entities.UpdateLists();
@@ -276,6 +280,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedLevel = null;
             savedEntities = null;
 
+            preClonedSavedEntities = null;
+            preClonedState = null;
+
             DeepClonerUtils.ClearSharedDeepCloneState();
 
             // Mod
@@ -293,8 +300,21 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // level.RetryPlayerCorpse = null;
         }
 
+        private void PreClonedEntities() {
+            Task.Run(() => {
+                preClonedSavedEntities = null;
+                preClonedState = null;
+
+                DeepCloneState deepCloneState = new DeepCloneState();
+
+                preClonedSavedEntities = savedEntities.DeepClone(deepCloneState);
+                preClonedState = deepCloneState;
+            });
+        }
+
         private void RestoreLevelEntities(Level level) {
-            List<Entity> deepCloneEntities = savedEntities.DeepCloneShared();
+            List<Entity> deepCloneEntities = preClonedSavedEntities ?? savedEntities.DeepCloneShared();
+            PreClonedEntities();
 
             // just follow the level.LoadLevel add player last. There must some black magic in it.
             // fixed: Player can't perform a really spike jump when wind blow down.

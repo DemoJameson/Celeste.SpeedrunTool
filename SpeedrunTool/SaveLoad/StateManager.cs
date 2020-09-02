@@ -303,7 +303,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private void PreCloneEntities(List<Entity> entities) {
-            preCloneTask = Task.Factory.StartNew(() => {
+            preCloneTask = Task.Run(() => {
                 DeepCloneState deepCloneState = new DeepCloneState();
                 entities.DeepClone(deepCloneState);
                 return deepCloneState;

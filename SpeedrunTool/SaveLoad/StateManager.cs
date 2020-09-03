@@ -379,15 +379,22 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 result.Insert(0, player);
             }
 
+            // 修复：章节计时器在章节完成隐藏后读档无法重新显示
+            if (level.Entities.FindFirst<SpeedrunTimerDisplay>() is Entity speedrunTimerDisplay) {
+                result.Add(speedrunTimerDisplay);
+            }
+
             // 存储的 Entity 被清除时会调用 Renderer，所以 Renderer 应该放到最后
             if (level.Entities.FindFirst<SeekerBarrierRenderer>() is Entity seekerBarrierRenderer) {
                 result.Add(seekerBarrierRenderer);
             }
 
+            // 同上
             if (level.Entities.FindFirst<LightningRenderer>() is Entity lightningRenderer) {
                 result.Add(lightningRenderer);
             }
 
+            // 同上
             if (level.Entities.FirstOrDefault(entity =>
                     entity.GetType().FullName == "Celeste.Mod.AcidHelper.Entities.InstantTeleporterRenderer") is Entity
                 teleporterRenderer) {

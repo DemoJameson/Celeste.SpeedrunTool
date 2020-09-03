@@ -64,6 +64,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         && !(entity is CassetteBlockManager)
                         && !(entity is SeekerBarrierRenderer)
                         && !(entity is LightningRenderer)
+                        && !(entity is SpeedrunTimerDisplay)
                         // Fixes: Glyph Teleport Area Effect
                         && entity.GetType().FullName != "Celeste.Mod.AcidHelper.Entities.InstantTeleporterRenderer"
                     ) return sourceObj;

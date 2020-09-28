@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using FMOD.Studio;
+using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class SaveLoadAction {
@@ -145,9 +147,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             // Fixed: Game crashes after save DustSpriteColorController
             All.Add(new SaveLoadAction(
-                (savedValues, level) => {
-                    SaveStaticFieldValues(savedValues, typeof(DustStyles), "Styles");
-                },
+                (savedValues, level) => { SaveStaticFieldValues(savedValues, typeof(DustStyles), "Styles"); },
                 (savedValues, level) => LoadStaticFieldValues(savedValues)
             ));
         }
@@ -176,11 +176,23 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private static void SupportExtendedVariants() {
+            // 修复：ExtendedVariantTrigger 设置的值在 SL 之后失效
+            if (Type.GetType("ExtendedVariants.ExtendedVariantTrigger, ExtendedVariantMode") is Type extendedVariantTrigger) {
+                All.Add(new SaveLoadAction(
+                    null,
+                    (savedValues, level) => {
+                        if (!(Engine.Scene.GetPlayer() is Player player) ||
+                            !(player.GetFieldValue("triggersInside") is HashSet<Trigger> triggersInside)) return;
+                        foreach (Trigger trigger in triggersInside.Where(trigger => trigger.GetType() == extendedVariantTrigger && (bool) trigger.GetFieldValue(trigger.GetType(), "revertOnLeave"))) {
+                            trigger.OnEnter(player);
+                        }
+                    }));
+            }
+
             if (Type.GetType("ExtendedVariants.Variants.JumpCount, ExtendedVariantMode") is Type jumpCountType) {
                 All.Add(new SaveLoadAction(
                     (savedValues, level) => SaveStaticFieldValues(savedValues, jumpCountType, "jumpBuffer"),
-                    (savedValues, level) => LoadStaticFieldValues(savedValues)
-                ));
+                    (savedValues, level) => LoadStaticFieldValues(savedValues)));
             }
         }
 

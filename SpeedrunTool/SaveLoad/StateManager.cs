@@ -191,8 +191,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             RestoreCassetteBlockManager1(level); // 停止播放主音乐，等待播放节奏音乐
             RestoreLevel(level);
 
-            // AddSaveStateMark(level);
-
             // Mod 和其他
             SaveLoadAction.OnLoadState(level);
 

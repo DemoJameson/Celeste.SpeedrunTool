@@ -309,8 +309,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private void RestoreLevelEntities(Level level) {
-            PreCloneEntities(savedEntities);
             List<Entity> deepCloneEntities = savedEntities.DeepCloneShared();
+            PreCloneEntities(savedEntities);
 
             // just follow the level.LoadLevel add player last. There must some black magic in it.
             // fixed: Player can't perform a really spike jump when wind blow down.

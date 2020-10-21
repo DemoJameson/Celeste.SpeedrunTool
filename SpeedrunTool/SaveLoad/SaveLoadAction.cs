@@ -98,6 +98,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     saved.Add("CurrentAmbience", Audio.GetEventName(Audio.CurrentAmbienceEventInstance));
                     saved.Add("CurrentAltMusic", Audio.GetEventName(typeof(Audio).GetFieldValue("currentAltMusicEvent") as EventInstance));
                     saved.Add("MusicUnderwater", Audio.MusicUnderwater);
+                    if (Audio.CurrentAmbienceEventInstance != null) {
+                        Audio.CurrentAmbienceEventInstance.getParameterValue("strong_wind", out var strongWindValue, out var _);
+                        saved.Add("strong_wind", strongWindValue > 0f);
+                    }
                     savedValues[typeof(Audio)] = saved;
                 },
                 (savedValues, level) => {
@@ -106,6 +110,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     Audio.SetAmbience(saved["CurrentAmbience"] as string);
                     Audio.SetAltMusic(saved["CurrentAltMusic"] as string);
                     Audio.MusicUnderwater = (bool) saved["MusicUnderwater"];
+                    if (saved.ContainsKey("strong_wind") && level.Entities.FindFirst<WindController>() is WindController controller) {
+                        controller.InvokeMethod("SetAmbienceStrength", saved["strong_wind"]);
+                    }
                 }
             ));
         }

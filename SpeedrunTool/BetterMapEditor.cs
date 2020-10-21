@@ -118,7 +118,7 @@ namespace Celeste.Mod.SpeedrunTool {
         }
 
         private static void FixWindSoundNotPlay(On.Celeste.WindController.orig_SetAmbienceStrength orig, WindController self, bool strong) {
-            if (SpeedrunToolModule.Enabled && Audio.CurrentAmbienceEventInstance == null && self.SceneAs<Level>()?.Session.Area.LevelSet == "Celeste") {
+            if (SpeedrunToolModule.Enabled && Audio.CurrentAmbienceEventInstance == null && Engine.Scene.GetSession()?.Area.LevelSet == "Celeste") {
                 Audio.SetAmbience("event:/env/amb/04_main");
             }
 

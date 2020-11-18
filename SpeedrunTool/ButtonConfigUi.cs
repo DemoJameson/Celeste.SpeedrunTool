@@ -19,7 +19,8 @@ namespace Celeste.Mod.SpeedrunTool {
             Buttons.RightTrigger,
             Buttons.LeftStick,
             Buttons.RightStick,
-            Buttons.Back
+            Buttons.Back,
+            Buttons.BigButton
         };
 
         public class ButtonInfo {

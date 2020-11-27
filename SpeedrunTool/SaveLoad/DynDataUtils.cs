@@ -20,7 +20,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             return constructorInfo?.Invoke(new[] {obj});
         }
 
-        public static IDictionary GetDataMap(Type type) {
+        public static object GetDataMap(Type type) {
             string key = $"DynDataUtils-GetDataMap-{type}";
 
             FieldInfo fieldInfo = type.GetExtendedDataValue<FieldInfo>(key);
@@ -31,7 +31,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 type.SetExtendedDataValue(key, fieldInfo);
             }
 
-            return fieldInfo?.GetValue(null) as IDictionary;
+            return fieldInfo?.GetValue(null);
         }
 
         public static Dictionary<string, object> GetDate(object obj, Type targetType) {

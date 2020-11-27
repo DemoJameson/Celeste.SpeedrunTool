@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using FMOD.Studio;
 using Force.DeepCloner;
@@ -161,15 +162,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     Type objType = sourceObj.GetType();
                     if (objType.IsClass) {
                         do {
-                            IDictionary dataMap = DynDataUtils.GetDataMap(objType);
-                            if (dataMap == null || dataMap.Count == 0) continue;
-                            WeakReference sourceWeak = new WeakReference(sourceObj);
+                            object dataMap = DynDataUtils.GetDataMap(objType);
+                            if (dataMap == null) continue;
 
-                            if (!dataMap.Contains(sourceWeak)) continue;
-                            if (!(dataMap[sourceWeak].GetFieldValue("Data") is Dictionary<string, object> data) || data.Count == 0) continue;
+                            object[] parameters = { sourceObj, new object()};
+                            if (false == (bool) dataMap.InvokeMethod("TryGetValue", parameters)) continue;
 
-                            WeakReference clonedWeak = new WeakReference(clonedObj);
-                            dataMap[clonedWeak] = dataMap[sourceWeak].DeepClone(deepCloneState);
+                            object sourceValue = parameters[1];
+                            if (!(sourceValue.GetFieldValue("Data") is Dictionary<string, object> data) || data.Count == 0) continue;
+
+                            dataMap.InvokeMethod("Add", clonedObj, sourceValue.DeepClone(deepCloneState));
                         } while ((objType = objType.BaseType) != null && objType.IsSameOrSubclassOf(typeof(object)));
                     }
 

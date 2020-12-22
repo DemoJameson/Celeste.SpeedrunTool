@@ -35,7 +35,6 @@ steps:
     SourceFolder: '$(Build.SourcesDirectory)'
     Contents: '**\bin\**'
     TargetFolder: '$(Build.ArtifactStagingDirectory)'
-    flattenFolders: true
 
 - task: PublishBuildArtifacts@1
   inputs:

@@ -33,11 +33,11 @@ steps:
 - task: CopyFiles@2
   inputs:
     SourceFolder: '$(Build.SourcesDirectory)'
-    Contents: '**\bin\**'
+    Contents: 'SpeedrunTool\bin\**'
     TargetFolder: '$(Build.ArtifactStagingDirectory)'
 
 - task: PublishBuildArtifacts@1
   inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)\SpeedrunTool\bin\Release'
     ArtifactName: 'SpeedrunTool'
     publishLocation: 'Container'

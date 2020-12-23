@@ -93,6 +93,7 @@
     <Compile Include="Extensions\CommonExtensions.cs" />
     <Compile Include="Extensions\EverestModuleSessionExtensions.cs" />
     <Compile Include="Extensions\ExtendedDataExtensions.cs" />
+    <Compile Include="Extensions\ThreadSafeFastReflectionHelper.cs" />
     <Compile Include="Extensions\LoggerExtensions.cs" />
     <Compile Include="Extensions\ReflectionExtensions.cs" />
     <Compile Include="RespawnSpeedUtils.cs" />

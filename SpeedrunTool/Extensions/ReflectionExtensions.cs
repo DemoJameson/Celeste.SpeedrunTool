@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Xna.Framework;
-using MonoMod.Utils;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
     internal static class ReflectionExtensions {

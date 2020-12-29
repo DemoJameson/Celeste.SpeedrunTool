@@ -61,6 +61,7 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string ResetRoomPb = "SPEEDRUN_TOOL_RESET_ROOM_PB";
         public const string SwitchRoomTimer = "SPEEDRUN_TOOL_SWITCH_ROOM_TIMER";
         public const string SetEndPoint = "SPEEDRUN_TOOL_SET_END_POINT";
+        public const string SetAdditionalEndPoint = "SPEEDRUN_TOOL_SET_ADDITIONAL_END_POINT";
         public const string TeleportToLastRoom = "SPEEDRUN_TOOL_TELEPORT_TO_LAST_ROOM";
         public const string TeleportToNextRoom = "SPEEDRUN_TOOL_TELEPORT_TO_NEXT_ROOM";
         public const string SwitchAutoLoadState = "SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE";

@@ -80,13 +80,14 @@ SPEEDRUN_TOOL_YURI=      Yuri
 SPEEDRUN_TOOL_RANDOM=    Random
 
 # ================================== Button Config ==================================
-SPEEDRUN_TOOL_OPEN_DEBUG_MAP=        Open Debug Map
-SPEEDRUN_TOOL_RESET_ROOM_PB=         Reset Room PB
-SPEEDRUN_TOOL_SWITCH_ROOM_TIMER=     Switch Room Timer
-SPEEDRUN_TOOL_SET_END_POINT=         Set Room Timer End Point
-SPEEDRUN_TOOL_TELEPORT_TO_LAST_ROOM= Teleport to Last Room
-SPEEDRUN_TOOL_TELEPORT_TO_NEXT_ROOM= Teleport to Next Room
-SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE=Toggle Auto Load State
+SPEEDRUN_TOOL_OPEN_DEBUG_MAP=          Open Debug Map
+SPEEDRUN_TOOL_RESET_ROOM_PB=           Reset Room PB
+SPEEDRUN_TOOL_SWITCH_ROOM_TIMER=       Switch Room Timer
+SPEEDRUN_TOOL_SET_END_POINT=           Set Room Timer End Point
+SPEEDRUN_TOOL_SET_ADDITIONAL_END_POINT=Set Room Timer Additional End Point
+SPEEDRUN_TOOL_TELEPORT_TO_LAST_ROOM=   Teleport to Last Room
+SPEEDRUN_TOOL_TELEPORT_TO_NEXT_ROOM=   Teleport to Next Room
+SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE=  Toggle Auto Load State
 
 # ================================== Death Statistics ==================================
 SPEEDRUN_TOOL_CLEAR_DEATH_STATISTICS=   Clear Data

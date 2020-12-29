@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
@@ -233,6 +234,20 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             }
 
             Add(sprite);
+        }
+
+        public static bool IsExist => Engine.Scene is Level level && level.Entities.FindFirst<EndPoint>() != null;
+
+        private static List<EndPoint> EmptyList = new List<EndPoint>();
+        public static List<EndPoint> All {
+            get {
+                if (Engine.Scene is Level level) {
+                    return level.Entities.FindAll<EndPoint>();
+                }
+
+                EmptyList.Clear();
+                return EmptyList;
+            }
         }
     }
 }

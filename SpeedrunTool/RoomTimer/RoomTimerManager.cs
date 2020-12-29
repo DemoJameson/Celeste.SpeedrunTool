@@ -17,7 +17,6 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         private readonly RoomTimerData nextRoomTimerData = new RoomTimerData(RoomTimerType.NextRoom);
 
         public SpeedrunType? OriginalSpeedrunType;
-        public EndPoint SavedEndPoint;
 
         public void Init() {
             OriginalSpeedrunType = Settings.Instance.SpeedrunClock;
@@ -64,12 +63,23 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 ClearPbTimes();
                 CreateEndPoint(self);
             }
+
+            if (GetVirtualButton(Mappings.SetAdditionalEndPoint).Pressed && !self.Paused) {
+                GetVirtualButton(Mappings.SetAdditionalEndPoint).ConsumePress();
+                if (!EndPoint.IsExist) {
+                    ClearPbTimes();
+                }
+                CreateEndPoint(self, true);
+            }
         }
 
-        private void CreateEndPoint(Level level) {
+        private void CreateEndPoint(Level level, bool additional = false) {
             if (level.Entities.FindFirst<Player>() is Player player && !player.Dead) {
-                SavedEndPoint?.RemoveSelf();
-                level.Add(SavedEndPoint = new EndPoint(player));
+                if (!additional) {
+                    EndPoint.All.ForEach(point => point.RemoveSelf());
+                }
+
+                level.Add(new EndPoint(player));
             }
         }
 
@@ -92,8 +102,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             nextRoomTimerData.Clear();
             currentRoomTimerData.Clear();
             if (clearEndPoint) {
-                SavedEndPoint?.RemoveSelf();
-                SavedEndPoint = null;
+                EndPoint.All.ForEach(point => point.RemoveSelf());
             }
         }
 

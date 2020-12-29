@@ -67,6 +67,7 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingIgnore] public Buttons? ControllerResetRoomPb { get; set; }
         [SettingIgnore] public Buttons? ControllerSwitchRoomTimer { get; set; }
         [SettingIgnore] public Buttons? ControllerSetEndPoint { get; set; }
+        [SettingIgnore] public Buttons? ControllerSetAdditionalEndPoint { get; set; }
         [SettingIgnore] public Buttons? ControllerCheckDeathStatistics { get; set; }
         [SettingIgnore] public Buttons? ControllerLastRoom { get; set; }
         [SettingIgnore] public Buttons? ControllerNextRoom { get; set; }
@@ -95,6 +96,8 @@ namespace Celeste.Mod.SpeedrunTool {
 
         [SettingIgnore]
         public List<Keys> KeyboardSetEndPoint { get; set; } = GetButtonInfo(Mappings.SetEndPoint).DefaultKeys.ToList();
+        [SettingIgnore]
+        public List<Keys> KeyboardSetAdditionalEndPoint { get; set; } = GetButtonInfo(Mappings.SetAdditionalEndPoint).DefaultKeys.ToList();
 
         [SettingIgnore]
         public List<Keys> KeyboardCheckDeathStatistics { get; set; } =
@@ -217,7 +220,7 @@ namespace Celeste.Mod.SpeedrunTool {
                     Math.Max(0, EndPointStyleStrings.IndexOf(EndPointStyle))
                 ).Change(index => {
                     EndPointStyle = EndPointStyleStrings[index];
-                    RoomTimerManager.Instance.SavedEndPoint?.ResetSprite();
+                    EndPoint.All.ForEach(endPoint => endPoint.ResetSprite());
                 }));
         }
 

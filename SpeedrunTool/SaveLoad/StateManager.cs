@@ -229,7 +229,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private void LoadStateComplete(Level level) {
             RestoreLevel(level);
             RestoreCassetteBlockManager2(level);
-            RoomTimerManager.Instance.SavedEndPoint?.ReadyForTime();
+            EndPoint.All.ForEach(point => point.ReadyForTime());
             foreach (EventInstance instance in playingEventInstances) instance.start();
             playingEventInstances.Clear();
             DeepClonerUtils.ClearSharedDeepCloneState();

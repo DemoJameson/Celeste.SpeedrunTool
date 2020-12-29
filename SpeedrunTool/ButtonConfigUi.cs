@@ -112,6 +112,15 @@ namespace Celeste.Mod.SpeedrunTool {
                     GetLabel = () => DialogIds.SetEndPoint.DialogClean(),
                 }
             }, {
+                Mappings.SetAdditionalEndPoint, new ButtonInfo {
+                    GetButton = () => Settings.ControllerSetAdditionalEndPoint,
+                    SetButton = button => Settings.ControllerSetAdditionalEndPoint = button,
+                    GetKeys = () => Settings.KeyboardSetAdditionalEndPoint,
+                    SetKeys = keys => Settings.KeyboardSetAdditionalEndPoint = keys,
+                    DefaultKeys = new Keys[]{},
+                    GetLabel = () => DialogIds.SetAdditionalEndPoint.DialogClean(),
+                }
+            }, {
                 Mappings.CheckDeathStatistics, new ButtonInfo {
                     GetButton = () => Settings.ControllerCheckDeathStatistics,
                     SetButton = button => Settings.ControllerCheckDeathStatistics = button,
@@ -193,16 +202,15 @@ namespace Celeste.Mod.SpeedrunTool {
             Clear();
 
             Add(new Header(Dialog.Clean(DialogIds.ButtonConfig)));
-            Add(new SubHeader(Dialog.Clean(DialogIds.Controller)));
-
-            foreach (var pair in ButtonInfos) {
-                AddControllerSetting(pair.Key, pair.Value.GetButton());
-            }
 
             Add(new SubHeader(Dialog.Clean(DialogIds.Keyboard)));
-
             foreach (var pair in ButtonInfos) {
                 AddKeyboardSetting(pair.Key, pair.Value.GetKeys());
+            }
+
+            Add(new SubHeader(Dialog.Clean(DialogIds.Controller)));
+            foreach (var pair in ButtonInfos) {
+                AddControllerSetting(pair.Key, pair.Value.GetButton());
             }
 
             Add(new SubHeader(""));
@@ -275,6 +283,14 @@ namespace Celeste.Mod.SpeedrunTool {
 
                 if (info.FixedDefaultKeys) {
                     info.GetKeys().AddRange(info.DefaultKeys.ToList());
+                }
+
+                foreach (ButtonInfo otherInfo in ButtonInfos.Values) {
+                    if (otherInfo == info) continue;
+                    if (otherInfo.GetKeys().Contains(key) && !(otherInfo.FixedDefaultKeys && otherInfo.DefaultKeys.Contains(key))) {
+                        otherInfo.GetKeys().Remove(key);
+                        otherInfo.UpdateVirtualButton();
+                    }
                 }
 
                 info.GetKeys().Add(key);
@@ -364,6 +380,7 @@ namespace Celeste.Mod.SpeedrunTool {
             ResetRoomPb,
             SwitchRoomTimer,
             SetEndPoint,
+            SetAdditionalEndPoint,
             CheckDeathStatistics,
             LastRoom,
             NextRoom,

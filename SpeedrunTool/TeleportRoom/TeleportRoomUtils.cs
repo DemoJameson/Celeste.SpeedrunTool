@@ -2,6 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Celeste.Mod.SpeedrunTool.DeathStatistics;
+using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Force.DeepCloner;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -68,10 +71,54 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
             }
         }
 
-        private static void TeleportTo(Session session) {
-            // TODO: 用 level.TeleportTo 代替 LevelLoader
-            BetterMapEditor.FixTeleportProblems = true;
-            Engine.Scene = new LevelLoader(session.DeepClone());
+        private static void TeleportTo(Session session, bool fromHistory = false) {
+            if (SpeedrunToolModule.Settings.FastTeleport && Engine.Scene is Level level && level.GetPlayer() is Player player) {
+                // 修复问题：死亡瞬间传送 PlayerDeadBody 没被清除，导致传送完毕后 madeline 自动爆炸
+                level.Entities.UpdateLists();
+
+                // External
+                RoomTimerManager.Instance.ResetTime();
+                DeathStatisticsManager.Instance.Died = false;
+
+                level.SetFieldValue("transition", null); // 允许切换房间时传送
+                level.Displacement.Clear(); // 避免冲刺后残留爆破效果
+                level.ParticlesBG.Clear();
+                level.Particles.Clear();
+                level.ParticlesFG.Clear();
+                TrailManager.Clear(); // 清除冲刺的残影
+
+                if (fromHistory) {
+                    session.DeepCloneTo(level.Session);
+                } else {
+                    BetterMapEditor.Instance.FixTeleportProblems(session, session.RespawnPoint, true);
+                }
+
+                // 修改自 level.TeleportTo(player, session.Level, Player.IntroTypes.Respawn);
+                level.Remove(player);
+                if (level.Entities.FindFirst<SpeedrunTimerDisplay>() is Entity timer) {
+                    level.Remove(timer);
+                }
+                level.UnloadLevel();
+
+                // 修复：章节计时器在章节完成隐藏后传送无法重新显示
+                level.Add(new SpeedrunTimerDisplay());
+                level.LoadLevel(Player.IntroTypes.Respawn);
+                level.Entities.UpdateLists();
+
+                level.Completed = false;
+                level.InCutscene = false;
+                level.SkippingCutscene = false;
+
+                // new player instance
+                player = level.GetPlayer();
+                level.Camera.Position = player.CameraTarget;
+                level.Update();
+            } else {
+                if (!fromHistory) {
+                    BetterMapEditor.ShouldFixTeleportProblems = true;
+                }
+                Engine.Scene = new LevelLoader(session.DeepClone());
+            }
         }
 
         private static void LevelExitOnCtor(On.Celeste.LevelExit.orig_ctor orig, LevelExit self, LevelExit.Mode mode,
@@ -148,7 +195,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
         private static void TeleportToNextRoom(Level level) {
             if (HistoryIndex >= 0 && HistoryIndex < RoomHistory.Count - 1) {
                 HistoryIndex++;
-                TeleportTo(RoomHistory[HistoryIndex]);
+                TeleportTo(RoomHistory[HistoryIndex], true);
                 return;
             }
 

@@ -45,6 +45,10 @@ namespace Celeste.Mod.SpeedrunTool {
 
         [SettingRange(1, 9)] public int RespawnSpeed { get; set; } = 1;
 
+        [SettingName(DialogIds.FastTeleport)]
+        [SettingSubText(DialogIds.FastTeleportDescription)]
+        public bool FastTeleport { get; set; } = false;
+
         [SettingName(DialogIds.DeathStatistics)]
         public bool DeathStatistics { get; set; } = false;
 

@@ -63,7 +63,6 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         private void SceneOnBegin(On.Monocle.Scene.orig_Begin orig, Scene self) {
             orig(self);
             if(self is Overworld || self is LevelExit) Clear();
-            // TODO 死亡后按确认键再按 PageDown/Up 会产生一条错误的死亡记录，等待 Teleport 功能改版时一并修改
         }
 
         private void PlayerOnAdded(On.Celeste.Player.orig_Added orig, Player self, Scene scene) {

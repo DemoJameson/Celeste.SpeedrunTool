@@ -23,6 +23,8 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string MaxNumberOfDeathData = "SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA";
         public const string CheckDeathStatistics = "SPEEDRUN_TOOL_CHECK_DEATH_STATISTICS";
         public const string RespawnSpeed = "SPEEDRUN_TOOL_RESPAWN_SPEED";
+        public const string FastTeleport = "SPEEDRUN_TOOL_FAST_TELEPORT";
+        public const string FastTeleportDescription = "SPEEDRUN_TOOL_FAST_TELEPORT_DESCRIPTION";
         public const string RoomTimer = "SPEEDRUN_TOOL_ROOM_TIMER";
         public const string EndPointStyle = "SPEEDRUN_TOOL_END_POINT_STYLE";
         public const string NumberOfRooms = "SPEEDRUN_TOOL_NUMBER_OF_ROOMS";

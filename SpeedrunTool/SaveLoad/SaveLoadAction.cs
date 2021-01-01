@@ -69,6 +69,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SupportMaxHelpingHand();
             SupportPandorasBox();
             SupportCrystallineHelper();
+            SupportSpringCollab2020();
         }
 
         private static void SupportCrystallineHelper() {
@@ -102,6 +103,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         Audio.CurrentAmbienceEventInstance.getParameterValue("strong_wind", out var strongWindValue, out var _);
                         saved.Add("strong_wind", strongWindValue > 0f);
                     }
+
                     savedValues[typeof(Audio)] = saved;
                 },
                 (savedValues, level) => {
@@ -182,6 +184,48 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
         }
 
+        private static void SupportSpringCollab2020() {
+            if (Type.GetType("Celeste.Mod.SpringCollab2020.Entities.RainbowSpinnerColorController, SpringCollab2020") is Type colorControllerType
+                && Delegate.CreateDelegate(typeof(On.Celeste.CrystalStaticSpinner.hook_GetHue),
+                        colorControllerType.GetMethodInfo("getRainbowSpinnerHue")) is
+                    On.Celeste.CrystalStaticSpinner.hook_GetHue hookGetHue
+            ) {
+                All.Add(new SaveLoadAction(
+                    (savedValues, level) => {
+                        SaveStaticFieldValues(savedValues, colorControllerType,
+                            "rainbowSpinnerHueHooked", "transitionProgress", "spinnerControllerOnScreen",
+                            "nextSpinnerController");
+                    },
+                    (savedValues, level) => {
+                        if ((bool) savedValues[colorControllerType]["rainbowSpinnerHueHooked"]) {
+                            On.Celeste.CrystalStaticSpinner.GetHue += hookGetHue;
+                        }
+
+                        LoadStaticFieldValues(savedValues);
+                    }
+                ));
+            }
+
+            if (Type.GetType("Celeste.Mod.SpringCollab2020.Entities.RainbowSpinnerColorAreaController, SpringCollab2020") is Type
+                    colorAreaControllerType
+                && Delegate.CreateDelegate(typeof(On.Celeste.CrystalStaticSpinner.hook_GetHue),
+                        colorAreaControllerType.GetMethodInfo("getRainbowSpinnerHue")) is
+                    On.Celeste.CrystalStaticSpinner.hook_GetHue hookSpinnerGetHue
+            ) {
+                All.Add(new SaveLoadAction(
+                    (savedValues, level) => { SaveStaticFieldValues(savedValues, colorAreaControllerType, "rainbowSpinnerHueHooked"); },
+                    (savedValues, level) => {
+                        if ((bool) savedValues[colorAreaControllerType]["rainbowSpinnerHueHooked"]) {
+                            On.Celeste.CrystalStaticSpinner.GetHue += hookSpinnerGetHue;
+                        }
+
+                        LoadStaticFieldValues(savedValues);
+                    }
+                ));
+            }
+        }
+
+
         private static void SupportExtendedVariants() {
             // 修复：ExtendedVariantTrigger 设置的值在 SL 之后失效
             if (Type.GetType("ExtendedVariants.ExtendedVariantTrigger, ExtendedVariantMode") is Type extendedVariantTrigger) {
@@ -190,7 +234,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     (savedValues, level) => {
                         if (!(Engine.Scene.GetPlayer() is Player player) ||
                             !(player.GetFieldValue("triggersInside") is HashSet<Trigger> triggersInside)) return;
-                        foreach (Trigger trigger in triggersInside.Where(trigger => trigger.GetType() == extendedVariantTrigger && (bool) trigger.GetFieldValue(trigger.GetType(), "revertOnLeave"))) {
+                        foreach (Trigger trigger in triggersInside.Where(trigger =>
+                            trigger.GetType() == extendedVariantTrigger && (bool) trigger.GetFieldValue(trigger.GetType(), "revertOnLeave"))) {
                             trigger.OnEnter(player);
                         }
                     }));

@@ -47,7 +47,7 @@ namespace Celeste.Mod.SpeedrunTool {
 
         [SettingName(DialogIds.FastTeleport)]
         [SettingSubText(DialogIds.FastTeleportDescription)]
-        public bool FastTeleport { get; set; } = false;
+        public bool FastTeleport { get; set; } = true;
 
         [SettingName(DialogIds.DeathStatistics)]
         public bool DeathStatistics { get; set; } = false;

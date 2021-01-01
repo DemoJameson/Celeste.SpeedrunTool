@@ -94,27 +94,27 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private static void SupportAudioMusic() {
             All.Add(new SaveLoadAction(
                 (savedValues, level) => {
-                    Dictionary<string, object> saved = new Dictionary<string, object>();
-                    saved.Add("CurrentMusic", Audio.CurrentMusic);
-                    saved.Add("CurrentAmbience", Audio.GetEventName(Audio.CurrentAmbienceEventInstance));
-                    saved.Add("CurrentAltMusic", Audio.GetEventName(typeof(Audio).GetFieldValue("currentAltMusicEvent") as EventInstance));
-                    saved.Add("MusicUnderwater", Audio.MusicUnderwater);
-                    if (Audio.CurrentAmbienceEventInstance != null) {
-                        Audio.CurrentAmbienceEventInstance.getParameterValue("strong_wind", out var strongWindValue, out var _);
-                        saved.Add("strong_wind", strongWindValue > 0f);
-                    }
-
+                    Dictionary<string, object> saved = new Dictionary<string, object> {
+                        {"currentMusicEvent", typeof(Audio).GetFieldValue("currentMusicEvent").DeepCloneShared()},
+                        {"CurrentAmbienceEventInstance", Audio.CurrentAmbienceEventInstance.DeepCloneShared()},
+                        {"currentAltMusicEvent", typeof(Audio).GetFieldValue("currentAltMusicEvent") as EventInstance},
+                        {"MusicUnderwater", Audio.MusicUnderwater}
+                    };
                     savedValues[typeof(Audio)] = saved;
                 },
                 (savedValues, level) => {
                     Dictionary<string, object> saved = savedValues[typeof(Audio)];
-                    Audio.SetMusic(saved["CurrentMusic"] as string);
-                    Audio.SetAmbience(saved["CurrentAmbience"] as string);
-                    Audio.SetAltMusic(saved["CurrentAltMusic"] as string);
+
+                    Audio.SetMusic(Audio.GetEventName(saved["currentMusicEvent"] as EventInstance));
+                    Audio.CurrentMusicEventInstance?.CopyParametersFrom(saved["currentMusicEvent"] as EventInstance);
+
+                    Audio.SetAmbience(Audio.GetEventName(saved["CurrentAmbienceEventInstance"] as EventInstance));
+                    Audio.CurrentAmbienceEventInstance?.CopyParametersFrom(saved["CurrentAmbienceEventInstance"] as EventInstance);
+
+                    Audio.SetAltMusic(Audio.GetEventName(saved["currentAltMusicEvent"] as EventInstance));
+                    (typeof(Audio).GetFieldValue("currentAltMusicEvent") as EventInstance)?.CopyParametersFrom(saved["currentAltMusicEvent"] as EventInstance);
+
                     Audio.MusicUnderwater = (bool) saved["MusicUnderwater"];
-                    if (saved.ContainsKey("strong_wind") && level.Entities.FindFirst<WindController>() is WindController controller) {
-                        controller.InvokeMethod("SetAmbienceStrength", saved["strong_wind"]);
-                    }
                 }
             ));
         }

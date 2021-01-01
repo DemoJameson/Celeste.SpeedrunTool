@@ -87,11 +87,10 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                 level.ParticlesFG.Clear();
                 TrailManager.Clear(); // 清除冲刺的残影
 
-                if (fromHistory) {
-                    session.DeepCloneTo(level.Session);
-                } else {
+                if (!fromHistory) {
                     BetterMapEditor.Instance.FixTeleportProblems(session, session.RespawnPoint, true);
                 }
+                session.DeepCloneTo(level.Session);
 
                 // 修改自 level.TeleportTo(player, session.Level, Player.IntroTypes.Respawn);
                 level.Remove(player);

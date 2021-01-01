@@ -78,7 +78,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                             && source.Playing
                             && source.GetFieldValue("instance") is EventInstance instance) {
                             if (string.IsNullOrEmpty(source.EventName)) return null;
-                            instance.NeedManualClone(true);
+                            instance.NeedManualClone();
                             instance.SaveTimelinePosition(instance.LoadTimelinePosition());
 
                             return null;
@@ -88,11 +88,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                             // isLevelMusic = true 时 sfx 自动等于 Audio.CurrentMusicEventInstance，无需重建
                             if (manager.GetFieldValue("sfx") is EventInstance sfx &&
                                 !(bool) manager.GetFieldValue("isLevelMusic")) {
-                                sfx.NeedManualClone(true);
+                                sfx.NeedManualClone();
                             }
 
                             if (manager.GetFieldValue("snapshot") is EventInstance snapshot) {
-                                snapshot.NeedManualClone(true);
+                                snapshot.NeedManualClone();
                             }
 
                             return null;

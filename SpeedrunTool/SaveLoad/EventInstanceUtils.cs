@@ -19,6 +19,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (result == RESULT.OK) {
                 self.SaveParameters(name, value);
             }
+
             return result;
         }
     }
@@ -28,8 +29,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private const string ParametersKey = "EventInstanceExtensions-ParametersKey";
         private const string TimelinePositionKey = "EventInstanceExtensions-TimelinePositionKey";
 
-        public static void NeedManualClone(this EventInstance eventInstance, bool needClone) {
-            eventInstance.SetExtendedBoolean(NeedManualCloneKey, needClone);
+        public static EventInstance NeedManualClone(this EventInstance eventInstance) {
+            eventInstance.SetExtendedBoolean(NeedManualCloneKey, true);
+            return eventInstance;
         }
 
         public static bool IsNeedManualClone(this EventInstance eventInstance) {
@@ -81,7 +83,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             EventInstance cloneInstance = Audio.CreateInstance(path);
             if (cloneInstance == null) return null;
 
-            cloneInstance.NeedManualClone(eventInstance.IsNeedManualClone());
+            if (eventInstance.IsNeedManualClone()) {
+                cloneInstance.NeedManualClone();
+            }
 
             var parameters = eventInstance.GetSavedParameterValues();
             if (parameters != null) {
@@ -99,14 +103,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (eventInstance == null || otherEventInstance == null) return;
             if (Audio.GetEventName(eventInstance) != Audio.GetEventName(otherEventInstance)) return;
 
-            Dictionary<string,float> parameterValues = new Dictionary<string, float>(eventInstance.GetSavedParameterValues());
+            Dictionary<string, float> parameterValues = new Dictionary<string, float>(eventInstance.GetSavedParameterValues());
             Dictionary<string, float> clonedParameterValues = otherEventInstance.GetSavedParameterValues();
-            foreach (KeyValuePair<string,float> pair in parameterValues) {
-                if (clonedParameterValues.ContainsKey(pair.Key)) {
-                    eventInstance.setParameterValue(pair.Key, pair.Value);
-                } else {
-                    if(eventInstance.getDescription(out var description) != RESULT.OK) continue;
-                    if(description.getParameter(pair.Key, out var parameterDescription) != RESULT.OK) continue;
+            foreach (KeyValuePair<string, float> pair in clonedParameterValues) {
+                eventInstance.setParameterValue(pair.Key, pair.Value);
+            }
+            foreach (KeyValuePair<string, float> pair in parameterValues) {
+                if (!clonedParameterValues.ContainsKey(pair.Key)) {
+                    if (eventInstance.getDescription(out var description) != RESULT.OK) continue;
+                    if (description.getParameter(pair.Key, out var parameterDescription) != RESULT.OK) continue;
                     eventInstance.setParameterValue(pair.Key, parameterDescription.defaultvalue);
                 }
             }

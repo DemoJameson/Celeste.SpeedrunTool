@@ -95,9 +95,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             All.Add(new SaveLoadAction(
                 (savedValues, level) => {
                     Dictionary<string, object> saved = new Dictionary<string, object> {
-                        {"currentMusicEvent", typeof(Audio).GetFieldValue("currentMusicEvent").DeepCloneShared()},
-                        {"CurrentAmbienceEventInstance", Audio.CurrentAmbienceEventInstance.DeepCloneShared()},
-                        {"currentAltMusicEvent", typeof(Audio).GetFieldValue("currentAltMusicEvent") as EventInstance},
+                        {"currentMusicEvent", (typeof(Audio).GetFieldValue("currentMusicEvent") as EventInstance)?.NeedManualClone().DeepCloneShared()},
+                        {"CurrentAmbienceEventInstance", Audio.CurrentAmbienceEventInstance?.NeedManualClone().DeepCloneShared()},
+                        {"currentAltMusicEvent", (typeof(Audio).GetFieldValue("currentAltMusicEvent") as EventInstance)?.NeedManualClone().DeepCloneShared()},
                         {"MusicUnderwater", Audio.MusicUnderwater}
                     };
                     savedValues[typeof(Audio)] = saved;

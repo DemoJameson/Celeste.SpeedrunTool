@@ -34,7 +34,7 @@ namespace Celeste.Mod.SpeedrunTool {
         };
 
         private readonly List<string> farewellCassetteRooms = new List<string> {
-            "i-00","i-00b","i-01","i-02","i-03","i-04","i-05","j-00"
+            "i-00", "i-00b", "i-01", "i-02", "i-03", "i-04", "i-05", "j-00"
         };
 
         private readonly List<Vector2> excludeDreamRespawnPoints = new List<Vector2> {
@@ -127,7 +127,7 @@ namespace Celeste.Mod.SpeedrunTool {
 
         private static void AddedOpenDebugMapButton(On.Celeste.Level.orig_Update orig, Level self) {
             orig(self);
-            
+
             if (!SpeedrunToolModule.Enabled) {
                 return;
             }
@@ -151,28 +151,28 @@ namespace Celeste.Mod.SpeedrunTool {
 
         private void LevelLoaderOnCtor(On.Celeste.LevelLoader.orig_ctor orig, LevelLoader self, Session session,
             Vector2? startPosition) {
-            FixTeleportProblems(session, startPosition, ShouldFixTeleportProblems);
+            if (ShouldFixTeleportProblems) {
+                ShouldFixTeleportProblems = false;
+                FixTeleportProblems(session, startPosition);
+            }
             orig(self, session, startPosition);
         }
 
-        public void FixTeleportProblems(Session session, Vector2? startPosition, bool shouldFix) {
-            if (shouldFix) {
-                ShouldFixTeleportProblems = false;
-                if (SpeedrunToolModule.Enabled && session.StartCheckpoint == null && session.LevelData != null) {
-                    Vector2 spawnPoint;
-                    if (startPosition != null) {
-                        spawnPoint = session.GetSpawnPoint(startPosition.Value);
-                    } else {
-                        Rectangle bounds = session.LevelData.Bounds;
-                        spawnPoint = session.GetSpawnPoint(new Vector2(bounds.Left, bounds.Bottom));
-                    }
-
-                    FixCoreMode(session);
-                    FixBadelineChase(session, spawnPoint);
-                    FixHugeMessRoomLight(session);
-                    FixFarewellCassetteRoomColorGrade(session, spawnPoint);
-                    FixFarewellIntro02LaunchDashes(session);
+        public void FixTeleportProblems(Session session, Vector2? startPosition) {
+            if (SpeedrunToolModule.Enabled && session.StartCheckpoint == null && session.LevelData != null) {
+                Vector2 spawnPoint;
+                if (startPosition != null) {
+                    spawnPoint = session.GetSpawnPoint(startPosition.Value);
+                } else {
+                    Rectangle bounds = session.LevelData.Bounds;
+                    spawnPoint = session.GetSpawnPoint(new Vector2(bounds.Left, bounds.Bottom));
                 }
+
+                FixCoreMode(session);
+                FixBadelineChase(session, spawnPoint);
+                FixHugeMessRoomLight(session);
+                FixFarewellCassetteRoomColorGrade(session, spawnPoint);
+                FixFarewellIntro02LaunchDashes(session);
             }
         }
 

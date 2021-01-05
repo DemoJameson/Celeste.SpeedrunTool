@@ -292,7 +292,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private void UnloadLevelEntities(Level level) {
-            List<Entity> entities = GetEntitiesExcludingGlobal(level);
+            List<Entity> entities = GetEntitiesExcludingGlobal(level, true);
             level.Remove(entities);
             level.Entities.UpdateLists();
             // 修复：Retry 后读档依然执行 PlayerDeadBody.End 的问题
@@ -311,13 +311,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private void RestoreLevelEntities(Level level) {
             List<Entity> deepCloneEntities = savedEntities.DeepCloneShared();
             PreCloneEntities(savedEntities);
-
-            // just follow the level.LoadLevel add player last. There must some black magic in it.
-            // fixed: Player can't perform a really spike jump when wind blow down.
-            if (deepCloneEntities.FirstOrDefault(entity => entity is Player) is Player player) {
-                deepCloneEntities.Remove(player);
-                deepCloneEntities.Add(player);
-            }
 
             // Re Add Entities
             List<Entity> entities = (List<Entity>) level.Entities.GetFieldValue("entities");
@@ -347,6 +340,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     pools[type].Dequeue();
                 }
             }
+            level.Entities.SetFieldValue("unsorted", false);
+            entities.Sort(EntityList.CompareDepth);
         }
 
         private void RestoreLevel(Level level) {
@@ -367,11 +362,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             Distort.GameRate = savedDistortGameRate;
         }
 
-        private List<Entity> GetEntitiesExcludingGlobal(Level level) {
+        // movePlayerToFirst = true: 调用游戏本身方法移除房间内 entities 时必须最早清楚 Player，因为它关联着许多 Trigger
+        // movePlayerToFirst = false: 克隆和恢复 entities 时必须严格按照相同的顺序，因为这会影响到 entity.Depth 从而影响到 entity.Update 的顺序
+        private List<Entity> GetEntitiesExcludingGlobal(Level level, bool movePlayerToFirst) {
             var result = level.Entities.Where(
                 entity => !entity.TagCheck(Tags.Global) || entity is CassetteBlockManager).ToList();
 
-            if (level.GetPlayer() is Player player) {
+            if (movePlayerToFirst && level.GetPlayer() is Player player) {
                 // Player 被 Remove 时会触发其他 Trigger，所以必须最早清除
                 result.Remove(player);
                 result.Insert(0, player);
@@ -403,7 +400,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private List<Entity> GetEntitiesNeedDeepClone(Level level) {
-            return GetEntitiesExcludingGlobal(level).Where(entity => {
+            return GetEntitiesExcludingGlobal(level, false).Where(entity => {
                 // 不恢复设置了 IgnoreSaveLoadComponent 的物体
                 // SpeedrunTool 里有 ConfettiRenderer 和一些 MiniTextbox
                 if (entity.IsIgnoreSaveLoad()) return false;

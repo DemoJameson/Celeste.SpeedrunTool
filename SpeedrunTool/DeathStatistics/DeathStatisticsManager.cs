@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -6,6 +7,7 @@ using Celeste.Mod.SpeedrunTool.Extensions;
 using Force.DeepCloner;
 using Microsoft.Xna.Framework;
 using Monocle;
+using MonoMod.RuntimeDetour;
 using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
 
 namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
@@ -41,8 +43,11 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         // 尽量晚的 Hook Player.Die 方法，以便可以稳定的从指定的 StackTrace 中找出死亡原因
         private void HookPlayerDie(On.Celeste.Level.orig_LoadLevel orig, Level self, Player.IntroTypes playerIntro, bool isFromLoader) {
             orig(self, playerIntro, isFromLoader);
-            On.Celeste.Player.Die -= PlayerOnDie;
-            On.Celeste.Player.Die += PlayerOnDie;
+
+            using (new DetourContext {After = new List<string> {"*"}}) {
+                On.Celeste.Player.Die -= PlayerOnDie;
+                On.Celeste.Player.Die += PlayerOnDie;
+            }
         }
 
         public void Unload() {
@@ -62,7 +67,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
 
         private void SceneOnBegin(On.Monocle.Scene.orig_Begin orig, Scene self) {
             orig(self);
-            if(self is Overworld || self is LevelExit) Clear();
+            if (self is Overworld || self is LevelExit) Clear();
         }
 
         private void PlayerOnAdded(On.Celeste.Player.orig_Added orig, Player self, Scene scene) {

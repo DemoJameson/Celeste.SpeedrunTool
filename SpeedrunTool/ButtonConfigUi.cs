@@ -293,7 +293,9 @@ namespace Celeste.Mod.SpeedrunTool {
                     }
                 }
 
-                info.GetKeys().Add(key);
+                if (!info.GetKeys().Contains(key)) {
+                    info.GetKeys().Add(key);
+                }
                 info.UpdateVirtualButton();
             });
             Reload(Selection);

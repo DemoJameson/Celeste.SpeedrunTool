@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Force.DeepCloner;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Monocle;
@@ -270,8 +271,20 @@ namespace Celeste.Mod.SpeedrunTool {
         private void SetRemap(Buttons button) {
             remapping = false;
             inputDelay = 0.25f;
-            ButtonInfos[remappingType].SetButton(button);
-            ButtonInfos[remappingType].UpdateVirtualButton();
+            ButtonInfo info = ButtonInfos[remappingType];
+            if (info.GetButton().HasValue && info.GetButton().Value == button) {
+                info.SetButton(null);
+            } else {
+                info.SetButton(button);
+                foreach (ButtonInfo otherInfo in ButtonInfos.Values) {
+                    if (otherInfo == info) continue;
+                    if (otherInfo.GetButton().HasValue && otherInfo.GetButton().Value == button) {
+                        otherInfo.SetButton(null);
+                        otherInfo.UpdateVirtualButton();
+                    }
+                }
+            }
+            info.UpdateVirtualButton();
             Reload(Selection);
         }
 
@@ -279,22 +292,20 @@ namespace Celeste.Mod.SpeedrunTool {
             remapping = false;
             inputDelay = 0.25f;
             ButtonInfos[remappingType].With(info => {
-                info.GetKeys().Clear();
-
-                if (info.FixedDefaultKeys) {
-                    info.GetKeys().AddRange(info.DefaultKeys.ToList());
-                }
-
-                foreach (ButtonInfo otherInfo in ButtonInfos.Values) {
-                    if (otherInfo == info) continue;
-                    if (otherInfo.GetKeys().Contains(key) && !(otherInfo.FixedDefaultKeys && otherInfo.DefaultKeys.Contains(key))) {
-                        otherInfo.GetKeys().Remove(key);
-                        otherInfo.UpdateVirtualButton();
+                if (info.GetKeys().Contains(key) && !(info.FixedDefaultKeys && info.DefaultKeys.Contains(key))) {
+                    info.GetKeys().Remove(key);
+                } else {
+                    if (!info.FixedDefaultKeys) {
+                        info.GetKeys().Clear();
                     }
-                }
-
-                if (!info.GetKeys().Contains(key)) {
                     info.GetKeys().Add(key);
+                    foreach (ButtonInfo otherInfo in ButtonInfos.Values) {
+                        if (otherInfo == info) continue;
+                        if (otherInfo.GetKeys().Contains(key) && !(otherInfo.FixedDefaultKeys && otherInfo.DefaultKeys.Contains(key))) {
+                            otherInfo.GetKeys().Remove(key);
+                            otherInfo.UpdateVirtualButton();
+                        }
+                    }
                 }
                 info.UpdateVirtualButton();
             });

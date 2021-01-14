@@ -27,7 +27,10 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         private bool Enabled => SpeedrunToolModule.Settings.DeathStatistics;
 
         public void Load() {
-            On.Celeste.Level.LoadLevel += HookPlayerDie;
+            // 尽量晚的 Hook Player.Die 方法，以便可以稳定的从指定的 StackTrace 中找出死亡原因
+            using (new DetourContext {After = new List<string> {"*"}}) {
+                On.Celeste.Player.Die += PlayerOnDie;
+            }
             On.Celeste.PlayerDeadBody.End += PlayerDeadBodyOnEnd;
             On.Celeste.Level.NextLevel += LevelOnNextLevel;
             On.Celeste.Player.Update += PlayerOnUpdate;
@@ -40,18 +43,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             On.Monocle.Scene.Begin += SceneOnBegin;
         }
 
-        // 尽量晚的 Hook Player.Die 方法，以便可以稳定的从指定的 StackTrace 中找出死亡原因
-        private void HookPlayerDie(On.Celeste.Level.orig_LoadLevel orig, Level self, Player.IntroTypes playerIntro, bool isFromLoader) {
-            orig(self, playerIntro, isFromLoader);
-
-            using (new DetourContext {After = new List<string> {"*"}}) {
-                On.Celeste.Player.Die -= PlayerOnDie;
-                On.Celeste.Player.Die += PlayerOnDie;
-            }
-        }
-
         public void Unload() {
-            On.Celeste.Level.LoadLevel -= HookPlayerDie;
             On.Celeste.Player.Die -= PlayerOnDie;
             On.Celeste.PlayerDeadBody.End -= PlayerDeadBodyOnEnd;
             On.Celeste.Level.NextLevel -= LevelOnNextLevel;

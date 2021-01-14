@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Celeste.Mod.SpeedrunTool.Extensions;
-using Force.DeepCloner;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Monocle;
@@ -398,6 +398,22 @@ namespace Celeste.Mod.SpeedrunTool {
             LastRoom,
             NextRoom,
             SwitchAutoLoadState,
+        }
+    }
+
+    internal static class MappingsExtensions {
+        private static readonly Lazy<FieldInfo> TasRunning = new Lazy<FieldInfo>(() =>
+             Type.GetType("TAS.Manager, CelesteTAS-EverestInterop")?.GetFieldInfo("Running")
+        );
+        public static bool Pressed(this ButtonConfigUi.Mappings mappings) {
+            if (TasRunning == null || (bool) TasRunning.Value.GetValue(null)) {
+                return false;
+            }
+            return ButtonConfigUi.GetVirtualButton(mappings).Pressed;
+        }
+
+        public static void ConsumePress(this ButtonConfigUi.Mappings mappings) {
+            ButtonConfigUi.GetVirtualButton(mappings).ConsumePress();
         }
     }
 }

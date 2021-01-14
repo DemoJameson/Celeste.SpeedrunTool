@@ -46,26 +46,26 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 return;
             }
 
-            if (GetVirtualButton(Mappings.ResetRoomPb).Pressed && !self.Paused) {
-                GetVirtualButton(Mappings.ResetRoomPb).ConsumePress();
+            if (Mappings.ResetRoomPb.Pressed() && !self.Paused) {
+                Mappings.ResetRoomPb.ConsumePress();
                 ClearPbTimes();
             }
 
-            if (GetVirtualButton(Mappings.SwitchRoomTimer).Pressed && !self.Paused) {
-                GetVirtualButton(Mappings.SwitchRoomTimer).ConsumePress();
+            if (Mappings.SwitchRoomTimer.Pressed() && !self.Paused) {
+                Mappings.SwitchRoomTimer.ConsumePress();
                 RoomTimerType roomTimerType = SpeedrunToolModule.Settings.RoomTimerType;
                 SwitchRoomTimer(((int) roomTimerType + 1) % Enum.GetNames(typeof(RoomTimerType)).Length);
                 SpeedrunToolModule.Instance.SaveSettings();
             }
 
-            if (GetVirtualButton(Mappings.SetEndPoint).Pressed && !self.Paused) {
-                GetVirtualButton(Mappings.SetEndPoint).ConsumePress();
+            if (Mappings.SetEndPoint.Pressed() && !self.Paused) {
+                Mappings.SetEndPoint.ConsumePress();
                 ClearPbTimes();
                 CreateEndPoint(self);
             }
 
-            if (GetVirtualButton(Mappings.SetAdditionalEndPoint).Pressed && !self.Paused) {
-                GetVirtualButton(Mappings.SetAdditionalEndPoint).ConsumePress();
+            if (Mappings.SetAdditionalEndPoint.Pressed() && !self.Paused) {
+                Mappings.SetAdditionalEndPoint.ConsumePress();
                 if (!EndPoint.IsExist) {
                     ClearPbTimes();
                 }

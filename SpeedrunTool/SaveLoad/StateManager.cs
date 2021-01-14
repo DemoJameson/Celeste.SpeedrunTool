@@ -429,26 +429,26 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private void CheckButton(Level level) {
             if (!SpeedrunToolModule.Enabled) return;
 
-            if (GetVirtualButton(Mappings.Save).Pressed) {
-                GetVirtualButton(Mappings.Save).ConsumePress();
+            if (Mappings.Save.Pressed()) {
+                Mappings.Save.ConsumePress();
                 SaveState(false);
-            } else if (GetVirtualButton(Mappings.Load).Pressed && !level.Paused && state == States.None) {
-                GetVirtualButton(Mappings.Load).ConsumePress();
+            } else if (Mappings.Load.Pressed() && !level.Paused && state == States.None) {
+                Mappings.Load.ConsumePress();
                 if (IsSaved) {
                     LoadState(false);
                 } else if (!level.Frozen) {
                     level.Add(new MiniTextbox(DialogIds.DialogNotSaved).IgnoreSaveLoad());
                 }
-            } else if (GetVirtualButton(Mappings.Clear).Pressed && !level.Paused && state == States.None) {
-                GetVirtualButton(Mappings.Clear).ConsumePress();
+            } else if (Mappings.Clear.Pressed() && !level.Paused && state == States.None) {
+                Mappings.Clear.ConsumePress();
                 ClearState();
                 if (IsNotCollectingHeart(level) && !level.Completed) {
                     level.Add(new MiniTextbox(DialogIds.DialogClear).IgnoreSaveLoad());
                 }
-            } else if (MInput.Keyboard.Check(Keys.F5) || GetVirtualButton(Mappings.OpenDebugMap).Pressed) {
+            } else if (MInput.Keyboard.Check(Keys.F5) || Mappings.OpenDebugMap.Pressed()) {
                 ClearState();
-            } else if (GetVirtualButton(Mappings.SwitchAutoLoadState).Pressed && !level.Paused) {
-                GetVirtualButton(Mappings.SwitchAutoLoadState).ConsumePress();
+            } else if (Mappings.SwitchAutoLoadState.Pressed() && !level.Paused) {
+                Mappings.SwitchAutoLoadState.ConsumePress();
                 Settings.AutoLoadAfterDeath = !Settings.AutoLoadAfterDeath;
                 SpeedrunToolModule.Instance.SaveSettings();
             } else if (state == States.Waiting && !level.Paused

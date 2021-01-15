@@ -406,7 +406,7 @@ namespace Celeste.Mod.SpeedrunTool {
              Type.GetType("TAS.Manager, CelesteTAS-EverestInterop")?.GetFieldInfo("Running")
         );
         public static bool Pressed(this ButtonConfigUi.Mappings mappings) {
-            if (TasRunning == null || (bool) TasRunning.Value.GetValue(null)) {
+            if (TasRunning.Value == null || (bool) TasRunning.Value.GetValue(null)) {
                 return false;
             }
             return ButtonConfigUi.GetVirtualButton(mappings).Pressed;

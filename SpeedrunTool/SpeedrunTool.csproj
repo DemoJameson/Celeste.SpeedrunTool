@@ -95,7 +95,6 @@
     <Compile Include="DialogIds.cs" />
     <Compile Include="Extensions\CelesteExtensions.cs" />
     <Compile Include="Extensions\CommonExtensions.cs" />
-    <Compile Include="Extensions\EverestModuleSessionExtensions.cs" />
     <Compile Include="Extensions\ExtendedDataExtensions.cs" />
     <Compile Include="Extensions\ThreadSafeFastReflectionHelper.cs" />
     <Compile Include="Extensions\LoggerExtensions.cs" />

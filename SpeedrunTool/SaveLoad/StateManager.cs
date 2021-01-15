@@ -151,7 +151,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedModSessions = new Dictionary<EverestModule, EverestModuleSession>();
             foreach (EverestModule module in Everest.Modules) {
                 if (module._Session != null) {
-                    savedModSessions[module] = module._Session.DeepCloneYaml(module.SessionType);
+                    savedModSessions[module] = module._Session.DeepCloneShared();
                 }
             }
 
@@ -197,7 +197,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // restore all mod sessions
             foreach (EverestModule module in Everest.Modules) {
                 if (savedModSessions.TryGetValue(module, out EverestModuleSession savedModSession)) {
-                    module._Session = savedModSession.DeepCloneYaml(module.SessionType);
+                    module._Session = savedModSession.DeepCloneShared();
                 }
             }
 
@@ -395,6 +395,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 teleporterRenderer) {
                 result.Add(teleporterRenderer);
             }
+
+            // 同上
+            if (level.Entities.FirstOrDefault(entity =>
+                    entity.GetType().FullName == "VivHelper.Entities.HoldableBarrierRenderer") is Entity
+                holdableBarrierRenderer) {
+                result.Add(holdableBarrierRenderer);
+            }
+
 
             return result;
         }

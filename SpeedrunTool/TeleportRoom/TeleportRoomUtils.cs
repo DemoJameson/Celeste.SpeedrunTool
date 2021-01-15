@@ -5,6 +5,7 @@ using System.Linq;
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
+using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Force.DeepCloner;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -90,6 +91,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                 if (!fromHistory) {
                     BetterMapEditor.Instance.FixTeleportProblems(session, session.RespawnPoint);
                 }
+
                 session.DeepCloneTo(level.Session);
 
                 // 修改自 level.TeleportTo(player, session.Level, Player.IntroTypes.Respawn);
@@ -97,6 +99,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                 if (level.Entities.FindFirst<SpeedrunTimerDisplay>() is Entity timer) {
                     level.Remove(timer);
                 }
+
                 level.UnloadLevel();
 
                 // 修复：章节计时器在章节完成隐藏后传送无法重新显示
@@ -116,6 +119,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                 if (!fromHistory) {
                     BetterMapEditor.ShouldFixTeleportProblems = true;
                 }
+
                 Engine.Scene = new LevelLoader(session.DeepClone());
             }
         }
@@ -141,10 +145,12 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                 return;
             }
 
-            if (Mappings.LastRoom.Pressed() && !self.Paused) {
+            if (self.Paused || StateManager.Instance.State != StateManager.States.None) return;
+
+            if (Mappings.LastRoom.Pressed()) {
                 Mappings.LastRoom.ConsumePress();
                 TeleportToLastRoom(self);
-            } else if (Mappings.NextRoom.Pressed() && !self.Paused) {
+            } else if (Mappings.NextRoom.Pressed()) {
                 Mappings.NextRoom.ConsumePress();
                 TeleportToNextRoom(self);
             }
@@ -156,6 +162,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                 if (level.Session.Level == RoomHistory[HistoryIndex].Level) {
                     HistoryIndex--;
                 }
+
                 TeleportTo(RoomHistory[HistoryIndex]);
                 return;
             }

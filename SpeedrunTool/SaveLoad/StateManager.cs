@@ -41,9 +41,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private Dictionary<EverestModule, EverestModuleSession> savedModSessions;
 
-        private States state = States.None;
+        public States State = States.None;
 
-        private enum States {
+        public enum States {
             None,
             Loading,
             Waiting,
@@ -77,7 +77,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             orig(self);
             CheckButton(self);
 
-            if (state == States.Waiting && self.Frozen) {
+            if (State == States.Waiting && self.Frozen) {
                 self.Foreground.Update(self);
                 self.Background.Update(self);
             }
@@ -88,7 +88,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (self is Overworld) ClearState();
             if (IsSaved) {
                 if (self is Level) {
-                    state = States.None; // 修复：读档途中按下 PageDown/Up 后无法存档
+                    State = States.None; // 修复：读档途中按下 PageDown/Up 后无法存档
                     PreCloneEntities(savedEntities);
                 }
 
@@ -167,9 +167,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private bool LoadState(bool tas) {
             if (!(Engine.Scene is Level level)) return false;
-            if (level.Paused || state != States.None || !IsSaved) return false;
+            if (level.Paused || State != States.None || !IsSaved) return false;
 
-            state = States.Loading;
+            State = States.Loading;
             DeepClonerUtils.SetSharedDeepCloneState(preCloneTask?.Result);
 
             // 修复问题：死亡瞬间读档 PlayerDeadBody 没被清除，导致读档完毕后 madeline 自动 retry
@@ -216,7 +216,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 ClearScreenWipe(level);
 
                 if (!tas && Settings.FreezeAfterLoadState) {
-                    state = States.Waiting;
+                    State = States.Waiting;
                     level.PauseLock = true;
                 } else {
                     LoadStateComplete(level);
@@ -233,7 +233,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             foreach (EventInstance instance in playingEventInstances) instance.start();
             playingEventInstances.Clear();
             DeepClonerUtils.ClearSharedDeepCloneState();
-            state = States.None;
+            State = States.None;
         }
 
         private void ClearScreenWipe(Level level) {
@@ -288,7 +288,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // Mod
             SaveLoadAction.OnClearState();
 
-            state = States.None;
+            State = States.None;
         }
 
         private void UnloadLevelEntities(Level level) {
@@ -424,7 +424,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private bool IsAllowSave(Level level, Player player) {
-            return state == States.None
+            return State == States.None
                    && !level.Paused && !level.Transitioning && !level.InCutscene && !level.SkippingCutscene
                    && player != null && !player.Dead && !DisabledSaveStates.Contains(player.StateMachine.State)
                    && IsNotCollectingHeart(level);
@@ -440,14 +440,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (Mappings.Save.Pressed()) {
                 Mappings.Save.ConsumePress();
                 SaveState(false);
-            } else if (Mappings.Load.Pressed() && !level.Paused && state == States.None) {
+            } else if (Mappings.Load.Pressed() && !level.Paused && State == States.None) {
                 Mappings.Load.ConsumePress();
                 if (IsSaved) {
                     LoadState(false);
                 } else if (!level.Frozen) {
                     level.Add(new MiniTextbox(DialogIds.DialogNotSaved).IgnoreSaveLoad());
                 }
-            } else if (Mappings.Clear.Pressed() && !level.Paused && state == States.None) {
+            } else if (Mappings.Clear.Pressed() && !level.Paused && State == States.None) {
                 Mappings.Clear.ConsumePress();
                 ClearState();
                 if (IsNotCollectingHeart(level) && !level.Completed) {
@@ -459,7 +459,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 Mappings.SwitchAutoLoadState.ConsumePress();
                 Settings.AutoLoadAfterDeath = !Settings.AutoLoadAfterDeath;
                 SpeedrunToolModule.Instance.SaveSettings();
-            } else if (state == States.Waiting && !level.Paused
+            } else if (State == States.Waiting && !level.Paused
                                                && (Input.Dash.Pressed
                                                    || Input.Grab.Check
                                                    || Input.Jump.Check

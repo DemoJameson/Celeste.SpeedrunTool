@@ -236,7 +236,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             Add(sprite);
         }
 
-        public static bool IsExist => Engine.Scene is Level level && level.Entities.FindFirst<EndPoint>() != null;
+        public static bool IsExist => Engine.Scene is Level level && level.Tracker.GetEntity<EndPoint>() != null;
 
         private static List<EndPoint> EmptyList = new List<EndPoint>();
         public static List<EndPoint> All {

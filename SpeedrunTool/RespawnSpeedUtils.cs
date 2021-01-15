@@ -1,8 +1,9 @@
+using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
 using On.Monocle;
 
 namespace Celeste.Mod.SpeedrunTool {
-    public class RespawnSpeedUtils {
+    public static class RespawnSpeedUtils {
         public static void Load() {
             Engine.Update += RespawnSpeed;
         }
@@ -22,7 +23,7 @@ namespace Celeste.Mod.SpeedrunTool {
                 return;
             }
 
-            Player player = level.Entities.FindFirst<Player>();
+            Player player = level.GetPlayer();
 
             // level 场景中 player == null 代表人物死亡
 			// if player is null, Madeline is dead

@@ -19,7 +19,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static Player GetPlayer(this Scene scene) {
-            if (scene.GetLevel()?.Entities.FindFirst<Player>() is Player player) {
+            if (scene.GetLevel()?.Tracker.GetEntity<Player>() is Player player) {
                 return player;
             }
 

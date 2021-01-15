@@ -74,7 +74,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         }
 
         private void CreateEndPoint(Level level, bool additional = false) {
-            if (level.Entities.FindFirst<Player>() is Player player && !player.Dead) {
+            if (level.GetPlayer() is Player player && !player.Dead) {
                 if (!additional) {
                     EndPoint.All.ForEach(point => point.RemoveSelf());
                 }

@@ -244,7 +244,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         // 分两步的原因是更早的停止音乐，听起来更舒服更好一点
         private void RestoreCassetteBlockManager1(Level level) {
-            if (level.Entities.FindFirst<CassetteBlockManager>() is CassetteBlockManager manager) {
+            if (level.Tracker.GetEntity<CassetteBlockManager>() is CassetteBlockManager manager) {
                 if (manager.GetFieldValue("snapshot") is EventInstance snapshot) {
                     snapshot.start();
                 }
@@ -252,7 +252,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private void RestoreCassetteBlockManager2(Level level) {
-            if (level.Entities.FindFirst<CassetteBlockManager>() is CassetteBlockManager manager) {
+            if (level.Tracker.GetEntity<CassetteBlockManager>() is CassetteBlockManager manager) {
                 if (manager.GetFieldValue("sfx") is EventInstance sfx &&
                     !(bool) manager.GetFieldValue("isLevelMusic")) {
                     if ((int) manager.GetFieldValue("leadBeats") <= 0) {
@@ -380,12 +380,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             // 存储的 Entity 被清除时会调用 Renderer，所以 Renderer 应该放到最后
-            if (level.Entities.FindFirst<SeekerBarrierRenderer>() is Entity seekerBarrierRenderer) {
+            if (level.Tracker.GetEntity<SeekerBarrierRenderer>() is Entity seekerBarrierRenderer) {
                 result.Add(seekerBarrierRenderer);
             }
 
             // 同上
-            if (level.Entities.FindFirst<LightningRenderer>() is Entity lightningRenderer) {
+            if (level.Tracker.GetEntity<LightningRenderer>() is Entity lightningRenderer) {
                 result.Add(lightningRenderer);
             }
 
@@ -423,7 +423,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private bool IsNotCollectingHeart(Level level) {
-            return !level.Entities.FindAll<HeartGem>().Any(heart => (bool) heart.GetFieldValue("collected"));
+            return !level.Tracker.GetEntities<HeartGem>().Any(heart => (bool) heart.GetFieldValue("collected"));
         }
 
         private void CheckButton(Level level) {

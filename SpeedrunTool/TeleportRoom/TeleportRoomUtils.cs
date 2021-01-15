@@ -65,7 +65,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
 
             // 似乎通过地图选择旗子作为传送点会预设旗子，所以从第二面碰到的旗子开始才开始记录位置
             if (flag.StartsWith(FlagPrefix) && setTo && self.Flags.Count(input => input.StartsWith(FlagPrefix)) >= 2) {
-                if (Engine.Scene is Level level && level.Entities.FindFirst<Player>() is Player player) {
+                if (Engine.Scene is Level level && level.GetPlayer() is Player player) {
                     player.Add(new Coroutine(WaitSessionReady(self)));
                 }
             }

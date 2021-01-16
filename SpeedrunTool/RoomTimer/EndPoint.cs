@@ -119,7 +119,9 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 Activated = true;
                 SceneAs<Level>().Displacement.AddBurst(TopCenter, 0.5f, 4f, 24f, 0.5f);
                 Scene.Add(new ConfettiRenderer(TopCenter));
-                Audio.Play("event:/game/07_summit/checkpoint_confetti", TopCenter + Vector2.UnitX);
+                if (All[0] == this) {
+                    Audio.Play("event:/game/07_summit/checkpoint_confetti", TopCenter + Vector2.UnitX);
+                }
             }
         }
 

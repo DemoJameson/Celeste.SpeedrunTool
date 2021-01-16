@@ -431,7 +431,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private bool IsNotCollectingHeart(Level level) {
-            return !level.Tracker.GetEntities<HeartGem>().Any(heart => (bool) heart.GetFieldValue("collected"));
+            return !level.Entities.FindAll<HeartGem>().Any(heart => (bool) heart.GetFieldValue("collected"));
         }
 
         private void CheckButton(Level level) {

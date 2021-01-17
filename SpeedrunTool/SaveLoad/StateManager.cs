@@ -31,6 +31,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private bool IsSaved => savedLevel != null;
         private List<Entity> savedEntities;
         private Dictionary<Type, List<Entity>> savedOrderTrackerEntities;
+        private Dictionary<Type, List<Component>> savedOrderTrackerComponents;
 
         private Task<DeepCloneState> preCloneTask;
 
@@ -137,11 +138,24 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedLevel.Foreground = level.Foreground.DeepCloneShared();
 
             savedEntities = GetEntitiesNeedDeepClone(level).DeepCloneShared();
+
             savedOrderTrackerEntities = new Dictionary<Type, List<Entity>>();
             foreach (Entity savedEntity in savedEntities) {
                 Type type = savedEntity.GetType();
+                if(savedOrderTrackerEntities.ContainsKey(type)) continue;
+
                 if (level.Tracker.Entities.ContainsKey(type)) {
                     savedOrderTrackerEntities[type] = level.Tracker.Entities[type].DeepCloneShared();
+                }
+            }
+
+            savedOrderTrackerComponents = new Dictionary<Type, List<Component>>();
+            foreach (Component component in savedEntities.SelectMany(entity => entity.Components)) {
+                Type type = component.GetType();
+                if(savedOrderTrackerComponents.ContainsKey(type)) continue;
+
+                if (level.Tracker.Components.ContainsKey(type)) {
+                    savedOrderTrackerComponents[type] = level.Tracker.Components[type].DeepCloneShared();
                 }
             }
 
@@ -287,8 +301,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             savedModSessions = null;
             savedLevel = null;
+            savedEntities?.Clear();
             savedEntities = null;
+            savedOrderTrackerEntities?.Clear();
             savedOrderTrackerEntities = null;
+            savedOrderTrackerComponents?.Clear();
+            savedOrderTrackerComponents = null;
 
             preCloneTask = null;
 
@@ -353,7 +371,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             level.Entities.SetFieldValue("unsorted", false);
             entities.Sort(EntityList.CompareDepth);
 
-            // restore tracker entities order
+            // restore tracker order
             Dictionary<Type, List<Entity>> orderedTrackerEntities = savedOrderTrackerEntities.DeepCloneShared();
             foreach (Type type in orderedTrackerEntities.Keys) {
                 if (!level.Tracker.Entities.ContainsKey(type)) continue;
@@ -361,8 +379,23 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 List<Entity> unorderedList = level.Tracker.Entities[type];
                 unorderedList.Sort((entity1, entity2) => {
                     var index1 = orderedList.IndexOf(entity1);
+                    if (index1 == -1) return 0;
                     var index2 = orderedList.IndexOf(entity2);
-                    if (index1 == -1 || index2 == -1) return 0;
+                    if (index2 == -1) return 0;
+                    return index1 - index2;
+                });
+            }
+
+            Dictionary<Type, List<Component>> orderedTrackerComponents = savedOrderTrackerComponents.DeepCloneShared();
+            foreach (Type type in orderedTrackerComponents.Keys) {
+                if (!level.Tracker.Components.ContainsKey(type)) continue;
+                List<Component> orderedList = orderedTrackerComponents[type];
+                List<Component> unorderedList = level.Tracker.Components[type];
+                unorderedList.Sort((component1, component2) => {
+                    var index1 = orderedList.IndexOf(component1);
+                    if (index1 == -1) return 0;
+                    var index2 = orderedList.IndexOf(component2);
+                    if (index2 == -1) return 0;
                     return index1 - index2;
                 });
             }

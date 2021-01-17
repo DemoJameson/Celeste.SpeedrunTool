@@ -10,7 +10,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         private const BindingFlags InstanceAnyVisibilityDeclaredOnly = InstanceAnyVisibility | BindingFlags.DeclaredOnly;
         private const BindingFlags StaticInstanceAnyVisibility = InstanceAnyVisibility | BindingFlags.Static;
 
-        private static readonly object[] NoArg = {};
+        private static readonly object[] NoArg = { };
 
         private static readonly HashSet<Type> SimpleTypes = new HashSet<Type> {
             typeof(byte), typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong),
@@ -171,7 +171,8 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return fieldInfo;
         }
 
-        public static FieldInfo[] GetFieldInfos(this Type type, BindingFlags bindingFlags = StaticInstanceAnyVisibility, bool filterBackingField = false) {
+        public static FieldInfo[] GetFieldInfos(this Type type, BindingFlags bindingFlags = StaticInstanceAnyVisibility,
+            bool filterBackingField = false) {
             string key = $"ReflectionExtensions-GetFieldInfos-{bindingFlags}-{filterBackingField}";
 
             FieldInfo[] fieldInfos = type.GetExtendedDataValue<FieldInfo[]>(key);
@@ -189,15 +190,20 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
         public static List<FieldInfo> GetAllFieldInfos(this Type type, BindingFlags bindingFlags = StaticInstanceAnyVisibility,
             bool filterBackingField = false) {
-            List<FieldInfo> result = new List<FieldInfo>();
-            while (type != null && type.IsSubclassOf(typeof(object))) {
-                var fieldInfos = type.GetFieldInfos(bindingFlags, filterBackingField);
-                foreach (FieldInfo fieldInfo in fieldInfos) {
-                    if (result.Contains(fieldInfo)) continue;
-                    result.Add(fieldInfo);
-                }
+             string key = $"ReflectionExtensions-GetAllFieldInfos-{bindingFlags}-{filterBackingField}";
+            List<FieldInfo> result = type.GetExtendedDataValue<List<FieldInfo>>(key);
+            if (result == null) {
+                result = new List<FieldInfo>();
+                while (type != null && type.IsSubclassOf(typeof(object))) {
+                    var fieldInfos = type.GetFieldInfos(bindingFlags, filterBackingField);
+                    foreach (FieldInfo fieldInfo in fieldInfos) {
+                        if (result.Contains(fieldInfo)) continue;
+                        result.Add(fieldInfo);
+                    }
 
-                type = type.BaseType;
+                    type = type.BaseType;
+                }
+                type.SetExtendedDataValue(key, result);
             }
 
             return result;

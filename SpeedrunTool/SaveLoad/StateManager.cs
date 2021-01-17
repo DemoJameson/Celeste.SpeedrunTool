@@ -30,6 +30,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private Level savedLevel;
         private bool IsSaved => savedLevel != null;
         private List<Entity> savedEntities;
+        private Dictionary<Type, List<Entity>> savedOrderTrackerEntities;
 
         private Task<DeepCloneState> preCloneTask;
 
@@ -136,6 +137,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedLevel.Foreground = level.Foreground.DeepCloneShared();
 
             savedEntities = GetEntitiesNeedDeepClone(level).DeepCloneShared();
+            savedOrderTrackerEntities = new Dictionary<Type, List<Entity>>();
+            foreach (Entity savedEntity in savedEntities) {
+                Type type = savedEntity.GetType();
+                if (level.Tracker.Entities.ContainsKey(type)) {
+                    savedOrderTrackerEntities[type] = level.Tracker.Entities[type].DeepCloneShared();
+                }
+            }
 
             // External
             savedFreezeTimer = Engine.FreezeTimer;
@@ -280,6 +288,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedModSessions = null;
             savedLevel = null;
             savedEntities = null;
+            savedOrderTrackerEntities = null;
 
             preCloneTask = null;
 
@@ -340,8 +349,23 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     pools[type].Dequeue();
                 }
             }
+
             level.Entities.SetFieldValue("unsorted", false);
             entities.Sort(EntityList.CompareDepth);
+
+            // restore tracker entities order
+            Dictionary<Type, List<Entity>> orderedTrackerEntities = savedOrderTrackerEntities.DeepCloneShared();
+            foreach (Type type in orderedTrackerEntities.Keys) {
+                if (!level.Tracker.Entities.ContainsKey(type)) continue;
+                List<Entity> orderedList = orderedTrackerEntities[type];
+                List<Entity> unorderedList = level.Tracker.Entities[type];
+                unorderedList.Sort((entity1, entity2) => {
+                    var index1 = orderedList.IndexOf(entity1);
+                    var index2 = orderedList.IndexOf(entity2);
+                    if (index1 == -1 || index2 == -1) return 0;
+                    return index1 - index2;
+                });
+            }
         }
 
         private void RestoreLevel(Level level) {

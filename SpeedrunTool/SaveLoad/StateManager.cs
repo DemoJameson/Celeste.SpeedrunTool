@@ -30,8 +30,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private Level savedLevel;
         private bool IsSaved => savedLevel != null;
         private List<Entity> savedEntities;
-        private Dictionary<Type, List<Entity>> savedOrderTrackerEntities;
-        private Dictionary<Type, List<Component>> savedOrderTrackerComponents;
+        private Dictionary<Type, List<Entity>> savedOrderedTrackerEntities;
+        private Dictionary<Type, List<Component>> savedOrderedTrackerComponents;
 
         private Task<DeepCloneState> preCloneTask;
 
@@ -139,23 +139,23 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             savedEntities = GetEntitiesNeedDeepClone(level).DeepCloneShared();
 
-            savedOrderTrackerEntities = new Dictionary<Type, List<Entity>>();
+            savedOrderedTrackerEntities = new Dictionary<Type, List<Entity>>();
             foreach (Entity savedEntity in savedEntities) {
                 Type type = savedEntity.GetType();
-                if(savedOrderTrackerEntities.ContainsKey(type)) continue;
+                if(savedOrderedTrackerEntities.ContainsKey(type)) continue;
 
                 if (level.Tracker.Entities.ContainsKey(type)) {
-                    savedOrderTrackerEntities[type] = level.Tracker.Entities[type].DeepCloneShared();
+                    savedOrderedTrackerEntities[type] = level.Tracker.Entities[type].DeepCloneShared();
                 }
             }
 
-            savedOrderTrackerComponents = new Dictionary<Type, List<Component>>();
+            savedOrderedTrackerComponents = new Dictionary<Type, List<Component>>();
             foreach (Component component in savedEntities.SelectMany(entity => entity.Components)) {
                 Type type = component.GetType();
-                if(savedOrderTrackerComponents.ContainsKey(type)) continue;
+                if(savedOrderedTrackerComponents.ContainsKey(type)) continue;
 
                 if (level.Tracker.Components.ContainsKey(type)) {
-                    savedOrderTrackerComponents[type] = level.Tracker.Components[type].DeepCloneShared();
+                    savedOrderedTrackerComponents[type] = level.Tracker.Components[type].DeepCloneShared();
                 }
             }
 
@@ -303,10 +303,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedLevel = null;
             savedEntities?.Clear();
             savedEntities = null;
-            savedOrderTrackerEntities?.Clear();
-            savedOrderTrackerEntities = null;
-            savedOrderTrackerComponents?.Clear();
-            savedOrderTrackerComponents = null;
+            savedOrderedTrackerEntities?.Clear();
+            savedOrderedTrackerEntities = null;
+            savedOrderedTrackerComponents?.Clear();
+            savedOrderedTrackerComponents = null;
 
             preCloneTask = null;
 
@@ -372,7 +372,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             entities.Sort(EntityList.CompareDepth);
 
             // restore tracker order
-            Dictionary<Type, List<Entity>> orderedTrackerEntities = savedOrderTrackerEntities.DeepCloneShared();
+            Dictionary<Type, List<Entity>> orderedTrackerEntities = savedOrderedTrackerEntities.DeepCloneShared();
             foreach (Type type in orderedTrackerEntities.Keys) {
                 if (!level.Tracker.Entities.ContainsKey(type)) continue;
                 List<Entity> orderedList = orderedTrackerEntities[type];
@@ -386,7 +386,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 });
             }
 
-            Dictionary<Type, List<Component>> orderedTrackerComponents = savedOrderTrackerComponents.DeepCloneShared();
+            Dictionary<Type, List<Component>> orderedTrackerComponents = savedOrderedTrackerComponents.DeepCloneShared();
             foreach (Type type in orderedTrackerComponents.Keys) {
                 if (!level.Tracker.Components.ContainsKey(type)) continue;
                 List<Component> orderedList = orderedTrackerComponents[type];

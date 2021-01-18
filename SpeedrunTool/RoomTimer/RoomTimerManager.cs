@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -28,7 +27,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             On.Celeste.Level.Update += Timing;
             On.Celeste.Level.Update += ProcessButtons;
             On.Celeste.Level.NextLevel += UpdateTimerStateOnNextLevel;
-            On.Celeste.Session.SetFlag += UpdateTimerStateOnTouchFlag;
+            On.Celeste.SummitCheckpoint.Update += UpdateTimerStateOnTouchFlag;
         }
 
         public void Unload() {
@@ -37,7 +36,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             On.Celeste.Level.Update -= Timing;
             On.Celeste.Level.Update -= ProcessButtons;
             On.Celeste.Level.NextLevel -= UpdateTimerStateOnNextLevel;
-            On.Celeste.Session.SetFlag -= UpdateTimerStateOnTouchFlag;
+            On.Celeste.SummitCheckpoint.Update -= UpdateTimerStateOnTouchFlag;
         }
 
         private void ProcessButtons(On.Celeste.Level.orig_Update orig, Level self) {
@@ -123,14 +122,10 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             UpdateTimerState();
         }
 
-        private void UpdateTimerStateOnTouchFlag(On.Celeste.Session.orig_SetFlag origSetFlag, Session session,
-            string flag, bool setTo) {
-            origSetFlag(session, flag, setTo);
-
-            // 似乎通过地图选择旗子作为传送点会预设旗子，所以从第二面碰到的旗子开始才改变计时状态
-            // F1 F2 F3 因为有保存旗子状态所以不受影响
-            if (flag.StartsWith(FlagPrefix) && setTo &&
-                session.Flags.Count(input => input.StartsWith(FlagPrefix)) >= 2) {
+        private void UpdateTimerStateOnTouchFlag(On.Celeste.SummitCheckpoint.orig_Update orig, SummitCheckpoint self) {
+            bool lastActivated = self.Activated;
+            orig(self);
+            if (!lastActivated && self.Activated) {
                 UpdateTimerState();
             }
         }

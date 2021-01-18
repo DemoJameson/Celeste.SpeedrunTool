@@ -27,7 +27,6 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
 
         private static readonly Color StarFlyColor = Calc.HexToColor("ffd65c");
         private readonly Facings facing;
-        public readonly string LevelName;
         public bool Activated;
         private PlayerHair playerHair;
         private PlayerSprite playerSprite;
@@ -37,7 +36,6 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             Tag = Tags.Global;
 
             facing = player.Facing;
-            LevelName = player.SceneAs<Level>().Session.Level;
 
             Collidable = false;
             Collider = new Hitbox(8f, 11f, -4f, -11f);

@@ -203,8 +203,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             level.SetFieldValue("transition", null); // 允许切换房间时读档  // Allow reading fields when switching rooms
             level.Displacement.Clear(); // 避免冲刺后读档残留爆破效果  // Remove dash displacement effect
-            level.ParticlesBG.Clear();
             level.Particles.Clear();
+            level.ParticlesBG.Clear();
             level.ParticlesFG.Clear();
             TrailManager.Clear(); // 清除冲刺的残影  // Remove dash trail
 

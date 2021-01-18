@@ -19,13 +19,14 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
         private static readonly List<Session> RoomHistory = new List<Session>();
         private static int HistoryIndex = -1;
         private static bool AllowRecord;
+        private static Vector2? RespawnPoint;
 
         public static void Load() {
             On.Celeste.Level.Update += LevelOnUpdate;
             On.Celeste.Level.LoadLevel += LevelOnLoadLevel;
             On.Celeste.Level.TransitionRoutine += LevelOnTransitionRoutine;
             On.Celeste.LevelExit.ctor += LevelExitOnCtor;
-            On.Celeste.Session.SetFlag += SessionOnSetFlag;
+            On.Celeste.SummitCheckpoint.Update += SummitCheckpointOnUpdate;
             MapEditor.LoadLevel += MapEditorOnLoadLevel;
             On.Celeste.LevelLoader.ctor += LevelLoaderOnCtor;
         }
@@ -35,14 +36,28 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
             On.Celeste.Level.LoadLevel -= LevelOnLoadLevel;
             On.Celeste.Level.TransitionRoutine -= LevelOnTransitionRoutine;
             On.Celeste.LevelExit.ctor -= LevelExitOnCtor;
-            On.Celeste.Session.SetFlag -= SessionOnSetFlag;
+            On.Celeste.SummitCheckpoint.Update -= SummitCheckpointOnUpdate;
             MapEditor.LoadLevel -= MapEditorOnLoadLevel;
             On.Celeste.LevelLoader.ctor -= LevelLoaderOnCtor;
+        }
+
+        private static void SummitCheckpointOnUpdate(On.Celeste.SummitCheckpoint.orig_Update orig, SummitCheckpoint self) {
+            bool lastActivated = self.Activated;
+            orig(self);
+            if (!lastActivated && self.Activated) {
+                if (Engine.Scene is Level level && level.GetPlayer() is Player player) {
+                    player.Add(new Coroutine(WaitSessionReady(level.Session)));
+                }
+            }
         }
 
         private static void LevelLoaderOnCtor(On.Celeste.LevelLoader.orig_ctor orig, LevelLoader self, Session session,
             Vector2? startPosition) {
             orig(self, session, startPosition);
+            if (RespawnPoint.HasValue) {
+                session.RespawnPoint = RespawnPoint;
+                RespawnPoint = null;
+            }
             if (AllowRecord) {
                 RecordTransitionRoom(session);
             }
@@ -60,18 +75,6 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
             RecordTransitionRoom(self);
         }
 
-        private static void SessionOnSetFlag(On.Celeste.Session.orig_SetFlag orig, Session self, string flag,
-            bool setTo) {
-            orig(self, flag, setTo);
-
-            // 似乎通过地图选择旗子作为传送点会预设旗子，所以从第二面碰到的旗子开始才开始记录位置
-            if (flag.StartsWith(FlagPrefix) && setTo && self.Flags.Count(input => input.StartsWith(FlagPrefix)) >= 2) {
-                if (Engine.Scene is Level level && level.GetPlayer() is Player player) {
-                    player.Add(new Coroutine(WaitSessionReady(self)));
-                }
-            }
-        }
-
         private static void TeleportTo(Session session, bool fromHistory = false) {
             if (SpeedrunToolModule.Settings.FastTeleport && Engine.Scene is Level level && level.GetPlayer() is Player player) {
                 // 修复问题：死亡瞬间传送 PlayerDeadBody 没被清除，导致传送完毕后 madeline 自动爆炸
@@ -83,8 +86,8 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
 
                 level.SetFieldValue("transition", null); // 允许切换房间时传送
                 level.Displacement.Clear(); // 避免冲刺后残留爆破效果
-                level.ParticlesBG.Clear();
                 level.Particles.Clear();
+                level.ParticlesBG.Clear();
                 level.ParticlesFG.Clear();
                 TrailManager.Clear(); // 清除冲刺的残影
 
@@ -120,6 +123,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                     BetterMapEditor.ShouldFixTeleportProblems = true;
                 }
 
+                RespawnPoint = session.RespawnPoint;
                 Engine.Scene = new LevelLoader(session.DeepClone());
             }
         }
@@ -177,6 +181,11 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                 return;
             }
 
+            if (SearchSummitCheckpoint(false, level)) {
+                TeleportTo(level.Session);
+                return;
+            }
+
             int index = levelDatas.IndexOf(currentLevelData);
             if (index <= 0) {
                 return;
@@ -195,6 +204,8 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
 
             level.Session.Level = lastLevelData.Name;
             level.Session.RespawnPoint = null;
+
+            SearchSummitCheckpoint(false, lastLevelData, level);
             TeleportTo(level.Session);
         }
 
@@ -215,7 +226,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                 return;
             }
 
-            if (SearchSummitCheckpoint(level)) {
+            if (SearchSummitCheckpoint(true, level)) {
                 // 根据数据跳到下一个房间也需要记录
                 RecordAndTeleport(level.Session);
                 return;
@@ -240,44 +251,67 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
             level.Session.Level = nextLevelData.Name;
             level.Session.RespawnPoint = null;
 
-            SearchSummitCheckpoint(nextLevelData, level);
+            SearchSummitCheckpoint(true, nextLevelData, level);
             // 根据数据跳到下一个房间也需要记录
             RecordAndTeleport(level.Session);
         }
 
-        private static bool SearchSummitCheckpoint(Level level) {
+        private static bool SearchSummitCheckpoint(bool next, Level level) {
             // 查找当前房间是否有未触发的旗子，且旗子数现有的小，如果有则跳到旗子处
-            int currentFlagNumber = -1;
+            int currentFlagNumber = int.MaxValue;
+
             foreach (string flag in level.Session.Flags) {
                 if (!flag.StartsWith(FlagPrefix)) {
                     continue;
                 }
 
                 if (int.TryParse(flag.Replace(FlagPrefix, ""), out int flagNumber)) {
-                    currentFlagNumber = Math.Max(currentFlagNumber, flagNumber);
+                    currentFlagNumber = Math.Min(currentFlagNumber, flagNumber);
                 }
+            }
+
+            if (currentFlagNumber == int.MaxValue && !next) {
+                currentFlagNumber = -1;
             }
 
             List<SummitCheckpoint> flagList = level.Entities.FindAll<SummitCheckpoint>()
                 .Where(checkpoint => !checkpoint.Activated).ToList();
-            flagList.Sort((first, second) => second.Number - first.Number);
-            if (flagList.Count > 0 && flagList[0].Number < currentFlagNumber) {
-                level.Session.RespawnPoint = level.GetSpawnPoint(flagList[0].Position);
-                level.Session.SetFlag(FlagPrefix + flagList[0].Number);
+
+            // from samll to big
+            flagList.Sort((first, second) => first.Number - second.Number);
+
+            if (flagList.Count > 0) {
+                SummitCheckpoint summitCheckpoint = null;
+                if (next && flagList.LastOrDefault(checkpoint => checkpoint.Number < currentFlagNumber) is SummitCheckpoint biggest) {
+                    summitCheckpoint = biggest;
+                } else if (!next && flagList.FirstOrDefault(checkpoint => checkpoint.Number > currentFlagNumber) is SummitCheckpoint smallest) {
+                    summitCheckpoint = smallest;
+                }
+
+                if (summitCheckpoint == null) return false;
+
+                level.Session.RespawnPoint = level.GetSpawnPoint(summitCheckpoint.Position);
+                level.Session.SetFlag(FlagPrefix + summitCheckpoint.Number);
                 return true;
             }
 
             return false;
         }
 
-        private static void SearchSummitCheckpoint(LevelData levelData, Level level) {
-            // 查找下个房间是否有旗子，如果有则跳到旗子处
+        private static void SearchSummitCheckpoint(bool next, LevelData levelData, Level level) {
+            // 查找上/下个房间是否有旗子，如果有则跳到旗子处
             List<EntityData> flagList = levelData.Entities.Where(data => data.Name == "summitcheckpoint").ToList();
 
-            flagList.Sort((first, second) => second.Int("number") - first.Int("number"));
+            flagList.Sort((first, second) => first.Int("number") - second.Int("number"));
             if (flagList.Count > 0) {
-                level.Session.SetFlag(FlagPrefix + flagList[0].Int("number"));
-                level.Session.RespawnPoint = level.GetSpawnPoint(flagList[0].Position);
+                EntityData summitCheckpoint;
+                if (next) {
+                    summitCheckpoint = flagList.Last();
+                } else {
+                    summitCheckpoint = flagList.First();
+                }
+                level.Session.RespawnPoint = level.GetSpawnPoint(levelData.Position+summitCheckpoint.Position);
+                level.Session.SetFlag(FlagPrefix + summitCheckpoint.Int("number"));
             }
         }
 

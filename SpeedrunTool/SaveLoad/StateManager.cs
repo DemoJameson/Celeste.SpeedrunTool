@@ -28,7 +28,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         };
 
         private Level savedLevel;
-        private bool IsSaved => savedLevel != null;
+
+        // public for tas
+        public bool IsSaved => savedLevel != null;
+
         private List<Entity> savedEntities;
         private Dictionary<Type, List<Entity>> savedOrderedTrackerEntities;
         private Dictionary<Type, List<Component>> savedOrderedTrackerComponents;
@@ -231,6 +234,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // 修复问题：未打开自动读档时，死掉按下确认键后读档完成会接着执行 Reload 复活方法
             // Fix: When AutoLoadStateAfterDeath is off, if manually LoadState() after death, level.Reload() will still be executed.
             ClearScreenWipe(level);
+
+            if (tas) {
+                LoadStateComplete(level);
+                return true;
+            }
 
             level.Frozen = true; // 加一个转场等待，避免太突兀   // Add a pause to avoid being too abrupt
             level.TimerStopped = true; // 停止计时器  // Stop timer

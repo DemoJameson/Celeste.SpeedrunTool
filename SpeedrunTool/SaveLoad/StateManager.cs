@@ -45,6 +45,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         public States State = States.None;
 
+        private bool savedByTas;
+
         public enum States {
             None,
             Loading,
@@ -104,6 +106,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (SpeedrunToolModule.Settings.Enabled
                 && SpeedrunToolModule.Settings.AutoLoadAfterDeath
                 && IsSaved
+                && !savedByTas
                 && !(bool) self.GetFieldValue("finished")
                 && Engine.Scene is Level level
             ) {
@@ -127,6 +130,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (!IsAllowSave(level, level.GetPlayer())) return false;
 
             ClearState(false);
+
+            savedByTas = tas;
 
             savedLevel = level.ShallowClone();
             savedLevel.Lighting = level.Lighting.ShallowClone();
@@ -314,6 +319,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             // Mod
             SaveLoadAction.OnClearState();
+
+            savedByTas = false;
 
             State = States.None;
         }

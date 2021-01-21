@@ -92,7 +92,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private void ClearStateWhenSwitchScene(On.Monocle.Scene.orig_Begin orig, Scene self) {
             orig(self);
-            if (self is Overworld) ClearState();
+            if (self is Overworld) ClearState(true);
             if (IsSaved) {
                 if (self is Level) {
                     State = States.None; // 修复：读档途中按下 PageDown/Up 后无法存档
@@ -100,7 +100,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
 
                 if (self.GetSession() is Session session && session.Area != savedLevel.Session.Area) {
-                    ClearState();
+                    ClearState(true);
                 }
             }
         }
@@ -297,18 +297,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
         }
 
-        private void ClearState(bool clearEndPoint = true) {
+        // public for tas
+        // ReSharper disable once UnusedMember.Global
+        public void ClearState() {
+            ClearState(false);
+        }
+        private void ClearState(bool clearEndPoint) {
             if (Engine.Scene is Level level && IsNotCollectingHeart(level) && !level.Completed) {
                 level.Frozen = false;
                 level.PauseLock = false;
             }
 
-            try {
-                RoomTimerManager.Instance.ClearPbTimes(clearEndPoint);
-            } catch (NullReferenceException) {
-                // Don't know why it happened
-                // SpeedrunToolModule.Instance = null Exception
-            }
+            RoomTimerManager.Instance.ClearPbTimes(clearEndPoint);
 
             playingEventInstances.Clear();
 
@@ -521,12 +521,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
             } else if (Mappings.Clear.Pressed() && !level.Paused && State == States.None) {
                 Mappings.Clear.ConsumePress();
-                ClearState();
+                ClearState(true);
                 if (IsNotCollectingHeart(level) && !level.Completed) {
                     level.Add(new MiniTextbox(DialogIds.DialogClear).IgnoreSaveLoad());
                 }
             } else if (MInput.Keyboard.Check(Keys.F5) || Mappings.OpenDebugMap.Pressed()) {
-                ClearState();
+                ClearState(true);
             } else if (Mappings.SwitchAutoLoadState.Pressed() && !level.Paused) {
                 Mappings.SwitchAutoLoadState.ConsumePress();
                 Settings.AutoLoadAfterDeath = !Settings.AutoLoadAfterDeath;

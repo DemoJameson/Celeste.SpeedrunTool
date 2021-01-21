@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using FMOD.Studio;
 using Force.DeepCloner;
@@ -114,6 +113,22 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         // 在 Celeste.Mod.MaxHelpingHand.Entities.CustomizableRefill.<>c__DisplayClass0_0.<.ctor>b__0(Player player)
                         if (sourceObj is WeakReference sourceWeak) {
                             return new WeakReference(sourceWeak.Target.DeepClone(deepCloneState));
+                        }
+
+                        // 修复启用 CelesteNet 后保存状态时的崩溃
+                        // System.ObjectDisposedException: 无法访问已释放的对象。
+                        // 对象名:“RenderTarget2D”。
+                        if (sourceObj is RenderTarget2D renderTarget2D && renderTarget2D.IsDisposed) {
+                            return new RenderTarget2D(
+                                renderTarget2D.GraphicsDevice,
+                                renderTarget2D.Width,
+                                renderTarget2D.Height,
+                                renderTarget2D.LevelCount != 1,
+                                renderTarget2D.Format,
+                                renderTarget2D.DepthStencilFormat,
+                                0,
+                                renderTarget2D.RenderTargetUsage
+                            );
                         }
                     }
                 }

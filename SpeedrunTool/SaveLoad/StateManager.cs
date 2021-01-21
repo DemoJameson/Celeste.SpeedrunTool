@@ -250,7 +250,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 // 在 Celeste.Player.Removed(Scene scene)
                 ClearScreenWipe(level);
 
-                if (!tas && Settings.FreezeAfterLoadState) {
+                if (Settings.FreezeAfterLoadState) {
                     State = States.Waiting;
                     level.PauseLock = true;
                 } else {

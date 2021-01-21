@@ -105,6 +105,11 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         public override void Update() {
             base.Update();
 
+            if (!closing && ButtonConfigUi.Mappings.CheckDeathStatistics.Pressed()) {
+                ButtonConfigUi.Mappings.CheckDeathStatistics.ConsumePress();
+                OnESC?.Invoke();
+            }
+
             if (inputDelay > 0.0) {
                 inputDelay -= Engine.DeltaTime;
                 if (inputDelay <= 0.0) {

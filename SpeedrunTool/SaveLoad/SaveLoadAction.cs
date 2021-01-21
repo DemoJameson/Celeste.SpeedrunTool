@@ -64,12 +64,41 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         internal static void OnLoad() {
+            SupportMInput();
             SupportAudioMusic();
             SupportExtendedVariants();
             SupportMaxHelpingHand();
             SupportPandorasBox();
             SupportCrystallineHelper();
             SupportSpringCollab2020();
+        }
+
+        internal static void OnUnload() {
+            All.Clear();
+        }
+
+        private static void SupportMInput() {
+            Type type = typeof(MInput);
+            All.Add(new SaveLoadAction(
+                (savedValues, level) => {
+                    Dictionary<string,object> dictionary = new Dictionary<string, object>();
+                    dictionary["Active"] = MInput.Active;
+                    dictionary["Disabled"] = MInput.Disabled;
+                    dictionary["Keyboard"] = MInput.Keyboard;
+                    dictionary["Mouse"] = MInput.Mouse;
+                    dictionary["GamePads"] = MInput.GamePads;
+                    dictionary["VirtualInputs"] = type.GetFieldValue("VirtualInputs");
+                    savedValues[type] = dictionary.DeepCloneShared();
+                }, (savedValues, level) => {
+                    Dictionary<string,object> dictionary = savedValues[type].DeepCloneShared();
+                    MInput.Active = (bool) dictionary["Active"];
+                    MInput.Disabled = (bool) dictionary["Disabled"];
+                    type.SetPropertyValue("Keyboard", dictionary["Keyboard"]);
+                    type.SetPropertyValue("Mouse", dictionary["Mouse"]);
+                    type.SetPropertyValue("GamePads", dictionary["GamePads"]);
+                    type.SetPropertyValue("VirtualInputs", dictionary["VirtualInputs"]);
+                }
+                ));
         }
 
         private static void SupportCrystallineHelper() {
@@ -246,10 +275,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     (savedValues, level) => SaveStaticFieldValues(savedValues, jumpCountType, "jumpBuffer"),
                     (savedValues, level) => LoadStaticFieldValues(savedValues)));
             }
-        }
-
-        internal static void OnUnload() {
-            All.Clear();
         }
     }
 }

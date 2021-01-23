@@ -40,6 +40,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private float savedFreezeTimer;
         private float savedTimeRate;
+        private float savedDeltaTime;
+        private float savedRawDeltaTime;
+        private ulong savedFrameCounter;
         private float savedGlitchValue;
         private float savedDistortAnxiety;
         private float savedDistortGameRate;
@@ -170,6 +173,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // External
             savedFreezeTimer = Engine.FreezeTimer;
             savedTimeRate = Engine.TimeRate;
+            savedDeltaTime = Engine.DeltaTime;
+            savedRawDeltaTime = Engine.RawDeltaTime;
+            savedFrameCounter = Engine.FrameCounter;
             savedGlitchValue = Glitch.Value;
             savedDistortAnxiety = Distort.Anxiety;
             savedDistortGameRate = Distort.GameRate;
@@ -429,6 +435,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // External Static Field
             Engine.FreezeTimer = savedFreezeTimer;
             Engine.TimeRate = savedTimeRate;
+            typeof(Engine).SetPropertyValue("DeltaTime", savedDeltaTime);
+            typeof(Engine).SetPropertyValue("RawDeltaTime", savedRawDeltaTime);
+            typeof(Engine).SetPropertyValue("FrameCounter", savedFrameCounter);
             Glitch.Value = savedGlitchValue;
             Distort.Anxiety = savedDistortAnxiety;
             Distort.GameRate = savedDistortGameRate;

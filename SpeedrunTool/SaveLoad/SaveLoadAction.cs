@@ -158,27 +158,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                             "baseTimeRate",
                             "ourLastTimeRate",
                             "playerTimeRate",
-                            "hookAdded"
+                            "hookAdded",
+                            "targetPlayer",
+                            "lingeringTarget"
                         );
-                        // 直接克隆 WeakReference<T> 里面的 Target 不会被克隆，而且似乎会造成一些问题原因未知，体现为 Remirrored 3C 保存状态后自杀报错：
-                        // player.collider 的类型都变了
-                        // System.Exception: Collisions against the collider type are not implemented!
-                        // 在 Monocle.Collider.Collide(Collider collider)
-                        savedValues[timeFieldType]["-player-"] =
-                            timeFieldType.GetFieldValue("targetPlayer").GetPropertyValue("Target").DeepCloneShared();
-                        savedValues[timeFieldType]["-timeField-"] =
-                            timeFieldType.GetFieldValue("lingeringTarget").GetPropertyValue("Target").DeepCloneShared();
                     },
                     (savedValues, level) => {
                         if ((bool) savedValues[timeFieldType]["hookAdded"]) {
                             On.Celeste.Player.Update += hookUpdate;
                         }
-
                         LoadStaticFieldValues(savedValues);
-                        timeFieldType.GetFieldValue("targetPlayer")
-                            .SetPropertyValue("Target", savedValues[timeFieldType]["-player-"].DeepCloneShared());
-                        timeFieldType.GetFieldValue("lingeringTarget")
-                            .SetPropertyValue("Target", savedValues[timeFieldType]["-timeField-"].DeepCloneShared());
                     }
                 ));
             }

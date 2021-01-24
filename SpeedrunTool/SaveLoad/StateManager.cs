@@ -61,12 +61,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Celeste.Level.Update += CheckButtonsAndUpdateBackdrop;
             On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
-            On.Celeste.Level.EndCutscene += LevelOnEndCutscene;
-        }
-
-        private void LevelOnEndCutscene(On.Celeste.Level.orig_EndCutscene orig, Level self) {
-            orig(self);
-            $"LevelOnEndCutscene, SkippingCutscene={self.SkippingCutscene}".DebugLog();
         }
 
         public void OnUnload() {
@@ -146,6 +140,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedLevel.SetFieldValue("transition", level.GetFieldValue("transition").DeepCloneShared());
             savedLevel.SetFieldValue("skipCoroutine", level.GetFieldValue("skipCoroutine").DeepCloneShared());
             savedLevel.SetFieldValue("onCutsceneSkip", level.GetFieldValue("onCutsceneSkip").DeepCloneShared());
+            savedLevel.SetPropertyValue<Scene>("RendererList", level.RendererList.DeepCloneShared());
+            savedLevel.Wipe = level.Wipe.DeepCloneShared();
 
             savedEntities = GetEntitiesNeedDeepClone(level).DeepCloneShared();
 
@@ -236,10 +232,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
             }
 
-            // 修复问题：未打开自动读档时，死掉按下确认键后读档完成会接着执行 Reload 复活方法
-            // Fix: When AutoLoadStateAfterDeath is off, if manually LoadState() after death, level.Reload() will still be executed.
-            ClearScreenWipe(level);
-
             if (tas) {
                 LoadStateComplete(level);
                 return true;
@@ -248,22 +240,24 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             level.Frozen = true; // 加一个转场等待，避免太突兀   // Add a pause to avoid being too abrupt
             level.TimerStopped = true; // 停止计时器  // Stop timer
 
-            level.DoScreenWipe(true, () => {
-                // 修复问题：死亡后出现黑屏的一瞬间手动读档后游戏崩溃，因为 ScreenWipe 执行了 level.Reload() 方法
-                // System.NullReferenceException: 未将对象引用设置到对象的实例。
-                // 在 Celeste.CameraTargetTrigger.OnLeave(Player player)
-                // 在 Celeste.Player.Removed(Scene scene)
-                ClearScreenWipe(level);
-
-                if (Settings.FreezeAfterLoadState) {
-                    State = States.Waiting;
-                    level.PauseLock = true;
-                } else {
-                    LoadStateComplete(level);
-                }
-            });
+            if (level.RendererList.Renderers.Any(renderer => renderer is ScreenWipe)) {
+                LoadStateEnd(level);
+            } else {
+                level.DoScreenWipe(true, () => {
+                    LoadStateEnd(level);
+                });
+            }
 
             return true;
+        }
+
+        private void LoadStateEnd(Level level) {
+            if (Settings.FreezeAfterLoadState) {
+                State = States.Waiting;
+                level.PauseLock = true;
+            } else {
+                LoadStateComplete(level);
+            }
         }
 
         private void LoadStateComplete(Level level) {
@@ -274,12 +268,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             playingEventInstances.Clear();
             DeepClonerUtils.ClearSharedDeepCloneState();
             State = States.None;
-        }
-
-        private void ClearScreenWipe(Level level) {
-            level.RendererList.Renderers.ForEach(renderer => {
-                if (renderer is ScreenWipe wipe) wipe.Cancel();
-            });
         }
 
         // 分两步的原因是更早的停止音乐，听起来更舒服更好一点
@@ -433,6 +421,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             level.SetFieldValue("transition", savedLevel.GetFieldValue("transition").DeepCloneShared());
             level.SetFieldValue("skipCoroutine", savedLevel.GetFieldValue("skipCoroutine").DeepCloneShared());
             level.SetFieldValue("onCutsceneSkip", savedLevel.GetFieldValue("onCutsceneSkip").DeepCloneShared());
+            level.SetPropertyValue<Scene>("RendererList", savedLevel.RendererList.DeepCloneShared());
+            level.Wipe = savedLevel.Wipe.DeepCloneShared();
 
             // External Static Field
             Engine.FreezeTimer = savedFreezeTimer;

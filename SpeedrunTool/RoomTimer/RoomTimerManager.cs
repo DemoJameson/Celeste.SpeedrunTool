@@ -161,6 +161,11 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 return;
             }
 
+            if (self.DrawLerp <= 0f) {
+                orig(self);
+                return;
+            }
+
             // 强制显示时间
             Settings.Instance.SpeedrunClock = SpeedrunType.File;
 

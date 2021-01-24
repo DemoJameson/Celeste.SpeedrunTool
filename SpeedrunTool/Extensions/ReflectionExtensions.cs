@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
     internal static class ReflectionExtensions {
@@ -15,7 +16,8 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         private static readonly HashSet<Type> SimpleTypes = new HashSet<Type> {
             typeof(byte), typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong),
             typeof(float), typeof(double), typeof(decimal), typeof(char), typeof(string), typeof(bool),
-            typeof(DateTime), typeof(TimeSpan), typeof(DateTimeOffset), typeof(Vector2)
+            typeof(DateTime), typeof(TimeSpan), typeof(DateTimeOffset), typeof(Vector2), typeof(Vector3),
+            typeof(VertexPositionColor)
         };
 
         public static bool IsSimple(this Type type) {

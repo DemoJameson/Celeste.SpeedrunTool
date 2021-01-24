@@ -89,7 +89,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (IsSaved) {
                 if (self is Level) {
                     State = States.None; // 修复：读档途中按下 PageDown/Up 后无法存档
-                    PreCloneEntities(savedEntities);
+                    PreCloneSavedEntities();
                 }
 
                 if (self.GetSession() is Session session && session.Area != savedLevel.Session.Area) {
@@ -130,25 +130,36 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedByTas = tas;
 
             savedLevel = level.ShallowClone();
-            savedLevel.Lighting = level.Lighting.ShallowClone();
             savedLevel.FormationBackdrop = level.FormationBackdrop.ShallowClone();
             savedLevel.Session = level.Session.DeepCloneShared();
             savedLevel.Camera = level.Camera.DeepCloneShared();
+
+            // Renderer
             savedLevel.Bloom = level.Bloom.DeepCloneShared();
             savedLevel.Background = level.Background.DeepCloneShared();
             savedLevel.Foreground = level.Foreground.DeepCloneShared();
+            savedLevel.HudRenderer = level.HudRenderer.DeepCloneShared();
+            savedLevel.Lighting = level.Lighting.ShallowClone();
+            savedLevel.SubHudRenderer = level.SubHudRenderer.DeepCloneShared();
+            savedLevel.Displacement = level.Displacement.DeepCloneShared();
+
+            // 无需克隆，且里面有 camera
+            // savedLevel.GameplayRenderer = level.GameplayRenderer.DeepCloneShared();
+
+            // Renderer nullable
+            savedLevel.Wipe = level.Wipe.DeepCloneShared();
+
             savedLevel.SetFieldValue("transition", level.GetFieldValue("transition").DeepCloneShared());
             savedLevel.SetFieldValue("skipCoroutine", level.GetFieldValue("skipCoroutine").DeepCloneShared());
             savedLevel.SetFieldValue("onCutsceneSkip", level.GetFieldValue("onCutsceneSkip").DeepCloneShared());
             savedLevel.SetPropertyValue<Scene>("RendererList", level.RendererList.DeepCloneShared());
-            savedLevel.Wipe = level.Wipe.DeepCloneShared();
 
             savedEntities = GetEntitiesNeedDeepClone(level).DeepCloneShared();
 
             savedOrderedTrackerEntities = new Dictionary<Type, List<Entity>>();
             foreach (Entity savedEntity in savedEntities) {
                 Type type = savedEntity.GetType();
-                if(savedOrderedTrackerEntities.ContainsKey(type)) continue;
+                if (savedOrderedTrackerEntities.ContainsKey(type)) continue;
 
                 if (level.Tracker.Entities.ContainsKey(type)) {
                     savedOrderedTrackerEntities[type] = level.Tracker.Entities[type].DeepCloneShared();
@@ -158,7 +169,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedOrderedTrackerComponents = new Dictionary<Type, List<Component>>();
             foreach (Component component in savedEntities.SelectMany(entity => entity.Components)) {
                 Type type = component.GetType();
-                if(savedOrderedTrackerComponents.ContainsKey(type)) continue;
+                if (savedOrderedTrackerComponents.ContainsKey(type)) continue;
 
                 if (level.Tracker.Components.ContainsKey(type)) {
                     savedOrderedTrackerComponents[type] = level.Tracker.Components[type].DeepCloneShared();
@@ -187,7 +198,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             DeepClonerUtils.ClearSharedDeepCloneState();
-            return LoadState(tas);
+
+            if (tas) {
+                return LoadState(tas);
+            }
+
+            WaitSaveStateEntity waitSaveStateEntity = new WaitSaveStateEntity(level);
+            level.Add(waitSaveStateEntity);
+            return true;
         }
 
         // public for TAS Mod
@@ -243,9 +261,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (level.RendererList.Renderers.Any(renderer => renderer is ScreenWipe)) {
                 LoadStateEnd(level);
             } else {
-                level.DoScreenWipe(true, () => {
-                    LoadStateEnd(level);
-                });
+                level.DoScreenWipe(true, () => { LoadStateEnd(level); });
             }
 
             return true;
@@ -295,6 +311,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         public void ClearState() {
             ClearState(false);
         }
+
         private void ClearState(bool clearEndPoint) {
             if (Engine.Scene is Level level && IsNotCollectingHeart(level) && !level.Completed) {
                 level.Frozen = false;
@@ -335,17 +352,17 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // level.RetryPlayerCorpse = null;
         }
 
-        private void PreCloneEntities(List<Entity> entities) {
+        private void PreCloneSavedEntities() {
             preCloneTask = Task.Run(() => {
                 DeepCloneState deepCloneState = new DeepCloneState();
-                entities.DeepClone(deepCloneState);
+                savedEntities.DeepClone(deepCloneState);
                 return deepCloneState;
             });
         }
 
         private void RestoreLevelEntities(Level level) {
             List<Entity> deepCloneEntities = savedEntities.DeepCloneShared();
-            PreCloneEntities(savedEntities);
+            PreCloneSavedEntities();
 
             // Re Add Entities
             List<Entity> entities = (List<Entity>) level.Entities.GetFieldValue("entities");
@@ -412,17 +429,27 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private void RestoreLevel(Level level) {
             level.Camera.CopyFrom(savedLevel.Camera);
             savedLevel.Session.DeepCloneToShared(level.Session);
+            level.FormationBackdrop.CopyAllSimpleTypeFieldsAndNull(savedLevel.FormationBackdrop);
+
             savedLevel.Bloom.DeepCloneToShared(level.Bloom);
             savedLevel.Background.DeepCloneToShared(level.Background);
             savedLevel.Foreground.DeepCloneToShared(level.Foreground);
-            level.CopyAllSimpleTypeFieldsAndNull(savedLevel);
             level.Lighting.CopyAllSimpleTypeFieldsAndNull(savedLevel.Lighting);
-            level.FormationBackdrop.CopyAllSimpleTypeFieldsAndNull(savedLevel.FormationBackdrop);
+            savedLevel.HudRenderer.DeepCloneToShared(level.HudRenderer);
+            savedLevel.SubHudRenderer.DeepCloneToShared(level.SubHudRenderer);
+            savedLevel.Displacement.DeepCloneToShared(level.Displacement);
+
+            // 里面有 camera 且没什么需要克隆还原的
+            // level.GameplayRenderer.CopyAllSimpleTypeFieldsAndNull(savedLevel.GameplayRenderer);
+
+            level.Wipe = savedLevel.Wipe.DeepCloneShared();
+
             level.SetFieldValue("transition", savedLevel.GetFieldValue("transition").DeepCloneShared());
             level.SetFieldValue("skipCoroutine", savedLevel.GetFieldValue("skipCoroutine").DeepCloneShared());
             level.SetFieldValue("onCutsceneSkip", savedLevel.GetFieldValue("onCutsceneSkip").DeepCloneShared());
             level.SetPropertyValue<Scene>("RendererList", savedLevel.RendererList.DeepCloneShared());
-            level.Wipe = savedLevel.Wipe.DeepCloneShared();
+
+            level.CopyAllSimpleTypeFieldsAndNull(savedLevel);
 
             // External Static Field
             Engine.FreezeTimer = savedFreezeTimer;
@@ -497,7 +524,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private bool IsAllowSave(Level level, Player player) {
-            return State == States.None && player != null && !player.Dead && !level.Paused;
+            return State == States.None && player != null && !player.Dead && !level.Paused && !level.SkippingCutscene;
         }
 
         private bool IsNotCollectingHeart(Level level) {
@@ -551,5 +578,27 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private StateManager() { }
         // @formatter:on
+
+        class WaitSaveStateEntity : Entity {
+            private readonly Level level;
+            private readonly bool origTimerStopped;
+
+            public WaitSaveStateEntity(Level level) {
+                this.level = level;
+
+                origTimerStopped = level.TimerStopped;
+                level.Frozen = true;
+                level.TimerStopped = true;
+            }
+
+            public override void Render() {
+                Instance.PreCloneSavedEntities();
+                level.DoScreenWipe(true, () => {
+                    level.Frozen = false;
+                    level.TimerStopped = origTimerStopped;
+                });
+                RemoveSelf();
+            }
+        }
     }
 }

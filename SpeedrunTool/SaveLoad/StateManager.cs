@@ -95,7 +95,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private void ClearStateWhenSwitchScene(On.Monocle.Scene.orig_Begin orig, Scene self) {
             orig(self);
-            if (self is Overworld) ClearState(true);
+            if (self is Overworld && !savedByTas) ClearState(true);
             if (IsSaved) {
                 if (self is Level) {
                     State = States.None; // 修复：读档途中按下 PageDown/Up 后无法存档
@@ -147,6 +147,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedLevel.Bloom = level.Bloom.DeepCloneShared();
             savedLevel.Background = level.Background.DeepCloneShared();
             savedLevel.Foreground = level.Foreground.DeepCloneShared();
+            savedLevel.SetFieldValue("transition", level.GetFieldValue("transition").DeepCloneShared());
 
             savedEntities = GetEntitiesNeedDeepClone(level).DeepCloneShared();
 
@@ -204,6 +205,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private bool LoadState(bool tas) {
             if (!(Engine.Scene is Level level)) return false;
             if (level.Paused || State != States.None || !IsSaved) return false;
+            if (tas && !savedByTas) return false;
 
             State = States.Loading;
             DeepClonerUtils.SetSharedDeepCloneState(preCloneTask?.Result);
@@ -215,7 +217,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             RoomTimerManager.Instance.ResetTime();
             DeathStatisticsManager.Instance.Died = false;
 
-            level.SetFieldValue("transition", null); // 允许切换房间时读档  // Allow reading fields when switching rooms
             level.Displacement.Clear(); // 避免冲刺后读档残留爆破效果  // Remove dash displacement effect
             level.Particles.Clear();
             level.ParticlesBG.Clear();
@@ -431,6 +432,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             level.CopyAllSimpleTypeFieldsAndNull(savedLevel);
             level.Lighting.CopyAllSimpleTypeFieldsAndNull(savedLevel.Lighting);
             level.FormationBackdrop.CopyAllSimpleTypeFieldsAndNull(savedLevel.FormationBackdrop);
+            level.SetFieldValue("transition", savedLevel.GetFieldValue("transition").DeepCloneShared());
 
             // External Static Field
             Engine.FreezeTimer = savedFreezeTimer;
@@ -506,7 +508,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private bool IsAllowSave(Level level, Player player) {
             return State == States.None
-                   && !level.Paused && !level.Transitioning && !level.InCutscene && !level.SkippingCutscene
+                   && !level.Paused && !level.InCutscene && !level.SkippingCutscene
                    && player != null && !player.Dead && !DisabledSaveStates.Contains(player.StateMachine.State)
                    && IsNotCollectingHeart(level);
         }

@@ -1,5 +1,7 @@
 using System;
+using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework;
 using Monocle;
 using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
@@ -15,10 +17,10 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         private readonly RoomTimerData currentRoomTimerData = new RoomTimerData(RoomTimerType.CurrentRoom);
         private readonly RoomTimerData nextRoomTimerData = new RoomTimerData(RoomTimerType.NextRoom);
 
-        public SpeedrunType? OriginalSpeedrunType;
+        private SpeedrunType? originalSpeedrunType;
 
         public void Init() {
-            OriginalSpeedrunType = Settings.Instance.SpeedrunClock;
+            originalSpeedrunType = Settings.Instance.SpeedrunClock;
         }
 
         public void Load() {
@@ -28,6 +30,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             On.Celeste.Level.Update += ProcessButtons;
             On.Celeste.Level.NextLevel += UpdateTimerStateOnNextLevel;
             On.Celeste.SummitCheckpoint.Update += UpdateTimerStateOnTouchFlag;
+            On.Celeste.LevelExit.ctor += LevelExitOnCtor;
         }
 
         public void Unload() {
@@ -37,6 +40,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             On.Celeste.Level.Update -= ProcessButtons;
             On.Celeste.Level.NextLevel -= UpdateTimerStateOnNextLevel;
             On.Celeste.SummitCheckpoint.Update -= UpdateTimerStateOnTouchFlag;
+            On.Celeste.LevelExit.ctor -= LevelExitOnCtor;
         }
 
         private void ProcessButtons(On.Celeste.Level.orig_Update orig, Level self) {
@@ -91,7 +95,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             }
 
             ClearPbTimes();
-            SpeedrunType? speedrunType = OriginalSpeedrunType;
+            SpeedrunType? speedrunType = originalSpeedrunType;
             if (speedrunType != null) {
                 Settings.Instance.SpeedrunClock = (SpeedrunType) speedrunType;
             }
@@ -130,6 +134,13 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             }
         }
 
+        private void LevelExitOnCtor(On.Celeste.LevelExit.orig_ctor orig, LevelExit self, LevelExit.Mode mode, Session session, HiresSnow snow) {
+            orig(self, mode, session, snow);
+            if (mode == LevelExit.Mode.Restart && !StateManager.Instance.IsSaved) {
+                SpeedrunToolModule.Settings.RoomTimer = SpeedrunToolSettings.RoomTimerStrings.First();
+            }
+        }
+
         public void UpdateTimerState(bool endPoint = false) {
             switch (SpeedrunToolModule.Settings.RoomTimerType) {
                 case RoomTimerType.NextRoom:
@@ -153,8 +164,8 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         private void Render(On.Celeste.SpeedrunTimerDisplay.orig_Render orig, SpeedrunTimerDisplay self) {
             SpeedrunToolSettings settings = SpeedrunToolModule.Settings;
             if (!settings.Enabled || settings.RoomTimerType == RoomTimerType.Off) {
-                if (OriginalSpeedrunType != null) {
-                    Settings.Instance.SpeedrunClock = (SpeedrunType) OriginalSpeedrunType;
+                if (originalSpeedrunType != null) {
+                    Settings.Instance.SpeedrunClock = (SpeedrunType) originalSpeedrunType;
                 }
 
                 orig(self);
@@ -218,7 +229,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         }
 
         private void SaveOriginalSpeedrunClock(On.Celeste.MenuOptions.orig_SetSpeedrunClock orig, int val) {
-            OriginalSpeedrunType = (SpeedrunType) val;
+            originalSpeedrunType = (SpeedrunType) val;
             orig(val);
         }
 

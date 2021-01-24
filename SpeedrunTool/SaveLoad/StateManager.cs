@@ -17,16 +17,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class StateManager {
         private static SpeedrunToolSettings Settings => SpeedrunToolModule.Settings;
 
-        private static readonly List<int> DisabledSaveStates = new List<int> {
-            Player.StReflectionFall,
-            Player.StTempleFall,
-            Player.StCassetteFly,
-            Player.StIntroJump,
-            Player.StIntroWalk,
-            Player.StIntroRespawn,
-            Player.StIntroWakeUp,
-        };
-
         private Level savedLevel;
 
         // public for tas
@@ -71,6 +61,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Celeste.Level.Update += CheckButtonsAndUpdateBackdrop;
             On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
+            On.Celeste.Level.EndCutscene += LevelOnEndCutscene;
+        }
+
+        private void LevelOnEndCutscene(On.Celeste.Level.orig_EndCutscene orig, Level self) {
+            orig(self);
+            $"LevelOnEndCutscene, SkippingCutscene={self.SkippingCutscene}".DebugLog();
         }
 
         public void OnUnload() {
@@ -148,6 +144,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedLevel.Background = level.Background.DeepCloneShared();
             savedLevel.Foreground = level.Foreground.DeepCloneShared();
             savedLevel.SetFieldValue("transition", level.GetFieldValue("transition").DeepCloneShared());
+            savedLevel.SetFieldValue("skipCoroutine", level.GetFieldValue("skipCoroutine").DeepCloneShared());
+            savedLevel.SetFieldValue("onCutsceneSkip", level.GetFieldValue("onCutsceneSkip").DeepCloneShared());
 
             savedEntities = GetEntitiesNeedDeepClone(level).DeepCloneShared();
 
@@ -433,6 +431,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             level.Lighting.CopyAllSimpleTypeFieldsAndNull(savedLevel.Lighting);
             level.FormationBackdrop.CopyAllSimpleTypeFieldsAndNull(savedLevel.FormationBackdrop);
             level.SetFieldValue("transition", savedLevel.GetFieldValue("transition").DeepCloneShared());
+            level.SetFieldValue("skipCoroutine", savedLevel.GetFieldValue("skipCoroutine").DeepCloneShared());
+            level.SetFieldValue("onCutsceneSkip", savedLevel.GetFieldValue("onCutsceneSkip").DeepCloneShared());
 
             // External Static Field
             Engine.FreezeTimer = savedFreezeTimer;
@@ -507,10 +507,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private bool IsAllowSave(Level level, Player player) {
-            return State == States.None
-                   && !level.Paused && !level.InCutscene && !level.SkippingCutscene
-                   && player != null && !player.Dead && !DisabledSaveStates.Contains(player.StateMachine.State)
-                   && IsNotCollectingHeart(level);
+            return State == States.None && player != null && !player.Dead && !level.Paused;
         }
 
         private bool IsNotCollectingHeart(Level level) {

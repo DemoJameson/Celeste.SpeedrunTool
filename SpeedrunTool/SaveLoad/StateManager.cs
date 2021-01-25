@@ -124,6 +124,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private bool SaveState(bool tas) {
             if (!(Engine.Scene is Level level)) return false;
             if (!IsAllowSave(level, level.GetPlayer())) return false;
+            // 不允许玩家开场黑屏时保存状态，因为如果在黑屏结束一瞬间之前保存，读档后没有黑屏等待时间感觉会很突兀
+            // TODO 尝试在 SaveState 结尾加 Wipe 不过加载状态后右上角残留黑块
+            if (!tas && level.RendererList.Renderers.Any(renderer => renderer is SpotlightWipe)) return false;
 
             ClearState(false);
 
@@ -139,9 +142,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedLevel.Background = level.Background.DeepCloneShared();
             savedLevel.Foreground = level.Foreground.DeepCloneShared();
             savedLevel.HudRenderer = level.HudRenderer.DeepCloneShared();
-            savedLevel.Lighting = level.Lighting.ShallowClone();
             savedLevel.SubHudRenderer = level.SubHudRenderer.DeepCloneShared();
             savedLevel.Displacement = level.Displacement.DeepCloneShared();
+
+            // 只需浅克隆
+            savedLevel.Lighting = level.Lighting.ShallowClone();
 
             // 无需克隆，且里面有 camera
             // savedLevel.GameplayRenderer = level.GameplayRenderer.DeepCloneShared();
@@ -200,7 +205,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             DeepClonerUtils.ClearSharedDeepCloneState();
 
             if (tas) {
-                return LoadState(tas);
+                return true;
+            }
+
+            // 存在 wipe 的情况下不能自行加 wipe
+            if (level.RendererList.Renderers.Any(renderer => renderer is ScreenWipe)) {
+                return true;
             }
 
             WaitSaveStateEntity waitSaveStateEntity = new WaitSaveStateEntity(level);
@@ -347,9 +357,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             List<Entity> entities = GetEntitiesExcludingGlobal(level, true);
             level.Remove(entities);
             level.Entities.UpdateLists();
-            // 修复：Retry 后读档依然执行 PlayerDeadBody.End 的问题
-            // 由 level.CopyAllSimpleTypeFields(savedLevel) 自动处理了
-            // level.RetryPlayerCorpse = null;
         }
 
         private void PreCloneSavedEntities() {
@@ -434,10 +441,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedLevel.Bloom.DeepCloneToShared(level.Bloom);
             savedLevel.Background.DeepCloneToShared(level.Background);
             savedLevel.Foreground.DeepCloneToShared(level.Foreground);
-            level.Lighting.CopyAllSimpleTypeFieldsAndNull(savedLevel.Lighting);
             savedLevel.HudRenderer.DeepCloneToShared(level.HudRenderer);
             savedLevel.SubHudRenderer.DeepCloneToShared(level.SubHudRenderer);
             savedLevel.Displacement.DeepCloneToShared(level.Displacement);
+
+            // 不要 DeepClone level.Lighting 会造成光源偏移
+            level.Lighting.CopyAllSimpleTypeFieldsAndNull(savedLevel.Lighting);
 
             // 里面有 camera 且没什么需要克隆还原的
             // level.GameplayRenderer.CopyAllSimpleTypeFieldsAndNull(savedLevel.GameplayRenderer);
@@ -524,7 +533,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private bool IsAllowSave(Level level, Player player) {
-            return State == States.None && player != null && !player.Dead && !level.Paused && !level.SkippingCutscene;
+            return State == States.None && player != null && !player.Dead && !level.Paused;
         }
 
         private bool IsNotCollectingHeart(Level level) {
@@ -586,6 +595,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             public WaitSaveStateEntity(Level level) {
                 this.level = level;
 
+                // 避免被 Save
+                Tag = Tags.Global;
                 origTimerStopped = level.TimerStopped;
                 level.Frozen = true;
                 level.TimerStopped = true;

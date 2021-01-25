@@ -70,6 +70,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         && entity.GetType().FullName != "VivHelper.Entities.HoldableBarrierRenderer"
                     ) return sourceObj;
 
+                    // 克隆了 level.RendererList 但不想克隆以下元素
+                    if (sourceObj is GameplayRenderer || sourceObj is LightingRenderer) {
+                        return sourceObj;
+                    }
+
                     lock (sourceObj) {
                         // 稍后重新创建正在播放的 SoundSource 里的 EventInstance 实例
                         if (sourceObj is SoundSource source

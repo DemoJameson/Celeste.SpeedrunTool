@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using FMOD.Studio;
 using Monocle;
@@ -64,6 +65,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         internal static void OnLoad() {
+            SupportEntitySimpleStaticFields();
             SupportMInput();
             SupportAudioMusic();
             SupportExtendedVariants();
@@ -77,6 +79,60 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             All.Clear();
         }
 
+        private static readonly Lazy<Dictionary<Type, FieldInfo[]>> EntityStaticFields = new Lazy<Dictionary<Type, FieldInfo[]>>(
+            () => {
+                Dictionary<Type, FieldInfo[]> result = new Dictionary<Type, FieldInfo[]>();
+                IEnumerable<Type> entityTypes = AppDomain.CurrentDomain.GetAssemblies().SelectMany(assembly => assembly.GetTypes().Where(type =>
+                    !type.IsAbstract
+                    && !type.IsGenericType
+                    && type.FullName != null
+                    && !type.FullName.StartsWith("Celeste.Mod.SpeedrunTool")
+                    && type.IsSameOrSubclassOf(typeof(Entity))));
+
+                foreach (Type entityType in entityTypes) {
+                    FieldInfo[] fieldInfos = entityType.GetFieldInfos(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).Where(info => !info.IsLiteral).ToArray();
+                    if (fieldInfos.Length == 0) continue;
+                    result[entityType] = fieldInfos;
+                }
+
+                return result;
+            });
+
+        private static void SupportEntitySimpleStaticFields() {
+            All.Add(new SaveLoadAction(
+                (dictionary, level) => {
+                    foreach (Type type in EntityStaticFields.Value.Keys) {
+                        FieldInfo[] fieldInfos = EntityStaticFields.Value[type];
+                        // string.Join("\n", fieldInfos.Select(info => type.FullName + " " + info.Name)).DebugLog();
+                        Dictionary<string,object> values = new Dictionary<string, object>();
+
+                        foreach (FieldInfo fieldInfo in fieldInfos) {
+                            object value = fieldInfo.GetValue(null);
+                            Type fieldType = fieldInfo.FieldType;
+                            if (value == null) {
+                                values[fieldInfo.Name] = null;
+                            } else if (fieldType.IsSimpleClass()) {
+                                values[fieldInfo.Name] = value;
+                            }
+                        }
+
+                        if (values.Keys.Count > 0) {
+                            dictionary[type] = values.DeepCloneShared();
+                        }
+                    }
+                }, (dictionary, level) => {
+                    Dictionary<Type,Dictionary<string,object>> clonedDict = dictionary.DeepCloneShared();
+                    clonedDict.Keys.Count.DebugLog();
+                    foreach (Type type in clonedDict.Keys) {
+                        Dictionary<string,object> values = clonedDict[type];
+                        // string.Join("\n", values.Select(pair => type.FullName + " " + pair.Key)).DebugLog();
+                        foreach (KeyValuePair<string,object> pair in values) {
+                            type.SetFieldValue(pair.Key, pair.Value);
+                        }
+                    }
+                }
+            ));
+        }
         private static void SupportMInput() {
             Type type = typeof(MInput);
             All.Add(new SaveLoadAction(

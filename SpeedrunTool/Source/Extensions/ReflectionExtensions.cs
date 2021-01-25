@@ -29,6 +29,10 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return SimpleTypes.Contains(type) || type.IsEnum;
         }
 
+        public static bool IsSimpleClass(this Type type) {
+            return IsSimple(type) || IsSimpleArray(type) || IsSimpleList(type) || IsSimpleStack(type) || IsSimpleHashSet(type) || IsSimpleDictionary(type);
+        }
+
         public static void CopyAllSimpleTypeFieldsAndNull(this object to, object from) {
             if (to.GetType() != from.GetType()) throw new ArgumentException("object to and from not the same type");
 
@@ -42,16 +46,28 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             }
         }
 
-        public static bool IsSingleRankArray(this Type type) {
-            return type.IsArray && type.GetArrayRank() == 1;
-        }
-
         public static bool IsSimpleArray(this Type type) {
             return type.IsSingleRankArray() && type.GetElementType().IsSimple();
         }
 
         public static bool IsSimpleList(this Type type) {
             return type.IsList(out Type genericType) && genericType.IsSimple();
+        }
+
+        public static bool IsSimpleStack(this Type type) {
+            return type.IsStack(out Type genericType) && genericType.IsSimple();
+        }
+
+        public static bool IsSimpleHashSet(this Type type) {
+            return type.IsHashSet(out Type genericType) && genericType.IsSimple();
+        }
+
+        public static bool IsSimpleDictionary(this Type type) {
+            return type.IsDictionary(out Type keyType, out Type valueType) && keyType.IsSimple() && valueType.IsSimple();
+        }
+
+        public static bool IsSingleRankArray(this Type type) {
+            return type.IsArray && type.GetArrayRank() == 1;
         }
 
         public static bool IsList(this Type type, out Type genericType) {

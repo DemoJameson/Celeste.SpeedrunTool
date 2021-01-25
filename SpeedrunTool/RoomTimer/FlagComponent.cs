@@ -11,6 +11,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         private readonly List<MTexture> numbersActive;
         private readonly List<MTexture> numbersEmpty;
         private Vector2 offset;
+        private Vector2 numberOffset;
 
         public FlagComponent(bool flagStyle) : base(false, true) {
             this.flagStyle = flagStyle;
@@ -25,6 +26,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         public override void Added(Entity entity) {
             base.Added(entity);
             offset = entity.TopCenter + Vector2.UnitY;
+            numberOffset = offset + Vector2.UnitY;
         }
 
         public override void Render() {
@@ -39,12 +41,13 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 mTexture = Scene.BetweenInterval(0.25f) ? baseEmpty : baseToggle;
             }
 
-            mTexture.Draw(offset - new Vector2(mTexture.Width / 2f - 1, mTexture.Height / 2f));
+            // ReSharper disable once PossibleLossOfFraction
+            mTexture.Draw(offset - new Vector2(mTexture.Width / 2 + 1, mTexture.Height / 2));
 
             mTextureList[0]
-                .DrawJustified(offset + Vector2.UnitX + new Vector2(-1f, 1f), new Vector2(1f, 0.0f));
+                .DrawJustified(numberOffset + new Vector2(-1f, 1f), new Vector2(1f, 0.0f));
             mTextureList[1]
-                .DrawJustified(offset + Vector2.UnitX + new Vector2(0.0f, 1f), new Vector2(0.0f, 0.0f));
+                .DrawJustified(numberOffset + new Vector2(0f, 1f), new Vector2(0f, 0f));
         }
     }
 }

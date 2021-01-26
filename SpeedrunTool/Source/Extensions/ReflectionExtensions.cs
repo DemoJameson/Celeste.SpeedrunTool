@@ -20,17 +20,23 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             typeof(VertexPositionColor)
         };
 
-        public static bool IsSimple(this Type type) {
+        public static bool IsSimple(this Type type, Func<Type, bool> extraTypes = null) {
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>)) {
                 // nullable type, check if the nested type is simple.
-                return IsSimple(type.GetGenericArguments()[0]);
+                return IsSimple(type.GetGenericArguments()[0], extraTypes);
             }
 
-            return SimpleTypes.Contains(type) || type.IsEnum;
+            return SimpleTypes.Contains(type) || type.IsEnum || extraTypes?.Invoke(type) == true;
         }
 
-        public static bool IsSimpleClass(this Type type) {
-            return IsSimple(type) || IsSimpleArray(type) || IsSimpleList(type) || IsSimpleStack(type) || IsSimpleHashSet(type) || IsSimpleDictionary(type);
+        public static bool IsSimpleClass(this Type type, Func<Type, bool> extraGenericTypes = null) {
+            return IsSimple(type, extraGenericTypes)
+                   || IsSimpleArray(type, extraGenericTypes)
+                   || IsSimpleList(type, extraGenericTypes)
+                   || IsSimpleStack(type, extraGenericTypes)
+                   || IsSimpleHashSet(type, extraGenericTypes)
+                   || IsSimpleDictionary(type, extraGenericTypes)
+                   || IsSimpleWeakReference(type, extraGenericTypes);
         }
 
         public static void CopyAllSimpleTypeFieldsAndNull(this object to, object from) {
@@ -46,24 +52,28 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             }
         }
 
-        public static bool IsSimpleArray(this Type type) {
-            return type.IsSingleRankArray() && type.GetElementType().IsSimple();
+        public static bool IsSimpleArray(this Type type, Func<Type, bool> extraGenericTypes = null) {
+            return type.IsSingleRankArray() && type.GetElementType().IsSimple(extraGenericTypes);
         }
 
-        public static bool IsSimpleList(this Type type) {
-            return type.IsList(out Type genericType) && genericType.IsSimple();
+        public static bool IsSimpleList(this Type type, Func<Type, bool> extraGenericTypes = null) {
+            return type.IsList(out Type genericType) && genericType.IsSimple(extraGenericTypes);
         }
 
-        public static bool IsSimpleStack(this Type type) {
-            return type.IsStack(out Type genericType) && genericType.IsSimple();
+        public static bool IsSimpleStack(this Type type, Func<Type, bool> extraGenericTypes = null) {
+            return type.IsStack(out Type genericType) && genericType.IsSimple(extraGenericTypes);
         }
 
-        public static bool IsSimpleHashSet(this Type type) {
-            return type.IsHashSet(out Type genericType) && genericType.IsSimple();
+        public static bool IsSimpleHashSet(this Type type, Func<Type, bool> extraGenericTypes = null) {
+            return type.IsHashSet(out Type genericType) && genericType.IsSimple(extraGenericTypes);
         }
 
-        public static bool IsSimpleDictionary(this Type type) {
-            return type.IsDictionary(out Type keyType, out Type valueType) && keyType.IsSimple() && valueType.IsSimple();
+        public static bool IsSimpleDictionary(this Type type, Func<Type, bool> extraGenericTypes = null) {
+            return type.IsDictionary(out Type keyType, out Type valueType) && keyType.IsSimple(extraGenericTypes) && valueType.IsSimple(extraGenericTypes);
+        }
+
+        public static bool IsSimpleWeakReference(this Type type, Func<Type, bool> extraGenericTypes = null) {
+            return type.IsWeakReference(out Type genericType) && genericType.IsSimple(extraGenericTypes);
         }
 
         public static bool IsSingleRankArray(this Type type) {

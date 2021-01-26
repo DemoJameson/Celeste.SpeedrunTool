@@ -79,30 +79,31 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             All.Clear();
         }
 
-        private static readonly Lazy<Dictionary<Type, FieldInfo[]>> EntityStaticFields = new Lazy<Dictionary<Type, FieldInfo[]>>(
-            () => {
-                Dictionary<Type, FieldInfo[]> result = new Dictionary<Type, FieldInfo[]>();
-                IEnumerable<Type> entityTypes = AppDomain.CurrentDomain.GetAssemblies().SelectMany(assembly => assembly.GetTypes().Where(type =>
-                    !type.IsAbstract
-                    && !type.IsGenericType
-                    && type.FullName != null
-                    && !type.FullName.StartsWith("Celeste.Mod.SpeedrunTool")
-                    && type.IsSameOrSubclassOf(typeof(Entity))));
+        internal static void OnLoadContent() {
+            EntityStaticFields = new Dictionary<Type, FieldInfo[]>();
+            IEnumerable<Type> entityTypes = AppDomain.CurrentDomain.GetAssemblies().SelectMany(assembly => assembly.GetTypes().Where(type =>
+                !type.IsAbstract
+                && !type.IsGenericType
+                && type.FullName != null
+                && !type.FullName.StartsWith("Celeste.Mod.SpeedrunTool")
+                && !type.FullName.StartsWith("Celeste.Mod.UI") // 里面几个 Entity 保存的话会很卡
+                && type.IsSameOrSubclassOf(typeof(Entity))));
 
-                foreach (Type entityType in entityTypes) {
-                    FieldInfo[] fieldInfos = entityType.GetFieldInfos(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).Where(info => !info.IsLiteral).ToArray();
-                    if (fieldInfos.Length == 0) continue;
-                    result[entityType] = fieldInfos;
-                }
+            foreach (Type entityType in entityTypes) {
+                FieldInfo[] fieldInfos = entityType.GetFieldInfos(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+                    .Where(info => !info.IsLiteral).ToArray();
+                if (fieldInfos.Length == 0) continue;
+                EntityStaticFields[entityType] = fieldInfos;
+            }
+        }
 
-                return result;
-            });
+        private static Dictionary<Type, FieldInfo[]> EntityStaticFields;
 
         private static void SupportEntitySimpleStaticFields() {
             All.Add(new SaveLoadAction(
                 (dictionary, level) => {
-                    foreach (Type type in EntityStaticFields.Value.Keys) {
-                        FieldInfo[] fieldInfos = EntityStaticFields.Value[type];
+                    foreach (Type type in EntityStaticFields.Keys) {
+                        FieldInfo[] fieldInfos = EntityStaticFields[type];
                         // string.Join("\n", fieldInfos.Select(info => type.FullName + " " + info.Name)).DebugLog();
                         Dictionary<string,object> values = new Dictionary<string, object>();
 
@@ -111,7 +112,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                             Type fieldType = fieldInfo.FieldType;
                             if (value == null) {
                                 values[fieldInfo.Name] = null;
-                            } else if (fieldType.IsSimpleClass()) {
+                            } else if (fieldType.IsSimpleClass(genericType => genericType.IsSameOrSubclassOf(typeof(Entity)))) {
                                 values[fieldInfo.Name] = value;
                             }
                         }
@@ -122,10 +123,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     }
                 }, (dictionary, level) => {
                     Dictionary<Type,Dictionary<string,object>> clonedDict = dictionary.DeepCloneShared();
-                    clonedDict.Keys.Count.DebugLog();
                     foreach (Type type in clonedDict.Keys) {
                         Dictionary<string,object> values = clonedDict[type];
-                        // string.Join("\n", values.Select(pair => type.FullName + " " + pair.Key)).DebugLog();
+                        // ("\n" + string.Join("\n", values.Select(pair => type.FullName + " " + pair.Key))).DebugLog();
                         foreach (KeyValuePair<string,object> pair in values) {
                             type.SetFieldValue(pair.Key, pair.Value);
                         }
@@ -137,13 +137,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             Type type = typeof(MInput);
             All.Add(new SaveLoadAction(
                 (savedValues, level) => {
-                    Dictionary<string,object> dictionary = new Dictionary<string, object>();
-                    dictionary["Active"] = MInput.Active;
-                    dictionary["Disabled"] = MInput.Disabled;
-                    dictionary["Keyboard"] = MInput.Keyboard;
-                    dictionary["Mouse"] = MInput.Mouse;
-                    dictionary["GamePads"] = MInput.GamePads;
-                    dictionary["VirtualInputs"] = type.GetFieldValue("VirtualInputs");
+                    Dictionary<string, object> dictionary = new Dictionary<string, object> {
+                        ["Active"] = MInput.Active,
+                        ["Disabled"] = MInput.Disabled,
+                        ["Keyboard"] = MInput.Keyboard,
+                        ["Mouse"] = MInput.Mouse,
+                        ["GamePads"] = MInput.GamePads,
+                        ["VirtualInputs"] = type.GetFieldValue("VirtualInputs")
+                    };
                     savedValues[type] = dictionary.DeepCloneShared();
                 }, (savedValues, level) => {
                     Dictionary<string,object> dictionary = savedValues[type].DeepCloneShared();
@@ -159,18 +160,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private static void SupportCrystallineHelper() {
             Type vitModuleType = Type.GetType("vitmod.VitModule, vitmod");
-            Type timeCrystalType = Type.GetType("vitmod.TimeCrystal, vitmod");
-            Type noMoveTriggerType = Type.GetType("vitmod.NoMoveTrigger, vitmod");
-            Type starCrystalType = Type.GetType("vitmod.StarCrystal, vitmod");
-
-            if (vitModuleType == null && timeCrystalType == null && noMoveTriggerType == null && starCrystalType == null) return;
-
+            if (vitModuleType == null) return;
             All.Add(new SaveLoadAction(
                 (savedValues, level) => {
                     SaveStaticFieldValues(savedValues, vitModuleType, "timeStopScaleTimer", "noMoveScaleTimer");
-                    SaveStaticFieldValues(savedValues, timeCrystalType, "stopTimer", "stopStage");
-                    SaveStaticFieldValues(savedValues, noMoveTriggerType, "stopTimer", "stopStage", "alreadyIn");
-                    SaveStaticFieldValues(savedValues, starCrystalType, "starTimer");
                 },
                 (savedValues, level) => LoadStaticFieldValues(savedValues)
             ));
@@ -209,21 +202,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 && Delegate.CreateDelegate(typeof(On.Celeste.Player.hook_Update), timeFieldType.GetMethodInfo("PlayerUpdateHook")) is
                     On.Celeste.Player.hook_Update hookUpdate) {
                 All.Add(new SaveLoadAction(
-                    (savedValues, level) => {
-                        SaveStaticFieldValues(savedValues, timeFieldType,
-                            "baseTimeRate",
-                            "ourLastTimeRate",
-                            "playerTimeRate",
-                            "hookAdded",
-                            "targetPlayer",
-                            "lingeringTarget"
-                        );
-                    },
-                    (savedValues, level) => {
-                        if ((bool) savedValues[timeFieldType]["hookAdded"]) {
+                    loadState:(savedValues, level) => {
+                        if ((bool) timeFieldType.GetFieldValue("hookAdded")) {
                             On.Celeste.Player.Update += hookUpdate;
                         }
-                        LoadStaticFieldValues(savedValues);
                     }
                 ));
             }
@@ -242,17 +224,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     On.Celeste.CrystalStaticSpinner.hook_GetHue hookGetHue
             ) {
                 All.Add(new SaveLoadAction(
-                    (savedValues, level) => {
-                        SaveStaticFieldValues(savedValues, colorControllerType,
-                            "rainbowSpinnerHueHooked", "transitionProgress", "spinnerControllerOnScreen",
-                            "nextSpinnerController");
-                    },
-                    (savedValues, level) => {
-                        if ((bool) savedValues[colorControllerType]["rainbowSpinnerHueHooked"]) {
+                    loadState:(savedValues, level) => {
+                        if ((bool) colorControllerType.GetFieldValue("rainbowSpinnerHueHooked")) {
                             On.Celeste.CrystalStaticSpinner.GetHue += hookGetHue;
                         }
-
-                        LoadStaticFieldValues(savedValues);
                     }
                 ));
             }
@@ -265,17 +240,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     On.Celeste.CrystalStaticSpinner.hook_GetHue hookGetHue
             ) {
                 All.Add(new SaveLoadAction(
-                    (savedValues, level) => {
-                        SaveStaticFieldValues(savedValues, colorControllerType,
-                            "rainbowSpinnerHueHooked", "transitionProgress", "spinnerControllerOnScreen",
-                            "nextSpinnerController");
-                    },
-                    (savedValues, level) => {
-                        if ((bool) savedValues[colorControllerType]["rainbowSpinnerHueHooked"]) {
+                    loadState:(savedValues, level) => {
+                        if ((bool) colorControllerType.GetFieldValue("rainbowSpinnerHueHooked")) {
                             On.Celeste.CrystalStaticSpinner.GetHue += hookGetHue;
                         }
-
-                        LoadStaticFieldValues(savedValues);
                     }
                 ));
             }
@@ -287,25 +255,20 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     On.Celeste.CrystalStaticSpinner.hook_GetHue hookSpinnerGetHue
             ) {
                 All.Add(new SaveLoadAction(
-                    (savedValues, level) => { SaveStaticFieldValues(savedValues, colorAreaControllerType, "rainbowSpinnerHueHooked"); },
-                    (savedValues, level) => {
-                        if ((bool) savedValues[colorAreaControllerType]["rainbowSpinnerHueHooked"]) {
+                    loadState:(savedValues, level) => {
+                        if ((bool) colorAreaControllerType.GetFieldValue("rainbowSpinnerHueHooked")) {
                             On.Celeste.CrystalStaticSpinner.GetHue += hookSpinnerGetHue;
                         }
-
-                        LoadStaticFieldValues(savedValues);
                     }
                 ));
             }
         }
 
-
         private static void SupportExtendedVariants() {
             // 修复：ExtendedVariantTrigger 设置的值在 SL 之后失效
             if (Type.GetType("ExtendedVariants.ExtendedVariantTrigger, ExtendedVariantMode") is Type extendedVariantTrigger) {
                 All.Add(new SaveLoadAction(
-                    null,
-                    (savedValues, level) => {
+                    loadState: (savedValues, level) => {
                         if (!(Engine.Scene.GetPlayer() is Player player) ||
                             !(player.GetFieldValue("triggersInside") is HashSet<Trigger> triggersInside)) return;
                         foreach (Trigger trigger in triggersInside.Where(trigger =>

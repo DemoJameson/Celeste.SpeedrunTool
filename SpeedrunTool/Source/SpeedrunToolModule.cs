@@ -63,5 +63,9 @@ namespace Celeste.Mod.SpeedrunTool {
             RoomTimerManager.Instance.Init();
             ButtonConfigUi.Init();
         }
+
+        public override void LoadContent(bool firstLoad) {
+            SaveLoadAction.OnLoadContent();
+        }
     }
 }

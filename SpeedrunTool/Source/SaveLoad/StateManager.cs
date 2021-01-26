@@ -124,9 +124,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private bool SaveState(bool tas) {
             if (!(Engine.Scene is Level level)) return false;
             if (!IsAllowSave(level, level.GetPlayer())) return false;
-            // 不允许玩家开场黑屏时保存状态，因为如果在黑屏结束一瞬间之前保存，读档后没有黑屏等待时间感觉会很突兀
+            // 不允许玩家在黑屏时保存状态，因为如果在黑屏结束一瞬间之前保存，读档后没有黑屏等待时间感觉会很突兀
             // TODO 尝试在 SaveState 结尾加 Wipe 不过加载状态后右上角残留黑块
-            if (!tas && level.RendererList.Renderers.Any(renderer => renderer is SpotlightWipe)) return false;
+            if (!tas && level.RendererList.Renderers.Any(renderer => renderer is ScreenWipe)) return false;
 
             ClearState(false);
 
@@ -213,8 +213,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 return true;
             }
 
-            WaitSaveStateEntity waitSaveStateEntity = new WaitSaveStateEntity(level);
-            level.Add(waitSaveStateEntity);
+            level.Add(new WaitSaveStateEntity(level));
             return true;
         }
 
@@ -271,7 +270,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (level.RendererList.Renderers.Any(renderer => renderer is ScreenWipe)) {
                 LoadStateEnd(level);
             } else {
-                level.DoScreenWipe(true, () => { LoadStateEnd(level); });
+                level.Add(new WaitLoadStateEntity(level));
             }
 
             return true;
@@ -608,6 +607,24 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     level.Frozen = false;
                     level.TimerStopped = origTimerStopped;
                 });
+                RemoveSelf();
+            }
+        }
+
+        class WaitLoadStateEntity : Entity {
+            private readonly Level level;
+
+            public WaitLoadStateEntity(Level level) {
+                this.level = level;
+
+                // 避免被 Save
+                Tag = Tags.Global;
+                level.Frozen = true;
+                level.TimerStopped = true;
+            }
+
+            public override void Render() {
+                level.DoScreenWipe(true, () => Instance.LoadStateEnd(level));
                 RemoveSelf();
             }
         }

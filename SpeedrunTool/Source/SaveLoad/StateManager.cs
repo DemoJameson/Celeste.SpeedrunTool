@@ -220,18 +220,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             DeepClonerUtils.ClearSharedDeepCloneState();
-
-            if (tas) {
-                return true;
-            }
-
-            // 存在 wipe 的情况下不能自行加 wipe
-            if (level.RendererList.Renderers.Any(renderer => renderer is ScreenWipe)) {
-                return true;
-            }
-
-            level.Add(new WaitSaveStateEntity(level));
-            return true;
+            return LoadState(tas);
         }
 
         // public for TAS Mod

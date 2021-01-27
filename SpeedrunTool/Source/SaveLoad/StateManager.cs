@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.Extensions;
@@ -16,6 +17,9 @@ using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class StateManager {
         private static SpeedrunToolSettings Settings => SpeedrunToolModule.Settings;
+        private static readonly Lazy<PropertyInfo> inGameOverworldHelperIsOpen = new Lazy<PropertyInfo>(
+            () => Type.GetType("Celeste.Mod.CollabUtils2.UI.InGameOverworldHelper, CollabUtils2")?.GetPropertyInfo("IsOpen")
+            );
 
         private Level savedLevel;
 
@@ -85,8 +89,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private void ClearStateWhenSwitchScene(On.Monocle.Scene.orig_Begin orig, Scene self) {
             orig(self);
-            if (self is Overworld && !savedByTas) ClearState(true);
             if (IsSaved) {
+                if (self is Overworld && !savedByTas && inGameOverworldHelperIsOpen.Value?.GetValue(null) as bool? != true) ClearState(true);
                 if (self is Level) {
                     State = States.None; // 修复：读档途中按下 PageDown/Up 后无法存档
                     PreCloneSavedEntities();
@@ -127,6 +131,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // 不允许玩家在黑屏时保存状态，因为如果在黑屏结束一瞬间之前保存，读档后没有黑屏等待时间感觉会很突兀
             // TODO 尝试在 SaveState 结尾加 Wipe 不过加载状态后右上角残留黑块
             if (!tas && level.RendererList.Renderers.Any(renderer => renderer is ScreenWipe)) return false;
+
+            // 不允许在春游图打开章节面板时存档
+            if (inGameOverworldHelperIsOpen.Value?.GetValue(null) as bool? == true) return false;
 
             ClearState(false);
 

@@ -35,8 +35,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                    || IsSimpleList(type, extraGenericTypes)
                    || IsSimpleStack(type, extraGenericTypes)
                    || IsSimpleHashSet(type, extraGenericTypes)
-                   || IsSimpleDictionary(type, extraGenericTypes)
-                   || IsSimpleWeakReference(type, extraGenericTypes);
+                   || IsSimpleDictionary(type, extraGenericTypes);
         }
 
         public static void CopyAllSimpleTypeFieldsAndNull(this object to, object from) {

@@ -292,6 +292,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             foreach (EventInstance instance in playingEventInstances) instance.start();
             playingEventInstances.Clear();
             DeepClonerUtils.ClearSharedDeepCloneState();
+            GC.Collect();
             State = States.None;
         }
 

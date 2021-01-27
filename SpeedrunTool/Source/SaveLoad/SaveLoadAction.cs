@@ -70,7 +70,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SupportAudioMusic();
             SupportExtendedVariants();
             SupportMaxHelpingHand();
-            SupportPandorasBox();
+            // SupportPandorasBox();
             SupportCrystallineHelper();
             SupportSpringCollab2020();
         }
@@ -112,7 +112,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                             Type fieldType = fieldInfo.FieldType;
                             if (value == null) {
                                 values[fieldInfo.Name] = null;
-                            } else if (fieldType.IsSimpleClass(genericType => genericType.IsSameOrSubclassOf(typeof(Entity)))) {
+                            } else if (fieldType.IsSimpleClass()) {
                                 values[fieldInfo.Name] = value;
                             }
                         }

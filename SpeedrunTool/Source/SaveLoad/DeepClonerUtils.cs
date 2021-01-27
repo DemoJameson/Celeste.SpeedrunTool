@@ -117,7 +117,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         // 在 MonoMod.Utils.DynData`1.get_Item(String name)
                         // 在 Celeste.Mod.MaxHelpingHand.Entities.CustomizableRefill.<>c__DisplayClass0_0.<.ctor>b__0(Player player)
                         if (sourceObj is WeakReference sourceWeak) {
-                            return new WeakReference(sourceWeak.Target.DeepClone(deepCloneState));
+                            return new WeakReference(sourceWeak.Target.DeepClone(deepCloneState), sourceWeak.TrackResurrection);
                         }
 
                         // 修复启用 CelesteNet 后保存状态时的崩溃

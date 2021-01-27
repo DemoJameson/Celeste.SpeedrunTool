@@ -23,8 +23,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         public bool IsSaved => savedLevel != null;
 
         private List<Entity> savedEntities;
-        private Dictionary<Type, List<Entity>> savedOrderedTrackerEntities;
-        private Dictionary<Type, List<Component>> savedOrderedTrackerComponents;
+        private Dictionary<Type, Dictionary<Entity, int>> savedOrderedTrackerEntities;
+        private Dictionary<Type, Dictionary<Component, int>> savedOrderedTrackerComponents;
 
         private Task<DeepCloneState> preCloneTask;
 
@@ -161,23 +161,33 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             savedEntities = GetEntitiesNeedDeepClone(level).DeepCloneShared();
 
-            savedOrderedTrackerEntities = new Dictionary<Type, List<Entity>>();
+            savedOrderedTrackerEntities = new Dictionary<Type, Dictionary<Entity, int>>();
             foreach (Entity savedEntity in savedEntities) {
                 Type type = savedEntity.GetType();
                 if (savedOrderedTrackerEntities.ContainsKey(type)) continue;
 
-                if (level.Tracker.Entities.ContainsKey(type)) {
-                    savedOrderedTrackerEntities[type] = level.Tracker.Entities[type].DeepCloneShared();
+                if (level.Tracker.Entities.ContainsKey(type) && level.Tracker.Entities[type].Count > 0) {
+                    List<Entity> clonedEntities = level.Tracker.Entities[type].DeepCloneShared();
+                    Dictionary<Entity,int> dictionary = new Dictionary<Entity, int>();
+                    for (var i = 0; i < clonedEntities.Count; i++) {
+                        dictionary[clonedEntities[i]] = i;
+                    }
+                    savedOrderedTrackerEntities[type] = dictionary;
                 }
             }
 
-            savedOrderedTrackerComponents = new Dictionary<Type, List<Component>>();
+            savedOrderedTrackerComponents = new Dictionary<Type, Dictionary<Component, int>>();
             foreach (Component component in savedEntities.SelectMany(entity => entity.Components)) {
                 Type type = component.GetType();
                 if (savedOrderedTrackerComponents.ContainsKey(type)) continue;
 
-                if (level.Tracker.Components.ContainsKey(type)) {
-                    savedOrderedTrackerComponents[type] = level.Tracker.Components[type].DeepCloneShared();
+                if (level.Tracker.Components.ContainsKey(type) && level.Tracker.Components[type].Count > 0) {
+                    List<Component> clonedComponents = level.Tracker.Components[type].DeepCloneShared();
+                    Dictionary<Component, int> dictionary = new Dictionary<Component, int>();
+                    for (var i = 0; i < clonedComponents.Count; i++) {
+                        dictionary[clonedComponents[i]] = i;
+                    }
+                    savedOrderedTrackerComponents[type] = dictionary;
                 }
             }
 
@@ -270,7 +280,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (level.RendererList.Renderers.Any(renderer => renderer is ScreenWipe)) {
                 LoadStateEnd(level);
             } else {
-                level.Add(new WaitLoadStateEntity(level));
+                level.DoScreenWipe(true, () => LoadStateEnd(level));
             }
 
             return true;
@@ -404,31 +414,29 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             entities.Sort(EntityList.CompareDepth);
 
             // restore tracker order
-            Dictionary<Type, List<Entity>> orderedTrackerEntities = savedOrderedTrackerEntities.DeepCloneShared();
+            Dictionary<Type, Dictionary<Entity, int>> orderedTrackerEntities = savedOrderedTrackerEntities.DeepCloneShared();
             foreach (Type type in orderedTrackerEntities.Keys) {
                 if (!level.Tracker.Entities.ContainsKey(type)) continue;
-                List<Entity> orderedList = orderedTrackerEntities[type];
+                Dictionary<Entity, int> orderedDict = orderedTrackerEntities[type];
                 List<Entity> unorderedList = level.Tracker.Entities[type];
                 unorderedList.Sort((entity1, entity2) => {
-                    var index1 = orderedList.IndexOf(entity1);
-                    if (index1 == -1) return 0;
-                    var index2 = orderedList.IndexOf(entity2);
-                    if (index2 == -1) return 0;
-                    return index1 - index2;
+                    if (orderedDict.ContainsKey(entity1) && orderedDict.ContainsKey(entity2)) {
+                        return orderedDict[entity1] - orderedDict[entity2];
+                    }
+                    return 0;
                 });
             }
 
-            Dictionary<Type, List<Component>> orderedTrackerComponents = savedOrderedTrackerComponents.DeepCloneShared();
+            Dictionary<Type, Dictionary<Component, int>> orderedTrackerComponents = savedOrderedTrackerComponents.DeepCloneShared();
             foreach (Type type in orderedTrackerComponents.Keys) {
                 if (!level.Tracker.Components.ContainsKey(type)) continue;
-                List<Component> orderedList = orderedTrackerComponents[type];
+                Dictionary<Component, int> orderedDict = orderedTrackerComponents[type];
                 List<Component> unorderedList = level.Tracker.Components[type];
                 unorderedList.Sort((component1, component2) => {
-                    var index1 = orderedList.IndexOf(component1);
-                    if (index1 == -1) return 0;
-                    var index2 = orderedList.IndexOf(component2);
-                    if (index2 == -1) return 0;
-                    return index1 - index2;
+                    if (orderedDict.ContainsKey(component1) && orderedDict.ContainsKey(component2)) {
+                        return orderedDict[component1] - orderedDict[component2];
+                    }
+                    return 0;
                 });
             }
         }
@@ -608,24 +616,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     level.Frozen = false;
                     level.TimerStopped = origTimerStopped;
                 });
-                RemoveSelf();
-            }
-        }
-
-        class WaitLoadStateEntity : Entity {
-            private readonly Level level;
-
-            public WaitLoadStateEntity(Level level) {
-                this.level = level;
-
-                // 避免被 Save
-                Tag = Tags.Global;
-                level.Frozen = true;
-                level.TimerStopped = true;
-            }
-
-            public override void Render() {
-                level.DoScreenWipe(true, () => Instance.LoadStateEnd(level));
                 RemoveSelf();
             }
         }

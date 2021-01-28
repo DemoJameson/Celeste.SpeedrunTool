@@ -251,6 +251,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             TrailManager.Clear(); // 清除冲刺的残影  // Remove dash trail
 
             UnloadLevelEntities(level);
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+
             RestoreLevelEntities(level);
             RestoreCassetteBlockManager1(level); // 停止播放主音乐，等待播放节奏音乐
             RestoreLevel(level);
@@ -298,7 +302,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             foreach (EventInstance instance in playingEventInstances) instance.start();
             playingEventInstances.Clear();
             DeepClonerUtils.ClearSharedDeepCloneState();
-            GC.Collect();
             State = States.None;
         }
 

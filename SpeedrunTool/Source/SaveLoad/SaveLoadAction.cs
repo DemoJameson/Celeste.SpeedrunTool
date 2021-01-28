@@ -81,12 +81,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         internal static void OnLoadContent() {
             EntityStaticFields = new Dictionary<Type, FieldInfo[]>();
-            IEnumerable<Type> entityTypes = AppDomain.CurrentDomain.GetAssemblies().SelectMany(assembly => assembly.GetTypes().Where(type =>
+            IEnumerable<Type> entityTypes = Everest.Modules.SelectMany(module => module.GetType().Assembly.GetTypes().Where(type =>
                 !type.IsAbstract
                 && !type.IsGenericType
                 && type.FullName != null
                 && !type.FullName.StartsWith("Celeste.Mod.SpeedrunTool")
-                && !type.FullName.StartsWith("Celeste.Mod.UI") // 里面几个 Entity 保存的话会很卡
                 && type.IsSameOrSubclassOf(typeof(Entity))));
 
             foreach (Type entityType in entityTypes) {

@@ -132,6 +132,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
             ));
         }
+
         private static void SupportMInput() {
             Type type = typeof(MInput);
             All.Add(new SaveLoadAction(

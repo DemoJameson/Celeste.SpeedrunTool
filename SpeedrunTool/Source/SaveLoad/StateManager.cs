@@ -21,11 +21,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             () => Type.GetType("Celeste.Mod.CollabUtils2.UI.InGameOverworldHelper, CollabUtils2")?.GetPropertyInfo("IsOpen")
             );
 
-        private Level savedLevel;
-
         // public for tas
         public bool IsSaved => savedLevel != null;
+        public States State { get; private set; } = States.None;
+        public bool SavedByTas { get; private set; }
 
+        private Level savedLevel;
         private List<Entity> savedEntities;
         private Dictionary<Type, Dictionary<Entity, int>> savedOrderedTrackerEntities;
         private Dictionary<Type, Dictionary<Component, int>> savedOrderedTrackerComponents;
@@ -42,10 +43,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private float savedDistortGameRate;
 
         private Dictionary<EverestModule, EverestModuleSession> savedModSessions;
-
-        public States State = States.None;
-
-        private bool savedByTas;
 
         public enum States {
             None,
@@ -90,7 +87,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private void ClearStateWhenSwitchScene(On.Monocle.Scene.orig_Begin orig, Scene self) {
             orig(self);
             if (IsSaved) {
-                if (self is Overworld && !savedByTas && inGameOverworldHelperIsOpen.Value?.GetValue(null) as bool? != true) ClearState(true);
+                if (self is Overworld && !SavedByTas && inGameOverworldHelperIsOpen.Value?.GetValue(null) as bool? != true) ClearState(true);
                 if (self is Level) {
                     State = States.None; // 修复：读档途中按下 PageDown/Up 后无法存档
                     PreCloneSavedEntities();
@@ -106,7 +103,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (SpeedrunToolModule.Settings.Enabled
                 && SpeedrunToolModule.Settings.AutoLoadAfterDeath
                 && IsSaved
-                && !savedByTas
+                && !SavedByTas
                 && !(bool) self.GetFieldValue("finished")
                 && Engine.Scene is Level level
             ) {
@@ -137,7 +134,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             ClearState(false);
 
-            savedByTas = tas;
+            SavedByTas = tas;
 
             savedLevel = level.ShallowClone();
             savedLevel.FormationBackdrop = level.FormationBackdrop.ShallowClone();
@@ -232,7 +229,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private bool LoadState(bool tas) {
             if (!(Engine.Scene is Level level)) return false;
             if (level.Paused || State != States.None || !IsSaved) return false;
-            if (tas && !savedByTas) return false;
+            if (tas && !SavedByTas) return false;
 
             State = States.Loading;
             DeepClonerUtils.SetSharedDeepCloneState(preCloneTask?.Result);
@@ -357,7 +354,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // Mod
             SaveLoadAction.OnClearState();
 
-            savedByTas = false;
+            SavedByTas = false;
 
             State = States.None;
         }

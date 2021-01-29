@@ -16,6 +16,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SaveLoadAction.Add(new SaveLoadAction(loadState: (savedValues, level) => {
                 // recolor golden berry
                 foreach (Strawberry berry in level.Entities.FindAll<Strawberry>().Where(strawberry => strawberry.Golden)) {
+                    if (StateManager.Instance.SavedByTas) return;
                     if (!(berry.GetFieldValue("sprite") is Sprite sprite)) return;
                     GFX.SpriteBank.CreateOn(sprite, "speedrun_tool_goldberry");
                 }
@@ -53,6 +54,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 SpeedrunToolModule.Settings.RoomTimerType == RoomTimerType.Off
                 && Engine.Scene is Level level && !level.Completed
                 && level.GetExtendedBoolean(START_FROM_SAVE_SATE)
+                && !StateManager.Instance.SavedByTas
             );
 
             var beforeInstr = cursor.DefineLabel();

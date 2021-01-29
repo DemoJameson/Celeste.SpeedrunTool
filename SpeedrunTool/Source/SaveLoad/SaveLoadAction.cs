@@ -81,7 +81,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         internal static void OnLoadContent() {
             EntityStaticFields = new Dictionary<Type, FieldInfo[]>();
-            IEnumerable<Type> entityTypes = Everest.Modules.SelectMany(module => module.GetType().Assembly.GetTypes().Where(type =>
+            IEnumerable<Type> entityTypes = Everest.Modules.SelectMany(module => module.GetType().Assembly.GetTypesSafe().Where(type =>
                 !type.IsAbstract
                 && !type.IsGenericType
                 && type.FullName != null

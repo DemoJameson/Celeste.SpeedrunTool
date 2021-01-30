@@ -145,9 +145,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedLevel.Bloom = level.Bloom.DeepCloneShared();
             savedLevel.Background = level.Background.DeepCloneShared();
             savedLevel.Foreground = level.Foreground.DeepCloneShared();
-            savedLevel.HudRenderer = level.HudRenderer.DeepCloneShared();
-            savedLevel.SubHudRenderer = level.SubHudRenderer.DeepCloneShared();
-            savedLevel.Displacement = level.Displacement.DeepCloneShared();
+            // savedLevel.HudRenderer = level.HudRenderer.DeepCloneShared();
+            // savedLevel.SubHudRenderer = level.SubHudRenderer.DeepCloneShared();
+            // savedLevel.Displacement = level.Displacement.DeepCloneShared();
 
             // 只需浅克隆
             savedLevel.Lighting = level.Lighting.ShallowClone();
@@ -156,12 +156,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // savedLevel.GameplayRenderer = level.GameplayRenderer.DeepCloneShared();
 
             // Renderer nullable
-            savedLevel.Wipe = level.Wipe.DeepCloneShared();
+            // savedLevel.Wipe = level.Wipe.DeepCloneShared();
 
             savedLevel.SetFieldValue("transition", level.GetFieldValue("transition").DeepCloneShared());
             savedLevel.SetFieldValue("skipCoroutine", level.GetFieldValue("skipCoroutine").DeepCloneShared());
             savedLevel.SetFieldValue("onCutsceneSkip", level.GetFieldValue("onCutsceneSkip").DeepCloneShared());
-            savedLevel.SetPropertyValue<Scene>("RendererList", level.RendererList.DeepCloneShared());
+            // savedLevel.SetPropertyValue<Scene>("RendererList", level.RendererList.DeepCloneShared());
 
             savedEntities = GetEntitiesNeedDeepClone(level).DeepCloneShared();
 
@@ -266,6 +266,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
             }
 
+            // 修复问题：未打开自动读档时，死掉按下确认键后读档完成会接着执行 Reload 复活方法
+            // Fix: When AutoLoadStateAfterDeath is off, if manually LoadState() after death, level.Reload() will still be executed.
+            ClearScreenWipe(level);
+
             if (tas) {
                 LoadStateComplete(level);
                 return true;
@@ -277,10 +281,24 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (level.RendererList.Renderers.Any(renderer => renderer is ScreenWipe)) {
                 LoadStateEnd(level);
             } else {
-                level.DoScreenWipe(true, () => LoadStateEnd(level));
+                level.DoScreenWipe(true, () => {
+                    // 修复问题：死亡后出现黑屏的一瞬间手动读档后游戏崩溃，因为 ScreenWipe 执行了 level.Reload() 方法
+                    // System.NullReferenceException: 未将对象引用设置到对象的实例。
+                    // 在 Celeste.CameraTargetTrigger.OnLeave(Player player)
+                    // 在 Celeste.Player.Removed(Scene scene)
+                    ClearScreenWipe(level);
+
+                    LoadStateEnd(level);
+                });
             }
 
             return true;
+        }
+
+        private void ClearScreenWipe(Level level) {
+            level.RendererList.Renderers.ForEach(renderer => {
+                if (renderer is ScreenWipe wipe) wipe.Cancel();
+            });
         }
 
         private void LoadStateEnd(Level level) {
@@ -445,9 +463,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedLevel.Bloom.DeepCloneToShared(level.Bloom);
             savedLevel.Background.DeepCloneToShared(level.Background);
             savedLevel.Foreground.DeepCloneToShared(level.Foreground);
-            savedLevel.HudRenderer.DeepCloneToShared(level.HudRenderer);
-            savedLevel.SubHudRenderer.DeepCloneToShared(level.SubHudRenderer);
-            savedLevel.Displacement.DeepCloneToShared(level.Displacement);
+            // savedLevel.HudRenderer.DeepCloneToShared(level.HudRenderer);
+            // savedLevel.SubHudRenderer.DeepCloneToShared(level.SubHudRenderer);
+            // savedLevel.Displacement.DeepCloneToShared(level.Displacement);
 
             // 不要 DeepClone level.Lighting 会造成光源偏移
             level.Lighting.CopyAllSimpleTypeFieldsAndNull(savedLevel.Lighting);
@@ -455,12 +473,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // 里面有 camera 且没什么需要克隆还原的
             // level.GameplayRenderer.CopyAllSimpleTypeFieldsAndNull(savedLevel.GameplayRenderer);
 
-            level.Wipe = savedLevel.Wipe.DeepCloneShared();
+            // level.Wipe = savedLevel.Wipe.DeepCloneShared();
 
             level.SetFieldValue("transition", savedLevel.GetFieldValue("transition").DeepCloneShared());
             level.SetFieldValue("skipCoroutine", savedLevel.GetFieldValue("skipCoroutine").DeepCloneShared());
             level.SetFieldValue("onCutsceneSkip", savedLevel.GetFieldValue("onCutsceneSkip").DeepCloneShared());
-            level.SetPropertyValue<Scene>("RendererList", savedLevel.RendererList.DeepCloneShared());
+            // level.SetPropertyValue<Scene>("RendererList", savedLevel.RendererList.DeepCloneShared());
 
             level.CopyAllSimpleTypeFieldsAndNull(savedLevel);
 
@@ -526,10 +544,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 // SpeedrunTool 里有 ConfettiRenderer 和一些 MiniTextbox
                 if (entity.IsIgnoreSaveLoad()) return false;
 
-                // 不恢复 CelesteNet/CelesteTAS 的物体
-                // Do not restore CelesteNet/CelesteTAS objects
-                if (entity.GetType().FullName is string name &&
-                    (name.StartsWith("Celeste.Mod.CelesteNet.") || name.StartsWith("TAS.")))
+                // 不恢复 CelesteNet 的物体
+                // Do not restore CelesteNet Entity
+                if (entity.GetType().FullName is string name && name.StartsWith("Celeste.Mod.CelesteNet."))
                     return false;
 
                 return true;

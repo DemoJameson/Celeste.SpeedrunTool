@@ -126,8 +126,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (!(Engine.Scene is Level level)) return false;
             if (!IsAllowSave(level, level.GetPlayer())) return false;
             // 不允许玩家在黑屏时保存状态，因为如果在黑屏结束一瞬间之前保存，读档后没有黑屏等待时间感觉会很突兀
-            // TODO 尝试在 SaveState 结尾加 Wipe 不过加载状态后右上角残留黑块
-            if (!tas && level.RendererList.Renderers.Any(renderer => renderer is ScreenWipe)) return false;
+            if (!tas && level.Wipe != null) return false;
 
             // 不允许在春游图打开章节面板时存档
             if (inGameOverworldHelperIsOpen.Value?.GetValue(null) as bool? == true) return false;
@@ -554,7 +553,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private bool IsAllowSave(Level level, Player player) {
-            return State == States.None && player != null && !player.Dead && !level.Paused;
+            return State == States.None && player != null && !player.Dead && !level.Paused && !level.SkippingCutscene;
         }
 
         private bool IsNotCollectingHeart(Level level) {

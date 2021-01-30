@@ -41,6 +41,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     // NLua
                     || type == typeof(Lua)
                     || type.IsSubclassOf(typeof(LuaBase))
+
+                    // CelesteNet
+                    || type.FullName != null && type.FullName.StartsWith("Celeste.Mod.CelesteNet.")
                 ) {
                     return true;
                 }

@@ -104,7 +104,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     foreach (Type type in EntityStaticFields.Keys) {
                         FieldInfo[] fieldInfos = EntityStaticFields[type];
                         // string.Join("\n", fieldInfos.Select(info => type.FullName + " " + info.Name)).DebugLog();
-                        Dictionary<string,object> values = new Dictionary<string, object>();
+                        Dictionary<string, object> values = new Dictionary<string, object>();
 
                         foreach (FieldInfo fieldInfo in fieldInfos) {
                             object value = fieldInfo.GetValue(null);
@@ -121,7 +121,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         }
                     }
                 }, (dictionary, level) => {
-                    Dictionary<Type,Dictionary<string,object>> clonedDict = dictionary.DeepCloneShared();
+                    Dictionary<Type, Dictionary<string, object>> clonedDict = dictionary.DeepCloneShared();
                     foreach (Type type in clonedDict.Keys) {
                         Dictionary<string,object> values = clonedDict[type];
                         // ("\n" + string.Join("\n", values.Select(pair => type.FullName + " " + pair.Key))).DebugLog();
@@ -147,7 +147,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     };
                     savedValues[type] = dictionary.DeepCloneShared();
                 }, (savedValues, level) => {
-                    Dictionary<string,object> dictionary = savedValues[type].DeepCloneShared();
+                    Dictionary<string, object> dictionary = savedValues[type].DeepCloneShared();
                     MInput.Active = (bool) dictionary["Active"];
                     MInput.Disabled = (bool) dictionary["Disabled"];
                     type.SetPropertyValue("Keyboard", dictionary["Keyboard"]);
@@ -155,16 +155,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     type.SetPropertyValue("GamePads", dictionary["GamePads"]);
                     type.SetPropertyValue("VirtualInputs", dictionary["VirtualInputs"]);
                 }
-                ));
+            ));
         }
 
         private static void SupportCrystallineHelper() {
             Type vitModuleType = Type.GetType("vitmod.VitModule, vitmod");
             if (vitModuleType == null) return;
             All.Add(new SaveLoadAction(
-                (savedValues, level) => {
-                    SaveStaticFieldValues(savedValues, vitModuleType, "timeStopScaleTimer", "noMoveScaleTimer");
-                },
+                (savedValues, level) => { SaveStaticFieldValues(savedValues, vitModuleType, "timeStopScaleTimer", "noMoveScaleTimer"); },
                 (savedValues, level) => LoadStaticFieldValues(savedValues)
             ));
         }
@@ -173,9 +171,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             All.Add(new SaveLoadAction(
                 (savedValues, level) => {
                     Dictionary<string, object> saved = new Dictionary<string, object> {
-                        {"currentMusicEvent", (typeof(Audio).GetFieldValue("currentMusicEvent") as EventInstance)?.NeedManualClone().DeepCloneShared()},
-                        {"CurrentAmbienceEventInstance", Audio.CurrentAmbienceEventInstance?.NeedManualClone().DeepCloneShared()},
-                        {"currentAltMusicEvent", (typeof(Audio).GetFieldValue("currentAltMusicEvent") as EventInstance)?.NeedManualClone().DeepCloneShared()},
+                        {
+                            "currentMusicEvent",
+                            (typeof(Audio).GetFieldValue("currentMusicEvent") as EventInstance)?.NeedManualClone().DeepCloneShared()
+                        },
+                        {"CurrentAmbienceEventInstance", Audio.CurrentAmbienceEventInstance?.NeedManualClone().DeepCloneShared()}, {
+                            "currentAltMusicEvent",
+                            (typeof(Audio).GetFieldValue("currentAltMusicEvent") as EventInstance)?.NeedManualClone().DeepCloneShared()
+                        },
                         {"MusicUnderwater", Audio.MusicUnderwater}
                     };
                     savedValues[typeof(Audio)] = saved;
@@ -190,7 +193,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     Audio.CurrentAmbienceEventInstance?.CopyParametersFrom(saved["CurrentAmbienceEventInstance"] as EventInstance);
 
                     Audio.SetAltMusic(Audio.GetEventName(saved["currentAltMusicEvent"] as EventInstance));
-                    (typeof(Audio).GetFieldValue("currentAltMusicEvent") as EventInstance)?.CopyParametersFrom(saved["currentAltMusicEvent"] as EventInstance);
+                    (typeof(Audio).GetFieldValue("currentAltMusicEvent") as EventInstance)?.CopyParametersFrom(
+                        saved["currentAltMusicEvent"] as EventInstance);
 
                     Audio.MusicUnderwater = (bool) saved["MusicUnderwater"];
                 }
@@ -202,7 +206,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 && Delegate.CreateDelegate(typeof(On.Celeste.Player.hook_Update), timeFieldType.GetMethodInfo("PlayerUpdateHook")) is
                     On.Celeste.Player.hook_Update hookUpdate) {
                 All.Add(new SaveLoadAction(
-                    loadState:(savedValues, level) => {
+                    loadState: (savedValues, level) => {
                         if ((bool) timeFieldType.GetFieldValue("hookAdded")) {
                             On.Celeste.Player.Update += hookUpdate;
                         }
@@ -224,10 +228,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     On.Celeste.CrystalStaticSpinner.hook_GetHue hookGetHue
             ) {
                 All.Add(new SaveLoadAction(
-                    loadState:(savedValues, level) => {
+                    (savedValues, level) => {
+                        SaveStaticFieldValues(savedValues, colorControllerType, "spinnerControllerOnScreen", "nextSpinnerController");
+                    },
+                    (savedValues, level) => {
                         if ((bool) colorControllerType.GetFieldValue("rainbowSpinnerHueHooked")) {
                             On.Celeste.CrystalStaticSpinner.GetHue += hookGetHue;
                         }
+
+                        LoadStaticFieldValues(savedValues);
                     }
                 ));
             }
@@ -240,10 +249,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     On.Celeste.CrystalStaticSpinner.hook_GetHue hookGetHue
             ) {
                 All.Add(new SaveLoadAction(
-                    loadState:(savedValues, level) => {
+                    (savedValues, level) => {
+                        SaveStaticFieldValues(savedValues, colorControllerType, "spinnerControllerOnScreen", "nextSpinnerController");
+                    },
+                    (savedValues, level) => {
                         if ((bool) colorControllerType.GetFieldValue("rainbowSpinnerHueHooked")) {
                             On.Celeste.CrystalStaticSpinner.GetHue += hookGetHue;
                         }
+
+                        LoadStaticFieldValues(savedValues);
                     }
                 ));
             }
@@ -255,7 +269,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     On.Celeste.CrystalStaticSpinner.hook_GetHue hookSpinnerGetHue
             ) {
                 All.Add(new SaveLoadAction(
-                    loadState:(savedValues, level) => {
+                    loadState: (savedValues, level) => {
                         if ((bool) colorAreaControllerType.GetFieldValue("rainbowSpinnerHueHooked")) {
                             On.Celeste.CrystalStaticSpinner.GetHue += hookSpinnerGetHue;
                         }

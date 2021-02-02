@@ -104,6 +104,8 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                 }
 
                 level.UnloadLevel();
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
 
                 // 修复：章节计时器在章节完成隐藏后传送无法重新显示
                 level.Add(new SpeedrunTimerDisplay());

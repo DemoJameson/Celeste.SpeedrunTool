@@ -1,10 +1,11 @@
 using System;
 using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework;
 using Monocle;
-using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
+using static Celeste.Mod.SpeedrunTool.Other.ButtonConfigUi;
 
 namespace Celeste.Mod.SpeedrunTool.RoomTimer {
     public sealed class RoomTimerManager {

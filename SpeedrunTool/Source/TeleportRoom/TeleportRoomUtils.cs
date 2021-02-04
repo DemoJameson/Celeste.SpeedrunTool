@@ -4,13 +4,14 @@ using System.Collections.Generic;
 using System.Linq;
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Force.DeepCloner;
 using Microsoft.Xna.Framework;
 using Monocle;
 using On.Celeste.Editor;
-using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
+using static Celeste.Mod.SpeedrunTool.Other.ButtonConfigUi;
 using LevelTemplate = Celeste.Editor.LevelTemplate;
 
 namespace Celeste.Mod.SpeedrunTool.TeleportRoom {

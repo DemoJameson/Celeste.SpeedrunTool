@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Monocle;
 
-namespace Celeste.Mod.SpeedrunTool {
+namespace Celeste.Mod.SpeedrunTool.Other {
     public class ButtonConfigUi : TextMenu {
         private static readonly List<Buttons> AllButtons = new List<Buttons> {
             Buttons.A,

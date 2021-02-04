@@ -5,10 +5,10 @@ using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
 using Monocle;
 using On.Celeste.Editor;
-using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
+using static Celeste.Mod.SpeedrunTool.Other.ButtonConfigUi;
 using LevelTemplate = Celeste.Editor.LevelTemplate;
 
-namespace Celeste.Mod.SpeedrunTool {
+namespace Celeste.Mod.SpeedrunTool.Other {
     public class BetterMapEditor {
         public static bool ShouldFixTeleportProblems;
         private const string StartChasingLevel = "3";

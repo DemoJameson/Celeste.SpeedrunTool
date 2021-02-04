@@ -2,7 +2,7 @@ using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
 using On.Monocle;
 
-namespace Celeste.Mod.SpeedrunTool {
+namespace Celeste.Mod.SpeedrunTool.Other {
     public static class RespawnSpeedUtils {
         public static void Load() {
             Engine.Update += RespawnSpeed;

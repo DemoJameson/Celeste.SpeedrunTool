@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Celeste.Mod.SpeedrunTool.Other;
 using Microsoft.Xna.Framework;
 using Monocle;
 

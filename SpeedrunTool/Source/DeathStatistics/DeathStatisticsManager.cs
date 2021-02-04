@@ -4,11 +4,12 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.Other;
 using Force.DeepCloner;
 using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod.RuntimeDetour;
-using static Celeste.Mod.SpeedrunTool.ButtonConfigUi;
+using static Celeste.Mod.SpeedrunTool.Other.ButtonConfigUi;
 
 namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
     public class DeathStatisticsManager {

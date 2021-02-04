@@ -82,6 +82,7 @@ SPEEDRUN_TOOL_YURI=      Yuri
 SPEEDRUN_TOOL_RANDOM=    Random
 
 # ================================== Button Config ==================================
+SPEEDRUN_TOOL_PRESS_DELETE_TO_REMOVE_BUTTON=Press Delete to Remove Button
 SPEEDRUN_TOOL_OPEN_DEBUG_MAP=          Open Debug Map
 SPEEDRUN_TOOL_RESET_ROOM_PB=           Reset Room PB
 SPEEDRUN_TOOL_SWITCH_ROOM_TIMER=       Switch Room Timer

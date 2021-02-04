@@ -59,6 +59,7 @@ namespace Celeste.Mod.SpeedrunTool {
         // ReSharper restore UnusedMember.Global
 
         // Button Config
+        public const string PressDeleteToRemoveButton = "SPEEDRUN_TOOL_PRESS_DELETE_TO_REMOVE_BUTTON";
         public const string OpenDebugMap = "SPEEDRUN_TOOL_OPEN_DEBUG_MAP";
         public const string ResetRoomPb = "SPEEDRUN_TOOL_RESET_ROOM_PB";
         public const string SwitchRoomTimer = "SPEEDRUN_TOOL_SWITCH_ROOM_TIMER";

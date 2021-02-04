@@ -71,8 +71,7 @@ namespace Celeste.Mod.SpeedrunTool {
                     SetButton = button => Settings.ControllerQuickClear = button,
                     GetKeys = () => Settings.KeyboardQuickClear,
                     SetKeys = keys => Settings.KeyboardQuickClear = keys,
-                    DefaultKeys = new[] {Keys.F3, Keys.F6},
-                    FixedDefaultKeys = true,
+                    DefaultKeys = new[] {Keys.F3},
                     GetLabel = () => DialogIds.Clear.DialogClean(),
                 }
             }, {
@@ -204,6 +203,8 @@ namespace Celeste.Mod.SpeedrunTool {
 
             Add(new Header(Dialog.Clean(DialogIds.ButtonConfig)));
 
+            Add(new SubHeader(Dialog.Clean(DialogIds.PressDeleteToRemoveButton)));
+
             Add(new SubHeader(Dialog.Clean(DialogIds.Keyboard)));
             foreach (var pair in ButtonInfos) {
                 AddKeyboardSetting(pair.Key, pair.Value.GetKeys());
@@ -248,7 +249,8 @@ namespace Celeste.Mod.SpeedrunTool {
         }
 
         private void AddKeyboardSetting(Mappings mappingType, List<Keys> keys) {
-            Add(new Setting(ButtonInfos[mappingType].GetLabel(), keys).Pressed(() => Remap(mappingType, true)));
+            ButtonInfo buttonInfo = ButtonInfos[mappingType];
+            Add(new Setting(buttonInfo.GetLabel(), keys).Pressed(() => Remap(mappingType, true)));
         }
 
         private static void SetDefaultButtons() {
@@ -323,7 +325,8 @@ namespace Celeste.Mod.SpeedrunTool {
 
             remappingEase = Calc.Approach(remappingEase, remapping ? 1f : 0.0f, Engine.DeltaTime * 4f);
             if (remappingEase > 0.5 && remapping) {
-                if (Input.ESC.Pressed || Input.MenuCancel || timeout <= 0.0) {
+                if (Input.ESC.Pressed || Input.MenuCancel || MInput.Keyboard.Pressed(Keys.Delete) || timeout <= 0.0) {
+                    Input.ESC.ConsumePress();
                     remapping = false;
                     Focused = true;
                 } else if (remappingKeyboard) {
@@ -346,6 +349,24 @@ namespace Celeste.Mod.SpeedrunTool {
                 }
 
                 timeout -= Engine.DeltaTime;
+            } else if (MInput.Keyboard.Pressed(Keys.Delete) && Selection >= 3 && Selection < Items.Count - 1) {
+                int index = Selection - 3;
+                bool keyboard = true;
+                if (index > ButtonInfos.Count - 1) {
+                    index--;
+                    index %= ButtonInfos.Count;
+                    keyboard = false;
+                }
+                ButtonInfo buttonInfo = ButtonInfos.Values.ToList()[index];
+                if (keyboard) {
+                    buttonInfo.GetKeys().Clear();
+                    if (buttonInfo.FixedDefaultKeys) {
+                        buttonInfo.SetKeys(buttonInfo.DefaultKeys.ToList());
+                    }
+                } else {
+                    buttonInfo.SetButton(null);
+                }
+                Reload(Selection);
             }
 
             Alpha = Calc.Approach(Alpha, closing ? 0.0f : 1f, Engine.DeltaTime * 8f);

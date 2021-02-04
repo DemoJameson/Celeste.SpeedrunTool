@@ -579,8 +579,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 if (IsNotCollectingHeart(level) && !level.Completed) {
                     level.Add(new MiniTextbox(DialogIds.DialogClear).IgnoreSaveLoad());
                 }
-            } else if (MInput.Keyboard.Check(Keys.F5) || Mappings.OpenDebugMap.Pressed()) {
-                ClearState(true);
             } else if (Mappings.SwitchAutoLoadState.Pressed() && !level.Paused) {
                 Mappings.SwitchAutoLoadState.ConsumePress();
                 Settings.AutoLoadAfterDeath = !Settings.AutoLoadAfterDeath;

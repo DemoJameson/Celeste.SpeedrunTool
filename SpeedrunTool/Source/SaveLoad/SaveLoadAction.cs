@@ -65,6 +65,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         internal static void OnLoad() {
+            SupportCalcRandom();
             SupportEntitySimpleStaticFields();
             SupportMInput();
             SupportAudioMusic();
@@ -78,6 +79,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         internal static void OnUnload() {
             All.Clear();
         }
+
+        private static Dictionary<Type, FieldInfo[]> EntityStaticFields;
 
         internal static void OnLoadContent() {
             EntityStaticFields = new Dictionary<Type, FieldInfo[]>();
@@ -96,7 +99,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
         }
 
-        private static Dictionary<Type, FieldInfo[]> EntityStaticFields;
+        private static void SupportCalcRandom() {
+            Type type = typeof(Calc);
+            All.Add(new SaveLoadAction(
+                (savedValues, level) => {
+                    SaveStaticFieldValues(savedValues, type, "Random", "randomStack");
+                }, (savedValues, level) => {
+                    LoadStaticFieldValues(savedValues);
+                }
+            ));
+        }
 
         private static void SupportEntitySimpleStaticFields() {
             All.Add(new SaveLoadAction(
@@ -143,7 +155,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         ["Keyboard"] = MInput.Keyboard,
                         ["Mouse"] = MInput.Mouse,
                         ["GamePads"] = MInput.GamePads,
-                        ["VirtualInputs"] = type.GetFieldValue("VirtualInputs")
                     };
                     savedValues[type] = dictionary.DeepCloneShared();
                 }, (savedValues, level) => {
@@ -153,17 +164,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     type.SetPropertyValue("Keyboard", dictionary["Keyboard"]);
                     type.SetPropertyValue("Mouse", dictionary["Mouse"]);
                     type.SetPropertyValue("GamePads", dictionary["GamePads"]);
-                    type.SetPropertyValue("VirtualInputs", dictionary["VirtualInputs"]);
                 }
-            ));
-        }
-
-        private static void SupportCrystallineHelper() {
-            Type vitModuleType = Type.GetType("vitmod.VitModule, vitmod");
-            if (vitModuleType == null) return;
-            All.Add(new SaveLoadAction(
-                (savedValues, level) => { SaveStaticFieldValues(savedValues, vitModuleType, "timeStopScaleTimer", "noMoveScaleTimer"); },
-                (savedValues, level) => LoadStaticFieldValues(savedValues)
             ));
         }
 
@@ -240,6 +241,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     }
                 ));
             }
+        }
+
+        private static void SupportCrystallineHelper() {
+            Type vitModuleType = Type.GetType("vitmod.VitModule, vitmod");
+            if (vitModuleType == null) return;
+            All.Add(new SaveLoadAction(
+                (savedValues, level) => { SaveStaticFieldValues(savedValues, vitModuleType, "timeStopScaleTimer", "noMoveScaleTimer"); },
+                (savedValues, level) => LoadStaticFieldValues(savedValues)
+            ));
         }
 
         private static void SupportSpringCollab2020() {

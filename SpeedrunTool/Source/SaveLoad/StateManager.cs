@@ -278,19 +278,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             level.Frozen = true; // 加一个转场等待，避免太突兀   // Add a pause to avoid being too abrupt
             level.TimerStopped = true; // 停止计时器  // Stop timer
 
-            if (level.RendererList.Renderers.Any(renderer => renderer is ScreenWipe)) {
-                LoadStateEnd(level);
-            } else {
-                level.DoScreenWipe(true, () => {
-                    // 修复问题：死亡后出现黑屏的一瞬间手动读档后游戏崩溃，因为 ScreenWipe 执行了 level.Reload() 方法
-                    // System.NullReferenceException: 未将对象引用设置到对象的实例。
-                    // 在 Celeste.CameraTargetTrigger.OnLeave(Player player)
-                    // 在 Celeste.Player.Removed(Scene scene)
-                    ClearScreenWipe(level);
+            level.DoScreenWipe(true, () => {
+                // 修复问题：死亡后出现黑屏的一瞬间手动读档后游戏崩溃，因为 ScreenWipe 执行了 level.Reload() 方法
+                // System.NullReferenceException: 未将对象引用设置到对象的实例。
+                // 在 Celeste.CameraTargetTrigger.OnLeave(Player player)
+                // 在 Celeste.Player.Removed(Scene scene)
+                ClearScreenWipe(level);
 
-                    LoadStateEnd(level);
-                });
-            }
+                LoadStateEnd(level);
+            });
 
             return true;
         }

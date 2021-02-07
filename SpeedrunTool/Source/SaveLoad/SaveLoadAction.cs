@@ -66,8 +66,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         internal static void OnLoad() {
             SupportCalcRandom();
-            SupportEntitySimpleStaticFields();
             SupportMInput();
+        }
+
+        // code mod 需要等待此时才正式加载，才能通过 Type 查找
+        internal static void OnLoadContent() {
+            InitStaticFields();
+            SupportEntitySimpleStaticFields();
             SupportAudioMusic();
             SupportExtendedVariants();
             SupportMaxHelpingHand();
@@ -82,11 +87,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private static Dictionary<Type, FieldInfo[]> EntityStaticFields;
 
-        internal static void OnLoadContent() {
+        private static void InitStaticFields() {
             EntityStaticFields = new Dictionary<Type, FieldInfo[]>();
             IEnumerable<Type> entityTypes = Everest.Modules.SelectMany(module => module.GetType().Assembly.GetTypesSafe().Where(type =>
-                !type.IsAbstract
-                && !type.IsGenericType
+                !type.IsGenericType
                 && type.FullName != null
                 && !type.FullName.StartsWith("Celeste.Mod.SpeedrunTool")
                 && type.IsSameOrSubclassOf(typeof(Entity))));
@@ -234,6 +238,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     },
                     (savedValues, level) => {
                         if ((bool) colorControllerType.GetFieldValue("rainbowSpinnerHueHooked")) {
+                            On.Celeste.CrystalStaticSpinner.GetHue -= hookGetHue;
                             On.Celeste.CrystalStaticSpinner.GetHue += hookGetHue;
                         }
 
@@ -264,9 +269,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     },
                     (savedValues, level) => {
                         if ((bool) colorControllerType.GetFieldValue("rainbowSpinnerHueHooked")) {
+                            On.Celeste.CrystalStaticSpinner.GetHue -= hookGetHue;
                             On.Celeste.CrystalStaticSpinner.GetHue += hookGetHue;
                         }
-
                         LoadStaticFieldValues(savedValues);
                     }
                 ));
@@ -281,6 +286,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 All.Add(new SaveLoadAction(
                     loadState: (savedValues, level) => {
                         if ((bool) colorAreaControllerType.GetFieldValue("rainbowSpinnerHueHooked")) {
+                            On.Celeste.CrystalStaticSpinner.GetHue -= hookSpinnerGetHue;
                             On.Celeste.CrystalStaticSpinner.GetHue += hookSpinnerGetHue;
                         }
                     }

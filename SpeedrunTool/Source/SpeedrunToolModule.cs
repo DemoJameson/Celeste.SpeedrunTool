@@ -66,7 +66,9 @@ namespace Celeste.Mod.SpeedrunTool {
         }
 
         public override void LoadContent(bool firstLoad) {
-            SaveLoadAction.OnLoadContent();
+            if (firstLoad) {
+                SaveLoadAction.OnLoadContent();
+            }
         }
     }
 }

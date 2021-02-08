@@ -86,6 +86,12 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                 DeathStatisticsManager.Instance.Died = false;
 
                 level.SetFieldValue("transition", null); // 允许切换房间时传送
+                Glitch.Value = 0f;
+                Engine.TimeRate = 1f;
+                Engine.FreezeTimer = 0f;
+                Distort.Anxiety = 0f;
+                Distort.GameRate = 1f;
+                Audio.SetMusicParam("fade", 1f);
                 level.Displacement.Clear(); // 避免冲刺后残留爆破效果
                 level.Particles.Clear();
                 level.ParticlesBG.Clear();

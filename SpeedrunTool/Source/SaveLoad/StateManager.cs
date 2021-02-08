@@ -495,10 +495,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             var result = level.Entities.Where(
                 entity => !entity.TagCheck(Tags.Global) || entity is CassetteBlockManager).ToList();
 
-            if (movePlayerToFirst && level.GetPlayer() is Player player) {
-                // Player 被 Remove 时会触发其他 Trigger，所以必须最早清除
-                result.Remove(player);
-                result.Insert(0, player);
+            if (movePlayerToFirst) {
+                // Player 被 Remove 时会调用进入其中的 Trigger.OnLeave 方法，必须最早清除，不然会抛出异常
+                // System.NullReferenceException: 未将对象引用设置到对象的实例。
+                // 在 Celeste.CameraTargetTrigger.OnLeave(Player player)
+                foreach (Entity player in level.Tracker.GetEntities<Player>()) {
+                    result.Remove(player);
+                    result.Insert(0, player);
+                }
             }
 
             // 修复：章节计时器在章节完成隐藏后读档无法重新显示
@@ -529,7 +533,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 holdableBarrierRenderer) {
                 result.Add(holdableBarrierRenderer);
             }
-
 
             return result;
         }

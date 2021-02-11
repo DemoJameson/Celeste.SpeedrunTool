@@ -366,6 +366,8 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                 } else {
                     buttonInfo.SetButton(null);
                 }
+
+                buttonInfo.UpdateVirtualButton();
                 Reload(Selection);
             }
 

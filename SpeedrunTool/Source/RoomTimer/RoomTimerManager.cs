@@ -4,10 +4,18 @@ using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework;
+using Mono.Cecil.Cil;
 using Monocle;
+using MonoMod.Cil;
 using static Celeste.Mod.SpeedrunTool.Other.ButtonConfigUi;
 
 namespace Celeste.Mod.SpeedrunTool.RoomTimer {
+    internal enum TimerState {
+        WaitToStart,
+        Timing,
+        Completed
+    }
+
     public sealed class RoomTimerManager {
         private static readonly Color bestColor1 = Calc.HexToColor("fad768");
         private static readonly Color bestColor2 = Calc.HexToColor("cfa727");
@@ -18,15 +26,9 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         private readonly RoomTimerData currentRoomTimerData = new RoomTimerData(RoomTimerType.CurrentRoom);
         private readonly RoomTimerData nextRoomTimerData = new RoomTimerData(RoomTimerType.NextRoom);
 
-        private SpeedrunType? originalSpeedrunType;
-
-        public void Init() {
-            originalSpeedrunType = Settings.Instance.SpeedrunClock;
-        }
-
         public void Load() {
+            IL.Celeste.SpeedrunTimerDisplay.Update += SpeedrunTimerDisplayOnUpdate;
             On.Celeste.SpeedrunTimerDisplay.Render += Render;
-            On.Celeste.MenuOptions.SetSpeedrunClock += SaveOriginalSpeedrunClock;
             On.Celeste.Level.Update += Timing;
             On.Celeste.Level.Update += ProcessButtons;
             On.Celeste.Level.NextLevel += UpdateTimerStateOnNextLevel;
@@ -35,13 +37,25 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         }
 
         public void Unload() {
+            IL.Celeste.SpeedrunTimerDisplay.Update -= SpeedrunTimerDisplayOnUpdate;
             On.Celeste.SpeedrunTimerDisplay.Render -= Render;
-            On.Celeste.MenuOptions.SetSpeedrunClock -= SaveOriginalSpeedrunClock;
             On.Celeste.Level.Update -= Timing;
             On.Celeste.Level.Update -= ProcessButtons;
             On.Celeste.Level.NextLevel -= UpdateTimerStateOnNextLevel;
             On.Celeste.SummitCheckpoint.Update -= UpdateTimerStateOnTouchFlag;
             On.Celeste.LevelExit.ctor -= LevelExitOnCtor;
+        }
+
+        private void SpeedrunTimerDisplayOnUpdate(ILContext il) {
+            ILCursor ilCursor = new ILCursor(il);
+            if (ilCursor.TryGotoNext(MoveType.After,
+                ins => ins.OpCode == OpCodes.Ldarg_0,
+                ins => ins.OpCode == OpCodes.Ldarg_0,
+                ins => ins.MatchLdfld<SpeedrunTimerDisplay>("DrawLerp"),
+                ins => ins.OpCode == OpCodes.Ldloc_1
+            )) {
+                ilCursor.EmitDelegate<Func<bool, bool>>(showTimer => showTimer || SpeedrunToolModule.Settings.RoomTimerType != RoomTimerType.Off);
+            }
         }
 
         private void ProcessButtons(On.Celeste.Level.orig_Update orig, Level self) {
@@ -73,6 +87,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 if (!EndPoint.IsExist) {
                     ClearPbTimes();
                 }
+
                 CreateEndPoint(self, true);
             }
         }
@@ -96,10 +111,6 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             }
 
             ClearPbTimes();
-            SpeedrunType? speedrunType = originalSpeedrunType;
-            if (speedrunType != null) {
-                Settings.Instance.SpeedrunClock = (SpeedrunType) speedrunType;
-            }
         }
 
         public void ClearPbTimes(bool clearEndPoint = true) {
@@ -164,22 +175,10 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
 
         private void Render(On.Celeste.SpeedrunTimerDisplay.orig_Render orig, SpeedrunTimerDisplay self) {
             SpeedrunToolSettings settings = SpeedrunToolModule.Settings;
-            if (!settings.Enabled || settings.RoomTimerType == RoomTimerType.Off) {
-                if (originalSpeedrunType != null) {
-                    Settings.Instance.SpeedrunClock = (SpeedrunType) originalSpeedrunType;
-                }
-
+            if (!settings.Enabled || settings.RoomTimerType == RoomTimerType.Off || self.DrawLerp <= 0f) {
                 orig(self);
                 return;
             }
-
-            if (self.DrawLerp <= 0f) {
-                orig(self);
-                return;
-            }
-
-            // 强制显示时间
-            Settings.Instance.SpeedrunClock = SpeedrunType.File;
 
             RoomTimerType roomTimeType = SpeedrunToolModule.Settings.RoomTimerType;
             RoomTimerData roomTimerData = roomTimeType == RoomTimerType.NextRoom ? nextRoomTimerData : currentRoomTimerData;
@@ -227,11 +226,6 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             Draw.Rect(x, self.Y + topTimeHeight, pbWidth + 2, bg.Height * pbScale + 1f, Color.Black);
             bg.Draw(new Vector2(x + pbWidth, self.Y + topTimeHeight), Vector2.Zero, Color.White, pbScale);
             DrawTime(new Vector2(x + timeMarginLeft, (float) (self.Y + 66.4)), pbTimeString, pbScale, false, false, 0.6f);
-        }
-
-        private void SaveOriginalSpeedrunClock(On.Celeste.MenuOptions.orig_SetSpeedrunClock orig, int val) {
-            originalSpeedrunType = (SpeedrunType) val;
-            orig(val);
         }
 
         private static string ComparePb(long time, long pbTime) {
@@ -293,16 +287,10 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             }
         }
 
-        // @formatter:off
-        private static readonly Lazy<RoomTimerManager> Lazy = new Lazy<RoomTimerManager>(() => new RoomTimerManager());
-        public static RoomTimerManager Instance => Lazy.Value;
-        private RoomTimerManager() { }
+    // @formatter:off
+    private static readonly Lazy<RoomTimerManager> Lazy = new Lazy<RoomTimerManager>(() => new RoomTimerManager());
+    public static RoomTimerManager Instance => Lazy.Value;
+    private RoomTimerManager() { }
         // @formatter:on
-    }
-
-    internal enum TimerState {
-        WaitToStart,
-        Timing,
-        Completed
     }
 }

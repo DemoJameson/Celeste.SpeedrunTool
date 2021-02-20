@@ -165,7 +165,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         if (backup.Count == 0) return clonedObj;
 
                         clonedObj.InvokeMethod("Clear");
-                        backup.ForEach(obj => { clonedObj.InvokeMethod("Add", obj); });
+                        backup.ForEach(obj => {
+                            if (obj != null) {
+                                clonedObj.InvokeMethod("Add", obj);
+                            }
+                        });
                     }
 
                     // 同上

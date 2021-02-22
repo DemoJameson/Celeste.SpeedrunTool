@@ -123,6 +123,11 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                 level.InCutscene = false;
                 level.SkippingCutscene = false;
 
+                // 节奏块房间传送出来时恢复音乐
+                if (level.Tracker.GetEntities<CassetteBlock>().Count == 0) {
+                    level.Tracker.GetEntity<CassetteBlockManager>()?.RemoveSelf();
+                }
+
                 // new player instance
                 player = level.GetPlayer();
                 level.Camera.Position = player.CameraTarget;

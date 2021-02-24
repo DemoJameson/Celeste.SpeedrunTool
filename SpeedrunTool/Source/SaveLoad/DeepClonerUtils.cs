@@ -76,7 +76,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     // 不要克隆 RendererList 会造成 BeforeRender 中产生空指针异常
                     // 克隆了 level.RendererList 但不想克隆以下元素
                     // if (sourceObj is GameplayRenderer || sourceObj is LightingRenderer) {
-                        // return sourceObj;
+                    // return sourceObj;
                     // }
 
                     lock (sourceObj) {
@@ -193,7 +193,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                             object dataMap = DynDataUtils.GetDataMap(objType);
                             if (dataMap == null) continue;
 
-                            object[] parameters = { sourceObj, new object()};
+                            object[] parameters = {sourceObj, null};
                             if (false == (bool) dataMap.InvokeMethod("TryGetValue", parameters)) continue;
 
                             object sourceValue = parameters[1];
@@ -205,7 +205,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                     // CLone DynamicData
                     if (DynDataUtils.DynamicDataMap.Value is object dynamicDataMap) {
-                        object[] parameters = { sourceObj, new object()};
+                        object[] parameters = {sourceObj, null};
                         if ((bool) dynamicDataMap.InvokeMethod("TryGetValue", parameters)) {
                             object sourceValue = parameters[1];
                             if (sourceValue.GetFieldValue("Data") is Dictionary<string, object> data && data.Count != 0) {

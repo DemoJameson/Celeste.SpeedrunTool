@@ -188,8 +188,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     }
 
                     // Clone dynData.Data
-                    Type objType = sourceObj.GetType();
-                    if (objType.IsClass) {
+                    if (sourceObj.GetType() is Type objType && objType.IsClass) {
                         do {
                             object dataMap = DynDataUtils.GetDataMap(objType);
                             if (dataMap == null) continue;
@@ -202,6 +201,17 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                             dataMap.InvokeMethod("Add", clonedObj, sourceValue.DeepClone(deepCloneState));
                         } while ((objType = objType.BaseType) != null && objType.IsSameOrSubclassOf(typeof(object)));
+                    }
+
+                    // CLone DynamicData
+                    if (DynDataUtils.DynamicDataMap.Value is object dynamicDataMap) {
+                        object[] parameters = { sourceObj, new object()};
+                        if ((bool) dynamicDataMap.InvokeMethod("TryGetValue", parameters)) {
+                            object sourceValue = parameters[1];
+                            if (sourceValue.GetFieldValue("Data") is Dictionary<string, object> data && data.Count != 0) {
+                                dynamicDataMap.InvokeMethod("Add", clonedObj, sourceValue.DeepClone(deepCloneState));
+                            }
+                        }
                     }
 
                     if (clonedObj is VirtualTexture virtualTexture && virtualTexture.IsDisposed) {

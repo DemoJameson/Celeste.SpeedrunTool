@@ -6,6 +6,7 @@ using MonoMod.Utils;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     internal static class DynDataUtils {
+        public static readonly Lazy<object> DynamicDataMap = new Lazy<object>(() => typeof(DynamicData).GetFieldValue("_DataMap"));
         public static object CreateDynData(object obj, Type targetType) {
             string key = $"DynDataUtils-CreateDynData-{targetType.FullName}";
 

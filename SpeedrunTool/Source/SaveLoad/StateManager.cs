@@ -11,7 +11,6 @@ using FMOD.Studio;
 using Force.DeepCloner;
 using Force.DeepCloner.Helpers;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
 using Monocle;
 using static Celeste.Mod.SpeedrunTool.Other.ButtonConfigUi;
 
@@ -228,7 +227,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private bool LoadState(bool tas) {
             if (!(Engine.Scene is Level level)) return false;
-            if (level.Paused || State != States.None || !IsSaved) return false;
+            if (level.PausedNew() || State != States.None || !IsSaved) return false;
             if (tas && !SavedByTas) return false;
 
             State = States.Loading;
@@ -553,7 +552,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private bool IsAllowSave(Level level, Player player) {
-            return State == States.None && player != null && !player.Dead && !level.Paused && !level.SkippingCutscene;
+            return State == States.None && player != null && !player.Dead && !level.PausedNew() && !level.SkippingCutscene;
         }
 
         private bool IsNotCollectingHeart(Level level) {
@@ -566,24 +565,24 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (Mappings.Save.Pressed()) {
                 Mappings.Save.ConsumePress();
                 SaveState(false);
-            } else if (Mappings.Load.Pressed() && !level.Paused && State == States.None) {
+            } else if (Mappings.Load.Pressed() && !level.PausedNew() && State == States.None) {
                 Mappings.Load.ConsumePress();
                 if (IsSaved) {
                     LoadState(false);
                 } else if (!level.Frozen) {
                     level.Add(new MiniTextbox(DialogIds.DialogNotSaved).IgnoreSaveLoad());
                 }
-            } else if (Mappings.Clear.Pressed() && !level.Paused && State == States.None) {
+            } else if (Mappings.Clear.Pressed() && !level.PausedNew() && State == States.None) {
                 Mappings.Clear.ConsumePress();
                 ClearState(true);
                 if (IsNotCollectingHeart(level) && !level.Completed) {
                     level.Add(new MiniTextbox(DialogIds.DialogClear).IgnoreSaveLoad());
                 }
-            } else if (Mappings.SwitchAutoLoadState.Pressed() && !level.Paused) {
+            } else if (Mappings.SwitchAutoLoadState.Pressed() && !level.PausedNew()) {
                 Mappings.SwitchAutoLoadState.ConsumePress();
                 Settings.AutoLoadAfterDeath = !Settings.AutoLoadAfterDeath;
                 SpeedrunToolModule.Instance.SaveSettings();
-            } else if (State == States.Waiting && !level.Paused
+            } else if (State == States.Waiting && !level.PausedNew()
                                                && (Input.Dash.Pressed
                                                    || Input.Grab.Check
                                                    || Input.Jump.Check

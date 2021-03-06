@@ -1,4 +1,5 @@
-﻿using Monocle;
+﻿using System.Reflection;
+using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
     internal static class CelesteExtensions {
@@ -27,9 +28,11 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static bool IsGlobalButExcludeSomeTypes(this Entity entity) {
-            return entity.TagCheck(Tags.Global) 
-                   && entity.IsNotType<CassetteBlockManager>()
-                ;
+            return entity.TagCheck(Tags.Global) && entity.IsNotType<CassetteBlockManager>();
+        }
+
+        public static bool PausedNew(this Level level) {
+            return level.Paused || level.GetFieldValue("unpauseTimer") is float unpauseTimer && unpauseTimer > 0f;
         }
     }
 }

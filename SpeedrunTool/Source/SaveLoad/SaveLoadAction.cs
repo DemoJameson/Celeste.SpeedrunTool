@@ -130,7 +130,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                             if (value == null) {
                                 values[fieldInfo.Name] = null;
                             } else if (fieldType.IsSimpleClass(extraType => {
-                                return fieldType == type || fieldType == typeof(MTexture);
+                                return fieldType == type || fieldType == typeof(MTexture) || fieldType == typeof(CrystalStaticSpinner);
                             })) {
                                 values[fieldInfo.Name] = value;
                             }

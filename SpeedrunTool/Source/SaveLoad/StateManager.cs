@@ -593,6 +593,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                                                    || Input.Aim.Value != Vector2.Zero
                                                    || GetVirtualButton(Mappings.Load).Released
                                                    || typeof(Input).GetFieldValue("DemoDash")?.GetPropertyValue("Pressed") as bool? == true
+                                                   || typeof(Input).GetFieldValue("CrouchDash")?.GetPropertyValue("Pressed") as bool? == true
                                                )) {
                 LoadStateComplete(level);
             }

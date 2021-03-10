@@ -22,7 +22,7 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingName(DialogIds.Enabled)] public bool Enabled { get; set; } = true;
 
         [YamlIgnore] [SettingIgnore] public RoomTimerType RoomTimerType => GetEnumFromName<RoomTimerType>(RoomTimer);
-        public string RoomTimer { get; set; } = RoomTimerStrings.First();
+        [YamlIgnore] public string RoomTimer { get; set; } = RoomTimerStrings.First();
 
         [SettingRange(1, 99)]
         [SettingName(DialogIds.NumberOfRooms)]

@@ -75,11 +75,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             InitStaticFields();
             SupportEntitySimpleStaticFields();
             SupportAudioMusic();
-            SupportExtendedVariants();
             SupportMaxHelpingHand();
             // SupportPandorasBox();
             SupportCrystallineHelper();
             SupportSpringCollab2020();
+            SupportExtendedVariants();
+            SupportXaphanHelper();
         }
 
         internal static void OnUnload() {
@@ -108,11 +109,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private static void SupportCalcRandom() {
             Type type = typeof(Calc);
             All.Add(new SaveLoadAction(
-                (savedValues, level) => {
-                    SaveStaticFieldValues(savedValues, type, "Random", "randomStack");
-                }, (savedValues, level) => {
-                    LoadStaticFieldValues(savedValues);
-                }
+                (savedValues, level) => { SaveStaticFieldValues(savedValues, type, "Random", "randomStack"); },
+                (savedValues, level) => { LoadStaticFieldValues(savedValues); }
             ));
         }
 
@@ -143,9 +141,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }, (dictionary, level) => {
                     Dictionary<Type, Dictionary<string, object>> clonedDict = dictionary.DeepCloneShared();
                     foreach (Type type in clonedDict.Keys) {
-                        Dictionary<string,object> values = clonedDict[type];
+                        Dictionary<string, object> values = clonedDict[type];
                         // ("\n\n" + string.Join("\n", values.Select(pair => type.FullName + " " + pair.Key + " " + pair.Value))).DebugLog();
-                        foreach (KeyValuePair<string,object> pair in values) {
+                        foreach (KeyValuePair<string, object> pair in values) {
                             type.SetFieldValue(pair.Key, pair.Value);
                         }
                     }
@@ -248,7 +246,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 ));
             }
 
-            if (Type.GetType("Celeste.Mod.MaxHelpingHand.Entities.SeekerBarrierColorController, MaxHelpingHand") is Type seekerBarrierColorControllerType) {
+            if (Type.GetType("Celeste.Mod.MaxHelpingHand.Entities.SeekerBarrierColorController, MaxHelpingHand") is Type
+                seekerBarrierColorControllerType) {
                 All.Add(new SaveLoadAction(
                     loadState: (savedValues, level) => {
                         if ((bool) seekerBarrierColorControllerType.GetFieldValue("seekerBarrierRendererHooked")) {
@@ -277,7 +276,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             if (Type.GetType("Celeste.Mod.MaxHelpingHand.Entities.ParallaxFadeOutController, MaxHelpingHand") is Type parallaxFadeOutControllerType
                 && Delegate.CreateDelegate(typeof(ILContext.Manipulator),
-                        parallaxFadeOutControllerType.GetMethodInfo("onBackdropRender")) is ILContext.Manipulator onBackdropRender
+                    parallaxFadeOutControllerType.GetMethodInfo("onBackdropRender")) is ILContext.Manipulator onBackdropRender
             ) {
                 All.Add(new SaveLoadAction(
                     loadState: (savedValues, level) => {
@@ -293,12 +292,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             if (Type.GetType("Celeste.Mod.MaxHelpingHand.Effects.BlackholeCustomColors, MaxHelpingHand") is Type blackHoleCustomColorsType) {
                 All.Add(new SaveLoadAction(
-                    (savedValues, level) => {
-                        SaveStaticFieldValues(savedValues, blackHoleCustomColorsType, "colorsMild");
-                    },
-                    (savedValues, level) => {
-                        LoadStaticFieldValues(savedValues);
-                    }
+                    (savedValues, level) => { SaveStaticFieldValues(savedValues, blackHoleCustomColorsType, "colorsMild"); },
+                    (savedValues, level) => { LoadStaticFieldValues(savedValues); }
                 ));
             }
         }
@@ -348,9 +343,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 ));
             }
 
-            if (Type.GetType("Celeste.Mod.SpringCollab2020.Entities.SpikeJumpThroughController, SpringCollab2020") is Type spikeJumpThroughControllerType
+            if (Type.GetType("Celeste.Mod.SpringCollab2020.Entities.SpikeJumpThroughController, SpringCollab2020") is Type
+                    spikeJumpThroughControllerType
                 && Delegate.CreateDelegate(typeof(On.Celeste.Spikes.hook_OnCollide),
-                        spikeJumpThroughControllerType.GetMethodInfo("OnCollideHook")) is On.Celeste.Spikes.hook_OnCollide OnCollideHook
+                    spikeJumpThroughControllerType.GetMethodInfo("OnCollideHook")) is On.Celeste.Spikes.hook_OnCollide OnCollideHook
             ) {
                 All.Add(new SaveLoadAction(
                     loadState: (savedValues, level) => {
@@ -383,6 +379,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 All.Add(new SaveLoadAction(
                     (savedValues, level) => SaveStaticFieldValues(savedValues, jumpCountType, "jumpBuffer"),
                     (savedValues, level) => LoadStaticFieldValues(savedValues)));
+            }
+        }
+
+        private static void SupportXaphanHelper() {
+            if (Type.GetType("Celeste.Mod.XaphanHelper.Upgrades.SpaceJump, XaphanHelper") is Type spaceJumpType) {
+                All.Add(new SaveLoadAction(
+                    (savedValues, level) => SaveStaticFieldValues(savedValues, spaceJumpType, "jumpBuffer"),
+                    (savedValues, level) => LoadStaticFieldValues(savedValues))
+                );
             }
         }
     }

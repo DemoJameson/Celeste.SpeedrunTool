@@ -16,7 +16,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         public static void Config() {
             // Clone 开始时，判断哪些类型是直接使用原对象而不 DeepClone 的
             // Before cloning, determine which types use the original object directly
-            DeepCloner.AddKnownTypesProcessor((type) => {
+            DeepCloner.AddKnownTypesProcessor(type => {
                 if (
                     // Celeste Singleton
                     type == typeof(Celeste)

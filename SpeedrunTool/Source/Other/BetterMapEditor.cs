@@ -159,7 +159,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         }
 
         public void FixTeleportProblems(Session session, Vector2? startPosition) {
-            if (SpeedrunToolModule.Enabled && session.StartCheckpoint == null && session.LevelData != null) {
+            if (SpeedrunToolModule.Enabled && session.LevelData != null) {
                 Vector2 spawnPoint;
                 if (startPosition != null) {
                     spawnPoint = session.GetSpawnPoint(startPosition.Value);

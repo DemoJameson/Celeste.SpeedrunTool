@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
@@ -27,6 +27,7 @@ namespace Celeste.Mod.SpeedrunTool {
 
         public static SpeedrunToolSettings Settings => (SpeedrunToolSettings) Instance._Settings;
         public static bool Enabled => Settings.Enabled;
+        public static bool LivesplitMode => Settings.LivesplitMode;
 
         public SpeedrunToolModule() {
             Instance = this;

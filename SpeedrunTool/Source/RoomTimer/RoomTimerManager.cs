@@ -26,6 +26,8 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         private readonly RoomTimerData currentRoomTimerData = new RoomTimerData(RoomTimerType.CurrentRoom);
         private readonly RoomTimerData nextRoomTimerData = new RoomTimerData(RoomTimerType.NextRoom);
 
+        private string previousRoom = null;
+
         public void Load() {
             IL.Celeste.SpeedrunTimerDisplay.Update += SpeedrunTimerDisplayOnUpdate;
             On.Celeste.SpeedrunTimerDisplay.Render += Render;
@@ -122,11 +124,19 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         }
 
         private void Timing(On.Celeste.Level.orig_Update orig, Level self) {
-            if (!self.Completed && self.TimerStarted) {
-                nextRoomTimerData.Timing(self);
-                currentRoomTimerData.Timing(self);
-            } else if (self.Completed) {
-                UpdateTimerState();
+            if (SpeedrunToolModule.LivesplitMode) {
+                var currentRoom = Celeste.Instance.AutoSplitterInfo.Level;
+                if (previousRoom != null && previousRoom != currentRoom)
+                    UpdateTimerState();
+
+                previousRoom = currentRoom;
+            } else {
+                if (!self.Completed && self.TimerStarted) {
+                    nextRoomTimerData.Timing(self);
+                    currentRoomTimerData.Timing(self);
+                } else if (self.Completed) {
+                    UpdateTimerState();
+                }
             }
 
             orig(self);
@@ -135,19 +145,21 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         private void UpdateTimerStateOnNextLevel(On.Celeste.Level.orig_NextLevel orig, Level self, Vector2 at,
             Vector2 dir) {
             orig(self, at, dir);
-            UpdateTimerState();
+            if (!SpeedrunToolModule.LivesplitMode)
+                UpdateTimerState();
         }
 
         private void UpdateTimerStateOnTouchFlag(On.Celeste.SummitCheckpoint.orig_Update orig, SummitCheckpoint self) {
             bool lastActivated = self.Activated;
             orig(self);
-            if (!lastActivated && self.Activated) {
+            if (!SpeedrunToolModule.LivesplitMode && !lastActivated && self.Activated) {
                 UpdateTimerState();
             }
         }
 
         private void LevelExitOnCtor(On.Celeste.LevelExit.orig_ctor orig, LevelExit self, LevelExit.Mode mode, Session session, HiresSnow snow) {
             orig(self, mode, session, snow);
+            previousRoom = null;
             if (mode == LevelExit.Mode.Restart && !StateManager.Instance.IsSaved) {
                 SpeedrunToolModule.Settings.RoomTimer = SpeedrunToolSettings.RoomTimerStrings.First();
             }

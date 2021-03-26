@@ -30,6 +30,7 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string NumberOfRooms = "SPEEDRUN_TOOL_NUMBER_OF_ROOMS";
         public const string ButtonConfig = "SPEEDRUN_TOOL_BUTTON_CONFIG";
         public const string MoreOptions = "SPEEDRUN_TOOL_MORE_OPTIONS";
+        public const string LivesplitMode = "SPEEDRUN_TOOL_LIVESPLIT_MODE";
 
         // State Manager
         public const string Controller = "SPEEDRUN_TOOL_CONTROLLER";

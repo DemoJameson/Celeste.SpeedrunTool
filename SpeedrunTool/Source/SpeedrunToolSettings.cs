@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -59,6 +59,9 @@ namespace Celeste.Mod.SpeedrunTool {
 
         // ReSharper disable once UnusedMember.Global
         [YamlIgnore] public string CheckDeathStatistics { get; set; } = "";
+
+        [SettingName(DialogIds.LivesplitMode)]
+        public bool LivesplitMode { get; set; } = false;
 
         // ReSharper disable once UnusedMember.Global
         [YamlIgnore] public string ButtonConfig { get; set; } = "";

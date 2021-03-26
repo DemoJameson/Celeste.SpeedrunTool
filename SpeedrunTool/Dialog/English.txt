@@ -1,4 +1,4 @@
-﻿# NOTES:
+# NOTES:
 # The # Symbol at the start of a line counts as a Comment. To include in dialog, use a \#
 # The . Symbol will cause a pause unless escaped with \. (ex: Mr. Oshiro has a pause, Mr\. Oshiro does not)
 # Newlines automatically create a Page Break, unless there is an {n} command on the previous line
@@ -46,6 +46,7 @@ SPEEDRUN_TOOL_ROOM_TIMER=                 Room Timer
 SPEEDRUN_TOOL_END_POINT_STYLE=            Room Timer End Point Style
 SPEEDRUN_TOOL_BUTTON_CONFIG=              Button Config
 SPEEDRUN_TOOL_MORE_OPTIONS=               More Options
+SPEEDRUN_TOOL_LIVESPLIT_MODE=             LiveSplit Mode
 
 # ================================== Room Timer Options ==================================
 SPEEDRUN_TOOL_NEXT_ROOM=       Next Room

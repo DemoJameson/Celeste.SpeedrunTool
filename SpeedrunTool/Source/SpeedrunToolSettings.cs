@@ -44,6 +44,9 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingIgnore]
         public EndPoint.SpriteStyle EndPointSpriteStyle => GetEnumFromName<EndPoint.SpriteStyle>(EndPointStyle);
 
+        [SettingName(DialogIds.RoomTimerIgnoreFlag)]
+        public bool RoomTimerIgnoreFlag { get; set; } = false;
+
         [SettingRange(1, 9)] public int RespawnSpeed { get; set; } = 1;
 
         [SettingName(DialogIds.FastTeleport)]

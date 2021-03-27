@@ -17,21 +17,22 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
     }
 
     public sealed class RoomTimerManager {
-        private static readonly Color bestColor1 = Calc.HexToColor("fad768");
-        private static readonly Color bestColor2 = Calc.HexToColor("cfa727");
-        private static readonly Color finishedColor1 = Calc.HexToColor("6ded87");
-        private static readonly Color finishedColor2 = Calc.HexToColor("43d14c");
+        private static readonly Color BestColor1 = Calc.HexToColor("fad768");
+        private static readonly Color BestColor2 = Calc.HexToColor("cfa727");
+        private static readonly Color FinishedColor1 = Calc.HexToColor("6ded87");
+        private static readonly Color FinishedColor2 = Calc.HexToColor("43d14c");
 
         public const string FlagPrefix = "summit_checkpoint_";
         private readonly RoomTimerData currentRoomTimerData = new RoomTimerData(RoomTimerType.CurrentRoom);
         private readonly RoomTimerData nextRoomTimerData = new RoomTimerData(RoomTimerType.NextRoom);
+
+        private string previousRoom;
 
         public void Load() {
             IL.Celeste.SpeedrunTimerDisplay.Update += SpeedrunTimerDisplayOnUpdate;
             On.Celeste.SpeedrunTimerDisplay.Render += Render;
             On.Celeste.Level.Update += Timing;
             On.Celeste.Level.Update += ProcessButtons;
-            On.Celeste.Level.NextLevel += UpdateTimerStateOnNextLevel;
             On.Celeste.SummitCheckpoint.Update += UpdateTimerStateOnTouchFlag;
             On.Celeste.LevelExit.ctor += LevelExitOnCtor;
         }
@@ -41,7 +42,6 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             On.Celeste.SpeedrunTimerDisplay.Render -= Render;
             On.Celeste.Level.Update -= Timing;
             On.Celeste.Level.Update -= ProcessButtons;
-            On.Celeste.Level.NextLevel -= UpdateTimerStateOnNextLevel;
             On.Celeste.SummitCheckpoint.Update -= UpdateTimerStateOnTouchFlag;
             On.Celeste.LevelExit.ctor -= LevelExitOnCtor;
         }
@@ -114,6 +114,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         }
 
         public void ClearPbTimes(bool clearEndPoint = true) {
+            previousRoom = null;
             nextRoomTimerData.Clear();
             currentRoomTimerData.Clear();
             if (clearEndPoint) {
@@ -122,26 +123,27 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         }
 
         private void Timing(On.Celeste.Level.orig_Update orig, Level self) {
+            string currentRoom = self.Session.Level;
+            bool nextRoom = previousRoom != null && previousRoom != currentRoom;
+            previousRoom = currentRoom;
+            if (self.Completed || nextRoom) {
+                UpdateTimerState();
+                orig(self);
+                return;
+            }
+
             if (!self.Completed && self.TimerStarted) {
                 nextRoomTimerData.Timing(self);
                 currentRoomTimerData.Timing(self);
-            } else if (self.Completed) {
-                UpdateTimerState();
             }
 
             orig(self);
         }
 
-        private void UpdateTimerStateOnNextLevel(On.Celeste.Level.orig_NextLevel orig, Level self, Vector2 at,
-            Vector2 dir) {
-            orig(self, at, dir);
-            UpdateTimerState();
-        }
-
         private void UpdateTimerStateOnTouchFlag(On.Celeste.SummitCheckpoint.orig_Update orig, SummitCheckpoint self) {
             bool lastActivated = self.Activated;
             orig(self);
-            if (!lastActivated && self.Activated) {
+            if (!SpeedrunToolModule.Settings.RoomTimerIgnoreFlag && !lastActivated && self.Activated) {
                 UpdateTimerState();
             }
         }
@@ -169,6 +171,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         }
 
         public void ResetTime() {
+            previousRoom = null;
             nextRoomTimerData.ResetTime();
             currentRoomTimerData.ResetTime();
         }
@@ -268,11 +271,11 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             Color color1 = Color.White * alpha;
             Color color2 = Color.LightGray * alpha;
             if (bestTime) {
-                color1 = bestColor1 * alpha;
-                color2 = bestColor2 * alpha;
+                color1 = BestColor1 * alpha;
+                color2 = BestColor2 * alpha;
             } else if (finished) {
-                color1 = finishedColor1 * alpha;
-                color2 = finishedColor2 * alpha;
+                color1 = FinishedColor1 * alpha;
+                color2 = FinishedColor2 * alpha;
             }
 
             for (int index = 0; index < timeString.Length; ++index) {

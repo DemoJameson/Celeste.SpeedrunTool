@@ -48,9 +48,10 @@ SPEEDRUN_TOOL_BUTTON_CONFIG=              按键设置
 SPEEDRUN_TOOL_MORE_OPTIONS=               更多选项
 
 # ================================== Room Timer Options ==================================
-SPEEDRUN_TOOL_NEXT_ROOM=       下个房间
-SPEEDRUN_TOOL_CURRENT_ROOM=    当前房间
-SPEEDRUN_TOOL_NUMBER_OF_ROOMS= 计时房间数
+SPEEDRUN_TOOL_NEXT_ROOM=              下个房间
+SPEEDRUN_TOOL_CURRENT_ROOM=           当前房间
+SPEEDRUN_TOOL_NUMBER_OF_ROOMS=        计时房间数
+SPEEDRUN_TOOL_ROOM_TIMER_IGNORE_FLAG= 房间计时器忽略旗子
 
 # ================================== State Manager ==================================
 SPEEDRUN_TOOL_CONTROLLER= 手柄

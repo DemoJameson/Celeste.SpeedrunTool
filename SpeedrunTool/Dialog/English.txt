@@ -48,9 +48,10 @@ SPEEDRUN_TOOL_BUTTON_CONFIG=              Button Config
 SPEEDRUN_TOOL_MORE_OPTIONS=               More Options
 
 # ================================== Room Timer Options ==================================
-SPEEDRUN_TOOL_NEXT_ROOM=       Next Room
-SPEEDRUN_TOOL_CURRENT_ROOM=    Current Room
-SPEEDRUN_TOOL_NUMBER_OF_ROOMS= Number of Timed Rooms 
+SPEEDRUN_TOOL_NEXT_ROOM=              Next Room
+SPEEDRUN_TOOL_CURRENT_ROOM=           Current Room
+SPEEDRUN_TOOL_NUMBER_OF_ROOMS=        Number of Timed Rooms
+SPEEDRUN_TOOL_ROOM_TIMER_IGNORE_FLAG= Room Timer Ignore Flag
 
 # ================================== State Manager ==================================
 SPEEDRUN_TOOL_CONTROLLER= Controller

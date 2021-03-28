@@ -106,6 +106,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 && !SavedByTas
                 && !(bool) self.GetFieldValue("finished")
                 && Engine.Scene is Level level
+                && level.Entities.FindFirst<PlayerSeeker>() == null
             ) {
                 level.OnEndOfFrame += () => LoadState(false);
                 self.RemoveSelf();

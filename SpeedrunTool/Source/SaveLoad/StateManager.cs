@@ -108,7 +108,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 && Engine.Scene is Level level
                 && level.Entities.FindFirst<PlayerSeeker>() == null
             ) {
-                level.OnEndOfFrame += () => LoadState(false);
+                level.OnEndOfFrame += () => {
+                    if (IsSaved) {
+                        LoadState(false);
+                    } else {
+                        level.DoScreenWipe(wipeIn: false, self.DeathAction ?? level.Reload);
+                    }
+                };
                 self.RemoveSelf();
             } else {
                 orig(self);

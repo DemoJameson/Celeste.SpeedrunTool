@@ -29,6 +29,7 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string EndPointStyle = "SPEEDRUN_TOOL_END_POINT_STYLE";
         public const string NumberOfRooms = "SPEEDRUN_TOOL_NUMBER_OF_ROOMS";
         public const string RoomTimerIgnoreFlag = "SPEEDRUN_TOOL_ROOM_TIMER_IGNORE_FLAG";
+        public const string AutoResetRoomTimer = "SPEEDRUN_TOOL_AUTO_RESET_ROOM_TIMER";
         public const string ButtonConfig = "SPEEDRUN_TOOL_BUTTON_CONFIG";
         public const string MoreOptions = "SPEEDRUN_TOOL_MORE_OPTIONS";
 

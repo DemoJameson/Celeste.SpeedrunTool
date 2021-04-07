@@ -52,6 +52,7 @@ SPEEDRUN_TOOL_NEXT_ROOM=              Next Room
 SPEEDRUN_TOOL_CURRENT_ROOM=           Current Room
 SPEEDRUN_TOOL_NUMBER_OF_ROOMS=        Number of Timed Rooms
 SPEEDRUN_TOOL_ROOM_TIMER_IGNORE_FLAG= Room Timer Ignore Flag
+SPEEDRUN_TOOL_AUTO_RESET_ROOM_TIMER=  Reset Room Timer When Restarting Chapter/Game
 
 # ================================== State Manager ==================================
 SPEEDRUN_TOOL_CONTROLLER= Controller

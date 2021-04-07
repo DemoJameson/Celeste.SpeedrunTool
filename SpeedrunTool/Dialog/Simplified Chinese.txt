@@ -52,6 +52,7 @@ SPEEDRUN_TOOL_NEXT_ROOM=              下个房间
 SPEEDRUN_TOOL_CURRENT_ROOM=           当前房间
 SPEEDRUN_TOOL_NUMBER_OF_ROOMS=        计时房间数
 SPEEDRUN_TOOL_ROOM_TIMER_IGNORE_FLAG= 房间计时器忽略旗子
+SPEEDRUN_TOOL_AUTO_RESET_ROOM_TIMER=  重启章节/游戏时重置房间计时器
 
 # ================================== State Manager ==================================
 SPEEDRUN_TOOL_CONTROLLER= 手柄

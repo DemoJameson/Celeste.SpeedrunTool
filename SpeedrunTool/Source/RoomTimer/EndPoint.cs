@@ -51,7 +51,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         }
 
         private void SetSprite(Player player) {
-            spriteStyle = SpeedrunToolModule.Settings.EndPointSpriteStyle;
+            spriteStyle = SpeedrunToolModule.Settings.EndPointStyle;
             if (spriteStyle == SpriteStyle.Random) {
                 spriteStyle = (SpriteStyle) new Random().Next(Enum.GetNames(typeof(SpriteStyle)).Length - 1);
             }

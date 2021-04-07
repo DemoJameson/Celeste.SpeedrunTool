@@ -51,7 +51,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             cursor.EmitDelegate<Func<bool>>(() =>
-                SpeedrunToolModule.Settings.RoomTimerType == RoomTimerType.Off
+                SpeedrunToolModule.Settings.RoomTimer == RoomTimerType.Off
                 && Engine.Scene is Level level && !level.Completed
                 && level.GetExtendedBoolean(START_FROM_SAVE_SATE)
                 && !StateManager.Instance.SavedByTas

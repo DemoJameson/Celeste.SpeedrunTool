@@ -43,27 +43,28 @@ SPEEDRUN_TOOL_RESPAWN_SPEED=              Respawn Speed
 SPEEDRUN_TOOL_FAST_TELEPORT=              Fast Teleport
 SPEEDRUN_TOOL_FAST_TELEPORT_DESCRIPTION=  Make PageDown/Up teleport more faster, no need to reload the whole map
 SPEEDRUN_TOOL_ROOM_TIMER=                 Room Timer
-SPEEDRUN_TOOL_END_POINT_STYLE=            Room Timer End Point Style
 SPEEDRUN_TOOL_BUTTON_CONFIG=              Button Config
 SPEEDRUN_TOOL_MORE_OPTIONS=               More Options
 
 # ================================== Room Timer Options ==================================
+SPEEDRUN_TOOL_ROOM_TIMER_TYPE=        Type
 SPEEDRUN_TOOL_NEXT_ROOM=              Next Room
 SPEEDRUN_TOOL_CURRENT_ROOM=           Current Room
 SPEEDRUN_TOOL_NUMBER_OF_ROOMS=        Number of Timed Rooms
-SPEEDRUN_TOOL_ROOM_TIMER_IGNORE_FLAG= Room Timer Ignore Flag
-SPEEDRUN_TOOL_AUTO_RESET_ROOM_TIMER=  Reset Room Timer When Restarting Chapter/Game
+SPEEDRUN_TOOL_END_POINT_STYLE=        End Point Style
+SPEEDRUN_TOOL_ROOM_TIMER_IGNORE_FLAG= Ignore Flag
+SPEEDRUN_TOOL_AUTO_RESET_ROOM_TIMER=  Turn Off Timer When Restarting Chapter
 
 # ================================== State Manager ==================================
 SPEEDRUN_TOOL_CONTROLLER= Controller
 SPEEDRUN_TOOL_KEYBOARD=   Keyboard
-SPEEDRUN_TOOL_SAVE=       Save State
-SPEEDRUN_TOOL_LOAD=       Load State
-SPEEDRUN_TOOL_CLEAR=      Clear State
-SPEEDRUN_TOOL_DIALOG_CLEAR=
+SPEEDRUN_TOOL_SAVE_STATE= Save State
+SPEEDRUN_TOOL_LOAD_STATE= Load State
+SPEEDRUN_TOOL_CLEAR_STATE=Clear State
+SPEEDRUN_TOOL_DIALOG_CLEAR_STATE=
     [MADELINE left normal]
     Cleared the state~
-SPEEDRUN_TOOL_DIALOG_NOT_SAVED=
+SPEEDRUN_TOOL_DIALOG_NOT_YET_SAVED_STATE=
     [MADELINE left upset]
     Not saved state yet.
 

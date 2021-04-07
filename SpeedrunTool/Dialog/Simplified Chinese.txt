@@ -36,34 +36,35 @@ SPEEDRUN_TOOL=                            速通辅助工具
 SPEEDRUN_TOOL_ENABLED=                    开关
 SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE=    加载状态后冻结游戏
 SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH=      死亡后自动加载状态
-SPEEDRUN_TOOL_DEATH_STATISTICS=           统计死亡数据
+SPEEDRUN_TOOL_DEATH_STATISTICS=           死亡数据
 SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA=   死亡数据数量
 SPEEDRUN_TOOL_CHECK_DEATH_STATISTICS=     查看死亡数据
 SPEEDRUN_TOOL_RESPAWN_SPEED=              复活速度
 SPEEDRUN_TOOL_FAST_TELEPORT=              快速传送
 SPEEDRUN_TOOL_FAST_TELEPORT_DESCRIPTION=  PageDown/Up 传送时更加快速，无需重载整个地图
 SPEEDRUN_TOOL_ROOM_TIMER=                 房间计时器
-SPEEDRUN_TOOL_END_POINT_STYLE=            房间计时器终点样式
 SPEEDRUN_TOOL_BUTTON_CONFIG=              按键设置
 SPEEDRUN_TOOL_MORE_OPTIONS=               更多选项
 
 # ================================== Room Timer Options ==================================
+SPEEDRUN_TOOL_ROOM_TIMER_TYPE=        类型
 SPEEDRUN_TOOL_NEXT_ROOM=              下个房间
 SPEEDRUN_TOOL_CURRENT_ROOM=           当前房间
 SPEEDRUN_TOOL_NUMBER_OF_ROOMS=        计时房间数
-SPEEDRUN_TOOL_ROOM_TIMER_IGNORE_FLAG= 房间计时器忽略旗子
-SPEEDRUN_TOOL_AUTO_RESET_ROOM_TIMER=  重启章节/游戏时重置房间计时器
+SPEEDRUN_TOOL_END_POINT_STYLE=        终点样式
+SPEEDRUN_TOOL_ROOM_TIMER_IGNORE_FLAG= 忽略旗子
+SPEEDRUN_TOOL_AUTO_RESET_ROOM_TIMER=  重启章节/游戏时关闭房间计时器
 
 # ================================== State Manager ==================================
 SPEEDRUN_TOOL_CONTROLLER= 手柄
 SPEEDRUN_TOOL_KEYBOARD=   键盘
-SPEEDRUN_TOOL_SAVE=       保存状态
-SPEEDRUN_TOOL_LOAD=       加载状态
-SPEEDRUN_TOOL_CLEAR=      清除状态
-SPEEDRUN_TOOL_DIALOG_CLEAR=
+SPEEDRUN_TOOL_SAVE_STATE= 保存状态
+SPEEDRUN_TOOL_LOAD_STATE= 加载状态
+SPEEDRUN_TOOL_CLEAR_STATE=清除状态
+SPEEDRUN_TOOL_DIALOG_CLEAR_STATE=
     [MADELINE left normal]
     清除状态~
-SPEEDRUN_TOOL_DIALOG_NOT_SAVED=
+SPEEDRUN_TOOL_DIALOG_NOT_YET_SAVED_STATE=
     [MADELINE left upset]
     请先保存状态。
     

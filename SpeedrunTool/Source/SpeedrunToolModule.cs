@@ -4,6 +4,7 @@ using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Celeste.Mod.SpeedrunTool.TeleportRoom;
+using FMOD.Studio;
 
 namespace Celeste.Mod.SpeedrunTool {
     // ReSharper disable once ClassNeverInstantiated.Global
@@ -68,6 +69,11 @@ namespace Celeste.Mod.SpeedrunTool {
             if (firstLoad) {
                 SaveLoadAction.OnLoadContent();
             }
+        }
+
+        public override void CreateModMenuSection(TextMenu menu, bool inGame, EventInstance snapshot) {
+            CreateModMenuSectionHeader(menu, inGame, snapshot);
+            SpeedrunToolMenu.Create(menu, inGame, snapshot);
         }
     }
 }

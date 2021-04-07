@@ -13,12 +13,18 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string Off = "SPEED_TOOL_OFF";
         public const string All = "SPEED_TOOL_ALL";
         // ReSharper restore UnusedMember.Global
-
+        
+        // RoomTimer
+        public const string RoomTimerType = "SPEEDRUN_TOOL_ROOM_TIMER_TYPE";
+        public const string EndPointStyle = "SPEEDRUN_TOOL_END_POINT_STYLE";
+        public const string NumberOfRooms = "SPEEDRUN_TOOL_NUMBER_OF_ROOMS";
+        public const string RoomTimerIgnoreFlag = "SPEEDRUN_TOOL_ROOM_TIMER_IGNORE_FLAG";
+        
         // Mod Options
         public const string SpeedrunTool = "SPEEDRUN_TOOL";
         public const string Enabled = "SPEEDRUN_TOOL_ENABLED";
         public const string FreezeAfterLoadState = "SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE";
-        public const string AutoLoadAfterDeath = "SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH";
+        public const string AutoLoadStateAfterDeath = "SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH";
         public const string DeathStatistics = "SPEEDRUN_TOOL_DEATH_STATISTICS";
         public const string MaxNumberOfDeathData = "SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA";
         public const string CheckDeathStatistics = "SPEEDRUN_TOOL_CHECK_DEATH_STATISTICS";
@@ -26,9 +32,6 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string FastTeleport = "SPEEDRUN_TOOL_FAST_TELEPORT";
         public const string FastTeleportDescription = "SPEEDRUN_TOOL_FAST_TELEPORT_DESCRIPTION";
         public const string RoomTimer = "SPEEDRUN_TOOL_ROOM_TIMER";
-        public const string EndPointStyle = "SPEEDRUN_TOOL_END_POINT_STYLE";
-        public const string NumberOfRooms = "SPEEDRUN_TOOL_NUMBER_OF_ROOMS";
-        public const string RoomTimerIgnoreFlag = "SPEEDRUN_TOOL_ROOM_TIMER_IGNORE_FLAG";
         public const string AutoResetRoomTimer = "SPEEDRUN_TOOL_AUTO_RESET_ROOM_TIMER";
         public const string ButtonConfig = "SPEEDRUN_TOOL_BUTTON_CONFIG";
         public const string MoreOptions = "SPEEDRUN_TOOL_MORE_OPTIONS";
@@ -36,11 +39,11 @@ namespace Celeste.Mod.SpeedrunTool {
         // State Manager
         public const string Controller = "SPEEDRUN_TOOL_CONTROLLER";
         public const string Keyboard = "SPEEDRUN_TOOL_KEYBOARD";
-        public const string Save = "SPEEDRUN_TOOL_SAVE";
-        public const string Load = "SPEEDRUN_TOOL_LOAD";
-        public const string Clear = "SPEEDRUN_TOOL_CLEAR";
-        public const string DialogClear = "SPEEDRUN_TOOL_DIALOG_CLEAR";
-        public const string DialogNotSaved = "SPEEDRUN_TOOL_DIALOG_NOT_SAVED";
+        public const string SaveState = "SPEEDRUN_TOOL_SAVE_STATE";
+        public const string LoadState = "SPEEDRUN_TOOL_LOAD_STATE";
+        public const string ClearState = "SPEEDRUN_TOOL_CLEAR_STATE";
+        public const string DialogClearState = "SPEEDRUN_TOOL_DIALOG_CLEAR_STATE";
+        public const string DialogNotSaved = "SPEEDRUN_TOOL_DIALOG_NOT_YET_SAVED_STATE";
         
         // ReSharper disable UnusedMember.Global
         // End Point Style

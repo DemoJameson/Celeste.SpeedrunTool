@@ -127,7 +127,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private void AutoLoadStateWhenDeath(On.Celeste.PlayerDeadBody.orig_End orig, PlayerDeadBody self) {
             if (SpeedrunToolModule.Settings.Enabled
-                && SpeedrunToolModule.Settings.AutoLoadAfterDeath
+                && SpeedrunToolModule.Settings.AutoLoadStateAfterDeath
                 && IsSaved
                 && !SavedByTas
                 && !(bool) self.GetFieldValue("finished")
@@ -619,11 +619,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 Mappings.Clear.ConsumePress();
                 ClearState(true);
                 if (IsNotCollectingHeart(level) && !level.Completed) {
-                    level.Add(new MiniTextbox(DialogIds.DialogClear).IgnoreSaveLoad());
+                    level.Add(new MiniTextbox(DialogIds.DialogClearState).IgnoreSaveLoad());
                 }
             } else if (Mappings.SwitchAutoLoadState.Pressed() && !level.PausedNew()) {
                 Mappings.SwitchAutoLoadState.ConsumePress();
-                Settings.AutoLoadAfterDeath = !Settings.AutoLoadAfterDeath;
+                Settings.AutoLoadStateAfterDeath = !Settings.AutoLoadStateAfterDeath;
                 SpeedrunToolModule.Instance.SaveSettings();
             } else if (State == States.Waiting && !level.PausedNew()
                                                && (Input.Dash.Pressed

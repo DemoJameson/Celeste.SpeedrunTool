@@ -73,7 +73,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                     GetKeys = () => Settings.KeyboardQuickSave,
                     SetKeys = keys => Settings.KeyboardQuickSave = keys,
                     DefaultKeys = new[] {Keys.F7},
-                    GetLabel = () => DialogIds.Save.DialogClean(),
+                    GetLabel = () => DialogIds.SaveState.DialogClean(),
                 }
             }, {
                 Mappings.Load, new ButtonInfo {
@@ -82,7 +82,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                     GetKeys = () => Settings.KeyboardQuickLoad,
                     SetKeys = keys => Settings.KeyboardQuickLoad = keys,
                     DefaultKeys = new[] {Keys.F8},
-                    GetLabel = () => DialogIds.Load.DialogClean(),
+                    GetLabel = () => DialogIds.LoadState.DialogClean(),
                 }
             }, {
                 Mappings.Clear, new ButtonInfo {
@@ -91,7 +91,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                     GetKeys = () => Settings.KeyboardQuickClear,
                     SetKeys = keys => Settings.KeyboardQuickClear = keys,
                     DefaultKeys = new[] {Keys.F3},
-                    GetLabel = () => DialogIds.Clear.DialogClean(),
+                    GetLabel = () => DialogIds.ClearState.DialogClean(),
                 }
             }, {
                 Mappings.OpenDebugMap, new ButtonInfo {

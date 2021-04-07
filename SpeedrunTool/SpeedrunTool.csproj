@@ -113,6 +113,7 @@
     <Compile Include="Source\SaveLoad\SaveLoadAction.cs" />
     <Compile Include="Source\SaveLoad\StateManager.cs" />
     <Compile Include="Source\SaveLoad\StateMarkUtils.cs" />
+    <Compile Include="Source\SpeedrunToolMenu.cs" />
     <Compile Include="Source\SpeedrunToolModule.cs" />
     <Compile Include="Source\SpeedrunToolSaveData.cs" />
     <Compile Include="Source\SpeedrunToolSettings.cs" />

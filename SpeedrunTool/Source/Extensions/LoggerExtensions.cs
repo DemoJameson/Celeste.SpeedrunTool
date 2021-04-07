@@ -1,4 +1,5 @@
 using System;
+using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
@@ -22,6 +23,24 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         public static void DebugLog(this object message, LogLevel logLevel = LogLevel.Info) {
 #if DEBUG
             message.Log(logLevel);
+            Color color;
+            switch (logLevel) {
+                case LogLevel.Warn:
+                    color = Color.Yellow;
+                    break;
+                case LogLevel.Error:
+                    color = Color.Red;
+                    break;
+                default:
+                    color = Color.Cyan;
+                    break;
+            }
+
+            try {
+                Engine.Commands?.Log($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] [{Tag}] {logLevel}: {message}", color);
+            } catch (Exception) {
+                // ignored
+            }
 #endif
         }
     }

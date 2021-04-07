@@ -17,9 +17,26 @@ using static Celeste.Mod.SpeedrunTool.Other.ButtonConfigUi;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class StateManager {
         private static SpeedrunToolSettings Settings => SpeedrunToolModule.Settings;
-        private static readonly Lazy<PropertyInfo> inGameOverworldHelperIsOpen = new Lazy<PropertyInfo>(
+
+        private static readonly Lazy<PropertyInfo> InGameOverworldHelperIsOpen = new Lazy<PropertyInfo>(
             () => Type.GetType("Celeste.Mod.CollabUtils2.UI.InGameOverworldHelper, CollabUtils2")?.GetPropertyInfo("IsOpen")
-            );
+        );
+
+        private static readonly Lazy<bool> IsD3D = new Lazy<bool>(() => {
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT) {
+                Version currentVersion = Celeste.Instance.Version;
+                Version version1312 = new Version(1, 3, 1, 2);
+                bool fna = typeof(Game).Assembly.FullName.Contains("FNA");
+                if (currentVersion <= version1312) {
+                    return !fna;
+                } else {
+                    string driver = Environment.GetEnvironmentVariable("FNA3D_FORCE_DRIVER");
+                    return !fna || string.IsNullOrEmpty(driver) || driver == "D3D11";
+                }
+            }
+
+            return false;
+        });
 
         // public for tas
         public bool IsSaved => savedLevel != null;
@@ -48,6 +65,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             None,
             Loading,
             Waiting,
+            PreCloning
         }
 
         private readonly HashSet<EventInstance> playingEventInstances = new HashSet<EventInstance>();
@@ -75,6 +93,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private void CheckButtonsAndUpdateBackdrop(On.Celeste.Level.orig_Update orig, Level self) {
+            if (State == States.PreCloning) {
+                if (preCloneTask?.IsCompleted == true) {
+                    LoadState(false);
+                }
+
+                return;
+            }
+
             orig(self);
             CheckButton(self);
 
@@ -87,7 +113,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private void ClearStateWhenSwitchScene(On.Monocle.Scene.orig_Begin orig, Scene self) {
             orig(self);
             if (IsSaved) {
-                if (self is Overworld && !SavedByTas && inGameOverworldHelperIsOpen.Value?.GetValue(null) as bool? != true) ClearState(true);
+                if (self is Overworld && !SavedByTas && InGameOverworldHelperIsOpen.Value?.GetValue(null) as bool? != true) ClearState(true);
                 if (self is Level) {
                     State = States.None; // 修复：读档途中按下 PageDown/Up 后无法存档
                     PreCloneSavedEntities();
@@ -136,7 +162,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (!tas && level.Wipe != null) return false;
 
             // 不允许在春游图打开章节面板时存档
-            if (inGameOverworldHelperIsOpen.Value?.GetValue(null) as bool? == true) return false;
+            if (InGameOverworldHelperIsOpen.Value?.GetValue(null) as bool? == true) return false;
 
             ClearState(false);
 
@@ -178,10 +204,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                 if (level.Tracker.Entities.ContainsKey(type) && level.Tracker.Entities[type].Count > 0) {
                     List<Entity> clonedEntities = level.Tracker.Entities[type].DeepCloneShared();
-                    Dictionary<Entity,int> dictionary = new Dictionary<Entity, int>();
+                    Dictionary<Entity, int> dictionary = new Dictionary<Entity, int>();
                     for (var i = 0; i < clonedEntities.Count; i++) {
                         dictionary[clonedEntities[i]] = i;
                     }
+
                     savedOrderedTrackerEntities[type] = dictionary;
                 }
             }
@@ -197,6 +224,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     for (var i = 0; i < clonedComponents.Count; i++) {
                         dictionary[clonedComponents[i]] = i;
                     }
+
                     savedOrderedTrackerComponents[type] = dictionary;
                 }
             }
@@ -234,8 +262,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private bool LoadState(bool tas) {
             if (!(Engine.Scene is Level level)) return false;
-            if (level.PausedNew() || State != States.None || !IsSaved) return false;
+            if (level.PausedNew() || State == States.Loading || State == States.Waiting || !IsSaved) return false;
             if (tas && !SavedByTas) return false;
+
+            // TODO FIXME: 使用非 D3D 驱动在大房间加载状态时有可能在 preCloneTask?.Result 处死锁，原因未知，目前通过等待预克隆完成的方式规避这个问题
+            if (!tas && !IsD3D.Value && preCloneTask?.IsCompleted == false) {
+                State = States.PreCloning;
+                return false;
+            }
 
             State = States.Loading;
             DeepClonerUtils.SetSharedDeepCloneState(preCloneTask?.Result);
@@ -439,6 +473,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     if (orderedDict.ContainsKey(entity1) && orderedDict.ContainsKey(entity2)) {
                         return orderedDict[entity1] - orderedDict[entity2];
                     }
+
                     return 0;
                 });
             }
@@ -452,6 +487,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     if (orderedDict.ContainsKey(component1) && orderedDict.ContainsKey(component2)) {
                         return orderedDict[component1] - orderedDict[component2];
                     }
+
                     return 0;
                 });
             }

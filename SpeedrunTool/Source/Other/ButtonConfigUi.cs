@@ -21,8 +21,27 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             Buttons.LeftStick,
             Buttons.RightStick,
             Buttons.Back,
-            Buttons.BigButton
+            Buttons.BigButton,
         };
+
+        static ButtonConfigUi() {
+            if (Celeste.Instance.Version >= new Version(1, 3, 3, 12)) {
+               AllButtons.AddRange(new[] {
+                   Buttons.DPadUp,
+                   Buttons.DPadDown,
+                   Buttons.DPadLeft,
+                   Buttons.DPadRight,
+                   Buttons.LeftThumbstickUp,
+                   Buttons.LeftThumbstickDown,
+                   Buttons.LeftThumbstickLeft,
+                   Buttons.LeftThumbstickRight,
+                   Buttons.RightThumbstickUp,
+                   Buttons.RightThumbstickDown,
+                   Buttons.RightThumbstickLeft,
+                   Buttons.RightThumbstickRight,
+               }); 
+            }
+        }
 
         public class ButtonInfo {
             public Func<Buttons?> GetButton;

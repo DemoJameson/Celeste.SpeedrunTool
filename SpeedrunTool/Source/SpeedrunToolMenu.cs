@@ -41,8 +41,8 @@ namespace Celeste.Mod.SpeedrunTool {
         private static void CreateOptions(TextMenu menu, bool inGame) {
             options = new List<TextMenu.Item> {
                 new TextMenuExt.SubMenu(Dialog.Clean(DialogIds.RoomTimer), false).With(subMenu => {
-                    subMenu.Add(new TextMenuExt.EnumerableSlider<RoomTimerType>(Dialog.Clean(DialogIds.RoomTimerType),
-                        CreateEnumerableOptions<RoomTimerType>(), Settings.RoomTimer).Change(timerType => { RoomTimerManager.Instance.SwitchRoomTimer(timerType); }));
+                    subMenu.Add(new TextMenuExt.EnumerableSlider<RoomTimerType>(Dialog.Clean(DialogIds.Enabled),
+                        CreateEnumerableOptions<RoomTimerType>(), Settings.RoomTimerType).Change(timerType => { RoomTimerManager.Instance.SwitchRoomTimer(timerType); }));
 
                     subMenu.Add(new TextMenuExt.IntSlider(Dialog.Clean(DialogIds.NumberOfRooms), 1, 99, Settings.NumberOfRooms).Change(i =>
                         Settings.NumberOfRooms = i));
@@ -56,11 +56,11 @@ namespace Celeste.Mod.SpeedrunTool {
                     subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.RoomTimerIgnoreFlag), Settings.RoomTimerIgnoreFlag).Change(b =>
                         Settings.RoomTimerIgnoreFlag = b));
 
-                    subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoResetRoomTimer), Settings.AutoResetRoomTimer).Change(b =>
+                    subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoTurnOffRoomTimer), Settings.AutoResetRoomTimer).Change(b =>
                         Settings.AutoResetRoomTimer = b));
                 }),
 
-                new TextMenuExt.SubMenu(Dialog.Clean(DialogIds.SaveState), false).With(subMenu => {
+                new TextMenuExt.SubMenu(Dialog.Clean(DialogIds.State), false).With(subMenu => {
                     subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoLoadStateAfterDeath), Settings.AutoLoadStateAfterDeath).Change(b =>
                         Settings.AutoLoadStateAfterDeath = b));
 

@@ -28,74 +28,70 @@
 	FONT=Renogare,64
 	
 # ================================== Common ==================================
-SPEEDRUN_TOOL_OFF=OFF
-SPEEDRUN_TOOL_ALL=ALL
+SPEEDRUN_TOOL_OFF= OFF
+SPEEDRUN_TOOL_ALL= ALL
 
 # ================================== Mod Options Menu ==================================
-SPEEDRUN_TOOL=                            Speedrun Tool
-SPEEDRUN_TOOL_ENABLED=                    Enabled
-SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE=    Freeze After Load State
-SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH=      Auto Load State After Death
-SPEEDRUN_TOOL_DEATH_STATISTICS=           Death Statistics
-SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA=   Max Number of Death Data
-SPEEDRUN_TOOL_CHECK_DEATH_STATISTICS=     Check Death Data
-SPEEDRUN_TOOL_RESPAWN_SPEED=              Respawn Speed
-SPEEDRUN_TOOL_FAST_TELEPORT=              Fast Teleport
-SPEEDRUN_TOOL_FAST_TELEPORT_DESCRIPTION=  Make PageDown/Up teleport more faster, no need to reload the whole map
-SPEEDRUN_TOOL_ROOM_TIMER=                 Room Timer
-SPEEDRUN_TOOL_BUTTON_CONFIG=              Button Config
-SPEEDRUN_TOOL_MORE_OPTIONS=               More Options
+SPEEDRUN_TOOL=              Speedrun Tool
+SPEEDRUN_TOOL_ENABLED=      Enabled
+SPEEDRUN_TOOL_ROOM_TIMER=   Room Timer
+SPEEDRUN_TOOL_STATE=        State
+SPEEDRUN_TOOL_MORE_OPTIONS= More Options
 
 # ================================== Room Timer Options ==================================
-SPEEDRUN_TOOL_ROOM_TIMER_TYPE=        Type
-SPEEDRUN_TOOL_NEXT_ROOM=              Next Room
-SPEEDRUN_TOOL_CURRENT_ROOM=           Current Room
-SPEEDRUN_TOOL_NUMBER_OF_ROOMS=        Number of Timed Rooms
-SPEEDRUN_TOOL_END_POINT_STYLE=        End Point Style
-SPEEDRUN_TOOL_ROOM_TIMER_IGNORE_FLAG= Ignore Flag
-SPEEDRUN_TOOL_AUTO_RESET_ROOM_TIMER=  Turn Off Timer When Restarting Chapter
+SPEEDRUN_TOOL_NEXT_ROOM=                Next Room
+SPEEDRUN_TOOL_CURRENT_ROOM=             Current Room
+SPEEDRUN_TOOL_NUMBER_OF_ROOMS=          Number of Timed Rooms
+SPEEDRUN_TOOL_END_POINT_STYLE=          End Point Style
+SPEEDRUN_TOOL_ROOM_TIMER_IGNORE_FLAG=   Ignore Flag
+SPEEDRUN_TOOL_AUTO_TURN_OFF_ROOM_TIMER= Turn Off Timer When Restarting Chapter w/o State
 
 # ================================== State Manager ==================================
-SPEEDRUN_TOOL_CONTROLLER= Controller
-SPEEDRUN_TOOL_KEYBOARD=   Keyboard
-SPEEDRUN_TOOL_SAVE_STATE= Save State
-SPEEDRUN_TOOL_LOAD_STATE= Load State
-SPEEDRUN_TOOL_CLEAR_STATE=Clear State
+SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE= Pause The Game After Loading State
+SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH=   Auto Loading State After Death
+SPEEDRUN_TOOL_CONTROLLER=              Controller
+SPEEDRUN_TOOL_KEYBOARD=                Keyboard
+SPEEDRUN_TOOL_SAVE_STATE=              Save State
+SPEEDRUN_TOOL_LOAD_STATE=              Load State
+SPEEDRUN_TOOL_CLEAR_STATE=             Clear State
 SPEEDRUN_TOOL_DIALOG_CLEAR_STATE=
     [MADELINE left normal]
     Cleared the state~
-SPEEDRUN_TOOL_DIALOG_NOT_YET_SAVED_STATE=
+SPEEDRUN_TOOL_DIALOG_NOT_SAVED_STATE_YET=
     [MADELINE left upset]
     Not saved state yet.
 
 # ================================== End Point Style ==================================
-SPEEDRUN_TOOL_FLAG=      Flag
-SPEEDRUN_TOOL_GOLD_BERRY=Gold Berry
-SPEEDRUN_TOOL_MADELINE=  Madeline
-SPEEDRUN_TOOL_BADELINE=  Badeline
-SPEEDRUN_TOOL_GRANNY=    Granny
-SPEEDRUN_TOOL_THEO=      Theo
-SPEEDRUN_TOOL_OSHIRO=    Oshiro
-SPEEDRUN_TOOL_BIRD=      Bird
-SPEEDRUN_TOOL_EYE_BAT=   Eye Bat
-SPEEDRUN_TOOL_OGMO=      Ogmo
-SPEEDRUN_TOOL_SKYTORN=   Skytorn
-SPEEDRUN_TOOL_TOWERFALL= TowerFall
-SPEEDRUN_TOOL_YURI=      Yuri
-SPEEDRUN_TOOL_RANDOM=    Random
+SPEEDRUN_TOOL_FLAG=       Flag
+SPEEDRUN_TOOL_GOLD_BERRY= Gold Berry
+SPEEDRUN_TOOL_MADELINE=   Madeline
+SPEEDRUN_TOOL_BADELINE=   Badeline
+SPEEDRUN_TOOL_GRANNY=     Granny
+SPEEDRUN_TOOL_THEO=       Theo
+SPEEDRUN_TOOL_OSHIRO=     Oshiro
+SPEEDRUN_TOOL_BIRD=       Bird
+SPEEDRUN_TOOL_EYE_BAT=    Eye Bat
+SPEEDRUN_TOOL_OGMO=       Ogmo
+SPEEDRUN_TOOL_SKYTORN=    Skytorn
+SPEEDRUN_TOOL_TOWERFALL=  TowerFall
+SPEEDRUN_TOOL_YURI=       Yuri
+SPEEDRUN_TOOL_RANDOM=     Random
 
 # ================================== Button Config ==================================
-SPEEDRUN_TOOL_PRESS_DELETE_TO_REMOVE_BUTTON=Press Delete to Remove Button
-SPEEDRUN_TOOL_OPEN_DEBUG_MAP=          Open Debug Map
-SPEEDRUN_TOOL_RESET_ROOM_PB=           Reset Room PB
-SPEEDRUN_TOOL_SWITCH_ROOM_TIMER=       Switch Room Timer
-SPEEDRUN_TOOL_SET_END_POINT=           Set Room Timer End Point
-SPEEDRUN_TOOL_SET_ADDITIONAL_END_POINT=Set Room Timer Additional End Point
-SPEEDRUN_TOOL_TELEPORT_TO_LAST_ROOM=   Teleport to Last Room
-SPEEDRUN_TOOL_TELEPORT_TO_NEXT_ROOM=   Teleport to Next Room
-SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE=  Toggle Auto Load State
+SPEEDRUN_TOOL_PRESS_DELETE_TO_REMOVE_BUTTON= Press Delete to Remove Button
+SPEEDRUN_TOOL_OPEN_DEBUG_MAP=                Open Debug Map
+SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB=           Reset Room Timer PB
+SPEEDRUN_TOOL_SWITCH_ROOM_TIMER=             Switch Room Timer
+SPEEDRUN_TOOL_SET_END_POINT=                 Set Room Timer End Point
+SPEEDRUN_TOOL_SET_ADDITIONAL_END_POINT=      Set Room Timer Additional End Point
+SPEEDRUN_TOOL_TELEPORT_TO_LAST_ROOM=         Teleport to Last Room
+SPEEDRUN_TOOL_TELEPORT_TO_NEXT_ROOM=         Teleport to Next Room
+SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE=        Toggle Auto Load State
 
 # ================================== Death Statistics ==================================
+SPEEDRUN_TOOL_DEATH_STATISTICS=         Death Statistics
+SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA= Max Number of Death Data
+SPEEDRUN_TOOL_CHECK_DEATH_STATISTICS=   Check Death Data
 SPEEDRUN_TOOL_CLEAR_DEATH_STATISTICS=   Clear Data
 SPEEDRUN_TOOL_CHAPTER=                  Chapter
 SPEEDRUN_TOOL_ROOM=                     Room
@@ -104,3 +100,9 @@ SPEEDRUN_TOOL_CAUSE_OF_DEATH=           Cause of Death
 SPEEDRUN_TOOL_TOTAL_DEATH_COUNT=        Total Death Count
 SPEEDRUN_TOOL_TOTAL_LOST_TIME=          Total Lost Time
 SPEEDRUN_TOOL_NO_DATA=                  No Data
+
+# ================================== More Options ==================================
+SPEEDRUN_TOOL_RESPAWN_SPEED=              Respawn Speed
+SPEEDRUN_TOOL_FAST_TELEPORT=              Fast Teleport
+SPEEDRUN_TOOL_FAST_TELEPORT_DESCRIPTION=  Make PageDown/Up teleport more faster, no need to reload the whole map
+SPEEDRUN_TOOL_BUTTON_CONFIG=              Button Config

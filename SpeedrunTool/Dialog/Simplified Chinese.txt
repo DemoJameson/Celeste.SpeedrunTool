@@ -28,43 +28,37 @@
 	FONT=Noto Sans CJK SC Medium,64
 
 # ================================== Common ==================================
-SPEEDRUN_TOOL_OFF=关
-SPEEDRUN_TOOL_ALL=全部
+SPEEDRUN_TOOL_OFF= 关
+SPEEDRUN_TOOL_ALL= 全部
 
 # ================================== Mod Options Menu ==================================
-SPEEDRUN_TOOL=                            速通辅助工具
-SPEEDRUN_TOOL_ENABLED=                    开关
-SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE=    加载状态后冻结游戏
-SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH=      死亡后自动加载状态
-SPEEDRUN_TOOL_DEATH_STATISTICS=           死亡数据
-SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA=   死亡数据数量
-SPEEDRUN_TOOL_CHECK_DEATH_STATISTICS=     查看死亡数据
-SPEEDRUN_TOOL_RESPAWN_SPEED=              复活速度
-SPEEDRUN_TOOL_FAST_TELEPORT=              快速传送
-SPEEDRUN_TOOL_FAST_TELEPORT_DESCRIPTION=  PageDown/Up 传送时更加快速，无需重载整个地图
-SPEEDRUN_TOOL_ROOM_TIMER=                 房间计时器
-SPEEDRUN_TOOL_BUTTON_CONFIG=              按键设置
-SPEEDRUN_TOOL_MORE_OPTIONS=               更多选项
+SPEEDRUN_TOOL=                  速通辅助工具
+SPEEDRUN_TOOL_ENABLED=          开关
+SPEEDRUN_TOOL_ROOM_TIMER=       房间计时器
+SPEEDRUN_TOOL_STATE=            保存状态
+SPEEDRUN_TOOL_DEATH_STATISTICS= 死亡数据
+SPEEDRUN_TOOL_MORE_OPTIONS=     更多选项
 
 # ================================== Room Timer Options ==================================
-SPEEDRUN_TOOL_ROOM_TIMER_TYPE=        类型
-SPEEDRUN_TOOL_NEXT_ROOM=              下个房间
-SPEEDRUN_TOOL_CURRENT_ROOM=           当前房间
-SPEEDRUN_TOOL_NUMBER_OF_ROOMS=        计时房间数
-SPEEDRUN_TOOL_END_POINT_STYLE=        终点样式
-SPEEDRUN_TOOL_ROOM_TIMER_IGNORE_FLAG= 忽略旗子
-SPEEDRUN_TOOL_AUTO_RESET_ROOM_TIMER=  重启章节/游戏时关闭房间计时器
+SPEEDRUN_TOOL_NEXT_ROOM=                下个房间
+SPEEDRUN_TOOL_CURRENT_ROOM=             当前房间
+SPEEDRUN_TOOL_NUMBER_OF_ROOMS=          计时房间数
+SPEEDRUN_TOOL_END_POINT_STYLE=          终点样式
+SPEEDRUN_TOOL_ROOM_TIMER_IGNORE_FLAG=   忽略旗子
+SPEEDRUN_TOOL_AUTO_TURN_OFF_ROOM_TIMER= 重启章节/游戏时关闭房间计时器
 
 # ================================== State Manager ==================================
-SPEEDRUN_TOOL_CONTROLLER= 手柄
-SPEEDRUN_TOOL_KEYBOARD=   键盘
-SPEEDRUN_TOOL_SAVE_STATE= 保存状态
-SPEEDRUN_TOOL_LOAD_STATE= 加载状态
-SPEEDRUN_TOOL_CLEAR_STATE=清除状态
+SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE= 加载状态后冻结游戏
+SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH=   死亡后自动加载状态
+SPEEDRUN_TOOL_CONTROLLER=              手柄
+SPEEDRUN_TOOL_KEYBOARD=                键盘
+SPEEDRUN_TOOL_SAVE_STATE=              保存状态
+SPEEDRUN_TOOL_LOAD_STATE=              加载状态
+SPEEDRUN_TOOL_CLEAR_STATE=             清除状态
 SPEEDRUN_TOOL_DIALOG_CLEAR_STATE=
     [MADELINE left normal]
     清除状态~
-SPEEDRUN_TOOL_DIALOG_NOT_YET_SAVED_STATE=
+SPEEDRUN_TOOL_DIALOG_NOT_SAVED_STATE_YET=
     [MADELINE left upset]
     请先保存状态。
     
@@ -85,17 +79,19 @@ SPEEDRUN_TOOL_YURI=      Yuri
 SPEEDRUN_TOOL_RANDOM=    随机
 
 # ================================== Button Config ==================================
-SPEEDRUN_TOOL_PRESS_DELETE_TO_REMOVE_BUTTON=按下 Delete 键移除按钮
-SPEEDRUN_TOOL_OPEN_DEBUG_MAP=          打开地图
-SPEEDRUN_TOOL_RESET_ROOM_PB=           重置房间记录
-SPEEDRUN_TOOL_SWITCH_ROOM_TIMER=       切换房间计时器
-SPEEDRUN_TOOL_SET_END_POINT=           标记房间计时器终点
-SPEEDRUN_TOOL_SET_ADDITIONAL_END_POINT=标记多个房间计时器终点
-SPEEDRUN_TOOL_TELEPORT_TO_LAST_ROOM=   传送到上个房间
-SPEEDRUN_TOOL_TELEPORT_TO_NEXT_ROOM=   传送到下个房间
-SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE=  开关死亡自动加载状态
+SPEEDRUN_TOOL_PRESS_DELETE_TO_REMOVE_BUTTON= 按下 Delete 键移除按钮
+SPEEDRUN_TOOL_OPEN_DEBUG_MAP=                打开地图
+SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB=           重置房间计时记录
+SPEEDRUN_TOOL_SWITCH_ROOM_TIMER=             切换房间计时器
+SPEEDRUN_TOOL_SET_END_POINT=                 标记房间计时器终点
+SPEEDRUN_TOOL_SET_ADDITIONAL_END_POINT=      标记多个房间计时器终点
+SPEEDRUN_TOOL_TELEPORT_TO_LAST_ROOM=         传送到上个房间
+SPEEDRUN_TOOL_TELEPORT_TO_NEXT_ROOM=         传送到下个房间
+SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE=        开关死亡自动加载状态
 
 # ================================== Death Statistics ==================================
+SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA= 死亡数据数量
+SPEEDRUN_TOOL_CHECK_DEATH_STATISTICS=   查看死亡数据
 SPEEDRUN_TOOL_CLEAR_DEATH_STATISTICS=   清除数据
 SPEEDRUN_TOOL_CHAPTER=                  章节
 SPEEDRUN_TOOL_ROOM=                     房间
@@ -104,3 +100,9 @@ SPEEDRUN_TOOL_CAUSE_OF_DEATH=           死因
 SPEEDRUN_TOOL_TOTAL_DEATH_COUNT=        总死亡数
 SPEEDRUN_TOOL_TOTAL_LOST_TIME=          总损失时间
 SPEEDRUN_TOOL_NO_DATA=                  无数据
+
+# ================================== More Options ==================================
+SPEEDRUN_TOOL_RESPAWN_SPEED=              复活速度
+SPEEDRUN_TOOL_FAST_TELEPORT=              快速传送
+SPEEDRUN_TOOL_FAST_TELEPORT_DESCRIPTION=  PageDown/Up 传送时更加快速，无需重载整个地图
+SPEEDRUN_TOOL_BUTTON_CONFIG=              按键设置

@@ -110,7 +110,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                     GetKeys = () => Settings.KeyboardResetRoomPb,
                     SetKeys = keys => Settings.KeyboardResetRoomPb = keys,
                     DefaultKeys = new[] {Keys.F9},
-                    GetLabel = () => DialogIds.ResetRoomPb.DialogClean(),
+                    GetLabel = () => DialogIds.ResetRoomTimerPb.DialogClean(),
                 }
             }, {
                 Mappings.SwitchRoomTimer, new ButtonInfo {

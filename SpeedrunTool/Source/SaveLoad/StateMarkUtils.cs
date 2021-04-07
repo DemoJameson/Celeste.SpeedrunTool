@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
 using Monocle;
@@ -51,7 +52,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             cursor.EmitDelegate<Func<bool>>(() =>
-                SpeedrunToolModule.Settings.RoomTimer == RoomTimerType.Off
+                SpeedrunToolModule.Settings.RoomTimerType == RoomTimerType.Off
                 && Engine.Scene is Level level && !level.Completed
                 && level.GetExtendedBoolean(START_FROM_SAVE_SATE)
                 && !StateManager.Instance.SavedByTas

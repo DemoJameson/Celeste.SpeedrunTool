@@ -613,7 +613,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 if (IsSaved) {
                     LoadState(false);
                 } else if (!level.Frozen) {
-                    level.Add(new MiniTextbox(DialogIds.DialogNotSaved).IgnoreSaveLoad());
+                    level.Add(new MiniTextbox(DialogIds.DialogNotSavedStateYet).IgnoreSaveLoad());
                 }
             } else if (Mappings.Clear.Pressed() && !level.PausedNew() && State == States.None) {
                 Mappings.Clear.ConsumePress();

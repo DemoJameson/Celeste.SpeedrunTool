@@ -60,14 +60,14 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                     Level level = Engine.Scene as Level;
                     if (numberOfRooms <= 1 && !EndPoint.IsExist
                         || endPoint && EndPoint.IsExist
-                        || level != null && level.Completed) {
+                        || level is {Completed: true}) {
                         timerState = TimerState.Completed;
                         LastPbTime = pbTimes.GetValueOrDefault(pbTimeKey, 0);
                         if (Time < LastPbTime || LastPbTime == 0) {
                             pbTimes[pbTimeKey] = Time;
                         }
 
-                        if (level != null && !level.Completed) {
+                        if (level is {Completed: false}) {
                             EndPoint.All.ForEach(point => point.StopTime());
                         }
                     } else {

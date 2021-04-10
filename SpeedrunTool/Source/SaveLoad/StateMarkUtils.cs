@@ -9,26 +9,50 @@ using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public static class StateMarkUtils {
-        private const string START_FROM_SAVE_SATE = "startFromSaveState";
+        private const string StartFromSaveSate = nameof(StartFromSaveSate);
 
         public static void OnLoad() {
+            On.Celeste.Strawberry.Added += StrawberryOnAdded;
             IL.Celeste.SpeedrunTimerDisplay.DrawTime += SetSaveStateColor;
 
             SaveLoadAction.Add(new SaveLoadAction(loadState: (savedValues, level) => {
                 // recolor golden berry
                 foreach (Strawberry berry in level.Entities.FindAll<Strawberry>().Where(strawberry => strawberry.Golden)) {
-                    if (StateManager.Instance.SavedByTas) return;
-                    if (berry.GetFieldValue("sprite") is not Sprite sprite) return;
-                    GFX.SpriteBank.CreateOn(sprite, "speedrun_tool_goldberry");
+                    if (TryRecolorSprite(berry)) {
+                        break;
+                    }
                 }
 
                 // recolor timer
-                level.SetExtendedBoolean(START_FROM_SAVE_SATE, true);
+                level.SetExtendedBoolean(StartFromSaveSate, true);
             }));
         }
 
         public static void OnUnload() {
+            On.Celeste.Strawberry.Added -= StrawberryOnAdded;
             IL.Celeste.SpeedrunTimerDisplay.DrawTime -= SetSaveStateColor;
+        }
+
+        private static void StrawberryOnAdded(On.Celeste.Strawberry.orig_Added orig, Strawberry self, Scene scene) {
+            orig(self, scene);
+            if (self.Golden && scene.GetExtendedBoolean(StartFromSaveSate)) {
+                TryRecolorSprite(self);
+            }
+        }
+
+        private static bool TryRecolorSprite(Strawberry berry) {
+            if (StateManager.Instance.SavedByTas) return true;
+            if (berry.GetFieldValue("sprite") is not Sprite sprite) return false;
+            string spriteId = "speedrun_tool_goldberry";
+            if (berry.GetType().FullName == "Celeste.Mod.CollabUtils2.Entities.SpeedBerry") {
+                spriteId = "speedrun_tool_speedberry";
+            } else if (berry.GetType().FullName == "Celeste.Mod.CollabUtils2.Entities.SilverBerry") {
+                spriteId = "speedrun_tool_silverberry";
+            }
+
+            GFX.SpriteBank.CreateOn(sprite, spriteId);
+
+            return false;
         }
 
         // Copy from https://github.com/rhelmot/CelesteRandomizer/blob/master/Randomizer/Patches/sessionLifecycle.cs#L144
@@ -39,8 +63,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             if (!cursor.TryGotoNext(MoveType.Before
-                ,instr => instr.MatchLdcI4(0)
-                ,instr => instr.OpCode == OpCodes.Stloc_S)) {
+                , instr => instr.MatchLdcI4(0)
+                , instr => instr.OpCode == OpCodes.Stloc_S)) {
                 return;
             }
 
@@ -53,7 +77,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             cursor.EmitDelegate<Func<bool>>(() =>
                 SpeedrunToolModule.Settings.RoomTimerType == RoomTimerType.Off
-                && Engine.Scene is Level {Completed: false} level && level.GetExtendedBoolean(START_FROM_SAVE_SATE) && !StateManager.Instance.SavedByTas
+                && Engine.Scene is Level {Completed: false} level && level.GetExtendedBoolean(StartFromSaveSate) && !StateManager.Instance.SavedByTas
             );
 
             var beforeInstr = cursor.DefineLabel();

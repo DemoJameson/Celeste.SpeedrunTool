@@ -6,4 +6,34 @@
         <Anim id="collect" path="idle" delay=".07" frames="7-11"/>
         <Loop id="flap" path="wings" delay=".08" frames="0-8,0-8,0-7,9"/>
     </speedrun_tool_goldberry>
+
+    <speedrun_tool_speedberry path="collectables/speedrun_tool_speedberry/" start="idle">
+        <Center />
+
+        <!-- Sprites matching the vanilla animations, preventing crashes -->
+        <Anim id="idle" path="Idle_g" delay=".1" frames="9" goto="idle_gold"/>
+        <Anim id="collect" path="collect_g" delay=".07" frames="0-3"/>
+
+        <!-- Idle animations (when following Madeline) -->
+        <Loop id="idle_bronze" path="Idle_b" delay=".1" frames="0-9" />
+        <Loop id="idle_silver" path="Idle_s" delay=".1" frames="0-9" />
+        <Loop id="idle_gold" path="Idle_g" delay=".1" frames="0-9" />
+
+        <!-- Transition animations -->
+        <Anim id="transition_to_silver" path="transition_g" delay=".1" frames="0-2" goto="idle_silver"/>
+        <Anim id="transition_to_bronze" path="transition_s" delay=".1" frames="0-2" goto="idle_bronze"/>
+        <Anim id="explosion" path="transition_b" delay=".1" frames="0-11" goto="idle_bronze"/>
+
+        <!-- Collect animations -->
+        <Anim id="collect_gold" path="collect_g" delay=".07" frames="0-3"/>
+        <Anim id="collect_silver" path="collect_s" delay=".07" frames="0-3"/>
+        <Anim id="collect_bronze" path="collect_b" delay=".07" frames="0-3"/>
+    </speedrun_tool_speedberry>
+
+    <speedrun_tool_silverberry path="collectables/speedrun_tool_silverberry/" start="idle">
+        <Center />
+
+        <Loop id="idle" path="idle" delay=".08" frames="0-5,0-5,0-5,0-5,0-7" />
+        <Anim id="collect" path="idle" delay=".07" frames="7-11"/>
+    </speedrun_tool_silverberry>
 </Sprites>

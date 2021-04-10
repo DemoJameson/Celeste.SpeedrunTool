@@ -4,8 +4,8 @@
 [GameBanana](https://gamebanana.com/tools/6597)
 
 ## 功能
-- 通过自定义的按键快速保存恢复玩家与房间快照
-- 死亡时自动加载快照
+- 通过自定义的按键快速保存恢复状态
+- 死亡时自动加载状态
 - 统计死亡数据，包括位置，损失的时间等
 - 增加单个房间类型的计时器，支持记录最佳时间与第七章旗子间的计时
 - 只用游戏手柄就也可以使用 Debug 地图，确认键选择房间，右摇杆缩放（已经整合到最新的 Everest 版本中）
@@ -21,7 +21,7 @@
 ![preview2_cn](./Preview/preview2_cn.jpg)
 
 ## 致谢
-- [Matt Makes Games Inc.](http://www.mattmakesgames.com/) —— 感谢他们开发出了 [Celeste](http://www.celestegame.com/) 这款我最爱的平台跳跃游戏
+- [Extremely OK Games, Ltd.](https://exok.com/) —— 感谢他们开发出了 [Celeste](http://www.celestegame.com/) 这款我最爱的平台跳跃游戏
 - [Everest](https://everestapi.github.io/) —— Celeste Mod 加载器，没有它就没有这个 Mod
 - [Ahorn](https://github.com/CelestialCartographers/Ahorn) —— 用来查找物体在游戏代码里的命名
 - [FMOD](https://www.fmod.com/) —— 提供了 Celeste 的音频工程，处理音频时可以预先试听

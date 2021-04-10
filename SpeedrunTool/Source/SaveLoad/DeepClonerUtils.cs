@@ -64,10 +64,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                     if (sourceObj is Entity entity
                         && entity.TagCheck(Tags.Global)
-                        && !(entity is CassetteBlockManager)
-                        && !(entity is SeekerBarrierRenderer)
-                        && !(entity is LightningRenderer)
-                        && !(entity is SpeedrunTimerDisplay)
+                        && entity is not CassetteBlockManager
+                        && entity is not SeekerBarrierRenderer
+                        && entity is not LightningRenderer
+                        && entity is not SpeedrunTimerDisplay
                         // Fixes: Glyph Teleport Area Effect
                         && entity.GetType().FullName != "Celeste.Mod.AcidHelper.Entities.InstantTeleporterRenderer"
                         && entity.GetType().FullName != "VivHelper.Entities.HoldableBarrierRenderer"
@@ -81,11 +81,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                     lock (sourceObj) {
                         // 稍后重新创建正在播放的 SoundSource 里的 EventInstance 实例
-                        if (sourceObj is SoundSource source
-                            // TODO SoundEmitter 的声音会存留在关卡中，切换房间后保存依然会播放
-                            && !(source.Entity is SoundEmitter)
-                            && source.Playing
-                            && source.GetFieldValue("instance") is EventInstance instance) {
+                        // TODO SoundEmitter 的声音会存留在关卡中，切换房间后保存依然会播放
+                        if (sourceObj is SoundSource {Entity: not SoundEmitter, Playing: true} source && source.GetFieldValue("instance") is EventInstance instance) {
                             if (string.IsNullOrEmpty(source.EventName)) return null;
                             instance.NeedManualClone();
                             instance.SaveTimelinePosition(instance.LoadTimelinePosition());
@@ -127,7 +124,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         // 修复启用 CelesteNet 后保存状态时的崩溃
                         // System.ObjectDisposedException: 无法访问已释放的对象。
                         // 对象名:“RenderTarget2D”。
-                        if (sourceObj is RenderTarget2D renderTarget2D && renderTarget2D.IsDisposed) {
+                        if (sourceObj is RenderTarget2D {IsDisposed: true} renderTarget2D) {
                             return new RenderTarget2D(
                                 renderTarget2D.GraphicsDevice,
                                 renderTarget2D.Width,
@@ -174,7 +171,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                     // 同上
                     if (clonedObj.GetType().IsDictionary(out Type dictKeyType, out Type _)
-                        && !dictKeyType.IsSimple() && clonedObj is IDictionary clonedDict && clonedDict.Count > 0
+                        && !dictKeyType.IsSimple() && clonedObj is IDictionary {Count: > 0} clonedDict
                     ) {
                         Dictionary<object, object> backupDict = new Dictionary<object, object>();
                         backupDict.AddRange(clonedDict);
@@ -188,7 +185,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     }
 
                     // Clone dynData.Data
-                    if (sourceObj.GetType() is Type objType && objType.IsClass) {
+                    if (sourceObj.GetType() is {IsClass: true} objType) {
                         do {
                             object dataMap = DynDataUtils.GetDataMap(objType);
                             if (dataMap == null) continue;
@@ -197,14 +194,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                             if (false == (bool) dataMap.InvokeMethod("TryGetValue", parameters)) continue;
 
                             object sourceValue = parameters[1];
-                            if (!(sourceValue.GetFieldValue("Data") is Dictionary<string, object> data) || data.Count == 0) continue;
+                            if (sourceValue.GetFieldValue("Data") is not Dictionary<string, object> data || data.Count == 0) continue;
 
                             dataMap.InvokeMethod("Add", clonedObj, sourceValue.DeepClone(deepCloneState));
                         } while ((objType = objType.BaseType) != null && objType.IsSameOrSubclassOf(typeof(object)));
                     }
 
                     // CLone DynamicData
-                    if (DynDataUtils.DynamicDataMap.Value is object dynamicDataMap) {
+                    if (DynDataUtils.DynamicDataMap.Value is { } dynamicDataMap) {
                         object[] parameters = {sourceObj, null};
                         if ((bool) dynamicDataMap.InvokeMethod("TryGetValue", parameters)) {
                             object sourceValue = parameters[1];
@@ -214,11 +211,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         }
                     }
 
-                    if (clonedObj is VirtualTexture virtualTexture && virtualTexture.IsDisposed) {
+                    if (clonedObj is VirtualTexture {IsDisposed: true} virtualTexture) {
                         virtualTexture.Reload();
                     }
 
-                    if (clonedObj is VirtualRenderTarget virtualRenderTarget && virtualRenderTarget.IsDisposed) {
+                    if (clonedObj is VirtualRenderTarget {IsDisposed: true} virtualRenderTarget) {
                         virtualRenderTarget.Reload();
                     }
                 }

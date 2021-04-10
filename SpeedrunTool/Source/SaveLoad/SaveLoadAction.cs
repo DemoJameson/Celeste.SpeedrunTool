@@ -209,7 +209,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private static void SupportPandorasBox() {
-            if (Type.GetType("Celeste.Mod.PandorasBox.TimeField, PandorasBox") is Type timeFieldType
+            if (Type.GetType("Celeste.Mod.PandorasBox.TimeField, PandorasBox") is { } timeFieldType
                 && Delegate.CreateDelegate(typeof(On.Celeste.Player.hook_Update), timeFieldType.GetMethodInfo("PlayerUpdateHook")) is
                     On.Celeste.Player.hook_Update hookUpdate) {
                 All.Add(new SaveLoadAction(
@@ -229,7 +229,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private static void SupportMaxHelpingHand() {
-            if (Type.GetType("Celeste.Mod.MaxHelpingHand.Entities.RainbowSpinnerColorController, MaxHelpingHand") is Type colorControllerType
+            if (Type.GetType("Celeste.Mod.MaxHelpingHand.Entities.RainbowSpinnerColorController, MaxHelpingHand") is { } colorControllerType
                 && Delegate.CreateDelegate(typeof(On.Celeste.CrystalStaticSpinner.hook_GetHue),
                         colorControllerType.GetMethodInfo("getRainbowSpinnerHue")) is
                     On.Celeste.CrystalStaticSpinner.hook_GetHue hookGetHue
@@ -246,8 +246,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 ));
             }
 
-            if (Type.GetType("Celeste.Mod.MaxHelpingHand.Entities.SeekerBarrierColorController, MaxHelpingHand") is Type
-                seekerBarrierColorControllerType) {
+            if (Type.GetType("Celeste.Mod.MaxHelpingHand.Entities.SeekerBarrierColorController, MaxHelpingHand") is { } seekerBarrierColorControllerType) {
                 All.Add(new SaveLoadAction(
                     loadState: (savedValues, level) => {
                         if ((bool) seekerBarrierColorControllerType.GetFieldValue("seekerBarrierRendererHooked")) {
@@ -260,7 +259,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 ));
             }
 
-            if (Type.GetType("Celeste.Mod.MaxHelpingHand.Triggers.GradientDustTrigger, MaxHelpingHand") is Type gradientDustTriggerType) {
+            if (Type.GetType("Celeste.Mod.MaxHelpingHand.Triggers.GradientDustTrigger, MaxHelpingHand") is { } gradientDustTriggerType) {
                 All.Add(new SaveLoadAction(
                     loadState: (savedValues, level) => {
                         if ((bool) gradientDustTriggerType.GetFieldValue("hooked")) {
@@ -274,7 +273,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 ));
             }
 
-            if (Type.GetType("Celeste.Mod.MaxHelpingHand.Entities.ParallaxFadeOutController, MaxHelpingHand") is Type parallaxFadeOutControllerType
+            if (Type.GetType("Celeste.Mod.MaxHelpingHand.Entities.ParallaxFadeOutController, MaxHelpingHand") is { } parallaxFadeOutControllerType
                 && Delegate.CreateDelegate(typeof(ILContext.Manipulator),
                     parallaxFadeOutControllerType.GetMethodInfo("onBackdropRender")) is ILContext.Manipulator onBackdropRender
             ) {
@@ -290,7 +289,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 ));
             }
 
-            if (Type.GetType("Celeste.Mod.MaxHelpingHand.Effects.BlackholeCustomColors, MaxHelpingHand") is Type blackHoleCustomColorsType) {
+            if (Type.GetType("Celeste.Mod.MaxHelpingHand.Effects.BlackholeCustomColors, MaxHelpingHand") is { } blackHoleCustomColorsType) {
                 All.Add(new SaveLoadAction(
                     (savedValues, level) => { SaveStaticFieldValues(savedValues, blackHoleCustomColorsType, "colorsMild"); },
                     (savedValues, level) => { LoadStaticFieldValues(savedValues); }
@@ -308,7 +307,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private static void SupportSpringCollab2020() {
-            if (Type.GetType("Celeste.Mod.SpringCollab2020.Entities.RainbowSpinnerColorController, SpringCollab2020") is Type colorControllerType
+            if (Type.GetType("Celeste.Mod.SpringCollab2020.Entities.RainbowSpinnerColorController, SpringCollab2020") is { } colorControllerType
                 && Delegate.CreateDelegate(typeof(On.Celeste.CrystalStaticSpinner.hook_GetHue),
                         colorControllerType.GetMethodInfo("getRainbowSpinnerHue")) is
                     On.Celeste.CrystalStaticSpinner.hook_GetHue hookGetHue
@@ -325,8 +324,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 ));
             }
 
-            if (Type.GetType("Celeste.Mod.SpringCollab2020.Entities.RainbowSpinnerColorAreaController, SpringCollab2020") is Type
-                    colorAreaControllerType
+            if (Type.GetType("Celeste.Mod.SpringCollab2020.Entities.RainbowSpinnerColorAreaController, SpringCollab2020") is { } colorAreaControllerType
                 && Delegate.CreateDelegate(typeof(On.Celeste.CrystalStaticSpinner.hook_GetHue),
                         colorAreaControllerType.GetMethodInfo("getRainbowSpinnerHue")) is
                     On.Celeste.CrystalStaticSpinner.hook_GetHue hookSpinnerGetHue
@@ -343,8 +341,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 ));
             }
 
-            if (Type.GetType("Celeste.Mod.SpringCollab2020.Entities.SpikeJumpThroughController, SpringCollab2020") is Type
-                    spikeJumpThroughControllerType
+            if (Type.GetType("Celeste.Mod.SpringCollab2020.Entities.SpikeJumpThroughController, SpringCollab2020") is { } spikeJumpThroughControllerType
                 && Delegate.CreateDelegate(typeof(On.Celeste.Spikes.hook_OnCollide),
                     spikeJumpThroughControllerType.GetMethodInfo("OnCollideHook")) is On.Celeste.Spikes.hook_OnCollide OnCollideHook
             ) {
@@ -363,11 +360,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private static void SupportExtendedVariants() {
             // 修复：ExtendedVariantTrigger 设置的值在 SL 之后失效
-            if (Type.GetType("ExtendedVariants.ExtendedVariantTrigger, ExtendedVariantMode") is Type extendedVariantTrigger) {
+            if (Type.GetType("ExtendedVariants.ExtendedVariantTrigger, ExtendedVariantMode") is { } extendedVariantTrigger) {
                 All.Add(new SaveLoadAction(
                     loadState: (savedValues, level) => {
-                        if (!(Engine.Scene.GetPlayer() is Player player) ||
-                            !(player.GetFieldValue("triggersInside") is HashSet<Trigger> triggersInside)) return;
+                        if (Engine.Scene.GetPlayer() is not { } player ||
+                            player.GetFieldValue("triggersInside") is not HashSet<Trigger> triggersInside) return;
                         foreach (Trigger trigger in triggersInside.Where(trigger =>
                             trigger.GetType() == extendedVariantTrigger && (bool) trigger.GetFieldValue(trigger.GetType(), "revertOnLeave"))) {
                             trigger.OnEnter(player);
@@ -375,7 +372,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     }));
             }
 
-            if (Type.GetType("ExtendedVariants.Variants.JumpCount, ExtendedVariantMode") is Type jumpCountType) {
+            if (Type.GetType("ExtendedVariants.Variants.JumpCount, ExtendedVariantMode") is { } jumpCountType) {
                 All.Add(new SaveLoadAction(
                     (savedValues, level) => SaveStaticFieldValues(savedValues, jumpCountType, "jumpBuffer"),
                     (savedValues, level) => LoadStaticFieldValues(savedValues)));
@@ -383,7 +380,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private static void SupportXaphanHelper() {
-            if (Type.GetType("Celeste.Mod.XaphanHelper.Upgrades.SpaceJump, XaphanHelper") is Type spaceJumpType) {
+            if (Type.GetType("Celeste.Mod.XaphanHelper.Upgrades.SpaceJump, XaphanHelper") is { } spaceJumpType) {
                 All.Add(new SaveLoadAction(
                     (savedValues, level) => SaveStaticFieldValues(savedValues, spaceJumpType, "jumpBuffer"),
                     (savedValues, level) => LoadStaticFieldValues(savedValues))

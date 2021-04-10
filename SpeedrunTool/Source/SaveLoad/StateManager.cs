@@ -119,7 +119,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     PreCloneSavedEntities();
                 }
 
-                if (self.GetSession() is Session session && session.Area != savedLevel.Session.Area) {
+                if (self.GetSession() is { } session && session.Area != savedLevel.Session.Area) {
                     ClearState(true);
                 }
             }
@@ -156,7 +156,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private bool SaveState(bool tas) {
-            if (!(Engine.Scene is Level level)) return false;
+            if (Engine.Scene is not Level level) return false;
             if (!IsAllowSave(level, level.GetPlayer())) return false;
             // 不允许玩家在黑屏时保存状态，因为如果在黑屏结束一瞬间之前保存，读档后没有黑屏等待时间感觉会很突兀
             if (!tas && level.Wipe != null) return false;
@@ -261,7 +261,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private bool LoadState(bool tas) {
-            if (!(Engine.Scene is Level level)) return false;
+            if (Engine.Scene is not Level level) return false;
             if (level.PausedNew() || State == States.Loading || State == States.Waiting || !IsSaved) return false;
             if (tas && !SavedByTas) return false;
 
@@ -358,7 +358,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         // 分两步的原因是更早的停止音乐，听起来更舒服更好一点
         private void RestoreCassetteBlockManager1(Level level) {
-            if (level.Tracker.GetEntity<CassetteBlockManager>() is CassetteBlockManager manager) {
+            if (level.Tracker.GetEntity<CassetteBlockManager>() is { } manager) {
                 if (manager.GetFieldValue("snapshot") is EventInstance snapshot) {
                     snapshot.start();
                 }
@@ -366,7 +366,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private void RestoreCassetteBlockManager2(Level level) {
-            if (level.Tracker.GetEntity<CassetteBlockManager>() is CassetteBlockManager manager) {
+            if (level.Tracker.GetEntity<CassetteBlockManager>() is { } manager) {
                 if (manager.GetFieldValue("sfx") is EventInstance sfx &&
                     !(bool) manager.GetFieldValue("isLevelMusic")) {
                     if ((int) manager.GetFieldValue("leadBeats") <= 0) {
@@ -447,8 +447,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         level.Tracker.InvokeMethod("ComponentAdded", component);
 
                         // 等 ScreenWipe 完毕再重新播放
-                        if (component is SoundSource source && source.Playing &&
-                            source.GetFieldValue("instance") is EventInstance eventInstance) {
+                        if (component is SoundSource {Playing: true} source && source.GetFieldValue("instance") is EventInstance eventInstance) {
                             playingEventInstances.Add(eventInstance);
                         }
                     });
@@ -564,15 +563,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             // 同上
             if (level.Entities.FirstOrDefault(entity =>
-                    entity.GetType().FullName == "Celeste.Mod.AcidHelper.Entities.InstantTeleporterRenderer") is Entity
-                teleporterRenderer) {
+                    entity.GetType().FullName == "Celeste.Mod.AcidHelper.Entities.InstantTeleporterRenderer") is { } teleporterRenderer) {
                 result.Add(teleporterRenderer);
             }
 
             // 同上
             if (level.Entities.FirstOrDefault(entity =>
-                    entity.GetType().FullName == "VivHelper.Entities.HoldableBarrierRenderer") is Entity
-                holdableBarrierRenderer) {
+                    entity.GetType().FullName == "VivHelper.Entities.HoldableBarrierRenderer") is { } holdableBarrierRenderer) {
                 result.Add(holdableBarrierRenderer);
             }
 
@@ -587,7 +584,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                 // 不恢复 CelesteNet 的物体
                 // Do not restore CelesteNet Entity
-                if (entity.GetType().FullName is string name && name.StartsWith("Celeste.Mod.CelesteNet."))
+                if (entity.GetType().FullName is { } name && name.StartsWith("Celeste.Mod.CelesteNet."))
                     return false;
 
                 return true;
@@ -595,7 +592,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private bool IsAllowSave(Level level, Player player) {
-            return State == States.None && player != null && !player.Dead && !level.PausedNew() && !level.SkippingCutscene;
+            return State == States.None && player is {Dead: false} && !level.PausedNew() && !level.SkippingCutscene;
         }
 
         private bool IsNotCollectingHeart(Level level) {

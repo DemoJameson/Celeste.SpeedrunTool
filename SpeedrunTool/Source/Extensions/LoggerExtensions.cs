@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
         public static void Log(this object message, LogLevel logLevel = LogLevel.Warn) {
             string levelInfo = "";
-            if (Engine.Scene.GetSession() is Session session) {
+            if (Engine.Scene.GetSession() is { } session) {
                 levelInfo += $"[{session.Area.SID} {session.Level}] ";
             }
 

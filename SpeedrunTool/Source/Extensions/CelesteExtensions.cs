@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-using Monocle;
+﻿using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
     internal static class CelesteExtensions {
@@ -20,7 +19,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static Player GetPlayer(this Scene scene) {
-            if (scene.GetLevel()?.Tracker.GetEntity<Player>() is Player player) {
+            if (scene.GetLevel()?.Tracker.GetEntity<Player>() is { } player) {
                 return player;
             }
 
@@ -32,7 +31,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static bool PausedNew(this Level level) {
-            return level.Paused || level.GetFieldValue("unpauseTimer") is float unpauseTimer && unpauseTimer > 0f;
+            return level.Paused || level.GetFieldValue("unpauseTimer") is > 0f;
         }
     }
 }

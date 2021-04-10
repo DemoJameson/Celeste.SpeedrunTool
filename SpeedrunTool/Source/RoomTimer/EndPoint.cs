@@ -94,7 +94,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         }
 
         public void ResetSprite() {
-            if (Engine.Scene.GetPlayer() is Player player) {
+            if (Engine.Scene.GetPlayer() is { } player) {
                 Get<Sprite>()?.RemoveSelf();
                 Get<PlayerHair>()?.RemoveSelf();
                 Get<PlayerSprite>()?.RemoveSelf();

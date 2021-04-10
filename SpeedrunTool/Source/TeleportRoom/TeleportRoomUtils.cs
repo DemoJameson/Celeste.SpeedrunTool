@@ -46,7 +46,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
             bool lastActivated = self.Activated;
             orig(self);
             if (!lastActivated && self.Activated) {
-                if (Engine.Scene is Level level && level.GetPlayer() is Player player) {
+                if (Engine.Scene is Level level && level.GetPlayer() is { } player) {
                     player.Add(new Coroutine(WaitSessionReady(level.Session)));
                 }
             }
@@ -77,7 +77,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
         }
 
         private static void TeleportTo(Session session, bool fromHistory = false) {
-            if (SpeedrunToolModule.Settings.FastTeleport && Engine.Scene is Level level && level.GetPlayer() is Player player) {
+            if (SpeedrunToolModule.Settings.FastTeleport && Engine.Scene is Level level && level.GetPlayer() is { } player) {
                 // 修复问题：死亡瞬间传送 PlayerDeadBody 没被清除，导致传送完毕后 madeline 自动爆炸
                 level.Entities.UpdateLists();
 
@@ -296,9 +296,9 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
 
             if (flagList.Count > 0) {
                 SummitCheckpoint summitCheckpoint = null;
-                if (next && flagList.LastOrDefault(checkpoint => checkpoint.Number < currentFlagNumber) is SummitCheckpoint biggest) {
+                if (next && flagList.LastOrDefault(checkpoint => checkpoint.Number < currentFlagNumber) is { } biggest) {
                     summitCheckpoint = biggest;
-                } else if (!next && flagList.FirstOrDefault(checkpoint => checkpoint.Number > currentFlagNumber) is SummitCheckpoint smallest) {
+                } else if (!next && flagList.FirstOrDefault(checkpoint => checkpoint.Number > currentFlagNumber) is { } smallest) {
                     summitCheckpoint = smallest;
                 }
 

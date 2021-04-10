@@ -19,7 +19,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                 return;
             }
 
-            if (!(Monocle.Engine.Scene is Level level)) {
+            if (Monocle.Engine.Scene is not Level level) {
                 return;
             }
 

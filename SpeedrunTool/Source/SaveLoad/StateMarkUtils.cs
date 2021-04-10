@@ -16,11 +16,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             IL.Celeste.SpeedrunTimerDisplay.DrawTime += SetSaveStateColor;
 
             SaveLoadAction.Add(new SaveLoadAction(loadState: (savedValues, level) => {
+                if (StateManager.Instance.SavedByTas) {
+                    return;
+                }
+                
                 // recolor golden berry
                 foreach (Strawberry berry in level.Entities.FindAll<Strawberry>().Where(strawberry => strawberry.Golden)) {
-                    if (TryRecolorSprite(berry)) {
-                        break;
-                    }
+                    TryRecolorSprite(berry);
                 }
 
                 // recolor timer
@@ -35,24 +37,25 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private static void StrawberryOnAdded(On.Celeste.Strawberry.orig_Added orig, Strawberry self, Scene scene) {
             orig(self, scene);
-            if (self.Golden && scene.GetExtendedBoolean(StartFromSaveSate)) {
+            if (self.Golden && !StateManager.Instance.SavedByTas && scene.GetExtendedBoolean(StartFromSaveSate)) {
                 TryRecolorSprite(self);
             }
         }
 
-        private static bool TryRecolorSprite(Strawberry berry) {
-            if (StateManager.Instance.SavedByTas) return true;
-            if (berry.GetFieldValue("sprite") is not Sprite sprite) return false;
-            string spriteId = "speedrun_tool_goldberry";
-            if (berry.GetType().FullName == "Celeste.Mod.CollabUtils2.Entities.SpeedBerry") {
-                spriteId = "speedrun_tool_speedberry";
-            } else if (berry.GetType().FullName == "Celeste.Mod.CollabUtils2.Entities.SilverBerry") {
-                spriteId = "speedrun_tool_silverberry";
+        private static void TryRecolorSprite(Strawberry berry) {
+            if (berry.GetFieldValue("sprite") is not Sprite sprite) {
+                return;
             }
+
+            string spriteId = berry.GetType().FullName switch {
+                "Celeste.Mod.CollabUtils2.Entities.SpeedBerry" => "speedrun_tool_speedberry",
+                "Celeste.Mod.CollabUtils2.Entities.SilverBerry" => "speedrun_tool_silverberry",
+                _ => "speedrun_tool_goldberry"
+            };
 
             GFX.SpriteBank.CreateOn(sprite, spriteId);
 
-            return false;
+            return;
         }
 
         // Copy from https://github.com/rhelmot/CelesteRandomizer/blob/master/Randomizer/Patches/sessionLifecycle.cs#L144

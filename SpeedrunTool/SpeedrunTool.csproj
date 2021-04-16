@@ -1,154 +1,85 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
-  <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{C7DFDD37-907C-4A75-96DA-1C5828C97F96}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Celeste.Mod.SpeedrunTool</RootNamespace>
-    <AssemblyName>SpeedrunTool</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <Deterministic>true</Deterministic>
-    <LangVersion>9</LangVersion>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <PlatformTarget>x86</PlatformTarget>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>portable</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <PlatformTarget>x86</PlatformTarget>
-  </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="Celeste, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\lib-stripped\Celeste.exe</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="FNA, Version=19.9.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\lib-stripped\FNA.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="KeraLua, Version=1.0.22.0, Culture=neutral, PublicKeyToken=6a194c04b9c89217">
-      <HintPath>..\packages\KeraLua.1.0.22\lib\net45\KeraLua.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="MMHOOK_Celeste, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\lib-stripped\MMHOOK_Celeste.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Mono.Cecil, Version=0.11.3.0, Culture=neutral, PublicKeyToken=50cebf1cceb9d05e">
-      <HintPath>..\packages\Mono.Cecil.0.11.3\lib\net40\Mono.Cecil.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Mono.Cecil.Mdb, Version=0.11.3.0, Culture=neutral, PublicKeyToken=50cebf1cceb9d05e">
-      <HintPath>..\packages\Mono.Cecil.0.11.3\lib\net40\Mono.Cecil.Mdb.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Mono.Cecil.Pdb, Version=0.11.3.0, Culture=neutral, PublicKeyToken=50cebf1cceb9d05e">
-      <HintPath>..\packages\Mono.Cecil.0.11.3\lib\net40\Mono.Cecil.Pdb.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Mono.Cecil.Rocks, Version=0.11.3.0, Culture=neutral, PublicKeyToken=50cebf1cceb9d05e">
-      <HintPath>..\packages\Mono.Cecil.0.11.3\lib\net40\Mono.Cecil.Rocks.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="MonoMod.RuntimeDetour, Version=21.1.11.1, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\packages\MonoMod.RuntimeDetour.21.1.11.1\lib\net40\MonoMod.RuntimeDetour.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="MonoMod.Utils, Version=21.1.11.1, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\packages\MonoMod.Utils.21.1.11.1\lib\net40\MonoMod.Utils.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="NLua, Version=1.4.25.0, Culture=neutral, PublicKeyToken=6a194c04b9c89217">
-      <HintPath>..\packages\NLua.1.4.25\lib\net45\NLua.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.Xml" />
-    <Reference Include="YamlDotNet, Version=8.0.0.0, Culture=neutral, PublicKeyToken=ec19458f3c15af5e">
-      <HintPath>..\packages\YamlDotNet.8.1.2\lib\net45\YamlDotNet.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Source\DeathStatistics\DeathInfo.cs" />
-    <Compile Include="Source\DeathStatistics\DeathMark.cs" />
-    <Compile Include="Source\DeathStatistics\DeathStatisticsManager.cs" />
-    <Compile Include="Source\DeathStatistics\DeathStatisticsUi.cs" />
-    <Compile Include="Source\DialogIds.cs" />
-    <Compile Include="Source\Extensions\CelesteExtensions.cs" />
-    <Compile Include="Source\Extensions\CommonExtensions.cs" />
-    <Compile Include="Source\Extensions\ExtendedDataExtensions.cs" />
-    <Compile Include="Source\Extensions\LoggerExtensions.cs" />
-    <Compile Include="Source\Extensions\ReflectionExtensions.cs" />
-    <Compile Include="Source\Extensions\ThreadSafeFastReflectionHelper.cs" />
-    <Compile Include="Source\Other\BetterMapEditor.cs" />
-    <Compile Include="Source\Other\ButtonConfigUi.cs" />
-    <Compile Include="Source\Other\RespawnSpeedUtils.cs" />
-    <Compile Include="Source\RoomTimer\ConfettiRenderer.cs" />
-    <Compile Include="Source\RoomTimer\EndPoint.cs" />
-    <Compile Include="Source\RoomTimer\FlagComponent.cs" />
-    <Compile Include="Source\RoomTimer\RoomTimerData.cs" />
-    <Compile Include="Source\RoomTimer\RoomTimerManager.cs" />
-    <Compile Include="Source\SaveLoad\DeepClonerUtils.cs" />
-    <Compile Include="Source\SaveLoad\DynDataUtils.cs" />
-    <Compile Include="Source\SaveLoad\EventInstanceUtils.cs" />
-    <Compile Include="Source\SaveLoad\IgnoreSaveLoadComponent.cs" />
-    <Compile Include="Source\SaveLoad\SaveLoadAction.cs" />
-    <Compile Include="Source\SaveLoad\StateManager.cs" />
-    <Compile Include="Source\SaveLoad\StateMarkUtils.cs" />
-    <Compile Include="Source\SpeedrunToolMenu.cs" />
-    <Compile Include="Source\SpeedrunToolModule.cs" />
-    <Compile Include="Source\SpeedrunToolSaveData.cs" />
-    <Compile Include="Source\SpeedrunToolSettings.cs" />
-    <Compile Include="Source\TeleportRoom\LevelDataReorderUtils.cs" />
-    <Compile Include="Source\TeleportRoom\TeleportRoomUtils.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="everest.yaml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Dialog\English.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Dialog\Simplified Chinese.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Dialog\Fonts\chinese.fnt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Dialog\Fonts\chinese_speedrun_tool_0.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>      
-    <Content Include="Graphics\**">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\DeepCloner\DeepCloner\DeepCloner.csproj">
-      <Project>{6bb0a0ab-67f9-45e4-b60c-4ceed098d463}</Project>
-      <Name>DeepCloner</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <ProjectGuid>{C7DFDD37-907C-4A75-96DA-1C5828C97F96}</ProjectGuid>
+        <RootNamespace>Celeste.Mod.SpeedrunTool</RootNamespace>
+        <TargetFramework>net452</TargetFramework>
+        <LangVersion>9</LangVersion>
+        <AssemblyTitle>SpeedrunTool</AssemblyTitle>
+        <Product>SpeedrunTool</Product>
+        <Copyright>Copyright © 2019</Copyright>
+        <PlatformTarget>x86</PlatformTarget>
+        <OutputPath>bin\$(Configuration)\</OutputPath>
+        <DebugType>portable</DebugType>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <PlatformTarget>AnyCPU</PlatformTarget>
+      <Prefer32bit>false</Prefer32bit>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <PlatformTarget>AnyCPU</PlatformTarget>
+      <Prefer32bit>false</Prefer32bit>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="KeraLua" Version="1.0.22">
+            <IncludeAssets>compile</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Mono.Cecil" Version="0.11.3">
+            <IncludeAssets>compile</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="MonoMod" Version="21.1.11.1">
+            <IncludeAssets>compile</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="MonoMod.RuntimeDetour" Version="21.1.11.1">
+            <IncludeAssets>compile</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="MonoMod.Utils" Version="21.1.11.1">
+            <IncludeAssets>compile</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="NLua" Version="1.4.25">
+            <IncludeAssets>compile</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="YamlDotNet" Version="8.1.2">
+            <IncludeAssets>compile</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+    <ItemGroup>
+        <Reference Include="Celeste, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+            <HintPath>..\lib-stripped\Celeste.exe</HintPath>
+            <Private>False</Private>
+        </Reference>
+        <Reference Include="FNA, Version=19.9.0.0, Culture=neutral, PublicKeyToken=null">
+            <HintPath>..\lib-stripped\FNA.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+        <Reference Include="MMHOOK_Celeste, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+            <HintPath>..\lib-stripped\MMHOOK_Celeste.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+    </ItemGroup>
+    <ItemGroup>
+        <None Include="everest.yaml">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Remove="SpeedrunTool.csproj.DotSettings" />
+    </ItemGroup>
+    <ItemGroup>
+        <Content Include="Dialog\English.txt">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Dialog\Simplified Chinese.txt">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Dialog\Fonts\chinese.fnt">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Dialog\Fonts\chinese_speedrun_tool_0.png">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Graphics\**">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\DeepCloner\DeepCloner\DeepCloner.csproj" />
+    </ItemGroup>
 </Project>

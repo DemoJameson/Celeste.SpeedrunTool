@@ -9,9 +9,9 @@ using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class SaveLoadAction {
-        private static readonly List<SaveLoadAction> All = new List<SaveLoadAction>();
+        private static readonly List<SaveLoadAction> All = new();
 
-        private readonly Dictionary<Type, Dictionary<string, object>> savedValues = new Dictionary<Type, Dictionary<string, object>>();
+        private readonly Dictionary<Type, Dictionary<string, object>> savedValues = new();
         private readonly Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState;
         private readonly Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState;
 
@@ -76,7 +76,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SupportEntitySimpleStaticFields();
             SupportAudioMusic();
             SupportMaxHelpingHand();
-            // SupportPandorasBox();
+            SupportPandorasBox();
             SupportCrystallineHelper();
             SupportSpringCollab2020();
             SupportExtendedVariants();
@@ -120,7 +120,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     foreach (Type type in EntityStaticFields.Keys) {
                         FieldInfo[] fieldInfos = EntityStaticFields[type];
                         // ("\n\n" + string.Join("\n", fieldInfos.Select(info => type.FullName + " " + info.Name + " " + info.FieldType))).DebugLog();
-                        Dictionary<string, object> values = new Dictionary<string, object>();
+                        Dictionary<string, object> values = new();
 
                         foreach (FieldInfo fieldInfo in fieldInfos) {
                             object value = fieldInfo.GetValue(null);
@@ -155,7 +155,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             Type type = typeof(MInput);
             All.Add(new SaveLoadAction(
                 (savedValues, level) => {
-                    Dictionary<string, object> dictionary = new Dictionary<string, object> {
+                    Dictionary<string, object> dictionary = new() {
                         ["Active"] = MInput.Active,
                         ["Disabled"] = MInput.Disabled,
                         ["Keyboard"] = MInput.Keyboard,
@@ -176,8 +176,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private static void SupportAudioMusic() {
             All.Add(new SaveLoadAction(
-                (savedValues, level) => {
-                    Dictionary<string, object> saved = new Dictionary<string, object> {
+                (savedValues, _) => {
+                    Dictionary<string, object> saved = new() {
                         {
                             "currentMusicEvent",
                             (typeof(Audio).GetFieldValue("currentMusicEvent") as EventInstance)?.NeedManualClone().DeepCloneShared()
@@ -190,7 +190,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     };
                     savedValues[typeof(Audio)] = saved;
                 },
-                (savedValues, level) => {
+                (savedValues, _) => {
                     Dictionary<string, object> saved = savedValues[typeof(Audio)];
 
                     Audio.SetMusic(Audio.GetEventName(saved["currentMusicEvent"] as EventInstance));
@@ -209,22 +209,22 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private static void SupportPandorasBox() {
-            if (Type.GetType("Celeste.Mod.PandorasBox.TimeField, PandorasBox") is { } timeFieldType
-                && Delegate.CreateDelegate(typeof(On.Celeste.Player.hook_Update), timeFieldType.GetMethodInfo("PlayerUpdateHook")) is
-                    On.Celeste.Player.hook_Update hookUpdate) {
-                All.Add(new SaveLoadAction(
-                    loadState: (savedValues, level) => {
-                        if ((bool) timeFieldType.GetFieldValue("hookAdded")) {
-                            On.Celeste.Player.Update += hookUpdate;
-                        }
-                    }
-                ));
-            }
+            // if (Type.GetType("Celeste.Mod.PandorasBox.TimeField, PandorasBox") is { } timeFieldType
+            //     && Delegate.CreateDelegate(typeof(On.Celeste.Player.hook_Update), timeFieldType.GetMethodInfo("PlayerUpdateHook")) is
+            //         On.Celeste.Player.hook_Update hookUpdate) {
+            //     All.Add(new SaveLoadAction(
+            //         loadState: (savedValues, level) => {
+            //             if ((bool) timeFieldType.GetFieldValue("hookAdded")) {
+            //                 On.Celeste.Player.Update += hookUpdate;
+            //             }
+            //         }
+            //     ));
+            // }
 
             // Fixed: Game crashes after save DustSpriteColorController
             All.Add(new SaveLoadAction(
-                (savedValues, level) => { SaveStaticFieldValues(savedValues, typeof(DustStyles), "Styles"); },
-                (savedValues, level) => LoadStaticFieldValues(savedValues)
+                (savedValues, _) => { SaveStaticFieldValues(savedValues, typeof(DustStyles), "Styles"); },
+                (savedValues, _) => LoadStaticFieldValues(savedValues)
             ));
         }
 
@@ -235,7 +235,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     On.Celeste.CrystalStaticSpinner.hook_GetHue hookGetHue
             ) {
                 All.Add(new SaveLoadAction(
-                    loadState: (savedValues, level) => {
+                    loadState: (savedValues, _) => {
                         if ((bool) colorControllerType.GetFieldValue("rainbowSpinnerHueHooked")) {
                             On.Celeste.CrystalStaticSpinner.GetHue -= hookGetHue;
                             On.Celeste.CrystalStaticSpinner.GetHue += hookGetHue;
@@ -248,7 +248,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             if (Type.GetType("Celeste.Mod.MaxHelpingHand.Entities.SeekerBarrierColorController, MaxHelpingHand") is { } seekerBarrierColorControllerType) {
                 All.Add(new SaveLoadAction(
-                    loadState: (savedValues, level) => {
+                    loadState: (savedValues, _) => {
                         if ((bool) seekerBarrierColorControllerType.GetFieldValue("seekerBarrierRendererHooked")) {
                             seekerBarrierColorControllerType.InvokeMethod("unhookSeekerBarrierRenderer");
                             seekerBarrierColorControllerType.InvokeMethod("hookSeekerBarrierRenderer");
@@ -261,12 +261,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             if (Type.GetType("Celeste.Mod.MaxHelpingHand.Triggers.GradientDustTrigger, MaxHelpingHand") is { } gradientDustTriggerType) {
                 All.Add(new SaveLoadAction(
-                    loadState: (savedValues, level) => {
+                    loadState: (savedValues, _) => {
                         if ((bool) gradientDustTriggerType.GetFieldValue("hooked")) {
                             gradientDustTriggerType.InvokeMethod("unhook");
                             gradientDustTriggerType.InvokeMethod("hook");
                         } else {
-                            gradientDustTriggerType.SetFieldValue("hooked", true);
                             gradientDustTriggerType.InvokeMethod("unhook");
                         }
                     }
@@ -278,7 +277,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     parallaxFadeOutControllerType.GetMethodInfo("onBackdropRender")) is ILContext.Manipulator onBackdropRender
             ) {
                 All.Add(new SaveLoadAction(
-                    loadState: (savedValues, level) => {
+                    loadState: (savedValues, _) => {
                         if ((bool) parallaxFadeOutControllerType.GetFieldValue("backdropRendererHooked")) {
                             IL.Celeste.BackdropRenderer.Render -= onBackdropRender;
                             IL.Celeste.BackdropRenderer.Render += onBackdropRender;
@@ -291,8 +290,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             if (Type.GetType("Celeste.Mod.MaxHelpingHand.Effects.BlackholeCustomColors, MaxHelpingHand") is { } blackHoleCustomColorsType) {
                 All.Add(new SaveLoadAction(
-                    (savedValues, level) => { SaveStaticFieldValues(savedValues, blackHoleCustomColorsType, "colorsMild"); },
-                    (savedValues, level) => { LoadStaticFieldValues(savedValues); }
+                    (savedValues, _) => { SaveStaticFieldValues(savedValues, blackHoleCustomColorsType, "colorsMild"); },
+                    (savedValues, _) => { LoadStaticFieldValues(savedValues); }
                 ));
             }
         }
@@ -301,8 +300,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             Type vitModuleType = Type.GetType("vitmod.VitModule, vitmod");
             if (vitModuleType == null) return;
             All.Add(new SaveLoadAction(
-                (savedValues, level) => { SaveStaticFieldValues(savedValues, vitModuleType, "timeStopScaleTimer", "noMoveScaleTimer"); },
-                (savedValues, level) => LoadStaticFieldValues(savedValues)
+                (savedValues, _) => { SaveStaticFieldValues(savedValues, vitModuleType, "timeStopScaleTimer", "noMoveScaleTimer"); },
+                (savedValues, _) => LoadStaticFieldValues(savedValues)
             ));
         }
 
@@ -313,7 +312,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     On.Celeste.CrystalStaticSpinner.hook_GetHue hookGetHue
             ) {
                 All.Add(new SaveLoadAction(
-                    loadState: (savedValues, level) => {
+                    loadState: (savedValues, _) => {
                         if ((bool) colorControllerType.GetFieldValue("rainbowSpinnerHueHooked")) {
                             On.Celeste.CrystalStaticSpinner.GetHue -= hookGetHue;
                             On.Celeste.CrystalStaticSpinner.GetHue += hookGetHue;
@@ -330,7 +329,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     On.Celeste.CrystalStaticSpinner.hook_GetHue hookSpinnerGetHue
             ) {
                 All.Add(new SaveLoadAction(
-                    loadState: (savedValues, level) => {
+                    loadState: (savedValues, _) => {
                         if ((bool) colorAreaControllerType.GetFieldValue("rainbowSpinnerHueHooked")) {
                             On.Celeste.CrystalStaticSpinner.GetHue -= hookSpinnerGetHue;
                             On.Celeste.CrystalStaticSpinner.GetHue += hookSpinnerGetHue;
@@ -343,15 +342,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             if (Type.GetType("Celeste.Mod.SpringCollab2020.Entities.SpikeJumpThroughController, SpringCollab2020") is { } spikeJumpThroughControllerType
                 && Delegate.CreateDelegate(typeof(On.Celeste.Spikes.hook_OnCollide),
-                    spikeJumpThroughControllerType.GetMethodInfo("OnCollideHook")) is On.Celeste.Spikes.hook_OnCollide OnCollideHook
+                    spikeJumpThroughControllerType.GetMethodInfo("OnCollideHook")) is On.Celeste.Spikes.hook_OnCollide onCollideHook
             ) {
                 All.Add(new SaveLoadAction(
-                    loadState: (savedValues, level) => {
+                    loadState: (savedValues, _) => {
                         if ((bool) spikeJumpThroughControllerType.GetFieldValue("SpikeHooked")) {
-                            On.Celeste.Spikes.OnCollide -= OnCollideHook;
-                            On.Celeste.Spikes.OnCollide += OnCollideHook;
+                            On.Celeste.Spikes.OnCollide -= onCollideHook;
+                            On.Celeste.Spikes.OnCollide += onCollideHook;
                         } else {
-                            On.Celeste.Spikes.OnCollide -= OnCollideHook;
+                            On.Celeste.Spikes.OnCollide -= onCollideHook;
                         }
                     }
                 ));
@@ -362,7 +361,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // 修复：ExtendedVariantTrigger 设置的值在 SL 之后失效
             if (Type.GetType("ExtendedVariants.ExtendedVariantTrigger, ExtendedVariantMode") is { } extendedVariantTrigger) {
                 All.Add(new SaveLoadAction(
-                    loadState: (savedValues, level) => {
+                    loadState: (savedValues, _) => {
                         if (Engine.Scene.GetPlayer() is not { } player ||
                             player.GetFieldValue("triggersInside") is not HashSet<Trigger> triggersInside) return;
                         foreach (Trigger trigger in triggersInside.Where(trigger =>
@@ -374,16 +373,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             if (Type.GetType("ExtendedVariants.Variants.JumpCount, ExtendedVariantMode") is { } jumpCountType) {
                 All.Add(new SaveLoadAction(
-                    (savedValues, level) => SaveStaticFieldValues(savedValues, jumpCountType, "jumpBuffer"),
-                    (savedValues, level) => LoadStaticFieldValues(savedValues)));
+                    (savedValues, _) => SaveStaticFieldValues(savedValues, jumpCountType, "jumpBuffer"),
+                    (savedValues, _) => LoadStaticFieldValues(savedValues)));
             }
         }
 
         private static void SupportXaphanHelper() {
             if (Type.GetType("Celeste.Mod.XaphanHelper.Upgrades.SpaceJump, XaphanHelper") is { } spaceJumpType) {
                 All.Add(new SaveLoadAction(
-                    (savedValues, level) => SaveStaticFieldValues(savedValues, spaceJumpType, "jumpBuffer"),
-                    (savedValues, level) => LoadStaticFieldValues(savedValues))
+                    (savedValues, _) => SaveStaticFieldValues(savedValues, spaceJumpType, "jumpBuffer"),
+                    (savedValues, _) => LoadStaticFieldValues(savedValues))
                 );
             }
         }

@@ -15,7 +15,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
         private static FastReflectionDelegate _CreateFastDelegate(MethodBase method, bool directBoxValueAccess = true) {
             DynamicMethodDefinition dmd =
-                new DynamicMethodDefinition($"FastReflection<{method.GetID(simple: true)}>", typeof(object), _DynamicMethodDelegateArgs);
+                new($"FastReflection<{method.GetID(simple: true)}>", typeof(object), _DynamicMethodDelegateArgs);
             ILProcessor il = dmd.GetILProcessor();
 
             ParameterInfo[] args = method.GetParameters();
@@ -32,8 +32,10 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             for (int i = 0; i < args.Length; i++) {
                 Type argType = args[i].ParameterType;
                 bool argIsByRef = argType.IsByRef;
-                if (argIsByRef)
+                if (argIsByRef) {
                     argType = argType.GetElementType();
+                }
+
                 bool argIsValueType = argType.IsValueType;
 
                 if (argIsByRef && argIsValueType && !directBoxValueAccess) {
@@ -106,8 +108,9 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
         public static FastReflectionDelegate CreateFastDelegate(this MethodInfo method, bool directBoxValueAccess = true) {
             lock (_DynamicMethodDelegateArgs) {
-                if (_MethodCache.TryGetValue(method, out FastReflectionDelegate dmd))
+                if (_MethodCache.TryGetValue(method, out FastReflectionDelegate dmd)) {
                     return dmd;
+                }
 
                 dmd = _CreateFastDelegate(method, directBoxValueAccess);
                 _MethodCache.Add(method, dmd);

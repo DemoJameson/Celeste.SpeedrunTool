@@ -28,8 +28,8 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         private static readonly Color FinishedColor2 = Calc.HexToColor("43d14c");
 
         public const string FlagPrefix = "summit_checkpoint_";
-        private readonly RoomTimerData currentRoomTimerData = new RoomTimerData(RoomTimerType.CurrentRoom);
-        private readonly RoomTimerData nextRoomTimerData = new RoomTimerData(RoomTimerType.NextRoom);
+        private readonly RoomTimerData currentRoomTimerData = new(RoomTimerType.CurrentRoom);
+        private readonly RoomTimerData nextRoomTimerData = new(RoomTimerType.NextRoom);
 
         private static SpeedrunToolSettings Settings => SpeedrunToolModule.Settings;
 
@@ -54,7 +54,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         }
 
         private void SpeedrunTimerDisplayOnUpdate(ILContext il) {
-            ILCursor ilCursor = new ILCursor(il);
+            ILCursor ilCursor = new(il);
             if (ilCursor.TryGotoNext(MoveType.After,
                 ins => ins.OpCode == OpCodes.Ldarg_0,
                 ins => ins.OpCode == OpCodes.Ldarg_0,
@@ -282,9 +282,9 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             for (int index = 0; index < timeString.Length; ++index) {
                 char ch = timeString[index];
 
-                Color color3 = ch == ':' || ch == '.' || (double) num1 < (double) scale ? color2 : color1;
+                Color color3 = ch is ':' or '.' || (double) num1 < (double) scale ? color2 : color1;
 
-                float num2 = (float) ((ch == ':' || ch == '.' ? spacerWidth : numberWidth) + 4.0) * num1;
+                float num2 = (float) ((ch is ':' or '.' ? spacerWidth : numberWidth) + 4.0) * num1;
                 font.DrawOutline(fontFaceSize, ch.ToString(), new Vector2(x + num2 / 2f, y), new Vector2(0.5f, 1f),
                     Vector2.One * num1, color3, 2f, Color.Black);
                 x += num2;
@@ -292,7 +292,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         }
 
         // @formatter:off
-        private static readonly Lazy<RoomTimerManager> Lazy = new Lazy<RoomTimerManager>(() => new RoomTimerManager());
+        private static readonly Lazy<RoomTimerManager> Lazy = new(() => new RoomTimerManager());
         public static RoomTimerManager Instance => Lazy.Value;
         private RoomTimerManager() {
             if (Settings.AutoResetRoomTimer) {

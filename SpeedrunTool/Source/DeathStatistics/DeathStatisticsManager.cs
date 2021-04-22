@@ -14,7 +14,7 @@ using static Celeste.Mod.SpeedrunTool.Other.ButtonConfigUi;
 namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
     public class DeathStatisticsManager {
         // @formatter:off
-        private static readonly Lazy<DeathStatisticsManager> Lazy = new Lazy<DeathStatisticsManager>(() => new DeathStatisticsManager());
+        private static readonly Lazy<DeathStatisticsManager> Lazy = new(() => new DeathStatisticsManager());
         public static DeathStatisticsManager Instance => Lazy.Value;
         private DeathStatisticsManager() { }
         // @formatter:on
@@ -60,7 +60,9 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
 
         private void SceneOnBegin(On.Monocle.Scene.orig_Begin orig, Scene self) {
             orig(self);
-            if (self is Overworld || self is LevelExit) Clear();
+            if (self is Overworld or LevelExit) {
+                Clear();
+            }
         }
 
         private void PlayerOnAdded(On.Celeste.Player.orig_Added orig, Player self, Scene scene) {
@@ -89,7 +91,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
                 Mappings.CheckDeathStatistics.ConsumePress();
 
                 level.Paused = true;
-                DeathStatisticsUi buttonConfigUi = new DeathStatisticsUi {
+                DeathStatisticsUi buttonConfigUi = new() {
                     OnClose = () => level.Paused = false
                 };
                 level.Add(buttonConfigUi);
@@ -138,7 +140,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         private void PlayerOnUpdate(On.Celeste.Player.orig_Update orig, Player self) {
             orig(self);
 
-            if (Enabled && Died && (self.StateMachine.State == Player.StNormal || self.StateMachine.State == Player.StSwim)) {
+            if (Enabled && Died && (self.StateMachine.State is Player.StNormal or Player.StSwim)) {
                 Died = false;
                 LoggingData(self);
             }
@@ -187,7 +189,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
 
             long lostTime = SaveData.Instance.Time - lastTime;
 
-            DeathInfo deathInfo = new DeathInfo {
+            DeathInfo deathInfo = new() {
                 Chapter = GetChapterName(session),
                 Room = session.Level,
                 LostTime = lostTime,
@@ -287,7 +289,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         }
 
         private string GetCauseOfDeath() {
-            StackTrace stackTrace = new StackTrace(3);
+            StackTrace stackTrace = new(3);
             MethodBase deathMethod = stackTrace.GetFrame(0).GetMethod();
             string death = deathMethod.ReflectedType?.Name ?? "";
 

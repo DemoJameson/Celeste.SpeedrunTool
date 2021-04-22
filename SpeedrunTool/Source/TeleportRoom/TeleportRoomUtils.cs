@@ -17,7 +17,7 @@ using LevelTemplate = Celeste.Editor.LevelTemplate;
 namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
     public static class TeleportRoomUtils {
         private const string FlagPrefix = "summit_checkpoint_";
-        private static readonly List<Session> RoomHistory = new List<Session>();
+        private static readonly List<Session> RoomHistory = new();
         private static int HistoryIndex = -1;
         private static bool AllowRecord;
         private static Vector2? RespawnPoint;
@@ -163,7 +163,9 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                 return;
             }
 
-            if (self.Paused || StateManager.Instance.State != StateManager.States.None) return;
+            if (self.Paused || StateManager.Instance.State != StateManager.States.None) {
+                return;
+            }
 
             if (Mappings.LastRoom.Pressed()) {
                 Mappings.LastRoom.ConsumePress();
@@ -185,7 +187,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                 return;
             }
 
-            var levelDatas = LevelDataReorderUtils.GetReorderLevelDatas(level);
+            List<LevelData> levelDatas = LevelDataReorderUtils.GetReorderLevelDatas(level);
             if (levelDatas == null) {
                 return;
             }
@@ -230,7 +232,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                 return;
             }
 
-            var levelDatas = LevelDataReorderUtils.GetReorderLevelDatas(level);
+            List<LevelData> levelDatas = LevelDataReorderUtils.GetReorderLevelDatas(level);
             if (levelDatas == null) {
                 return;
             }
@@ -302,7 +304,9 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                     summitCheckpoint = smallest;
                 }
 
-                if (summitCheckpoint == null) return false;
+                if (summitCheckpoint == null) {
+                    return false;
+                }
 
                 level.Session.RespawnPoint = level.GetSpawnPoint(summitCheckpoint.Position);
                 level.Session.SetFlag(FlagPrefix + summitCheckpoint.Number);
@@ -378,7 +382,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
 
         private static void RecordRoom(Session session) {
             // 如果存在相同的房间且存档点相同则先清除
-            for (var i = RoomHistory.Count - 1; i >= 0; i--) {
+            for (int i = RoomHistory.Count - 1; i >= 0; i--) {
                 if (RoomHistory[i].Level == session.Level && RoomHistory[i].RespawnPoint == session.RespawnPoint) {
                     RoomHistory.RemoveAt(i);
                 }

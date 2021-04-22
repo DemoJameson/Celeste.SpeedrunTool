@@ -7,7 +7,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
     public class DeathStatisticsUi : TextMenu {
         private static SpeedrunToolSaveData SaveData => SpeedrunToolModule.SaveData;
 
-        private static readonly Dictionary<string, int> ColumnHeaders = new Dictionary<string, int> {
+        private static readonly Dictionary<string, int> ColumnHeaders = new() {
             {Dialog.Clean(DialogIds.Chapter), 400},
             {Dialog.Clean(DialogIds.Room), 400},
             {Dialog.Clean(DialogIds.LostTime), 400},
@@ -75,13 +75,13 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
 
         private void AddListItems() {
             SaveData.DeathInfos.ForEach(deathInfo => {
-                Dictionary<string, int> labels = new Dictionary<string, int> {
+                Dictionary<string, int> labels = new() {
                     {deathInfo.Chapter, 400},
                     {deathInfo.Room, 400},
                     {deathInfo.GetLostTime(), 400},
                     {deathInfo.CauseOfDeath, 400},
                 };
-                ListItem item = new ListItem(labels);
+                ListItem item = new(labels);
                 item.Pressed(() => {
                     SaveData.Selection = Selection;
                     deathInfo.TeleportToDeathPosition();
@@ -92,7 +92,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
 
         private void AddClearButton() {
             Add(new SubHeader(""));
-            Button clearButton = new Button(Dialog.Clean(DialogIds.ClearDeathStatistics)) {
+            Button clearButton = new(Dialog.Clean(DialogIds.ClearDeathStatistics)) {
                 IncludeWidthInMeasurement = false,
                 AlwaysCenter = true,
                 OnPressed = () => {
@@ -165,7 +165,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             Color strokeColor = Color.Black * (alpha * alpha * alpha);
 
             Vector2 offset = Vector2.Zero;
-            foreach (var label in labels) {
+            foreach (KeyValuePair<string, int> label in labels) {
                 float scale = 1f;
                 float measureWidth = ActiveFont.Measure(label.Key).X;
                 if (measureWidth > label.Value - Divider) {
@@ -203,7 +203,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             Color strokeColor = Color.Black * (alpha * alpha * alpha);
 
             Vector2 offset = Vector2.Zero;
-            foreach (var label in labels) {
+            foreach (KeyValuePair<string, string> label in labels) {
                 ActiveFont.DrawOutline(label.Key, position + offset, new Vector2(0.0f, 0.5f), Vector2.One, color, 2f,
                     strokeColor);
                 ActiveFont.DrawOutline(label.Value, position + offset + ActiveFont.Measure(label.Key).XComp(),

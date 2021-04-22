@@ -46,13 +46,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private static void SaveStaticFieldValues(Dictionary<Type, Dictionary<string, object>> values, Type type,
             params string[] fieldNames) {
-            if (type == null) return;
+            if (type == null) {
+                return;
+            }
 
             if (!values.ContainsKey(type)) {
                 values[type] = new Dictionary<string, object>();
             }
 
-            foreach (var fieldName in fieldNames) {
+            foreach (string fieldName in fieldNames) {
                 values[type][fieldName] = type.GetFieldValue(fieldName).DeepCloneShared();
             }
         }
@@ -101,7 +103,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             foreach (Type entityType in entityTypes) {
                 FieldInfo[] fieldInfos = entityType.GetFieldInfos(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
                     .Where(info => !info.IsLiteral).ToArray();
-                if (fieldInfos.Length == 0) continue;
+                if (fieldInfos.Length == 0) {
+                    continue;
+                }
+
                 EntityStaticFields[entityType] = fieldInfos;
             }
         }
@@ -298,7 +303,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private static void SupportCrystallineHelper() {
             Type vitModuleType = Type.GetType("vitmod.VitModule, vitmod");
-            if (vitModuleType == null) return;
+            if (vitModuleType == null) {
+                return;
+            }
+
             All.Add(new SaveLoadAction(
                 (savedValues, _) => { SaveStaticFieldValues(savedValues, vitModuleType, "timeStopScaleTimer", "noMoveScaleTimer"); },
                 (savedValues, _) => LoadStaticFieldValues(savedValues)
@@ -363,7 +371,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 All.Add(new SaveLoadAction(
                     loadState: (savedValues, _) => {
                         if (Engine.Scene.GetPlayer() is not { } player ||
-                            player.GetFieldValue("triggersInside") is not HashSet<Trigger> triggersInside) return;
+                            player.GetFieldValue("triggersInside") is not HashSet<Trigger> triggersInside) {
+                            return;
+                        }
+
                         foreach (Trigger trigger in triggersInside.Where(trigger =>
                             trigger.GetType() == extendedVariantTrigger && (bool) trigger.GetFieldValue(trigger.GetType(), "revertOnLeave"))) {
                             trigger.OnEnter(player);

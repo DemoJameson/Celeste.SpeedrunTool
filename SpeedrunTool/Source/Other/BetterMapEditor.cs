@@ -14,30 +14,30 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         private const string StartChasingLevel = "3";
 
         // 3A 杂乱房间部分的光线调暗
-        private readonly List<string> darkRooms = new List<string> {
+        private readonly List<string> darkRooms = new() {
             "09-b", "08-x", "10-x", "11-x", "11-y", "12-y", "11-z", "10-z",
             "10-y", "11-a", "12-x", "13-x", "13-a", "13-b", "12-b", "11-b",
             "10-c", "10-d", "11-d", "12-d", "12-c", "11-c"
         };
 
         // LevelName
-        private readonly List<string> dreamDashRooms = new List<string> {
+        private readonly List<string> dreamDashRooms = new() {
             "0", "1", "2",
             "d0", "d1", "d2", "d3", "d4", "d6", "d5", "d9", "3x",
             "3", "4", "5", "6", "7", "8", "9", "9b", "10",
             "11", "12b", "12c", "12d", "12", "13"
         };
 
-        private readonly List<Vector2> excludeFarewellCassettePoints = new List<Vector2> {
+        private readonly List<Vector2> excludeFarewellCassettePoints = new() {
             new Vector2(43632, -9976),
             new Vector2(49448, -10296)
         };
 
-        private readonly List<string> farewellCassetteRooms = new List<string> {
+        private readonly List<string> farewellCassetteRooms = new() {
             "i-00", "i-00b", "i-01", "i-02", "i-03", "i-04", "i-05", "j-00"
         };
 
-        private readonly List<Vector2> excludeDreamRespawnPoints = new List<Vector2> {
+        private readonly List<Vector2> excludeDreamRespawnPoints = new() {
             new Vector2(288, 152),
             new Vector2(632, 144),
             new Vector2(648, 144),
@@ -55,7 +55,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             new Vector2(1616, 600)
         };
 
-        private readonly List<string> iceRooms = new List<string> {
+        private readonly List<string> iceRooms = new() {
             // 8A
             "9b-05", "9c-00", "9c-00b", "9c-02", "9c-03", "9d-03", "9d-10",
 
@@ -97,9 +97,11 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             Vector2 offset) {
             orig(self, data, offset);
 
-            if (!SpeedrunToolModule.Enabled) return;
+            if (!SpeedrunToolModule.Enabled) {
+                return;
+            }
 
-            Vector2 oshiro3C = new Vector2(1520, -272);
+            Vector2 oshiro3C = new(1520, -272);
             Level level = Engine.Scene.GetLevel();
 
             if (level != null && level.Session.Area.ToString() == "3HH" && level.StartPosition != null &&
@@ -224,7 +226,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         }
 
         // @formatter:off
-        private static readonly Lazy<BetterMapEditor> Lazy = new Lazy<BetterMapEditor>(() => new BetterMapEditor());
+        private static readonly Lazy<BetterMapEditor> Lazy = new(() => new BetterMapEditor());
         public static BetterMapEditor Instance => Lazy.Value;
         private BetterMapEditor() { }
         // @formatter:on 

@@ -60,7 +60,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         // Copy from https://github.com/rhelmot/CelesteRandomizer/blob/master/Randomizer/Patches/sessionLifecycle.cs#L144
         private static void SetSaveStateColor(ILContext il) {
-            ILCursor cursor = new ILCursor(il);
+            ILCursor cursor = new(il);
             if (!cursor.TryGotoNext(MoveType.After, instr => instr.MatchLdarg(3))) {
                 return;
             }
@@ -71,7 +71,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 return;
             }
 
-            var afterInstr = cursor.MarkLabel();
+            ILLabel afterInstr = cursor.MarkLabel();
 
             cursor.Index = 0;
             if (!cursor.TryGotoNext(MoveType.AfterLabel, instr => instr.MatchLdarg(3))) {
@@ -83,7 +83,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 && Engine.Scene is Level {Completed: false} level && level.GetExtendedBoolean(StartFromSaveSate) && !StateManager.Instance.SavedByTas
             );
 
-            var beforeInstr = cursor.DefineLabel();
+            ILLabel beforeInstr = cursor.DefineLabel();
             cursor.Emit(OpCodes.Brfalse, beforeInstr);
 
             cursor.Emit(OpCodes.Ldstr, "c2e6f2");

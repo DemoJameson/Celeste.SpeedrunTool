@@ -10,7 +10,7 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool {
     public static class SpeedrunToolMenu {
-        private static readonly Regex RegexFormatName = new Regex(@"([a-z])([A-Z])", RegexOptions.Compiled);
+        private static readonly Regex RegexFormatName = new(@"([a-z])([A-Z])", RegexOptions.Compiled);
         private static SpeedrunToolSettings Settings => SpeedrunToolModule.Settings;
         private static List<TextMenu.Item> options;
 
@@ -29,7 +29,7 @@ namespace Celeste.Mod.SpeedrunTool {
         }
 
         private static IEnumerable<KeyValuePair<T, string>> CreateEnumerableOptions<T>() where T : struct, IConvertible {
-            List<KeyValuePair<T, string>> results = new List<KeyValuePair<T, string>>();
+            List<KeyValuePair<T, string>> results = new();
             foreach (T value in Enum.GetValues(typeof(T))) {
                 results.Add(new KeyValuePair<T, string>(value,
                     Dialog.Clean(DialogIds.Prefix + RegexFormatName.Replace(value.ToString(), "$1_$2").ToUpper())));
@@ -82,7 +82,7 @@ namespace Celeste.Mod.SpeedrunTool {
 
                     subMenu.Add(new TextMenu.Button(Dialog.Clean(DialogIds.CheckDeathStatistics)).Pressed(() => {
                         menu.Focused = false;
-                        DeathStatisticsUi buttonConfigUi = new DeathStatisticsUi {OnClose = () => menu.Focused = true};
+                        DeathStatisticsUi buttonConfigUi = new() {OnClose = () => menu.Focused = true};
                         Engine.Scene.Add(buttonConfigUi);
                         Engine.Scene.OnEndOfFrame += (Action) (() => Engine.Scene.Entities.UpdateLists());
                     }));
@@ -97,7 +97,7 @@ namespace Celeste.Mod.SpeedrunTool {
 
                     subMenu.Add(new TextMenu.Button(Dialog.Clean(DialogIds.ButtonConfig)).Pressed(() => {
                         menu.Focused = false;
-                        ButtonConfigUi buttonConfigUi = new ButtonConfigUi {OnClose = () => menu.Focused = true};
+                        ButtonConfigUi buttonConfigUi = new() {OnClose = () => menu.Focused = true};
                         Engine.Scene.Add(buttonConfigUi);
                         Engine.Scene.OnEndOfFrame += (Action) (() => Engine.Scene.Entities.UpdateLists());
                     }));

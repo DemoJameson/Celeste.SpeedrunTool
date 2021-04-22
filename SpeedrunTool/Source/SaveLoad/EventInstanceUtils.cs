@@ -48,7 +48,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         internal static void SaveParameters(this EventInstance eventInstance, string param, float value) {
-            if (param == null) return;
+            if (param == null) {
+                return;
+            }
 
             Dictionary<string, float> parameters = eventInstance.GetSavedParameterValues();
             parameters[param] = value;
@@ -57,7 +59,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         public static int LoadTimelinePosition(this EventInstance eventInstance) {
             int saved = eventInstance.GetExtendedInt(TimelinePositionKey);
-            if (saved > 0) return saved;
+            if (saved > 0) {
+                return saved;
+            }
 
             object[] args = {0};
             eventInstance.InvokeMethod("getTimelinePosition", args);
@@ -78,18 +82,22 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         public static EventInstance Clone(this EventInstance eventInstance) {
             string path = Audio.GetEventName(eventInstance);
-            if (string.IsNullOrEmpty(path)) return null;
+            if (string.IsNullOrEmpty(path)) {
+                return null;
+            }
 
             EventInstance cloneInstance = Audio.CreateInstance(path);
-            if (cloneInstance == null) return null;
+            if (cloneInstance == null) {
+                return null;
+            }
 
             if (eventInstance.IsNeedManualClone()) {
                 cloneInstance.NeedManualClone();
             }
 
-            var parameters = eventInstance.GetSavedParameterValues();
+            Dictionary<string, float> parameters = eventInstance.GetSavedParameterValues();
             if (parameters != null) {
-                foreach (var pair in parameters) {
+                foreach (KeyValuePair<string, float> pair in parameters) {
                     cloneInstance.setParameterValue(pair.Key, pair.Value);
                 }
             }
@@ -100,18 +108,29 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         public static void CopyParametersFrom(this EventInstance eventInstance, EventInstance otherEventInstance) {
-            if (eventInstance == null || otherEventInstance == null) return;
-            if (Audio.GetEventName(eventInstance) != Audio.GetEventName(otherEventInstance)) return;
+            if (eventInstance == null || otherEventInstance == null) {
+                return;
+            }
 
-            Dictionary<string, float> parameterValues = new Dictionary<string, float>(eventInstance.GetSavedParameterValues());
+            if (Audio.GetEventName(eventInstance) != Audio.GetEventName(otherEventInstance)) {
+                return;
+            }
+
+            Dictionary<string, float> parameterValues = new(eventInstance.GetSavedParameterValues());
             Dictionary<string, float> clonedParameterValues = otherEventInstance.GetSavedParameterValues();
             foreach (KeyValuePair<string, float> pair in clonedParameterValues) {
                 eventInstance.setParameterValue(pair.Key, pair.Value);
             }
             foreach (KeyValuePair<string, float> pair in parameterValues) {
                 if (!clonedParameterValues.ContainsKey(pair.Key)) {
-                    if (eventInstance.getDescription(out var description) != RESULT.OK) continue;
-                    if (description.getParameter(pair.Key, out var parameterDescription) != RESULT.OK) continue;
+                    if (eventInstance.getDescription(out EventDescription description) != RESULT.OK) {
+                        continue;
+                    }
+
+                    if (description.getParameter(pair.Key, out PARAMETER_DESCRIPTION parameterDescription) != RESULT.OK) {
+                        continue;
+                    }
+
                     eventInstance.setParameterValue(pair.Key, parameterDescription.defaultvalue);
                 }
             }

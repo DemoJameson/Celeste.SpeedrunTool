@@ -23,11 +23,11 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         public AreaKey Area { get; set; }
         public Vector2? RespawnPoint { get; set; }
         public PlayerInventory Inventory { get; set; } = PlayerInventory.Default;
-        public HashSet<string> Flags { get; set; } = new HashSet<string>();
-        public HashSet<string> LevelFlags { get; set; } = new HashSet<string>();
-        public HashSet<EntityID> Strawberries { get; set; } = new HashSet<EntityID>();
-        public HashSet<EntityID> DoNotLoad { get; set; } = new HashSet<EntityID>();
-        public HashSet<EntityID> Keys { get; set; } = new HashSet<EntityID>();
+        public HashSet<string> Flags { get; set; } = new();
+        public HashSet<string> LevelFlags { get; set; } = new();
+        public HashSet<EntityID> Strawberries { get; set; } = new();
+        public HashSet<EntityID> DoNotLoad { get; set; } = new();
+        public HashSet<EntityID> Keys { get; set; } = new();
         public bool[] SummitGems { get; set; } = new bool[6];
         public string FurthestSeenLevel { get; set; }
         public long Time { get; set; }
@@ -51,7 +51,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         public bool HitCheckpoint { get; set; }
 
         public void TeleportToDeathPosition() {
-            Session session = new Session(Area) {
+            Session session = new(Area) {
                 RespawnPoint = RespawnPoint,
                 Inventory = Inventory,
                 Level = Room,

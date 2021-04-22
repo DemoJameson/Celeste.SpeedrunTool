@@ -13,7 +13,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
         private static readonly object[] NoArg = { };
 
-        private static readonly HashSet<Type> SimpleTypes = new HashSet<Type> {
+        private static readonly HashSet<Type> SimpleTypes = new() {
             typeof(byte), typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong),
             typeof(float), typeof(double), typeof(decimal), typeof(char), typeof(string), typeof(bool),
             typeof(DateTime), typeof(TimeSpan), typeof(DateTimeOffset), typeof(Vector2), typeof(Vector3),
@@ -39,7 +39,9 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static void CopyAllSimpleTypeFieldsAndNull(this object to, object from) {
-            if (to.GetType() != from.GetType()) throw new ArgumentException("object to and from not the same type");
+            if (to.GetType() != from.GetType()) {
+                throw new ArgumentException("object to and from not the same type");
+            }
 
             foreach (FieldInfo fieldInfo in to.GetType().GetAllFieldInfos(InstanceAnyVisibilityDeclaredOnly)) {
                 object fromValue = fieldInfo.GetValue(from);
@@ -222,9 +224,12 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             if (result == null) {
                 result = new List<FieldInfo>();
                 while (type != null && type.IsSubclassOf(typeof(object))) {
-                    var fieldInfos = type.GetFieldInfos(bindingFlags, filterBackingField);
+                    FieldInfo[] fieldInfos = type.GetFieldInfos(bindingFlags, filterBackingField);
                     foreach (FieldInfo fieldInfo in fieldInfos) {
-                        if (result.Contains(fieldInfo)) continue;
+                        if (result.Contains(fieldInfo)) {
+                            continue;
+                        }
+
                         result.Add(fieldInfo);
                     }
 

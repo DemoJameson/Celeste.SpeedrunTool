@@ -6,7 +6,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
     // source from: https://stackoverflow.com/a/17264480
     internal static class ExtendedDataExtensions {
         private static readonly ConditionalWeakTable<object, object> ExtendedData =
-            new ConditionalWeakTable<object, object>();
+            new();
 
         private static IDictionary<string, object> CreateDictionary(object o) {
             return new Dictionary<string, object>();

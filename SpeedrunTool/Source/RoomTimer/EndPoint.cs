@@ -216,7 +216,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
 
         private void CreateSecretSprite() {
             string id = "secret_" + Enum.GetNames(typeof(SpriteStyle))[(int) spriteStyle].ToLower();
-            Sprite sprite = new Sprite(GFX.Game, "decals/6-reflection/" + id);
+            Sprite sprite = new(GFX.Game, "decals/6-reflection/" + id);
             sprite.AddLoop(id, "", 0.1f);
             sprite.Play(id);
             sprite.CenterOrigin();
@@ -238,7 +238,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
 
         public static bool IsExist => Engine.Scene is Level level && level.Tracker.GetEntity<EndPoint>() != null;
 
-        private static List<EndPoint> EmptyList = new List<EndPoint>();
+        private static List<EndPoint> EmptyList = new();
         public static List<EndPoint> All {
             get {
                 if (Engine.Scene is Level level) {

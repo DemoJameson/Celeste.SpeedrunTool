@@ -9,7 +9,7 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Other {
     public class ButtonConfigUi : TextMenu {
-        private static readonly List<Buttons> AllButtons = new List<Buttons> {
+        private static readonly List<Buttons> AllButtons = new() {
             Buttons.A,
             Buttons.B,
             Buttons.X,
@@ -50,7 +50,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             public Action<List<Keys>> SetKeys;
             public Keys[] DefaultKeys;
             public Func<string> GetLabel;
-            public readonly Lazy<VirtualButton> VirtualButton = new Lazy<VirtualButton>(CreateVirtualButton);
+            public readonly Lazy<VirtualButton> VirtualButton = new(CreateVirtualButton);
             public bool FixedDefaultKeys;
 
             public void UpdateVirtualButton() {
@@ -64,7 +64,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             }
         }
 
-        private static readonly Dictionary<Mappings, ButtonInfo> ButtonInfos = new Dictionary<Mappings, ButtonInfo> {
+        private static readonly Dictionary<Mappings, ButtonInfo> ButtonInfos = new() {
             {
                 Mappings.Save,
                 new ButtonInfo {
@@ -214,7 +214,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         private static SpeedrunToolSettings Settings => SpeedrunToolModule.Settings;
 
         private static VirtualButton CreateVirtualButton() {
-            return new VirtualButton(0.08f);
+            return new(0.08f);
         }
 
         private void Reload(int index = -1) {
@@ -225,12 +225,12 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             Add(new SubHeader(Dialog.Clean(DialogIds.PressDeleteToRemoveButton)));
 
             Add(new SubHeader(Dialog.Clean(DialogIds.Keyboard)));
-            foreach (var pair in ButtonInfos) {
+            foreach (KeyValuePair<Mappings, ButtonInfo> pair in ButtonInfos) {
                 AddKeyboardSetting(pair.Key, pair.Value.GetKeys());
             }
 
             Add(new SubHeader(Dialog.Clean(DialogIds.Controller)));
-            foreach (var pair in ButtonInfos) {
+            foreach (KeyValuePair<Mappings, ButtonInfo> pair in ButtonInfos) {
                 AddControllerSetting(pair.Key, pair.Value.GetButton());
             }
 
@@ -246,7 +246,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         }
 
         private void AddResetButton() {
-            Button resetButton = new Button(Dialog.Clean(DialogIds.KeyConfigReset)) {
+            Button resetButton = new(Dialog.Clean(DialogIds.KeyConfigReset)) {
                 IncludeWidthInMeasurement = false,
                 AlwaysCenter = true,
                 OnPressed = () => {
@@ -258,7 +258,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         }
 
         private void AddControllerSetting(Mappings mappingType, Buttons? button) {
-            Setting setting = new Setting(ButtonInfos[mappingType].GetLabel(), Keys.None);
+            Setting setting = new(ButtonInfos[mappingType].GetLabel(), Keys.None);
             setting.Pressed(() => Remap(mappingType));
             if (button != null) {
                 setting.Set(new List<Buttons> {(Buttons) button});
@@ -298,7 +298,10 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             } else {
                 info.SetButton(button);
                 foreach (ButtonInfo otherInfo in ButtonInfos.Values) {
-                    if (otherInfo == info) continue;
+                    if (otherInfo == info) {
+                        continue;
+                    }
+
                     if (otherInfo.GetButton().HasValue && otherInfo.GetButton().Value == button) {
                         otherInfo.SetButton(null);
                         otherInfo.UpdateVirtualButton();
@@ -321,7 +324,10 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                     }
                     info.GetKeys().Add(key);
                     foreach (ButtonInfo otherInfo in ButtonInfos.Values) {
-                        if (otherInfo == info) continue;
+                        if (otherInfo == info) {
+                            continue;
+                        }
+
                         if (otherInfo.GetKeys().Contains(key) && !(otherInfo.FixedDefaultKeys && otherInfo.DefaultKeys.Contains(key))) {
                             otherInfo.GetKeys().Remove(key);
                             otherInfo.UpdateVirtualButton();
@@ -444,7 +450,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
     }
 
     internal static class MappingsExtensions {
-        private static readonly Lazy<FieldInfo> TasRunning = new Lazy<FieldInfo>(() =>
+        private static readonly Lazy<FieldInfo> TasRunning = new(() =>
              Type.GetType("TAS.Manager, CelesteTAS-EverestInterop")?.GetFieldInfo("Running")
         );
         public static bool Pressed(this ButtonConfigUi.Mappings mappings) {

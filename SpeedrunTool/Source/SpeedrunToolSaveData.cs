@@ -6,7 +6,7 @@ using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool {
     public class SpeedrunToolSaveData : EverestModuleSaveData {
-        public List<DeathInfo> DeathInfos { get; set; } = new List<DeathInfo>();
+        public List<DeathInfo> DeathInfos { get; set; } = new();
         public int Selection { get; set; } = -1;
 
         public string GetTotalLostTime() {

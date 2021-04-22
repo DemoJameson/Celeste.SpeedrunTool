@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
     public static class LevelDataReorderUtils {
-        private static Dictionary<string, List<string>> ReorderLevelNames = new Dictionary<string, List<string>> {
+        private static Dictionary<string, List<string>> ReorderLevelNames = new() {
             {
                 "Celeste/0-IntroNormal",
                 new List<string> {
@@ -1102,7 +1102,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
         };
 
         private static readonly Dictionary<AreaKey, List<LevelData>> ReorderLevelDatas =
-            new Dictionary<AreaKey, List<LevelData>>();
+            new();
 
         public static List<LevelData> GetReorderLevelDatas(Level level) {
             AreaKey areaKey = level.Session.Area;
@@ -1111,9 +1111,9 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                 return ReorderLevelDatas[areaKey];
             }
 
-            List<LevelData> datas = new List<LevelData>();
+            List<LevelData> datas = new();
             if (ReorderLevelNames.ContainsKey(areaKey.SID + areaKey.Mode)) {
-                var levelNames = ReorderLevelNames[areaKey.SID + areaKey.Mode];
+                List<string> levelNames = ReorderLevelNames[areaKey.SID + areaKey.Mode];
                 foreach (string levelName in levelNames) {
                     LevelData levelData = levelDatas?.FirstOrDefault(data => data.Name == levelName);
                     if (levelData != null) {

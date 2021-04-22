@@ -58,7 +58,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     if (sourceObj is Level) {
                         // 金草莓死亡或者 PageDown/Up 切换房间后等等改变 Level 实例的情况
                         // After golden strawberry deaths or changing rooms w/ Page Down / Up
-                        if (Engine.Scene is Level level) return level;
+                        if (Engine.Scene is Level level) {
+                            return level;
+                        }
+
                         return sourceObj;
                     }
 
@@ -71,7 +74,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         // Fixes: Glyph Teleport Area Effect
                         && entity.GetType().FullName != "Celeste.Mod.AcidHelper.Entities.InstantTeleporterRenderer"
                         && entity.GetType().FullName != "VivHelper.Entities.HoldableBarrierRenderer"
-                    ) return sourceObj;
+                    ) {
+                        return sourceObj;
+                    }
 
                     // 不要克隆 RendererList 会造成 BeforeRender 中产生空指针异常
                     // 克隆了 level.RendererList 但不想克隆以下元素
@@ -83,7 +88,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         // 稍后重新创建正在播放的 SoundSource 里的 EventInstance 实例
                         // TODO SoundEmitter 的声音会存留在关卡中，切换房间后保存依然会播放
                         if (sourceObj is SoundSource {Entity: not SoundEmitter, Playing: true} source && source.GetFieldValue("instance") is EventInstance instance) {
-                            if (string.IsNullOrEmpty(source.EventName)) return null;
+                            if (string.IsNullOrEmpty(source.EventName)) {
+                                return null;
+                            }
+
                             instance.NeedManualClone();
                             instance.SaveTimelinePosition(instance.LoadTimelinePosition());
 
@@ -145,7 +153,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // Clone 对象的字段后，进行自定的处理
             // After cloning, perform custom processing
             DeepCloner.AddPostCloneProcessor((sourceObj, clonedObj, deepCloneState) => {
-                if (clonedObj == null) return null;
+                if (clonedObj == null) {
+                    return null;
+                }
 
                 lock (sourceObj) {
                     // 修复：DeepClone 的 hashSet.Containes(里面存在的引用对象) 总是返回 False，Dictionary 无此问题
@@ -154,12 +164,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     if (clonedObj.GetType().IsHashSet(out Type hashSetElementType) && !hashSetElementType.IsSimple()) {
                         IEnumerator enumerator = ((IEnumerable) clonedObj).GetEnumerator();
 
-                        List<object> backup = new List<object>();
+                        List<object> backup = new();
                         while (enumerator.MoveNext()) {
                             backup.Add(enumerator.Current);
                         }
 
-                        if (backup.Count == 0) return clonedObj;
+                        if (backup.Count == 0) {
+                            return clonedObj;
+                        }
 
                         clonedObj.InvokeMethod("Clear");
                         backup.ForEach(obj => {
@@ -173,7 +185,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     if (clonedObj.GetType().IsDictionary(out Type dictKeyType, out Type _)
                         && !dictKeyType.IsSimple() && clonedObj is IDictionary {Count: > 0} clonedDict
                     ) {
-                        Dictionary<object, object> backupDict = new Dictionary<object, object>();
+                        Dictionary<object, object> backupDict = new();
                         backupDict.AddRange(clonedDict);
                         clonedDict.Clear();
                         clonedDict.AddRange(backupDict);
@@ -188,13 +200,19 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     if (sourceObj.GetType() is {IsClass: true} objType) {
                         do {
                             object dataMap = DynDataUtils.GetDataMap(objType);
-                            if (dataMap == null) continue;
+                            if (dataMap == null) {
+                                continue;
+                            }
 
                             object[] parameters = {sourceObj, null};
-                            if (false == (bool) dataMap.InvokeMethod("TryGetValue", parameters)) continue;
+                            if (false == (bool) dataMap.InvokeMethod("TryGetValue", parameters)) {
+                                continue;
+                            }
 
                             object sourceValue = parameters[1];
-                            if (sourceValue.GetFieldValue("Data") is not Dictionary<string, object> data || data.Count == 0) continue;
+                            if (sourceValue.GetFieldValue("Data") is not Dictionary<string, object> data || data.Count == 0) {
+                                continue;
+                            }
 
                             dataMap.InvokeMethod("Add", clonedObj, sourceValue.DeepClone(deepCloneState));
                         } while ((objType = objType.BaseType) != null && objType.IsSameOrSubclassOf(typeof(object)));
@@ -231,12 +249,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         // 共用 DeepCloneState 可使多次 DeepClone 复用相同对象避免多次克隆同一对象
-        private static DeepCloneState sharedDeepCloneState = new DeepCloneState();
+        private static DeepCloneState sharedDeepCloneState = new();
 
         private static void InitSharedDeepCloneState() {
-            if (sharedDeepCloneState == null) {
-                sharedDeepCloneState = new DeepCloneState();
-            }
+            sharedDeepCloneState ??= new DeepCloneState();
         }
 
         public static void ClearSharedDeepCloneState() {

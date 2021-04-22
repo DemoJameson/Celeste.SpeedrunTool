@@ -5,7 +5,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
     public class DeathMark : Entity {
         private const string Id = "youdied";
         public DeathMark(Vector2 position) : base(position) {
-            Sprite sprite = new Sprite(GFX.Game, $"objects/speedrun_tool_deathmark/{Id}");
+            Sprite sprite = new(GFX.Game, $"objects/speedrun_tool_deathmark/{Id}");
             sprite.AddLoop(Id, "", 1f);
             sprite.Play(Id);
             sprite.CenterOrigin();

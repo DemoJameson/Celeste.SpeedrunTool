@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         public long LastPbTime;
         public long Time;
 
-        private readonly Dictionary<string, long> pbTimes = new Dictionary<string, long>();
+        private readonly Dictionary<string, long> pbTimes = new();
         private readonly RoomTimerType roomTimerType;
         private int numberOfRooms;
         private string pbTimeKey = "";
@@ -28,7 +28,9 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         public bool BeatBestTime => timerState == TimerState.Completed && (Time < LastPbTime || LastPbTime == 0);
 
         public void Timing(Level level) {
-            if (timerState != TimerState.Timing) return;
+            if (timerState != TimerState.Timing) {
+                return;
+            }
 
             if (pbTimeKey == "") {
                 Session session = level.Session;
@@ -42,7 +44,9 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 pbTimeKey += numberOfRooms;
             }
 
-            if (level.TimerStopped) return;
+            if (level.TimerStopped) {
+                return;
+            }
 
             Time += TimeSpan.FromSeconds(Engine.RawDeltaTime).Ticks;
         }

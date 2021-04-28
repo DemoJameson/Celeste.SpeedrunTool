@@ -4,7 +4,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Mono.Cecil.Cil;
-using Monocle;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
@@ -16,13 +15,20 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private static ILHook dynDataHook;
 
         public static void OnLoad() {
-            dynDataHook = new ILHook(typeof(DynData<>).MakeGenericType(typeof(Entity)).GetConstructors()[1], il => {
+            dynDataHook = new ILHook(typeof(DynData<>).MakeGenericType(typeof(object)).GetMethodInfo("set_Item"), il => {
                 ILCursor ilCursor = new(il);
-                ilCursor.Emit(OpCodes.Ldarg_0).Emit(OpCodes.Ldarg_1).EmitDelegate<Action<object, object>>((dynData, target) => {
+                ilCursor.Goto(ilCursor.Instrs.Count - 1);
+                ilCursor.Emit(OpCodes.Ldarg_0).EmitDelegate<Action<object>>(dynData => {
                     Type type = dynData.GetType().GetGenericArguments()[0];
-                    RecordDynDataObject(target, type);
+                    if (dynData.GetPropertyValue("Target") is { } target) {
+                        RecordDynDataObject(target, type);
+                    }
                 });
             });
+        }
+
+        public static void OnUnload() {
+            dynDataHook?.Dispose();
         }
 
         public static void RecordDynDataObject(object target, Type type) {
@@ -35,10 +41,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         public static bool TryGetDynDataTypes(object target, out HashSet<Type> types) {
             return DynDataObjects.TryGetValue(target, out types);
-        }
-
-        public static void OnUnload() {
-            dynDataHook?.Dispose();
         }
 
         public static object CreateDynData(object obj, Type targetType) {

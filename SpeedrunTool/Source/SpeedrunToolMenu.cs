@@ -81,10 +81,10 @@ namespace Celeste.Mod.SpeedrunTool {
                     ).Change(i => Settings.MaxNumberOfDeathData = i));
 
                     subMenu.Add(new TextMenu.Button(Dialog.Clean(DialogIds.CheckDeathStatistics)).Pressed(() => {
-                        menu.Focused = false;
-                        DeathStatisticsUi buttonConfigUi = new() {OnClose = () => menu.Focused = true};
+                        subMenu.Focused = false;
+                        DeathStatisticsUi buttonConfigUi = new() {OnClose = () => subMenu.Focused = true};
                         Engine.Scene.Add(buttonConfigUi);
-                        Engine.Scene.OnEndOfFrame += (Action) (() => Engine.Scene.Entities.UpdateLists());
+                        Engine.Scene.OnEndOfFrame += () => Engine.Scene.Entities.UpdateLists();
                     }));
                 }),
 
@@ -96,10 +96,10 @@ namespace Celeste.Mod.SpeedrunTool {
                         new TextMenu.OnOff(Dialog.Clean(DialogIds.FastTeleport), Settings.FastTeleport).Change(b => Settings.FastTeleport = b));
 
                     subMenu.Add(new TextMenu.Button(Dialog.Clean(DialogIds.ButtonConfig)).Pressed(() => {
-                        menu.Focused = false;
-                        ButtonConfigUi buttonConfigUi = new() {OnClose = () => menu.Focused = true};
+                        subMenu.Focused = false;
+                        ButtonConfigUi buttonConfigUi = new() {OnClose = () => subMenu.Focused = true};
                         Engine.Scene.Add(buttonConfigUi);
-                        Engine.Scene.OnEndOfFrame += (Action) (() => Engine.Scene.Entities.UpdateLists());
+                        Engine.Scene.OnEndOfFrame += () => Engine.Scene.Entities.UpdateLists();
                     }));
                 }),
             };

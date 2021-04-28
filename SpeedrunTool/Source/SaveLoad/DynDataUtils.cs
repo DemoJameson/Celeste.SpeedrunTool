@@ -1,12 +1,46 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Mono.Cecil.Cil;
+using Monocle;
+using MonoMod.Cil;
+using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     internal static class DynDataUtils {
+        private static readonly ConditionalWeakTable<object, HashSet<Type>> DynDataObjects = new();
         public static readonly Lazy<object> DynamicDataMap = new(() => typeof(DynamicData).GetFieldValue("_DataMap"));
+        private static ILHook dynDataHook;
+
+        public static void OnLoad() {
+            dynDataHook = new ILHook(typeof(DynData<>).MakeGenericType(typeof(Entity)).GetConstructors()[1], il => {
+                ILCursor ilCursor = new(il);
+                ilCursor.Emit(OpCodes.Ldarg_0).Emit(OpCodes.Ldarg_1).EmitDelegate<Action<object, object>>((dynData, target) => {
+                    Type type = dynData.GetType().GetGenericArguments()[0];
+                    RecordDynDataObject(target, type);
+                });
+            });
+        }
+
+        public static void RecordDynDataObject(object target, Type type) {
+            if (DynDataObjects.TryGetValue(target, out HashSet<Type> types)) {
+                types.Add(type);
+            } else {
+                DynDataObjects.Add(target, new HashSet<Type> {type});
+            }
+        }
+
+        public static bool TryGetDynDataTypes(object target, out HashSet<Type> types) {
+            return DynDataObjects.TryGetValue(target, out types);
+        }
+
+        public static void OnUnload() {
+            dynDataHook?.Dispose();
+        }
+
         public static object CreateDynData(object obj, Type targetType) {
             string key = $"DynDataUtils-CreateDynData-{targetType.FullName}";
 

@@ -197,8 +197,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     }
 
                     // Clone dynData.Data
-                    if (sourceObj.GetType() is {IsClass: true} objType) {
-                        do {
+                    if (sourceObj.GetType() is {IsClass: true} && DynDataUtils.TryGetDynDataTypes(sourceObj, out HashSet<Type> objTypes)) {
+                        foreach (Type objType in objTypes) {
                             object dataMap = DynDataUtils.GetDataMap(objType);
                             if (dataMap == null) {
                                 continue;
@@ -214,8 +214,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                                 continue;
                             }
 
-                            dataMap.InvokeMethod("Add", clonedObj, sourceValue.DeepClone(deepCloneState));
-                        } while ((objType = objType.BaseType) != null && objType.IsSameOrSubclassOf(typeof(object)));
+                            DynDataUtils.RecordDynDataObject(clonedObj, objType);
+                            dataMap.InvokeMethod("Add", clonedObj, sourceValue.DeepClone(deepCloneState)); 
+                        }
                     }
 
                     // CLone DynamicData

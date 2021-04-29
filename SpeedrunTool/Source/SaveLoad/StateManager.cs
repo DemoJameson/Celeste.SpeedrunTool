@@ -440,6 +440,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             SavedByTas = false;
 
+            DynDataUtils.IgnoreTypes.Clear();
+
             State = States.None;
         }
 

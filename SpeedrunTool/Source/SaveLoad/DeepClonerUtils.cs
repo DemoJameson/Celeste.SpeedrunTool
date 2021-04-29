@@ -198,10 +198,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     // Clone dynData.Data
                     if (sourceObj.GetType() is {IsClass: true} objType) {
                         do {
-                            object dataMap = DynDataUtils.GetDataMap(objType);
-                            if (dataMap == null) {
+                            if (DynDataUtils.IgnoreTypes.Contains(objType)) {
                                 continue;
                             }
+
+                            if (DynDataUtils.GetSpecialGetters(objType) is {Count: 0}) {
+                                DynDataUtils.IgnoreTypes.Add(objType);
+                                continue;
+                            }
+
+                            object dataMap = DynDataUtils.GetDataMap(objType);
 
                             object[] parameters = {sourceObj, null};
                             if (false == (bool) dataMap.InvokeMethod("TryGetValue", parameters)) {

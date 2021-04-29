@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using Celeste.Mod.SpeedrunTool.Extensions;
@@ -6,43 +7,32 @@ using MonoMod.Utils;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     internal static class DynDataUtils {
+        public static readonly HashSet<Type> IgnoreTypes = new();
         public static readonly Lazy<object> DynamicDataMap = new(() => typeof(DynamicData).GetFieldValue("_DataMap"));
-        public static object CreateDynData(object obj, Type targetType) {
-            string key = $"DynDataUtils-CreateDynData-{targetType.FullName}";
-
-            ConstructorInfo constructorInfo = targetType.GetExtendedDataValue<ConstructorInfo>(key);
-
-            if (constructorInfo == null) {
-                constructorInfo = typeof(DynData<>).MakeGenericType(targetType).GetConstructor(new[] {targetType});
-                targetType.SetExtendedDataValue(key, constructorInfo);
-            }
-
-            return constructorInfo?.Invoke(new[] {obj});
-        }
 
         public static object GetDataMap(Type type) {
             string key = $"DynDataUtils-GetDataMap-{type}";
 
-            FieldInfo fieldInfo = type.GetExtendedDataValue<FieldInfo>(key);
+            object result = type.GetExtendedDataValue<object>(key);
 
-            if (fieldInfo == null) {
-                fieldInfo = typeof(DynData<>).MakeGenericType(type)
-                    .GetField("_DataMap", BindingFlags.Static | BindingFlags.NonPublic);
-                type.SetExtendedDataValue(key, fieldInfo);
+            if (result == null) {
+                result = typeof(DynData<>).MakeGenericType(type)
+                    .GetField("_DataMap", BindingFlags.Static | BindingFlags.NonPublic)?.GetValue(null);
+                type.SetExtendedDataValue(key, result);
             }
 
-            return fieldInfo?.GetValue(null);
+            return result;
         }
 
-        public static Dictionary<string, object> GetDate(object obj, Type targetType) {
-            return CreateDynData(obj, targetType)?.GetPropertyValue("Data") as Dictionary<string, object>;
-        }
+        public static IDictionary GetSpecialGetters(Type type) {
+            string key = $"DynDataUtils-GetSpecialGetters-{type}";
 
-        public static bool IsDynData(this Type type, out Type genericType) {
-            bool result = type.IsGenericType && type.GetGenericTypeDefinition().IsAssignableFrom(typeof(DynData<>))
-                                             && type.GenericTypeArguments.Length == 1;
+            IDictionary result = type.GetExtendedDataValue<IDictionary>(key);
 
-            genericType = result ? type.GenericTypeArguments[0] : null;
+            if (result == null) {
+                result = typeof(DynData<>).MakeGenericType(type).GetField("_SpecialGetters", BindingFlags.Static | BindingFlags.NonPublic)?.GetValue(null) as IDictionary;
+                type.SetExtendedDataValue(key, result);
+            }
 
             return result;
         }

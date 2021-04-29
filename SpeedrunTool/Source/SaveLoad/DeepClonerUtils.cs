@@ -84,66 +84,65 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     // return sourceObj;
                     // }
 
-                    lock (sourceObj) {
-                        // 稍后重新创建正在播放的 SoundSource 里的 EventInstance 实例
-                        // TODO SoundEmitter 的声音会存留在关卡中，切换房间后保存依然会播放
-                        if (sourceObj is SoundSource {Entity: not SoundEmitter, Playing: true} source && source.GetFieldValue("instance") is EventInstance instance) {
-                            if (string.IsNullOrEmpty(source.EventName)) {
-                                return null;
-                            }
-
-                            instance.NeedManualClone();
-                            instance.SaveTimelinePosition(instance.LoadTimelinePosition());
-
+                    // 稍后重新创建正在播放的 SoundSource 里的 EventInstance 实例
+                    // TODO SoundEmitter 的声音会存留在关卡中，切换房间后保存依然会播放
+                    if (sourceObj is SoundSource {Entity: not SoundEmitter, Playing: true} source &&
+                        source.GetFieldValue("instance") is EventInstance instance) {
+                        if (string.IsNullOrEmpty(source.EventName)) {
                             return null;
                         }
 
-                        if (sourceObj is CassetteBlockManager manager) {
-                            // isLevelMusic = true 时 sfx 自动等于 Audio.CurrentMusicEventInstance，无需重建
-                            if (manager.GetFieldValue("sfx") is EventInstance sfx &&
-                                !(bool) manager.GetFieldValue("isLevelMusic")) {
-                                sfx.NeedManualClone();
-                            }
+                        instance.NeedManualClone();
+                        instance.SaveTimelinePosition(instance.LoadTimelinePosition());
 
-                            if (manager.GetFieldValue("snapshot") is EventInstance snapshot) {
-                                snapshot.NeedManualClone();
-                            }
+                        return null;
+                    }
 
-                            return null;
+                    if (sourceObj is CassetteBlockManager manager) {
+                        // isLevelMusic = true 时 sfx 自动等于 Audio.CurrentMusicEventInstance，无需重建
+                        if (manager.GetFieldValue("sfx") is EventInstance sfx &&
+                            !(bool) manager.GetFieldValue("isLevelMusic")) {
+                            sfx.NeedManualClone();
                         }
 
-                        // 重新创建正在播放的 EventInstance 实例
-                        if (sourceObj is EventInstance eventInstance && eventInstance.IsNeedManualClone()) {
-                            return eventInstance.Clone();
+                        if (manager.GetFieldValue("snapshot") is EventInstance snapshot) {
+                            snapshot.NeedManualClone();
                         }
 
-                        // Fixes: 克隆 WeakReference 后 Target 没有一起被克隆的问题，修复 dynData.Weak 克隆不完整导致的一些报错
-                        // System.Reflection.TargetException: 非静态字段需要一个目标。
-                        // 在 System.Reflection.RtFieldInfo.CheckConsistency(Object target)
-                        // 在 System.Reflection.RtFieldInfo.InternalGetValue(Object obj, StackCrawlMark& stackMark)
-                        // 在 System.Reflection.RtFieldInfo.GetValue(Object obj)
-                        // 在 MonoMod.Utils.DynData`1.<>c__DisplayClass19_0.<.cctor>b__1(TTarget obj)
-                        // 在 MonoMod.Utils.DynData`1.get_Item(String name)
-                        // 在 Celeste.Mod.MaxHelpingHand.Entities.CustomizableRefill.<>c__DisplayClass0_0.<.ctor>b__0(Player player)
-                        if (sourceObj is WeakReference sourceWeak) {
-                            return new WeakReference(sourceWeak.Target.DeepClone(deepCloneState), sourceWeak.TrackResurrection);
-                        }
+                        return null;
+                    }
 
-                        // 修复启用 CelesteNet 后保存状态时的崩溃
-                        // System.ObjectDisposedException: 无法访问已释放的对象。
-                        // 对象名:“RenderTarget2D”。
-                        if (sourceObj is RenderTarget2D {IsDisposed: true} renderTarget2D) {
-                            return new RenderTarget2D(
-                                renderTarget2D.GraphicsDevice,
-                                renderTarget2D.Width,
-                                renderTarget2D.Height,
-                                renderTarget2D.LevelCount != 1,
-                                renderTarget2D.Format,
-                                renderTarget2D.DepthStencilFormat,
-                                0,
-                                renderTarget2D.RenderTargetUsage
-                            );
-                        }
+                    // 重新创建正在播放的 EventInstance 实例
+                    if (sourceObj is EventInstance eventInstance && eventInstance.IsNeedManualClone()) {
+                        return eventInstance.Clone();
+                    }
+
+                    // Fixes: 克隆 WeakReference 后 Target 没有一起被克隆的问题，修复 dynData.Weak 克隆不完整导致的一些报错
+                    // System.Reflection.TargetException: 非静态字段需要一个目标。
+                    // 在 System.Reflection.RtFieldInfo.CheckConsistency(Object target)
+                    // 在 System.Reflection.RtFieldInfo.InternalGetValue(Object obj, StackCrawlMark& stackMark)
+                    // 在 System.Reflection.RtFieldInfo.GetValue(Object obj)
+                    // 在 MonoMod.Utils.DynData`1.<>c__DisplayClass19_0.<.cctor>b__1(TTarget obj)
+                    // 在 MonoMod.Utils.DynData`1.get_Item(String name)
+                    // 在 Celeste.Mod.MaxHelpingHand.Entities.CustomizableRefill.<>c__DisplayClass0_0.<.ctor>b__0(Player player)
+                    if (sourceObj is WeakReference sourceWeak) {
+                        return new WeakReference(sourceWeak.Target.DeepClone(deepCloneState), sourceWeak.TrackResurrection);
+                    }
+
+                    // 修复启用 CelesteNet 后保存状态时的崩溃
+                    // System.ObjectDisposedException: 无法访问已释放的对象。
+                    // 对象名:“RenderTarget2D”。
+                    if (sourceObj is RenderTarget2D {IsDisposed: true} renderTarget2D) {
+                        return new RenderTarget2D(
+                            renderTarget2D.GraphicsDevice,
+                            renderTarget2D.Width,
+                            renderTarget2D.Height,
+                            renderTarget2D.LevelCount != 1,
+                            renderTarget2D.Format,
+                            renderTarget2D.DepthStencilFormat,
+                            0,
+                            renderTarget2D.RenderTargetUsage
+                        );
                     }
                 }
 

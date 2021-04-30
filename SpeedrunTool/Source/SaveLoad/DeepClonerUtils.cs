@@ -185,6 +185,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         
                         do {
                             object dataMap = DynDataUtils.GetDataMap(objType);
+                            if (DynDataUtils.NotExistDynData(dataMap, objType)) {
+                                continue;
+                            }
 
                             object[] parameters = {sourceObj, null};
                             if (false == (bool) dataMap.InvokeMethod("TryGetValue", parameters)) {

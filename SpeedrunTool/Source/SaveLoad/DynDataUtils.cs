@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Celeste.Mod.SpeedrunTool.Extensions;
@@ -11,14 +12,17 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     internal static class DynDataUtils {
         // DynData
         public static ConditionalWeakTable<object, object> IgnoreObjects = new();
-        
+        private static readonly HashSet<Type> IgnoreTypes = new();
+        private static readonly int EmptyTableEntriesLength = ((Array) new ConditionalWeakTable<object, object>().GetFieldValue("_entries")).Length;
+        private static readonly int EmptyTableFreeList = (int) new ConditionalWeakTable<object, object>().GetFieldValue("_freeList");
+
         // DynamicData
         public static readonly object DynamicDataMap = typeof(DynamicData).GetFieldValue("_DataMap");
         private static readonly ConditionalWeakTable<object, object> DynamicDataObjects = new();
         private static ILHook dynamicDataHook;
 
         public static void OnLoad() {
-            dynamicDataHook = new ILHook(typeof(DynamicData).GetConstructor(new []{typeof(Type), typeof(object),typeof(bool)}), il => {
+            dynamicDataHook = new ILHook(typeof(DynamicData).GetConstructor(new[] {typeof(Type), typeof(object), typeof(bool)}), il => {
                 ILCursor ilCursor = new(il);
                 ilCursor.Emit(OpCodes.Ldarg_2).EmitDelegate<Action<object>>(RecordDynamicDataObject);
             });
@@ -30,6 +34,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         public static void OnClearState() {
             IgnoreObjects = new ConditionalWeakTable<object, object>();
+            IgnoreTypes.Clear();
         }
 
         public static void RecordDynamicDataObject(object target) {
@@ -40,6 +45,20 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         public static bool ExistDynamicData(object target) {
             return DynamicDataObjects.TryGetValue(target, out object _);
+        }
+
+        public static bool NotExistDynData(object dataMap, Type type) {
+            if (IgnoreTypes.Contains(type)) {
+                return true;
+            }
+
+            bool result = ((Array) dataMap.GetFieldValue("_entries")).Length == EmptyTableEntriesLength &&
+                          (int) dataMap.GetFieldValue("_freeList") == EmptyTableFreeList;
+            if (result) {
+                IgnoreTypes.Add(type);
+            }
+
+            return result;
         }
 
         public static object GetDataMap(Type type) {

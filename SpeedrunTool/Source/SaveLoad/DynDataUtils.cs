@@ -10,7 +10,7 @@ using MonoMod.Utils;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     internal static class DynDataUtils {
         // DynData
-        public static readonly ConditionalWeakTable<object, object> IgnoreObjects = new();
+        public static ConditionalWeakTable<object, object> IgnoreObjects = new();
         
         // DynamicData
         public static readonly object DynamicDataMap = typeof(DynamicData).GetFieldValue("_DataMap");
@@ -26,6 +26,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         public static void OnUnload() {
             dynamicDataHook?.Dispose();
+        }
+
+        public static void OnClearState() {
+            IgnoreObjects = new ConditionalWeakTable<object, object>();
         }
 
         public static void RecordDynamicDataObject(object target) {

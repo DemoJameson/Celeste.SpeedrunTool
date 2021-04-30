@@ -446,7 +446,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // Mod
             SaveLoadAction.OnClearState();
 
-            SavedByTas = false;
+            DynDataUtils.OnClearState();
 
             State = States.None;
         }

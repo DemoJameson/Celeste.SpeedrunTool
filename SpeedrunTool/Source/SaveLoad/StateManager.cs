@@ -706,6 +706,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         class WaitSaveStateEntity : Entity {
             private readonly Level level;
+            private readonly bool origFrozen;
             private readonly bool origTimerStopped;
 
             public WaitSaveStateEntity(Level level) {
@@ -713,6 +714,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                 // 避免被 Save
                 Tag = Tags.Global;
+                origFrozen = level.Frozen;
                 origTimerStopped = level.TimerStopped;
                 level.Frozen = true;
                 level.TimerStopped = true;
@@ -725,10 +727,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 // Instance.PreCloneSavedEntities();
                 level.DoScreenWipe(true, () => {
                     if (Settings.FreezeAfterLoadState) {
-                        Instance.State = States.Waiting;
                         level.Frozen = true;
+                        level.TimerStopped = true;
+                        Instance.State = States.Waiting;
                     } else {
-                        level.Frozen = false;
+                        level.Frozen = origFrozen;
                         level.TimerStopped = origTimerStopped;
                     }
                 });

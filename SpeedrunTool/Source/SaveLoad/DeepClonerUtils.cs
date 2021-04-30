@@ -184,15 +184,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         bool cloned = false;
                         
                         do {
-                            if (DynDataUtils.IgnoreTypes.Contains(objType)) {
-                                continue;
-                            }
-
-                            if (DynDataUtils.GetSpecialGetters(objType) is {Count: 0}) {
-                                DynDataUtils.IgnoreTypes.Add(objType);
-                                continue;
-                            }
-
                             object dataMap = DynDataUtils.GetDataMap(objType);
 
                             object[] parameters = {sourceObj, null};

@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Celeste.Mod.SpeedrunTool.Extensions;
@@ -12,7 +10,6 @@ using MonoMod.Utils;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     internal static class DynDataUtils {
         // DynData
-        public static readonly HashSet<Type> IgnoreTypes = new();
         public static readonly ConditionalWeakTable<object, object> IgnoreObjects = new();
         
         // DynamicData
@@ -49,19 +46,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (result == null) {
                 result = typeof(DynData<>).MakeGenericType(type)
                     .GetField("_DataMap", BindingFlags.Static | BindingFlags.NonPublic)?.GetValue(null);
-                type.SetExtendedDataValue(key, result);
-            }
-
-            return result;
-        }
-
-        public static IDictionary GetSpecialGetters(Type type) {
-            string key = $"DynDataUtils-GetSpecialGetters-{type}";
-
-            IDictionary result = type.GetExtendedDataValue<IDictionary>(key);
-
-            if (result == null) {
-                result = typeof(DynData<>).MakeGenericType(type).GetField("_SpecialGetters", BindingFlags.Static | BindingFlags.NonPublic)?.GetValue(null) as IDictionary;
                 type.SetExtendedDataValue(key, result);
             }
 

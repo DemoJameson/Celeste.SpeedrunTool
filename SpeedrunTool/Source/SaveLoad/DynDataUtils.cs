@@ -13,6 +13,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     internal static class DynDataUtils {
         // DynData
         public static readonly HashSet<Type> IgnoreTypes = new();
+        public static readonly ConditionalWeakTable<object, object> IgnoreObjects = new();
         
         // DynamicData
         public static readonly object DynamicDataMap = typeof(DynamicData).GetFieldValue("_DataMap");

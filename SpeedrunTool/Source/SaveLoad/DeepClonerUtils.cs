@@ -184,8 +184,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         bool cloned = false;
                         
                         do {
-                            object dataMap = DynDataUtils.GetDataMap(objType);
-                            if (DynDataUtils.NotExistDynData(dataMap, objType)) {
+                            if (DynDataUtils.NotExistDynData(objType, out object dataMap)) {
                                 continue;
                             }
 

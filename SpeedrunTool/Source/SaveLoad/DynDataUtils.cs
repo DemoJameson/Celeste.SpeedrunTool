@@ -47,10 +47,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             return DynamicDataObjects.TryGetValue(target, out object _);
         }
 
-        public static bool NotExistDynData(object dataMap, Type type) {
+        public static bool NotExistDynData(Type type, out object dataMap) {
             if (IgnoreTypes.Contains(type)) {
+                dataMap = null;
                 return true;
             }
+
+            dataMap = GetDataMap(type);
 
             bool result = ((Array) dataMap.GetFieldValue("_entries")).Length == EmptyTableEntriesLength &&
                           (int) dataMap.GetFieldValue("_freeList") == EmptyTableFreeList;
@@ -61,7 +64,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             return result;
         }
 
-        public static object GetDataMap(Type type) {
+        private static object GetDataMap(Type type) {
             string key = $"DynDataUtils-GetDataMap-{type}";
 
             object result = type.GetExtendedDataValue<object>(key);

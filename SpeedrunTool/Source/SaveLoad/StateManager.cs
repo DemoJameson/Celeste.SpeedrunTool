@@ -12,6 +12,7 @@ using Force.DeepCloner;
 using Force.DeepCloner.Helpers;
 using Microsoft.Xna.Framework;
 using Monocle;
+using MonoMod.Utils;
 using static Celeste.Mod.SpeedrunTool.Other.ButtonConfigUi;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
@@ -77,6 +78,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SaveLoadAction.OnLoad();
             EventInstanceUtils.OnHook();
             StateMarkUtils.OnLoad();
+            DynDataUtils.OnLoad();
             On.Celeste.Level.Update += CheckButtonsAndUpdateBackdrop;
             On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
@@ -87,6 +89,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SaveLoadAction.OnUnload();
             EventInstanceUtils.OnUnhook();
             StateMarkUtils.OnUnload();
+            DynDataUtils.OnUnload();
             On.Celeste.Level.Update -= CheckButtonsAndUpdateBackdrop;
             On.Monocle.Scene.Begin -= ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End -= AutoLoadStateWhenDeath;
@@ -176,6 +179,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (InGameOverworldHelperIsOpen.Value?.GetValue(null) as bool? == true) {
                 return false;
             }
+
+            DynamicData dynamicData = new DynamicData(level.GetPlayer());
+            dynamicData.Set("TEST", "dynamicData");
 
             ClearState(false);
 

@@ -224,12 +224,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     }
 
                     // CLone DynamicData
-                    if (DynDataUtils.DynamicDataMap.Value is { } dynamicDataMap) {
+                    if (DynDataUtils.ExistDynamicData(sourceObj)) {
                         object[] parameters = {sourceObj, null};
-                        if ((bool) dynamicDataMap.InvokeMethod("TryGetValue", parameters)) {
+                        if ((bool) DynDataUtils.DynamicDataMap.InvokeMethod("TryGetValue", parameters)) {
                             object sourceValue = parameters[1];
                             if (sourceValue.GetFieldValue("Data") is Dictionary<string, object> data && data.Count != 0) {
-                                dynamicDataMap.InvokeMethod("Add", clonedObj, sourceValue.DeepClone(deepCloneState));
+                                DynDataUtils.DynamicDataMap.InvokeMethod("Add", clonedObj, sourceValue.DeepClone(deepCloneState));
+                                DynDataUtils.RecordDynamicDataObject(clonedObj);
                             }
                         }
                     }

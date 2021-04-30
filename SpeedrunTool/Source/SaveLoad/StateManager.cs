@@ -274,7 +274,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             DeepClonerUtils.ClearSharedDeepCloneState();
-            return LoadState(tas);
+
+            if (tas) {
+                return LoadState(true);
+            } else {
+                level.Add(new WaitSaveStateEntity(level));
+                return true;
+            }
         }
 
         // public for TAS Mod
@@ -609,13 +615,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             // 同上
             if (level.Entities.FirstOrDefault(entity =>
-                    entity.GetType().FullName == "Celeste.Mod.AcidHelper.Entities.InstantTeleporterRenderer") is { } teleporterRenderer) {
+                entity.GetType().FullName == "Celeste.Mod.AcidHelper.Entities.InstantTeleporterRenderer") is { } teleporterRenderer) {
                 result.Add(teleporterRenderer);
             }
 
             // 同上
             if (level.Entities.FirstOrDefault(entity =>
-                    entity.GetType().FullName == "VivHelper.Entities.HoldableBarrierRenderer") is { } holdableBarrierRenderer) {
+                entity.GetType().FullName == "VivHelper.Entities.HoldableBarrierRenderer") is { } holdableBarrierRenderer) {
                 result.Add(holdableBarrierRenderer);
             }
 
@@ -713,10 +719,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             public override void Render() {
-                Instance.PreCloneSavedEntities();
+                // console load SpringCollab2020/3-Advanced/NeoKat
+                // 很奇怪，如果在这时候预克隆，部分图读档时就会游戏崩溃例如春游 nyoom
+                // System.ObjectDisposedException: Cannot access a disposed object.
+                // Instance.PreCloneSavedEntities();
                 level.DoScreenWipe(true, () => {
-                    level.Frozen = false;
-                    level.TimerStopped = origTimerStopped;
+                    if (Settings.FreezeAfterLoadState) {
+                        Instance.State = States.Waiting;
+                        level.Frozen = true;
+                    } else {
+                        level.Frozen = false;
+                        level.TimerStopped = origTimerStopped;
+                    }
                 });
                 RemoveSelf();
             }

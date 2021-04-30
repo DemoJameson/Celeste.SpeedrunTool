@@ -128,22 +128,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     if (sourceObj is WeakReference sourceWeak) {
                         return new WeakReference(sourceWeak.Target.DeepClone(deepCloneState), sourceWeak.TrackResurrection);
                     }
-
-                    // 修复启用 CelesteNet 后保存状态时的崩溃
-                    // System.ObjectDisposedException: 无法访问已释放的对象。
-                    // 对象名:“RenderTarget2D”。
-                    if (sourceObj is RenderTarget2D {IsDisposed: true} renderTarget2D) {
-                        return new RenderTarget2D(
-                            renderTarget2D.GraphicsDevice,
-                            renderTarget2D.Width,
-                            renderTarget2D.Height,
-                            renderTarget2D.LevelCount != 1,
-                            renderTarget2D.Format,
-                            renderTarget2D.DepthStencilFormat,
-                            0,
-                            renderTarget2D.RenderTargetUsage
-                        );
-                    }
                 }
 
                 return null;

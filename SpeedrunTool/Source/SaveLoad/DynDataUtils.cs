@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Celeste.Mod.SpeedrunTool.Extensions;
@@ -13,8 +15,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         // DynData
         public static ConditionalWeakTable<object, object> IgnoreObjects = new();
         private static readonly HashSet<Type> IgnoreTypes = new();
-        private static readonly int EmptyTableEntriesLength = ((Array) new ConditionalWeakTable<object, object>().GetFieldValue("_entries")).Length;
-        private static readonly int EmptyTableFreeList = (int) new ConditionalWeakTable<object, object>().GetFieldValue("_freeList");
+
+        private static readonly Lazy<int> EmptyTableEntriesLength =
+            new(() => ((Array) new ConditionalWeakTable<object, object>().GetFieldValue("_entries")).Length);
+
+        private static readonly Lazy<int> EmptyTableFreeList = new(() => (int) new ConditionalWeakTable<object, object>().GetFieldValue("_freeList"));
 
         // DynamicData
         public static readonly object DynamicDataMap = typeof(DynamicData).GetFieldValue("_DataMap");
@@ -38,7 +43,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         public static void RecordDynamicDataObject(object target) {
-            if (!DynamicDataObjects.TryGetValue(target, out object _)) {
+            if (target != null && !DynamicDataObjects.TryGetValue(target, out object _)) {
                 DynamicDataObjects.Add(target, null);
             }
         }
@@ -55,8 +60,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             dataMap = GetDataMap(type);
 
-            bool result = ((Array) dataMap.GetFieldValue("_entries")).Length == EmptyTableEntriesLength &&
-                          (int) dataMap.GetFieldValue("_freeList") == EmptyTableFreeList;
+            bool result;
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT) {
+                result = ((Array) dataMap.GetFieldValue("_entries")).Length == EmptyTableEntriesLength.Value &&
+                         (int) dataMap.GetFieldValue("_freeList") == EmptyTableFreeList.Value;
+            } else {
+                result = (int) dataMap.GetFieldValue("size") == 0;
+            }
+
             if (result) {
                 IgnoreTypes.Add(type);
             }

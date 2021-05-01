@@ -89,10 +89,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             All.Clear();
         }
 
-        private static Dictionary<Type, FieldInfo[]> EntityStaticFields;
+        private static Dictionary<Type, FieldInfo[]> entityStaticFields;
 
         private static void InitStaticFields() {
-            EntityStaticFields = new Dictionary<Type, FieldInfo[]>();
+            entityStaticFields = new Dictionary<Type, FieldInfo[]>();
             IEnumerable<Type> entityTypes = Everest.Modules.SelectMany(module => module.GetType().Assembly.GetTypesSafe().Where(type =>
                 !type.IsGenericType
                 && type.FullName != null
@@ -107,23 +107,23 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     continue;
                 }
 
-                EntityStaticFields[entityType] = fieldInfos;
+                entityStaticFields[entityType] = fieldInfos;
             }
         }
 
         private static void SupportCalcRandom() {
             Type type = typeof(Calc);
             All.Add(new SaveLoadAction(
-                (savedValues, level) => { SaveStaticFieldValues(savedValues, type, "Random", "randomStack"); },
-                (savedValues, level) => { LoadStaticFieldValues(savedValues); }
+                (savedValues, _) => { SaveStaticFieldValues(savedValues, type, "Random", "randomStack"); },
+                (savedValues, _) => { LoadStaticFieldValues(savedValues); }
             ));
         }
 
         private static void SupportEntitySimpleStaticFields() {
             All.Add(new SaveLoadAction(
-                (dictionary, level) => {
-                    foreach (Type type in EntityStaticFields.Keys) {
-                        FieldInfo[] fieldInfos = EntityStaticFields[type];
+                (dictionary, _) => {
+                    foreach (Type type in entityStaticFields.Keys) {
+                        FieldInfo[] fieldInfos = entityStaticFields[type];
                         // ("\n\n" + string.Join("\n", fieldInfos.Select(info => type.FullName + " " + info.Name + " " + info.FieldType))).DebugLog();
                         Dictionary<string, object> values = new();
 
@@ -143,7 +143,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                             dictionary[type] = values.DeepCloneShared();
                         }
                     }
-                }, (dictionary, level) => {
+                }, (dictionary, _) => {
                     Dictionary<Type, Dictionary<string, object>> clonedDict = dictionary.DeepCloneShared();
                     foreach (Type type in clonedDict.Keys) {
                         Dictionary<string, object> values = clonedDict[type];

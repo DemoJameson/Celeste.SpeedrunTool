@@ -17,7 +17,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             typeof(byte), typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong),
             typeof(float), typeof(double), typeof(decimal), typeof(char), typeof(string), typeof(bool),
             typeof(DateTime), typeof(TimeSpan), typeof(DateTimeOffset), typeof(Vector2), typeof(Vector3),
-            typeof(VertexPositionColor)
+            typeof(VertexPositionColor), typeof(Color)
         };
 
         public static bool IsSimple(this Type type, Func<Type, bool> extraTypes = null) {

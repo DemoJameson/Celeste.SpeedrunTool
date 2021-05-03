@@ -147,7 +147,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     Dictionary<Type, Dictionary<string, object>> clonedDict = dictionary.DeepCloneShared();
                     foreach (Type type in clonedDict.Keys) {
                         Dictionary<string, object> values = clonedDict[type];
-                        ("\n\n" + string.Join("\n", values.Select(pair => type.FullName + " " + pair.Key + " " + pair.Value))).DebugLog();
+                        // ("\n\n" + string.Join("\n", values.Select(pair => type.FullName + " " + pair.Key + " " + pair.Value))).DebugLog();
                         foreach (KeyValuePair<string, object> pair in values) {
                             type.SetFieldValue(pair.Key, pair.Value);
                         }

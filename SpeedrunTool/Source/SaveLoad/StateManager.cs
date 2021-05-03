@@ -63,6 +63,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         public enum States {
             None,
+            Saving,
             Loading,
             Waiting,
             PreCloning
@@ -181,6 +182,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             ClearState(false);
 
+            State = States.Saving;
+
             SavedByTas = tas;
 
             savedLevel = level.ShallowClone();
@@ -272,6 +275,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             DeepClonerUtils.ClearSharedDeepCloneState();
 
             if (tas) {
+                State = States.None;
                 return LoadState(true);
             } else {
                 level.Add(new WaitSaveStateEntity(level));
@@ -702,6 +706,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             private readonly Level level;
             private readonly bool origFrozen;
             private readonly bool origTimerStopped;
+            private readonly bool origPauseLock;
 
             public WaitSaveStateEntity(Level level) {
                 this.level = level;
@@ -710,8 +715,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 Tag = Tags.Global;
                 origFrozen = level.Frozen;
                 origTimerStopped = level.TimerStopped;
+                origPauseLock = level.PauseLock;
                 level.Frozen = true;
                 level.TimerStopped = true;
+                level.PauseLock = true;
             }
 
             public override void Render() {
@@ -723,10 +730,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     if (Settings.FreezeAfterLoadState) {
                         level.Frozen = true;
                         level.TimerStopped = true;
+                        level.PauseLock = true;
                         Instance.State = States.Waiting;
                     } else {
                         level.Frozen = origFrozen;
                         level.TimerStopped = origTimerStopped;
+                        level.PauseLock = origPauseLock;
+                        Instance.State = States.None;
                     }
                 });
                 RemoveSelf();

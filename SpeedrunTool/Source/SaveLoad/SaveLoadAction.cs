@@ -191,7 +191,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                             "currentAltMusicEvent",
                             (typeof(Audio).GetFieldValue("currentAltMusicEvent") as EventInstance)?.NeedManualClone().DeepCloneShared()
                         },
-                        {"MusicUnderwater", Audio.MusicUnderwater}
+                        {"MusicUnderwater", Audio.MusicUnderwater},
+                        {"PauseMusic", Audio.PauseMusic},
+                        {"PauseGameplaySfx", Audio.PauseGameplaySfx},
                     };
                     savedValues[typeof(Audio)] = saved;
                 },
@@ -209,6 +211,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         saved["currentAltMusicEvent"] as EventInstance);
 
                     Audio.MusicUnderwater = (bool) saved["MusicUnderwater"];
+                    Audio.PauseMusic = (bool) saved["PauseMusic"];
+                    Audio.PauseGameplaySfx = (bool) saved["PauseGameplaySfx"];
                 }
             ));
         }

@@ -188,17 +188,24 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             RoomTimerData roomTimerData = Settings.RoomTimerType == RoomTimerType.NextRoom ? nextRoomTimerData : currentRoomTimerData;
 
             string roomTimeString = roomTimerData.TimeString;
-            string pbTimeString = roomTimerData.PbTimeString;
-            pbTimeString = "PB " + pbTimeString;
+            string pbTimeString = $"PB {roomTimerData.PbTimeString}";
+            string comparePbString = ComparePb(roomTimerData.Time, roomTimerData.LastPbTime);
 
-            const float topBlackBarWidth = 32f;
+            float topBlackBarWidth = 0f;
+            float pbWidth = 60;
             const float topTimeHeight = 38f;
-            const float pbWidth = 100;
             const float timeMarginLeft = 32f;
             const float pbScale = 0.6f;
 
             MTexture bg = GFX.Gui["strawberryCountBG"];
             float x = -300f * Ease.CubeIn(1f - self.DrawLerp);
+
+            if (roomTimerData.IsCompleted) {
+                topBlackBarWidth += Math.Max(0, 35 * (roomTimeString.Length - 5)) + Math.Max(0, 20 * (comparePbString.Length - 5));
+                if (roomTimeString.Length >= 8) {
+                    topBlackBarWidth -= 15;
+                }
+            }
 
             Draw.Rect(x, self.Y, topBlackBarWidth + 2, topTimeHeight, Color.Black);
             bg.Draw(new Vector2(x + topBlackBarWidth, self.Y));
@@ -216,7 +223,6 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 roomTimerData.IsCompleted, roomTimerData.BeatBestTime);
 
             if (roomTimerData.IsCompleted) {
-                string comparePbString = ComparePb(roomTimerData.Time, roomTimerData.LastPbTime);
                 DrawTime(
                     new Vector2(x + timeMarginLeft + SpeedrunTimerDisplay.GetTimeWidth(roomTimeString) + 10,
                         self.Y + 36f),
@@ -224,9 +230,13 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                     roomTimerData.IsCompleted, roomTimerData.BeatBestTime);
             }
 
+            float pbTextWidth = Math.Max(0, 18 * (pbTimeString.Length - 8));
+            pbWidth += pbTextWidth;
+
             // 遮住上下两块的间隙，游戏原本的问题
             Draw.Rect(x, self.Y + topTimeHeight - 1, pbWidth + bg.Width * pbScale, 1f, Color.Black);
 
+            // PB
             Draw.Rect(x, self.Y + topTimeHeight, pbWidth + 2, bg.Height * pbScale + 1f, Color.Black);
             bg.Draw(new Vector2(x + pbWidth, self.Y + topTimeHeight), Vector2.Zero, Color.White, pbScale);
             DrawTime(new Vector2(x + timeMarginLeft, (float) (self.Y + 66.4)), pbTimeString, pbScale, false, false, 0.6f);
@@ -249,24 +259,27 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             return result;
         }
 
-        private static void DrawTime(Vector2 position, string timeString, float scale = 1f,
-            bool finished = false, bool bestTime = false, float alpha = 1f) {
+        private static readonly Lazy<PixelFontSize> PixelFontSize =
+            new(() => Dialog.Languages["english"].Font.Get(Dialog.Languages["english"].FontFaceSize));
+
+        private static readonly Lazy<float> NumberWidth = new(() => {
             float numberWidth = 0f;
-            float spacerWidth = 0f;
-            PixelFontSize pixelFontSize =
-                Dialog.Languages["english"].Font.Get(Dialog.Languages["english"].FontFaceSize);
             for (int index = 0; index < 10; ++index) {
-                float x1 = pixelFontSize.Measure(index.ToString()).X;
+                float x1 = PixelFontSize.Value.Measure(index.ToString()).X;
                 if ((double) x1 > numberWidth) {
                     numberWidth = x1;
                 }
             }
 
-            spacerWidth = pixelFontSize.Measure('.').X;
+            return numberWidth;
+        });
 
+        private static readonly Lazy<float> SpacerWidth = new(() => PixelFontSize.Value.Measure('.').X);
+
+        private static void DrawTime(Vector2 position, string timeString, float scale = 1f,
+            bool finished = false, bool bestTime = false, float alpha = 1f) {
             PixelFont font = Dialog.Languages["english"].Font;
             float fontFaceSize = Dialog.Languages["english"].FontFaceSize;
-            float num1 = scale;
             float x = position.X;
             float y = position.Y;
             Color color1 = Color.White * alpha;
@@ -279,14 +292,12 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 color2 = FinishedColor2 * alpha;
             }
 
-            for (int index = 0; index < timeString.Length; ++index) {
-                char ch = timeString[index];
+            foreach (char ch in timeString) {
+                Color color3 = ch is ':' or '.' ? color2 : color1;
 
-                Color color3 = ch is ':' or '.' || (double) num1 < (double) scale ? color2 : color1;
-
-                float num2 = (float) ((ch is ':' or '.' ? spacerWidth : numberWidth) + 4.0) * num1;
+                float num2 = (float) ((ch is ':' or '.' ? SpacerWidth.Value : NumberWidth.Value) + 4.0) * scale;
                 font.DrawOutline(fontFaceSize, ch.ToString(), new Vector2(x + num2 / 2f, y), new Vector2(0.5f, 1f),
-                    Vector2.One * num1, color3, 2f, Color.Black);
+                    Vector2.One * scale, color3, 2f, Color.Black);
                 x += num2;
             }
         }

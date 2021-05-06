@@ -20,7 +20,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             "10-c", "10-d", "11-d", "12-d", "12-c", "11-c"
         };
 
-        // LevelName
+        // 2A 需要激活果冻的房间
         private readonly List<string> dreamDashRooms = new() {
             "0", "1", "2",
             "d0", "d1", "d2", "d3", "d4", "d6", "d5", "d9", "3x",
@@ -157,6 +157,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                 ShouldFixTeleportProblems = false;
                 FixTeleportProblems(session, startPosition);
             }
+
             orig(self, session, startPosition);
         }
 
@@ -184,14 +185,20 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                 return;
             }
 
-            if (session.Area.ToString() == "10" && farewellCassetteRooms.Contains(session.Level)) {
-                session.ColorGrade = "feelingdown";
+            if (session.Area.ToString() == "10") {
+                if (farewellCassetteRooms.Contains(session.Level)) {
+                    session.ColorGrade = "feelingdown";
+                } else {
+                    session.ColorGrade = "none";
+                }
             }
         }
 
         private void FixFarewellIntro02LaunchDashes(Session session) {
             if (session.Area.ToString() == "10" && session.Level == "intro-02-launch") {
                 session.Inventory.Dashes = 2;
+            } else {
+                session.Inventory.Dashes = 1;
             }
         }
 
@@ -216,13 +223,13 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         private void FixHugeMessRoomLight(Session session) {
             if (session.Area.ToString() == "3" && darkRooms.Contains(session.Level)) {
                 session.LightingAlphaAdd = 0.15f;
+            } else {
+                session.LightingAlphaAdd = 0;
             }
         }
 
         private void FixCoreMode(Session session) {
-            if (iceRooms.Contains(session.Area + session.Level)) {
-                session.CoreMode = Session.CoreModes.Cold;
-            }
+            session.CoreMode = iceRooms.Contains(session.Area + session.Level) ? Session.CoreModes.Cold : Session.CoreModes.Hot;
         }
 
         // @formatter:off

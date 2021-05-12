@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
@@ -14,25 +15,26 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         public static void OnLoad() {
             On.Celeste.Strawberry.Added += StrawberryOnAdded;
             IL.Celeste.SpeedrunTimerDisplay.DrawTime += SetSaveStateColor;
-
-            SaveLoadAction.Add(new SaveLoadAction(loadState: (savedValues, level) => {
-                if (StateManager.Instance.SavedByTas) {
-                    return;
-                }
-                
-                // recolor golden berry
-                foreach (Strawberry berry in level.Entities.FindAll<Strawberry>().Where(strawberry => strawberry.Golden)) {
-                    TryRecolorSprite(berry);
-                }
-
-                // recolor timer
-                level.SetExtendedBoolean(StartFromSaveSate, true);
-            }));
+            SaveLoadAction.Add(new SaveLoadAction(ReColor, ReColor));
         }
 
         public static void OnUnload() {
             On.Celeste.Strawberry.Added -= StrawberryOnAdded;
             IL.Celeste.SpeedrunTimerDisplay.DrawTime -= SetSaveStateColor;
+        }
+
+        private static void ReColor(Dictionary<Type, Dictionary<string, object>> savedValues, Level level) {
+            if (StateManager.Instance.SavedByTas) {
+                return;
+            }
+
+            // recolor golden berry
+            foreach (Strawberry berry in level.Entities.FindAll<Strawberry>().Where(strawberry => strawberry.Golden)) {
+                TryRecolorSprite(berry);
+            }
+
+            // recolor timer
+            level.SetExtendedBoolean(StartFromSaveSate, true);
         }
 
         private static void StrawberryOnAdded(On.Celeste.Strawberry.orig_Added orig, Strawberry self, Scene scene) {

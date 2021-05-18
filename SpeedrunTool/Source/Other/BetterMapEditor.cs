@@ -14,7 +14,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         private const string StartChasingLevel = "3";
 
         // 3A 杂乱房间部分的光线调暗
-        private readonly List<string> darkRooms = new() {
+        private readonly HashSet<string> darkRooms = new() {
             "09-b", "08-x", "10-x", "11-x", "11-y", "12-y", "11-z", "10-z",
             "10-y", "11-a", "12-x", "13-x", "13-a", "13-b", "12-b", "11-b",
             "10-c", "10-d", "11-d", "12-d", "12-c", "11-c"
@@ -28,16 +28,16 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             "11", "12b", "12c", "12d", "12", "13"
         };
 
-        private readonly List<Vector2> excludeFarewellCassettePoints = new() {
+        private readonly HashSet<Vector2> excludeFarewellCassettePoints = new() {
             new Vector2(43632, -9976),
             new Vector2(49448, -10296)
         };
 
-        private readonly List<string> farewellCassetteRooms = new() {
+        private readonly HashSet<string> farewellCassetteRooms = new() {
             "i-00", "i-00b", "i-01", "i-02", "i-03", "i-04", "i-05", "j-00"
         };
 
-        private readonly List<Vector2> excludeDreamRespawnPoints = new() {
+        private readonly HashSet<Vector2> excludeDreamRespawnPoints = new() {
             new Vector2(288, 152),
             new Vector2(632, 144),
             new Vector2(648, 144),
@@ -55,12 +55,21 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             new Vector2(1616, 600)
         };
 
-        private readonly List<string> iceRooms = new() {
+        private readonly HashSet<string> coreIceRooms = new() {
             // 8A
             "9b-05", "9c-00", "9c-00b", "9c-02", "9c-03", "9d-03", "9d-10",
 
             // 8B
             "9Ha-03", "9Ha-04", "9Ha-05", "9Hb-02", "9Hb-03", "9Hc-01", "9Hc-06"
+        };
+
+        private readonly HashSet<string> coreRefillDashRooms = new() {
+            // 8A
+            "90X", "900", "901", "9space",
+            // 8B
+            "9H00", "9H01", "9Hspace",
+            // 8C
+            "9HHintro"
         };
 
         public void Load() {
@@ -172,6 +181,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                 }
 
                 FixCoreMode(session);
+                FixCoreRefillDash(session);
                 FixBadelineChase(session, spawnPoint);
                 FixHugeMessRoomLight(session);
                 FixFarewellCassetteRoomColorGrade(session, spawnPoint);
@@ -195,10 +205,12 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         }
 
         private void FixFarewellIntro02LaunchDashes(Session session) {
-            if (session.Area.ToString() == "10" && session.Level == "intro-02-launch") {
-                session.Inventory.Dashes = 2;
-            } else {
-                session.Inventory.Dashes = 1;
+            if (session.Area.ID == 10) {
+                if (session.Level == "intro-02-launch") {
+                    session.Inventory.Dashes = 2;
+                } else {
+                    session.Inventory.Dashes = 1;
+                }
             }
         }
 
@@ -229,7 +241,15 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         }
 
         private void FixCoreMode(Session session) {
-            session.CoreMode = iceRooms.Contains(session.Area + session.Level) ? Session.CoreModes.Cold : Session.CoreModes.Hot;
+            session.CoreMode = coreIceRooms.Contains(session.Area + session.Level) ? Session.CoreModes.Cold : Session.CoreModes.Hot;
+        }
+
+        private void FixCoreRefillDash(Session session) {
+            if (session.Area.ID != 9) {
+                return;
+            }
+
+            session.Inventory.NoRefills = !coreRefillDashRooms.Contains(session.Level);
         }
 
         // @formatter:off

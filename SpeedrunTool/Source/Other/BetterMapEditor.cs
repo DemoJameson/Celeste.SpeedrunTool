@@ -247,7 +247,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         }
 
         private void FixCoreRefillDash(Session session) {
-            if (session.Area.ID != 9) {
+            if (session.Area.ID == 9) {
                 session.Inventory.NoRefills = !coreRefillDashRooms.Contains(session.Level);
             }
         }

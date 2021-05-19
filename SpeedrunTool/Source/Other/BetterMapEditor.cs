@@ -198,6 +198,8 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             if (session.Area.ToString() == "10") {
                 if (farewellCassetteRooms.Contains(session.Level)) {
                     session.ColorGrade = "feelingdown";
+                } else if (session.Level == "end-golden") {
+                    session.ColorGrade = "golden";
                 } else {
                     session.ColorGrade = "none";
                 }
@@ -205,12 +207,8 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         }
 
         private void FixFarewellIntro02LaunchDashes(Session session) {
-            if (session.Area.ID == 10) {
-                if (session.Level == "intro-02-launch") {
-                    session.Inventory.Dashes = 2;
-                } else {
-                    session.Inventory.Dashes = 1;
-                }
+            if (session.Area.ToString() == "10") {
+                session.Inventory.Dashes = session.Level == "intro-02-launch" ? 2 : 1;
             }
         }
 
@@ -233,23 +231,25 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         }
 
         private void FixHugeMessRoomLight(Session session) {
-            if (session.Area.ToString() == "3" && darkRooms.Contains(session.Level)) {
-                session.LightingAlphaAdd = 0.15f;
-            } else {
-                session.LightingAlphaAdd = 0;
+            if (session.Area.ToString() == "3") {
+                if (darkRooms.Contains(session.Level)) {
+                    session.LightingAlphaAdd = 0.15f;
+                } else {
+                    session.LightingAlphaAdd = 0;
+                }
             }
         }
 
         private void FixCoreMode(Session session) {
-            session.CoreMode = coreIceRooms.Contains(session.Area + session.Level) ? Session.CoreModes.Cold : Session.CoreModes.Hot;
+            if (session.Area.ID == 9) {
+                session.CoreMode = coreIceRooms.Contains(session.Area + session.Level) ? Session.CoreModes.Cold : Session.CoreModes.Hot;
+            }
         }
 
         private void FixCoreRefillDash(Session session) {
-            if (session.Area.ID != 9) {
-                return;
+            if (session.Area.ID == 9) {
+                session.Inventory.NoRefills = !coreRefillDashRooms.Contains(session.Level);
             }
-
-            session.Inventory.NoRefills = !coreRefillDashRooms.Contains(session.Level);
         }
 
         // @formatter:off

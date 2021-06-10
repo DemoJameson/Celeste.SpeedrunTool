@@ -126,21 +126,19 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         }
 
         private void Timing(On.Celeste.Level.orig_Update orig, Level self) {
+            orig(self);
+
             string currentRoom = self.Session.Level;
             bool nextRoom = previousRoom != null && previousRoom != currentRoom;
             previousRoom = currentRoom;
             if (self.Completed || nextRoom) {
                 UpdateTimerState();
-                orig(self);
-                return;
             }
 
             if (!self.Completed && self.TimerStarted) {
                 nextRoomTimerData.Timing(self);
                 currentRoomTimerData.Timing(self);
             }
-
-            orig(self);
         }
 
         private void UpdateTimerStateOnTouchFlag(On.Celeste.SummitCheckpoint.orig_Update orig, SummitCheckpoint self) {

@@ -23,11 +23,14 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                 return;
             }
 
+            if (level.Paused) {
+                return;
+            }
+
             Player player = level.GetPlayer();
 
-            // level 场景中 player == null 代表人物死亡
-			// if player is null, Madeline is dead
-            if (player != null && player.StateMachine.State == Player.StIntroRespawn || player == null) {
+            // 加速复活过程
+            if (player == null || player.StateMachine.State == Player.StIntroRespawn) {
                 for (int i = 1; i < SpeedrunToolModule.Settings.RespawnSpeed; i++) {
                     orig(self, time);
                 }

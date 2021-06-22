@@ -26,13 +26,13 @@
         <PackageReference Include="Mono.Cecil" Version="0.11.3">
             <IncludeAssets>compile</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="MonoMod" Version="21.1.11.1">
+        <PackageReference Include="MonoMod" Version="21.4.29.1">
             <IncludeAssets>compile</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="MonoMod.RuntimeDetour" Version="21.1.11.1">
+        <PackageReference Include="MonoMod.RuntimeDetour" Version="21.4.29.1">
             <IncludeAssets>compile</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="MonoMod.Utils" Version="21.1.11.1">
+        <PackageReference Include="MonoMod.Utils" Version="21.4.29.1">
             <IncludeAssets>compile</IncludeAssets>
         </PackageReference>
         <PackageReference Include="NLua" Version="1.4.25">
@@ -47,7 +47,7 @@
             <HintPath>..\lib-stripped\Celeste.exe</HintPath>
             <Private>False</Private>
         </Reference>
-        <Reference Include="FNA, Version=19.9.0.0, Culture=neutral, PublicKeyToken=null">
+        <Reference Include="FNA">
             <HintPath>..\lib-stripped\FNA.dll</HintPath>
             <Private>False</Private>
         </Reference>

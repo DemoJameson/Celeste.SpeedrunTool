@@ -38,15 +38,10 @@ namespace Celeste.Mod.SpeedrunTool {
             Selection = -1;
             DeathInfos.Clear();
             DeathStatisticsManager.Instance.Clear();
-            Save();
         }
 
         public void SetSelection(int selection) {
             Selection = selection;
-        }
-
-        private static void Save() {
-            SpeedrunToolModule.Instance.SaveSaveData(SpeedrunToolModule.SaveData.Index);
         }
     }
 }

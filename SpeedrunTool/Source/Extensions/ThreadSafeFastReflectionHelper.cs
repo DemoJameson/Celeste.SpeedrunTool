@@ -6,7 +6,7 @@ using Mono.Cecil.Cil;
 using MonoMod.Utils;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
-    public static class ThreadSafeFastReflectionHelper {
+    internal static class ThreadSafeFastReflectionHelper {
         public delegate object FastReflectionDelegate(object target, params object[] args);
 
         private static readonly Type[] _DynamicMethodDelegateArgs = {typeof(object), typeof(object[])};

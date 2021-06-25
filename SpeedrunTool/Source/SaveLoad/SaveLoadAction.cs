@@ -83,6 +83,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SupportSpringCollab2020();
             SupportExtendedVariants();
             SupportXaphanHelper();
+            SupportIsaGrabBag();
         }
 
         internal static void OnUnload() {
@@ -400,6 +401,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 All.Add(new SaveLoadAction(
                     (savedValues, _) => SaveStaticFieldValues(savedValues, spaceJumpType, "jumpBuffer"),
                     (savedValues, _) => LoadStaticFieldValues(savedValues))
+                );
+            }
+        }
+
+        private static void SupportIsaGrabBag() {
+            // 解决 DreamSpinnerBorder 读档后影像残留在屏幕中
+            if (Type.GetType("Celeste.Mod.IsaGrabBag.DreamSpinnerBorder, IsaMods") is { } borderType) {
+                All.Add(new SaveLoadAction(
+                        loadState: (_, level) => level.Entities.FirstOrDefault(entity => entity.GetType() == borderType)?.Update()
+                    )
                 );
             }
         }

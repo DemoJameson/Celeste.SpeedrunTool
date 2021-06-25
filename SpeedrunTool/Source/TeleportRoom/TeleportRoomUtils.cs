@@ -273,27 +273,20 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
         }
 
         private static bool SearchSummitCheckpoint(bool next, Level level) {
-            // 查找当前房间是否有未触发的旗子，且旗子数现有的小，如果有则跳到旗子处
-            int currentFlagNumber = int.MaxValue;
+            // 查找当前房间是否有未触发的旗子，如果有则跳到旗子处
+            int? currentFlagNumber = null;
 
-            foreach (string flag in level.Session.Flags) {
-                if (!flag.StartsWith(FlagPrefix)) {
-                    continue;
-                }
-
+            foreach (string flag in level.Session.Flags.Where(flag => flag.StartsWith(FlagPrefix))) {
                 if (int.TryParse(flag.Replace(FlagPrefix, ""), out int flagNumber)) {
-                    currentFlagNumber = Math.Min(currentFlagNumber, flagNumber);
+                    currentFlagNumber = currentFlagNumber == null ? flagNumber : Math.Min(currentFlagNumber.Value, flagNumber);
                 }
             }
 
-            if (currentFlagNumber == int.MaxValue && !next) {
-                currentFlagNumber = -1;
-            }
+            currentFlagNumber ??= next ? int.MaxValue : int.MinValue;
 
-            List<SummitCheckpoint> flagList = level.Entities.FindAll<SummitCheckpoint>()
-                .Where(checkpoint => !checkpoint.Activated).ToList();
+            List<SummitCheckpoint> flagList = level.Entities.FindAll<SummitCheckpoint>().Where(checkpoint => !checkpoint.Activated).ToList();
 
-            // from samll to big
+            // from small to big
             flagList.Sort((first, second) => first.Number - second.Number);
 
             if (flagList.Count > 0) {
@@ -322,12 +315,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
 
             flagList.Sort((first, second) => first.Int("number") - second.Int("number"));
             if (flagList.Count > 0) {
-                EntityData summitCheckpoint;
-                if (next) {
-                    summitCheckpoint = flagList.Last();
-                } else {
-                    summitCheckpoint = flagList.First();
-                }
+                EntityData summitCheckpoint = next ? flagList.Last() : flagList.First();
                 level.Session.RespawnPoint = level.GetSpawnPoint(levelData.Position+summitCheckpoint.Position);
                 level.Session.SetFlag(FlagPrefix + summitCheckpoint.Int("number"));
             }

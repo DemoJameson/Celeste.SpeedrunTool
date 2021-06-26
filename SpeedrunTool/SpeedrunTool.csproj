@@ -10,50 +10,40 @@
         <PlatformTarget>x86</PlatformTarget>
         <OutputPath>bin\$(Configuration)\</OutputPath>
         <DebugType>portable</DebugType>
+        <MSBuildWarningsAsMessages>$(MSBuildWarningsAsMessages);MSB3270</MSBuildWarningsAsMessages>
     </PropertyGroup>
+    <ItemDefinitionGroup>
+        <PackageReference PrivateAssets="all" ExcludeAssets="runtime" />
+        <Reference>
+            <Private>False</Private>
+        </Reference>
+    </ItemDefinitionGroup>
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-      <PlatformTarget>AnyCPU</PlatformTarget>
-      <Prefer32bit>false</Prefer32bit>
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <Prefer32bit>false</Prefer32bit>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-      <PlatformTarget>AnyCPU</PlatformTarget>
-      <Prefer32bit>false</Prefer32bit>
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <Prefer32bit>false</Prefer32bit>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="KeraLua" Version="1.0.22">
-            <IncludeAssets>compile</IncludeAssets>
-        </PackageReference>
-        <PackageReference Include="Mono.Cecil" Version="0.11.3">
-            <IncludeAssets>compile</IncludeAssets>
-        </PackageReference>
-        <PackageReference Include="MonoMod" Version="21.4.29.1">
-            <IncludeAssets>compile</IncludeAssets>
-        </PackageReference>
-        <PackageReference Include="MonoMod.RuntimeDetour" Version="21.4.29.1">
-            <IncludeAssets>compile</IncludeAssets>
-        </PackageReference>
-        <PackageReference Include="MonoMod.Utils" Version="21.4.29.1">
-            <IncludeAssets>compile</IncludeAssets>
-        </PackageReference>
-        <PackageReference Include="NLua" Version="1.4.25">
-            <IncludeAssets>compile</IncludeAssets>
-        </PackageReference>
-        <PackageReference Include="YamlDotNet" Version="8.1.2">
-            <IncludeAssets>compile</IncludeAssets>
-        </PackageReference>
+        <PackageReference Include="KeraLua" Version="1.0.22" />
+        <PackageReference Include="Mono.Cecil" Version="0.11.3" />
+        <PackageReference Include="MonoMod" Version="21.4.29.1" />
+        <PackageReference Include="MonoMod.RuntimeDetour" Version="21.4.29.1" />
+        <PackageReference Include="MonoMod.Utils" Version="21.4.29.1" />
+        <PackageReference Include="NLua" Version="1.4.25" />
+        <PackageReference Include="YamlDotNet" Version="8.1.2" />
     </ItemGroup>
     <ItemGroup>
         <Reference Include="Celeste, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
             <HintPath>..\lib-stripped\Celeste.exe</HintPath>
-            <Private>False</Private>
         </Reference>
         <Reference Include="FNA">
             <HintPath>..\lib-stripped\FNA.dll</HintPath>
-            <Private>False</Private>
         </Reference>
         <Reference Include="MMHOOK_Celeste, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
             <HintPath>..\lib-stripped\MMHOOK_Celeste.dll</HintPath>
-            <Private>False</Private>
         </Reference>
     </ItemGroup>
     <ItemGroup>

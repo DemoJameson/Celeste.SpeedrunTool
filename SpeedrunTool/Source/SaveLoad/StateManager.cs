@@ -425,11 +425,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private void ClearState(bool clearEndPoint) {
-            if (Engine.Scene is Level level && IsNotCollectingHeart(level) && !level.Completed) {
-                level.Frozen = false;
-                level.PauseLock = false;
-            }
-
             RoomTimerManager.Instance.ClearPbTimes(clearEndPoint);
 
             playingEventInstances.Clear();

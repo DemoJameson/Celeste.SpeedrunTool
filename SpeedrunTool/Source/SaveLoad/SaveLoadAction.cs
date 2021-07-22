@@ -131,11 +131,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         foreach (FieldInfo fieldInfo in fieldInfos) {
                             object value = fieldInfo.GetValue(null);
                             Type fieldType = fieldInfo.FieldType;
+
+                            // 避免 SL SaveLoadIcon.Instance 这种不需要克隆的字段
+                            if (fieldType == type && value is Entity entity && entity.TagCheck(Tags.Global)) {
+                                continue;
+                            }
+
                             if (value == null) {
                                 values[fieldInfo.Name] = null;
-                            } else if (fieldType.IsSimpleClass(extraType => {
-                                return fieldType == type || fieldType == typeof(MTexture) || fieldType == typeof(CrystalStaticSpinner);
-                            })) {
+                            } else if (fieldType.IsSimpleClass(_ => fieldType == type || fieldType == typeof(MTexture) || fieldType == typeof(CrystalStaticSpinner))) {
                                 values[fieldInfo.Name] = value;
                             }
                         }
@@ -150,6 +154,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         Dictionary<string, object> values = clonedDict[type];
                         // ("\n\n" + string.Join("\n", values.Select(pair => type.FullName + " " + pair.Key + " " + pair.Value))).DebugLog();
                         foreach (KeyValuePair<string, object> pair in values) {
+                            object value = pair.Value;
+
+                            // 避免 SL SaveLoadIcon.Instance 这种不需要克隆的字段
+                            if (value == null && type.GetFieldValue(pair.Key) is Entity entity && entity.GetType() == type && entity.TagCheck(Tags.Global)) {
+                                continue;
+                            }
+
                             type.SetFieldValue(pair.Key, pair.Value);
                         }
                     }

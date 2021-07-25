@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using FMOD;
 using FMOD.Studio;
 using Monocle;
 using MonoMod.Cil;
@@ -42,6 +43,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             foreach (SaveLoadAction saveLoadAction in All) {
                 saveLoadAction.savedValues.Clear();
             }
+            CachedAudios.Clear();
         }
 
         private static void SaveStaticFieldValues(Dictionary<Type, Dictionary<string, object>> values, Type type,
@@ -70,13 +72,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         internal static void OnLoad() {
             SupportCalcRandom();
             SupportMInput();
+            SupportAudioMusic();
+            MuteSomeAudios();
+            On.FMOD.Studio.EventDescription.createInstance += EventDescriptionOnCreateInstance;
         }
 
         // code mod 需要等待此时才正式加载，才能通过 Type 查找
         internal static void OnLoadContent() {
             InitStaticFields();
             SupportEntitySimpleStaticFields();
-            SupportAudioMusic();
             SupportMaxHelpingHand();
             SupportPandorasBox();
             SupportCrystallineHelper();
@@ -88,6 +92,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         internal static void OnUnload() {
             All.Clear();
+            On.FMOD.Studio.EventDescription.createInstance -= EventDescriptionOnCreateInstance;
         }
 
         private static Dictionary<Type, FieldInfo[]> entityStaticFields;
@@ -139,7 +144,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                             if (value == null) {
                                 values[fieldInfo.Name] = null;
-                            } else if (fieldType.IsSimpleClass(_ => fieldType == type || fieldType == typeof(MTexture) || fieldType == typeof(CrystalStaticSpinner))) {
+                            } else if (fieldType.IsSimpleClass(_ =>
+                                fieldType == type || fieldType == typeof(MTexture) || fieldType == typeof(CrystalStaticSpinner))) {
                                 values[fieldInfo.Name] = value;
                             }
                         }
@@ -157,7 +163,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                             object value = pair.Value;
 
                             // 避免 SL SaveLoadIcon.Instance 这种不需要克隆的字段
-                            if (value == null && type.GetFieldValue(pair.Key) is Entity entity && entity.GetType() == type && entity.TagCheck(Tags.Global)) {
+                            if (value == null && type.GetFieldValue(pair.Key) is Entity entity && entity.GetType() == type &&
+                                entity.TagCheck(Tags.Global)) {
                                 continue;
                             }
 
@@ -189,6 +196,35 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     type.SetPropertyValue("GamePads", dictionary["GamePads"]);
                 }
             ));
+        }
+
+        private static readonly HashSet<string> RequireMuteAudios = new() {
+            "event:/game/general/seed_complete_main",
+            "event:/game/general/cassette_get",
+        };
+
+        private static readonly Dictionary<string, EventInstance> CachedAudios = new();
+
+        private static void MuteSomeAudios() {
+            All.Add(new SaveLoadAction(loadState: (_, _) => {
+                foreach (string path in RequireMuteAudios) {
+                    if (CachedAudios.TryGetValue(path, out EventInstance sfx)) {
+                        sfx.setVolume(0f);
+                        CachedAudios.Remove(path);
+                    }
+                }
+            }));
+        }
+
+        private static RESULT EventDescriptionOnCreateInstance(On.FMOD.Studio.EventDescription.orig_createInstance orig, EventDescription self,
+            out EventInstance instance) {
+            RESULT result = orig(self, out instance);
+
+            if (instance != null && self.getPath(out string path) == RESULT.OK && path != null && RequireMuteAudios.Contains(path)) {
+                CachedAudios.Add(path, instance);
+            }
+
+            return result;
         }
 
         private static void SupportAudioMusic() {
@@ -256,7 +292,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     On.Celeste.CrystalStaticSpinner.hook_GetHue hookGetHue
             ) {
                 All.Add(new SaveLoadAction(
-                    loadState: (savedValues, _) => {
+                    loadState: (_, _) => {
                         if ((bool) colorControllerType.GetFieldValue("rainbowSpinnerHueHooked")) {
                             On.Celeste.CrystalStaticSpinner.GetHue -= hookGetHue;
                             On.Celeste.CrystalStaticSpinner.GetHue += hookGetHue;
@@ -267,7 +303,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 ));
             }
 
-            if (Type.GetType("Celeste.Mod.MaxHelpingHand.Entities.SeekerBarrierColorController, MaxHelpingHand") is { } seekerBarrierColorControllerType) {
+            if (Type.GetType("Celeste.Mod.MaxHelpingHand.Entities.SeekerBarrierColorController, MaxHelpingHand") is
+                { } seekerBarrierColorControllerType) {
                 All.Add(new SaveLoadAction(
                     loadState: (savedValues, _) => {
                         if ((bool) seekerBarrierColorControllerType.GetFieldValue("seekerBarrierRendererHooked")) {
@@ -349,7 +386,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 ));
             }
 
-            if (Type.GetType("Celeste.Mod.SpringCollab2020.Entities.RainbowSpinnerColorAreaController, SpringCollab2020") is { } colorAreaControllerType
+            if (Type.GetType("Celeste.Mod.SpringCollab2020.Entities.RainbowSpinnerColorAreaController, SpringCollab2020") is
+                    { } colorAreaControllerType
                 && Delegate.CreateDelegate(typeof(On.Celeste.CrystalStaticSpinner.hook_GetHue),
                         colorAreaControllerType.GetMethodInfo("getRainbowSpinnerHue")) is
                     On.Celeste.CrystalStaticSpinner.hook_GetHue hookSpinnerGetHue
@@ -366,7 +404,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 ));
             }
 
-            if (Type.GetType("Celeste.Mod.SpringCollab2020.Entities.SpikeJumpThroughController, SpringCollab2020") is { } spikeJumpThroughControllerType
+            if (Type.GetType("Celeste.Mod.SpringCollab2020.Entities.SpikeJumpThroughController, SpringCollab2020") is
+                    { } spikeJumpThroughControllerType
                 && Delegate.CreateDelegate(typeof(On.Celeste.Spikes.hook_OnCollide),
                     spikeJumpThroughControllerType.GetMethodInfo("OnCollideHook")) is On.Celeste.Spikes.hook_OnCollide onCollideHook
             ) {

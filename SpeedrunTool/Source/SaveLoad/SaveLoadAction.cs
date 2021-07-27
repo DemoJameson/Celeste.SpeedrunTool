@@ -466,7 +466,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             // 解决读档后冲进 DreamSpinner 会被刺死
             if (Type.GetType("Celeste.Mod.IsaGrabBag.GrabBagModule, IsaMods") is { } grabBagModuleType) {
-                "Celeste.Mod.IsaGrabBag.GrabBagModule".Log();
                 All.Add(new SaveLoadAction(
                     (savedValues, _) => SaveStaticFieldValues(savedValues, grabBagModuleType, "ZipLineState".ToBackingField(),
                         "playerInstance".ToBackingField()),

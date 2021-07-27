@@ -220,8 +220,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             out EventInstance instance) {
             RESULT result = orig(self, out instance);
 
-            if (instance != null && self.getPath(out string path) == RESULT.OK && path != null && RequireMuteAudios.Contains(path)) {
-                CachedAudios.Add(path, instance);
+            if (StateManager.Instance.IsSaved && instance != null && self.getPath(out string path) == RESULT.OK && path != null && RequireMuteAudios.Contains(path)) {
+                CachedAudios[path] = instance;
             }
 
             return result;

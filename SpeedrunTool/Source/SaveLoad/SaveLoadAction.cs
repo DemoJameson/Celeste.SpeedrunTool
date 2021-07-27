@@ -43,7 +43,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             foreach (SaveLoadAction saveLoadAction in All) {
                 saveLoadAction.savedValues.Clear();
             }
-            CachedAudios.Clear();
+            RequireMuteAudios.Clear();
         }
 
         private static void SaveStaticFieldValues(Dictionary<Type, Dictionary<string, object>> values, Type type,
@@ -73,7 +73,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SupportCalcRandom();
             SupportMInput();
             SupportAudioMusic();
-            MuteSomeAudios();
+            MuteAnnoyingAudios();
             On.FMOD.Studio.EventDescription.createInstance += EventDescriptionOnCreateInstance;
         }
 
@@ -198,7 +198,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             ));
         }
 
-        private static readonly HashSet<string> RequireMuteAudios = new() {
+        private static readonly HashSet<string> RequireMuteAudioPaths = new() {
             "event:/game/general/strawberry_get",
             "event:/game/general/strawberry_laugh",
             "event:/game/general/strawberry_flyaway",
@@ -210,14 +210,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             "event:/char/badeline/boss_laser_fire",
         };
 
-        private static readonly List<EventInstance> CachedAudios = new();
+        private static readonly List<EventInstance> RequireMuteAudios = new();
 
-        private static void MuteSomeAudios() {
+        private static void MuteAnnoyingAudios() {
             All.Add(new SaveLoadAction(loadState: (_, _) => {
-                foreach (EventInstance sfx in CachedAudios) {
+                foreach (EventInstance sfx in RequireMuteAudios) {
                     sfx.setVolume(0f);
                 }
-                CachedAudios.Clear();
+                RequireMuteAudios.Clear();
             }));
         }
 
@@ -225,8 +225,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             out EventInstance instance) {
             RESULT result = orig(self, out instance);
 
-            if (StateManager.Instance.IsSaved && instance != null && self.getPath(out string path) == RESULT.OK && path != null && RequireMuteAudios.Contains(path)) {
-                CachedAudios.Add(instance);
+            if (StateManager.Instance.IsSaved && instance != null && self.getPath(out string path) == RESULT.OK && path != null && RequireMuteAudioPaths.Contains(path)) {
+                RequireMuteAudios.Add(instance);
             }
 
             return result;

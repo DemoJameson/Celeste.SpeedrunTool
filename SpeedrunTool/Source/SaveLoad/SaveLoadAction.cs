@@ -199,20 +199,25 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private static readonly HashSet<string> RequireMuteAudios = new() {
+            "event:/game/general/strawberry_get",
+            "event:/game/general/strawberry_laugh",
+            "event:/game/general/strawberry_flyaway",
             "event:/game/general/seed_complete_main",
+            "event:/game/general/key_get",
             "event:/game/general/cassette_get",
+            "event:/game/05_mirror_temple/eyewall_destroy",
+            "event:/char/badeline/boss_hug",
+            "event:/char/badeline/boss_laser_fire",
         };
 
-        private static readonly Dictionary<string, EventInstance> CachedAudios = new();
+        private static readonly List<EventInstance> CachedAudios = new();
 
         private static void MuteSomeAudios() {
             All.Add(new SaveLoadAction(loadState: (_, _) => {
-                foreach (string path in RequireMuteAudios) {
-                    if (CachedAudios.TryGetValue(path, out EventInstance sfx)) {
-                        sfx.setVolume(0f);
-                        CachedAudios.Remove(path);
-                    }
+                foreach (EventInstance sfx in CachedAudios) {
+                    sfx.setVolume(0f);
                 }
+                CachedAudios.Clear();
             }));
         }
 
@@ -221,7 +226,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             RESULT result = orig(self, out instance);
 
             if (StateManager.Instance.IsSaved && instance != null && self.getPath(out string path) == RESULT.OK && path != null && RequireMuteAudios.Contains(path)) {
-                CachedAudios[path] = instance;
+                CachedAudios.Add(instance);
             }
 
             return result;

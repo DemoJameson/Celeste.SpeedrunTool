@@ -171,6 +171,10 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return methodInfo.GetBaseDefinition().DeclaringType != methodInfo.DeclaringType;
         }
 
+        public static string ToBackingField(this string fieldName) {
+            return $"<{fieldName}>k__BackingField";
+        }
+
         public static MethodInfo GetMethodInfo(this Type type, string name, BindingFlags bindingFlags = StaticInstanceAnyVisibility) {
             string key = $"ReflectionExtensions-GetMethodInfo-{name}-{bindingFlags}";
 

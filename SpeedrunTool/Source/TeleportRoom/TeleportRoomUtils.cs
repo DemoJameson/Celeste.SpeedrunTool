@@ -114,14 +114,14 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
 
+                level.Completed = false;
+                level.InCutscene = false;
+                level.SkippingCutscene = false;
+
                 // 修复：章节计时器在章节完成隐藏后传送无法重新显示
                 level.Add(new SpeedrunTimerDisplay());
                 level.LoadLevel(Player.IntroTypes.Respawn);
                 level.Entities.UpdateLists();
-
-                level.Completed = false;
-                level.InCutscene = false;
-                level.SkippingCutscene = false;
 
                 // 节奏块房间传送出来时恢复音乐
                 if (level.Tracker.GetEntities<CassetteBlock>().Count == 0) {
@@ -358,7 +358,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                 RoomHistory.RemoveRange(HistoryIndex + 1, RoomHistory.Count - HistoryIndex - 1);
             }
 
-            // 增加记录          
+            // 增加记录
             RecordRoom(currentSession);
         }
 

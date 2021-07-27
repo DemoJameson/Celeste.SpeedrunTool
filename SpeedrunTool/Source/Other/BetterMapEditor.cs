@@ -184,6 +184,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                 FixCoreRefillDash(session);
                 FixBadelineChase(session, spawnPoint);
                 FixHugeMessRoomLight(session);
+                FixMirrorTempleColorGrade(session);
                 FixFarewellCassetteRoomColorGrade(session, spawnPoint);
                 FixFarewellIntro02LaunchDashes(session);
             }
@@ -240,6 +241,12 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             }
         }
 
+        private void FixMirrorTempleColorGrade(Session session) {
+            if (session.Area.ToString() == "5") {
+                session.ColorGrade = session.Level == "void" ? "templevoid" : null;
+            }
+        }
+
         private void FixCoreMode(Session session) {
             if (session.Area.ID == 9) {
                 session.CoreMode = coreIceRooms.Contains(session.Area + session.Level) ? Session.CoreModes.Cold : Session.CoreModes.Hot;
@@ -256,6 +263,6 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         private static readonly Lazy<BetterMapEditor> Lazy = new(() => new BetterMapEditor());
         public static BetterMapEditor Instance => Lazy.Value;
         private BetterMapEditor() { }
-        // @formatter:on 
+        // @formatter:on
     }
 }

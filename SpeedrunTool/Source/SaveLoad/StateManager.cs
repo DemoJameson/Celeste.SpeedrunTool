@@ -82,6 +82,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Celeste.Level.Update += CheckButtonsAndUpdateBackdrop;
             On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
+            On.Monocle.Scene.BeforeUpdate += SceneOnBeforeUpdate;
         }
 
         public void OnUnload() {
@@ -93,6 +94,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Celeste.Level.Update -= CheckButtonsAndUpdateBackdrop;
             On.Monocle.Scene.Begin -= ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End -= AutoLoadStateWhenDeath;
+            On.Monocle.Scene.BeforeUpdate -= SceneOnBeforeUpdate;
         }
 
         private void CheckButtonsAndUpdateBackdrop(On.Celeste.Level.orig_Update orig, Level self) {
@@ -151,6 +153,25 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             } else {
                 orig(self);
             }
+        }
+        
+        private void SceneOnBeforeUpdate(On.Monocle.Scene.orig_BeforeUpdate orig, Scene self) {
+            if (SpeedrunToolModule.Enabled && self is Level level && State == States.Waiting && !level.PausedNew()
+                && (Input.Dash.Pressed
+                    || Input.Grab.Check
+                    || Input.Jump.Check
+                    || Input.Pause.Check
+                    || Input.Talk.Check
+                    || Input.MoveX != 0
+                    || Input.MoveY != 0
+                    || Input.Aim.Value != Vector2.Zero
+                    || GetVirtualButton(Mappings.Load).Released
+                    || typeof(Input).GetFieldValue("DemoDash")?.GetPropertyValue("Pressed") as bool? == true
+                    || typeof(Input).GetFieldValue("CrouchDash")?.GetPropertyValue("Pressed") as bool? == true
+                )) {
+                LoadStateComplete(level);
+            }
+            orig(self);
         }
 
         #endregion Hook
@@ -672,20 +693,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 Mappings.SwitchAutoLoadState.ConsumePress();
                 Settings.AutoLoadStateAfterDeath = !Settings.AutoLoadStateAfterDeath;
                 SpeedrunToolModule.Instance.SaveSettings();
-            } else if (State == States.Waiting && !level.PausedNew()
-                                               && (Input.Dash.Pressed
-                                                   || Input.Grab.Check
-                                                   || Input.Jump.Check
-                                                   || Input.Pause.Check
-                                                   || Input.Talk.Check
-                                                   || Input.MoveX != 0
-                                                   || Input.MoveY != 0
-                                                   || Input.Aim.Value != Vector2.Zero
-                                                   || GetVirtualButton(Mappings.Load).Released
-                                                   || typeof(Input).GetFieldValue("DemoDash")?.GetPropertyValue("Pressed") as bool? == true
-                                                   || typeof(Input).GetFieldValue("CrouchDash")?.GetPropertyValue("Pressed") as bool? == true
-                                               )) {
-                LoadStateComplete(level);
             }
         }
 

@@ -22,22 +22,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             () => Type.GetType("Celeste.Mod.CollabUtils2.UI.InGameOverworldHelper, CollabUtils2")?.GetPropertyInfo("IsOpen")
         );
 
-        private static readonly Lazy<bool> IsD3D = new(() => {
-            if (Environment.OSVersion.Platform == PlatformID.Win32NT) {
-                Version currentVersion = Celeste.Instance.Version;
-                Version version1312 = new(1, 3, 1, 2);
-                bool fna = typeof(Game).Assembly.FullName.Contains("FNA");
-                if (currentVersion <= version1312) {
-                    return !fna;
-                } else {
-                    string driver = Environment.GetEnvironmentVariable("FNA3D_FORCE_DRIVER");
-                    return !fna || string.IsNullOrEmpty(driver) || driver == "D3D11";
-                }
-            }
-
-            return false;
-        });
-
         // public for tas
         public bool IsSaved => savedLevel != null;
         public States State { get; private set; } = States.None;
@@ -66,7 +50,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             Saving,
             Loading,
             Waiting,
-            PreCloning
         }
 
         private readonly HashSet<EventInstance> playingEventInstances = new();
@@ -98,14 +81,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private void CheckButtonsAndUpdateBackdrop(On.Celeste.Level.orig_Update orig, Level self) {
-            if (State == States.PreCloning) {
-                if (preCloneTask?.IsCompleted == true) {
-                    LoadState(false);
-                }
-
-                return;
-            }
-
             orig(self);
             CheckButton(self);
 
@@ -320,12 +295,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             if (tas && !SavedByTas) {
-                return false;
-            }
-
-            // TODO FIXME: 使用非 D3D 驱动在大房间加载状态时有可能在 preCloneTask?.Result 处死锁，原因未知，目前通过等待预克隆完成的方式规避这个问题
-            if (!tas && !IsD3D.Value && preCloneTask?.IsCompleted == false) {
-                State = States.PreCloning;
                 return false;
             }
 

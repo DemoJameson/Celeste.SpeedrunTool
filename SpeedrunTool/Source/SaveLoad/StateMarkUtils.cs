@@ -88,13 +88,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             ILLabel beforeInstr = cursor.DefineLabel();
             cursor.Emit(OpCodes.Brfalse, beforeInstr);
 
-            cursor.Emit(OpCodes.Ldstr, "c2e6f2");
+            cursor.Emit(OpCodes.Ldstr, "afdded");
             cursor.Emit(OpCodes.Call, typeof(Calc).GetMethod("HexToColor", new[] {typeof(string)}));
             cursor.Emit(OpCodes.Ldarg, 6);
             cursor.Emit(OpCodes.Call, typeof(Color).GetMethod("op_Multiply"));
             cursor.Emit(OpCodes.Stloc, 5);
 
-            cursor.Emit(OpCodes.Ldstr, "93c0cf");
+            cursor.Emit(OpCodes.Ldstr, "8fc7db");
             cursor.Emit(OpCodes.Call, typeof(Calc).GetMethod("HexToColor", new[] {typeof(string)}));
             cursor.Emit(OpCodes.Ldarg, 6);
             cursor.Emit(OpCodes.Call, typeof(Color).GetMethod("op_Multiply"));

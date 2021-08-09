@@ -67,13 +67,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                     if (sourceObj is Entity entity
                         && entity.TagCheck(Tags.Global)
-                        && entity is not CassetteBlockManager
-                        && entity is not SeekerBarrierRenderer
-                        && entity is not LightningRenderer
-                        && entity is not SpeedrunTimerDisplay
-                        // Fixes: Glyph Teleport Area Effect
-                        && entity.GetType().FullName != "Celeste.Mod.AcidHelper.Entities.InstantTeleporterRenderer"
-                        && entity.GetType().FullName != "VivHelper.Entities.HoldableBarrierRenderer"
+                        && !StateManager.Instance.IsRequireClonedGlobalEntity(entity)
+                        && !StateManager.Instance.IsRequireClonedRenderer(entity)
                     ) {
                         return sourceObj;
                     }

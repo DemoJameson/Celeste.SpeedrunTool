@@ -565,11 +565,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             Distort.GameRate = savedDistortGameRate;
         }
 
-        // movePlayerToFirst = true: 调用游戏本身方法移除房间内 entities 时必须最早清楚 Player，因为它关联着许多 Trigger
+        // movePlayerToFirst = true: 调用游戏本身方法移除房间内 entities 时必须最早移除 Player，因为它关联着许多 Trigger
         // movePlayerToFirst = false: 克隆和恢复 entities 时必须严格按照相同的顺序，因为这会影响到 entity.Depth 从而影响到 entity.Update 的顺序
         private List<Entity> GetEntitiesExcludingGlobal(Level level, bool movePlayerToFirst) {
             List<Entity> result = level.Entities.Where(
-                entity => !entity.TagCheck(Tags.Global) || entity is CassetteBlockManager).ToList();
+                entity => !entity.TagCheck(Tags.Global) || IsRequireClonedGlobalEntity(entity)).ToList();
 
             if (movePlayerToFirst) {
                 // Player 被 Remove 时会调用进入其中的 Trigger.OnLeave 方法，必须最早清除，不然会抛出异常
@@ -581,34 +581,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
             }
 
-            // 修复：章节计时器在章节完成隐藏后读档无法重新显示
-            if (level.Entities.FindFirst<SpeedrunTimerDisplay>() is Entity speedrunTimerDisplay) {
-                result.Add(speedrunTimerDisplay);
-            }
-
-            // 存储的 Entity 被清除时会调用 Renderer，所以 Renderer 应该放到最后
-            if (level.Tracker.GetEntity<SeekerBarrierRenderer>() is Entity seekerBarrierRenderer) {
-                result.Add(seekerBarrierRenderer);
-            }
-
-            // 同上
-            if (level.Tracker.GetEntity<LightningRenderer>() is Entity lightningRenderer) {
-                result.Add(lightningRenderer);
-            }
-
-            // 同上
-            if (level.Entities.FirstOrDefault(entity =>
-                entity.GetType().FullName == "Celeste.Mod.AcidHelper.Entities.InstantTeleporterRenderer") is { } teleporterRenderer) {
-                result.Add(teleporterRenderer);
-            }
-
-            // 同上
-            if (level.Entities.FirstOrDefault(entity =>
-                entity.GetType().FullName == "VivHelper.Entities.HoldableBarrierRenderer") is { } holdableBarrierRenderer) {
-                result.Add(holdableBarrierRenderer);
-            }
+            // renderer 一般是 Global 并且携带其它 entity 的引用，所以需要克隆并且放到最后才移除
+            result.AddRange(level.Entities.Where(IsRequireClonedRenderer));
 
             return result;
+        }
+
+        public bool IsRequireClonedRenderer(Entity entity) {
+            return entity.TagCheck(Tags.Global) && entity.GetType().FullName.EndsWith("Renderer");
+        }
+        
+        public bool IsRequireClonedGlobalEntity(Entity entity) {
+            return entity is CassetteBlockManager or SpeedrunTimerDisplay;
         }
 
         private List<Entity> GetEntitiesNeedDeepClone(Level level) {

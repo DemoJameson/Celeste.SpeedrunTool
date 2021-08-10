@@ -72,8 +72,8 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingIgnore] public Buttons? ControllerCheckDeathStatistics { get; set; }
         [SettingIgnore] public Buttons? ControllerLastRoom { get; set; }
         [SettingIgnore] public Buttons? ControllerNextRoom { get; set; }
-
         [SettingIgnore] public Buttons? ControllerAutoLoadStateAfterDeath { get; set; }
+        [SettingIgnore] public Buttons? ControllerToggleFullscreen { get; set; }
 
         [SettingIgnore] public List<Keys> KeyboardQuickSave { get; set; } = GetButtonInfo(Mappings.Save).DefaultKeys.ToList();
 
@@ -103,9 +103,12 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingIgnore] public List<Keys> KeyboardLastRoom { get; set; } = GetButtonInfo(Mappings.LastRoom).DefaultKeys.ToList();
 
         [SettingIgnore] public List<Keys> KeyboardNextRoom { get; set; } = GetButtonInfo(Mappings.NextRoom).DefaultKeys.ToList();
-
+        
         [SettingIgnore]
         public List<Keys> KeyboardAutoLoadStateAfterDeath { get; set; } = GetButtonInfo(Mappings.SwitchAutoLoadState).DefaultKeys.ToList();
+        
+        [SettingIgnore]
+        public List<Keys> KeyboardToggleFullscreen { get; set; } = GetButtonInfo(Mappings.ToggleFullscreen).DefaultKeys.ToList();
 
         #endregion ButtonConfig
     }

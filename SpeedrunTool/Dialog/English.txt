@@ -87,6 +87,7 @@ SPEEDRUN_TOOL_SET_ADDITIONAL_END_POINT=      Set Room Timer Additional End Point
 SPEEDRUN_TOOL_TELEPORT_TO_LAST_ROOM=         Teleport to Last Room
 SPEEDRUN_TOOL_TELEPORT_TO_NEXT_ROOM=         Teleport to Next Room
 SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE=        Toggle Auto Load State
+SPEEDRUN_TOOL_TOGGLE_FULLSCREEN=             Toggle Fullscreen
 
 # ================================== Death Statistics ==================================
 SPEEDRUN_TOOL_DEATH_STATISTICS=         Death Statistics

@@ -67,6 +67,7 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string TeleportToLastRoom = "SPEEDRUN_TOOL_TELEPORT_TO_LAST_ROOM";
         public const string TeleportToNextRoom = "SPEEDRUN_TOOL_TELEPORT_TO_NEXT_ROOM";
         public const string SwitchAutoLoadState = "SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE";
+        public const string ToggleFullscreen = "SPEEDRUN_TOOL_TOGGLE_FULLSCREEN";
 
         // Death Statistics
         public const string MaxNumberOfDeathData = "SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA";

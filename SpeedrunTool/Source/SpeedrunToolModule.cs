@@ -48,6 +48,7 @@ namespace Celeste.Mod.SpeedrunTool {
             RoomTimerManager.Instance.Load();
             TeleportRoomUtils.Load();
             StateManager.Instance.OnLoad();
+            ButtonConfigUi.Load();
         }
 
         // Unload the entirety of your mod's content, remove any event listeners and undo all hooks.
@@ -58,6 +59,7 @@ namespace Celeste.Mod.SpeedrunTool {
             RoomTimerManager.Instance.Unload();
             TeleportRoomUtils.Unload();
             StateManager.Instance.OnUnload();
+            ButtonConfigUi.Unload();
         }
 
         // Optional, initialize anything after Celeste has initialized itself properly.

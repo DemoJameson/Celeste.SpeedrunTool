@@ -6,9 +6,29 @@ using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Monocle;
+using CelesteSettings = Celeste.Settings;
 
 namespace Celeste.Mod.SpeedrunTool.Other {
+    [Tracked]
     public class ButtonConfigUi : TextMenu {
+        public static void Load() {
+            On.Monocle.Scene.Update += SceneOnUpdate;
+        }
+
+        public static void Unload() {
+            On.Monocle.Scene.Update -= SceneOnUpdate;
+        }
+
+        private static void SceneOnUpdate(On.Monocle.Scene.orig_Update orig, Scene self) {
+            orig(self);
+            if (Mappings.ToggleFullscreen.Pressed()) {
+                Mappings.SwitchAutoLoadState.ConsumePress();
+                CelesteSettings.Instance.Fullscreen = !CelesteSettings.Instance.Fullscreen;
+                CelesteSettings.Instance.ApplyScreen();
+                UserIO.SaveHandler(false, true);
+            }
+        }
+
         private static readonly List<Buttons> AllButtons = new() {
             Buttons.A,
             Buttons.B,
@@ -26,20 +46,20 @@ namespace Celeste.Mod.SpeedrunTool.Other {
 
         static ButtonConfigUi() {
             if (Celeste.Instance.Version >= new Version(1, 3, 3, 12)) {
-               AllButtons.AddRange(new[] {
-                   Buttons.DPadUp,
-                   Buttons.DPadDown,
-                   Buttons.DPadLeft,
-                   Buttons.DPadRight,
-                   Buttons.LeftThumbstickUp,
-                   Buttons.LeftThumbstickDown,
-                   Buttons.LeftThumbstickLeft,
-                   Buttons.LeftThumbstickRight,
-                   Buttons.RightThumbstickUp,
-                   Buttons.RightThumbstickDown,
-                   Buttons.RightThumbstickLeft,
-                   Buttons.RightThumbstickRight,
-               }); 
+                AllButtons.AddRange(new[] {
+                    Buttons.DPadUp,
+                    Buttons.DPadDown,
+                    Buttons.DPadLeft,
+                    Buttons.DPadRight,
+                    Buttons.LeftThumbstickUp,
+                    Buttons.LeftThumbstickDown,
+                    Buttons.LeftThumbstickLeft,
+                    Buttons.LeftThumbstickRight,
+                    Buttons.RightThumbstickUp,
+                    Buttons.RightThumbstickDown,
+                    Buttons.RightThumbstickLeft,
+                    Buttons.RightThumbstickRight,
+                });
             }
         }
 
@@ -136,7 +156,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                     SetButton = button => Settings.ControllerSetAdditionalEndPoint = button,
                     GetKeys = () => Settings.KeyboardSetAdditionalEndPoint,
                     SetKeys = keys => Settings.KeyboardSetAdditionalEndPoint = keys,
-                    DefaultKeys = new Keys[]{},
+                    DefaultKeys = new Keys[] { },
                     GetLabel = () => DialogIds.SetAdditionalEndPoint.DialogClean(),
                 }
             }, {
@@ -172,8 +192,17 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                     SetButton = button => Settings.ControllerAutoLoadStateAfterDeath = button,
                     GetKeys = () => Settings.KeyboardAutoLoadStateAfterDeath,
                     SetKeys = keys => Settings.KeyboardAutoLoadStateAfterDeath = keys,
-                    DefaultKeys = new Keys[]{} ,
+                    DefaultKeys = new Keys[] { },
                     GetLabel = () => DialogIds.SwitchAutoLoadState.DialogClean(),
+                }
+            }, {
+                Mappings.ToggleFullscreen, new ButtonInfo {
+                    GetButton = () => Settings.ControllerToggleFullscreen,
+                    SetButton = button => Settings.ControllerToggleFullscreen = button,
+                    GetKeys = () => Settings.KeyboardToggleFullscreen,
+                    SetKeys = keys => Settings.KeyboardToggleFullscreen = keys,
+                    DefaultKeys = new Keys[] { },
+                    GetLabel = () => DialogIds.ToggleFullscreen.DialogClean(),
                 }
             }
         };
@@ -308,6 +337,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                     }
                 }
             }
+
             info.UpdateVirtualButton();
             Reload(Selection);
         }
@@ -322,6 +352,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                     if (!info.FixedDefaultKeys) {
                         info.GetKeys().Clear();
                     }
+
                     info.GetKeys().Add(key);
                     foreach (ButtonInfo otherInfo in ButtonInfos.Values) {
                         if (otherInfo == info) {
@@ -334,6 +365,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                         }
                     }
                 }
+
                 info.UpdateVirtualButton();
             });
             Reload(Selection);
@@ -382,6 +414,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                     index %= ButtonInfos.Count;
                     keyboard = false;
                 }
+
                 ButtonInfo buttonInfo = ButtonInfos.Values.ToList()[index];
                 if (keyboard) {
                     buttonInfo.GetKeys().Clear();
@@ -446,17 +479,24 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             LastRoom,
             NextRoom,
             SwitchAutoLoadState,
+            ToggleFullscreen,
         }
     }
 
     internal static class MappingsExtensions {
         private static readonly Lazy<FieldInfo> TasRunning = new(() =>
-             Type.GetType("TAS.Manager, CelesteTAS-EverestInterop")?.GetFieldInfo("Running")
+            Type.GetType("TAS.Manager, CelesteTAS-EverestInterop")?.GetFieldInfo("Running")
         );
+
         public static bool Pressed(this ButtonConfigUi.Mappings mappings) {
             if (TasRunning.Value?.GetValue(null) as bool? == true) {
                 return false;
             }
+
+            if (Engine.Scene.Tracker.GetEntity<ButtonConfigUi>() != null) {
+                return false;
+            }
+
             return ButtonConfigUi.GetVirtualButton(mappings).Pressed;
         }
 

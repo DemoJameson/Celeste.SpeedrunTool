@@ -88,6 +88,7 @@ SPEEDRUN_TOOL_SET_ADDITIONAL_END_POINT=      标记多个房间计时器终点
 SPEEDRUN_TOOL_TELEPORT_TO_LAST_ROOM=         传送到上个房间
 SPEEDRUN_TOOL_TELEPORT_TO_NEXT_ROOM=         传送到下个房间
 SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE=        开关死亡自动加载状态
+SPEEDRUN_TOOL_TOGGLE_FULLSCREEN=             开关全屏
 
 # ================================== Death Statistics ==================================
 SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA= 死亡数据数量

@@ -12,14 +12,14 @@ namespace Celeste.Mod.SpeedrunTool.Other {
     [Tracked]
     public class ButtonConfigUi : TextMenu {
         public static void Load() {
-            On.Monocle.Scene.Update += SceneOnUpdate;
+            On.Monocle.Scene.BeforeUpdate += SceneOnBeforeUpdate;
         }
 
         public static void Unload() {
-            On.Monocle.Scene.Update -= SceneOnUpdate;
+            On.Monocle.Scene.BeforeUpdate -= SceneOnBeforeUpdate;
         }
 
-        private static void SceneOnUpdate(On.Monocle.Scene.orig_Update orig, Scene self) {
+        private static void SceneOnBeforeUpdate(On.Monocle.Scene.orig_BeforeUpdate orig, Scene self) {
             orig(self);
             if (Mappings.ToggleFullscreen.Pressed()) {
                 Mappings.SwitchAutoLoadState.ConsumePress();
@@ -493,7 +493,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                 return false;
             }
 
-            if (Engine.Scene.Tracker.GetEntity<ButtonConfigUi>() != null) {
+            if (Engine.Scene.Tracker.Entities.TryGetValue(typeof(ButtonConfigUi), out List<Entity> entities) && entities.Count > 0) {
                 return false;
             }
 

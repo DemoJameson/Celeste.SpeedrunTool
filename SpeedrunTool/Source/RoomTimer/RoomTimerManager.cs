@@ -71,8 +71,8 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 return;
             }
 
-            if (Mappings.ResetRoomPb.Pressed() && !self.Paused) {
-                Mappings.ResetRoomPb.ConsumePress();
+            if (Mappings.ResetRoomTimerPb.Pressed() && !self.Paused) {
+                Mappings.ResetRoomTimerPb.ConsumePress();
                 ClearPbTimes();
             }
 

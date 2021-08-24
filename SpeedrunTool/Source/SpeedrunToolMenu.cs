@@ -96,6 +96,14 @@ namespace Celeste.Mod.SpeedrunTool {
                         new TextMenu.OnOff(Dialog.Clean(DialogIds.FastTeleport), Settings.FastTeleport).Change(b => Settings.FastTeleport = b));
 
                     subMenu.Add(new TextMenu.Button(Dialog.Clean(DialogIds.ButtonConfig)).Pressed(() => {
+                        // 修复：在 overworld 界面 hot reload 之后打开按键设置菜单游戏崩溃
+                        if (Engine.Scene.Tracker.Entities is { } entities) {
+                            Type type = typeof(ButtonConfigUi);
+                            if (!entities.ContainsKey(type)) {
+                                entities[type] = new List<Entity>();
+                            }
+                        }
+
                         subMenu.Focused = false;
                         ButtonConfigUi buttonConfigUi = new() {OnClose = () => subMenu.Focused = true};
                         Engine.Scene.Add(buttonConfigUi);

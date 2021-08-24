@@ -140,7 +140,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     || Input.MoveX != 0
                     || Input.MoveY != 0
                     || Input.Aim.Value != Vector2.Zero
-                    || GetVirtualButton(Mappings.Load).Released
+                    || GetVirtualButton(Mappings.LoadState).Released
                     || typeof(Input).GetFieldValue("DemoDash")?.GetPropertyValue("Pressed") as bool? == true
                     || typeof(Input).GetFieldValue("CrouchDash")?.GetPropertyValue("Pressed") as bool? == true
                 )) {
@@ -218,8 +218,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     continue;
                 }
 
-                if (level.Tracker.Entities.ContainsKey(type) && level.Tracker.Entities[type].Count > 0) {
-                    List<Entity> clonedEntities = level.Tracker.Entities[type].DeepCloneShared();
+                Dictionary<Type,List<Entity>> trackerEntities = level.Tracker.Entities;
+                if (trackerEntities.ContainsKey(type) && trackerEntities[type].Count > 0) {
+                    List<Entity> clonedEntities = trackerEntities[type].DeepCloneShared();
                     Dictionary<Entity, int> dictionary = new();
                     for (int i = 0; i < clonedEntities.Count; i++) {
                         dictionary[clonedEntities[i]] = i;
@@ -236,8 +237,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     continue;
                 }
 
-                if (level.Tracker.Components.ContainsKey(type) && level.Tracker.Components[type].Count > 0) {
-                    List<Component> clonedComponents = level.Tracker.Components[type].DeepCloneShared();
+                Dictionary<Type,List<Component>> trackerComponents = level.Tracker.Components;
+                if (trackerComponents.ContainsKey(type) && trackerComponents[type].Count > 0) {
+                    List<Component> clonedComponents = trackerComponents[type].DeepCloneShared();
                     Dictionary<Component, int> dictionary = new();
                     for (int i = 0; i < clonedComponents.Count; i++) {
                         dictionary[clonedComponents[i]] = i;
@@ -491,35 +493,22 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             level.Entities.SetFieldValue("unsorted", false);
             entities.Sort(EntityList.CompareDepth);
 
-            // restore tracker order
-            Dictionary<Type, Dictionary<Entity, int>> orderedTrackerEntities = savedOrderedTrackerEntities.DeepCloneShared();
-            foreach (Type type in orderedTrackerEntities.Keys) {
-                if (!level.Tracker.Entities.ContainsKey(type)) {
+            RestoreTrackerOrder(level.Tracker.Entities, savedOrderedTrackerEntities);
+            RestoreTrackerOrder(level.Tracker.Components, savedOrderedTrackerComponents);
+        }
+
+        private void RestoreTrackerOrder<T>(Dictionary<Type, List<T>> objects, Dictionary<Type, Dictionary<T, int>> orderedTrackerObjects) {
+            orderedTrackerObjects = orderedTrackerObjects.DeepCloneShared();
+            foreach (Type type in orderedTrackerObjects.Keys) {
+                if (!objects.ContainsKey(type)) {
                     continue;
                 }
 
-                Dictionary<Entity, int> orderedDict = orderedTrackerEntities[type];
-                List<Entity> unorderedList = level.Tracker.Entities[type];
-                unorderedList.Sort((entity1, entity2) => {
-                    if (orderedDict.ContainsKey(entity1) && orderedDict.ContainsKey(entity2)) {
-                        return orderedDict[entity1] - orderedDict[entity2];
-                    }
-
-                    return 0;
-                });
-            }
-
-            Dictionary<Type, Dictionary<Component, int>> orderedTrackerComponents = savedOrderedTrackerComponents.DeepCloneShared();
-            foreach (Type type in orderedTrackerComponents.Keys) {
-                if (!level.Tracker.Components.ContainsKey(type)) {
-                    continue;
-                }
-
-                Dictionary<Component, int> orderedDict = orderedTrackerComponents[type];
-                List<Component> unorderedList = level.Tracker.Components[type];
-                unorderedList.Sort((component1, component2) => {
-                    if (orderedDict.ContainsKey(component1) && orderedDict.ContainsKey(component2)) {
-                        return orderedDict[component1] - orderedDict[component2];
+                Dictionary<T, int> orderedDict = orderedTrackerObjects[type];
+                List<T> unorderedList = objects[type];
+                unorderedList.Sort((object1, object2) => {
+                    if (orderedDict.ContainsKey(object1) && orderedDict.ContainsKey(object2)) {
+                        return orderedDict[object1] - orderedDict[object2];
                     }
 
                     return 0;
@@ -626,18 +615,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 return;
             }
 
-            if (Mappings.Save.Pressed()) {
-                Mappings.Save.ConsumePress();
+            if (Mappings.SaveState.Pressed()) {
+                Mappings.SaveState.ConsumePress();
                 SaveState(false);
-            } else if (Mappings.Load.Pressed() && !level.PausedNew() && State == States.None) {
-                Mappings.Load.ConsumePress();
+            } else if (Mappings.LoadState.Pressed() && !level.PausedNew() && State == States.None) {
+                Mappings.LoadState.ConsumePress();
                 if (IsSaved) {
                     LoadState(false);
                 } else if (!level.Frozen) {
                     level.Add(new MiniTextbox(DialogIds.DialogNotSavedStateYet).IgnoreSaveLoad());
                 }
-            } else if (Mappings.Clear.Pressed() && !level.PausedNew() && State == States.None) {
-                Mappings.Clear.ConsumePress();
+            } else if (Mappings.ClearState.Pressed() && !level.PausedNew() && State == States.None) {
+                Mappings.ClearState.ConsumePress();
                 ClearState(true);
                 if (IsNotCollectingHeart(level) && !level.Completed) {
                     level.Add(new MiniTextbox(DialogIds.DialogClearState).IgnoreSaveLoad());

@@ -64,14 +64,10 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         }
 
         public class ButtonInfo {
-            public Func<Buttons?> GetButton;
-            public Action<Buttons?> SetButton;
-            public Func<List<Keys>> GetKeys;
-            public Action<List<Keys>> SetKeys;
             public Keys[] DefaultKeys;
-            public Func<string> GetLabel;
-            public readonly Lazy<VirtualButton> VirtualButton = new(CreateVirtualButton);
             public bool FixedDefaultKeys;
+            public Mappings Mappings;
+            public readonly Lazy<VirtualButton> VirtualButton = new(CreateVirtualButton);
 
             public void UpdateVirtualButton() {
                 List<VirtualButton.Node> nodes = VirtualButton.Value.Nodes;
@@ -79,133 +75,86 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                 nodes.AddRange(GetKeys().Select(key => new VirtualButton.KeyboardKey(key)));
 
                 if (GetButton() != null) {
-                    nodes.Add(new VirtualButton.PadButton(Input.Gamepad, (Buttons) GetButton()));
+                    nodes.Add(new VirtualButton.PadButton(Input.Gamepad, (Buttons)GetButton()));
                 }
+            }
+
+            public Buttons? GetButton() {
+                return (Buttons?)Settings.GetPropertyValue($"Controller{Mappings}");
+            }
+
+            public void SetButton(Buttons? button) {
+                Settings.SetPropertyValue($"Controller{Mappings}", button);
+            }
+
+            public void SetKeys(List<Keys> keys) {
+                Settings.SetPropertyValue($"Keyboard{Mappings}", keys);
+            }
+
+            public List<Keys> GetKeys() {
+                return (List<Keys>)Settings.GetPropertyValue($"Keyboard{Mappings}");
+            }
+
+            public string GetLabel() {
+                return (typeof(DialogIds).GetFieldValue(Mappings.ToString()) as string).DialogClean();
             }
         }
 
-        private static readonly Dictionary<Mappings, ButtonInfo> ButtonInfos = new() {
-            {
-                Mappings.Save,
-                new ButtonInfo {
-                    GetButton = () => Settings.ControllerQuickSave,
-                    SetButton = button => Settings.ControllerQuickSave = button,
-                    GetKeys = () => Settings.KeyboardQuickSave,
-                    SetKeys = keys => Settings.KeyboardQuickSave = keys,
-                    DefaultKeys = new[] {Keys.F7},
-                    GetLabel = () => DialogIds.SaveState.DialogClean(),
-                }
-            }, {
-                Mappings.Load, new ButtonInfo {
-                    GetButton = () => Settings.ControllerQuickLoad,
-                    SetButton = button => Settings.ControllerQuickLoad = button,
-                    GetKeys = () => Settings.KeyboardQuickLoad,
-                    SetKeys = keys => Settings.KeyboardQuickLoad = keys,
-                    DefaultKeys = new[] {Keys.F8},
-                    GetLabel = () => DialogIds.LoadState.DialogClean(),
-                }
-            }, {
-                Mappings.Clear, new ButtonInfo {
-                    GetButton = () => Settings.ControllerQuickClear,
-                    SetButton = button => Settings.ControllerQuickClear = button,
-                    GetKeys = () => Settings.KeyboardQuickClear,
-                    SetKeys = keys => Settings.KeyboardQuickClear = keys,
-                    DefaultKeys = new[] {Keys.F3},
-                    GetLabel = () => DialogIds.ClearState.DialogClean(),
-                }
-            }, {
-                Mappings.OpenDebugMap, new ButtonInfo {
-                    GetButton = () => Settings.ControllerOpenDebugMap,
-                    SetButton = button => Settings.ControllerOpenDebugMap = button,
-                    GetKeys = () => Settings.KeyboardOpenDebugMap,
-                    SetKeys = keys => Settings.KeyboardOpenDebugMap = keys,
-                    DefaultKeys = new[] {Keys.F6},
-                    FixedDefaultKeys = true,
-                    GetLabel = () => DialogIds.OpenDebugMap.DialogClean(),
-                }
-            }, {
-                Mappings.ResetRoomPb, new ButtonInfo {
-                    GetButton = () => Settings.ControllerResetRoomPb,
-                    SetButton = button => Settings.ControllerResetRoomPb = button,
-                    GetKeys = () => Settings.KeyboardResetRoomPb,
-                    SetKeys = keys => Settings.KeyboardResetRoomPb = keys,
-                    DefaultKeys = new[] {Keys.F9},
-                    GetLabel = () => DialogIds.ResetRoomTimerPb.DialogClean(),
-                }
-            }, {
-                Mappings.SwitchRoomTimer, new ButtonInfo {
-                    GetButton = () => Settings.ControllerSwitchRoomTimer,
-                    SetButton = button => Settings.ControllerSwitchRoomTimer = button,
-                    GetKeys = () => Settings.KeyboardSwitchRoomTimer,
-                    SetKeys = keys => Settings.KeyboardSwitchRoomTimer = keys,
-                    DefaultKeys = new[] {Keys.F10},
-                    GetLabel = () => DialogIds.SwitchRoomTimer.DialogClean(),
-                }
-            }, {
-                Mappings.SetEndPoint, new ButtonInfo {
-                    GetButton = () => Settings.ControllerSetEndPoint,
-                    SetButton = button => Settings.ControllerSetEndPoint = button,
-                    GetKeys = () => Settings.KeyboardSetEndPoint,
-                    SetKeys = keys => Settings.KeyboardSetEndPoint = keys,
-                    DefaultKeys = new[] {Keys.F11},
-                    GetLabel = () => DialogIds.SetEndPoint.DialogClean(),
-                }
-            }, {
-                Mappings.SetAdditionalEndPoint, new ButtonInfo {
-                    GetButton = () => Settings.ControllerSetAdditionalEndPoint,
-                    SetButton = button => Settings.ControllerSetAdditionalEndPoint = button,
-                    GetKeys = () => Settings.KeyboardSetAdditionalEndPoint,
-                    SetKeys = keys => Settings.KeyboardSetAdditionalEndPoint = keys,
-                    DefaultKeys = new Keys[] { },
-                    GetLabel = () => DialogIds.SetAdditionalEndPoint.DialogClean(),
-                }
-            }, {
-                Mappings.CheckDeathStatistics, new ButtonInfo {
-                    GetButton = () => Settings.ControllerCheckDeathStatistics,
-                    SetButton = button => Settings.ControllerCheckDeathStatistics = button,
-                    GetKeys = () => Settings.KeyboardCheckDeathStatistics,
-                    SetKeys = keys => Settings.KeyboardCheckDeathStatistics = keys,
-                    DefaultKeys = new[] {Keys.F12},
-                    GetLabel = () => DialogIds.CheckDeathStatistics.DialogClean(),
-                }
-            }, {
-                Mappings.LastRoom, new ButtonInfo {
-                    GetButton = () => Settings.ControllerLastRoom,
-                    SetButton = button => Settings.ControllerLastRoom = button,
-                    GetKeys = () => Settings.KeyboardLastRoom,
-                    SetKeys = keys => Settings.KeyboardLastRoom = keys,
-                    DefaultKeys = new[] {Keys.PageUp},
-                    GetLabel = () => DialogIds.TeleportToLastRoom.DialogClean(),
-                }
-            }, {
-                Mappings.NextRoom, new ButtonInfo {
-                    GetButton = () => Settings.ControllerNextRoom,
-                    SetButton = button => Settings.ControllerNextRoom = button,
-                    GetKeys = () => Settings.KeyboardNextRoom,
-                    SetKeys = keys => Settings.KeyboardNextRoom = keys,
-                    DefaultKeys = new[] {Keys.PageDown},
-                    GetLabel = () => DialogIds.TeleportToNextRoom.DialogClean(),
-                }
-            }, {
-                Mappings.SwitchAutoLoadState, new ButtonInfo {
-                    GetButton = () => Settings.ControllerAutoLoadStateAfterDeath,
-                    SetButton = button => Settings.ControllerAutoLoadStateAfterDeath = button,
-                    GetKeys = () => Settings.KeyboardAutoLoadStateAfterDeath,
-                    SetKeys = keys => Settings.KeyboardAutoLoadStateAfterDeath = keys,
-                    DefaultKeys = new Keys[] { },
-                    GetLabel = () => DialogIds.SwitchAutoLoadState.DialogClean(),
-                }
-            }, {
-                Mappings.ToggleFullscreen, new ButtonInfo {
-                    GetButton = () => Settings.ControllerToggleFullscreen,
-                    SetButton = button => Settings.ControllerToggleFullscreen = button,
-                    GetKeys = () => Settings.KeyboardToggleFullscreen,
-                    SetKeys = keys => Settings.KeyboardToggleFullscreen = keys,
-                    DefaultKeys = new Keys[] { },
-                    GetLabel = () => DialogIds.ToggleFullscreen.DialogClean(),
-                }
+        private static readonly Dictionary<Mappings, ButtonInfo> ButtonInfos = new List<ButtonInfo> {
+            new() {
+                Mappings = Mappings.SaveState,
+                DefaultKeys = new[] { Keys.F7 },
+            },
+            new() {
+                Mappings = Mappings.LoadState,
+                DefaultKeys = new[] { Keys.F8 },
+            },
+            new() {
+                Mappings = Mappings.ClearState,
+                DefaultKeys = new[] { Keys.F3 },
+            },
+            new() {
+                Mappings = Mappings.OpenDebugMap,
+                DefaultKeys = new[] { Keys.F6 },
+                FixedDefaultKeys = true,
+            },
+            new() {
+                Mappings = Mappings.ResetRoomTimerPb,
+                DefaultKeys = new[] { Keys.F9 },
+            },
+            new() {
+                Mappings = Mappings.SwitchRoomTimer,
+                DefaultKeys = new[] { Keys.F10 },
+            },
+            new() {
+                Mappings = Mappings.SetEndPoint,
+                DefaultKeys = new[] { Keys.F11 },
+            },
+            new() {
+                Mappings = Mappings.SetAdditionalEndPoint,
+                DefaultKeys = new Keys[] { },
+            },
+            new() {
+                Mappings = Mappings.CheckDeathStatistics,
+                DefaultKeys = new[] { Keys.F12 },
+            },
+            new() {
+                Mappings = Mappings.TeleportToLastRoom,
+                DefaultKeys = new[] { Keys.PageUp },
+            },
+            new() {
+                Mappings = Mappings.TeleportToNextRoom,
+                DefaultKeys = new[] { Keys.PageDown },
+            },
+            new() {
+                Mappings = Mappings.SwitchAutoLoadState,
+                DefaultKeys = new Keys[] { },
+            },
+            new() {
+                Mappings = Mappings.ToggleFullscreen,
+                DefaultKeys = new Keys[] { },
             }
-        };
+        }.ToDictionary(info => info.Mappings, info => info);
 
         public static ButtonInfo GetButtonInfo(Mappings mappings) {
             return ButtonInfos[mappings];
@@ -243,7 +192,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         private static SpeedrunToolSettings Settings => SpeedrunToolModule.Settings;
 
         private static VirtualButton CreateVirtualButton() {
-            return new(0.08f);
+            return new VirtualButton(0.08f);
         }
 
         private void Reload(int index = -1) {
@@ -290,7 +239,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             Setting setting = new(ButtonInfos[mappingType].GetLabel(), Keys.None);
             setting.Pressed(() => Remap(mappingType));
             if (button != null) {
-                setting.Set(new List<Buttons> {(Buttons) button});
+                setting.Set(new List<Buttons> { (Buttons)button });
             }
 
             Add(setting);
@@ -467,17 +416,17 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         }
 
         public enum Mappings {
-            Save,
-            Load,
-            Clear,
+            SaveState,
+            LoadState,
+            ClearState,
             OpenDebugMap,
-            ResetRoomPb,
+            ResetRoomTimerPb,
             SwitchRoomTimer,
             SetEndPoint,
             SetAdditionalEndPoint,
             CheckDeathStatistics,
-            LastRoom,
-            NextRoom,
+            TeleportToLastRoom,
+            TeleportToNextRoom,
             SwitchAutoLoadState,
             ToggleFullscreen,
         }

@@ -29,21 +29,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private Level savedLevel;
         private List<Entity> savedEntities;
+        private static SaveData savedSaveData;
         private Dictionary<Type, Dictionary<Entity, int>> savedOrderedTrackerEntities;
         private Dictionary<Type, Dictionary<Component, int>> savedOrderedTrackerComponents;
 
         private Task<DeepCloneState> preCloneTask;
 
-        private float savedFreezeTimer;
-        private float savedTimeRate;
-        private float savedDeltaTime;
-        private float savedRawDeltaTime;
-        private ulong savedFrameCounter;
-        private float savedGlitchValue;
-        private float savedDistortAnxiety;
-        private float savedDistortGameRate;
-
         private Dictionary<EverestModule, EverestModuleSession> savedModSessions;
+        private Dictionary<EverestModule, EverestModuleSaveData> savedModSaveDatas;
 
         public enum States {
             None,
@@ -249,18 +242,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
             }
 
-            // External
-            savedFreezeTimer = Engine.FreezeTimer;
-            savedTimeRate = Engine.TimeRate;
-            savedDeltaTime = Engine.DeltaTime;
-            savedRawDeltaTime = Engine.RawDeltaTime;
-            savedFrameCounter = Engine.FrameCounter;
-            savedGlitchValue = Glitch.Value;
-            savedDistortAnxiety = Distort.Anxiety;
-            savedDistortGameRate = Distort.GameRate;
-
-            // Mod 和其他
-            SaveLoadAction.OnSaveState(level);
+            savedSaveData = SaveData.Instance.DeepCloneShared();
 
             // save all mod sessions
             savedModSessions = new Dictionary<EverestModule, EverestModuleSession>();
@@ -269,6 +251,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     savedModSessions[module] = module._Session.DeepCloneShared();
                 }
             }
+
+            savedModSaveDatas = new Dictionary<EverestModule, EverestModuleSaveData>();
+            foreach (EverestModule module in Everest.Modules) {
+                if (module._SaveData != null) {
+                    savedModSaveDatas[module] = module._SaveData.DeepCloneShared();
+                }
+            }
+
+            // Mod 和其他
+            SaveLoadAction.OnSaveState(level);
 
             DeepClonerUtils.ClearSharedDeepCloneState();
 
@@ -324,9 +316,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             RestoreLevelEntities(level);
             RestoreCassetteBlockManager1(level); // 停止播放主音乐，等待播放节奏音乐
             RestoreLevel(level);
-
-            // Mod 和其他
-            SaveLoadAction.OnLoadState(level);
+            
+            SaveData.Instance = savedSaveData.DeepCloneShared();
 
             // restore all mod sessions
             foreach (EverestModule module in Everest.Modules) {
@@ -334,6 +325,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     module._Session = savedModSession.DeepCloneShared();
                 }
             }
+
+            foreach (EverestModule module in Everest.Modules) {
+                if (savedModSaveDatas.TryGetValue(module, out EverestModuleSaveData savedModSaveData)) {
+                    module._SaveData = savedModSaveData.DeepCloneShared();
+                }
+            }
+
+            // Mod 和其他
+            SaveLoadAction.OnLoadState(level);
 
             // 修复问题：未打开自动读档时，死掉按下确认键后读档完成会接着执行 Reload 复活方法
             // Fix: When AutoLoadStateAfterDeath is off, if manually LoadState() after death, level.Reload() will still be executed.
@@ -518,7 +518,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private void RestoreLevel(Level level) {
             level.Camera.CopyFrom(savedLevel.Camera);
-            savedLevel.Session.DeepCloneToShared(level.Session);
+            level.Session = savedLevel.Session.DeepCloneShared();
             level.FormationBackdrop.CopyAllSimpleTypeFieldsAndNull(savedLevel.FormationBackdrop);
 
             savedLevel.Bloom.DeepCloneToShared(level.Bloom);
@@ -542,16 +542,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // level.SetPropertyValue<Scene>("RendererList", savedLevel.RendererList.DeepCloneShared());
 
             level.CopyAllSimpleTypeFieldsAndNull(savedLevel);
-
-            // External Static Field
-            Engine.FreezeTimer = savedFreezeTimer;
-            Engine.TimeRate = savedTimeRate;
-            typeof(Engine).SetPropertyValue("DeltaTime", savedDeltaTime);
-            typeof(Engine).SetPropertyValue("RawDeltaTime", savedRawDeltaTime);
-            typeof(Engine).SetPropertyValue("FrameCounter", savedFrameCounter);
-            Glitch.Value = savedGlitchValue;
-            Distort.Anxiety = savedDistortAnxiety;
-            Distort.GameRate = savedDistortGameRate;
         }
 
         // movePlayerToFirst = true: 调用游戏本身方法移除房间内 entities 时必须最早移除 Player，因为它关联着许多 Trigger

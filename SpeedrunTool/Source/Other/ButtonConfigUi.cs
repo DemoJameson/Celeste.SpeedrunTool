@@ -64,10 +64,16 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         }
 
         public class ButtonInfo {
-            public Keys[] DefaultKeys;
-            public bool FixedDefaultKeys;
-            public Mappings Mappings;
+            public readonly Mappings Mappings;
+            public readonly Keys[] DefaultKeys;
+            public readonly bool FixedDefaultKeys;
             public readonly Lazy<VirtualButton> VirtualButton = new(CreateVirtualButton);
+
+            public ButtonInfo(Mappings mappings, Keys? defaultKey = null, bool fixedDefaultKeys = false) {
+                Mappings = mappings;
+                DefaultKeys = defaultKey == null ? new Keys[0] : new[] { defaultKey.Value };
+                FixedDefaultKeys = fixedDefaultKeys;
+            }
 
             public void UpdateVirtualButton() {
                 List<VirtualButton.Node> nodes = VirtualButton.Value.Nodes;
@@ -101,59 +107,19 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         }
 
         private static readonly Dictionary<Mappings, ButtonInfo> ButtonInfos = new List<ButtonInfo> {
-            new() {
-                Mappings = Mappings.SaveState,
-                DefaultKeys = new[] { Keys.F7 },
-            },
-            new() {
-                Mappings = Mappings.LoadState,
-                DefaultKeys = new[] { Keys.F8 },
-            },
-            new() {
-                Mappings = Mappings.ClearState,
-                DefaultKeys = new[] { Keys.F3 },
-            },
-            new() {
-                Mappings = Mappings.OpenDebugMap,
-                DefaultKeys = new[] { Keys.F6 },
-                FixedDefaultKeys = true,
-            },
-            new() {
-                Mappings = Mappings.ResetRoomTimerPb,
-                DefaultKeys = new[] { Keys.F9 },
-            },
-            new() {
-                Mappings = Mappings.SwitchRoomTimer,
-                DefaultKeys = new[] { Keys.F10 },
-            },
-            new() {
-                Mappings = Mappings.SetEndPoint,
-                DefaultKeys = new[] { Keys.F11 },
-            },
-            new() {
-                Mappings = Mappings.SetAdditionalEndPoint,
-                DefaultKeys = new Keys[] { },
-            },
-            new() {
-                Mappings = Mappings.CheckDeathStatistics,
-                DefaultKeys = new[] { Keys.F12 },
-            },
-            new() {
-                Mappings = Mappings.TeleportToLastRoom,
-                DefaultKeys = new[] { Keys.PageUp },
-            },
-            new() {
-                Mappings = Mappings.TeleportToNextRoom,
-                DefaultKeys = new[] { Keys.PageDown },
-            },
-            new() {
-                Mappings = Mappings.SwitchAutoLoadState,
-                DefaultKeys = new Keys[] { },
-            },
-            new() {
-                Mappings = Mappings.ToggleFullscreen,
-                DefaultKeys = new Keys[] { },
-            }
+            new(Mappings.SaveState, Keys.F7),
+            new(Mappings.LoadState, Keys.F8),
+            new(Mappings.ClearState, Keys.F3),
+            new(Mappings.OpenDebugMap, Keys.F6, true),
+            new(Mappings.ResetRoomTimerPb, Keys.F9),
+            new(Mappings.SwitchRoomTimer, Keys.F10),
+            new(Mappings.SetEndPoint, Keys.F11),
+            new(Mappings.SetAdditionalEndPoint),
+            new(Mappings.CheckDeathStatistics, Keys.F12),
+            new(Mappings.TeleportToLastRoom, Keys.PageUp),
+            new(Mappings.TeleportToNextRoom, Keys.PageDown),
+            new(Mappings.SwitchAutoLoadState),
+            new(Mappings.ToggleFullscreen),
         }.ToDictionary(info => info.Mappings, info => info);
 
         public static ButtonInfo GetButtonInfo(Mappings mappings) {

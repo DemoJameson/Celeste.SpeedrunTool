@@ -582,12 +582,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 if (IsSaved) {
                     LoadState(false);
                 } else if (!level.Frozen) {
+                    if (level.Entities.FindFirst<MiniTextbox>() is { } miniTextbox) {
+                        miniTextbox.RemoveSelf();
+                    }
                     level.Add(new MiniTextbox(DialogIds.DialogNotSavedStateYet).IgnoreSaveLoad());
                 }
             } else if (Mappings.ClearState.Pressed() && !level.PausedNew() && State == States.None) {
                 Mappings.ClearState.ConsumePress();
                 ClearState(true);
                 if (IsNotCollectingHeart(level) && !level.Completed) {
+                    if (level.Entities.FindFirst<MiniTextbox>() is { } miniTextbox) {
+                        miniTextbox.RemoveSelf();
+                    }
                     level.Add(new MiniTextbox(DialogIds.DialogClearState).IgnoreSaveLoad());
                 }
             } else if (Mappings.SwitchAutoLoadState.Pressed() && !level.PausedNew()) {

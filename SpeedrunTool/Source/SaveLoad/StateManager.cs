@@ -283,7 +283,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // External
             RoomTimerManager.Instance.ResetTime();
             DeathStatisticsManager.Instance.Died = false;
-
+            
+            DoNotRestoreTimeAndDeaths(level);
+            
             level.Displacement.Clear(); // 避免冲刺后读档残留爆破效果  // Remove dash displacement effect
             level.Particles.Clear();
             level.ParticlesBG.Clear();
@@ -298,6 +300,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             RestoreLevelEntities(level);
             RestoreCassetteBlockManager1(level); // 停止播放主音乐，等待播放节奏音乐
             RestoreLevel(level);
+            $"savedSession.Time={savedLevel.Session.Time}, session.Time={level.Session.Time}".Log();
             
             SaveData.Instance = savedSaveData.DeepCloneShared();
 
@@ -327,6 +330,26 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             });
 
             return true;
+        }
+
+        private void DoNotRestoreTimeAndDeaths(Level level) {
+            if (!SavedByTas && Settings.DoNotRestoreTimeAndDeaths) {
+                Session session = level.Session;
+                Session clonedSession = savedLevel.Session.DeepCloneShared();
+                SaveData clonedSaveData = savedSaveData.DeepCloneShared();
+                AreaKey areaKey = session.Area;
+
+                clonedSession.Deaths = session.Deaths + 1;
+                clonedSession.DeathsInCurrentLevel = session.DeathsInCurrentLevel + 1;
+                clonedSaveData.TotalDeaths = SaveData.Instance.TotalDeaths + 1;
+                clonedSaveData.Areas_Safe[areaKey.ID].Modes[(int) areaKey.Mode].Deaths =
+                    SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int) areaKey.Mode].Deaths + 1;
+
+                clonedSession.Time = session.Time;
+                clonedSaveData.Time = SaveData.Instance.Time;
+                clonedSaveData.Areas_Safe[areaKey.ID].Modes[(int) areaKey.Mode].TimePlayed =
+                    SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int) areaKey.Mode].TimePlayed;
+            }
         }
 
         private void ClearScreenWipe(Level level) {

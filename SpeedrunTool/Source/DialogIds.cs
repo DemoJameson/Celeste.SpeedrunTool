@@ -31,8 +31,7 @@ namespace Celeste.Mod.SpeedrunTool {
         // State Manager
         public const string FreezeAfterLoadState = "SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE";
         public const string AutoLoadStateAfterDeath = "SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH";
-        public const string Controller = "SPEEDRUN_TOOL_CONTROLLER";
-        public const string Keyboard = "SPEEDRUN_TOOL_KEYBOARD";
+        public const string DoNotRestoreTimeAndDeaths = "SPEEDRUN_TOOL_DO_NOT_RESTORE_TIME_AND_DEATHS";
         public const string SaveState = "SPEEDRUN_TOOL_SAVE_STATE";
         public const string LoadState = "SPEEDRUN_TOOL_LOAD_STATE";
         public const string ClearState = "SPEEDRUN_TOOL_CLEAR_STATE";
@@ -58,6 +57,8 @@ namespace Celeste.Mod.SpeedrunTool {
         // ReSharper restore UnusedMember.Global
 
         // Button Config
+        public const string Keyboard = "SPEEDRUN_TOOL_KEYBOARD";
+        public const string Controller = "SPEEDRUN_TOOL_CONTROLLER";
         public const string PressDeleteToRemoveButton = "SPEEDRUN_TOOL_PRESS_DELETE_TO_REMOVE_BUTTON";
         public const string OpenDebugMap = "SPEEDRUN_TOOL_OPEN_DEBUG_MAP";
         public const string ResetRoomTimerPb = "SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB";

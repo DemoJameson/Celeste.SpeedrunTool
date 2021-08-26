@@ -47,13 +47,12 @@ SPEEDRUN_TOOL_ROOM_TIMER_IGNORE_FLAG=   Ignore Flag
 SPEEDRUN_TOOL_AUTO_TURN_OFF_ROOM_TIMER= Turn Off Timer When Restarting Chapter w/o State
 
 # ================================== State Manager ==================================
-SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE= Pause The Game After Loading State
-SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH=   Auto Loading State After Death
-SPEEDRUN_TOOL_CONTROLLER=              Controller
-SPEEDRUN_TOOL_KEYBOARD=                Keyboard
-SPEEDRUN_TOOL_SAVE_STATE=              Save State
-SPEEDRUN_TOOL_LOAD_STATE=              Load State
-SPEEDRUN_TOOL_CLEAR_STATE=             Clear State
+SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE=        Pause The Game After Loading State
+SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH=          Auto Loading State After Death
+SPEEDRUN_TOOL_DO_NOT_RESTORE_TIME_AND_DEATHS= Do Not Restore Time and Deaths
+SPEEDRUN_TOOL_SAVE_STATE=                     Save State
+SPEEDRUN_TOOL_LOAD_STATE=                     Load State
+SPEEDRUN_TOOL_CLEAR_STATE=                    Clear State
 SPEEDRUN_TOOL_DIALOG_CLEAR_STATE=
     [MADELINE left normal]
     Cleared the state~
@@ -78,6 +77,8 @@ SPEEDRUN_TOOL_YURI=       Yuri
 SPEEDRUN_TOOL_RANDOM=     Random
 
 # ================================== Button Config ==================================
+SPEEDRUN_TOOL_KEYBOARD=                      Keyboard
+SPEEDRUN_TOOL_CONTROLLER=                    Controller
 SPEEDRUN_TOOL_PRESS_DELETE_TO_REMOVE_BUTTON= Press Delete to Remove Button
 SPEEDRUN_TOOL_OPEN_DEBUG_MAP=                Open Debug Map
 SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB=           Reset Room Timer PB

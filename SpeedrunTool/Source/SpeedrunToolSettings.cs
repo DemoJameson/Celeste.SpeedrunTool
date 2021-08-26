@@ -35,6 +35,9 @@ namespace Celeste.Mod.SpeedrunTool {
 
         [SettingName(DialogIds.FreezeAfterLoadState)]
         public bool FreezeAfterLoadState { get; set; } = true;
+        
+        [SettingName(DialogIds.DoNotRestoreTimeAndDeaths)]
+        public bool DoNotRestoreTimeAndDeaths { get; set; } = true;
 
         #endregion
 

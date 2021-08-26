@@ -112,17 +112,17 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private static void SupportModSessionAndSaveData() {
-            All.Add(new SaveLoadAction(
+            Add(new SaveLoadAction(
                 (savedValues, _) => {
                     foreach (EverestModule module in Everest.Modules.Where(module => module.GetType().Name != "NullModule")) {
                         savedValues[module.GetType()] = new Dictionary<string, object> {
-                            { "_Session", module._Session },
-                            { "_SaveData", module._SaveData },
+                            {"_Session", module._Session},
+                            {"_SaveData", module._SaveData},
                         }.DeepCloneShared();
                     }
                 },
                 (savedValues, _) => {
-                    Dictionary<Type,Dictionary<string,object>> clonedValues = savedValues.DeepCloneShared();
+                    Dictionary<Type, Dictionary<string, object>> clonedValues = savedValues.DeepCloneShared();
                     foreach (EverestModule module in Everest.Modules.Where(module => module.GetType().Name != "NullModule")) {
                         if (clonedValues.TryGetValue(module.GetType(), out Dictionary<string, object> dictionary)) {
                             module._Session = dictionary["_Session"] as EverestModuleSession;
@@ -155,7 +155,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private static void SupportExternalMember() {
-            All.Add(new SaveLoadAction(
+            Add(new SaveLoadAction(
                 (savedValues, _) => {
                     SaveStaticMemberValues(savedValues, typeof(Engine), "DashAssistFreeze", "DashAssistFreezePress", "DeltaTime", "FrameCounter",
                         "FreezeTimer", "RawDeltaTime", "TimeRate", "TimeRateB");
@@ -167,13 +167,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private static void SupportCalcRandom() {
             Type type = typeof(Calc);
-            All.Add(new SaveLoadAction(
+            Add(new SaveLoadAction(
                 (savedValues, _) => SaveStaticMemberValues(savedValues, type, "Random", "randomStack"),
                 (savedValues, _) => LoadStaticMemberValues(savedValues)));
         }
 
         private static void SupportEntitySimpleStaticFields() {
-            All.Add(new SaveLoadAction(
+            Add(new SaveLoadAction(
                 (dictionary, _) => {
                     foreach (Type type in entityStaticFields.Keys) {
                         FieldInfo[] fieldInfos = entityStaticFields[type];
@@ -223,14 +223,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private static void SupportMInput() {
-            All.Add(new SaveLoadAction(
+            Add(new SaveLoadAction(
                 (savedValues, _) => SaveStaticMemberValues(savedValues, typeof(MInput), "Active", "Disabled", "Keyboard", "Mouse", "GamePads"),
                 (savedValues, _) => LoadStaticMemberValues(savedValues)));
         }
 
         private static void SupportInput() {
             Type type = typeof(Input);
-            All.Add(new SaveLoadAction(
+            Add(new SaveLoadAction(
                 (savedValues, level) => {
                     Dictionary<string, object> dictionary = new();
                     foreach (FieldInfo fieldInfo in type.GetFields(BindingFlags.Public | BindingFlags.Static).Where(info =>
@@ -274,7 +274,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private static readonly List<EventInstance> RequireMuteAudios = new();
 
         private static void MuteAnnoyingAudios() {
-            All.Add(new SaveLoadAction(loadState: (_, _) => {
+            Add(new SaveLoadAction(loadState: (_, _) => {
                 foreach (EventInstance sfx in RequireMuteAudios) {
                     sfx.setVolume(0f);
                 }
@@ -296,20 +296,20 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private static void SupportAudioMusic() {
-            All.Add(new SaveLoadAction(
+            Add(new SaveLoadAction(
                 (savedValues, _) => {
                     Dictionary<string, object> saved = new() {
                         {
                             "currentMusicEvent",
                             (typeof(Audio).GetFieldValue("currentMusicEvent") as EventInstance)?.NeedManualClone().DeepCloneShared()
                         },
-                        { "CurrentAmbienceEventInstance", Audio.CurrentAmbienceEventInstance?.NeedManualClone().DeepCloneShared() }, {
+                        {"CurrentAmbienceEventInstance", Audio.CurrentAmbienceEventInstance?.NeedManualClone().DeepCloneShared()}, {
                             "currentAltMusicEvent",
                             (typeof(Audio).GetFieldValue("currentAltMusicEvent") as EventInstance)?.NeedManualClone().DeepCloneShared()
                         },
-                        { "MusicUnderwater", Audio.MusicUnderwater },
-                        { "PauseMusic", Audio.PauseMusic },
-                        { "PauseGameplaySfx", Audio.PauseGameplaySfx },
+                        {"MusicUnderwater", Audio.MusicUnderwater},
+                        {"PauseMusic", Audio.PauseMusic},
+                        {"PauseGameplaySfx", Audio.PauseGameplaySfx},
                     };
                     savedValues[typeof(Audio)] = saved;
                 },
@@ -326,9 +326,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     (typeof(Audio).GetFieldValue("currentAltMusicEvent") as EventInstance)?.CopyParametersFrom(
                         saved["currentAltMusicEvent"] as EventInstance);
 
-                    Audio.MusicUnderwater = (bool)saved["MusicUnderwater"];
-                    Audio.PauseMusic = (bool)saved["PauseMusic"];
-                    Audio.PauseGameplaySfx = (bool)saved["PauseGameplaySfx"];
+                    Audio.MusicUnderwater = (bool) saved["MusicUnderwater"];
+                    Audio.PauseMusic = (bool) saved["PauseMusic"];
+                    Audio.PauseGameplaySfx = (bool) saved["PauseGameplaySfx"];
                 }
             ));
         }
@@ -337,7 +337,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // if (Type.GetType("Celeste.Mod.PandorasBox.TimeField, PandorasBox") is { } timeFieldType
             //     && Delegate.CreateDelegate(typeof(On.Celeste.Player.hook_Update), timeFieldType.GetMethodInfo("PlayerUpdateHook")) is
             //         On.Celeste.Player.hook_Update hookUpdate) {
-            //     All.Add(new SaveLoadAction(
+            //     Add(new SaveLoadAction(
             //         loadState: (savedValues, level) => {
             //             if ((bool) timeFieldType.GetFieldValue("hookAdded")) {
             //                 On.Celeste.Player.Update += hookUpdate;
@@ -347,7 +347,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // }
 
             // Fixed: Game crashes after save DustSpriteColorController
-            All.Add(new SaveLoadAction(
+            Add(new SaveLoadAction(
                 (savedValues, _) => SaveStaticMemberValues(savedValues, typeof(DustStyles), "Styles"),
                 (savedValues, _) => LoadStaticMemberValues(savedValues)
             ));
@@ -359,9 +359,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         colorControllerType.GetMethodInfo("getRainbowSpinnerHue")) is
                     On.Celeste.CrystalStaticSpinner.hook_GetHue hookGetHue
             ) {
-                All.Add(new SaveLoadAction(
+                Add(new SaveLoadAction(
                     loadState: (_, _) => {
-                        if ((bool)colorControllerType.GetFieldValue("rainbowSpinnerHueHooked")) {
+                        if ((bool) colorControllerType.GetFieldValue("rainbowSpinnerHueHooked")) {
                             On.Celeste.CrystalStaticSpinner.GetHue -= hookGetHue;
                             On.Celeste.CrystalStaticSpinner.GetHue += hookGetHue;
                         } else {
@@ -373,9 +373,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             if (Type.GetType("Celeste.Mod.MaxHelpingHand.Entities.SeekerBarrierColorController, MaxHelpingHand") is
                 { } seekerBarrierColorControllerType) {
-                All.Add(new SaveLoadAction(
+                Add(new SaveLoadAction(
                     loadState: (savedValues, _) => {
-                        if ((bool)seekerBarrierColorControllerType.GetFieldValue("seekerBarrierRendererHooked")) {
+                        if ((bool) seekerBarrierColorControllerType.GetFieldValue("seekerBarrierRendererHooked")) {
                             seekerBarrierColorControllerType.InvokeMethod("unhookSeekerBarrierRenderer");
                             seekerBarrierColorControllerType.InvokeMethod("hookSeekerBarrierRenderer");
                         } else {
@@ -386,9 +386,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             if (Type.GetType("Celeste.Mod.MaxHelpingHand.Triggers.GradientDustTrigger, MaxHelpingHand") is { } gradientDustTriggerType) {
-                All.Add(new SaveLoadAction(
+                Add(new SaveLoadAction(
                     loadState: (savedValues, _) => {
-                        if ((bool)gradientDustTriggerType.GetFieldValue("hooked")) {
+                        if ((bool) gradientDustTriggerType.GetFieldValue("hooked")) {
                             gradientDustTriggerType.InvokeMethod("unhook");
                             gradientDustTriggerType.InvokeMethod("hook");
                         } else {
@@ -404,9 +404,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 && Delegate.CreateDelegate(typeof(ILContext.Manipulator),
                     parallaxFadeOutControllerType.GetMethodInfo("onBackdropRender")) is ILContext.Manipulator onBackdropRender
             ) {
-                All.Add(new SaveLoadAction(
+                Add(new SaveLoadAction(
                     loadState: (savedValues, _) => {
-                        if ((bool)parallaxFadeOutControllerType.GetFieldValue("backdropRendererHooked")) {
+                        if ((bool) parallaxFadeOutControllerType.GetFieldValue("backdropRendererHooked")) {
                             IL.Celeste.BackdropRenderer.Render -= onBackdropRender;
                             IL.Celeste.BackdropRenderer.Render += onBackdropRender;
                         } else {
@@ -417,7 +417,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             if (Type.GetType("Celeste.Mod.MaxHelpingHand.Effects.BlackholeCustomColors, MaxHelpingHand") is { } blackHoleCustomColorsType) {
-                All.Add(new SaveLoadAction(
+                Add(new SaveLoadAction(
                     (savedValues, _) => SaveStaticMemberValues(savedValues, blackHoleCustomColorsType, "colorsMild"),
                     (savedValues, _) => LoadStaticMemberValues(savedValues)));
             }
@@ -429,7 +429,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 return;
             }
 
-            All.Add(new SaveLoadAction(
+            Add(new SaveLoadAction(
                 (savedValues, _) => SaveStaticMemberValues(savedValues, vitModuleType, "timeStopScaleTimer", "noMoveScaleTimer"),
                 (savedValues, _) => LoadStaticMemberValues(savedValues)
             ));
@@ -441,9 +441,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         colorControllerType.GetMethodInfo("getRainbowSpinnerHue")) is
                     On.Celeste.CrystalStaticSpinner.hook_GetHue hookGetHue
             ) {
-                All.Add(new SaveLoadAction(
+                Add(new SaveLoadAction(
                     loadState: (savedValues, _) => {
-                        if ((bool)colorControllerType.GetFieldValue("rainbowSpinnerHueHooked")) {
+                        if ((bool) colorControllerType.GetFieldValue("rainbowSpinnerHueHooked")) {
                             On.Celeste.CrystalStaticSpinner.GetHue -= hookGetHue;
                             On.Celeste.CrystalStaticSpinner.GetHue += hookGetHue;
                         } else {
@@ -459,9 +459,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         colorAreaControllerType.GetMethodInfo("getRainbowSpinnerHue")) is
                     On.Celeste.CrystalStaticSpinner.hook_GetHue hookSpinnerGetHue
             ) {
-                All.Add(new SaveLoadAction(
+                Add(new SaveLoadAction(
                     loadState: (savedValues, _) => {
-                        if ((bool)colorAreaControllerType.GetFieldValue("rainbowSpinnerHueHooked")) {
+                        if ((bool) colorAreaControllerType.GetFieldValue("rainbowSpinnerHueHooked")) {
                             On.Celeste.CrystalStaticSpinner.GetHue -= hookSpinnerGetHue;
                             On.Celeste.CrystalStaticSpinner.GetHue += hookSpinnerGetHue;
                         } else {
@@ -476,9 +476,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 && Delegate.CreateDelegate(typeof(On.Celeste.Spikes.hook_OnCollide),
                     spikeJumpThroughControllerType.GetMethodInfo("OnCollideHook")) is On.Celeste.Spikes.hook_OnCollide onCollideHook
             ) {
-                All.Add(new SaveLoadAction(
+                Add(new SaveLoadAction(
                     loadState: (savedValues, _) => {
-                        if ((bool)spikeJumpThroughControllerType.GetFieldValue("SpikeHooked")) {
+                        if ((bool) spikeJumpThroughControllerType.GetFieldValue("SpikeHooked")) {
                             On.Celeste.Spikes.OnCollide -= onCollideHook;
                             On.Celeste.Spikes.OnCollide += onCollideHook;
                         } else {
@@ -492,7 +492,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private static void SupportExtendedVariants() {
             // 修复：ExtendedVariantTrigger 设置的值在 SL 之后失效
             if (Type.GetType("ExtendedVariants.ExtendedVariantTrigger, ExtendedVariantMode") is { } extendedVariantTrigger) {
-                All.Add(new SaveLoadAction(
+                Add(new SaveLoadAction(
                     loadState: (savedValues, _) => {
                         if (Engine.Scene.GetPlayer() is not { } player ||
                             player.GetFieldValue("triggersInside") is not HashSet<Trigger> triggersInside) {
@@ -500,14 +500,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         }
 
                         foreach (Trigger trigger in triggersInside.Where(trigger =>
-                            trigger.GetType() == extendedVariantTrigger && (bool)trigger.GetFieldValue(trigger.GetType(), "revertOnLeave"))) {
+                            trigger.GetType() == extendedVariantTrigger && (bool) trigger.GetFieldValue(trigger.GetType(), "revertOnLeave"))) {
                             trigger.OnEnter(player);
                         }
                     }));
             }
 
             if (Type.GetType("ExtendedVariants.Variants.JumpCount, ExtendedVariantMode") is { } jumpCountType) {
-                All.Add(new SaveLoadAction(
+                Add(new SaveLoadAction(
                     (savedValues, _) => SaveStaticMemberValues(savedValues, jumpCountType, "jumpBuffer"),
                     (savedValues, _) => LoadStaticMemberValues(savedValues)));
             }
@@ -515,7 +515,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private static void SupportXaphanHelper() {
             if (Type.GetType("Celeste.Mod.XaphanHelper.Upgrades.SpaceJump, XaphanHelper") is { } spaceJumpType) {
-                All.Add(new SaveLoadAction(
+                Add(new SaveLoadAction(
                     (savedValues, _) => SaveStaticMemberValues(savedValues, spaceJumpType, "jumpBuffer"),
                     (savedValues, _) => LoadStaticMemberValues(savedValues))
                 );
@@ -525,7 +525,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private static void SupportIsaGrabBag() {
             // 解决 DreamSpinnerBorder 读档后影像残留在屏幕中
             if (Type.GetType("Celeste.Mod.IsaGrabBag.DreamSpinnerBorder, IsaMods") is { } borderType) {
-                All.Add(new SaveLoadAction(
+                Add(new SaveLoadAction(
                         loadState: (_, level) => level.Entities.FirstOrDefault(entity => entity.GetType() == borderType)?.Update()
                     )
                 );
@@ -533,7 +533,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             // 解决读档后冲进 DreamSpinner 会被刺死
             if (Type.GetType("Celeste.Mod.IsaGrabBag.GrabBagModule, IsaMods") is { } grabBagModuleType) {
-                All.Add(new SaveLoadAction(
+                Add(new SaveLoadAction(
                     (savedValues, _) => SaveStaticMemberValues(savedValues, grabBagModuleType, "ZipLineState".ToBackingField(),
                         "playerInstance".ToBackingField()),
                     (savedValues, _) => LoadStaticMemberValues(savedValues))

@@ -339,11 +339,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 SaveData clonedSaveData = savedSaveData.DeepCloneShared();
                 AreaKey areaKey = session.Area;
 
-                clonedSession.Deaths = session.Deaths + 1;
-                clonedSession.DeathsInCurrentLevel = session.DeathsInCurrentLevel + 1;
-                clonedSaveData.TotalDeaths = SaveData.Instance.TotalDeaths + 1;
+                int increaseDeath = 1;
+                if (level.GetPlayer() == null || level.GetPlayer().Dead) {
+                    increaseDeath = 0;
+                }
+                clonedSession.Deaths = session.Deaths + increaseDeath;
+                clonedSession.DeathsInCurrentLevel = session.DeathsInCurrentLevel + increaseDeath;
+                clonedSaveData.TotalDeaths = SaveData.Instance.TotalDeaths + increaseDeath;
                 clonedSaveData.Areas_Safe[areaKey.ID].Modes[(int) areaKey.Mode].Deaths =
-                    SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int) areaKey.Mode].Deaths + 1;
+                    SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int) areaKey.Mode].Deaths + increaseDeath;
 
                 clonedSession.Time = session.Time;
                 clonedSaveData.Time = SaveData.Instance.Time;

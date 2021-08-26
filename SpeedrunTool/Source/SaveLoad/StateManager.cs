@@ -35,9 +35,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private Task<DeepCloneState> preCloneTask;
 
-        private Dictionary<EverestModule, EverestModuleSession> savedModSessions;
-        private Dictionary<EverestModule, EverestModuleSaveData> savedModSaveDatas;
-
         public enum States {
             None,
             Saving,
@@ -244,21 +241,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             savedSaveData = SaveData.Instance.DeepCloneShared();
 
-            // save all mod sessions
-            savedModSessions = new Dictionary<EverestModule, EverestModuleSession>();
-            foreach (EverestModule module in Everest.Modules) {
-                if (module._Session != null) {
-                    savedModSessions[module] = module._Session.DeepCloneShared();
-                }
-            }
-
-            savedModSaveDatas = new Dictionary<EverestModule, EverestModuleSaveData>();
-            foreach (EverestModule module in Everest.Modules) {
-                if (module._SaveData != null) {
-                    savedModSaveDatas[module] = module._SaveData.DeepCloneShared();
-                }
-            }
-
             // Mod 和其他
             SaveLoadAction.OnSaveState(level);
 
@@ -318,19 +300,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             RestoreLevel(level);
             
             SaveData.Instance = savedSaveData.DeepCloneShared();
-
-            // restore all mod sessions
-            foreach (EverestModule module in Everest.Modules) {
-                if (savedModSessions.TryGetValue(module, out EverestModuleSession savedModSession)) {
-                    module._Session = savedModSession.DeepCloneShared();
-                }
-            }
-
-            foreach (EverestModule module in Everest.Modules) {
-                if (savedModSaveDatas.TryGetValue(module, out EverestModuleSaveData savedModSaveData)) {
-                    module._SaveData = savedModSaveData.DeepCloneShared();
-                }
-            }
 
             // Mod 和其他
             SaveLoadAction.OnLoadState(level);
@@ -421,10 +390,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             playingEventInstances.Clear();
 
-            savedModSessions = null;
             savedLevel = null;
             savedEntities?.Clear();
             savedEntities = null;
+            savedSaveData = null;
             savedOrderedTrackerEntities?.Clear();
             savedOrderedTrackerEntities = null;
             savedOrderedTrackerComponents?.Clear();

@@ -94,6 +94,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         // code mod 需要等待此时才正式加载，才能通过 Type 查找
         internal static void OnLoadContent() {
+            SupportModSessionAndSaveData();
             InitStaticFields();
             SupportEntitySimpleStaticFields();
             SupportMaxHelpingHand();
@@ -108,6 +109,27 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         internal static void OnUnload() {
             All.Clear();
             On.FMOD.Studio.EventDescription.createInstance -= EventDescriptionOnCreateInstance;
+        }
+
+        private static void SupportModSessionAndSaveData() {
+            All.Add(new SaveLoadAction(
+                (savedValues, _) => {
+                    foreach (EverestModule module in Everest.Modules.Where(module => module.GetType().Name != "NullModule")) {
+                        savedValues[module.GetType()] = new Dictionary<string, object> {
+                            { "_Session", module._Session },
+                            { "_SaveData", module._SaveData },
+                        }.DeepCloneShared();
+                    }
+                },
+                (savedValues, _) => {
+                    Dictionary<Type,Dictionary<string,object>> clonedValues = savedValues.DeepCloneShared();
+                    foreach (EverestModule module in Everest.Modules.Where(module => module.GetType().Name != "NullModule")) {
+                        if (clonedValues.TryGetValue(module.GetType(), out Dictionary<string, object> dictionary)) {
+                            module._Session = dictionary["_Session"] as EverestModuleSession;
+                            module._SaveData = dictionary["_SaveData"] as EverestModuleSaveData;
+                        }
+                    }
+                }));
         }
 
         private static Dictionary<Type, FieldInfo[]> entityStaticFields;

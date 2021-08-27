@@ -606,7 +606,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         public bool IsRequireClonedGlobalEntity(Entity entity) {
-            return entity is CassetteBlockManager or SpeedrunTimerDisplay;
+            return entity is CassetteBlockManager or SpeedrunTimerDisplay or TotalStrawberriesDisplay;
         }
 
         private List<Entity> GetEntitiesNeedDeepClone(Level level) {

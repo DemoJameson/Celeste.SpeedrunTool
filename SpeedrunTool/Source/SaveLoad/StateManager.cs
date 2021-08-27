@@ -11,7 +11,10 @@ using FMOD.Studio;
 using Force.DeepCloner;
 using Force.DeepCloner.Helpers;
 using Microsoft.Xna.Framework;
+using Mono.Cecil.Cil;
 using Monocle;
+using MonoMod.Cil;
+using MonoMod.RuntimeDetour;
 using static Celeste.Mod.SpeedrunTool.Other.ButtonConfigUi;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
@@ -29,7 +32,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private Level savedLevel;
         private List<Entity> savedEntities;
-        private static SaveData savedSaveData;
+        private SaveData savedSaveData;
+        private object transitionRoutine;
+        private object savedTransitionRoutine;
+        private FieldInfo playerStuckFieldInfo;
         private Dictionary<Type, Dictionary<Entity, int>> savedOrderedTrackerEntities;
         private Dictionary<Type, Dictionary<Component, int>> savedOrderedTrackerComponents;
 
@@ -44,6 +50,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private readonly HashSet<EventInstance> playingEventInstances = new();
 
+        private ILHook hook;
+
         #region Hook
 
         public void OnLoad() {
@@ -56,6 +64,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
             On.Monocle.Scene.BeforeUpdate += SceneOnBeforeUpdate;
+            hook = new ILHook(typeof(Level).GetMethodInfo("TransitionRoutine"), LevelOnTransitionRoutine);
         }
 
         public void OnUnload() {
@@ -68,6 +77,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Monocle.Scene.Begin -= ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End -= AutoLoadStateWhenDeath;
             On.Monocle.Scene.BeforeUpdate -= SceneOnBeforeUpdate;
+            hook?.Dispose();
         }
 
         private void CheckButtonsAndUpdateBackdrop(On.Celeste.Level.orig_Update orig, Level self) {
@@ -119,7 +129,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 orig(self);
             }
         }
-        
+
         private void SceneOnBeforeUpdate(On.Monocle.Scene.orig_BeforeUpdate orig, Scene self) {
             if (SpeedrunToolModule.Enabled && self is Level level && State == States.Waiting && !level.PausedNew()
                 && (Input.Dash.Pressed
@@ -136,7 +146,26 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 )) {
                 LoadStateComplete(level);
             }
+
             orig(self);
+        }
+
+        private void LevelOnTransitionRoutine(ILContext il) {
+            ILCursor ilCursor = new(il);
+            if (ilCursor.TryGotoNext(MoveType.After, ins => ins.OpCode == OpCodes.Newobj)) {
+                ilCursor.Emit(OpCodes.Dup).EmitDelegate<Action<object>>(obj => {
+                        transitionRoutine = obj;
+                        if (obj == null || playerStuckFieldInfo != null) {
+                            return;
+                        }
+
+                        foreach (FieldInfo fieldInfo in obj.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic)) {
+                            if (fieldInfo.Name.StartsWith("<playerStuck>")) {
+                                playerStuckFieldInfo = fieldInfo;
+                            }
+                        }
+                });
+            }
         }
 
         #endregion Hook
@@ -240,6 +269,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
 
             savedSaveData = SaveData.Instance.DeepCloneShared();
+            savedTransitionRoutine = transitionRoutine.DeepCloneShared();
 
             // Mod 和其他
             SaveLoadAction.OnSaveState(level);
@@ -283,9 +313,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // External
             RoomTimerManager.Instance.ResetTime();
             DeathStatisticsManager.Instance.Died = false;
-            
+
             DoNotRestoreTimeAndDeaths(level);
-            
+
             level.Displacement.Clear(); // 避免冲刺后读档残留爆破效果  // Remove dash displacement effect
             level.Particles.Clear();
             level.ParticlesBG.Clear();
@@ -300,8 +330,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             RestoreLevelEntities(level);
             RestoreCassetteBlockManager1(level); // 停止播放主音乐，等待播放节奏音乐
             RestoreLevel(level);
-            $"savedSession.Time={savedLevel.Session.Time}, session.Time={level.Session.Time}".Log();
-            
+
             SaveData.Instance = savedSaveData.DeepCloneShared();
 
             // Mod 和其他
@@ -339,20 +368,26 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 SaveData clonedSaveData = savedSaveData.DeepCloneShared();
                 AreaKey areaKey = session.Area;
 
+                clonedSession.Time = session.Time;
+                clonedSaveData.Time = SaveData.Instance.Time;
+                clonedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].TimePlayed =
+                    SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].TimePlayed;
+
+                // 修复：切换房间时存档后读档导致游戏误以为卡死自动重生
+                if (savedLevel.Transitioning && savedTransitionRoutine != null) {
+                    playerStuckFieldInfo?.SetValue(savedTransitionRoutine.DeepCloneShared(), TimeSpan.FromTicks(session.Time));
+                }
+
                 int increaseDeath = 1;
                 if (level.GetPlayer() == null || level.GetPlayer().Dead) {
                     increaseDeath = 0;
                 }
+
                 clonedSession.Deaths = session.Deaths + increaseDeath;
                 clonedSession.DeathsInCurrentLevel = session.DeathsInCurrentLevel + increaseDeath;
                 clonedSaveData.TotalDeaths = SaveData.Instance.TotalDeaths + increaseDeath;
-                clonedSaveData.Areas_Safe[areaKey.ID].Modes[(int) areaKey.Mode].Deaths =
-                    SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int) areaKey.Mode].Deaths + increaseDeath;
-
-                clonedSession.Time = session.Time;
-                clonedSaveData.Time = SaveData.Instance.Time;
-                clonedSaveData.Areas_Safe[areaKey.ID].Modes[(int) areaKey.Mode].TimePlayed =
-                    SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int) areaKey.Mode].TimePlayed;
+                clonedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths =
+                    SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths + increaseDeath;
             }
         }
 
@@ -412,8 +447,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             ClearState(false);
         }
 
-        private void ClearState(bool clearEndPoint) {
-            RoomTimerManager.Instance.ClearPbTimes(clearEndPoint);
+        private void ClearState(bool fullClear) {
+            if (fullClear) {
+                transitionRoutine = null;
+            }
+            RoomTimerManager.Instance.ClearPbTimes(fullClear);
 
             playingEventInstances.Clear();
 
@@ -421,6 +459,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedEntities?.Clear();
             savedEntities = null;
             savedSaveData = null;
+            savedTransitionRoutine = null;
             savedOrderedTrackerEntities?.Clear();
             savedOrderedTrackerEntities = null;
             savedOrderedTrackerComponents?.Clear();
@@ -565,7 +604,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         public bool IsRequireClonedRenderer(Entity entity) {
             return entity.TagCheck(Tags.Global) && entity.GetType().FullName.EndsWith("Renderer");
         }
-        
+
         public bool IsRequireClonedGlobalEntity(Entity entity) {
             return entity is CassetteBlockManager or SpeedrunTimerDisplay;
         }
@@ -612,6 +651,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     if (level.Entities.FindFirst<MiniTextbox>() is { } miniTextbox) {
                         miniTextbox.RemoveSelf();
                     }
+
                     level.Add(new MiniTextbox(DialogIds.DialogNotSavedStateYet).IgnoreSaveLoad());
                 }
             } else if (Mappings.ClearState.Pressed() && !level.PausedNew() && State == States.None) {
@@ -621,6 +661,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     if (level.Entities.FindFirst<MiniTextbox>() is { } miniTextbox) {
                         miniTextbox.RemoveSelf();
                     }
+
                     level.Add(new MiniTextbox(DialogIds.DialogClearState).IgnoreSaveLoad());
                 }
             } else if (Mappings.SwitchAutoLoadState.Pressed() && !level.PausedNew()) {

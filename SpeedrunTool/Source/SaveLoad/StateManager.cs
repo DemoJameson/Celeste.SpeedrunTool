@@ -379,7 +379,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
 
                 int increaseDeath = 1;
-                if (level.GetPlayer() == null || level.GetPlayer().Dead) {
+                if (level.GetPlayer() == null || level.GetPlayer().Dead || level.GetPlayer().JustRespawned) {
                     increaseDeath = 0;
                 }
 

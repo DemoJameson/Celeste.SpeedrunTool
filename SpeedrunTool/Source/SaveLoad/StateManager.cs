@@ -50,7 +50,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private readonly HashSet<EventInstance> playingEventInstances = new();
 
-        private ILHook hook;
+        private ILHook ilHook;
 
         #region Hook
 
@@ -64,7 +64,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
             On.Monocle.Scene.BeforeUpdate += SceneOnBeforeUpdate;
-            hook = new ILHook(typeof(Level).GetMethodInfo("TransitionRoutine"), LevelOnTransitionRoutine);
+            ilHook = new ILHook(typeof(Level).GetMethodInfo("TransitionRoutine"), LevelOnTransitionRoutine);
         }
 
         public void OnUnload() {
@@ -77,7 +77,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Monocle.Scene.Begin -= ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End -= AutoLoadStateWhenDeath;
             On.Monocle.Scene.BeforeUpdate -= SceneOnBeforeUpdate;
-            hook?.Dispose();
+            ilHook?.Dispose();
         }
 
         private void CheckButtonsAndUpdateBackdrop(On.Celeste.Level.orig_Update orig, Level self) {
@@ -144,7 +144,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     || typeof(Input).GetFieldValue("DemoDash")?.GetPropertyValue("Pressed") as bool? == true
                     || typeof(Input).GetFieldValue("CrouchDash")?.GetPropertyValue("Pressed") as bool? == true
                 )) {
-                LoadStateComplete(level);
+                if (preCloneTask == null) {
+                    // savestate 之后的冻结
+                    OutOfWaiting(level);
+                } else {
+                    // loadstate 之后的冻结
+                    LoadStateComplete(level);
+                }
             }
 
             orig(self);
@@ -154,16 +160,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             ILCursor ilCursor = new(il);
             if (ilCursor.TryGotoNext(MoveType.After, ins => ins.OpCode == OpCodes.Newobj)) {
                 ilCursor.Emit(OpCodes.Dup).EmitDelegate<Action<object>>(obj => {
-                        transitionRoutine = obj;
-                        if (obj == null || playerStuckFieldInfo != null) {
-                            return;
-                        }
+                    transitionRoutine = obj;
+                    if (obj == null || playerStuckFieldInfo != null) {
+                        return;
+                    }
 
-                        foreach (FieldInfo fieldInfo in obj.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic)) {
-                            if (fieldInfo.Name.StartsWith("<playerStuck>")) {
-                                playerStuckFieldInfo = fieldInfo;
-                            }
+                    foreach (FieldInfo fieldInfo in obj.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic)) {
+                        if (fieldInfo.Name.StartsWith("<playerStuck>")) {
+                            playerStuckFieldInfo = fieldInfo;
                         }
+                    }
                 });
             }
         }
@@ -421,6 +427,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             State = States.None;
         }
 
+        private void OutOfWaiting(Level level) {
+            level.Frozen = Instance.savedLevel?.Frozen ?? false;
+            level.TimerStopped = Instance.savedLevel?.TimerStopped ?? false;
+            level.PauseLock = Instance.savedLevel?.PauseLock ?? false;
+            EndPoint.All.ForEach(point => point.ReadyForTime());
+            Instance.State = States.None;
+        }
+
         // 分两步的原因是更早的停止音乐，听起来更舒服更好一点
         private void RestoreCassetteBlockManager1(Level level) {
             if (level.Tracker.GetEntity<CassetteBlockManager>() is { } manager) {
@@ -451,6 +465,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (fullClear) {
                 transitionRoutine = null;
             }
+
             RoomTimerManager.Instance.ClearPbTimes(fullClear);
 
             playingEventInstances.Clear();
@@ -680,19 +695,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         // @formatter:on
 
         class WaitSaveStateEntity : Entity {
-            private readonly Level level;
-            private readonly bool origFrozen;
-            private readonly bool origTimerStopped;
-            private readonly bool origPauseLock;
-
             public WaitSaveStateEntity(Level level) {
-                this.level = level;
-
                 // 避免被 Save
                 Tag = Tags.Global;
-                origFrozen = level.Frozen;
-                origTimerStopped = level.TimerStopped;
-                origPauseLock = level.PauseLock;
                 level.Frozen = true;
                 level.TimerStopped = true;
                 level.PauseLock = true;
@@ -703,6 +708,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 // 很奇怪，如果在这时候预克隆，部分图读档时就会游戏崩溃例如春游 nyoom
                 // System.ObjectDisposedException: Cannot access a disposed object.
                 // Instance.PreCloneSavedEntities();
+                Level level = SceneAs<Level>();
                 level.DoScreenWipe(true, () => {
                     if (Settings.FreezeAfterLoadState) {
                         level.Frozen = true;
@@ -710,10 +716,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         level.PauseLock = true;
                         Instance.State = States.Waiting;
                     } else {
-                        level.Frozen = origFrozen;
-                        level.TimerStopped = origTimerStopped;
-                        level.PauseLock = origPauseLock;
-                        Instance.State = States.None;
+                        Instance.OutOfWaiting(level);
                     }
                 });
                 RemoveSelf();

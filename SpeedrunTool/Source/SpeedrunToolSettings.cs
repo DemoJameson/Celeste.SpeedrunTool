@@ -18,7 +18,7 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingName(DialogIds.NumberOfRooms)]
         public int NumberOfRooms { get; set; } = 1;
 
-        [YamlIgnore] [SettingIgnore] public EndPoint.SpriteStyle EndPointStyle { get; set; } = EndPoint.SpriteStyle.Flag;
+        public EndPoint.SpriteStyle EndPointStyle { get; set; } = EndPoint.SpriteStyle.Flag;
 
         [SettingName(DialogIds.RoomTimerIgnoreFlag)]
         public bool RoomTimerIgnoreFlag { get; set; } = false;

@@ -6,6 +6,7 @@ using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using FMOD.Studio;
+using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool {
@@ -38,11 +39,25 @@ namespace Celeste.Mod.SpeedrunTool {
             return results;
         }
 
+        private static void AddDescription(TextMenu.Item subMenuItem, TextMenuExt.SubMenu subMenu, TextMenu containingMenu, string description) {
+            TextMenuExt.EaseInSubHeaderExt descriptionText = new(description, false, containingMenu) {
+                TextColor = Color.Gray,
+                HeightExtra = 0f
+            };
+
+            subMenu.Add(descriptionText);
+
+            subMenuItem.OnEnter += () => descriptionText.FadeVisible = true;
+            subMenuItem.OnLeave += () => descriptionText.FadeVisible = false;
+        }
+
         private static void CreateOptions(TextMenu menu, bool inGame) {
             options = new List<TextMenu.Item> {
                 new TextMenuExt.SubMenu(Dialog.Clean(DialogIds.RoomTimer), false).With(subMenu => {
                     subMenu.Add(new TextMenuExt.EnumerableSlider<RoomTimerType>(Dialog.Clean(DialogIds.Enabled),
-                        CreateEnumerableOptions<RoomTimerType>(), Settings.RoomTimerType).Change(timerType => { RoomTimerManager.Instance.SwitchRoomTimer(timerType); }));
+                        CreateEnumerableOptions<RoomTimerType>(), Settings.RoomTimerType).Change(timerType => {
+                        RoomTimerManager.Instance.SwitchRoomTimer(timerType);
+                    }));
 
                     subMenu.Add(new TextMenuExt.IntSlider(Dialog.Clean(DialogIds.NumberOfRooms), 1, 99, Settings.NumberOfRooms).Change(i =>
                         Settings.NumberOfRooms = i));
@@ -95,8 +110,16 @@ namespace Celeste.Mod.SpeedrunTool {
                     subMenu.Add(new TextMenuExt.IntSlider(Dialog.Clean(DialogIds.RespawnSpeed), 1, 9, Settings.RespawnSpeed).Change(i =>
                         Settings.RespawnSpeed = i));
 
+                    TextMenu.Item fastTeleportItem;
                     subMenu.Add(
-                        new TextMenu.OnOff(Dialog.Clean(DialogIds.FastTeleport), Settings.FastTeleport).Change(b => Settings.FastTeleport = b));
+                        fastTeleportItem =
+                            new TextMenu.OnOff(Dialog.Clean(DialogIds.FastTeleport), Settings.FastTeleport).Change(b => Settings.FastTeleport = b));
+
+                    AddDescription(fastTeleportItem, subMenu, menu, Dialog.Clean(DialogIds.FastTeleportDescription));
+
+                    subMenu.Add(
+                        new TextMenu.OnOff(Dialog.Clean(DialogIds.MuteInBackground), Settings.MuteInBackground).Change(b =>
+                            Settings.MuteInBackground = b));
 
                     subMenu.Add(new TextMenu.Button(Dialog.Clean(DialogIds.ButtonConfig)).Pressed(() => {
                         // 修复：在 overworld 界面 hot reload 之后打开按键设置菜单游戏崩溃

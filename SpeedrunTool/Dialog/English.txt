@@ -107,4 +107,5 @@ SPEEDRUN_TOOL_NO_DATA=                  No Data
 SPEEDRUN_TOOL_RESPAWN_SPEED=              Respawn Speed
 SPEEDRUN_TOOL_FAST_TELEPORT=              Fast Teleport
 SPEEDRUN_TOOL_FAST_TELEPORT_DESCRIPTION=  Make PageDown/Up teleport more faster, no need to reload the whole map
+SPEEDRUN_TOOL_MUTE_IN_BACKGROUND=         Mute In Background
 SPEEDRUN_TOOL_BUTTON_CONFIG=              Button Config

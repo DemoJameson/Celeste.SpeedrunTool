@@ -59,6 +59,7 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingName(DialogIds.FastTeleport)]
         [SettingSubText(DialogIds.FastTeleportDescription)]
         public bool FastTeleport { get; set; } = true;
+        public bool MuteInBackground { get; set; }
 
         #endregion
 

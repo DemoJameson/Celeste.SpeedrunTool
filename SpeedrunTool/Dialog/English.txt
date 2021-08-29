@@ -59,6 +59,12 @@ SPEEDRUN_TOOL_DIALOG_CLEAR_STATE=
 SPEEDRUN_TOOL_DIALOG_NOT_SAVED_STATE_YET=
     [MADELINE left upset]
     Not saved state yet.
+SPEEDRUN_TOOL_DIALOG_CLEAR_STATE_BADELINE=
+    [BADELINE left normal]
+    Cleared the state~
+SPEEDRUN_TOOL_DIALOG_NOT_SAVED_STATE_YET_BADELINE=
+    [BADELINE left yell]
+    Not saved state yet.
 
 # ================================== End Point Style ==================================
 SPEEDRUN_TOOL_FLAG=       Flag

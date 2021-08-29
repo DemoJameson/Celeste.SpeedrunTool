@@ -667,7 +667,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         miniTextbox.RemoveSelf();
                     }
 
-                    level.Add(new MiniTextbox(DialogIds.DialogNotSavedStateYet).IgnoreSaveLoad());
+                    level.Add(new MiniTextbox(IsPlayAsBadeline(level) ? DialogIds.DialogNotSavedStateYetBadeline : DialogIds.DialogNotSavedStateYet).IgnoreSaveLoad());
                 }
             } else if (Mappings.ClearState.Pressed() && !level.PausedNew() && State == States.None) {
                 Mappings.ClearState.ConsumePress();
@@ -677,7 +677,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         miniTextbox.RemoveSelf();
                     }
 
-                    level.Add(new MiniTextbox(DialogIds.DialogClearState).IgnoreSaveLoad());
+                    level.Add(new MiniTextbox(IsPlayAsBadeline(level) ? DialogIds.DialogClearStateBadeline : DialogIds.DialogClearState).IgnoreSaveLoad());
                 }
             } else if (Mappings.SwitchAutoLoadState.Pressed() && !level.PausedNew()) {
                 Mappings.SwitchAutoLoadState.ConsumePress();
@@ -686,6 +686,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
         }
 
+        private static bool IsPlayAsBadeline(Level level) {
+            if (level.GetPlayer() is { } player) {
+                return player.Sprite.Mode == PlayerSpriteMode.MadelineAsBadeline;
+            } else {
+                return SaveData.Instance.Assists.PlayAsBadeline;
+            }
+        }
 
         // @formatter:off
         private static readonly Lazy<StateManager> Lazy = new(() => new StateManager());

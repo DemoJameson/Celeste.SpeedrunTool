@@ -60,7 +60,13 @@ SPEEDRUN_TOOL_DIALOG_CLEAR_STATE=
 SPEEDRUN_TOOL_DIALOG_NOT_SAVED_STATE_YET=
     [MADELINE left upset]
     请先保存状态。
-    
+SPEEDRUN_TOOL_DIALOG_CLEAR_STATE_BADELINE=
+    [BADELINE left normal]
+    清除状态~
+SPEEDRUN_TOOL_DIALOG_NOT_SAVED_STATE_YET_BADELINE=
+    [BADELINE left yell]
+    还没保存状态！
+
 # ================================== End Point Style ==================================
 SPEEDRUN_TOOL_FLAG=      Flag
 SPEEDRUN_TOOL_GOLD_BERRY=Gold Berry

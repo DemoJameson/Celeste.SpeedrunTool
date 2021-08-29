@@ -37,6 +37,8 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string ClearState = "SPEEDRUN_TOOL_CLEAR_STATE";
         public const string DialogClearState = "SPEEDRUN_TOOL_DIALOG_CLEAR_STATE";
         public const string DialogNotSavedStateYet = "SPEEDRUN_TOOL_DIALOG_NOT_SAVED_STATE_YET";
+        public const string DialogClearStateBadeline = "SPEEDRUN_TOOL_DIALOG_CLEAR_STATE_BADELINE";
+        public const string DialogNotSavedStateYetBadeline = "SPEEDRUN_TOOL_DIALOG_NOT_SAVED_STATE_YET_BADELINE";
         
         // ReSharper disable UnusedMember.Global
         // End Point Style

@@ -42,6 +42,9 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             On.Celeste.Level.Update += ProcessButtons;
             On.Celeste.SummitCheckpoint.Update += UpdateTimerStateOnTouchFlag;
             On.Celeste.LevelExit.ctor += LevelExitOnCtor;
+            if (Settings.AutoResetRoomTimer) {
+                SwitchRoomTimer(RoomTimerType.Off);
+            }
         }
 
         public void Unload() {
@@ -114,6 +117,8 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             if (roomTimerType == RoomTimerType.Off) {
                 ClearPbTimes();
             }
+            
+            SpeedrunToolModule.Instance.SaveSettings();
         }
 
         public void ClearPbTimes(bool clearEndPoint = true) {

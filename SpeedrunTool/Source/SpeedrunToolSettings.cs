@@ -12,7 +12,7 @@ namespace Celeste.Mod.SpeedrunTool {
 
         #region RoomTimer
 
-        [YamlIgnore] [SettingIgnore] public RoomTimerType RoomTimerType { get; set; } = RoomTimerType.Off;
+        public RoomTimerType RoomTimerType { get; set; } = RoomTimerType.Off;
 
         [SettingRange(1, 99)]
         [SettingName(DialogIds.NumberOfRooms)]

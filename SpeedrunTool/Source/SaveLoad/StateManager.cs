@@ -60,6 +60,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             EventInstanceUtils.OnHook();
             StateMarkUtils.OnLoad();
             DynDataUtils.OnLoad();
+            EndPoint.OnLoad();
             On.Celeste.Level.Update += CheckButtonsAndUpdateBackdrop;
             On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
@@ -73,6 +74,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             EventInstanceUtils.OnUnhook();
             StateMarkUtils.OnUnload();
             DynDataUtils.OnUnload();
+            EndPoint.OnUnload();
             On.Celeste.Level.Update -= CheckButtonsAndUpdateBackdrop;
             On.Monocle.Scene.Begin -= ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End -= AutoLoadStateWhenDeath;

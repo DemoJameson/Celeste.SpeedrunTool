@@ -117,7 +117,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             if (roomTimerType == RoomTimerType.Off) {
                 ClearPbTimes();
             }
-            
+
             SpeedrunToolModule.Instance.SaveSettings();
         }
 
@@ -156,7 +156,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
 
         private void LevelExitOnCtor(On.Celeste.LevelExit.orig_ctor orig, LevelExit self, LevelExit.Mode mode, Session session, HiresSnow snow) {
             orig(self, mode, session, snow);
-            if (Settings.AutoResetRoomTimer && mode == LevelExit.Mode.Restart && !StateManager.Instance.IsSaved) {
+            if (Settings.AutoResetRoomTimer && mode == LevelExit.Mode.Restart) {
                 SwitchRoomTimer(RoomTimerType.Off);
             }
         }

@@ -31,6 +31,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         private PlayerHair playerHair;
         private PlayerSprite playerSprite;
         private SpriteStyle spriteStyle;
+        private readonly string roomName;
 
         public EndPoint(Player player) {
             Tag = Tags.Global;
@@ -48,6 +49,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             // saved madeline sprite
             CreateMadelineSprite(player);
             SetSprite(player);
+            roomName = player.SceneAs<Level>().Session.Level;
         }
 
         private void SetSprite(Player player) {
@@ -117,7 +119,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 Activated = true;
                 SceneAs<Level>().Displacement.AddBurst(TopCenter, 0.5f, 4f, 24f, 0.5f);
                 Scene.Add(new ConfettiRenderer(TopCenter));
-                if (All[0] == this) {
+                if (All.FirstOrDefault(point => point.roomName == roomName) != null) {
                     Audio.Play("event:/game/07_summit/checkpoint_confetti", TopCenter + Vector2.UnitX);
                 }
             }
@@ -238,15 +240,14 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
 
         public static bool IsExist => Engine.Scene is Level level && level.Tracker.GetEntity<EndPoint>() != null;
 
-        private static List<EndPoint> EmptyList = new();
+        private static readonly List<EndPoint> EmptyList = new();
         public static List<EndPoint> All {
             get {
                 if (Engine.Scene is Level level) {
-                    return level.Entities.FindAll<EndPoint>();
+                    return level.Tracker.GetEntities<EndPoint>().Cast<EndPoint>().ToList();
+                } else {
+                    return EmptyList;
                 }
-
-                EmptyList.Clear();
-                return EmptyList;
             }
         }
     }

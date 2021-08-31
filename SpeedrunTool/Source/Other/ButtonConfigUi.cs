@@ -409,7 +409,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                 return false;
             }
 
-            if (Engine.Scene.Tracker.Entities.TryGetValue(typeof(ButtonConfigUi), out List<Entity> entities) && entities.Count > 0) {
+            if (Engine.Scene is {} scene && scene.Tracker.Entities.TryGetValue(typeof(ButtonConfigUi), out List<Entity> entities) && entities.Count > 0) {
                 return false;
             }
 

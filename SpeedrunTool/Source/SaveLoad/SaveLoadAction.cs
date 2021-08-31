@@ -89,6 +89,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SupportInput();
             SupportAudioMusic();
             MuteAnnoyingAudios();
+            SupportEntityList();
             On.FMOD.Studio.EventDescription.createInstance += EventDescriptionOnCreateInstance;
         }
 
@@ -280,6 +281,26 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
 
                 RequireMuteAudios.Clear();
+            }));
+        }
+
+        private static void SupportEntityList() {
+            string[] fieldNames = {
+                "toRemove", "removing", "toAdd", "adding", "toAwake"
+            };
+
+            Add(new SaveLoadAction((savedValues, level) => {
+                Dictionary<string,object> value = new();
+                foreach (string fieldName in fieldNames) {
+                    value[fieldName] = level.Entities.GetFieldValue(fieldName);
+                }
+                savedValues[typeof(EntityList)] = value.DeepCloneShared();
+            }, (savedValues, level) => {
+                Dictionary<string, object> value = savedValues[typeof(EntityList)].DeepCloneShared();
+                foreach (string fieldName in fieldNames) {
+                    level.Entities.SetFieldValue(fieldName, value[fieldName]);
+                    // value[fieldName].DeepCloneToShared(level.Entities.GetFieldValue(fieldName));
+                } 
             }));
         }
 

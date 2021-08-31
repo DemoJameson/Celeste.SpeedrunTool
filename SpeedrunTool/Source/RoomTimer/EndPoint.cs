@@ -274,7 +274,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         private static readonly List<EndPoint> EmptyList = new();
         public static List<EndPoint> All {
             get {
-                if (Engine.Scene is Level level) {
+                if (Engine.Scene is Level level && level.Tracker.Entities.ContainsKey(typeof(EndPoint))) {
                     return level.Tracker.GetEntities<EndPoint>().Cast<EndPoint>().ToList();
                 } else {
                     return EmptyList;

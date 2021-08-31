@@ -383,7 +383,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                 // 修复：切换房间时存档后读档导致游戏误以为卡死自动重生
                 if (savedLevel.Transitioning && savedTransitionRoutine != null) {
-                    playerStuckFieldInfo?.SetValue(savedTransitionRoutine.DeepCloneShared(), TimeSpan.FromTicks(session.Time));
+                    transitionRoutine = savedTransitionRoutine.DeepCloneShared();
+                    playerStuckFieldInfo?.SetValue(transitionRoutine, TimeSpan.FromTicks(session.Time));
                 }
 
                 int increaseDeath = 1;

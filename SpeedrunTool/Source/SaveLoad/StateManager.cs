@@ -61,7 +61,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             StateMarkUtils.OnLoad();
             DynDataUtils.OnLoad();
             EndPoint.OnLoad();
-            On.Celeste.Level.Update += CheckButtonsAndUpdateBackdrop;
+            On.Monocle.Engine.Update += CheckButtonsAndUpdateBackdrop;
             On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
             On.Monocle.Scene.BeforeUpdate += SceneOnBeforeUpdate;
@@ -75,21 +75,23 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             StateMarkUtils.OnUnload();
             DynDataUtils.OnUnload();
             EndPoint.OnUnload();
-            On.Celeste.Level.Update -= CheckButtonsAndUpdateBackdrop;
+            On.Monocle.Engine.Update -= CheckButtonsAndUpdateBackdrop;
             On.Monocle.Scene.Begin -= ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End -= AutoLoadStateWhenDeath;
             On.Monocle.Scene.BeforeUpdate -= SceneOnBeforeUpdate;
             ilHook?.Dispose();
         }
 
-        private void CheckButtonsAndUpdateBackdrop(On.Celeste.Level.orig_Update orig, Level self) {
-            orig(self);
-            CheckButton(self);
-
-            if (State == States.Waiting && self.Frozen) {
-                self.Foreground.Update(self);
-                self.Background.Update(self);
+        private void CheckButtonsAndUpdateBackdrop(On.Monocle.Engine.orig_Update orig, Engine self, GameTime gameTime) {
+            if (Engine.Scene is Level level) {
+                CheckButton(level);
+                if (State == States.Waiting && level.Frozen) {
+                    level.Foreground.Update(level);
+                    level.Background.Update(level);
+                }
             }
+
+            orig(self, gameTime);
         }
 
         private void ClearStateWhenSwitchScene(On.Monocle.Scene.orig_Begin orig, Scene self) {
@@ -115,7 +117,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 && SpeedrunToolModule.Settings.AutoLoadStateAfterDeath
                 && IsSaved
                 && !SavedByTas
-                && !(bool) self.GetFieldValue("finished")
+                && !(bool)self.GetFieldValue("finished")
                 && Engine.Scene is Level level
                 && level.Entities.FindFirst<PlayerSeeker>() == null
             ) {
@@ -133,24 +135,24 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private void SceneOnBeforeUpdate(On.Monocle.Scene.orig_BeforeUpdate orig, Scene self) {
-            if (SpeedrunToolModule.Enabled && self is Level level && State == States.Waiting && !level.PausedNew()
-                && (Input.Dash.Pressed
-                    || Input.Grab.Check
-                    || Input.Jump.Check
-                    || Input.Pause.Check
-                    || Input.Talk.Check
-                    || Input.MoveX != 0
-                    || Input.MoveY != 0
-                    || Input.Aim.Value != Vector2.Zero
-                    || GetVirtualButton(Mappings.LoadState).Released
-                    || typeof(Input).GetFieldValue("DemoDash")?.GetPropertyValue("Pressed") as bool? == true
-                    || typeof(Input).GetFieldValue("CrouchDash")?.GetPropertyValue("Pressed") as bool? == true
-                )) {
+            if (Settings.Enabled && self is Level level && State == States.Waiting && !level.PausedNew()
+                                        && (Input.Dash.Pressed
+                                            || Input.Grab.Check
+                                            || Input.Jump.Check
+                                            || Input.Pause.Check
+                                            || Input.Talk.Check
+                                            || Input.MoveX != 0
+                                            || Input.MoveY != 0
+                                            || Input.Aim.Value != Vector2.Zero
+                                            || GetVirtualButton(Mappings.LoadState).Released
+                                            || typeof(Input).GetFieldValue("DemoDash")?.GetPropertyValue("Pressed") as bool? == true
+                                            || typeof(Input).GetFieldValue("CrouchDash")?.GetPropertyValue("Pressed") as bool? == true
+                                        )) {
                 if (preCloneTask == null) {
-                    // savestate 之后的冻结
-                    OutOfWaiting(level);
+                    // savestate 之后的解冻
+                    WaitSaveStateEntity.OutOfWaiting(level);
                 } else {
-                    // loadstate 之后的冻结
+                    // loadstate 之后的解冻
                     LoadStateComplete(level);
                 }
             }
@@ -245,7 +247,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     continue;
                 }
 
-                Dictionary<Type,List<Entity>> trackerEntities = level.Tracker.Entities;
+                Dictionary<Type, List<Entity>> trackerEntities = level.Tracker.Entities;
                 if (trackerEntities.ContainsKey(type) && trackerEntities[type].Count > 0) {
                     List<Entity> clonedEntities = trackerEntities[type].DeepCloneShared();
                     Dictionary<Entity, int> dictionary = new();
@@ -264,7 +266,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     continue;
                 }
 
-                Dictionary<Type,List<Component>> trackerComponents = level.Tracker.Components;
+                Dictionary<Type, List<Component>> trackerComponents = level.Tracker.Components;
                 if (trackerComponents.ContainsKey(type) && trackerComponents[type].Count > 0) {
                     List<Component> clonedComponents = trackerComponents[type].DeepCloneShared();
                     Dictionary<Component, int> dictionary = new();
@@ -430,14 +432,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             State = States.None;
         }
 
-        private void OutOfWaiting(Level level) {
-            level.Frozen = Instance.savedLevel?.Frozen ?? false;
-            level.TimerStopped = Instance.savedLevel?.TimerStopped ?? false;
-            level.PauseLock = Instance.savedLevel?.PauseLock ?? false;
-            EndPoint.All.ForEach(point => point.ReadyForTime());
-            Instance.State = States.None;
-        }
-
         // 分两步的原因是更早的停止音乐，听起来更舒服更好一点
         private void RestoreCassetteBlockManager1(Level level) {
             if (level.Tracker.GetEntity<CassetteBlockManager>() is { } manager) {
@@ -450,8 +444,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private void RestoreCassetteBlockManager2(Level level) {
             if (level.Tracker.GetEntity<CassetteBlockManager>() is { } manager) {
                 if (manager.GetFieldValue("sfx") is EventInstance sfx &&
-                    !(bool) manager.GetFieldValue("isLevelMusic")) {
-                    if ((int) manager.GetFieldValue("leadBeats") <= 0) {
+                    !(bool)manager.GetFieldValue("isLevelMusic")) {
+                    if ((int)manager.GetFieldValue("leadBeats") <= 0) {
                         sfx.start();
                     }
                 }
@@ -514,8 +508,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             PreCloneSavedEntities();
 
             // Re Add Entities
-            List<Entity> entities = (List<Entity>) level.Entities.GetFieldValue("entities");
-            HashSet<Entity> current = (HashSet<Entity>) level.Entities.GetFieldValue("current");
+            List<Entity> entities = (List<Entity>)level.Entities.GetFieldValue("entities");
+            HashSet<Entity> current = (HashSet<Entity>)level.Entities.GetFieldValue("current");
             foreach (Entity entity in deepCloneEntities) {
                 if (entities.Contains(entity)) {
                     continue;
@@ -531,12 +525,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         level.Tracker.InvokeMethod("ComponentAdded", component);
 
                         // 等 ScreenWipe 完毕再重新播放
-                        if (component is SoundSource {Playing: true} source && source.GetFieldValue("instance") is EventInstance eventInstance) {
+                        if (component is SoundSource { Playing: true } source && source.GetFieldValue("instance") is EventInstance eventInstance) {
                             playingEventInstances.Add(eventInstance);
                         }
                     });
                 level.InvokeMethod("SetActualDepth", entity);
-                Dictionary<Type, Queue<Entity>> pools = (Dictionary<Type, Queue<Entity>>) Engine.Pooler.GetPropertyValue("Pools");
+                Dictionary<Type, Queue<Entity>> pools = (Dictionary<Type, Queue<Entity>>)Engine.Pooler.GetPropertyValue("Pools");
                 Type type = entity.GetType();
                 if (pools.ContainsKey(type) && pools[type].Count > 0) {
                     pools[type].Dequeue();
@@ -646,11 +640,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private bool IsAllowSave(Level level, Player player) {
-            return State == States.None && player is {Dead: false} && !level.PausedNew() && !level.SkippingCutscene;
+            return State == States.None && player is { Dead: false } && !level.PausedNew() && !level.SkippingCutscene;
         }
 
         private bool IsNotCollectingHeart(Level level) {
-            return !level.Entities.FindAll<HeartGem>().Any(heart => (bool) heart.GetFieldValue("collected"));
+            return !level.Entities.FindAll<HeartGem>().Any(heart => (bool)heart.GetFieldValue("collected"));
         }
 
         private void CheckButton(Level level) {
@@ -670,7 +664,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         miniTextbox.RemoveSelf();
                     }
 
-                    level.Add(new MiniTextbox(IsPlayAsBadeline(level) ? DialogIds.DialogNotSavedStateYetBadeline : DialogIds.DialogNotSavedStateYet).IgnoreSaveLoad());
+                    level.Add(new MiniTextbox(IsPlayAsBadeline(level) ? DialogIds.DialogNotSavedStateYetBadeline : DialogIds.DialogNotSavedStateYet)
+                        .IgnoreSaveLoad());
                 }
             } else if (Mappings.ClearState.Pressed() && !level.PausedNew() && State == States.None) {
                 Mappings.ClearState.ConsumePress();
@@ -680,7 +675,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         miniTextbox.RemoveSelf();
                     }
 
-                    level.Add(new MiniTextbox(IsPlayAsBadeline(level) ? DialogIds.DialogClearStateBadeline : DialogIds.DialogClearState).IgnoreSaveLoad());
+                    level.Add(new MiniTextbox(IsPlayAsBadeline(level) ? DialogIds.DialogClearStateBadeline : DialogIds.DialogClearState)
+                        .IgnoreSaveLoad());
                 }
             } else if (Mappings.SwitchAutoLoadState.Pressed() && !level.PausedNew()) {
                 Mappings.SwitchAutoLoadState.ConsumePress();
@@ -705,9 +701,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         // @formatter:on
 
         class WaitSaveStateEntity : Entity {
+            private static bool origFrozen;
+            private static bool origTimerStopped;
+            private static bool origPauseLock;
+
             public WaitSaveStateEntity(Level level) {
                 // 避免被 Save
                 Tag = Tags.Global;
+
+                origFrozen = level.Frozen;
+                origTimerStopped = level.TimerStopped;
+                origPauseLock = level.PauseLock;
+
                 level.Frozen = true;
                 level.TimerStopped = true;
                 level.PauseLock = true;
@@ -726,10 +731,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         level.PauseLock = true;
                         Instance.State = States.Waiting;
                     } else {
-                        Instance.OutOfWaiting(level);
+                        OutOfWaiting(level);
                     }
                 });
                 RemoveSelf();
+            }
+
+            public static void OutOfWaiting(Level level) {
+                level.Frozen = Instance.savedLevel?.Frozen ?? origFrozen;
+                level.TimerStopped = Instance.savedLevel?.TimerStopped ?? origTimerStopped;
+                level.PauseLock = Instance.savedLevel?.PauseLock ?? origPauseLock;
+                EndPoint.All.ForEach(point => point.ReadyForTime());
+                Instance.State = States.None;
             }
         }
     }

@@ -158,6 +158,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private static void SupportExternalMember() {
             Add(new SaveLoadAction(
                 (savedValues, _) => {
+                    // 手动保存时移除冻结帧
+                    if (!StateManager.Instance.SavedByTas) {
+                        Engine.FreezeTimer = 0f;
+                    }
                     SaveStaticMemberValues(savedValues, typeof(Engine), "DashAssistFreeze", "DashAssistFreezePress", "DeltaTime", "FrameCounter",
                         "FreezeTimer", "RawDeltaTime", "TimeRate", "TimeRateB");
                     SaveStaticMemberValues(savedValues, typeof(Glitch), "Value");

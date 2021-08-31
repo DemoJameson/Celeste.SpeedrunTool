@@ -12,21 +12,22 @@ namespace Celeste.Mod.SpeedrunTool.Other {
     [Tracked]
     public class ButtonConfigUi : TextMenu {
         public static void Load() {
-            On.Monocle.Scene.BeforeUpdate += SceneOnBeforeUpdate;
+            On.Monocle.Engine.Update += EngineOnUpdate;
         }
 
         public static void Unload() {
-            On.Monocle.Scene.BeforeUpdate -= SceneOnBeforeUpdate;
+            On.Monocle.Engine.Update -= EngineOnUpdate;
         }
 
-        private static void SceneOnBeforeUpdate(On.Monocle.Scene.orig_BeforeUpdate orig, Scene self) {
-            orig(self);
+        private static void EngineOnUpdate(On.Monocle.Engine.orig_Update orig, Engine self, GameTime gameTime) {
             if (Mappings.ToggleFullscreen.Pressed()) {
                 Mappings.SwitchAutoLoadState.ConsumePress();
                 CelesteSettings.Instance.Fullscreen = !CelesteSettings.Instance.Fullscreen;
                 CelesteSettings.Instance.ApplyScreen();
                 UserIO.SaveHandler(false, true);
             }
+
+            orig(self, gameTime);
         }
 
         private static readonly List<Buttons> AllButtons = new() {

@@ -77,7 +77,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
         }
 
         private static void TeleportTo(Session session, bool fromHistory = false) {
-            if (SpeedrunToolModule.Settings.FastTeleport && Engine.Scene is Level level && level.GetPlayer() is { } player) {
+            if (SpeedrunToolModule.Settings.FastTeleport && Engine.Scene is Level level) {
                 // 修复问题：死亡瞬间传送 PlayerDeadBody 没被清除，导致传送完毕后 madeline 自动爆炸
                 level.Entities.UpdateLists();
 
@@ -105,7 +105,10 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                 session.DeepCloneTo(level.Session);
 
                 // 修改自 level.TeleportTo(player, session.Level, Player.IntroTypes.Respawn);
-                level.Remove(player);
+                if (level.GetPlayer() != null) {
+                    level.Remove(level.GetPlayer());
+                }
+
                 if (level.Entities.FindFirst<SpeedrunTimerDisplay>() is Entity timer) {
                     level.Remove(timer);
                 }
@@ -129,8 +132,10 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                 }
 
                 // new player instance
-                player = level.GetPlayer();
-                level.Camera.Position = player.CameraTarget;
+                if (level.GetPlayer() != null) {
+                    level.Camera.Position = level.GetPlayer().CameraTarget;
+                }
+
                 level.Update();
             } else {
                 if (!fromHistory) {

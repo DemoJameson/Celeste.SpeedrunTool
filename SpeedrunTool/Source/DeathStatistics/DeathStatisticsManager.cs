@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Celeste.Mod.Helpers;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.Other;
 using Force.DeepCloner;
@@ -22,6 +24,9 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         public bool Died;
         private string causeOfDeath;
         private Vector2 deathPosition;
+        private readonly string playbackDir = Path.Combine(typeof(UserIO).GetFieldValue("SavePath").ToString(), "SpeedrunTool", "DeathPlayback");
+        private Vector2 playbackStartPosition;
+        private string playbackFilePath;
 
         private DeathInfo teleportDeathInfo;
         private bool Enabled => SpeedrunToolModule.Settings.DeathStatistics;
@@ -31,6 +36,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             using (new DetourContext {After = new List<string> {"*"}}) {
                 On.Celeste.Player.Die += PlayerOnDie;
             }
+
             On.Celeste.PlayerDeadBody.End += PlayerDeadBodyOnEnd;
             On.Celeste.Level.NextLevel += LevelOnNextLevel;
             On.Celeste.Player.Update += PlayerOnUpdate;
@@ -38,20 +44,20 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             On.Celeste.ChangeRespawnTrigger.OnEnter += ChangeRespawnTriggerOnOnEnter;
             On.Celeste.Session.SetFlag += UpdateTimerStateOnTouchFlag;
             On.Celeste.LevelLoader.ctor += LevelLoaderOnCtor;
-            On.Celeste.Player.Added += PlayerOnAdded;
+            On.Celeste.Level.LoadLevel += LevelOnLoadLevel;
             On.Monocle.Scene.Begin += SceneOnBegin;
 
             Hotkeys.CheckDeathStatistics.RegisterPressedAction(scene => {
-                if (scene.Tracker.GetEntity<DeathStatisticsUi>() is {} deathStatisticsUi) {
+                if (scene.Tracker.GetEntity<DeathStatisticsUi>() is { } deathStatisticsUi) {
                     deathStatisticsUi.OnESC?.Invoke();
-                } else if (scene is Level { Paused: false } level && !level.IsPlayerDead()) {
+                } else if (scene is Level {Paused: false} level && !level.IsPlayerDead()) {
                     level.Paused = true;
                     DeathStatisticsUi buttonConfigUi = new() {
                         OnClose = () => level.Paused = false
                     };
                     level.Add(buttonConfigUi);
                     level.OnEndOfFrame += level.Entities.UpdateLists;
-                } 
+                }
             });
         }
 
@@ -64,7 +70,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             On.Celeste.ChangeRespawnTrigger.OnEnter -= ChangeRespawnTriggerOnOnEnter;
             On.Celeste.Session.SetFlag -= UpdateTimerStateOnTouchFlag;
             On.Celeste.LevelLoader.ctor -= LevelLoaderOnCtor;
-            On.Celeste.Player.Added -= PlayerOnAdded;
+            On.Celeste.Level.LoadLevel -= LevelOnLoadLevel;
             On.Monocle.Scene.Begin -= SceneOnBegin;
         }
 
@@ -75,12 +81,26 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             }
         }
 
-        private void PlayerOnAdded(On.Celeste.Player.orig_Added orig, Player self, Scene scene) {
-            orig(self, scene);
-            if (scene is Level level && teleportDeathInfo != null && teleportDeathInfo.Area == level.Session.Area &&
-                teleportDeathInfo.Room == level.Session.Level) {
-                scene.Add(new DeathMark(teleportDeathInfo.DeathPosition));
+        private void LevelOnLoadLevel(On.Celeste.Level.orig_LoadLevel orig, Level level, Player.IntroTypes playerIntro, bool isFromLoader) {
+            if (IsPracticing()) {
+                level.Add(new DeathMark(teleportDeathInfo.DeathPosition));
+
+                if (!string.IsNullOrEmpty(teleportDeathInfo.PlaybackFilePath) && File.Exists(teleportDeathInfo.PlaybackFilePath)) {
+                    List<Player.ChaserState> chaserStates = PlaybackData.Import(FileProxy.ReadAllBytes(teleportDeathInfo.PlaybackFilePath));
+                    PlayerSpriteMode spriteMode = level.Session.Inventory.Backpack ? PlayerSpriteMode.Madeline : PlayerSpriteMode.MadelineNoBackpack;
+                    if (SaveData.Instance.Assists.PlayAsBadeline) {
+                        spriteMode = PlayerSpriteMode.MadelineAsBadeline;
+                    }
+
+                    PlayerPlayback playerPlayback = new(teleportDeathInfo.PlaybackStartPosition, spriteMode, chaserStates) {
+                        Depth = Depths.Player
+                    };
+                    playerPlayback.Sprite.Color *= 0.8f;
+                    level.Add(playerPlayback);
+                }
             }
+
+            orig(level, playerIntro, isFromLoader);
         }
 
         private void LevelLoaderOnCtor(On.Celeste.LevelLoader.orig_ctor orig, LevelLoader self, Session session,
@@ -101,13 +121,14 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
 
         private void ChangeRespawnTriggerOnOnEnter(On.Celeste.ChangeRespawnTrigger.orig_OnEnter orig,
             ChangeRespawnTrigger self, Player player) {
+            Level level = player.SceneAs<Level>();
+            Vector2? oldPoint = level.Session.RespawnPoint;
             orig(self, player);
+            Vector2? newPoint = level.Session.RespawnPoint;
 
-            if (self.Scene.CollideCheck<Solid>(self.Target + Vector2.UnitY * -4f)) {
-                return;
+            if (oldPoint != newPoint) {
+                lastTime = SaveData.Instance.Time;
             }
-
-            lastTime = SaveData.Instance.Time;
         }
 
         private void OuiFileSelectSlotOnEnterFirstArea(On.Celeste.OuiFileSelectSlot.orig_EnterFirstArea orig,
@@ -121,12 +142,28 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             lastTime = 0;
         }
 
-        private void PlayerOnUpdate(On.Celeste.Player.orig_Update orig, Player self) {
-            orig(self);
+        private void PlayerOnUpdate(On.Celeste.Player.orig_Update orig, Player player) {
+            orig(player);
 
-            if (Enabled && Died && (self.StateMachine.State is Player.StNormal or Player.StSwim)) {
+            if (Enabled && Died && player.StateMachine.State is Player.StNormal or Player.StSwim) {
                 Died = false;
-                LoggingData(self);
+                LoggingData();
+            }
+        }
+
+        private void ExportPlayback(Player player) {
+            string filePath = Path.Combine(playbackDir, $"{DateTime.Now.Ticks}.bin");
+            if (!Directory.Exists(playbackDir)) {
+                Directory.CreateDirectory(playbackDir);
+            }
+
+            if (player.ChaserStates.Count > 0) {
+                PlaybackData.Export(player.ChaserStates, filePath);
+                playbackStartPosition = player.ChaserStates[0].Position;
+                playbackFilePath = filePath;
+            } else {
+                playbackStartPosition = default;
+                playbackFilePath = string.Empty;
             }
         }
 
@@ -143,8 +180,17 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             PlayerDeadBody playerDeadBody = orig(self, direction, evenIfInvincible, registerDeathInStats);
 
             if (playerDeadBody != null && Enabled) {
-                causeOfDeath = GetCauseOfDeath();
-                deathPosition = self.Position;
+                if (IsPracticing()) {
+                    causeOfDeath = null;
+                    deathPosition = default;
+                    playbackStartPosition = default;
+                    playbackFilePath = string.Empty;
+                    teleportDeathInfo = null;
+                } else {
+                    causeOfDeath = GetCauseOfDeath();
+                    deathPosition = self.Position;
+                    ExportPlayback(self);
+                }
             }
 
             return playerDeadBody;
@@ -157,14 +203,24 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             }
         }
 
-        private void LoggingData(Player player) {
-            Level level = player.SceneAs<Level>();
-            if (level == null) {
+        private bool IsPracticing() {
+            Level level = Engine.Scene switch {
+                Level lvl => lvl,
+                LevelLoader levelLoader => levelLoader.Level,
+                _ => null
+            };
+            return level != null && teleportDeathInfo != null && teleportDeathInfo.Area == level.Session.Area &&
+                   teleportDeathInfo.Room == level.Session.Level;
+        }
+
+        private void LoggingData() {
+            if (Engine.Scene is not Level level) {
                 return;
             }
 
-            // 传送到死亡地点练习时产生的死亡不记录
-            if (teleportDeathInfo?.Room == level.Session.Level) {
+            // 传送到死亡地点练习时产生的第一次死亡不记录，清除死亡地点
+            if (IsPracticing() || causeOfDeath == null) {
+                lastTime = SaveData.Instance.Time;
                 return;
             }
 
@@ -174,6 +230,8 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             long lostTime = SaveData.Instance.Time - lastTime;
 
             DeathInfo deathInfo = new() {
+                PlaybackStartPosition = playbackStartPosition,
+                PlaybackFilePath = playbackFilePath,
                 Chapter = GetChapterName(session),
                 Room = session.Level,
                 LostTime = lostTime,
@@ -209,6 +267,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
                 GrabbedGolden = cloneSession.GrabbedGolden,
                 HitCheckpoint = cloneSession.HitCheckpoint,
             };
+
             SpeedrunToolModule.SaveData.Add(deathInfo);
             lastTime = SaveData.Instance.Time;
         }
@@ -304,6 +363,9 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         public void Clear() {
             Died = false;
             teleportDeathInfo = null;
+            if (Directory.Exists(playbackDir)) {
+                Directory.Delete(playbackDir, true);
+            }
         }
     }
 }

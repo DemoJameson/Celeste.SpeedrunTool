@@ -19,6 +19,9 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
 
         public Vector2 DeathPosition { get; set; }
 
+        public Vector2 PlaybackStartPosition { get; set; }
+        public string PlaybackFilePath { get; set; }
+
         // Session
         public AreaKey Area { get; set; }
         public Vector2? RespawnPoint { get; set; }
@@ -81,8 +84,8 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
                 GrabbedGolden = GrabbedGolden,
                 HitCheckpoint = HitCheckpoint,
             };
-            Engine.Scene = new LevelLoader(session.DeepClone());
             DeathStatisticsManager.Instance.SetTeleportDeathInfo(this);
+            Engine.Scene = new LevelLoader(session.DeepClone());
         }
     }
 }

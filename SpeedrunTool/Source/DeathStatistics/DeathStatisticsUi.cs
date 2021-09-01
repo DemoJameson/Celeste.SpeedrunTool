@@ -29,7 +29,6 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             Alpha = 0.0f;
         }
 
-        // TODO 研究能否记录死亡现场的录像回放
         private void Reload(int index = -1) {
             Clear();
 

@@ -97,17 +97,19 @@ SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE=        Toggle Auto Load State
 SPEEDRUN_TOOL_TOGGLE_FULLSCREEN=             Toggle Fullscreen
 
 # ================================== Death Statistics ==================================
-SPEEDRUN_TOOL_DEATH_STATISTICS=         Death Statistics
-SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA= Max Number of Death Data
-SPEEDRUN_TOOL_CHECK_DEATH_STATISTICS=   Check Death Data
-SPEEDRUN_TOOL_CLEAR_DEATH_STATISTICS=   Clear Data
-SPEEDRUN_TOOL_CHAPTER=                  Chapter
-SPEEDRUN_TOOL_ROOM=                     Room
-SPEEDRUN_TOOL_LOST_TIME=                Lost Time
-SPEEDRUN_TOOL_CAUSE_OF_DEATH=           Cause of Death
-SPEEDRUN_TOOL_TOTAL_DEATH_COUNT=        Total Death Count
-SPEEDRUN_TOOL_TOTAL_LOST_TIME=          Total Lost Time
-SPEEDRUN_TOOL_NO_DATA=                  No Data
+SPEEDRUN_TOOL_DEATH_STATISTICS=              Death Statistics
+SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA=      Max Number of Death Data
+SPEEDRUN_TOOL_CHECK_DEATH_STATISTICS=        Check Death Data
+SPEEDRUN_TOOL_DEATH_STATISTICS_HEADER=       Death Statistics (Slot {0})
+SPEEDRUN_TOOL_DEATH_STATISTICS_HEADER_DEBUG= Death Statistics (Debug Slot)
+SPEEDRUN_TOOL_CLEAR_DEATH_STATISTICS=        Clear Data
+SPEEDRUN_TOOL_CHAPTER=                       Chapter
+SPEEDRUN_TOOL_ROOM=                          Room
+SPEEDRUN_TOOL_LOST_TIME=                     Lost Time
+SPEEDRUN_TOOL_CAUSE_OF_DEATH=                Cause of Death
+SPEEDRUN_TOOL_TOTAL_DEATH_COUNT=             Total Death Count
+SPEEDRUN_TOOL_TOTAL_LOST_TIME=               Total Lost Time
+SPEEDRUN_TOOL_NO_DATA=                       No Data
 
 # ================================== More Options ==================================
 SPEEDRUN_TOOL_RESPAWN_SPEED=              Respawn Speed

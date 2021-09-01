@@ -75,6 +75,8 @@ namespace Celeste.Mod.SpeedrunTool {
         // Death Statistics
         public const string MaxNumberOfDeathData = "SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA";
         public const string CheckDeathStatistics = "SPEEDRUN_TOOL_CHECK_DEATH_STATISTICS";
+        public const string DeathStatisticsHeader = "SPEEDRUN_TOOL_DEATH_STATISTICS_HEADER";
+        public const string DeathStatisticsHeaderDebug = "SPEEDRUN_TOOL_DEATH_STATISTICS_HEADER_DEBUG";
         public const string ClearDeathStatistics = "SPEEDRUN_TOOL_CLEAR_DEATH_STATISTICS";
         public const string Chapter = "SPEEDRUN_TOOL_CHAPTER";
         public const string Room = "SPEEDRUN_TOOL_ROOM";

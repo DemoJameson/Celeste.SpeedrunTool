@@ -5,7 +5,7 @@ using Monocle;
 namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
     [Tracked]
     public class DeathStatisticsUi : TextMenu {
-        private static SpeedrunToolSaveData SaveData => SpeedrunToolModule.SaveData;
+        private static SpeedrunToolSaveData ModSaveData => SpeedrunToolModule.SaveData;
 
         private static readonly Dictionary<string, int> ColumnHeaders = new() {
             {Dialog.Clean(DialogIds.Chapter), 400},
@@ -18,27 +18,35 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         private float inputDelay;
 
         public DeathStatisticsUi() {
-            Reload(SaveData.Selection);
+            Reload(ModSaveData.Selection);
             OnESC = OnCancel = () => {
                 Focused = false;
                 closing = true;
-                SaveData.SetSelection(Selection);
+                ModSaveData.SetSelection(Selection);
             };
             MinWidth = 600f;
             Position.Y = ScrollTargetY;
             Alpha = 0.0f;
         }
 
-        // TODO 排序
-        // TODO 过滤功能
-        // TODO 重新组织菜单
         // TODO 研究能否记录死亡现场的录像回放
         private void Reload(int index = -1) {
             Clear();
 
-            Add(new Header(Dialog.Clean(DialogIds.CheckDeathStatistics)));
+            string title;
+            if (SaveData.Instance is { } saveData) {
+                if (saveData.FileSlot == -1) {
+                    title = Dialog.Clean(DialogIds.DeathStatisticsHeaderDebug);
+                } else {
+                    title = string.Format(Dialog.Get(DialogIds.DeathStatisticsHeader), saveData.FileSlot);
+                }
+            } else {
+                title = Dialog.Clean(DialogIds.DeathStatistics);
+            }
 
-            if (SaveData.DeathInfos.Count == 0) {
+            Add(new Header(title));
+
+            if (ModSaveData.DeathInfos.Count == 0) {
                 AddEmptyInfo();
             } else {
                 AddTotalInfo();
@@ -63,8 +71,8 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
 
         private void AddTotalInfo() {
             Add(new TotalItem(new Dictionary<string, string> {
-                {$"{Dialog.Clean(DialogIds.TotalDeathCount)}: ", SaveData.GetTotalDeathCount().ToString()},
-                {$"{Dialog.Clean(DialogIds.TotalLostTime)}: ", SaveData.GetTotalLostTime()},
+                {$"{Dialog.Clean(DialogIds.TotalDeathCount)}: ", ModSaveData.GetTotalDeathCount().ToString()},
+                {$"{Dialog.Clean(DialogIds.TotalLostTime)}: ", ModSaveData.GetTotalLostTime()},
             }));
             Add(new SubHeader(""));
         }
@@ -74,7 +82,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         }
 
         private void AddListItems() {
-            SaveData.DeathInfos.ForEach(deathInfo => {
+            ModSaveData.DeathInfos.ForEach(deathInfo => {
                 Dictionary<string, int> labels = new() {
                     {deathInfo.Chapter, 400},
                     {deathInfo.Room, 400},
@@ -83,7 +91,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
                 };
                 ListItem item = new(labels);
                 item.Pressed(() => {
-                    SaveData.Selection = Selection;
+                    ModSaveData.Selection = Selection;
                     deathInfo.TeleportToDeathPosition();
                 });
                 Add(item);
@@ -96,7 +104,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
                 IncludeWidthInMeasurement = false,
                 AlwaysCenter = true,
                 OnPressed = () => {
-                    SaveData.Clear();
+                    ModSaveData.Clear();
                     Reload(0);
                 }
             };

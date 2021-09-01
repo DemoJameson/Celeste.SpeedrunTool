@@ -98,16 +98,18 @@ SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE=        开关死亡自动加载状态
 SPEEDRUN_TOOL_TOGGLE_FULLSCREEN=             开关全屏
 
 # ================================== Death Statistics ==================================
-SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA= 死亡数据数量
-SPEEDRUN_TOOL_CHECK_DEATH_STATISTICS=   查看死亡数据
-SPEEDRUN_TOOL_CLEAR_DEATH_STATISTICS=   清除数据
-SPEEDRUN_TOOL_CHAPTER=                  章节
-SPEEDRUN_TOOL_ROOM=                     房间
-SPEEDRUN_TOOL_LOST_TIME=                损失时间
-SPEEDRUN_TOOL_CAUSE_OF_DEATH=           死因
-SPEEDRUN_TOOL_TOTAL_DEATH_COUNT=        总死亡数
-SPEEDRUN_TOOL_TOTAL_LOST_TIME=          总损失时间
-SPEEDRUN_TOOL_NO_DATA=                  无数据
+SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA=      死亡数据数量
+SPEEDRUN_TOOL_CHECK_DEATH_STATISTICS=        查看死亡数据
+SPEEDRUN_TOOL_DEATH_STATISTICS_HEADER=       死亡数据（存档 {0})
+SPEEDRUN_TOOL_DEATH_STATISTICS_HEADER_DEBUG= 死亡数据（调试存档)
+SPEEDRUN_TOOL_CLEAR_DEATH_STATISTICS=        清除数据
+SPEEDRUN_TOOL_CHAPTER=                       章节
+SPEEDRUN_TOOL_ROOM=                          房间
+SPEEDRUN_TOOL_LOST_TIME=                     损失时间
+SPEEDRUN_TOOL_CAUSE_OF_DEATH=                死因
+SPEEDRUN_TOOL_TOTAL_DEATH_COUNT=             总死亡数
+SPEEDRUN_TOOL_TOTAL_LOST_TIME=               总损失时间
+SPEEDRUN_TOOL_NO_DATA=                       无数据
 
 # ================================== More Options ==================================
 SPEEDRUN_TOOL_RESPAWN_SPEED=              复活速度

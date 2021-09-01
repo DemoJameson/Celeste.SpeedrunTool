@@ -10,9 +10,19 @@ using CelesteSettings = Celeste.Settings;
 
 namespace Celeste.Mod.SpeedrunTool.Other {
     [Tracked]
-    public class ButtonConfigUi : TextMenu {
+    public class HotkeyConfigUi : TextMenu {
+        private static readonly Lazy<FieldInfo> TasRunning = new(() =>
+            Type.GetType("TAS.Manager, CelesteTAS-EverestInterop")?.GetFieldInfo("Running")
+        );
+
         public static void Load() {
             On.Monocle.Engine.Update += EngineOnUpdate;
+
+            Hotkeys.ToggleFullscreen.RegisterPressedAction(_ => {
+                CelesteSettings.Instance.Fullscreen = !CelesteSettings.Instance.Fullscreen;
+                CelesteSettings.Instance.ApplyScreen();
+                UserIO.SaveHandler(false, true);
+            });
         }
 
         public static void Unload() {
@@ -20,14 +30,34 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         }
 
         private static void EngineOnUpdate(On.Monocle.Engine.orig_Update orig, Engine self, GameTime gameTime) {
-            if (Mappings.ToggleFullscreen.Pressed()) {
-                Mappings.SwitchAutoLoadState.ConsumePress();
-                CelesteSettings.Instance.Fullscreen = !CelesteSettings.Instance.Fullscreen;
-                CelesteSettings.Instance.ApplyScreen();
-                UserIO.SaveHandler(false, true);
+            if (Engine.Scene is { } scene && Settings.Enabled) {
+                foreach (Hotkeys hotkey in Enum.GetValues(typeof(Hotkeys)).Cast<Hotkeys>()) {
+                    HotkeyConfig hotkeyConfig = GetHotkeyConfig(hotkey);
+                    if (Pressed(hotkey, scene)) {
+                        hotkeyConfig.VirtualButton.Value.ConsumePress();
+                        hotkeyConfig.OnPressed?.Invoke(scene);
+                    }
+                }
             }
 
             orig(self, gameTime);
+        }
+        
+        private static bool Pressed(Hotkeys hotkeys, Scene scene) {
+            bool pressed = GetVirtualButton(hotkeys).Pressed;
+            if (!pressed) {
+                return false;
+            }
+
+            if (TasRunning.Value?.GetValue(null) as bool? == true) {
+                return false;
+            }
+
+            if (scene.Tracker.Entities.TryGetValue(typeof(HotkeyConfigUi), out List<Entity> entities) && entities.Count > 0) {
+                return false;
+            }
+
+            return true;
         }
 
         private static readonly List<Buttons> AllButtons = new() {
@@ -45,7 +75,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             Buttons.BigButton,
         };
 
-        static ButtonConfigUi() {
+        static HotkeyConfigUi() {
             if (Celeste.Instance.Version >= new Version(1, 3, 3, 12)) {
                 AllButtons.AddRange(new[] {
                     Buttons.DPadUp,
@@ -64,75 +94,32 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             }
         }
 
-        public class ButtonInfo {
-            public readonly Mappings Mappings;
-            public readonly Keys[] DefaultKeys;
-            public readonly bool FixedDefaultKeys;
-            public readonly Lazy<VirtualButton> VirtualButton = new(CreateVirtualButton);
+        private static readonly Dictionary<Hotkeys, HotkeyConfig> HotkeyConfigs = new List<HotkeyConfig> {
+            new(Hotkeys.SaveState, Keys.F7),
+            new(Hotkeys.LoadState, Keys.F8),
+            new(Hotkeys.ClearState, Keys.F3),
+            new(Hotkeys.OpenDebugMap, Keys.F6, true),
+            new(Hotkeys.ResetRoomTimerPb, Keys.F9),
+            new(Hotkeys.SwitchRoomTimer, Keys.F10),
+            new(Hotkeys.SetEndPoint, Keys.F11),
+            new(Hotkeys.SetAdditionalEndPoint),
+            new(Hotkeys.CheckDeathStatistics, Keys.F12),
+            new(Hotkeys.TeleportToLastRoom, Keys.PageUp),
+            new(Hotkeys.TeleportToNextRoom, Keys.PageDown),
+            new(Hotkeys.SwitchAutoLoadState),
+            new(Hotkeys.ToggleFullscreen),
+        }.ToDictionary(info => info.Hotkeys, info => info);
 
-            public ButtonInfo(Mappings mappings, Keys? defaultKey = null, bool fixedDefaultKeys = false) {
-                Mappings = mappings;
-                DefaultKeys = defaultKey == null ? new Keys[0] : new[] { defaultKey.Value };
-                FixedDefaultKeys = fixedDefaultKeys;
-            }
-
-            public void UpdateVirtualButton() {
-                List<VirtualButton.Node> nodes = VirtualButton.Value.Nodes;
-                nodes.Clear();
-                nodes.AddRange(GetKeys().Select(key => new VirtualButton.KeyboardKey(key)));
-
-                if (GetButton() != null) {
-                    nodes.Add(new VirtualButton.PadButton(Input.Gamepad, (Buttons)GetButton()));
-                }
-            }
-
-            public Buttons? GetButton() {
-                return (Buttons?)Settings.GetPropertyValue($"Controller{Mappings}");
-            }
-
-            public void SetButton(Buttons? button) {
-                Settings.SetPropertyValue($"Controller{Mappings}", button);
-            }
-
-            public void SetKeys(List<Keys> keys) {
-                Settings.SetPropertyValue($"Keyboard{Mappings}", keys);
-            }
-
-            public List<Keys> GetKeys() {
-                return (List<Keys>)Settings.GetPropertyValue($"Keyboard{Mappings}");
-            }
-
-            public string GetLabel() {
-                return (typeof(DialogIds).GetFieldValue(Mappings.ToString()) as string).DialogClean();
-            }
+        public static HotkeyConfig GetHotkeyConfig(Hotkeys hotkeys) {
+            return HotkeyConfigs[hotkeys];
         }
 
-        private static readonly Dictionary<Mappings, ButtonInfo> ButtonInfos = new List<ButtonInfo> {
-            new(Mappings.SaveState, Keys.F7),
-            new(Mappings.LoadState, Keys.F8),
-            new(Mappings.ClearState, Keys.F3),
-            new(Mappings.OpenDebugMap, Keys.F6, true),
-            new(Mappings.ResetRoomTimerPb, Keys.F9),
-            new(Mappings.SwitchRoomTimer, Keys.F10),
-            new(Mappings.SetEndPoint, Keys.F11),
-            new(Mappings.SetAdditionalEndPoint),
-            new(Mappings.CheckDeathStatistics, Keys.F12),
-            new(Mappings.TeleportToLastRoom, Keys.PageUp),
-            new(Mappings.TeleportToNextRoom, Keys.PageDown),
-            new(Mappings.SwitchAutoLoadState),
-            new(Mappings.ToggleFullscreen),
-        }.ToDictionary(info => info.Mappings, info => info);
-
-        public static ButtonInfo GetButtonInfo(Mappings mappings) {
-            return ButtonInfos[mappings];
-        }
-
-        public static VirtualButton GetVirtualButton(Mappings mappings) {
-            return ButtonInfos[mappings].VirtualButton.Value;
+        public static VirtualButton GetVirtualButton(Hotkeys hotkeys) {
+            return HotkeyConfigs[hotkeys].VirtualButton.Value;
         }
 
         public static void Init() {
-            foreach (ButtonInfo buttonInfo in ButtonInfos.Values) {
+            foreach (HotkeyConfig buttonInfo in HotkeyConfigs.Values) {
                 buttonInfo.UpdateVirtualButton();
             }
         }
@@ -140,12 +127,12 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         private bool closing;
         private float inputDelay;
         private bool remapping;
-        private Mappings remappingType;
+        private Hotkeys remappingType;
         private float remappingEase;
         private bool remappingKeyboard;
         private float timeout;
 
-        public ButtonConfigUi() {
+        public HotkeyConfigUi() {
             Reload();
             OnESC = OnCancel = () => {
                 Focused = false;
@@ -158,10 +145,6 @@ namespace Celeste.Mod.SpeedrunTool.Other {
 
         private static SpeedrunToolSettings Settings => SpeedrunToolModule.Settings;
 
-        private static VirtualButton CreateVirtualButton() {
-            return new VirtualButton(0.08f);
-        }
-
         private void Reload(int index = -1) {
             Clear();
 
@@ -170,12 +153,12 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             Add(new SubHeader(Dialog.Clean(DialogIds.PressDeleteToRemoveButton)));
 
             Add(new SubHeader(Dialog.Clean(DialogIds.Keyboard)));
-            foreach (KeyValuePair<Mappings, ButtonInfo> pair in ButtonInfos) {
+            foreach (KeyValuePair<Hotkeys, HotkeyConfig> pair in HotkeyConfigs) {
                 AddKeyboardSetting(pair.Key, pair.Value.GetKeys());
             }
 
             Add(new SubHeader(Dialog.Clean(DialogIds.Controller)));
-            foreach (KeyValuePair<Mappings, ButtonInfo> pair in ButtonInfos) {
+            foreach (KeyValuePair<Hotkeys, HotkeyConfig> pair in HotkeyConfigs) {
                 AddControllerSetting(pair.Key, pair.Value.GetButton());
             }
 
@@ -202,9 +185,9 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             Add(resetButton);
         }
 
-        private void AddControllerSetting(Mappings mappingType, Buttons? button) {
-            Setting setting = new(ButtonInfos[mappingType].GetLabel(), Keys.None);
-            setting.Pressed(() => Remap(mappingType));
+        private void AddControllerSetting(Hotkeys hotkeyType, Buttons? button) {
+            Setting setting = new(HotkeyConfigs[hotkeyType].GetLabel(), Keys.None);
+            setting.Pressed(() => Remap(hotkeyType));
             if (button != null) {
                 setting.Set(new List<Buttons> { (Buttons)button });
             }
@@ -212,13 +195,13 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             Add(setting);
         }
 
-        private void AddKeyboardSetting(Mappings mappingType, List<Keys> keys) {
-            ButtonInfo buttonInfo = ButtonInfos[mappingType];
-            Add(new Setting(buttonInfo.GetLabel(), keys).Pressed(() => Remap(mappingType, true)));
+        private void AddKeyboardSetting(Hotkeys hotkeyType, List<Keys> keys) {
+            HotkeyConfig hotkeyConfig = HotkeyConfigs[hotkeyType];
+            Add(new Setting(hotkeyConfig.GetLabel(), keys).Pressed(() => Remap(hotkeyType, true)));
         }
 
         private static void SetDefaultButtons() {
-            foreach (ButtonInfo buttonInfo in ButtonInfos.Values) {
+            foreach (HotkeyConfig buttonInfo in HotkeyConfigs.Values) {
                 buttonInfo.SetButton(null);
                 buttonInfo.SetKeys(buttonInfo.DefaultKeys.ToList());
                 buttonInfo.UpdateVirtualButton();
@@ -226,10 +209,10 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         }
 
 
-        private void Remap(Mappings mapping, bool remapKeyboard = false) {
+        private void Remap(Hotkeys hotkey, bool remapKeyboard = false) {
             remapping = true;
             remappingKeyboard = remapKeyboard;
-            remappingType = mapping;
+            remappingType = hotkey;
             timeout = 5f;
             Focused = false;
         }
@@ -237,17 +220,17 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         private void SetRemap(Buttons button) {
             remapping = false;
             inputDelay = 0.25f;
-            ButtonInfo info = ButtonInfos[remappingType];
-            if (info.GetButton().HasValue && info.GetButton().Value == button) {
+            HotkeyConfig info = HotkeyConfigs[remappingType];
+            if (info.GetButton() is {} currentButton && currentButton == button) {
                 info.SetButton(null);
             } else {
                 info.SetButton(button);
-                foreach (ButtonInfo otherInfo in ButtonInfos.Values) {
+                foreach (HotkeyConfig otherInfo in HotkeyConfigs.Values) {
                     if (otherInfo == info) {
                         continue;
                     }
 
-                    if (otherInfo.GetButton().HasValue && otherInfo.GetButton().Value == button) {
+                    if (otherInfo.GetButton() is {} otherButton && otherButton == button) {
                         otherInfo.SetButton(null);
                         otherInfo.UpdateVirtualButton();
                     }
@@ -261,7 +244,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         private void SetRemap(Keys key) {
             remapping = false;
             inputDelay = 0.25f;
-            ButtonInfos[remappingType].With(info => {
+            HotkeyConfigs[remappingType].With(info => {
                 if (info.GetKeys().Contains(key) && !(info.FixedDefaultKeys && info.DefaultKeys.Contains(key))) {
                     info.GetKeys().Remove(key);
                 } else {
@@ -270,7 +253,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                     }
 
                     info.GetKeys().Add(key);
-                    foreach (ButtonInfo otherInfo in ButtonInfos.Values) {
+                    foreach (HotkeyConfig otherInfo in HotkeyConfigs.Values) {
                         if (otherInfo == info) {
                             continue;
                         }
@@ -325,23 +308,23 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             } else if (MInput.Keyboard.Pressed(Keys.Delete) && Selection >= 3 && Selection < Items.Count - 1) {
                 int index = Selection - 3;
                 bool keyboard = true;
-                if (index > ButtonInfos.Count - 1) {
+                if (index > HotkeyConfigs.Count - 1) {
                     index--;
-                    index %= ButtonInfos.Count;
+                    index %= HotkeyConfigs.Count;
                     keyboard = false;
                 }
 
-                ButtonInfo buttonInfo = ButtonInfos.Values.ToList()[index];
+                HotkeyConfig hotkeyConfig = HotkeyConfigs.Values.ToList()[index];
                 if (keyboard) {
-                    buttonInfo.GetKeys().Clear();
-                    if (buttonInfo.FixedDefaultKeys) {
-                        buttonInfo.SetKeys(buttonInfo.DefaultKeys.ToList());
+                    hotkeyConfig.GetKeys().Clear();
+                    if (hotkeyConfig.FixedDefaultKeys) {
+                        hotkeyConfig.SetKeys(hotkeyConfig.DefaultKeys.ToList());
                     }
                 } else {
-                    buttonInfo.SetButton(null);
+                    hotkeyConfig.SetButton(null);
                 }
 
-                buttonInfo.UpdateVirtualButton();
+                hotkeyConfig.UpdateVirtualButton();
                 Reload(Selection);
             }
 
@@ -372,7 +355,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                     new Vector2(0.5f, 1f),
                     Vector2.One * 0.7f,
                     Color.LightGray * Ease.CubeIn(remappingEase));
-                ActiveFont.Draw(ButtonInfos[remappingType].GetLabel(),
+                ActiveFont.Draw(HotkeyConfigs[remappingType].GetLabel(),
                     position + new Vector2(0.0f, 8f), new Vector2(0.5f, 0.0f), Vector2.One * 2f,
                     Color.White * Ease.CubeIn(remappingEase));
             } else {
@@ -381,43 +364,77 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                     Color.White * Ease.CubeIn(remappingEase));
             }
         }
+    }
 
-        public enum Mappings {
-            SaveState,
-            LoadState,
-            ClearState,
-            OpenDebugMap,
-            ResetRoomTimerPb,
-            SwitchRoomTimer,
-            SetEndPoint,
-            SetAdditionalEndPoint,
-            CheckDeathStatistics,
-            TeleportToLastRoom,
-            TeleportToNextRoom,
-            SwitchAutoLoadState,
-            ToggleFullscreen,
+    public class HotkeyConfig {
+        private static SpeedrunToolSettings Settings => SpeedrunToolModule.Settings;
+       
+        public readonly Hotkeys Hotkeys;
+        public readonly Keys[] DefaultKeys;
+        public readonly bool FixedDefaultKeys;
+        public readonly Lazy<VirtualButton> VirtualButton = new(() => new VirtualButton(0.08f));
+        public Action<Scene> OnPressed;
+
+        public HotkeyConfig(Hotkeys hotkeys, Keys? defaultKey = null, bool fixedDefaultKeys = false) {
+            Hotkeys = hotkeys;
+            DefaultKeys = defaultKey == null ? new Keys[0] : new[] { defaultKey.Value };
+            FixedDefaultKeys = fixedDefaultKeys;
+        }
+
+        public void UpdateVirtualButton() {
+            List<VirtualButton.Node> nodes = VirtualButton.Value.Nodes;
+            nodes.Clear();
+            nodes.AddRange(GetKeys().Select(key => new VirtualButton.KeyboardKey(key)));
+
+            if (GetButton() is {} button) {
+                nodes.Add(new VirtualButton.PadButton(Input.Gamepad, button));
+            }
+        }
+
+        public Buttons? GetButton() {
+            return (Buttons?)Settings.GetPropertyValue($"Controller{Hotkeys}");
+        }
+
+        public void SetButton(Buttons? button) {
+            Settings.SetPropertyValue($"Controller{Hotkeys}", button);
+        }
+
+        public void SetKeys(List<Keys> keys) {
+            Settings.SetPropertyValue($"Keyboard{Hotkeys}", keys);
+        }
+
+        public List<Keys> GetKeys() {
+            return (List<Keys>)Settings.GetPropertyValue($"Keyboard{Hotkeys}");
+        }
+
+        public string GetLabel() {
+            return (typeof(DialogIds).GetFieldValue(Hotkeys.ToString()) as string).DialogClean();
         }
     }
 
-    internal static class MappingsExtensions {
-        private static readonly Lazy<FieldInfo> TasRunning = new(() =>
-            Type.GetType("TAS.Manager, CelesteTAS-EverestInterop")?.GetFieldInfo("Running")
-        );
+    public enum Hotkeys {
+        SaveState,
+        LoadState,
+        ClearState,
+        OpenDebugMap,
+        ResetRoomTimerPb,
+        SwitchRoomTimer,
+        SetEndPoint,
+        SetAdditionalEndPoint,
+        CheckDeathStatistics,
+        TeleportToLastRoom,
+        TeleportToNextRoom,
+        SwitchAutoLoadState,
+        ToggleFullscreen
+    }
 
-        public static bool Pressed(this ButtonConfigUi.Mappings mappings) {
-            if (TasRunning.Value?.GetValue(null) as bool? == true) {
-                return false;
-            }
-
-            if (Engine.Scene is {} scene && scene.Tracker.Entities.TryGetValue(typeof(ButtonConfigUi), out List<Entity> entities) && entities.Count > 0) {
-                return false;
-            }
-
-            return ButtonConfigUi.GetVirtualButton(mappings).Pressed;
+    internal static class HotkeysExtensions {
+        public static void RegisterPressedAction(this Hotkeys hotkeys, Action<Scene> onPressed) {
+            HotkeyConfigUi.GetHotkeyConfig(hotkeys).OnPressed = onPressed;
         }
 
-        public static void ConsumePress(this ButtonConfigUi.Mappings mappings) {
-            ButtonConfigUi.GetVirtualButton(mappings).ConsumePress();
+        public static List<Keys> GetDefaultKeys(this Hotkeys hotkeys) {
+            return HotkeyConfigUi.GetHotkeyConfig(hotkeys).DefaultKeys.ToList();
         }
     }
 }

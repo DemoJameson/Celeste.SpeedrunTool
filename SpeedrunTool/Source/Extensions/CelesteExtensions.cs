@@ -26,6 +26,10 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return null;
         }
 
+        public static bool IsPlayerDead(this Scene scene) {
+            return scene.GetPlayer()?.Dead != false;
+        }
+
         public static bool IsGlobalButExcludeSomeTypes(this Entity entity) {
             return entity.TagCheck(Tags.Global) && entity.IsNotType<CassetteBlockManager>();
         }

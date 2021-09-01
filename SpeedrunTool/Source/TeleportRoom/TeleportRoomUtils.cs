@@ -11,7 +11,6 @@ using Force.DeepCloner;
 using Microsoft.Xna.Framework;
 using Monocle;
 using On.Celeste.Editor;
-using static Celeste.Mod.SpeedrunTool.Other.ButtonConfigUi;
 using LevelTemplate = Celeste.Editor.LevelTemplate;
 
 namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
@@ -23,17 +22,31 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
         private static Vector2? RespawnPoint;
 
         public static void Load() {
-            On.Celeste.Level.Update += LevelOnUpdate;
             On.Celeste.Level.LoadLevel += LevelOnLoadLevel;
             On.Celeste.Level.TransitionRoutine += LevelOnTransitionRoutine;
             On.Celeste.LevelExit.ctor += LevelExitOnCtor;
             On.Celeste.SummitCheckpoint.Update += SummitCheckpointOnUpdate;
             MapEditor.LoadLevel += MapEditorOnLoadLevel;
             On.Celeste.LevelLoader.ctor += LevelLoaderOnCtor;
+
+            RegisterHotkeys();
+        }
+
+        private static void RegisterHotkeys() {
+            Hotkeys.TeleportToLastRoom.RegisterPressedAction(scene => {
+                if (scene is Level { Paused: false } level && StateManager.Instance.State == StateManager.States.None) {
+                    TeleportToLastRoom(level);
+                }
+            });
+            
+            Hotkeys.TeleportToNextRoom.RegisterPressedAction(scene => {
+                if (scene is Level { Paused: false } level && StateManager.Instance.State == StateManager.States.None) {
+                    TeleportToNextRoom(level);
+                }
+            });
         }
 
         public static void Unload() {
-            On.Celeste.Level.Update -= LevelOnUpdate;
             On.Celeste.Level.LoadLevel -= LevelOnLoadLevel;
             On.Celeste.Level.TransitionRoutine -= LevelOnTransitionRoutine;
             On.Celeste.LevelExit.ctor -= LevelExitOnCtor;
@@ -159,26 +172,6 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
         private static void Reset() {
             RoomHistory.Clear();
             HistoryIndex = -1;
-        }
-
-        private static void LevelOnUpdate(On.Celeste.Level.orig_Update orig, Level self) {
-            orig(self);
-
-            if (!SpeedrunToolModule.Enabled) {
-                return;
-            }
-
-            if (self.Paused || StateManager.Instance.State != StateManager.States.None) {
-                return;
-            }
-
-            if (Mappings.TeleportToLastRoom.Pressed()) {
-                Mappings.TeleportToLastRoom.ConsumePress();
-                TeleportToLastRoom(self);
-            } else if (Mappings.TeleportToNextRoom.Pressed()) {
-                Mappings.TeleportToNextRoom.ConsumePress();
-                TeleportToNextRoom(self);
-            }
         }
 
         private static void TeleportToLastRoom(Level level) {

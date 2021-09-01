@@ -1,9 +1,7 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
+using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Microsoft.Xna.Framework.Input;
-using YamlDotNet.Serialization;
-using static Celeste.Mod.SpeedrunTool.Other.ButtonConfigUi;
 
 namespace Celeste.Mod.SpeedrunTool {
     [SettingName(DialogIds.SpeedrunTool)]
@@ -63,7 +61,7 @@ namespace Celeste.Mod.SpeedrunTool {
 
         #endregion
 
-        #region ButtonConfig
+        #region HotkeyConfig
 
         [SettingIgnore] public Buttons? ControllerSaveState { get; set; }
         [SettingIgnore] public Buttons? ControllerLoadState { get; set; }
@@ -79,41 +77,38 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingIgnore] public Buttons? ControllerSwitchAutoLoadState { get; set; }
         [SettingIgnore] public Buttons? ControllerToggleFullscreen { get; set; }
 
-        [SettingIgnore] public List<Keys> KeyboardSaveState { get; set; } = GetButtonInfo(Mappings.SaveState).DefaultKeys.ToList();
+        [SettingIgnore] public List<Keys> KeyboardSaveState { get; set; } = Hotkeys.SaveState.GetDefaultKeys();
 
-        [SettingIgnore] public List<Keys> KeyboardLoadState { get; set; } = GetButtonInfo(Mappings.LoadState).DefaultKeys.ToList();
+        [SettingIgnore] public List<Keys> KeyboardLoadState { get; set; } = Hotkeys.LoadState.GetDefaultKeys();
 
-        [SettingIgnore] public List<Keys> KeyboardClearState { get; set; } = GetButtonInfo(Mappings.ClearState).DefaultKeys.ToList();
-
-        [SettingIgnore]
-        public List<Keys> KeyboardOpenDebugMap { get; set; } =
-            GetButtonInfo(Mappings.OpenDebugMap).DefaultKeys.ToList();
-
-        [SettingIgnore] public List<Keys> KeyboardResetRoomTimerPb { get; set; } = GetButtonInfo(Mappings.ResetRoomTimerPb).DefaultKeys.ToList();
+        [SettingIgnore] public List<Keys> KeyboardClearState { get; set; } = Hotkeys.ClearState.GetDefaultKeys();
 
         [SettingIgnore]
-        public List<Keys> KeyboardSwitchRoomTimer { get; set; } =
-            GetButtonInfo(Mappings.SwitchRoomTimer).DefaultKeys.ToList();
+        public List<Keys> KeyboardOpenDebugMap { get; set; } = Hotkeys.OpenDebugMap.GetDefaultKeys();
 
-        [SettingIgnore] public List<Keys> KeyboardSetEndPoint { get; set; } = GetButtonInfo(Mappings.SetEndPoint).DefaultKeys.ToList();
-
-        [SettingIgnore]
-        public List<Keys> KeyboardSetAdditionalEndPoint { get; set; } = GetButtonInfo(Mappings.SetAdditionalEndPoint).DefaultKeys.ToList();
+        [SettingIgnore] public List<Keys> KeyboardResetRoomTimerPb { get; set; } = Hotkeys.ResetRoomTimerPb.GetDefaultKeys();
 
         [SettingIgnore]
-        public List<Keys> KeyboardCheckDeathStatistics { get; set; } =
-            GetButtonInfo(Mappings.CheckDeathStatistics).DefaultKeys.ToList();
+        public List<Keys> KeyboardSwitchRoomTimer { get; set; } = Hotkeys.SwitchRoomTimer.GetDefaultKeys();
 
-        [SettingIgnore] public List<Keys> KeyboardTeleportToLastRoom { get; set; } = GetButtonInfo(Mappings.TeleportToLastRoom).DefaultKeys.ToList();
+        [SettingIgnore] public List<Keys> KeyboardSetEndPoint { get; set; } = Hotkeys.SetEndPoint.GetDefaultKeys();
 
-        [SettingIgnore] public List<Keys> KeyboardTeleportToNextRoom { get; set; } = GetButtonInfo(Mappings.TeleportToNextRoom).DefaultKeys.ToList();
+        [SettingIgnore]
+        public List<Keys> KeyboardSetAdditionalEndPoint { get; set; } = Hotkeys.SetAdditionalEndPoint.GetDefaultKeys();
+
+        [SettingIgnore]
+        public List<Keys> KeyboardCheckDeathStatistics { get; set; } = Hotkeys.CheckDeathStatistics.GetDefaultKeys();
+
+        [SettingIgnore] public List<Keys> KeyboardTeleportToLastRoom { get; set; } = Hotkeys.TeleportToLastRoom.GetDefaultKeys();
+
+        [SettingIgnore] public List<Keys> KeyboardTeleportToNextRoom { get; set; } = Hotkeys.TeleportToNextRoom.GetDefaultKeys();
         
         [SettingIgnore]
-        public List<Keys> KeyboardSwitchAutoLoadState { get; set; } = GetButtonInfo(Mappings.SwitchAutoLoadState).DefaultKeys.ToList();
+        public List<Keys> KeyboardSwitchAutoLoadState { get; set; } = Hotkeys.SwitchAutoLoadState.GetDefaultKeys();
         
         [SettingIgnore]
-        public List<Keys> KeyboardToggleFullscreen { get; set; } = GetButtonInfo(Mappings.ToggleFullscreen).DefaultKeys.ToList();
+        public List<Keys> KeyboardToggleFullscreen { get; set; } = Hotkeys.ToggleFullscreen.GetDefaultKeys();
 
-        #endregion ButtonConfig
+        #endregion HotkeyConfig
     }
 }

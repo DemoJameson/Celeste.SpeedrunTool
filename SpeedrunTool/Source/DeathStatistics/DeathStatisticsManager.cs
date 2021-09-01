@@ -9,7 +9,6 @@ using Force.DeepCloner;
 using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod.RuntimeDetour;
-using static Celeste.Mod.SpeedrunTool.Other.ButtonConfigUi;
 
 namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
     public class DeathStatisticsManager {
@@ -39,9 +38,21 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             On.Celeste.ChangeRespawnTrigger.OnEnter += ChangeRespawnTriggerOnOnEnter;
             On.Celeste.Session.SetFlag += UpdateTimerStateOnTouchFlag;
             On.Celeste.LevelLoader.ctor += LevelLoaderOnCtor;
-            On.Celeste.Level.Update += LevelOnUpdate;
             On.Celeste.Player.Added += PlayerOnAdded;
             On.Monocle.Scene.Begin += SceneOnBegin;
+
+            Hotkeys.CheckDeathStatistics.RegisterPressedAction(scene => {
+                if (scene.Tracker.GetEntity<DeathStatisticsUi>() is {} deathStatisticsUi) {
+                    deathStatisticsUi.OnESC?.Invoke();
+                } else if (scene is Level { Paused: false } level && !level.IsPlayerDead()) {
+                    level.Paused = true;
+                    DeathStatisticsUi buttonConfigUi = new() {
+                        OnClose = () => level.Paused = false
+                    };
+                    level.Add(buttonConfigUi);
+                    level.OnEndOfFrame += level.Entities.UpdateLists;
+                } 
+            });
         }
 
         public void Unload() {
@@ -53,7 +64,6 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             On.Celeste.ChangeRespawnTrigger.OnEnter -= ChangeRespawnTriggerOnOnEnter;
             On.Celeste.Session.SetFlag -= UpdateTimerStateOnTouchFlag;
             On.Celeste.LevelLoader.ctor -= LevelLoaderOnCtor;
-            On.Celeste.Level.Update -= LevelOnUpdate;
             On.Celeste.Player.Added -= PlayerOnAdded;
             On.Monocle.Scene.Begin -= SceneOnBegin;
         }
@@ -70,32 +80,6 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             if (scene is Level level && teleportDeathInfo != null && teleportDeathInfo.Area == level.Session.Area &&
                 teleportDeathInfo.Room == level.Session.Level) {
                 scene.Add(new DeathMark(teleportDeathInfo.DeathPosition));
-            }
-        }
-
-        private void LevelOnUpdate(On.Celeste.Level.orig_Update orig, Level level) {
-            orig(level);
-            if (!SpeedrunToolModule.Enabled) {
-                return;
-            }
-
-            if (level.Paused || level.GetPlayer() == null || level.GetPlayer().Dead) {
-                return;
-            }
-
-            CheckDeathStatisticsButton(level);
-        }
-
-        private void CheckDeathStatisticsButton(Level level) {
-            if (Mappings.CheckDeathStatistics.Pressed()) {
-                Mappings.CheckDeathStatistics.ConsumePress();
-
-                level.Paused = true;
-                DeathStatisticsUi buttonConfigUi = new() {
-                    OnClose = () => level.Paused = false
-                };
-                level.Add(buttonConfigUi);
-                level.OnEndOfFrame += (Action) (() => level.Entities.UpdateLists());
             }
         }
 

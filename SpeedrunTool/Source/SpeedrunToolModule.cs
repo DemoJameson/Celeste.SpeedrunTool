@@ -48,7 +48,7 @@ namespace Celeste.Mod.SpeedrunTool {
             RoomTimerManager.Instance.Load();
             TeleportRoomUtils.Load();
             StateManager.Instance.OnLoad();
-            ButtonConfigUi.Load();
+            HotkeyConfigUi.Load();
             MuteInBackground.Load();
         }
 
@@ -60,13 +60,13 @@ namespace Celeste.Mod.SpeedrunTool {
             RoomTimerManager.Instance.Unload();
             TeleportRoomUtils.Unload();
             StateManager.Instance.OnUnload();
-            ButtonConfigUi.Unload();
+            HotkeyConfigUi.Unload();
             MuteInBackground.Unload();
         }
 
         // Optional, initialize anything after Celeste has initialized itself properly.
         public override void Initialize() {
-            ButtonConfigUi.Init();
+            HotkeyConfigUi.Init();
         }
 
         public override void LoadContent(bool firstLoad) {

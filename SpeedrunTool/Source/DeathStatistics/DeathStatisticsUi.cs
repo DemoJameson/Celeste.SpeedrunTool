@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using Celeste.Mod.SpeedrunTool.Other;
 using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
+    [Tracked]
     public class DeathStatisticsUi : TextMenu {
         private static SpeedrunToolSaveData SaveData => SpeedrunToolModule.SaveData;
 
@@ -105,11 +105,6 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
 
         public override void Update() {
             base.Update();
-
-            if (!closing && ButtonConfigUi.Mappings.CheckDeathStatistics.Pressed()) {
-                ButtonConfigUi.Mappings.CheckDeathStatistics.ConsumePress();
-                OnESC?.Invoke();
-            }
 
             if (inputDelay > 0.0) {
                 inputDelay -= Engine.DeltaTime;

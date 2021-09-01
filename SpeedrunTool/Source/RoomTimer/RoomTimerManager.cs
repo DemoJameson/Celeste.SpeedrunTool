@@ -1,12 +1,10 @@
 using System;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.Other;
-using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
 using Monocle;
 using MonoMod.Cil;
-using static Celeste.Mod.SpeedrunTool.Other.ButtonConfigUi;
 
 namespace Celeste.Mod.SpeedrunTool.RoomTimer {
     internal enum TimerState {
@@ -39,9 +37,9 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             IL.Celeste.SpeedrunTimerDisplay.Update += SpeedrunTimerDisplayOnUpdate;
             On.Celeste.SpeedrunTimerDisplay.Render += Render;
             On.Celeste.Level.Update += Timing;
-            On.Celeste.Level.Update += ProcessButtons;
             On.Celeste.SummitCheckpoint.Update += UpdateTimerStateOnTouchFlag;
             On.Celeste.LevelExit.ctor += LevelExitOnCtor;
+            RegisterHotkeys();
             if (Settings.AutoResetRoomTimer) {
                 SwitchRoomTimer(RoomTimerType.Off);
             }
@@ -51,9 +49,40 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             IL.Celeste.SpeedrunTimerDisplay.Update -= SpeedrunTimerDisplayOnUpdate;
             On.Celeste.SpeedrunTimerDisplay.Render -= Render;
             On.Celeste.Level.Update -= Timing;
-            On.Celeste.Level.Update -= ProcessButtons;
             On.Celeste.SummitCheckpoint.Update -= UpdateTimerStateOnTouchFlag;
             On.Celeste.LevelExit.ctor -= LevelExitOnCtor;
+        }
+
+        private void RegisterHotkeys() {
+            Hotkeys.ResetRoomTimerPb.RegisterPressedAction(scene => {
+                if (scene is Level { Paused: false }) {
+                    ClearPbTimes();
+                }
+            });
+            
+            Hotkeys.SwitchRoomTimer.RegisterPressedAction(scene => {
+                if (scene is Level { Paused: false }) {
+                    SwitchRoomTimer((RoomTimerType)(((int) Settings.RoomTimerType + 1) % Enum.GetNames(typeof(RoomTimerType)).Length));
+                    SpeedrunToolModule.Instance.SaveSettings();
+                }
+            });
+            
+            Hotkeys.SetEndPoint.RegisterPressedAction(scene => {
+                if (scene is Level { Paused: false } level) {
+                    ClearPbTimes();
+                    CreateEndPoint(level);
+                }
+            });
+            
+            Hotkeys.SetAdditionalEndPoint.RegisterPressedAction(scene => {
+                if (scene is Level { Paused: false } level) {
+                    if (!EndPoint.IsExist) {
+                        ClearPbTimes();
+                    }
+
+                    CreateEndPoint(level, true);
+                }
+            });
         }
 
         private void SpeedrunTimerDisplayOnUpdate(ILContext il) {
@@ -65,39 +94,6 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 ins => ins.OpCode == OpCodes.Ldloc_1
             )) {
                 ilCursor.EmitDelegate<Func<bool, bool>>(showTimer => showTimer || Settings.RoomTimerType != RoomTimerType.Off);
-            }
-        }
-
-        private void ProcessButtons(On.Celeste.Level.orig_Update orig, Level self) {
-            orig(self);
-            if (!SpeedrunToolModule.Enabled || self.Paused) {
-                return;
-            }
-
-            if (Mappings.ResetRoomTimerPb.Pressed() && !self.Paused) {
-                Mappings.ResetRoomTimerPb.ConsumePress();
-                ClearPbTimes();
-            }
-
-            if (Mappings.SwitchRoomTimer.Pressed() && !self.Paused) {
-                Mappings.SwitchRoomTimer.ConsumePress();
-                SwitchRoomTimer((RoomTimerType)(((int) Settings.RoomTimerType + 1) % Enum.GetNames(typeof(RoomTimerType)).Length));
-                SpeedrunToolModule.Instance.SaveSettings();
-            }
-
-            if (Mappings.SetEndPoint.Pressed() && !self.Paused) {
-                Mappings.SetEndPoint.ConsumePress();
-                ClearPbTimes();
-                CreateEndPoint(self);
-            }
-
-            if (Mappings.SetAdditionalEndPoint.Pressed() && !self.Paused) {
-                Mappings.SetAdditionalEndPoint.ConsumePress();
-                if (!EndPoint.IsExist) {
-                    ClearPbTimes();
-                }
-
-                CreateEndPoint(self, true);
             }
         }
 

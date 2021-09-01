@@ -5,7 +5,6 @@ using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
 using Monocle;
 using On.Celeste.Editor;
-using static Celeste.Mod.SpeedrunTool.Other.ButtonConfigUi;
 using LevelTemplate = Celeste.Editor.LevelTemplate;
 
 namespace Celeste.Mod.SpeedrunTool.Other {
@@ -74,16 +73,20 @@ namespace Celeste.Mod.SpeedrunTool.Other {
 
         public void Load() {
             MapEditor.LoadLevel += MapEditorOnLoadLevel;
-            On.Celeste.Level.Update += AddedOpenDebugMapButton;
             On.Celeste.WindController.SetAmbienceStrength += FixWindSoundNotPlay;
             On.Celeste.OshiroTrigger.ctor += RestoreOshiroTrigger;
             On.Celeste.Commands.CmdLoad += CommandsOnCmdLoad;
             On.Celeste.LevelLoader.ctor += LevelLoaderOnCtor;
+            
+            Hotkeys.OpenDebugMap.RegisterPressedAction(scene => {
+                if (scene is Level) {
+                    Engine.Commands.FunctionKeyActions[5]();
+                }
+            });
         }
 
         public void Unload() {
             MapEditor.LoadLevel -= MapEditorOnLoadLevel;
-            On.Celeste.Level.Update -= AddedOpenDebugMapButton;
             On.Celeste.WindController.SetAmbienceStrength -= FixWindSoundNotPlay;
             On.Celeste.OshiroTrigger.ctor -= RestoreOshiroTrigger;
             On.Celeste.Commands.CmdLoad -= CommandsOnCmdLoad;
@@ -134,19 +137,6 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             }
 
             orig(self, strong);
-        }
-
-        private static void AddedOpenDebugMapButton(On.Celeste.Level.orig_Update orig, Level self) {
-            orig(self);
-
-            if (!SpeedrunToolModule.Enabled) {
-                return;
-            }
-
-            if (Mappings.OpenDebugMap.Pressed() && !self.Paused) {
-                Mappings.OpenDebugMap.ConsumePress();
-                Engine.Commands.FunctionKeyActions[5]();
-            }
         }
 
         private void MapEditorOnLoadLevel(MapEditor.orig_LoadLevel orig, Editor.MapEditor self,

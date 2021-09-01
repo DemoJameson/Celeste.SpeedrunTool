@@ -8,7 +8,6 @@ using Celeste.Mod.SpeedrunTool.RoomTimer;
 using FMOD.Studio;
 using Microsoft.Xna.Framework;
 using Monocle;
-using Color = Microsoft.Xna.Framework.Color;
 
 namespace Celeste.Mod.SpeedrunTool {
     public static class SpeedrunToolMenu {
@@ -124,15 +123,15 @@ namespace Celeste.Mod.SpeedrunTool {
                     subMenu.Add(new TextMenu.Button(Dialog.Clean(DialogIds.ButtonConfig)).Pressed(() => {
                         // 修复：在 overworld 界面 hot reload 之后打开按键设置菜单游戏崩溃
                         if (Engine.Scene.Tracker.Entities is { } entities) {
-                            Type type = typeof(ButtonConfigUi);
+                            Type type = typeof(HotkeyConfigUi);
                             if (!entities.ContainsKey(type)) {
                                 entities[type] = new List<Entity>();
                             }
                         }
 
                         subMenu.Focused = false;
-                        ButtonConfigUi buttonConfigUi = new() {OnClose = () => subMenu.Focused = true};
-                        Engine.Scene.Add(buttonConfigUi);
+                        HotkeyConfigUi hotkeyConfigUi = new() {OnClose = () => subMenu.Focused = true};
+                        Engine.Scene.Add(hotkeyConfigUi);
                         Engine.Scene.OnEndOfFrame += () => Engine.Scene.Entities.UpdateLists();
                     }));
                 }),

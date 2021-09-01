@@ -15,7 +15,6 @@ using Mono.Cecil.Cil;
 using Monocle;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
-using static Celeste.Mod.SpeedrunTool.Other.ButtonConfigUi;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class StateManager {
@@ -61,11 +60,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             StateMarkUtils.OnLoad();
             DynDataUtils.OnLoad();
             EndPoint.OnLoad();
-            On.Monocle.Engine.Update += CheckButtonsAndUpdateBackdrop;
+            On.Celeste.Level.Update += UpdateBackdropWhenWaiting;
             On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
             On.Monocle.Scene.BeforeUpdate += SceneOnBeforeUpdate;
             ilHook = new ILHook(typeof(Level).GetMethodInfo("TransitionRoutine"), LevelOnTransitionRoutine);
+            RegisterHotkeys();
         }
 
         public void OnUnload() {
@@ -75,23 +75,89 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             StateMarkUtils.OnUnload();
             DynDataUtils.OnUnload();
             EndPoint.OnUnload();
-            On.Monocle.Engine.Update -= CheckButtonsAndUpdateBackdrop;
+            On.Celeste.Level.Update -= UpdateBackdropWhenWaiting;
             On.Monocle.Scene.Begin -= ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End -= AutoLoadStateWhenDeath;
             On.Monocle.Scene.BeforeUpdate -= SceneOnBeforeUpdate;
             ilHook?.Dispose();
         }
+        
+        private void RegisterHotkeys() {
+            Hotkeys.SaveState.RegisterPressedAction(scene => {
+                if (scene is Level) {
+                    SaveState(false);
+                }
+            });
+            
+            Hotkeys.LoadState.RegisterPressedAction(scene => {
+                if (scene is Level level && !level.PausedNew() && State == States.None) {
+                    if (IsSaved) {
+                        LoadState(false);
+                    } else if (!level.Frozen) {
+                        if (level.Entities.FindFirst<MiniTextbox>() is { } miniTextbox) {
+                            miniTextbox.RemoveSelf();
+                        }
 
-        private void CheckButtonsAndUpdateBackdrop(On.Monocle.Engine.orig_Update orig, Engine self, GameTime gameTime) {
-            if (Engine.Scene is Level level) {
-                CheckButton(level);
-                if (State == States.Waiting && level.Frozen) {
-                    level.Foreground.Update(level);
-                    level.Background.Update(level);
+                        level.Add(new MiniTextbox(IsPlayAsBadeline(level) ? DialogIds.DialogNotSavedStateYetBadeline : DialogIds.DialogNotSavedStateYet)
+                            .IgnoreSaveLoad());
+                    }
+                }
+            });
+            
+            Hotkeys.ClearState.RegisterPressedAction(scene => {
+                if (scene is Level level && !level.PausedNew() && State == States.None) {
+                    ClearState(true);
+                    if (IsNotCollectingHeart(level) && !level.Completed) {
+                        if (level.Entities.FindFirst<MiniTextbox>() is { } miniTextbox) {
+                            miniTextbox.RemoveSelf();
+                        }
+
+                        level.Add(new MiniTextbox(IsPlayAsBadeline(level) ? DialogIds.DialogClearStateBadeline : DialogIds.DialogClearState).IgnoreSaveLoad());
+                    }
+                }
+            });
+            
+            Hotkeys.SwitchAutoLoadState.RegisterPressedAction(scene => {
+                if (scene is Level level && !level.PausedNew()) {
+                    Settings.AutoLoadStateAfterDeath = !Settings.AutoLoadStateAfterDeath;
+                    SpeedrunToolModule.Instance.SaveSettings();
+                }
+            });
+        }
+
+        private void SceneOnBeforeUpdate(On.Monocle.Scene.orig_BeforeUpdate orig, Scene self) {
+            if (Settings.Enabled && self is Level level && State == States.Waiting && !level.PausedNew()
+                && (Input.Dash.Pressed
+                    || Input.Grab.Check
+                    || Input.Jump.Check
+                    || Input.Pause.Check
+                    || Input.Talk.Check
+                    || Input.MoveX != 0
+                    || Input.MoveY != 0
+                    || Input.Aim.Value != Vector2.Zero
+                    || HotkeyConfigUi.GetVirtualButton(Hotkeys.LoadState).Released
+                    || typeof(Input).GetFieldValue("DemoDash")?.GetPropertyValue("Pressed") as bool? == true
+                    || typeof(Input).GetFieldValue("CrouchDash")?.GetPropertyValue("Pressed") as bool? == true
+                )) {
+                if (preCloneTask == null) {
+                    // savestate 之后的解冻
+                    WaitSaveStateEntity.OutOfWaiting(level);
+                } else {
+                    // loadstate 之后的解冻
+                    LoadStateComplete(level);
                 }
             }
 
-            orig(self, gameTime);
+            orig(self);
+        }
+
+        private void UpdateBackdropWhenWaiting(On.Celeste.Level.orig_Update orig, Level level) {
+            orig(level);
+
+            if (State == States.Waiting && level.Frozen) {
+                level.Foreground.Update(level);
+                level.Background.Update(level);
+            }
         }
 
         private void ClearStateWhenSwitchScene(On.Monocle.Scene.orig_Begin orig, Scene self) {
@@ -132,32 +198,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             } else {
                 orig(self);
             }
-        }
-
-        private void SceneOnBeforeUpdate(On.Monocle.Scene.orig_BeforeUpdate orig, Scene self) {
-            if (Settings.Enabled && self is Level level && State == States.Waiting && !level.PausedNew()
-                                        && (Input.Dash.Pressed
-                                            || Input.Grab.Check
-                                            || Input.Jump.Check
-                                            || Input.Pause.Check
-                                            || Input.Talk.Check
-                                            || Input.MoveX != 0
-                                            || Input.MoveY != 0
-                                            || Input.Aim.Value != Vector2.Zero
-                                            || GetVirtualButton(Mappings.LoadState).Released
-                                            || typeof(Input).GetFieldValue("DemoDash")?.GetPropertyValue("Pressed") as bool? == true
-                                            || typeof(Input).GetFieldValue("CrouchDash")?.GetPropertyValue("Pressed") as bool? == true
-                                        )) {
-                if (preCloneTask == null) {
-                    // savestate 之后的解冻
-                    WaitSaveStateEntity.OutOfWaiting(level);
-                } else {
-                    // loadstate 之后的解冻
-                    LoadStateComplete(level);
-                }
-            }
-
-            orig(self);
         }
 
         private void LevelOnTransitionRoutine(ILContext il) {
@@ -390,7 +430,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
 
                 int increaseDeath = 1;
-                if (level.GetPlayer() == null || level.GetPlayer().Dead || level.GetPlayer().JustRespawned) {
+                if (level.IsPlayerDead() || level.GetPlayer().JustRespawned) {
                     increaseDeath = 0;
                 }
 
@@ -645,44 +685,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private bool IsNotCollectingHeart(Level level) {
             return !level.Entities.FindAll<HeartGem>().Any(heart => (bool)heart.GetFieldValue("collected"));
-        }
-
-        private void CheckButton(Level level) {
-            if (!SpeedrunToolModule.Enabled) {
-                return;
-            }
-
-            if (Mappings.SaveState.Pressed()) {
-                Mappings.SaveState.ConsumePress();
-                SaveState(false);
-            } else if (Mappings.LoadState.Pressed() && !level.PausedNew() && State == States.None) {
-                Mappings.LoadState.ConsumePress();
-                if (IsSaved) {
-                    LoadState(false);
-                } else if (!level.Frozen) {
-                    if (level.Entities.FindFirst<MiniTextbox>() is { } miniTextbox) {
-                        miniTextbox.RemoveSelf();
-                    }
-
-                    level.Add(new MiniTextbox(IsPlayAsBadeline(level) ? DialogIds.DialogNotSavedStateYetBadeline : DialogIds.DialogNotSavedStateYet)
-                        .IgnoreSaveLoad());
-                }
-            } else if (Mappings.ClearState.Pressed() && !level.PausedNew() && State == States.None) {
-                Mappings.ClearState.ConsumePress();
-                ClearState(true);
-                if (IsNotCollectingHeart(level) && !level.Completed) {
-                    if (level.Entities.FindFirst<MiniTextbox>() is { } miniTextbox) {
-                        miniTextbox.RemoveSelf();
-                    }
-
-                    level.Add(new MiniTextbox(IsPlayAsBadeline(level) ? DialogIds.DialogClearStateBadeline : DialogIds.DialogClearState)
-                        .IgnoreSaveLoad());
-                }
-            } else if (Mappings.SwitchAutoLoadState.Pressed() && !level.PausedNew()) {
-                Mappings.SwitchAutoLoadState.ConsumePress();
-                Settings.AutoLoadStateAfterDeath = !Settings.AutoLoadStateAfterDeath;
-                SpeedrunToolModule.Instance.SaveSettings();
-            }
         }
 
         private static bool IsPlayAsBadeline(Level level) {

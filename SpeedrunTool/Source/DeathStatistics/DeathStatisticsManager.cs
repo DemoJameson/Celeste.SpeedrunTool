@@ -20,7 +20,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         public static DeathStatisticsManager Instance => Lazy.Value;
         private DeathStatisticsManager() { }
         // @formatter:on
-        
+
         public static readonly string PlaybackDir = Path.Combine(typeof(UserIO).GetFieldValue("SavePath").ToString(), "SpeedrunTool", "DeathPlayback");
         private static bool Enabled => SpeedrunToolModule.Settings.Enabled && SpeedrunToolModule.Settings.DeathStatistics;
 
@@ -93,7 +93,6 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
                     PlayerPlayback playerPlayback = new(playbackDeathInfo.PlaybackStartPosition, spriteMode, chaserStates) {
                         Depth = Depths.Player
                     };
-                    playerPlayback.SetFieldValue("ShowTrail", true);
                     playerPlayback.IgnoreSaveLoad().Sprite.Color *= 0.8f;
                     level.Add(playerPlayback);
                 }

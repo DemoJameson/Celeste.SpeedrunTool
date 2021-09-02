@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Force.DeepCloner;
 using Microsoft.Xna.Framework;
+using YamlDotNet.Serialization;
 
 namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
     public class DeathInfo {
@@ -52,6 +53,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         public bool GrabbedGolden { get; set; }
         public bool HitCheckpoint { get; set; }
 
+        [YamlIgnore]
         public Session Session => new(Area) {
             RespawnPoint = RespawnPoint,
             Inventory = Inventory,

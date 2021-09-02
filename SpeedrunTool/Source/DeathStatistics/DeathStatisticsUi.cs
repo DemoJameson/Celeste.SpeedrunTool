@@ -85,13 +85,13 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
                 Dictionary<string, int> labels = new() {
                     {deathInfo.Chapter, 400},
                     {deathInfo.Room, 400},
-                    {deathInfo.GetLostTime(), 400},
+                    {deathInfo.FormattedLostTime, 400},
                     {deathInfo.CauseOfDeath, 400},
                 };
                 ListItem item = new(labels);
                 item.Pressed(() => {
                     ModSaveData.Selection = Selection;
-                    deathInfo.TeleportToDeathPosition();
+                    DeathStatisticsManager.Instance.TeleportToDeathPosition(deathInfo);
                 });
                 Add(item);
             });

@@ -1,3 +1,4 @@
+using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework;
 using Monocle;
 
@@ -13,6 +14,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             sprite.Color = Color.White * 0.5f;
             Add(sprite);
             Depth = Depths.FormationSequences;
+            Add(new IgnoreSaveLoadComponent());
         }
     }
 }

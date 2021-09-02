@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using Celeste.Mod.Helpers;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.Other;
+using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Force.DeepCloner;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -19,17 +20,14 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         public static DeathStatisticsManager Instance => Lazy.Value;
         private DeathStatisticsManager() { }
         // @formatter:on
+        
+        public static readonly string PlaybackDir = Path.Combine(typeof(UserIO).GetFieldValue("SavePath").ToString(), "SpeedrunTool", "DeathPlayback");
+        private static bool Enabled => SpeedrunToolModule.Settings.Enabled && SpeedrunToolModule.Settings.DeathStatistics;
 
         private long lastTime;
-        public bool Died;
-        private string causeOfDeath;
-        private Vector2 deathPosition;
-        private readonly string playbackDir = Path.Combine(typeof(UserIO).GetFieldValue("SavePath").ToString(), "SpeedrunTool", "DeathPlayback");
-        private Vector2 playbackStartPosition;
-        private string playbackFilePath;
-
-        private DeathInfo teleportDeathInfo;
-        private bool Enabled => SpeedrunToolModule.Settings.DeathStatistics;
+        private bool died;
+        private DeathInfo currentDeathInfo;
+        private DeathInfo playbackDeathInfo;
 
         public void Load() {
             // 尽量晚的 Hook Player.Die 方法，以便可以稳定的从指定的 StackTrace 中找出死亡原因
@@ -82,20 +80,21 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         }
 
         private void LevelOnLoadLevel(On.Celeste.Level.orig_LoadLevel orig, Level level, Player.IntroTypes playerIntro, bool isFromLoader) {
-            if (IsPracticing()) {
-                level.Add(new DeathMark(teleportDeathInfo.DeathPosition));
+            if (IsPlayback()) {
+                level.Add(new DeathMark(playbackDeathInfo.DeathPosition));
 
-                if (!string.IsNullOrEmpty(teleportDeathInfo.PlaybackFilePath) && File.Exists(teleportDeathInfo.PlaybackFilePath)) {
-                    List<Player.ChaserState> chaserStates = PlaybackData.Import(FileProxy.ReadAllBytes(teleportDeathInfo.PlaybackFilePath));
+                if (!string.IsNullOrEmpty(playbackDeathInfo.PlaybackFilePath) && File.Exists(playbackDeathInfo.PlaybackFilePath)) {
+                    List<Player.ChaserState> chaserStates = PlaybackData.Import(FileProxy.ReadAllBytes(playbackDeathInfo.PlaybackFilePath));
                     PlayerSpriteMode spriteMode = level.Session.Inventory.Backpack ? PlayerSpriteMode.Madeline : PlayerSpriteMode.MadelineNoBackpack;
                     if (SaveData.Instance.Assists.PlayAsBadeline) {
                         spriteMode = PlayerSpriteMode.MadelineAsBadeline;
                     }
 
-                    PlayerPlayback playerPlayback = new(teleportDeathInfo.PlaybackStartPosition, spriteMode, chaserStates) {
+                    PlayerPlayback playerPlayback = new(playbackDeathInfo.PlaybackStartPosition, spriteMode, chaserStates) {
                         Depth = Depths.Player
                     };
-                    playerPlayback.Sprite.Color *= 0.8f;
+                    playerPlayback.SetFieldValue("ShowTrail", true);
+                    playerPlayback.IgnoreSaveLoad().Sprite.Color *= 0.8f;
                     level.Add(playerPlayback);
                 }
             }
@@ -119,8 +118,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             }
         }
 
-        private void ChangeRespawnTriggerOnOnEnter(On.Celeste.ChangeRespawnTrigger.orig_OnEnter orig,
-            ChangeRespawnTrigger self, Player player) {
+        private void ChangeRespawnTriggerOnOnEnter(On.Celeste.ChangeRespawnTrigger.orig_OnEnter orig, ChangeRespawnTrigger self, Player player) {
             Level level = player.SceneAs<Level>();
             Vector2? oldPoint = level.Session.RespawnPoint;
             orig(self, player);
@@ -145,25 +143,25 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         private void PlayerOnUpdate(On.Celeste.Player.orig_Update orig, Player player) {
             orig(player);
 
-            if (Enabled && Died && player.StateMachine.State is Player.StNormal or Player.StSwim) {
-                Died = false;
+            if (Enabled && died && player.StateMachine.State is Player.StNormal or Player.StSwim) {
+                died = false;
                 LoggingData();
             }
         }
 
         private void ExportPlayback(Player player) {
-            string filePath = Path.Combine(playbackDir, $"{DateTime.Now.Ticks}.bin");
-            if (!Directory.Exists(playbackDir)) {
-                Directory.CreateDirectory(playbackDir);
+            string filePath = Path.Combine(PlaybackDir, $"{DateTime.Now.Ticks}.bin");
+            if (!Directory.Exists(PlaybackDir)) {
+                Directory.CreateDirectory(PlaybackDir);
             }
 
             if (player.ChaserStates.Count > 0) {
                 PlaybackData.Export(player.ChaserStates, filePath);
-                playbackStartPosition = player.ChaserStates[0].Position;
-                playbackFilePath = filePath;
+                currentDeathInfo.PlaybackStartPosition = player.ChaserStates[0].Position;
+                currentDeathInfo.PlaybackFilePath = filePath;
             } else {
-                playbackStartPosition = default;
-                playbackFilePath = string.Empty;
+                currentDeathInfo.PlaybackStartPosition = default;
+                currentDeathInfo.PlaybackFilePath = string.Empty;
             }
         }
 
@@ -180,15 +178,14 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             PlayerDeadBody playerDeadBody = orig(self, direction, evenIfInvincible, registerDeathInStats);
 
             if (playerDeadBody != null && Enabled) {
-                if (IsPracticing()) {
-                    causeOfDeath = null;
-                    deathPosition = default;
-                    playbackStartPosition = default;
-                    playbackFilePath = string.Empty;
-                    teleportDeathInfo = null;
+                if (IsPlayback()) {
+                    currentDeathInfo = null;
+                    playbackDeathInfo = null;
                 } else {
-                    causeOfDeath = GetCauseOfDeath();
-                    deathPosition = self.Position;
+                    currentDeathInfo = new DeathInfo {
+                        CauseOfDeath = GetCauseOfDeath(),
+                        DeathPosition = self.Position
+                    };
                     ExportPlayback(self);
                 }
             }
@@ -199,136 +196,32 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         private void PlayerDeadBodyOnEnd(On.Celeste.PlayerDeadBody.orig_End orig, PlayerDeadBody self) {
             orig(self);
             if (Enabled) {
-                Died = true;
+                died = true;
             }
         }
 
-        private bool IsPracticing() {
+        private bool IsPlayback() {
             Level level = Engine.Scene switch {
                 Level lvl => lvl,
                 LevelLoader levelLoader => levelLoader.Level,
                 _ => null
             };
-            return level != null && teleportDeathInfo != null && teleportDeathInfo.Area == level.Session.Area &&
-                   teleportDeathInfo.Room == level.Session.Level;
+            return level != null && playbackDeathInfo != null && playbackDeathInfo.Area == level.Session.Area &&
+                   playbackDeathInfo.Room == level.Session.Level;
         }
 
         private void LoggingData() {
-            if (Engine.Scene is not Level level) {
-                return;
-            }
-
             // 传送到死亡地点练习时产生的第一次死亡不记录，清除死亡地点
-            if (IsPracticing() || causeOfDeath == null) {
-                lastTime = SaveData.Instance.Time;
+            if (Engine.Scene is not Level level || IsPlayback() || currentDeathInfo == null) {
+                Clear();
                 return;
             }
 
-            Session session = level.Session;
-            Session cloneSession = session.DeepClone();
-
-            long lostTime = SaveData.Instance.Time - lastTime;
-
-            DeathInfo deathInfo = new() {
-                PlaybackStartPosition = playbackStartPosition,
-                PlaybackFilePath = playbackFilePath,
-                Chapter = GetChapterName(session),
-                Room = session.Level,
-                LostTime = lostTime,
-                CauseOfDeath = causeOfDeath,
-                DeathPosition = deathPosition,
-                Area = cloneSession.Area,
-                RespawnPoint = cloneSession.RespawnPoint,
-                Inventory = cloneSession.Inventory,
-                Flags = cloneSession.Flags,
-                LevelFlags = cloneSession.LevelFlags,
-                Strawberries = cloneSession.Strawberries,
-                DoNotLoad = cloneSession.DoNotLoad,
-                Keys = cloneSession.Keys,
-                SummitGems = cloneSession.SummitGems,
-                FurthestSeenLevel = cloneSession.FurthestSeenLevel,
-                Time = cloneSession.Time,
-                StartedFromBeginning = cloneSession.StartedFromBeginning,
-                Deaths = cloneSession.Deaths,
-                Dashes = cloneSession.Dashes,
-                DashesAtLevelStart = cloneSession.DashesAtLevelStart,
-                DeathsInCurrentLevel = cloneSession.DeathsInCurrentLevel,
-                InArea = cloneSession.InArea,
-                StartCheckpoint = cloneSession.StartCheckpoint,
-                FirstLevel = cloneSession.FirstLevel,
-                Cassette = cloneSession.Cassette,
-                HeartGem = cloneSession.HeartGem,
-                Dreaming = cloneSession.Dreaming,
-                ColorGrade = cloneSession.ColorGrade,
-                LightingAlphaAdd = cloneSession.LightingAlphaAdd,
-                BloomBaseAdd = cloneSession.BloomBaseAdd,
-                DarkRoomAlpha = cloneSession.DarkRoomAlpha,
-                CoreMode = cloneSession.CoreMode,
-                GrabbedGolden = cloneSession.GrabbedGolden,
-                HitCheckpoint = cloneSession.HitCheckpoint,
-            };
-
-            SpeedrunToolModule.SaveData.Add(deathInfo);
+            currentDeathInfo.CopyFromSession(level.Session);
+            currentDeathInfo.LostTime = SaveData.Instance.Time - lastTime;
+            SpeedrunToolModule.SaveData.Add(currentDeathInfo);
             lastTime = SaveData.Instance.Time;
-        }
-
-        private string GetSideText(AreaMode areaMode) {
-            switch (areaMode) {
-                case AreaMode.Normal:
-                    return "A";
-                case AreaMode.BSide:
-                    return "B";
-                case AreaMode.CSide:
-                    return "C";
-                default:
-                    return "Unknown";
-            }
-        }
-
-        private string GetChapterName(Session session) {
-            string levelName = Dialog.Get(AreaData.Get(session).Name, Dialog.Languages["english"]);
-            string levelMode = GetSideText(session.Area.Mode);
-
-            switch (levelName) {
-                case "Forsaken City":
-                    levelName = "1";
-                    break;
-                case "Old Site":
-                    levelName = "2";
-                    break;
-                case "Celestial Resort":
-                    levelName = "3";
-                    break;
-                case "Golden Ridge":
-                    levelName = "4";
-                    break;
-                case "Mirror Temple":
-                    levelName = "5";
-                    break;
-                case "Reflection":
-                    levelName = "6";
-                    break;
-                case "The Summit":
-                    levelName = "7";
-                    break;
-                case "Core":
-                    levelName = "8";
-                    break;
-            }
-
-            if (levelName.Length == 1) {
-                return levelName + levelMode;
-            }
-
-            if (AreaData.Get(session).Interlude) {
-                return levelName;
-            }
-
-            if (levelName == "Farewell") {
-                return levelName;
-            }
-
-            return levelName + " " + levelMode;
+            currentDeathInfo = null;
         }
 
         private string GetCauseOfDeath() {
@@ -356,16 +249,16 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             return death;
         }
 
-        public void SetTeleportDeathInfo(DeathInfo deathInfo) {
-            teleportDeathInfo = deathInfo;
+        public void TeleportToDeathPosition(DeathInfo deathInfo) {
+            playbackDeathInfo = deathInfo;
+            Engine.Scene = new LevelLoader(deathInfo.Session.DeepClone());
         }
 
         public void Clear() {
-            Died = false;
-            teleportDeathInfo = null;
-            if (Directory.Exists(playbackDir)) {
-                Directory.Delete(playbackDir, true);
-            }
+            died = false;
+            lastTime = SaveData.Instance?.Time ?? 0;
+            currentDeathInfo = null;
+            playbackDeathInfo = null;
         }
     }
 }

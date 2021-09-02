@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Monocle;
@@ -38,6 +39,9 @@ namespace Celeste.Mod.SpeedrunTool {
             Selection = -1;
             DeathInfos.Clear();
             DeathStatisticsManager.Instance.Clear();
+            if (Directory.Exists(DeathStatisticsManager.PlaybackDir)) {
+                Directory.Delete(DeathStatisticsManager.PlaybackDir, true);
+            }
         }
 
         public void SetSelection(int selection) {

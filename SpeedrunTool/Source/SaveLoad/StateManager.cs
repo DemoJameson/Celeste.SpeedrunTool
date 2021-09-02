@@ -362,7 +362,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             // External
             RoomTimerManager.Instance.ResetTime();
-            DeathStatisticsManager.Instance.Died = false;
+            DeathStatisticsManager.Instance.Clear();
 
             DoNotRestoreTimeAndDeaths(level);
 

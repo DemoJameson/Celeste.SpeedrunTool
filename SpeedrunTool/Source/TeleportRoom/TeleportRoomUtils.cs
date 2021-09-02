@@ -96,7 +96,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
 
                 // External
                 RoomTimerManager.Instance.ResetTime();
-                DeathStatisticsManager.Instance.Died = false;
+                DeathStatisticsManager.Instance.Clear();
 
                 level.SetFieldValue("transition", null); // 允许切换房间时传送
                 Glitch.Value = 0f;

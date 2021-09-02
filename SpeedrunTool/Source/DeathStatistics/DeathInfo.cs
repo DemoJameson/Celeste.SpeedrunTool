@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using Force.DeepCloner;
 using Microsoft.Xna.Framework;
-using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
     public class DeathInfo {
@@ -10,15 +9,15 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         public string Room { get; set; }
         public long LostTime { get; set; }
 
-        public string GetLostTime() {
-            TimeSpan lostTimeSpan = TimeSpan.FromTicks(LostTime);
-            return (int) lostTimeSpan.TotalSeconds + lostTimeSpan.ToString("\\.fff");
+        public string FormattedLostTime {
+            get {
+                TimeSpan lostTimeSpan = TimeSpan.FromTicks(LostTime);
+                return (int)lostTimeSpan.TotalSeconds + lostTimeSpan.ToString("\\.fff");
+            }
         }
 
         public string CauseOfDeath { get; set; }
-
         public Vector2 DeathPosition { get; set; }
-
         public Vector2 PlaybackStartPosition { get; set; }
         public string PlaybackFilePath { get; set; }
 
@@ -53,39 +52,116 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         public bool GrabbedGolden { get; set; }
         public bool HitCheckpoint { get; set; }
 
-        public void TeleportToDeathPosition() {
-            Session session = new(Area) {
-                RespawnPoint = RespawnPoint,
-                Inventory = Inventory,
-                Level = Room,
-                Flags = Flags,
-                LevelFlags = LevelFlags,
-                Strawberries = Strawberries,
-                DoNotLoad = DoNotLoad,
-                Keys = Keys,
-                SummitGems = SummitGems,
-                FurthestSeenLevel = FurthestSeenLevel,
-                Time = Time,
-                StartedFromBeginning = StartedFromBeginning,
-                Deaths = Deaths,
-                Dashes = Dashes,
-                DashesAtLevelStart = DashesAtLevelStart,
-                DeathsInCurrentLevel = DeathsInCurrentLevel,
-                InArea = InArea,
-                StartCheckpoint = StartCheckpoint,
-                FirstLevel = FirstLevel,
-                Cassette = Cassette,
-                HeartGem = HeartGem,
-                Dreaming = Dreaming,
-                LightingAlphaAdd = LightingAlphaAdd,
-                BloomBaseAdd = BloomBaseAdd,
-                DarkRoomAlpha = DarkRoomAlpha,
-                CoreMode = CoreMode,
-                GrabbedGolden = GrabbedGolden,
-                HitCheckpoint = HitCheckpoint,
-            };
-            DeathStatisticsManager.Instance.SetTeleportDeathInfo(this);
-            Engine.Scene = new LevelLoader(session.DeepClone());
+        public Session Session => new(Area) {
+            RespawnPoint = RespawnPoint,
+            Inventory = Inventory,
+            Level = Room,
+            Flags = Flags,
+            LevelFlags = LevelFlags,
+            Strawberries = Strawberries,
+            DoNotLoad = DoNotLoad,
+            Keys = Keys,
+            SummitGems = SummitGems,
+            FurthestSeenLevel = FurthestSeenLevel,
+            Time = Time,
+            StartedFromBeginning = StartedFromBeginning,
+            Deaths = Deaths,
+            Dashes = Dashes,
+            DashesAtLevelStart = DashesAtLevelStart,
+            DeathsInCurrentLevel = DeathsInCurrentLevel,
+            InArea = InArea,
+            StartCheckpoint = StartCheckpoint,
+            FirstLevel = FirstLevel,
+            Cassette = Cassette,
+            HeartGem = HeartGem,
+            Dreaming = Dreaming,
+            LightingAlphaAdd = LightingAlphaAdd,
+            BloomBaseAdd = BloomBaseAdd,
+            DarkRoomAlpha = DarkRoomAlpha,
+            CoreMode = CoreMode,
+            GrabbedGolden = GrabbedGolden,
+            HitCheckpoint = HitCheckpoint,
+        };
+
+        public void CopyFromSession(Session session) {
+            Session clonedSession = session.DeepClone();
+            Chapter = GetChapterName(session);
+            Room = clonedSession.Level;
+            Area = clonedSession.Area;
+            RespawnPoint = clonedSession.RespawnPoint;
+            Inventory = clonedSession.Inventory;
+            Flags = clonedSession.Flags;
+            LevelFlags = clonedSession.LevelFlags;
+            Strawberries = clonedSession.Strawberries;
+            DoNotLoad = clonedSession.DoNotLoad;
+            Keys = clonedSession.Keys;
+            SummitGems = clonedSession.SummitGems;
+            FurthestSeenLevel = clonedSession.FurthestSeenLevel;
+            Time = clonedSession.Time;
+            StartedFromBeginning = clonedSession.StartedFromBeginning;
+            Deaths = clonedSession.Deaths;
+            Dashes = clonedSession.Dashes;
+            DashesAtLevelStart = clonedSession.DashesAtLevelStart;
+            DeathsInCurrentLevel = clonedSession.DeathsInCurrentLevel;
+            InArea = clonedSession.InArea;
+            StartCheckpoint = clonedSession.StartCheckpoint;
+            FirstLevel = clonedSession.FirstLevel;
+            Cassette = clonedSession.Cassette;
+            HeartGem = clonedSession.HeartGem;
+            Dreaming = clonedSession.Dreaming;
+            ColorGrade = clonedSession.ColorGrade;
+            LightingAlphaAdd = clonedSession.LightingAlphaAdd;
+            BloomBaseAdd = clonedSession.BloomBaseAdd;
+            DarkRoomAlpha = clonedSession.DarkRoomAlpha;
+            CoreMode = clonedSession.CoreMode;
+            GrabbedGolden = clonedSession.GrabbedGolden;
+            HitCheckpoint = clonedSession.HitCheckpoint;
+        }
+
+        private string GetChapterName(Session session) {
+            string levelName = Dialog.Get(AreaData.Get(session).Name, Dialog.Languages["english"]);
+            string levelMode = ((char) (session.Area.Mode + 'A')).ToString();
+
+            switch (levelName) {
+                case "Forsaken City":
+                    levelName = "1";
+                    break;
+                case "Old Site":
+                    levelName = "2";
+                    break;
+                case "Celestial Resort":
+                    levelName = "3";
+                    break;
+                case "Golden Ridge":
+                    levelName = "4";
+                    break;
+                case "Mirror Temple":
+                    levelName = "5";
+                    break;
+                case "Reflection":
+                    levelName = "6";
+                    break;
+                case "The Summit":
+                    levelName = "7";
+                    break;
+                case "Core":
+                    levelName = "8";
+                    break;
+            }
+
+            if (levelName.Length == 1) {
+                return levelName + levelMode;
+            }
+
+            if (AreaData.Get(session).Interlude) {
+                return levelName;
+            }
+
+            if (levelName == "Farewell") {
+                return levelName;
+            }
+
+            return levelName + " " + levelMode;
         }
     }
 }

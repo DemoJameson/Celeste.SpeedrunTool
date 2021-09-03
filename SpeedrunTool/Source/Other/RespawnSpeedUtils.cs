@@ -1,17 +1,21 @@
+using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
+using MonoMod.RuntimeDetour;
 using On.Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Other {
     public static class RespawnSpeedUtils {
         public static void Load() {
-            Engine.Update += RespawnSpeed;
+            using (new DetourContext {After = new List<string> {"*"}}) {
+                Engine.Update += RespawnSpeed;
+            }
         }
 
         public static void Unload() {
             Engine.Update -= RespawnSpeed;
-        } 
-        
+        }
+
         private static void RespawnSpeed(Engine.orig_Update orig, Monocle.Engine self, GameTime time) {
             orig(self, time);
 

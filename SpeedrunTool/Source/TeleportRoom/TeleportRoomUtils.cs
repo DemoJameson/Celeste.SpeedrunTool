@@ -38,7 +38,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                     TeleportToLastRoom(level);
                 }
             });
-            
+
             Hotkeys.TeleportToNextRoom.RegisterPressedAction(scene => {
                 if (scene is Level { Paused: false } level && StateManager.Instance.State == StateManager.States.None) {
                     TeleportToNextRoom(level);
@@ -90,7 +90,16 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
         }
 
         private static void TeleportTo(Session session, bool fromHistory = false) {
-            if (SpeedrunToolModule.Settings.FastTeleport && Engine.Scene is Level level) {
+            if (Engine.Scene is not Level level) {
+                return;
+            }
+
+            session.Time = level.Session.Time;
+            int increaseDeath = level.IsPlayerDead() || level.GetPlayer().JustRespawned ? 0 : 1;
+            session.Deaths = level.Session.Deaths + increaseDeath;
+            session.DeathsInCurrentLevel = level.Session.DeathsInCurrentLevel + increaseDeath;
+
+            if (SpeedrunToolModule.Settings.FastTeleport) {
                 // 修复问题：死亡瞬间传送 PlayerDeadBody 没被清除，导致传送完毕后 madeline 自动爆炸
                 level.Entities.UpdateLists();
 

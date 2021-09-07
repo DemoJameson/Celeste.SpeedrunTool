@@ -81,14 +81,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Monocle.Scene.BeforeUpdate -= SceneOnBeforeUpdate;
             ilHook?.Dispose();
         }
-        
+
         private void RegisterHotkeys() {
             Hotkeys.SaveState.RegisterPressedAction(scene => {
                 if (scene is Level) {
                     SaveState(false);
                 }
             });
-            
+
             Hotkeys.LoadState.RegisterPressedAction(scene => {
                 if (scene is Level level && !level.PausedNew() && State == States.None) {
                     if (IsSaved) {
@@ -103,7 +103,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     }
                 }
             });
-            
+
             Hotkeys.ClearState.RegisterPressedAction(scene => {
                 if (scene is Level level && !level.PausedNew() && State == States.None) {
                     ClearState(true);
@@ -116,7 +116,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     }
                 }
             });
-            
+
             Hotkeys.SwitchAutoLoadState.RegisterPressedAction(scene => {
                 if (scene is Level level && !level.PausedNew()) {
                     Settings.AutoLoadStateAfterDeath = !Settings.AutoLoadStateAfterDeath;
@@ -706,6 +706,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             private static bool origFrozen;
             private static bool origTimerStopped;
             private static bool origPauseLock;
+            private static float origTimeActive;
+            private static float origRawTimeActive;
 
             public WaitSaveStateEntity(Level level) {
                 // 避免被 Save
@@ -714,6 +716,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 origFrozen = level.Frozen;
                 origTimerStopped = level.TimerStopped;
                 origPauseLock = level.PauseLock;
+                origTimeActive = level.TimeActive;
+                origRawTimeActive = level.RawTimeActive;
 
                 level.Frozen = true;
                 level.TimerStopped = true;
@@ -743,6 +747,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 level.Frozen = Instance.savedLevel?.Frozen ?? origFrozen;
                 level.TimerStopped = Instance.savedLevel?.TimerStopped ?? origTimerStopped;
                 level.PauseLock = Instance.savedLevel?.PauseLock ?? origPauseLock;
+                level.TimeActive = Instance.savedLevel?.TimeActive ?? origTimeActive;
+                level.RawTimeActive = Instance.savedLevel?.RawTimeActive ?? origRawTimeActive;
                 EndPoint.All.ForEach(point => point.ReadyForTime());
                 Instance.State = States.None;
             }

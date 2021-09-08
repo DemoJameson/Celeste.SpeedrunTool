@@ -366,11 +366,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             DoNotRestoreTimeAndDeaths(level);
 
-            level.Displacement.Clear(); // 避免冲刺后读档残留爆破效果  // Remove dash displacement effect
+            level.Displacement.Clear();
             level.Particles.Clear();
             level.ParticlesBG.Clear();
             level.ParticlesFG.Clear();
-            TrailManager.Clear(); // 清除冲刺的残影  // Remove dash trail
+            level.Tracker.GetEntities<TrailManager.Snapshot>().ForEach(entity => entity.Position = savedLevel.Camera.Position - Vector2.One * 100);
 
             UnloadLevelEntities(level);
 
@@ -395,9 +395,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 return true;
             }
 
-            level.Frozen = true; // 加一个转场等待，避免太突兀   // Add a pause to avoid being too abrupt
-            level.TimerStopped = true; // 停止计时器  // Stop timer
-
+            // 加一个转场等待，避免太突兀
+            // Add a pause to avoid being too abrupt
+            level.Frozen = true;
+            level.TimerStopped = true;
+            level.PauseLock = true;
             level.DoScreenWipe(true, () => {
                 // 修复问题：死亡后出现黑屏的一瞬间手动读档后游戏崩溃，因为 ScreenWipe 执行了 level.Reload() 方法
                 // System.NullReferenceException: 未将对象引用设置到对象的实例。

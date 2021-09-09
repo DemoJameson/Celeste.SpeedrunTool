@@ -9,8 +9,25 @@ using LevelTemplate = Celeste.Editor.LevelTemplate;
 
 namespace Celeste.Mod.SpeedrunTool.Other {
     public class BetterMapEditor {
-        public static bool ShouldFixTeleportProblems;
         private const string StartChasingLevel = "3";
+        public static bool ShouldFixTeleportProblems;
+
+        private readonly HashSet<string> coreIceRooms = new() {
+            // 8A
+            "9b-05", "9c-00", "9c-00b", "9c-02", "9c-03", "9d-03", "9d-10",
+
+            // 8B
+            "9Ha-03", "9Ha-04", "9Ha-05", "9Hb-02", "9Hb-03", "9Hc-01", "9Hc-06"
+        };
+
+        private readonly HashSet<string> coreRefillDashRooms = new() {
+            // 8A
+            "90X", "900", "901", "9space",
+            // 8B
+            "9H00", "9H01", "9Hspace",
+            // 8C
+            "9HHintro"
+        };
 
         // 3A 杂乱房间部分的光线调暗
         private readonly HashSet<string> darkRooms = new() {
@@ -25,15 +42,6 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             "d0", "d1", "d2", "d3", "d4", "d6", "d5", "d9", "3x",
             "3", "4", "5", "6", "7", "8", "9", "9b", "10",
             "11", "12b", "12c", "12d", "12", "13"
-        };
-
-        private readonly HashSet<Vector2> excludeFarewellCassettePoints = new() {
-            new Vector2(43632, -9976),
-            new Vector2(49448, -10296)
-        };
-
-        private readonly HashSet<string> farewellCassetteRooms = new() {
-            "i-00", "i-00b", "i-01", "i-02", "i-03", "i-04", "i-05", "j-00"
         };
 
         private readonly HashSet<Vector2> excludeDreamRespawnPoints = new() {
@@ -54,21 +62,13 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             new Vector2(1616, 600)
         };
 
-        private readonly HashSet<string> coreIceRooms = new() {
-            // 8A
-            "9b-05", "9c-00", "9c-00b", "9c-02", "9c-03", "9d-03", "9d-10",
-
-            // 8B
-            "9Ha-03", "9Ha-04", "9Ha-05", "9Hb-02", "9Hb-03", "9Hc-01", "9Hc-06"
+        private readonly HashSet<Vector2> excludeFarewellCassettePoints = new() {
+            new Vector2(43632, -9976),
+            new Vector2(49448, -10296)
         };
 
-        private readonly HashSet<string> coreRefillDashRooms = new() {
-            // 8A
-            "90X", "900", "901", "9space",
-            // 8B
-            "9H00", "9H01", "9Hspace",
-            // 8C
-            "9HHintro"
+        private readonly HashSet<string> farewellCassetteRooms = new() {
+            "i-00", "i-00b", "i-01", "i-02", "i-03", "i-04", "i-05", "j-00"
         };
 
         public void Load() {
@@ -77,10 +77,11 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             On.Celeste.OshiroTrigger.ctor += RestoreOshiroTrigger;
             On.Celeste.Commands.CmdLoad += CommandsOnCmdLoad;
             On.Celeste.LevelLoader.ctor += LevelLoaderOnCtor;
-            
+
             Hotkeys.OpenDebugMap.RegisterPressedAction(scene => {
-                if (scene is Level) {
-                    Engine.Commands.FunctionKeyActions[5]();
+                if (scene is Level level) {
+                    Engine.Scene = new Editor.MapEditor(level.Session.Area);
+                    Engine.Commands.Open = false;
                 }
             });
         }
@@ -117,7 +118,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             Level level = Engine.Scene.GetLevel();
 
             if (level != null && level.Session.Area.ToString() == "3HH" && level.StartPosition != null &&
-                level.Session.GetSpawnPoint((Vector2) level.StartPosition) == oshiro3C) {
+                level.Session.GetSpawnPoint((Vector2)level.StartPosition) == oshiro3C) {
                 self.Add(new Coroutine(OnEnter(self)));
             }
         }

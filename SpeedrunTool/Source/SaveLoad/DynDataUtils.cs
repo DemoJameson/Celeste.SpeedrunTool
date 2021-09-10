@@ -8,7 +8,7 @@ using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
 
-namespace Celeste.Mod.SpeedrunTool.Other {
+namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     internal static class DynDataUtils {
         // DynData
         public static ConditionalWeakTable<object, object> IgnoreObjects = new();

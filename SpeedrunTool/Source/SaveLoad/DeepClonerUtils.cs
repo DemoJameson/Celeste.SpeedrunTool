@@ -11,7 +11,7 @@ using Monocle;
 using MonoMod.Utils;
 using NLua;
 
-namespace Celeste.Mod.SpeedrunTool.Other {
+namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     internal static class DeepClonerUtils {
         public static void Config() {
             // Clone 开始时，判断哪些类型是直接使用原对象而不 DeepClone 的
@@ -177,7 +177,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                     // Clone dynData.Data
                     if (sourceObj.GetType() is {IsClass: true} objType && !DynDataUtils.IgnoreObjects.TryGetValue(sourceObj, out object _)) {
                         bool cloned = false;
-                        
+
                         do {
                             if (DynDataUtils.NotExistDynData(objType, out object dataMap)) {
                                 continue;

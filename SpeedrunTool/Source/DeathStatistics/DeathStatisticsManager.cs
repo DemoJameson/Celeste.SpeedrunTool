@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using Celeste.Mod.Helpers;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.Other;
+using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Force.DeepCloner;
 using Microsoft.Xna.Framework;
 using Monocle;

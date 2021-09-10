@@ -8,7 +8,7 @@ using FMOD.Studio;
 using Monocle;
 using MonoMod.Cil;
 
-namespace Celeste.Mod.SpeedrunTool.Other {
+namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class SaveLoadAction {
         private static readonly List<SaveLoadAction> All = new();
 

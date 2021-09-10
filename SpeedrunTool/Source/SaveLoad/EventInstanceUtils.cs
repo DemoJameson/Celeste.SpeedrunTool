@@ -3,7 +3,7 @@ using Celeste.Mod.SpeedrunTool.Extensions;
 using FMOD;
 using FMOD.Studio;
 
-namespace Celeste.Mod.SpeedrunTool.Other {
+namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     internal static class EventInstanceUtils {
         public static void OnHook() {
             On.FMOD.Studio.EventInstance.setParameterValue += EventInstanceOnsetParameterValue;

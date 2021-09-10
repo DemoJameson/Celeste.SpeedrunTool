@@ -6,6 +6,7 @@ using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
+using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Force.DeepCloner;
 using Microsoft.Xna.Framework;
 using Monocle;

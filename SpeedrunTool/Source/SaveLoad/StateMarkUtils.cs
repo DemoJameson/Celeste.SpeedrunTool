@@ -8,7 +8,7 @@ using Mono.Cecil.Cil;
 using Monocle;
 using MonoMod.Cil;
 
-namespace Celeste.Mod.SpeedrunTool.Other {
+namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public static class StateMarkUtils {
         private const string StartFromSaveSate = nameof(StartFromSaveSate);
 

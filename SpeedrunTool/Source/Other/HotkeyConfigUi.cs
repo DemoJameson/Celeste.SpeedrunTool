@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.UI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Monocle;
@@ -89,7 +90,10 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         public static void Load() {
             On.Monocle.MInput.Update += MInputOnUpdate;
 
-            Hotkeys.ToggleFullscreen.RegisterPressedAction(_ => {
+            Hotkeys.ToggleFullscreen.RegisterPressedAction(scene => {
+                if (!MInput.ControllerHasFocus && scene is Overworld {Current: OuiFileNaming {UseKeyboardInput: true} or OuiModOptionString {UseKeyboardInput: true}}) {
+                    return;
+                }
                 CelesteSettings.Instance.Fullscreen = !CelesteSettings.Instance.Fullscreen;
                 CelesteSettings.Instance.ApplyScreen();
                 UserIO.SaveHandler(false, true);

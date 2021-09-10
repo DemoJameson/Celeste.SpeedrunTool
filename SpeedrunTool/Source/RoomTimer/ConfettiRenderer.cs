@@ -1,5 +1,5 @@
 using System;
-using Celeste.Mod.SpeedrunTool.SaveLoad;
+using Celeste.Mod.SpeedrunTool.Other;
 using Microsoft.Xna.Framework;
 using Monocle;
 

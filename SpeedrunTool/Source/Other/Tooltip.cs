@@ -2,10 +2,11 @@
 using Microsoft.Xna.Framework;
 using Monocle;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad {
+namespace Celeste.Mod.SpeedrunTool.Other {
     [Tracked]
     public class Tooltip : Entity {
-        private const int Padding = 20;
+        private const int Padding = 25;
+        private readonly Vector2 scale = Vector2.One * 0.9f;
         private readonly string message;
         private float alpha;
         private float unEasedAlpha;
@@ -13,7 +14,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private Tooltip(string message) {
             this.message = message;
             Vector2 messageSize = ActiveFont.Measure(message);
-            Position = new(Padding, Engine.Height - messageSize.Y - Padding);
+            Position = new(Padding, Engine.Height - messageSize.Y - Padding / 2f);
             Tag = TagsExt.SubHUD | Tags.Global | Tags.FrozenUpdate | Tags.TransitionUpdate;
             Add(new Coroutine(Show()));
         }
@@ -37,7 +38,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private IEnumerator Dismiss() {
-            yield return 1.5f;
+            yield return 1f;
             while (alpha > 0f) {
                 unEasedAlpha = Calc.Approach(unEasedAlpha, 0f, Engine.RawDeltaTime * 4f);
                 alpha = Ease.SineIn(unEasedAlpha);
@@ -49,7 +50,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         public override void Render() {
             base.Render();
-            ActiveFont.DrawOutline(message, Position, Vector2.Zero, Vector2.One, Color.White * alpha, 1,
+            ActiveFont.DrawOutline(message, Position, Vector2.Zero, scale, Color.White * alpha, 2,
                 Color.Black * alpha);
         }
 

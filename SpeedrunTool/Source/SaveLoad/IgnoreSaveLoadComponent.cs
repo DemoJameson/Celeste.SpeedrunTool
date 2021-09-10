@@ -1,6 +1,6 @@
 ﻿using Monocle;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad {
+namespace Celeste.Mod.SpeedrunTool.Other {
     public class IgnoreSaveLoadComponent : Component {
         public IgnoreSaveLoadComponent() : base(false, false) { }
     }

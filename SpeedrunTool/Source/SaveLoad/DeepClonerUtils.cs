@@ -11,7 +11,7 @@ using Monocle;
 using MonoMod.Utils;
 using NLua;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad {
+namespace Celeste.Mod.SpeedrunTool.Other {
     internal static class DeepClonerUtils {
         public static void Config() {
             // Clone 开始时，判断哪些类型是直接使用原对象而不 DeepClone 的

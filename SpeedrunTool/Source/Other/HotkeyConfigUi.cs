@@ -148,7 +148,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         private void Reload(int index = -1) {
             Clear();
 
-            Add(new Header(Dialog.Clean(DialogIds.ButtonConfig)));
+            Add(new Header(Dialog.Clean(DialogIds.HotkeyConfig)));
 
             Add(new SubHeader(Dialog.Clean(DialogIds.PressDeleteToRemoveButton)));
 

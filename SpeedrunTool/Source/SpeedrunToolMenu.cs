@@ -28,14 +28,17 @@ namespace Celeste.Mod.SpeedrunTool {
             }
         }
 
-        private static IEnumerable<KeyValuePair<T, string>> CreateEnumerableOptions<T>() where T : struct, IConvertible {
-            List<KeyValuePair<T, string>> results = new();
-            foreach (T value in Enum.GetValues(typeof(T))) {
-                results.Add(new KeyValuePair<T, string>(value,
-                    Dialog.Clean(DialogIds.Prefix + RegexFormatName.Replace(value.ToString(), "$1_$2").ToUpper())));
+        private static IEnumerable<KeyValuePair<TEnum, string>> CreateEnumerableOptions<TEnum>() where TEnum : struct, IComparable, IFormattable, IConvertible {
+            List<KeyValuePair<TEnum, string>> results = new();
+            foreach (TEnum value in Enum.GetValues(typeof(TEnum))) {
+                results.Add(new KeyValuePair<TEnum, string>(value, value.DialogClean()));
             }
 
             return results;
+        }
+
+        public static string DialogClean<TEnum>(this TEnum @enum) where TEnum : struct, IComparable, IFormattable, IConvertible {
+            return Dialog.Clean(DialogIds.Prefix + RegexFormatName.Replace(@enum.ToString(), "$1_$2").ToUpper());
         }
 
         private static void AddDescription(TextMenu.Item subMenuItem, TextMenuExt.SubMenu subMenu, TextMenu containingMenu, string description) {
@@ -120,7 +123,7 @@ namespace Celeste.Mod.SpeedrunTool {
                         new TextMenu.OnOff(Dialog.Clean(DialogIds.MuteInBackground), Settings.MuteInBackground).Change(b =>
                             Settings.MuteInBackground = b));
 
-                    subMenu.Add(new TextMenu.Button(Dialog.Clean(DialogIds.ButtonConfig)).Pressed(() => {
+                    subMenu.Add(new TextMenu.Button(Dialog.Clean(DialogIds.HotkeyConfig)).Pressed(() => {
                         // 修复：在 overworld 界面 hot reload 之后打开按键设置菜单游戏崩溃
                         if (Engine.Scene.Tracker.Entities is { } entities) {
                             Type type = typeof(HotkeyConfigUi);

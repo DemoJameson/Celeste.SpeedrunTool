@@ -28,6 +28,7 @@
 	FONT=Noto Sans CJK SC Medium,64
 
 # ================================== Common ==================================
+SPEEDRUN_TOOL_ON= 开
 SPEEDRUN_TOOL_OFF= 关
 SPEEDRUN_TOOL_ALL= 全部
 
@@ -54,18 +55,8 @@ SPEEDRUN_TOOL_DO_NOT_RESTORE_TIME_AND_DEATHS= 不还原时间和死亡数，加�
 SPEEDRUN_TOOL_SAVE_STATE=                     保存状态
 SPEEDRUN_TOOL_LOAD_STATE=                     加载状态
 SPEEDRUN_TOOL_CLEAR_STATE=                    清除状态
-SPEEDRUN_TOOL_DIALOG_CLEAR_STATE=
-    [MADELINE left normal]
-    清除状态~
-SPEEDRUN_TOOL_DIALOG_NOT_SAVED_STATE_YET=
-    [MADELINE left upset]
-    请先保存状态。
-SPEEDRUN_TOOL_DIALOG_CLEAR_STATE_BADELINE=
-    [BADELINE left normal]
-    清除状态~
-SPEEDRUN_TOOL_DIALOG_NOT_SAVED_STATE_YET_BADELINE=
-    [BADELINE left yell]
-    还没保存状态！
+SPEEDRUN_TOOL_CLEAR_STATE_TOOLTIP=            清除状态
+SPEEDRUN_TOOL_NOT_SAVED_STATE_TOOLTIP=        请先保存状态
 
 # ================================== End Point Style ==================================
 SPEEDRUN_TOOL_FLAG=      Flag
@@ -83,7 +74,7 @@ SPEEDRUN_TOOL_TOWERFALL= TowerFall
 SPEEDRUN_TOOL_YURI=      Yuri
 SPEEDRUN_TOOL_RANDOM=    随机
 
-# ================================== Button Config ==================================
+# ================================== Hotkey Config ==================================
 SPEEDRUN_TOOL_KEYBOARD=                      键盘
 SPEEDRUN_TOOL_CONTROLLER=                    手柄
 SPEEDRUN_TOOL_PRESS_DELETE_TO_REMOVE_BUTTON= 按下 Delete 键移除按钮
@@ -116,4 +107,4 @@ SPEEDRUN_TOOL_RESPAWN_SPEED=              复活速度
 SPEEDRUN_TOOL_FAST_TELEPORT=              快速传送
 SPEEDRUN_TOOL_FAST_TELEPORT_DESCRIPTION=  PageDown/Up 传送时更加快速，无需重载整个地图
 SPEEDRUN_TOOL_MUTE_IN_BACKGROUND=         游戏后台运行时静音
-SPEEDRUN_TOOL_BUTTON_CONFIG=              按键设置
+SPEEDRUN_TOOL_HOTKEY_CONFIG=              按键设置

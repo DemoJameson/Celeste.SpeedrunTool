@@ -94,12 +94,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     if (IsSaved) {
                         LoadState(false);
                     } else if (!level.Frozen) {
-                        if (level.Entities.FindFirst<MiniTextbox>() is { } miniTextbox) {
-                            miniTextbox.RemoveSelf();
-                        }
-
-                        level.Add(new MiniTextbox(IsPlayAsBadeline(level) ? DialogIds.DialogNotSavedStateYetBadeline : DialogIds.DialogNotSavedStateYet)
-                            .IgnoreSaveLoad());
+                        Tooltip.Show(level, DialogIds.NotSavedStateTooltip.DialogClean());
                     }
                 }
             });
@@ -107,13 +102,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             Hotkeys.ClearState.RegisterPressedAction(scene => {
                 if (scene is Level level && !level.PausedNew() && State == States.None) {
                     ClearState(true);
-                    if (IsNotCollectingHeart(level) && !level.Completed) {
-                        if (level.Entities.FindFirst<MiniTextbox>() is { } miniTextbox) {
-                            miniTextbox.RemoveSelf();
-                        }
-
-                        level.Add(new MiniTextbox(IsPlayAsBadeline(level) ? DialogIds.DialogClearStateBadeline : DialogIds.DialogClearState).IgnoreSaveLoad());
-                    }
+                    Tooltip.Show(level, DialogIds.ClearStateToolTip.DialogClean());
                 }
             });
 
@@ -121,6 +110,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 if (scene is Level level && !level.PausedNew()) {
                     Settings.AutoLoadStateAfterDeath = !Settings.AutoLoadStateAfterDeath;
                     SpeedrunToolModule.Instance.SaveSettings();
+                    string status = (Settings.AutoLoadStateAfterDeath ? DialogIds.On : DialogIds.Off).DialogClean();
+                    Tooltip.Show(level, $"{DialogIds.AutoLoadStateAfterDeath.DialogClean()}: {status}");
                 }
             });
         }
@@ -683,18 +674,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private bool IsAllowSave(Level level, Player player) {
             return State == States.None && player is { Dead: false } && !level.PausedNew() && !level.SkippingCutscene;
-        }
-
-        private bool IsNotCollectingHeart(Level level) {
-            return !level.Entities.FindAll<HeartGem>().Any(heart => (bool)heart.GetFieldValue("collected"));
-        }
-
-        private static bool IsPlayAsBadeline(Level level) {
-            if (level.GetPlayer() is { } player) {
-                return player.Sprite.Mode == PlayerSpriteMode.MadelineAsBadeline;
-            } else {
-                return SaveData.Instance.Assists.PlayAsBadeline;
-            }
         }
 
         // @formatter:off

@@ -26,8 +26,9 @@
 # Font (Face, Base Size)
 # Use BMFONT to generate the .fnt and image files
 	FONT=Renogare,64
-	
+
 # ================================== Common ==================================
+SPEEDRUN_TOOL_ON=  ON
 SPEEDRUN_TOOL_OFF= OFF
 SPEEDRUN_TOOL_ALL= ALL
 
@@ -53,18 +54,8 @@ SPEEDRUN_TOOL_DO_NOT_RESTORE_TIME_AND_DEATHS= Do Not Restore Time and Deaths
 SPEEDRUN_TOOL_SAVE_STATE=                     Save State
 SPEEDRUN_TOOL_LOAD_STATE=                     Load State
 SPEEDRUN_TOOL_CLEAR_STATE=                    Clear State
-SPEEDRUN_TOOL_DIALOG_CLEAR_STATE=
-    [MADELINE left normal]
-    Cleared the state~
-SPEEDRUN_TOOL_DIALOG_NOT_SAVED_STATE_YET=
-    [MADELINE left upset]
-    Not saved state yet.
-SPEEDRUN_TOOL_DIALOG_CLEAR_STATE_BADELINE=
-    [BADELINE left normal]
-    Cleared the state~
-SPEEDRUN_TOOL_DIALOG_NOT_SAVED_STATE_YET_BADELINE=
-    [BADELINE left yell]
-    Not saved state yet.
+SPEEDRUN_TOOL_CLEAR_STATE_TOOLTIP=            Cleared the State
+SPEEDRUN_TOOL_NOT_SAVED_STATE_TOOLTIP=        Not saved state yet
 
 # ================================== End Point Style ==================================
 SPEEDRUN_TOOL_FLAG=       Flag
@@ -82,7 +73,7 @@ SPEEDRUN_TOOL_TOWERFALL=  TowerFall
 SPEEDRUN_TOOL_YURI=       Yuri
 SPEEDRUN_TOOL_RANDOM=     Random
 
-# ================================== Button Config ==================================
+# ================================== Hotkey Config ==================================
 SPEEDRUN_TOOL_KEYBOARD=                      Keyboard
 SPEEDRUN_TOOL_CONTROLLER=                    Controller
 SPEEDRUN_TOOL_PRESS_DELETE_TO_REMOVE_BUTTON= Press Delete to Remove Button
@@ -116,4 +107,4 @@ SPEEDRUN_TOOL_RESPAWN_SPEED=              Respawn Speed
 SPEEDRUN_TOOL_FAST_TELEPORT=              Fast Teleport
 SPEEDRUN_TOOL_FAST_TELEPORT_DESCRIPTION=  Make PageDown/Up teleport more faster, no need to reload the whole map
 SPEEDRUN_TOOL_MUTE_IN_BACKGROUND=         Mute in Background
-SPEEDRUN_TOOL_BUTTON_CONFIG=              Button Config
+SPEEDRUN_TOOL_HOTKEY_CONFIG=              Hotkey Config

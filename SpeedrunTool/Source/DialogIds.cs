@@ -10,10 +10,11 @@ namespace Celeste.Mod.SpeedrunTool {
 
         // Common
         // ReSharper disable UnusedMember.Global
-        public const string Off = "SPEED_TOOL_OFF";
-        public const string All = "SPEED_TOOL_ALL";
+        public const string On = "SPEEDRUN_TOOL_ON";
+        public const string Off = "SPEEDRUN_TOOL_OFF";
+        public const string All = "SPEEDRUN_TOOL_ALL";
         // ReSharper restore UnusedMember.Global
-        
+
         // RoomTimer
         public const string EndPointStyle = "SPEEDRUN_TOOL_END_POINT_STYLE";
         public const string NumberOfRooms = "SPEEDRUN_TOOL_NUMBER_OF_ROOMS";
@@ -35,11 +36,9 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string SaveState = "SPEEDRUN_TOOL_SAVE_STATE";
         public const string LoadState = "SPEEDRUN_TOOL_LOAD_STATE";
         public const string ClearState = "SPEEDRUN_TOOL_CLEAR_STATE";
-        public const string DialogClearState = "SPEEDRUN_TOOL_DIALOG_CLEAR_STATE";
-        public const string DialogNotSavedStateYet = "SPEEDRUN_TOOL_DIALOG_NOT_SAVED_STATE_YET";
-        public const string DialogClearStateBadeline = "SPEEDRUN_TOOL_DIALOG_CLEAR_STATE_BADELINE";
-        public const string DialogNotSavedStateYetBadeline = "SPEEDRUN_TOOL_DIALOG_NOT_SAVED_STATE_YET_BADELINE";
-        
+        public const string ClearStateToolTip = "SPEEDRUN_TOOL_CLEAR_STATE_TOOLTIP";
+        public const string NotSavedStateTooltip = "SPEEDRUN_TOOL_NOT_SAVED_STATE_TOOLTIP";
+
         // ReSharper disable UnusedMember.Global
         // End Point Style
         public const string Flag = "SPEEDRUN_TOOL_FLAG";
@@ -58,7 +57,7 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string Random = "SPEEDRUN_TOOL_RANDOM";
         // ReSharper restore UnusedMember.Global
 
-        // Button Config
+        // Hotkey Config
         public const string Keyboard = "SPEEDRUN_TOOL_KEYBOARD";
         public const string Controller = "SPEEDRUN_TOOL_CONTROLLER";
         public const string PressDeleteToRemoveButton = "SPEEDRUN_TOOL_PRESS_DELETE_TO_REMOVE_BUTTON";
@@ -91,6 +90,6 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string FastTeleport = "SPEEDRUN_TOOL_FAST_TELEPORT";
         public const string MuteInBackground = "SPEEDRUN_TOOL_MUTE_IN_BACKGROUND";
         public const string FastTeleportDescription = "SPEEDRUN_TOOL_FAST_TELEPORT_DESCRIPTION";
-        public const string ButtonConfig = "SPEEDRUN_TOOL_BUTTON_CONFIG";
+        public const string HotkeyConfig = "SPEEDRUN_TOOL_HOTKEY_CONFIG";
     }
 }

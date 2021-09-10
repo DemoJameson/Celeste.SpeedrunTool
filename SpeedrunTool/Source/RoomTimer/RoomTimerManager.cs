@@ -1,6 +1,7 @@
 using System;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.Other;
+using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
 using Monocle;
@@ -59,20 +60,21 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                     ClearPbTimes();
                 }
             });
-            
+
             Hotkeys.SwitchRoomTimer.RegisterPressedAction(scene => {
-                if (scene is Level { Paused: false }) {
+                if (scene is Level { Paused: false } level) {
                     SwitchRoomTimer((RoomTimerType)(((int) Settings.RoomTimerType + 1) % Enum.GetNames(typeof(RoomTimerType)).Length));
+                    Tooltip.Show(level, $"{DialogIds.RoomTimer.DialogClean()}: {Settings.RoomTimerType.DialogClean()}");
                 }
             });
-            
+
             Hotkeys.SetEndPoint.RegisterPressedAction(scene => {
                 if (scene is Level { Paused: false } level) {
                     ClearPbTimes();
                     CreateEndPoint(level);
                 }
             });
-            
+
             Hotkeys.SetAdditionalEndPoint.RegisterPressedAction(scene => {
                 if (scene is Level { Paused: false } level) {
                     if (!EndPoint.IsExist) {

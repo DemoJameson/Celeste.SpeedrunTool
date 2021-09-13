@@ -12,8 +12,11 @@ using MonoMod.Utils;
 using NLua;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
-    internal static class DeepClonerUtils {
-        public static void Config() {
+    public static class DeepClonerUtils {
+        // 共用 DeepCloneState 可使多次 DeepClone 复用相同对象避免多次克隆同一对象
+        private static DeepCloneState sharedDeepCloneState = new();
+
+        internal static void Config() {
             // Clone 开始时，判断哪些类型是直接使用原对象而不 DeepClone 的
             // Before cloning, determine which types use the original object directly
             DeepCloner.AddKnownTypesProcessor(type => {
@@ -96,7 +99,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     if (sourceObj is CassetteBlockManager manager) {
                         // isLevelMusic = true 时 sfx 自动等于 Audio.CurrentMusicEventInstance，无需重建
                         if (manager.GetFieldValue("sfx") is EventInstance sfx &&
-                            !(bool) manager.GetFieldValue("isLevelMusic")) {
+                            !(bool)manager.GetFieldValue("isLevelMusic")) {
                             sfx.NeedManualClone();
                         }
 
@@ -140,7 +143,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     // 原因：没有重写 GetHashCode 方法 https://github.com/force-net/DeepCloner/issues/17#issuecomment-678650032
                     // Fix: DeepClone's hashSet.Contains (ReferenceType) always returns false, Dictionary has no such problem
                     if (clonedObj.GetType().IsHashSet(out Type hashSetElementType) && !hashSetElementType.IsSimple()) {
-                        IEnumerator enumerator = ((IEnumerable) clonedObj).GetEnumerator();
+                        IEnumerator enumerator = ((IEnumerable)clonedObj).GetEnumerator();
 
                         List<object> backup = new();
                         while (enumerator.MoveNext()) {
@@ -184,7 +187,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                             }
 
                             object[] parameters = {sourceObj, null};
-                            if (false == (bool) dataMap.InvokeMethod("TryGetValue", parameters)) {
+                            if (false == (bool)dataMap.InvokeMethod("TryGetValue", parameters)) {
                                 continue;
                             }
 
@@ -205,7 +208,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     // CLone DynamicData
                     if (DynDataUtils.ExistDynamicData(sourceObj)) {
                         object[] parameters = {sourceObj, null};
-                        if ((bool) DynDataUtils.DynamicDataMap.InvokeMethod("TryGetValue", parameters)) {
+                        if ((bool)DynDataUtils.DynamicDataMap.InvokeMethod("TryGetValue", parameters)) {
                             object sourceValue = parameters[1];
                             if (sourceValue.GetFieldValue("Data") is Dictionary<string, object> data && data.Count != 0) {
                                 DynDataUtils.DynamicDataMap.InvokeMethod("Add", clonedObj, sourceValue.DeepClone(deepCloneState));
@@ -227,24 +230,21 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             });
         }
 
-        public static void Clear() {
+        internal static void Clear() {
             DeepCloner.ClearKnownTypesProcessors();
             DeepCloner.ClearPreCloneProcessors();
             DeepCloner.ClearPostCloneProcessors();
         }
 
-        // 共用 DeepCloneState 可使多次 DeepClone 复用相同对象避免多次克隆同一对象
-        private static DeepCloneState sharedDeepCloneState = new();
-
         private static void InitSharedDeepCloneState() {
             sharedDeepCloneState ??= new DeepCloneState();
         }
 
-        public static void ClearSharedDeepCloneState() {
+        internal static void ClearSharedDeepCloneState() {
             sharedDeepCloneState = null;
         }
 
-        public static void SetSharedDeepCloneState(DeepCloneState deepCloneState) {
+        internal static void SetSharedDeepCloneState(DeepCloneState deepCloneState) {
             sharedDeepCloneState = deepCloneState;
         }
 

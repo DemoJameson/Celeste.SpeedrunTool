@@ -31,13 +31,17 @@ namespace Celeste.Mod.SpeedrunTool {
 
         // State Manager
         public const string FreezeAfterLoadState = "SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE";
-        public const string AutoLoadStateAfterDeath = "SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH";
+        public const string AutoLoadStateAfterDeath = "SPEEDRUN_TOOL_AUTO_LOAD_STATE_AFTER_DEATH";
         public const string DoNotRestoreTimeAndDeaths = "SPEEDRUN_TOOL_DO_NOT_RESTORE_TIME_AND_DEATHS";
         public const string SaveState = "SPEEDRUN_TOOL_SAVE_STATE";
         public const string LoadState = "SPEEDRUN_TOOL_LOAD_STATE";
         public const string ClearState = "SPEEDRUN_TOOL_CLEAR_STATE";
         public const string ClearStateToolTip = "SPEEDRUN_TOOL_CLEAR_STATE_TOOLTIP";
         public const string NotSavedStateTooltip = "SPEEDRUN_TOOL_NOT_SAVED_STATE_TOOLTIP";
+        public const string ClearStateDialog = "SPEEDRUN_TOOL_CLEAR_STATE_DIALOG";
+        public const string NotSavedStateYetDialog = "SPEEDRUN_TOOL_NOT_SAVED_STATE_YET_DIALOG";
+        public const string ClearStateDialogBadeline = "SPEEDRUN_TOOL_CLEAR_STATE_DIALOG_BADELINE";
+        public const string NotSavedStateYetDialogBadeline = "SPEEDRUN_TOOL_NOT_SAVED_STATE_YET_DIALOG_BADELINE";
 
         // ReSharper disable UnusedMember.Global
         // End Point Style
@@ -88,8 +92,10 @@ namespace Celeste.Mod.SpeedrunTool {
         // More Options
         public const string RespawnSpeed = "SPEEDRUN_TOOL_RESPAWN_SPEED";
         public const string FastTeleport = "SPEEDRUN_TOOL_FAST_TELEPORT";
-        public const string MuteInBackground = "SPEEDRUN_TOOL_MUTE_IN_BACKGROUND";
         public const string FastTeleportDescription = "SPEEDRUN_TOOL_FAST_TELEPORT_DESCRIPTION";
+        public const string MuteInBackground = "SPEEDRUN_TOOL_MUTE_IN_BACKGROUND";
+        public const string PopupMessageStyle = "SPEEDRUN_TOOL_POPUP_MESSAGE_STYLE";
+        public const string OptionState = "SPEEDRUN_TOOL_OPTION_STATE";
         public const string HotkeyConfig = "SPEEDRUN_TOOL_HOTKEY_CONFIG";
     }
 }

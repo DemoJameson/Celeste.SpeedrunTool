@@ -50,13 +50,25 @@ SPEEDRUN_TOOL_AUTO_TURN_OFF_ROOM_TIMER= 重启章节/游戏时关闭房间计时
 
 # ================================== State Manager ==================================
 SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE=        加载状态后冻结游戏
-SPEEDRUN_TOOL_AUTO_LOAD_AFTER_DEATH=          死亡后自动加载状态
+SPEEDRUN_TOOL_AUTO_LOAD_STATE_AFTER_DEATH=    死亡后自动加载状态
 SPEEDRUN_TOOL_DO_NOT_RESTORE_TIME_AND_DEATHS= 不还原时间和死亡数，加载状态死亡数加一
 SPEEDRUN_TOOL_SAVE_STATE=                     保存状态
 SPEEDRUN_TOOL_LOAD_STATE=                     加载状态
 SPEEDRUN_TOOL_CLEAR_STATE=                    清除状态
 SPEEDRUN_TOOL_CLEAR_STATE_TOOLTIP=            清除状态
 SPEEDRUN_TOOL_NOT_SAVED_STATE_TOOLTIP=        请先保存状态
+SPEEDRUN_TOOL_CLEAR_STATE_DIALOG=
+    [MADELINE left normal]
+    清除状态~
+SPEEDRUN_TOOL_NOT_SAVED_STATE_YET_DIALOG=
+    [MADELINE left upset]
+    请先保存状态。
+SPEEDRUN_TOOL_CLEAR_STATE_DIALOG_BADELINE=
+    [BADELINE left normal]
+    清除状态~
+SPEEDRUN_TOOL_NOT_SAVED_STATE_YET_DIALOG_BADELINE=
+    [BADELINE left yell]
+    还没保存状态！
 
 # ================================== End Point Style ==================================
 SPEEDRUN_TOOL_FLAG=      Flag
@@ -107,4 +119,8 @@ SPEEDRUN_TOOL_RESPAWN_SPEED=              复活速度
 SPEEDRUN_TOOL_FAST_TELEPORT=              快速传送
 SPEEDRUN_TOOL_FAST_TELEPORT_DESCRIPTION=  PageDown/Up 传送时更加快速，无需重载整个地图
 SPEEDRUN_TOOL_MUTE_IN_BACKGROUND=         游戏后台运行时静音
+SPEEDRUN_TOOL_POPUP_MESSAGE_STYLE=        提示信息样式
+SPEEDRUN_TOOL_TOOLTIP=                    简洁
+SPEEDRUN_TOOL_DIALOG_BOX=                 对话框
+SPEEDRUN_TOOL_OPTION_STATE=               {0}：{1}
 SPEEDRUN_TOOL_HOTKEY_CONFIG=              按键设置

@@ -1,5 +1,6 @@
 ﻿using System;
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
+using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
@@ -50,6 +51,7 @@ namespace Celeste.Mod.SpeedrunTool {
             StateManager.Instance.OnLoad();
             HotkeyConfigUi.Load();
             MuteInBackground.Load();
+            NonFrozenMiniTextbox.Load();
         }
 
         // Unload the entirety of your mod's content, remove any event listeners and undo all hooks.
@@ -62,6 +64,7 @@ namespace Celeste.Mod.SpeedrunTool {
             StateManager.Instance.OnUnload();
             HotkeyConfigUi.Unload();
             MuteInBackground.Unload();
+            NonFrozenMiniTextbox.Unload();
         }
 
         // Optional, initialize anything after Celeste has initialized itself properly.

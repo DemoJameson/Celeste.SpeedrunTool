@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Microsoft.Xna.Framework.Input;
@@ -33,7 +34,7 @@ namespace Celeste.Mod.SpeedrunTool {
 
         [SettingName(DialogIds.FreezeAfterLoadState)]
         public bool FreezeAfterLoadState { get; set; } = true;
-        
+
         [SettingName(DialogIds.DoNotRestoreTimeAndDeaths)]
         public bool DoNotRestoreTimeAndDeaths { get; set; } = true;
 
@@ -58,6 +59,7 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingSubText(DialogIds.FastTeleportDescription)]
         public bool FastTeleport { get; set; } = true;
         public bool MuteInBackground { get; set; }
+        public PopupMessageStyle PopupMessageStyle { get; set; } = PopupMessageStyle.Tooltip;
 
         #endregion
 
@@ -102,10 +104,10 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingIgnore] public List<Keys> KeyboardTeleportToLastRoom { get; set; } = Hotkeys.TeleportToLastRoom.GetDefaultKeys();
 
         [SettingIgnore] public List<Keys> KeyboardTeleportToNextRoom { get; set; } = Hotkeys.TeleportToNextRoom.GetDefaultKeys();
-        
+
         [SettingIgnore]
         public List<Keys> KeyboardSwitchAutoLoadState { get; set; } = Hotkeys.SwitchAutoLoadState.GetDefaultKeys();
-        
+
         [SettingIgnore]
         public List<Keys> KeyboardToggleFullscreen { get; set; } = Hotkeys.ToggleFullscreen.GetDefaultKeys();
 

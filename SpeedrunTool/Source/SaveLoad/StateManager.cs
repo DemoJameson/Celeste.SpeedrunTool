@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using FMOD.Studio;
@@ -93,8 +94,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 if (scene is Level level && !level.PausedNew() && State == States.None) {
                     if (IsSaved) {
                         LoadState(false);
-                    } else if (!level.Frozen) {
-                        Tooltip.Show(level, DialogIds.NotSavedStateTooltip.DialogClean());
+                    } else {
+                        PopupMessageUtils.Show(level, DialogIds.NotSavedStateTooltip.DialogClean(), DialogIds.NotSavedStateYetDialog);
                     }
                 }
             });
@@ -102,7 +103,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             Hotkeys.ClearState.RegisterPressedAction(scene => {
                 if (scene is Level level && !level.PausedNew() && State == States.None) {
                     ClearState(true);
-                    Tooltip.Show(level, DialogIds.ClearStateToolTip.DialogClean());
+                    PopupMessageUtils.Show(level, DialogIds.ClearStateToolTip.DialogClean(), DialogIds.ClearStateDialog);
                 }
             });
 
@@ -110,8 +111,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 if (scene is Level level && !level.PausedNew()) {
                     Settings.AutoLoadStateAfterDeath = !Settings.AutoLoadStateAfterDeath;
                     SpeedrunToolModule.Instance.SaveSettings();
-                    string status = (Settings.AutoLoadStateAfterDeath ? DialogIds.On : DialogIds.Off).DialogClean();
-                    Tooltip.Show(level, $"{DialogIds.AutoLoadStateAfterDeath.DialogClean()}: {status}");
+                    string state = (Settings.AutoLoadStateAfterDeath ? DialogIds.On : DialogIds.Off).DialogClean();
+                    PopupMessageUtils.ShowOptionState(level, DialogIds.AutoLoadStateAfterDeath.DialogClean(), state);
+
                 }
             });
         }

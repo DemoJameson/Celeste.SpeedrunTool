@@ -1,5 +1,6 @@
 using System;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
 using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
@@ -63,7 +64,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             Hotkeys.SwitchRoomTimer.RegisterPressedAction(scene => {
                 if (scene is Level { Paused: false } level) {
                     SwitchRoomTimer((RoomTimerType)(((int) Settings.RoomTimerType + 1) % Enum.GetNames(typeof(RoomTimerType)).Length));
-                    Tooltip.Show(level, $"{DialogIds.RoomTimer.DialogClean()}: {Settings.RoomTimerType.DialogClean()}");
+                    PopupMessageUtils.ShowOptionState(level, DialogIds.RoomTimer.DialogClean(), Settings.RoomTimerType.DialogClean());
                 }
             });
 

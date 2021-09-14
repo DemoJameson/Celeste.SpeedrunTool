@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using FMOD.Studio;
@@ -122,6 +123,11 @@ namespace Celeste.Mod.SpeedrunTool {
                     subMenu.Add(
                         new TextMenu.OnOff(Dialog.Clean(DialogIds.MuteInBackground), Settings.MuteInBackground).Change(b =>
                             Settings.MuteInBackground = b));
+
+                    subMenu.Add(new TextMenuExt.EnumerableSlider<PopupMessageStyle>(Dialog.Clean(DialogIds.PopupMessageStyle),
+                        CreateEnumerableOptions<PopupMessageStyle>(), Settings.PopupMessageStyle).Change(value => {
+                        Settings.PopupMessageStyle = value;
+                    }));
 
                     subMenu.Add(new TextMenu.Button(Dialog.Clean(DialogIds.HotkeyConfig)).Pressed(() => {
                         // 修复：在 overworld 界面 hot reload 之后打开按键设置菜单游戏崩溃

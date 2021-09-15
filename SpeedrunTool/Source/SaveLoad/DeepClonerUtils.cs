@@ -16,7 +16,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         // 共用 DeepCloneState 可使多次 DeepClone 复用相同对象避免多次克隆同一对象
         private static DeepCloneState sharedDeepCloneState = new();
 
-        internal static void Config() {
+        [Load]
+        private static void Config() {
             // Clone 开始时，判断哪些类型是直接使用原对象而不 DeepClone 的
             // Before cloning, determine which types use the original object directly
             DeepCloner.AddKnownTypesProcessor(type => {
@@ -230,7 +231,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             });
         }
 
-        internal static void Clear() {
+        [Unload]
+        private static void Clear() {
             DeepCloner.ClearKnownTypesProcessors();
             DeepCloner.ClearPreCloneProcessors();
             DeepCloner.ClearPostCloneProcessors();

@@ -87,7 +87,8 @@ namespace Celeste.Mod.SpeedrunTool.Other {
 
         private static SpeedrunToolSettings Settings => SpeedrunToolModule.Settings;
 
-        public static void Load() {
+        [Load]
+        private static void Load() {
             On.Monocle.MInput.Update += MInputOnUpdate;
 
             Hotkeys.ToggleFullscreen.RegisterPressedAction(scene => {
@@ -100,8 +101,16 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             });
         }
 
-        public static void Unload() {
+        [Unload]
+        private static void Unload() {
             On.Monocle.MInput.Update -= MInputOnUpdate;
+        }
+
+        [Initialize]
+        private static void Initialize() {
+            foreach (HotkeyConfig buttonInfo in HotkeyConfigs.Values) {
+                buttonInfo.UpdateVirtualButton();
+            }
         }
 
         private static void MInputOnUpdate(On.Monocle.MInput.orig_Update orig) {
@@ -141,12 +150,6 @@ namespace Celeste.Mod.SpeedrunTool.Other {
 
         public static VirtualButton GetVirtualButton(Hotkeys hotkeys) {
             return HotkeyConfigs[hotkeys].VirtualButton.Value;
-        }
-
-        public static void Init() {
-            foreach (HotkeyConfig buttonInfo in HotkeyConfigs.Values) {
-                buttonInfo.UpdateVirtualButton();
-            }
         }
 
         private void Reload(int index = -1) {

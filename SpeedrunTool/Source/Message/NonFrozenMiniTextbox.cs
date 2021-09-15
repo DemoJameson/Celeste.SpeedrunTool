@@ -26,12 +26,14 @@ namespace Celeste.Mod.SpeedrunTool.Message {
             }
         }
 
-        public static void Load() {
+        [Load]
+        private static void Load() {
             IL.Celeste.MiniTextbox.Render += MiniTextboxOnRender;
             routineHook = new ILHook(RoutineMethod, QuicklyClose);
         }
 
-        public static void Unload() {
+        [Unload]
+        private static void Unload() {
             IL.Celeste.MiniTextbox.Render -= MiniTextboxOnRender;
             routineHook?.Dispose();
             routineHook = null;

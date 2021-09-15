@@ -1,3 +1,4 @@
+using Celeste.Mod.SpeedrunTool.Extensions;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Other {
@@ -6,12 +7,14 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         private static bool lastSetting;
         private static SpeedrunToolSettings ModSettings => SpeedrunToolModule.Settings;
 
-        public static void Load() {
+        [Load]
+        private static void Load() {
             On.Monocle.Scene.BeforeUpdate += SceneOnBeforeUpdate;
         }
 
-        public static void Unload() {
-            On.Monocle.Scene.BeforeUpdate += SceneOnBeforeUpdate;
+        [Unload]
+        private static void Unload() {
+            On.Monocle.Scene.BeforeUpdate -= SceneOnBeforeUpdate;
         }
 
         private static void SceneOnBeforeUpdate(On.Monocle.Scene.orig_BeforeUpdate orig, Scene self) {

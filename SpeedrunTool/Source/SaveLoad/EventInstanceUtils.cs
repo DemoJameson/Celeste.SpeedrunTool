@@ -5,11 +5,13 @@ using FMOD.Studio;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     internal static class EventInstanceUtils {
-        public static void OnHook() {
+        [Load]
+        private static void Load() {
             On.FMOD.Studio.EventInstance.setParameterValue += EventInstanceOnsetParameterValue;
         }
 
-        public static void OnUnhook() {
+        [Unload]
+        private static void OnUnhook() {
             On.FMOD.Studio.EventInstance.setParameterValue -= EventInstanceOnsetParameterValue;
         }
 

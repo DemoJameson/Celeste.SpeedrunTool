@@ -24,14 +24,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private static readonly ConditionalWeakTable<object, object> DynamicDataObjects = new();
         private static ILHook dynamicDataHook;
 
-        public static void OnLoad() {
+        [Load]
+        private static void Load() {
             dynamicDataHook = new ILHook(typeof(DynamicData).GetConstructor(new[] {typeof(Type), typeof(object), typeof(bool)}), il => {
                 ILCursor ilCursor = new(il);
                 ilCursor.Emit(OpCodes.Ldarg_2).EmitDelegate<Action<object>>(RecordDynamicDataObject);
             });
         }
 
-        public static void OnUnload() {
+        [Unload]
+        private static void Unload() {
             dynamicDataHook?.Dispose();
         }
 

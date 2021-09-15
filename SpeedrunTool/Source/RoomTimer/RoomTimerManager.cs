@@ -20,33 +20,33 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         CurrentRoom
     }
 
-    public sealed class RoomTimerManager {
+    public static class RoomTimerManager {
         private static readonly Color BestColor1 = Calc.HexToColor("fad768");
         private static readonly Color BestColor2 = Calc.HexToColor("cfa727");
         private static readonly Color FinishedColor1 = Calc.HexToColor("6ded87");
         private static readonly Color FinishedColor2 = Calc.HexToColor("43d14c");
 
         public const string FlagPrefix = "summit_checkpoint_";
-        private readonly RoomTimerData currentRoomTimerData = new(RoomTimerType.CurrentRoom);
-        private readonly RoomTimerData nextRoomTimerData = new(RoomTimerType.NextRoom);
+        private static readonly RoomTimerData CurrentRoomTimerData = new(RoomTimerType.CurrentRoom);
+        private static readonly RoomTimerData NextRoomTimerData = new(RoomTimerType.NextRoom);
 
         private static SpeedrunToolSettings Settings => SpeedrunToolModule.Settings;
 
-        private string previousRoom;
+        private static string previousRoom;
 
-        public void Load() {
+        [Load]
+        private static void Load() {
             IL.Celeste.SpeedrunTimerDisplay.Update += SpeedrunTimerDisplayOnUpdate;
             On.Celeste.SpeedrunTimerDisplay.Render += Render;
             On.Celeste.Level.Update += Timing;
             On.Celeste.SummitCheckpoint.Update += UpdateTimerStateOnTouchFlag;
             On.Celeste.LevelExit.ctor += LevelExitOnCtor;
+            TryTurnOffRoomTimer();
             RegisterHotkeys();
-            if (Settings.AutoResetRoomTimer) {
-                SwitchRoomTimer(RoomTimerType.Off);
-            }
         }
 
-        public void Unload() {
+        [Unload]
+        private static void Unload() {
             IL.Celeste.SpeedrunTimerDisplay.Update -= SpeedrunTimerDisplayOnUpdate;
             On.Celeste.SpeedrunTimerDisplay.Render -= Render;
             On.Celeste.Level.Update -= Timing;
@@ -54,29 +54,29 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             On.Celeste.LevelExit.ctor -= LevelExitOnCtor;
         }
 
-        private void RegisterHotkeys() {
+        private static void RegisterHotkeys() {
             Hotkeys.ResetRoomTimerPb.RegisterPressedAction(scene => {
-                if (scene is Level { Paused: false }) {
+                if (scene is Level {Paused: false}) {
                     ClearPbTimes();
                 }
             });
 
             Hotkeys.SwitchRoomTimer.RegisterPressedAction(scene => {
-                if (scene is Level { Paused: false } level) {
-                    SwitchRoomTimer((RoomTimerType)(((int) Settings.RoomTimerType + 1) % Enum.GetNames(typeof(RoomTimerType)).Length));
+                if (scene is Level {Paused: false} level) {
+                    SwitchRoomTimer((RoomTimerType)(((int)Settings.RoomTimerType + 1) % Enum.GetNames(typeof(RoomTimerType)).Length));
                     PopupMessageUtils.ShowOptionState(level, DialogIds.RoomTimer.DialogClean(), Settings.RoomTimerType.DialogClean());
                 }
             });
 
             Hotkeys.SetEndPoint.RegisterPressedAction(scene => {
-                if (scene is Level { Paused: false } level) {
+                if (scene is Level {Paused: false} level) {
                     ClearPbTimes();
                     CreateEndPoint(level);
                 }
             });
 
             Hotkeys.SetAdditionalEndPoint.RegisterPressedAction(scene => {
-                if (scene is Level { Paused: false } level) {
+                if (scene is Level {Paused: false} level) {
                     if (!EndPoint.IsExist) {
                         ClearPbTimes();
                     }
@@ -86,7 +86,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             });
         }
 
-        private void SpeedrunTimerDisplayOnUpdate(ILContext il) {
+        private static void SpeedrunTimerDisplayOnUpdate(ILContext il) {
             ILCursor ilCursor = new(il);
             if (ilCursor.TryGotoNext(MoveType.After,
                 ins => ins.OpCode == OpCodes.Ldarg_0,
@@ -98,7 +98,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             }
         }
 
-        private void CreateEndPoint(Level level, bool additional = false) {
+        private static void CreateEndPoint(Level level, bool additional = false) {
             if (level.GetPlayer() is {Dead: false} player) {
                 if (!additional) {
                     EndPoint.All.ForEach(point => point.RemoveSelf());
@@ -108,7 +108,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             }
         }
 
-        public void SwitchRoomTimer(RoomTimerType roomTimerType) {
+        public static void SwitchRoomTimer(RoomTimerType roomTimerType) {
             Settings.RoomTimerType = roomTimerType;
 
             if (roomTimerType == RoomTimerType.Off) {
@@ -118,16 +118,16 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             SpeedrunToolModule.Instance.SaveSettings();
         }
 
-        public void ClearPbTimes(bool clearEndPoint = true) {
+        public static void ClearPbTimes(bool clearEndPoint = true) {
             previousRoom = null;
-            nextRoomTimerData.Clear();
-            currentRoomTimerData.Clear();
+            NextRoomTimerData.Clear();
+            CurrentRoomTimerData.Clear();
             if (clearEndPoint) {
                 EndPoint.All.ForEach(point => point.RemoveSelf());
             }
         }
 
-        private void Timing(On.Celeste.Level.orig_Update orig, Level self) {
+        private static void Timing(On.Celeste.Level.orig_Update orig, Level self) {
             orig(self);
 
             string currentRoom = self.Session.Level;
@@ -138,12 +138,12 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             }
 
             if (!self.Completed && self.TimerStarted) {
-                nextRoomTimerData.Timing(self);
-                currentRoomTimerData.Timing(self);
+                NextRoomTimerData.Timing(self);
+                CurrentRoomTimerData.Timing(self);
             }
         }
 
-        private void UpdateTimerStateOnTouchFlag(On.Celeste.SummitCheckpoint.orig_Update orig, SummitCheckpoint self) {
+        private static void UpdateTimerStateOnTouchFlag(On.Celeste.SummitCheckpoint.orig_Update orig, SummitCheckpoint self) {
             bool lastActivated = self.Activated;
             orig(self);
             if (!Settings.RoomTimerIgnoreFlag && !lastActivated && self.Activated) {
@@ -151,20 +151,21 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             }
         }
 
-        private void LevelExitOnCtor(On.Celeste.LevelExit.orig_ctor orig, LevelExit self, LevelExit.Mode mode, Session session, HiresSnow snow) {
+        private static void LevelExitOnCtor(On.Celeste.LevelExit.orig_ctor orig, LevelExit self, LevelExit.Mode mode, Session session,
+            HiresSnow snow) {
             orig(self, mode, session, snow);
             if (Settings.AutoResetRoomTimer && mode == LevelExit.Mode.Restart) {
                 SwitchRoomTimer(RoomTimerType.Off);
             }
         }
 
-        public void UpdateTimerState(bool endPoint = false) {
+        public static void UpdateTimerState(bool endPoint = false) {
             switch (Settings.RoomTimerType) {
                 case RoomTimerType.NextRoom:
-                    nextRoomTimerData.UpdateTimerState(endPoint);
+                    NextRoomTimerData.UpdateTimerState(endPoint);
                     break;
                 case RoomTimerType.CurrentRoom:
-                    currentRoomTimerData.UpdateTimerState(endPoint);
+                    CurrentRoomTimerData.UpdateTimerState(endPoint);
                     break;
                 case RoomTimerType.Off:
                     break;
@@ -173,19 +174,19 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             }
         }
 
-        public void ResetTime() {
+        public static void ResetTime() {
             previousRoom = null;
-            nextRoomTimerData.ResetTime();
-            currentRoomTimerData.ResetTime();
+            NextRoomTimerData.ResetTime();
+            CurrentRoomTimerData.ResetTime();
         }
 
-        private void Render(On.Celeste.SpeedrunTimerDisplay.orig_Render orig, SpeedrunTimerDisplay self) {
+        private static void Render(On.Celeste.SpeedrunTimerDisplay.orig_Render orig, SpeedrunTimerDisplay self) {
             if (!Settings.Enabled || Settings.RoomTimerType == RoomTimerType.Off || self.DrawLerp <= 0f) {
                 orig(self);
                 return;
             }
 
-            RoomTimerData roomTimerData = Settings.RoomTimerType == RoomTimerType.NextRoom ? nextRoomTimerData : currentRoomTimerData;
+            RoomTimerData roomTimerData = Settings.RoomTimerType == RoomTimerType.NextRoom ? NextRoomTimerData : CurrentRoomTimerData;
 
             string roomTimeString = roomTimerData.TimeString;
             string pbTimeString = $"PB {roomTimerData.PbTimeString}";
@@ -212,7 +213,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
 
             float roomTimeScale = 1f;
             if (roomTimerData.IsCompleted) {
-                Wiggler wiggler = (Wiggler) self.GetFieldValue("wiggler");
+                Wiggler wiggler = (Wiggler)self.GetFieldValue("wiggler");
                 if (wiggler != null) {
                     roomTimeScale = 1f + wiggler.Value * 0.15f;
                 }
@@ -239,7 +240,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             // PB
             Draw.Rect(x, self.Y + topTimeHeight, pbWidth + 2, bg.Height * pbScale + 1f, Color.Black);
             bg.Draw(new Vector2(x + pbWidth, self.Y + topTimeHeight), Vector2.Zero, Color.White, pbScale);
-            DrawTime(new Vector2(x + timeMarginLeft, (float) (self.Y + 66.4)), pbTimeString, pbScale, false, false, 0.6f);
+            DrawTime(new Vector2(x + timeMarginLeft, (float)(self.Y + 66.4)), pbTimeString, pbScale, false, false, 0.6f);
         }
 
         private static string ComparePb(long time, long pbTime) {
@@ -255,7 +256,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
 
             TimeSpan timeSpan = TimeSpan.FromTicks(Math.Abs(difference));
             string result = difference >= 0 ? "+" : "-";
-            result += (int) timeSpan.TotalSeconds + timeSpan.ToString("\\.fff");
+            result += (int)timeSpan.TotalSeconds + timeSpan.ToString("\\.fff");
             return result;
         }
 
@@ -266,7 +267,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             float numberWidth = 0f;
             for (int index = 0; index < 10; ++index) {
                 float x1 = PixelFontSize.Value.Measure(index.ToString()).X;
-                if ((double) x1 > numberWidth) {
+                if ((double)x1 > numberWidth) {
                     numberWidth = x1;
                 }
             }
@@ -295,21 +296,17 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             foreach (char ch in timeString) {
                 Color color3 = ch is ':' or '.' ? color2 : color1;
 
-                float num2 = (float) ((ch is ':' or '.' ? SpacerWidth.Value : NumberWidth.Value) + 4.0) * scale;
+                float num2 = (float)((ch is ':' or '.' ? SpacerWidth.Value : NumberWidth.Value) + 4.0) * scale;
                 font.DrawOutline(fontFaceSize, ch.ToString(), new Vector2(x + num2 / 2f, y), new Vector2(0.5f, 1f),
                     Vector2.One * scale, color3, 2f, Color.Black);
                 x += num2;
             }
         }
 
-        // @formatter:off
-        private static readonly Lazy<RoomTimerManager> Lazy = new(() => new RoomTimerManager());
-        public static RoomTimerManager Instance => Lazy.Value;
-        private RoomTimerManager() {
+        private static void TryTurnOffRoomTimer() {
             if (Settings.AutoResetRoomTimer) {
-                Settings.RoomTimerType = RoomTimerType.Off;
+                SwitchRoomTimer(RoomTimerType.Off);
             }
         }
-        // @formatter:on
     }
 }

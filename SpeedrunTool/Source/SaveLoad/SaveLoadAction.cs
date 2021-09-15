@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Celeste.Mod.Helpers;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using FMOD;
 using FMOD.Studio;
@@ -92,7 +93,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         // ReSharper disable once MemberCanBePrivate.Global
-        public static void LoadStaticMemberValues(Dictionary<Type, Dictionary<string, object>> values) {
+        private static void LoadStaticMemberValues(Dictionary<Type, Dictionary<string, object>> values) {
             foreach (KeyValuePair<Type, Dictionary<string, object>> pair in values) {
                 foreach (string memberName in pair.Value.Keys) {
                     Type type = pair.Key;
@@ -107,7 +108,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
         }
 
-        internal static void OnLoad() {
+        [Load]
+        private static void Load() {
             SupportExternalMember();
             SupportCalcRandom();
             SupportMInput();
@@ -119,9 +121,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         // code mod 需要等待此时才正式加载，才能通过 Type 查找
-        internal static void OnLoadContent() {
+        [LoadContent]
+        internal static void LoadContent() {
             SupportModSessionAndSaveData();
-            InitStaticFields();
             SupportEntitySimpleStaticFields();
             SupportMaxHelpingHand();
             SupportPandorasBox();
@@ -132,7 +134,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SupportIsaGrabBag();
         }
 
-        internal static void OnUnload() {
+        [Unload]
+        private static void Unload() {
             All.Clear();
             On.FMOD.Studio.EventDescription.createInstance -= EventDescriptionOnCreateInstance;
         }
@@ -160,12 +163,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private static void InitStaticFields() {
             entityStaticFields = new Dictionary<Type, FieldInfo[]>();
-            IEnumerable<Type> entityTypes = Everest.Modules.SelectMany(module => module.GetType().Assembly.GetTypesSafe().Where(type =>
+            IEnumerable<Type> entityTypes = FakeAssembly.GetFakeEntryAssembly().GetTypes().Where(type =>
                 !type.IsGenericType
                 && type.FullName != null
                 && !type.FullName.StartsWith("Celeste.Mod.SpeedrunTool")
                 && !type.IsSubclassOf(typeof(Oui))
-                && type.IsSameOrSubclassOf(typeof(Entity))));
+                && type.IsSameOrSubclassOf(typeof(Entity)));
 
             foreach (Type entityType in entityTypes) {
                 FieldInfo[] fieldInfos = entityType.GetFieldInfos(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
@@ -202,6 +205,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private static void SupportEntitySimpleStaticFields() {
+            InitStaticFields();
+
             Add(new SaveLoadAction(
                 (dictionary, _) => {
                     foreach (Type type in entityStaticFields.Keys) {

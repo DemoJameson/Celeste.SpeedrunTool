@@ -91,7 +91,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
                 ListItem item = new(labels);
                 item.Pressed(() => {
                     ModSaveData.Selection = Selection;
-                    DeathStatisticsManager.Instance.TeleportToDeathPosition(deathInfo);
+                    DeathStatisticsManager.TeleportToDeathPosition(deathInfo);
                 });
                 Add(item);
             });

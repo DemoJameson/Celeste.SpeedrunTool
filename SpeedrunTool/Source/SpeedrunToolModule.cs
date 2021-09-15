@@ -1,10 +1,6 @@
 ﻿using System;
-using Celeste.Mod.SpeedrunTool.DeathStatistics;
-using Celeste.Mod.SpeedrunTool.Message;
-using Celeste.Mod.SpeedrunTool.Other;
-using Celeste.Mod.SpeedrunTool.RoomTimer;
+using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
-using Celeste.Mod.SpeedrunTool.TeleportRoom;
 using FMOD.Studio;
 
 namespace Celeste.Mod.SpeedrunTool {
@@ -24,7 +20,6 @@ namespace Celeste.Mod.SpeedrunTool {
 
                 return (SpeedrunToolSaveData) Instance._SaveData;
             }
-            set => Instance._SaveData = value;
         }
 
         public static SpeedrunToolSettings Settings => (SpeedrunToolSettings) Instance._Settings;
@@ -32,49 +27,33 @@ namespace Celeste.Mod.SpeedrunTool {
 
         public SpeedrunToolModule() {
             Instance = this;
+            AttributeUtils.CollectMethods<LoadAttribute>();
+            AttributeUtils.CollectMethods<UnloadAttribute>();
+            AttributeUtils.CollectMethods<LoadContentAttribute>();
+            AttributeUtils.CollectMethods<InitializeAttribute>();
         }
 
-        // If you don't need to store any settings, => null
         public override Type SettingsType => typeof(SpeedrunToolSettings);
 
-        // If you don't need to store any save data, => null
         public override Type SaveDataType => typeof(SpeedrunToolSaveData);
 
-        // Set up any hooks, event handlers and your mod in general here.
-        // Load runs before Celeste itself has initialized properly.
         public override void Load() {
-            BetterMapEditor.Instance.Load();
-            DeathStatisticsManager.Instance.Load();
-            RespawnSpeedUtils.Load();
-            RoomTimerManager.Instance.Load();
-            TeleportRoomUtils.Load();
-            StateManager.Instance.OnLoad();
-            HotkeyConfigUi.Load();
-            MuteInBackground.Load();
-            NonFrozenMiniTextbox.Load();
+            StateManager.Instance.Load();
+            AttributeUtils.Invoke<LoadAttribute>();
         }
 
-        // Unload the entirety of your mod's content, remove any event listeners and undo all hooks.
         public override void Unload() {
-            BetterMapEditor.Instance.Unload();
-            DeathStatisticsManager.Instance.Unload();
-            RespawnSpeedUtils.Unload();
-            RoomTimerManager.Instance.Unload();
-            TeleportRoomUtils.Unload();
-            StateManager.Instance.OnUnload();
-            HotkeyConfigUi.Unload();
-            MuteInBackground.Unload();
-            NonFrozenMiniTextbox.Unload();
+            StateManager.Instance.Unload();
+            AttributeUtils.Invoke<UnloadAttribute>();
         }
 
-        // Optional, initialize anything after Celeste has initialized itself properly.
         public override void Initialize() {
-            HotkeyConfigUi.Init();
+            AttributeUtils.Invoke<InitializeAttribute>();
         }
 
         public override void LoadContent(bool firstLoad) {
             if (firstLoad) {
-                SaveLoadAction.OnLoadContent();
+                AttributeUtils.Invoke<LoadContentAttribute>();
             }
         }
 

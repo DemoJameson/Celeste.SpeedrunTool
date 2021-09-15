@@ -38,7 +38,7 @@ namespace Celeste.Mod.SpeedrunTool {
         public void Clear() {
             Selection = -1;
             DeathInfos.Clear();
-            DeathStatisticsManager.Instance.Clear();
+            DeathStatisticsManager.Clear();
             if (Directory.Exists(DeathStatisticsManager.PlaybackDir)) {
                 Directory.Delete(DeathStatisticsManager.PlaybackDir, true);
             }

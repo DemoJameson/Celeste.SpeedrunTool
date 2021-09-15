@@ -6,13 +6,15 @@ using On.Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Other {
     public static class RespawnSpeedUtils {
-        public static void Load() {
+        [Load]
+        private static void Load() {
             using (new DetourContext {After = new List<string> {"*"}}) {
                 Engine.Update += RespawnSpeed;
             }
         }
 
-        public static void Unload() {
+        [Unload]
+        private static void Unload() {
             Engine.Update -= RespawnSpeed;
         }
 

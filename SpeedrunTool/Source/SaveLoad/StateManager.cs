@@ -54,13 +54,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         #region Hook
 
-        public void OnLoad() {
-            DeepClonerUtils.Config();
-            SaveLoadAction.OnLoad();
-            EventInstanceUtils.OnHook();
-            StateMarkUtils.OnLoad();
-            DynDataUtils.OnLoad();
-            EndPoint.OnLoad();
+        public void Load() {
             On.Celeste.Level.Update += UpdateBackdropWhenWaiting;
             On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
@@ -69,13 +63,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             RegisterHotkeys();
         }
 
-        public void OnUnload() {
-            DeepClonerUtils.Clear();
-            SaveLoadAction.OnUnload();
-            EventInstanceUtils.OnUnhook();
-            StateMarkUtils.OnUnload();
-            DynDataUtils.OnUnload();
-            EndPoint.OnUnload();
+        public void Unload() {
             On.Celeste.Level.Update -= UpdateBackdropWhenWaiting;
             On.Monocle.Scene.Begin -= ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End -= AutoLoadStateWhenDeath;
@@ -354,8 +342,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             level.Entities.UpdateLists();
 
             // External
-            RoomTimerManager.Instance.ResetTime();
-            DeathStatisticsManager.Instance.Clear();
+            RoomTimerManager.ResetTime();
+            DeathStatisticsManager.Clear();
 
             DoNotRestoreTimeAndDeaths(level);
 
@@ -498,7 +486,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 transitionRoutine = null;
             }
 
-            RoomTimerManager.Instance.ClearPbTimes(fullClear);
+            RoomTimerManager.ClearPbTimes(fullClear);
 
             playingEventInstances.Clear();
 

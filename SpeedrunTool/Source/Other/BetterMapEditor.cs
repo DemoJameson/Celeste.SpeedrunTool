@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
@@ -8,11 +7,11 @@ using On.Celeste.Editor;
 using LevelTemplate = Celeste.Editor.LevelTemplate;
 
 namespace Celeste.Mod.SpeedrunTool.Other {
-    public class BetterMapEditor {
+    public static class BetterMapEditor {
         private const string StartChasingLevel = "3";
         public static bool ShouldFixTeleportProblems;
 
-        private readonly HashSet<string> coreIceRooms = new() {
+        private static readonly HashSet<string> CoreIceRooms = new() {
             // 8A
             "9b-05", "9c-00", "9c-00b", "9c-02", "9c-03", "9d-03", "9d-10",
 
@@ -20,7 +19,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             "9Ha-03", "9Ha-04", "9Ha-05", "9Hb-02", "9Hb-03", "9Hc-01", "9Hc-06"
         };
 
-        private readonly HashSet<string> coreRefillDashRooms = new() {
+        private static readonly HashSet<string> CoreRefillDashRooms = new() {
             // 8A
             "90X", "900", "901", "9space",
             // 8B
@@ -30,21 +29,21 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         };
 
         // 3A 杂乱房间部分的光线调暗
-        private readonly HashSet<string> darkRooms = new() {
+        private static readonly HashSet<string> DarkRooms = new() {
             "09-b", "08-x", "10-x", "11-x", "11-y", "12-y", "11-z", "10-z",
             "10-y", "11-a", "12-x", "13-x", "13-a", "13-b", "12-b", "11-b",
             "10-c", "10-d", "11-d", "12-d", "12-c", "11-c"
         };
 
         // 2A 需要激活果冻的房间
-        private readonly List<string> dreamDashRooms = new() {
+        private static readonly List<string> DreamDashRooms = new() {
             "0", "1", "2",
             "d0", "d1", "d2", "d3", "d4", "d6", "d5", "d9", "3x",
             "3", "4", "5", "6", "7", "8", "9", "9b", "10",
             "11", "12b", "12c", "12d", "12", "13"
         };
 
-        private readonly HashSet<Vector2> excludeDreamRespawnPoints = new() {
+        private static readonly HashSet<Vector2> ExcludeDreamRespawnPoints = new() {
             new Vector2(288, 152),
             new Vector2(632, 144),
             new Vector2(648, 144),
@@ -62,16 +61,17 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             new Vector2(1616, 600)
         };
 
-        private readonly HashSet<Vector2> excludeFarewellCassettePoints = new() {
+        private static readonly HashSet<Vector2> ExcludeFarewellCassettePoints = new() {
             new Vector2(43632, -9976),
             new Vector2(49448, -10296)
         };
 
-        private readonly HashSet<string> farewellCassetteRooms = new() {
+        private static readonly HashSet<string> FarewellCassetteRooms = new() {
             "i-00", "i-00b", "i-01", "i-02", "i-03", "i-04", "i-05", "j-00"
         };
 
-        public void Load() {
+        [Load]
+        private static void Load() {
             MapEditor.LoadLevel += MapEditorOnLoadLevel;
             On.Celeste.WindController.SetAmbienceStrength += FixWindSoundNotPlay;
             On.Celeste.OshiroTrigger.ctor += RestoreOshiroTrigger;
@@ -86,7 +86,8 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             });
         }
 
-        public void Unload() {
+        [Unload]
+        private static void Unload() {
             MapEditor.LoadLevel -= MapEditorOnLoadLevel;
             On.Celeste.WindController.SetAmbienceStrength -= FixWindSoundNotPlay;
             On.Celeste.OshiroTrigger.ctor -= RestoreOshiroTrigger;
@@ -94,7 +95,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             On.Celeste.LevelLoader.ctor -= LevelLoaderOnCtor;
         }
 
-        private void CommandsOnCmdLoad(On.Celeste.Commands.orig_CmdLoad orig, int id, string level) {
+        private static void CommandsOnCmdLoad(On.Celeste.Commands.orig_CmdLoad orig, int id, string level) {
             if (!SpeedrunToolModule.Enabled) {
                 orig(id, level);
                 return;
@@ -105,7 +106,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         }
 
         // 修复 3C 第三面最后的传送点 Oshiro 不出现的问题
-        private void RestoreOshiroTrigger(On.Celeste.OshiroTrigger.orig_ctor orig, OshiroTrigger self,
+        private static void RestoreOshiroTrigger(On.Celeste.OshiroTrigger.orig_ctor orig, OshiroTrigger self,
             EntityData data,
             Vector2 offset) {
             orig(self, data, offset);
@@ -119,11 +120,11 @@ namespace Celeste.Mod.SpeedrunTool.Other {
 
             if (level != null && level.Session.Area.ToString() == "3HH" && level.StartPosition != null &&
                 level.Session.GetSpawnPoint((Vector2)level.StartPosition) == oshiro3C) {
-                self.Add(new Coroutine(OnEnter(self)));
+                self.Add(new Coroutine(EnterOshiroTrigger(self)));
             }
         }
 
-        private IEnumerator OnEnter(OshiroTrigger self) {
+        private static IEnumerator EnterOshiroTrigger(OshiroTrigger self) {
             Player player = self.SceneAs<Level>().GetPlayer();
             if (player != null) {
                 self.OnEnter(player);
@@ -140,7 +141,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             orig(self, strong);
         }
 
-        private void MapEditorOnLoadLevel(MapEditor.orig_LoadLevel orig, Editor.MapEditor self,
+        private static void MapEditorOnLoadLevel(MapEditor.orig_LoadLevel orig, Editor.MapEditor self,
             LevelTemplate level, Vector2 at) {
             if (!SpeedrunToolModule.Enabled) {
                 orig(self, level, at);
@@ -151,7 +152,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             orig(self, level, at);
         }
 
-        private void LevelLoaderOnCtor(On.Celeste.LevelLoader.orig_ctor orig, LevelLoader self, Session session,
+        private static void LevelLoaderOnCtor(On.Celeste.LevelLoader.orig_ctor orig, LevelLoader self, Session session,
             Vector2? startPosition) {
             if (ShouldFixTeleportProblems) {
                 ShouldFixTeleportProblems = false;
@@ -161,7 +162,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             orig(self, session, startPosition);
         }
 
-        public void FixTeleportProblems(Session session, Vector2? startPosition) {
+        public static void FixTeleportProblems(Session session, Vector2? startPosition) {
             if (SpeedrunToolModule.Enabled && session.LevelData != null) {
                 Vector2 spawnPoint;
                 if (startPosition != null) {
@@ -181,14 +182,14 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             }
         }
 
-        private void FixFarewellCassetteRoomColorGrade(Session session, Vector2 spawnPoint) {
+        private static void FixFarewellCassetteRoomColorGrade(Session session, Vector2 spawnPoint) {
             // Logger.Log("Exclude Respawn Point", $"new Vector2({spawnPoint.X}, {spawnPoint.Y}),");
-            if (excludeFarewellCassettePoints.Contains(spawnPoint)) {
+            if (ExcludeFarewellCassettePoints.Contains(spawnPoint)) {
                 return;
             }
 
             if (session.Area.ToString() == "10") {
-                if (farewellCassetteRooms.Contains(session.Level)) {
+                if (FarewellCassetteRooms.Contains(session.Level)) {
                     session.ColorGrade = "feelingdown";
                 } else if (session.Level == "end-golden") {
                     session.ColorGrade = "golden";
@@ -198,23 +199,23 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             }
         }
 
-        private void FixFarewellIntro02LaunchDashes(Session session) {
+        private static void FixFarewellIntro02LaunchDashes(Session session) {
             if (session.Area.ToString() == "10") {
                 session.Inventory.Dashes = session.Level == "intro-02-launch" ? 2 : 1;
             }
         }
 
-        private void FixBadelineChase(Session session, Vector2 spawnPoint) {
+        private static void FixBadelineChase(Session session, Vector2 spawnPoint) {
             // Logger.Log("Exclude Respawn Point", $"new Vector2({spawnPoint.X}, {spawnPoint.Y}),");
-            if (excludeDreamRespawnPoints.Contains(spawnPoint)) {
+            if (ExcludeDreamRespawnPoints.Contains(spawnPoint)) {
                 return;
             }
 
-            if (session.Area.ToString() == "2" && dreamDashRooms.Contains(session.Level)) {
+            if (session.Area.ToString() == "2" && DreamDashRooms.Contains(session.Level)) {
                 session.Inventory.DreamDash = true;
 
                 // 根据 BadelineOldsite 的代码得知设置这两个 Flag 后才会启动追逐
-                if (dreamDashRooms.IndexOf(session.Level) >= dreamDashRooms.IndexOf(StartChasingLevel)) {
+                if (DreamDashRooms.IndexOf(session.Level) >= DreamDashRooms.IndexOf(StartChasingLevel)) {
                     session.SetFlag(CS02_BadelineIntro.Flag);
                 }
 
@@ -222,9 +223,9 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             }
         }
 
-        private void FixHugeMessRoomLight(Session session) {
+        private static void FixHugeMessRoomLight(Session session) {
             if (session.Area.ToString() == "3") {
-                if (darkRooms.Contains(session.Level)) {
+                if (DarkRooms.Contains(session.Level)) {
                     session.LightingAlphaAdd = 0.15f;
                 } else {
                     session.LightingAlphaAdd = 0;
@@ -232,28 +233,22 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             }
         }
 
-        private void FixMirrorTempleColorGrade(Session session) {
+        private static void FixMirrorTempleColorGrade(Session session) {
             if (session.Area.ToString() == "5") {
                 session.ColorGrade = session.Level == "void" ? "templevoid" : null;
             }
         }
 
-        private void FixCoreMode(Session session) {
+        private static void FixCoreMode(Session session) {
             if (session.Area.ID == 9) {
-                session.CoreMode = coreIceRooms.Contains(session.Area + session.Level) ? Session.CoreModes.Cold : Session.CoreModes.Hot;
+                session.CoreMode = CoreIceRooms.Contains(session.Area + session.Level) ? Session.CoreModes.Cold : Session.CoreModes.Hot;
             }
         }
 
-        private void FixCoreRefillDash(Session session) {
+        private static void FixCoreRefillDash(Session session) {
             if (session.Area.ID == 9) {
-                session.Inventory.NoRefills = !coreRefillDashRooms.Contains(session.Level);
+                session.Inventory.NoRefills = !CoreRefillDashRooms.Contains(session.Level);
             }
         }
-
-        // @formatter:off
-        private static readonly Lazy<BetterMapEditor> Lazy = new(() => new BetterMapEditor());
-        public static BetterMapEditor Instance => Lazy.Value;
-        private BetterMapEditor() { }
-        // @formatter:on
     }
 }

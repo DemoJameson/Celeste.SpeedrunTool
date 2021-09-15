@@ -58,9 +58,7 @@ namespace Celeste.Mod.SpeedrunTool {
             options = new List<EaseInSubMenu> {
                 new EaseInSubMenu(Dialog.Clean(DialogIds.RoomTimer), false).With(subMenu => {
                     subMenu.Add(new TextMenuExt.EnumerableSlider<RoomTimerType>(Dialog.Clean(DialogIds.Enabled),
-                        CreateEnumerableOptions<RoomTimerType>(), Settings.RoomTimerType).Change(timerType => {
-                        RoomTimerManager.Instance.SwitchRoomTimer(timerType);
-                    }));
+                        CreateEnumerableOptions<RoomTimerType>(), Settings.RoomTimerType).Change(RoomTimerManager.SwitchRoomTimer));
 
                     subMenu.Add(new TextMenuExt.IntSlider(Dialog.Clean(DialogIds.NumberOfRooms), 1, 99, Settings.NumberOfRooms).Change(i =>
                         Settings.NumberOfRooms = i));

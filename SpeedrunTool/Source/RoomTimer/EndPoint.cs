@@ -10,12 +10,15 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
     public class EndPoint : Entity {
         private static readonly List<EndPoint> CachedEndPoints = new();
         private static AreaKey cachedAreaKey;
-        public static void OnLoad() {
+
+        [Load]
+        private static void Load() {
             On.Celeste.Level.End += LevelOnEnd;
             On.Celeste.Level.Begin += LevelOnBegin;
         }
 
-        public static void OnUnload() {
+        [Unload]
+        private static void Unload() {
             On.Celeste.Level.End -= LevelOnEnd;
             On.Celeste.Level.Begin -= LevelOnBegin;
         }
@@ -142,7 +145,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         }
 
         private static void OnCollidePlayer(Player _) {
-            RoomTimerManager.Instance.UpdateTimerState(true);
+            RoomTimerManager.UpdateTimerState(true);
         }
 
         public void StopTime() {

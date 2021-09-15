@@ -12,13 +12,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public static class StateMarkUtils {
         private const string StartFromSaveSate = nameof(StartFromSaveSate);
 
-        public static void OnLoad() {
+        [Load]
+        private static void Load() {
             On.Celeste.Strawberry.Added += StrawberryOnAdded;
             IL.Celeste.SpeedrunTimerDisplay.DrawTime += SetSaveStateColor;
             SaveLoadAction.Add(new SaveLoadAction(ReColor, ReColor));
         }
 
-        public static void OnUnload() {
+        [Unload]
+        private static void Unload() {
             On.Celeste.Strawberry.Added -= StrawberryOnAdded;
             IL.Celeste.SpeedrunTimerDisplay.DrawTime -= SetSaveStateColor;
         }

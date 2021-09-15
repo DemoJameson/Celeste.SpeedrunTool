@@ -14,22 +14,16 @@ using Monocle;
 using MonoMod.RuntimeDetour;
 
 namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
-    public class DeathStatisticsManager {
-        // @formatter:off
-        private static readonly Lazy<DeathStatisticsManager> Lazy = new(() => new DeathStatisticsManager());
-        public static DeathStatisticsManager Instance => Lazy.Value;
-        private DeathStatisticsManager() { }
-        // @formatter:on
-
+    public static class DeathStatisticsManager {
         public static readonly string PlaybackDir = Path.Combine(typeof(UserIO).GetFieldValue("SavePath").ToString(), "SpeedrunTool", "DeathPlayback");
         private static bool Enabled => SpeedrunToolModule.Settings.Enabled && SpeedrunToolModule.Settings.DeathStatistics;
+        private static long lastTime;
+        private static bool died;
+        private static DeathInfo currentDeathInfo;
+        private static DeathInfo playbackDeathInfo;
 
-        private long lastTime;
-        private bool died;
-        private DeathInfo currentDeathInfo;
-        private DeathInfo playbackDeathInfo;
-
-        public void Load() {
+        [Load]
+        private static void Load() {
             // 尽量晚的 Hook Player.Die 方法，以便可以稳定的从指定的 StackTrace 中找出死亡原因
             using (new DetourContext {After = new List<string> {"*"}}) {
                 On.Celeste.Player.Die += PlayerOnDie;
@@ -59,7 +53,8 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             });
         }
 
-        public void Unload() {
+        [Unload]
+        private static void Unload() {
             On.Celeste.Player.Die -= PlayerOnDie;
             On.Celeste.PlayerDeadBody.End -= PlayerDeadBodyOnEnd;
             On.Celeste.Level.NextLevel -= LevelOnNextLevel;
@@ -72,14 +67,14 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             On.Monocle.Scene.Begin -= SceneOnBegin;
         }
 
-        private void SceneOnBegin(On.Monocle.Scene.orig_Begin orig, Scene self) {
+        private static void SceneOnBegin(On.Monocle.Scene.orig_Begin orig, Scene self) {
             orig(self);
             if (self is Overworld or LevelExit) {
                 Clear();
             }
         }
 
-        private void LevelOnLoadLevel(On.Celeste.Level.orig_LoadLevel orig, Level level, Player.IntroTypes playerIntro, bool isFromLoader) {
+        private static void LevelOnLoadLevel(On.Celeste.Level.orig_LoadLevel orig, Level level, Player.IntroTypes playerIntro, bool isFromLoader) {
             if (IsPlayback()) {
                 level.Add(new DeathMark(playbackDeathInfo.DeathPosition));
 
@@ -101,14 +96,14 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             orig(level, playerIntro, isFromLoader);
         }
 
-        private void LevelLoaderOnCtor(On.Celeste.LevelLoader.orig_ctor orig, LevelLoader self, Session session,
+        private static void LevelLoaderOnCtor(On.Celeste.LevelLoader.orig_ctor orig, LevelLoader self, Session session,
             Vector2? startPosition) {
             orig(self, session, startPosition);
 
             lastTime = SaveData.Instance.Time;
         }
 
-        private void UpdateTimerStateOnTouchFlag(On.Celeste.Session.orig_SetFlag origSetFlag, Session session,
+        private static void UpdateTimerStateOnTouchFlag(On.Celeste.Session.orig_SetFlag origSetFlag, Session session,
             string flag, bool setTo) {
             origSetFlag(session, flag, setTo);
 
@@ -117,7 +112,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             }
         }
 
-        private void ChangeRespawnTriggerOnOnEnter(On.Celeste.ChangeRespawnTrigger.orig_OnEnter orig, ChangeRespawnTrigger self, Player player) {
+        private static void ChangeRespawnTriggerOnOnEnter(On.Celeste.ChangeRespawnTrigger.orig_OnEnter orig, ChangeRespawnTrigger self, Player player) {
             Level level = player.SceneAs<Level>();
             Vector2? oldPoint = level.Session.RespawnPoint;
             orig(self, player);
@@ -128,7 +123,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             }
         }
 
-        private void OuiFileSelectSlotOnEnterFirstArea(On.Celeste.OuiFileSelectSlot.orig_EnterFirstArea orig,
+        private static void OuiFileSelectSlotOnEnterFirstArea(On.Celeste.OuiFileSelectSlot.orig_EnterFirstArea orig,
             OuiFileSelectSlot self) {
             orig(self);
 
@@ -139,7 +134,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             lastTime = 0;
         }
 
-        private void PlayerOnUpdate(On.Celeste.Player.orig_Update orig, Player player) {
+        private static void PlayerOnUpdate(On.Celeste.Player.orig_Update orig, Player player) {
             orig(player);
 
             if (Enabled && died && player.StateMachine.State is Player.StNormal or Player.StSwim) {
@@ -148,7 +143,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             }
         }
 
-        private void ExportPlayback(Player player) {
+        private static void ExportPlayback(Player player) {
             string filePath = Path.Combine(PlaybackDir, $"{DateTime.Now.Ticks}.bin");
             if (!Directory.Exists(PlaybackDir)) {
                 Directory.CreateDirectory(PlaybackDir);
@@ -164,7 +159,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             }
         }
 
-        private void LevelOnNextLevel(On.Celeste.Level.orig_NextLevel orig, Level self, Vector2 at, Vector2 dir) {
+        private static void LevelOnNextLevel(On.Celeste.Level.orig_NextLevel orig, Level self, Vector2 at, Vector2 dir) {
             orig(self, at, dir);
 
             if (Enabled) {
@@ -172,7 +167,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             }
         }
 
-        private PlayerDeadBody PlayerOnDie(On.Celeste.Player.orig_Die orig, Player self, Vector2 direction,
+        private static PlayerDeadBody PlayerOnDie(On.Celeste.Player.orig_Die orig, Player self, Vector2 direction,
             bool evenIfInvincible, bool registerDeathInStats) {
             PlayerDeadBody playerDeadBody = orig(self, direction, evenIfInvincible, registerDeathInStats);
 
@@ -192,14 +187,14 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             return playerDeadBody;
         }
 
-        private void PlayerDeadBodyOnEnd(On.Celeste.PlayerDeadBody.orig_End orig, PlayerDeadBody self) {
+        private static void PlayerDeadBodyOnEnd(On.Celeste.PlayerDeadBody.orig_End orig, PlayerDeadBody self) {
             orig(self);
             if (Enabled) {
                 died = true;
             }
         }
 
-        private bool IsPlayback() {
+        private static bool IsPlayback() {
             Level level = Engine.Scene switch {
                 Level lvl => lvl,
                 LevelLoader levelLoader => levelLoader.Level,
@@ -209,7 +204,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
                    playbackDeathInfo.Room == level.Session.Level;
         }
 
-        private void LoggingData() {
+        private static void LoggingData() {
             // 传送到死亡地点练习时产生的第一次死亡不记录，清除死亡地点
             if (Engine.Scene is not Level level || IsPlayback() || currentDeathInfo == null) {
                 Clear();
@@ -223,7 +218,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             currentDeathInfo = null;
         }
 
-        private string GetCauseOfDeath() {
+        private static string GetCauseOfDeath() {
             StackTrace stackTrace = new(3);
             MethodBase deathMethod = stackTrace.GetFrame(0).GetMethod();
             string death = deathMethod.ReflectedType?.Name ?? "";
@@ -248,12 +243,12 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             return death;
         }
 
-        public void TeleportToDeathPosition(DeathInfo deathInfo) {
+        public static void TeleportToDeathPosition(DeathInfo deathInfo) {
             playbackDeathInfo = deathInfo;
             Engine.Scene = new LevelLoader(deathInfo.Session.DeepClone());
         }
 
-        public void Clear() {
+        public static void Clear() {
             died = false;
             lastTime = SaveData.Instance?.Time ?? 0;
             currentDeathInfo = null;

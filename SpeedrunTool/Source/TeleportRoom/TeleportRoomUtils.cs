@@ -22,7 +22,8 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
         private static bool AllowRecord;
         private static Vector2? RespawnPoint;
 
-        public static void Load() {
+        [Load]
+        private static void Load() {
             On.Celeste.Level.LoadLevel += LevelOnLoadLevel;
             On.Celeste.Level.TransitionRoutine += LevelOnTransitionRoutine;
             On.Celeste.LevelExit.ctor += LevelExitOnCtor;
@@ -31,6 +32,16 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
             On.Celeste.LevelLoader.ctor += LevelLoaderOnCtor;
 
             RegisterHotkeys();
+        }
+
+        [Unload]
+        private static void Unload() {
+            On.Celeste.Level.LoadLevel -= LevelOnLoadLevel;
+            On.Celeste.Level.TransitionRoutine -= LevelOnTransitionRoutine;
+            On.Celeste.LevelExit.ctor -= LevelExitOnCtor;
+            On.Celeste.SummitCheckpoint.Update -= SummitCheckpointOnUpdate;
+            MapEditor.LoadLevel -= MapEditorOnLoadLevel;
+            On.Celeste.LevelLoader.ctor -= LevelLoaderOnCtor;
         }
 
         private static void RegisterHotkeys() {
@@ -49,15 +60,6 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                     }
                 }
             });
-        }
-
-        public static void Unload() {
-            On.Celeste.Level.LoadLevel -= LevelOnLoadLevel;
-            On.Celeste.Level.TransitionRoutine -= LevelOnTransitionRoutine;
-            On.Celeste.LevelExit.ctor -= LevelExitOnCtor;
-            On.Celeste.SummitCheckpoint.Update -= SummitCheckpointOnUpdate;
-            MapEditor.LoadLevel -= MapEditorOnLoadLevel;
-            On.Celeste.LevelLoader.ctor -= LevelLoaderOnCtor;
         }
 
         private static void SummitCheckpointOnUpdate(On.Celeste.SummitCheckpoint.orig_Update orig, SummitCheckpoint self) {
@@ -109,8 +111,8 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                 level.Entities.UpdateLists();
 
                 // External
-                RoomTimerManager.Instance.ResetTime();
-                DeathStatisticsManager.Instance.Clear();
+                RoomTimerManager.ResetTime();
+                DeathStatisticsManager.Clear();
 
                 level.SetFieldValue("transition", null); // 允许切换房间时传送
                 Glitch.Value = 0f;
@@ -126,7 +128,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                 TrailManager.Clear(); // 清除冲刺的残影
 
                 if (!fromHistory) {
-                    BetterMapEditor.Instance.FixTeleportProblems(session, session.RespawnPoint);
+                    BetterMapEditor.FixTeleportProblems(session, session.RespawnPoint);
                 }
 
                 session.DeepCloneTo(level.Session);

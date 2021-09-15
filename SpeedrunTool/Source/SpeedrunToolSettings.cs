@@ -74,7 +74,7 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingIgnore] public Buttons? ControllerSetEndPoint { get; set; }
         [SettingIgnore] public Buttons? ControllerSetAdditionalEndPoint { get; set; }
         [SettingIgnore] public Buttons? ControllerCheckDeathStatistics { get; set; }
-        [SettingIgnore] public Buttons? ControllerTeleportToLastRoom { get; set; }
+        [SettingIgnore] public Buttons? ControllerTeleportToPreviousRoom { get; set; }
         [SettingIgnore] public Buttons? ControllerTeleportToNextRoom { get; set; }
         [SettingIgnore] public Buttons? ControllerSwitchAutoLoadState { get; set; }
         [SettingIgnore] public Buttons? ControllerToggleFullscreen { get; set; }
@@ -101,7 +101,7 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingIgnore]
         public List<Keys> KeyboardCheckDeathStatistics { get; set; } = Hotkeys.CheckDeathStatistics.GetDefaultKeys();
 
-        [SettingIgnore] public List<Keys> KeyboardTeleportToLastRoom { get; set; } = Hotkeys.TeleportToLastRoom.GetDefaultKeys();
+        [SettingIgnore] public List<Keys> KeyboardTeleportToPreviousRoom { get; set; } = Hotkeys.TeleportToPreviousRoom.GetDefaultKeys();
 
         [SettingIgnore] public List<Keys> KeyboardTeleportToNextRoom { get; set; } = Hotkeys.TeleportToNextRoom.GetDefaultKeys();
 

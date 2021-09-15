@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
@@ -33,15 +34,19 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
         }
 
         private static void RegisterHotkeys() {
-            Hotkeys.TeleportToLastRoom.RegisterPressedAction(scene => {
+            Hotkeys.TeleportToPreviousRoom.RegisterPressedAction(scene => {
                 if (scene is Level { Paused: false } level && StateManager.Instance.State == StateManager.States.None) {
-                    TeleportToLastRoom(level);
+                    if (TeleportToPreviousRoom(level) == false) {
+                        PopupMessageUtils.Show(level, DialogIds.AlreadyFirstRoomTooltip.DialogClean(), DialogIds.AlreadyFirstRoomDialog);
+                    }
                 }
             });
 
             Hotkeys.TeleportToNextRoom.RegisterPressedAction(scene => {
                 if (scene is Level { Paused: false } level && StateManager.Instance.State == StateManager.States.None) {
-                    TeleportToNextRoom(level);
+                    if (TeleportToNextRoom(level) == false) {
+                        PopupMessageUtils.Show(level, DialogIds.AlreadyLastRoomTooltip.DialogClean(), DialogIds.AlreadyLastRoomDialog);
+                    }
                 }
             });
         }
@@ -183,7 +188,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
             HistoryIndex = -1;
         }
 
-        private static void TeleportToLastRoom(Level level) {
+        private static bool? TeleportToPreviousRoom(Level level) {
             if (HistoryIndex > 0 && HistoryIndex < RoomHistory.Count) {
                 // Glyph 这种传送到其他房间是不做记录的，所以只回到当前记录的房间
                 if (level.Session.Level == RoomHistory[HistoryIndex].Level) {
@@ -191,27 +196,27 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                 }
 
                 TeleportTo(RoomHistory[HistoryIndex]);
-                return;
+                return true;
             }
 
             List<LevelData> levelDatas = LevelDataReorderUtils.GetReorderLevelDatas(level);
             if (levelDatas == null) {
-                return;
+                return null;
             }
 
             LevelData currentLevelData = level.Session?.LevelData;
             if (currentLevelData == null) {
-                return;
+                return null;
             }
 
             if (SearchSummitCheckpoint(false, level)) {
                 TeleportTo(level.Session);
-                return;
+                return true;
             }
 
             int index = levelDatas.IndexOf(currentLevelData);
             if (index <= 0) {
-                return;
+                return false;
             }
 
             index--;
@@ -222,7 +227,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
             }
 
             if (lastLevelData.Dummy) {
-                return;
+                return false;
             }
 
             level.Session.Level = lastLevelData.Name;
@@ -230,34 +235,35 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
 
             SearchSummitCheckpoint(false, lastLevelData, level);
             TeleportTo(level.Session);
+            return true;
         }
 
-        private static void TeleportToNextRoom(Level level) {
+        private static bool? TeleportToNextRoom(Level level) {
             if (HistoryIndex >= 0 && HistoryIndex < RoomHistory.Count - 1) {
                 HistoryIndex++;
                 TeleportTo(RoomHistory[HistoryIndex], true);
-                return;
+                return true;
             }
 
             List<LevelData> levelDatas = LevelDataReorderUtils.GetReorderLevelDatas(level);
             if (levelDatas == null) {
-                return;
+                return null;
             }
 
             LevelData currentLevelData = level.Session?.LevelData;
             if (currentLevelData == null) {
-                return;
+                return null;
             }
 
             if (SearchSummitCheckpoint(true, level)) {
                 // 根据数据跳到下一个房间也需要记录
                 RecordAndTeleport(level.Session);
-                return;
+                return true;
             }
 
             int index = levelDatas.IndexOf(currentLevelData);
             if (index < 0 || index == levelDatas.Count - 1) {
-                return;
+                return false;
             }
 
             index++;
@@ -268,7 +274,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
             }
 
             if (nextLevelData.Dummy) {
-                return;
+                return false;
             }
 
             level.Session.Level = nextLevelData.Name;
@@ -277,6 +283,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
             SearchSummitCheckpoint(true, nextLevelData, level);
             // 根据数据跳到下一个房间也需要记录
             RecordAndTeleport(level.Session);
+            return true;
         }
 
         private static bool SearchSummitCheckpoint(bool next, Level level) {

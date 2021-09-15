@@ -67,7 +67,7 @@ SPEEDRUN_TOOL_CLEAR_STATE_DIALOG_BADELINE=
     Cleared the state~
 SPEEDRUN_TOOL_NOT_SAVED_STATE_YET_DIALOG_BADELINE=
     [BADELINE left yell]
-    Not saved state yet.
+    Not saved state yet!
 
 # ================================== End Point Style ==================================
 SPEEDRUN_TOOL_FLAG=       Flag
@@ -94,8 +94,22 @@ SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB=           Reset Room Timer PB
 SPEEDRUN_TOOL_SWITCH_ROOM_TIMER=             Switch Room Timer
 SPEEDRUN_TOOL_SET_END_POINT=                 Set Room Timer End Point
 SPEEDRUN_TOOL_SET_ADDITIONAL_END_POINT=      Set Room Timer Additional End Point
-SPEEDRUN_TOOL_TELEPORT_TO_LAST_ROOM=         Teleport to Last Room
+SPEEDRUN_TOOL_TELEPORT_TO_PREVIOUS_ROOM=     Teleport to Previous Room
 SPEEDRUN_TOOL_TELEPORT_TO_NEXT_ROOM=         Teleport to Next Room
+SPEEDRUN_TOOL_ALREADY_FIRST_ROOM_TOOLTIP=    Already in the first room
+SPEEDRUN_TOOL_ALREADY_FIRST_ROOM_DIALOG=
+    [MADELINE left upset]
+    Already in the first room.
+SPEEDRUN_TOOL_ALREADY_FIRST_ROOM_DIALOG_BADELINE=
+    [BADELINE left yell]
+    Already in the first room!
+SPEEDRUN_TOOL_ALREADY_LAST_ROOM_TOOLTIP=     Already in the last room
+SPEEDRUN_TOOL_ALREADY_LAST_ROOM_DIALOG=
+    [MADELINE left upset]
+    Already in the last room.
+SPEEDRUN_TOOL_ALREADY_LAST_ROOM_DIALOG_BADELINE=
+    [BADELINE left yell]
+    Already in the last room!
 SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE=        Toggle Auto Load State
 SPEEDRUN_TOOL_TOGGLE_FULLSCREEN=             Toggle Fullscreen
 

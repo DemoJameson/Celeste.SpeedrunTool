@@ -70,8 +70,14 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string SwitchRoomTimer = "SPEEDRUN_TOOL_SWITCH_ROOM_TIMER";
         public const string SetEndPoint = "SPEEDRUN_TOOL_SET_END_POINT";
         public const string SetAdditionalEndPoint = "SPEEDRUN_TOOL_SET_ADDITIONAL_END_POINT";
-        public const string TeleportToLastRoom = "SPEEDRUN_TOOL_TELEPORT_TO_LAST_ROOM";
+        public const string TeleportToPreviousRoom = "SPEEDRUN_TOOL_TELEPORT_TO_PREVIOUS_ROOM";
         public const string TeleportToNextRoom = "SPEEDRUN_TOOL_TELEPORT_TO_NEXT_ROOM";
+        public const string AlreadyFirstRoomTooltip = "SPEEDRUN_TOOL_ALREADY_FIRST_ROOM_TOOLTIP";
+        public const string AlreadyFirstRoomDialog = "SPEEDRUN_TOOL_ALREADY_FIRST_ROOM_DIALOG";
+        public const string AlreadyFirstRoomDialogBadeline = "SPEEDRUN_TOOL_ALREADY_FIRST_ROOM_DIALOG_BADELINE";
+        public const string AlreadyLastRoomTooltip = "SPEEDRUN_TOOL_ALREADY_LAST_ROOM_TOOLTIP";
+        public const string AlreadyLastRoomDialog = "SPEEDRUN_TOOL_ALREADY_LAST_ROOM_DIALOG";
+        public const string AlreadyLastRoomDialogBadeline = "SPEEDRUN_TOOL_ALREADY_LAST_ROOM_DIALOG_BADELINE";
         public const string SwitchAutoLoadState = "SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE";
         public const string ToggleFullscreen = "SPEEDRUN_TOOL_TOGGLE_FULLSCREEN";
 

@@ -41,7 +41,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             new(Hotkeys.SetEndPoint, Keys.F11),
             new(Hotkeys.SetAdditionalEndPoint),
             new(Hotkeys.CheckDeathStatistics, Keys.F12),
-            new(Hotkeys.TeleportToLastRoom, Keys.PageUp),
+            new(Hotkeys.TeleportToPreviousRoom, Keys.PageUp),
             new(Hotkeys.TeleportToNextRoom, Keys.PageDown),
             new(Hotkeys.SwitchAutoLoadState),
             new(Hotkeys.ToggleFullscreen),
@@ -427,7 +427,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         SetEndPoint,
         SetAdditionalEndPoint,
         CheckDeathStatistics,
-        TeleportToLastRoom,
+        TeleportToPreviousRoom,
         TeleportToNextRoom,
         SwitchAutoLoadState,
         ToggleFullscreen

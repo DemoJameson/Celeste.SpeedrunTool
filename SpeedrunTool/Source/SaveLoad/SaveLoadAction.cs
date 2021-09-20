@@ -132,6 +132,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SupportExtendedVariants();
             SupportXaphanHelper();
             SupportIsaGrabBag();
+            SupportCommunalHelper();
         }
 
         [Unload]
@@ -577,6 +578,22 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 Add(new SaveLoadAction(
                     (savedValues, _) => SaveStaticMemberValues(savedValues, grabBagModuleType, "ZipLineState".ToBackingField(),
                         "playerInstance".ToBackingField()),
+                    (savedValues, _) => LoadStaticMemberValues(savedValues))
+                );
+            }
+        }
+
+        private static void SupportCommunalHelper() {
+            if (Type.GetType("Celeste.Mod.CommunalHelper.Entities.DreamTunnelDash, CommunalHelper") is { } dreamTunnelDashType) {
+                Add(new SaveLoadAction(
+                    (savedValues, _) => SaveStaticMemberValues(savedValues, dreamTunnelDashType,
+                        "StDreamTunnelDash",
+                        "hasDreamTunnelDash",
+                        "dreamTunnelDashAttacking",
+                        "dreamTunnelDashTimer",
+                        "overrideDreamDashCheck",
+                        "dreamTunnelDashAttacking"
+                    ),
                     (savedValues, _) => LoadStaticMemberValues(savedValues))
                 );
             }

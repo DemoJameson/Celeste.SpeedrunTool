@@ -11,6 +11,11 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         private static void Load() {
             On.Celeste.Audio.Init += AudioOnInit;
             On.Celeste.Audio.Unload += AudioOnUnload;
+            if ((bool)typeof(Audio).GetFieldValue("ready")) {
+                Engine.Instance.Window.ClientSizeChanged += WindowOnClientSizeChanged;
+                Engine.Instance.Activated += InstanceOnActivated;
+                Engine.Instance.Deactivated += InstanceOnDeactivated;
+            }
         }
 
         [Unload]

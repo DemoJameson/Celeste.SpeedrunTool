@@ -1,4 +1,6 @@
-﻿using Monocle;
+﻿using System.Collections;
+using System.Collections.Generic;
+using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
     internal static class CelesteExtensions {
@@ -36,6 +38,14 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
         public static bool PausedNew(this Level level) {
             return level.Paused || level.GetFieldValue("unpauseTimer") is > 0f;
+        }
+
+        public static IEnumerator Current(this Coroutine coroutine) {
+            if (coroutine.GetFieldValue("enumerators") is Stack<IEnumerator> {Count: > 0} enumerators) {
+                return enumerators.Peek();
+            } else {
+                return null;
+            }
         }
     }
 }

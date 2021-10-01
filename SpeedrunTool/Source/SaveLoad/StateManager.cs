@@ -377,7 +377,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].TimePlayed;
 
                 // 修复：切换房间时存档后读档导致游戏误以为卡死自动重生
-                if (savedLevel.GetFieldValue("transition") is Coroutine {Current: { } enumerator}
+                if (savedLevel.GetFieldValue("transition") is Coroutine coroutine
+                    && coroutine.Current() is { } enumerator
                     && enumerator.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
                         .FirstOrDefault(info => info.Name.StartsWith("<playerStuck>")) is { } playerStuck
                 ) {

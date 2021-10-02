@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
+using Celeste.Mod.SpeedrunTool.Extensions;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool {
@@ -14,8 +15,8 @@ namespace Celeste.Mod.SpeedrunTool {
             long total = DeathInfos.Sum(deathInfo => deathInfo.LostTime);
 
             TimeSpan totalLostTimeSpan = TimeSpan.FromTicks(total);
-            if ((int) totalLostTimeSpan.TotalSeconds < 60) {
-                return (int) totalLostTimeSpan.TotalSeconds + totalLostTimeSpan.ToString("\\.fff");
+            if ((int)totalLostTimeSpan.TotalSeconds < 60) {
+                return (int)totalLostTimeSpan.TotalSeconds + totalLostTimeSpan.ToString("\\.fff");
             }
 
             return totalLostTimeSpan.ShortGameplayFormat();
@@ -31,6 +32,12 @@ namespace Celeste.Mod.SpeedrunTool {
             }
 
             if (DeathInfos.Count > max) {
+                for (int i = max; i < DeathInfos.Count; i++) {
+                    if (File.Exists(DeathInfos[i].PlaybackFilePath)) {
+                        File.Delete(DeathInfos[i].PlaybackFilePath);
+                    }
+                }
+
                 DeathInfos.RemoveRange(max, DeathInfos.Count - max);
             }
         }
@@ -39,13 +46,52 @@ namespace Celeste.Mod.SpeedrunTool {
             Selection = -1;
             DeathInfos.Clear();
             DeathStatisticsManager.Clear();
-            if (Directory.Exists(DeathStatisticsManager.PlaybackDir)) {
-                Directory.Delete(DeathStatisticsManager.PlaybackDir, true);
+            if (Directory.Exists(DeathStatisticsManager.PlaybackSlotDir)) {
+                Directory.Delete(DeathStatisticsManager.PlaybackSlotDir, true);
             }
         }
 
         public void SetSelection(int selection) {
             Selection = selection;
+        }
+
+        [Load]
+        private static void Load() {
+            On.Celeste.SaveData.LoadModSaveData += SaveDataOnLoadModSaveData;
+        }
+
+        [Unload]
+        private static void Unload() {
+            On.Celeste.SaveData.LoadModSaveData -= SaveDataOnLoadModSaveData;
+        }
+
+        [Initialize]
+        private static void ClearObsoletePlaybackFiles() {
+            if (Directory.Exists(DeathStatisticsManager.PlaybackDir)) {
+                foreach (string file in Directory.GetFiles(DeathStatisticsManager.PlaybackDir).Where(file => file.EndsWith(".bin"))) {
+                    File.Delete(file);
+                }
+            }
+        }
+
+        private static void SaveDataOnLoadModSaveData(On.Celeste.SaveData.orig_LoadModSaveData orig, int slot) {
+            orig(slot);
+            ClearUselessPlaybackFiles();
+        }
+
+        private static void ClearUselessPlaybackFiles() {
+            HashSet<string> playbackFiles = new(SpeedrunToolModule.SaveData.DeathInfos.Where(info => !string.IsNullOrEmpty(info.PlaybackFilePath))
+                .Select(info => info.PlaybackFilePath));
+
+            string.Join("\n", playbackFiles).Log();
+            if (Directory.Exists(DeathStatisticsManager.PlaybackSlotDir)) {
+                foreach (string file in Directory.GetFiles(DeathStatisticsManager.PlaybackSlotDir)) {
+                    file.Log();
+                    if (!playbackFiles.Contains(file)) {
+                        File.Delete(file);
+                    }
+                }
+            }
         }
     }
 }

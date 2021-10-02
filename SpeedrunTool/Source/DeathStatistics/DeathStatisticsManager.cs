@@ -15,7 +15,10 @@ using MonoMod.RuntimeDetour;
 
 namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
     public static class DeathStatisticsManager {
-        public static readonly string PlaybackDir = Path.Combine(typeof(UserIO).GetFieldValue("SavePath").ToString(), "SpeedrunTool", "DeathPlayback");
+        public static readonly string PlaybackDir =
+            Path.Combine(typeof(UserIO).GetFieldValue("SavePath").ToString(), "SpeedrunTool", "DeathPlayback");
+
+        public static string PlaybackSlotDir => Path.Combine(PlaybackDir, SaveData.Instance?.FileSlot.ToString() ?? "-1");
         private static bool Enabled => SpeedrunToolModule.Settings.Enabled && SpeedrunToolModule.Settings.DeathStatistics;
         private static long lastTime;
         private static bool died;
@@ -112,7 +115,8 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             }
         }
 
-        private static void ChangeRespawnTriggerOnOnEnter(On.Celeste.ChangeRespawnTrigger.orig_OnEnter orig, ChangeRespawnTrigger self, Player player) {
+        private static void ChangeRespawnTriggerOnOnEnter(On.Celeste.ChangeRespawnTrigger.orig_OnEnter orig, ChangeRespawnTrigger self,
+            Player player) {
             Level level = player.SceneAs<Level>();
             Vector2? oldPoint = level.Session.RespawnPoint;
             orig(self, player);
@@ -144,9 +148,9 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
         }
 
         private static void ExportPlayback(Player player) {
-            string filePath = Path.Combine(PlaybackDir, $"{DateTime.Now.Ticks}.bin");
-            if (!Directory.Exists(PlaybackDir)) {
-                Directory.CreateDirectory(PlaybackDir);
+            string filePath = Path.Combine(PlaybackSlotDir, $"{DateTime.Now.Ticks}.bin");
+            if (!Directory.Exists(PlaybackSlotDir)) {
+                Directory.CreateDirectory(PlaybackSlotDir);
             }
 
             if (player.ChaserStates.Count > 0) {

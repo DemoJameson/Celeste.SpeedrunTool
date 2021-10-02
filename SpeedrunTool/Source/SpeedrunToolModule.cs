@@ -12,17 +12,17 @@ namespace Celeste.Mod.SpeedrunTool {
             get {
                 // copy from max480
                 // failsafe: if DeathInfos is null, initialize it. THIS SHOULD NEVER HAPPEN, but already happened in a case of a corrupted save.
-                if (((SpeedrunToolSaveData) Instance._SaveData)?.DeathInfos == null) {
+                if (((SpeedrunToolSaveData)Instance._SaveData)?.DeathInfos == null) {
                     Logger.Log("SpeedrunTool/DeathStatisticsManager",
                         "WARNING: SaveData was null. This should not happen. Initializing it to an empty save data.");
                     Instance._SaveData = new SpeedrunToolSaveData();
                 }
 
-                return (SpeedrunToolSaveData) Instance._SaveData;
+                return (SpeedrunToolSaveData)Instance._SaveData;
             }
         }
 
-        public static SpeedrunToolSettings Settings => (SpeedrunToolSettings) Instance._Settings;
+        public static SpeedrunToolSettings Settings => (SpeedrunToolSettings)Instance._Settings;
         public static bool Enabled => Settings.Enabled;
 
         public SpeedrunToolModule() {

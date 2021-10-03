@@ -16,6 +16,36 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             Type.GetType("TAS.Manager, CelesteTAS-EverestInterop")?.GetFieldInfo("Running")
         );
 
+        private static readonly Lazy<FieldInfo> CelesteNetClientModuleInstance = new(() =>
+            Type.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientModule, CelesteNet.Client")?.GetFieldInfo("Instance"));
+
+        private static readonly Lazy<FieldInfo> CelesteNetClientModuleContext = new(() =>
+            Type.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientModule, CelesteNet.Client")?.GetFieldInfo("Context"));
+
+        private static readonly Lazy<FieldInfo> CelesteNetClientContextChat = new(() =>
+            Type.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientContext, CelesteNet.Client")?.GetFieldInfo("Chat"));
+
+        private static readonly Lazy<PropertyInfo> CelesteNetChatComponentActive = new(() =>
+            Type.GetType("Celeste.Mod.CelesteNet.Client.Components.CelesteNetChatComponent, CelesteNet.Client")?.GetPropertyInfo("Active"));
+
+        private static bool CelesteNetChatting {
+            get {
+                if (CelesteNetClientModuleInstance.Value?.GetValue(null) is not { } instance) {
+                    return false;
+                }
+
+                if (CelesteNetClientModuleContext.Value?.GetValue(instance) is not { } context) {
+                    return false;
+                }
+
+                if (CelesteNetClientContextChat.Value?.GetValue(context) is not { } chat) {
+                    return false;
+                }
+
+                return CelesteNetChatComponentActive.Value?.GetValue(chat) as bool? == true;
+            }
+        }
+
         private static readonly List<Buttons> AllButtons = new() {
             Buttons.A,
             Buttons.B,
@@ -92,9 +122,12 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             On.Monocle.MInput.Update += MInputOnUpdate;
 
             Hotkeys.ToggleFullscreen.RegisterPressedAction(scene => {
-                if (!MInput.ControllerHasFocus && scene is Overworld {Current: OuiFileNaming {UseKeyboardInput: true} or OuiModOptionString {UseKeyboardInput: true}}) {
+                if (!MInput.ControllerHasFocus && scene is Overworld {
+                    Current: OuiFileNaming {UseKeyboardInput: true} or OuiModOptionString {UseKeyboardInput: true}
+                }) {
                     return;
                 }
+
                 CelesteSettings.Instance.Fullscreen = !CelesteSettings.Instance.Fullscreen;
                 CelesteSettings.Instance.ApplyScreen();
                 UserIO.SaveHandler(false, true);
@@ -134,6 +167,10 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             }
 
             if (TasRunning.Value?.GetValue(null) as bool? == true) {
+                return false;
+            }
+
+            if (CelesteNetChatting) {
                 return false;
             }
 

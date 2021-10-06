@@ -325,7 +325,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
 
             remappingEase = Calc.Approach(remappingEase, remapping ? 1f : 0.0f, Engine.DeltaTime * 4f);
             if (remappingEase > 0.5 && remapping) {
-                if (Input.ESC.Pressed || Input.MenuCancel || MInput.Keyboard.Pressed(Keys.Delete) || timeout <= 0.0) {
+                if (Input.ESC.Pressed || Input.MenuCancel || timeout <= 0.0) {
                     Input.ESC.ConsumePress();
                     remapping = false;
                     Focused = true;

@@ -35,6 +35,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private Task<DeepCloneState> preCloneTask;
 
+        private int? ignorePlayerHairException;
+
         public enum States {
             None,
             Saving,
@@ -51,6 +53,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
             On.Monocle.Scene.BeforeUpdate += SceneOnBeforeUpdate;
+            On.Celeste.PlayerHair.Render += PlayerHairOnRender;
             RegisterHotkeys();
         }
 
@@ -59,6 +62,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Monocle.Scene.Begin -= ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End -= AutoLoadStateWhenDeath;
             On.Monocle.Scene.BeforeUpdate -= SceneOnBeforeUpdate;
+            On.Celeste.PlayerHair.Render -= PlayerHairOnRender;
         }
 
         private void RegisterHotkeys() {
@@ -121,12 +125,28 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             orig(self);
         }
 
+        private void PlayerHairOnRender(On.Celeste.PlayerHair.orig_Render orig, PlayerHair self) {
+            if (ignorePlayerHairException is > 0) {
+                try {
+                    orig(self);
+                } catch (ArgumentOutOfRangeException) {
+                    // ignore
+                }
+            } else {
+                orig(self);
+            }
+        }
+
         private void UpdateBackdropWhenWaiting(On.Celeste.Level.orig_Update orig, Level level) {
             orig(level);
 
             if (State == States.Waiting && level.Frozen) {
                 level.Foreground.Update(level);
                 level.Background.Update(level);
+            }
+
+            if (ignorePlayerHairException.HasValue) {
+                ignorePlayerHairException--;
             }
         }
 
@@ -465,6 +485,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedOrderedTrackerComponents?.Clear();
             savedOrderedTrackerComponents = null;
             preCloneTask = null;
+            ignorePlayerHairException = null;
             SaveLoadAction.OnClearState();
 
             RoomTimerManager.ClearPbTimes(fullClear);
@@ -684,6 +705,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 level.RawTimeActive = Instance.savedLevel?.RawTimeActive ?? origRawTimeActive;
                 EndPoint.All.ForEach(point => point.ReadyForTime());
                 Instance.State = States.None;
+                Instance.ignorePlayerHairException = 2;
             }
         }
     }

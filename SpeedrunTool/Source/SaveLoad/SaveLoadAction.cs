@@ -260,7 +260,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private static void SupportMInput() {
             Add(new SaveLoadAction(
                 (savedValues, _) => SaveStaticMemberValues(savedValues, typeof(MInput), "Active", "Disabled", "Keyboard", "Mouse", "GamePads"),
-                (savedValues, _) => LoadStaticMemberValues(savedValues)));
+                (savedValues, _) => {
+                    LoadStaticMemberValues(savedValues);
+                    Input.RumbleSpecific(0f, 0f);
+                }));
         }
 
         private static void SupportInput() {

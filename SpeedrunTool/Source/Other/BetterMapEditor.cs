@@ -70,6 +70,14 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             "i-00", "i-00b", "i-01", "i-02", "i-03", "i-04", "i-05", "j-00"
         };
 
+        private static readonly HashSet<string> FarewellOneDashRooms = new() {
+            "intro-00-past", "intro-01-future",
+            "i-00", "i-00b", "i-01", "i-02", "i-03", "i-04", "i-05",
+            "j-00", "j-00b", "j-01", "j-02", "j-03", "j-04", "j-05", "j-06", "j-07", "j-08", "j-09",
+            "j-10", "j-11", "j-12", "j-13", "j-14", "j-14b", "j-15", "j-16", "j-17", "j-18", "j-19",
+            "end-golden", "end-cinematic", "end-granny"
+        };
+
         [Load]
         private static void Load() {
             MapEditor.LoadLevel += MapEditorOnLoadLevel;
@@ -178,7 +186,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                 FixHugeMessRoomLight(session);
                 FixMirrorTempleColorGrade(session);
                 FixFarewellCassetteRoomColorGrade(session, spawnPoint);
-                FixFarewellIntro02LaunchDashes(session);
+                FixFarewellDashes(session);
             }
         }
 
@@ -199,9 +207,13 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             }
         }
 
-        private static void FixFarewellIntro02LaunchDashes(Session session) {
+        private static void FixFarewellDashes(Session session) {
             if (session.Area.ToString() == "10") {
-                session.Inventory.Dashes = session.Level == "intro-02-launch" ? 2 : 1;
+                if (session.Level == "intro-02-launch") {
+                    session.Inventory.Dashes = 2;
+                } else if (FarewellOneDashRooms.Contains(session.Level)) {
+                    session.Inventory.Dashes = 1;
+                }
             }
         }
 

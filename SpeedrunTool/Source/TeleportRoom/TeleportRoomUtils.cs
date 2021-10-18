@@ -258,8 +258,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
             }
 
             if (SearchSummitCheckpoint(true, level)) {
-                // 根据数据跳到下一个房间也需要记录
-                RecordAndTeleport(level.Session);
+                RecordAndTeleportToNextRoom(level.Session);
                 return true;
             }
 
@@ -283,8 +282,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
             level.Session.RespawnPoint = null;
 
             SearchSummitCheckpoint(true, nextLevelData, level);
-            // 根据数据跳到下一个房间也需要记录
-            RecordAndTeleport(level.Session);
+            RecordAndTeleportToNextRoom(level.Session);
             return true;
         }
 
@@ -379,7 +377,8 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
         }
 
         // 记录通过查找地图数据传送的房间
-        private static void RecordAndTeleport(Session session) {
+        private static void RecordAndTeleportToNextRoom(Session session) {
+            session.StartedFromBeginning = false;
             RecordRoom(session);
             TeleportTo(session);
         }

@@ -379,17 +379,22 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private static void SupportPandorasBox() {
-            // if (Type.GetType("Celeste.Mod.PandorasBox.TimeField, PandorasBox") is { } timeFieldType
-            //     && Delegate.CreateDelegate(typeof(On.Celeste.Player.hook_Update), timeFieldType.GetMethodInfo("PlayerUpdateHook")) is
-            //         On.Celeste.Player.hook_Update hookUpdate) {
-            //     Add(new SaveLoadAction(
-            //         loadState: (savedValues, level) => {
-            //             if ((bool) timeFieldType.GetFieldValue("hookAdded")) {
-            //                 On.Celeste.Player.Update += hookUpdate;
-            //             }
-            //         }
-            //     ));
-            // }
+            // 部分支持，因为 TimeField.targetPlayer 和 TimeField.lingeringTarget 未进行 SL
+            // 之所以不处理该字段是因为 WeakReference<T> 类型的实例在 SL 多次并且内存回收之后 target 可能会指向错误的对象，原因未知
+            if (Type.GetType("Celeste.Mod.PandorasBox.TimeField, PandorasBox") is { } timeFieldType
+                && Delegate.CreateDelegate(typeof(On.Celeste.Player.hook_Update), timeFieldType.GetMethodInfo("PlayerUpdateHook")) is
+                    On.Celeste.Player.hook_Update hookUpdate) {
+                Add(new SaveLoadAction(
+                    loadState: (_, _) => {
+                        if ((bool) timeFieldType.GetFieldValue("hookAdded")) {
+                            On.Celeste.Player.Update -= hookUpdate;
+                            On.Celeste.Player.Update += hookUpdate;
+                        } else {
+                            On.Celeste.Player.Update -= hookUpdate;
+                        }
+                    }
+                ));
+            }
 
             // Fixed: Game crashes after save DustSpriteColorController
             Add(new SaveLoadAction(

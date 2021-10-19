@@ -406,7 +406,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
 
                 int increaseDeath = 1;
-                if (level.IsPlayerDead() || level.GetPlayer().JustRespawned) {
+                if (level.IsPlayerDead()) {
                     increaseDeath = 0;
                 }
 

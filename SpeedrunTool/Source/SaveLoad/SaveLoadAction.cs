@@ -194,6 +194,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         "FreezeTimer", "RawDeltaTime", "TimeRate", "TimeRateB");
                     SaveStaticMemberValues(savedValues, typeof(Glitch), "Value");
                     SaveStaticMemberValues(savedValues, typeof(Distort), "Anxiety", "GameRate");
+                    SaveStaticMemberValues(savedValues, typeof(ScreenWipe), "WipeColor");
                 },
                 (savedValues, _) => LoadStaticMemberValues(savedValues)));
         }
@@ -386,7 +387,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     On.Celeste.Player.hook_Update hookUpdate) {
                 Add(new SaveLoadAction(
                     loadState: (_, _) => {
-                        if ((bool) timeFieldType.GetFieldValue("hookAdded")) {
+                        if ((bool)timeFieldType.GetFieldValue("hookAdded")) {
                             On.Celeste.Player.Update -= hookUpdate;
                             On.Celeste.Player.Update += hookUpdate;
                         } else {

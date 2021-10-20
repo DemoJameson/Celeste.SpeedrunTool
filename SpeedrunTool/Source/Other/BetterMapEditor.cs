@@ -173,7 +173,9 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         public static void FixTeleportProblems(Session session, Vector2? startPosition) {
             if (SpeedrunToolModule.Enabled && session.LevelData != null) {
                 Vector2 spawnPoint;
-                if (startPosition != null) {
+                if (session.RespawnPoint.HasValue) {
+                    spawnPoint = session.RespawnPoint.Value;
+                } else if (startPosition.HasValue) {
                     spawnPoint = session.GetSpawnPoint(startPosition.Value);
                 } else {
                     Rectangle bounds = session.LevelData.Bounds;
@@ -187,6 +189,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                 FixMirrorTempleColorGrade(session);
                 FixFarewellCassetteRoomColorGrade(session, spawnPoint);
                 FixFarewellDashes(session);
+                FixFarewellFinalBirdDisappear(session, spawnPoint);
             }
         }
 
@@ -213,6 +216,25 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                     session.Inventory.Dashes = 2;
                 } else if (FarewellOneDashRooms.Contains(session.Level)) {
                     session.Inventory.Dashes = 1;
+                }
+            }
+        }
+
+        private static void FixFarewellFinalBirdDisappear(Session session, Vector2 spawnPoint) {
+            const string roomName = "j-16";
+            if (session.Area.ToString() == "10" && session.Level == roomName) {
+                EntityID firstBird = new(roomName, 449);
+                EntityID secondBird = new(roomName, 481);
+                if (spawnPoint.X > 78296) {
+                    session.DoNotLoad.Add(firstBird);
+                } else {
+                    session.DoNotLoad.Remove(firstBird);
+                }
+
+                if (spawnPoint.X > 78896) {
+                    session.DoNotLoad.Add(secondBird);
+                } else {
+                    session.DoNotLoad.Remove(secondBird);
                 }
             }
         }

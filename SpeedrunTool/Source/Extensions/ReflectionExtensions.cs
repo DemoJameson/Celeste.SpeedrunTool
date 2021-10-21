@@ -70,7 +70,8 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         }
 
         public static bool IsSimpleDictionary(this Type type, Func<Type, bool> extraGenericTypes = null) {
-            return type.IsDictionary(out Type keyType, out Type valueType) && keyType.IsSimple(extraGenericTypes) && valueType.IsSimple(extraGenericTypes);
+            return type.IsDictionary(out Type keyType, out Type valueType) && keyType.IsSimple(extraGenericTypes) &&
+                   valueType.IsSimple(extraGenericTypes);
         }
 
         public static bool IsSimpleWeakReference(this Type type, Func<Type, bool> extraGenericTypes = null) {
@@ -110,6 +111,17 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
         public static bool IsDictionary(this Type type, out Type keyType, out Type valueType) {
             bool result = type.IsGenericType && type.GetGenericTypeDefinition().IsAssignableFrom(typeof(Dictionary<,>))
+                                             && type.GenericTypeArguments.Length == 2;
+
+            keyType = result ? type.GenericTypeArguments[0] : null;
+            valueType = result ? type.GenericTypeArguments[1] : null;
+
+            return result;
+        }
+
+        public static bool IsIDictionary(this Type type, out Type keyType, out Type valueType) {
+            bool result = type.IsGenericType && type.GetInterfaces()
+                                                 .Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>))
                                              && type.GenericTypeArguments.Length == 2;
 
             keyType = result ? type.GenericTypeArguments[0] : null;
@@ -223,7 +235,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
         public static List<FieldInfo> GetAllFieldInfos(this Type type, BindingFlags bindingFlags = StaticInstanceAnyVisibility,
             bool filterBackingField = false) {
-             string key = $"ReflectionExtensions-GetAllFieldInfos-{bindingFlags}-{filterBackingField}";
+            string key = $"ReflectionExtensions-GetAllFieldInfos-{bindingFlags}-{filterBackingField}";
             List<FieldInfo> result = type.GetExtendedDataValue<List<FieldInfo>>(key);
             if (result == null) {
                 result = new List<FieldInfo>();
@@ -239,6 +251,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
                     type = type.BaseType;
                 }
+
                 type.SetExtendedDataValue(key, result);
             }
 

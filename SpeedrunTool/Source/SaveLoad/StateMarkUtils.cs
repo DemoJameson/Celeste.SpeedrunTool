@@ -17,6 +17,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private static void Load() {
             On.Celeste.Strawberry.Added += StrawberryOnAdded;
             IL.Celeste.SpeedrunTimerDisplay.DrawTime += SetSaveStateColor;
+            IL.Celeste.Level.Reload += LevelOnReload;
             SaveLoadAction.Add(new SaveLoadAction(ReColor, ReColor));
         }
 
@@ -24,6 +25,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private static void Unload() {
             On.Celeste.Strawberry.Added -= StrawberryOnAdded;
             IL.Celeste.SpeedrunTimerDisplay.DrawTime -= SetSaveStateColor;
+            IL.Celeste.Level.Reload -= LevelOnReload;
         }
 
         [LoadContent]
@@ -108,6 +110,20 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             cursor.Emit(OpCodes.Br, afterInstr);
             cursor.MarkLabel(beforeInstr);
+        }
+
+        private static void LevelOnReload(ILContext il) {
+            ILCursor ilCursor = new(il);
+            if (ilCursor.TryGotoNext(ins => ins.OpCode == OpCodes.Ldarg_0,
+                ins => ins.OpCode == OpCodes.Ldc_I4_0,
+                ins => ins.MatchStfld<Level>("TimerStarted")
+            )) {
+                ilCursor.Emit(OpCodes.Ldarg_0).EmitDelegate<Action<Level>>(level => {
+                    if (!StateManager.Instance.IsSaved) {
+                        level.SetExtendedBoolean(StartFromSaveSate, false);
+                    }
+                });
+            }
         }
     }
 }

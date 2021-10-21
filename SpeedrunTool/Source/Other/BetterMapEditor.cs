@@ -1,8 +1,11 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
+using Mono.Cecil.Cil;
 using Monocle;
+using MonoMod.Cil;
 using On.Celeste.Editor;
 using LevelTemplate = Celeste.Editor.LevelTemplate;
 
@@ -85,6 +88,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             On.Celeste.OshiroTrigger.ctor += RestoreOshiroTrigger;
             On.Celeste.Commands.CmdLoad += CommandsOnCmdLoad;
             On.Celeste.LevelLoader.ctor += LevelLoaderOnCtor;
+            IL.Celeste.FlingBird.Awake += FlingBirdOnAwake;
 
             Hotkeys.OpenDebugMap.RegisterPressedAction(scene => {
                 if (scene is Level level) {
@@ -101,6 +105,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             On.Celeste.OshiroTrigger.ctor -= RestoreOshiroTrigger;
             On.Celeste.Commands.CmdLoad -= CommandsOnCmdLoad;
             On.Celeste.LevelLoader.ctor -= LevelLoaderOnCtor;
+            IL.Celeste.FlingBird.Awake -= FlingBirdOnAwake;
         }
 
         private static void CommandsOnCmdLoad(On.Celeste.Commands.orig_CmdLoad orig, int id, string level) {
@@ -170,6 +175,22 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             orig(self, session, startPosition);
         }
 
+        private static void FlingBirdOnAwake(ILContext il) {
+            ILCursor ilCursor = new(il);
+            if (ilCursor.TryGotoNext(MoveType.After,
+                ins => ins.OpCode == OpCodes.Ldarg_1,
+                ins => ins.MatchCallvirt<Scene>("get_Tracker"),
+                ins => ins.OpCode == OpCodes.Callvirt && ins.Operand.ToString().Contains("Celeste.Player")
+            )) {
+                ilCursor.Emit(OpCodes.Ldarg_1).EmitDelegate<Func<Player, Scene, Player>>((player, scene) => {
+                    if (SpeedrunToolModule.Enabled && scene is Level level && level.Session.Area.ToString() == "10" && level.Session.Level == "j-16") {
+                        return null;
+                    }
+                    return player;
+                });
+            }
+        }
+
         public static void FixTeleportProblems(Session session, Vector2? startPosition) {
             if (SpeedrunToolModule.Enabled && session.LevelData != null) {
                 Vector2 spawnPoint;
@@ -189,7 +210,6 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                 FixMirrorTempleColorGrade(session);
                 FixFarewellCassetteRoomColorGrade(session, spawnPoint);
                 FixFarewellDashes(session);
-                FixFarewellFinalBirdDisappear(session, spawnPoint);
             }
         }
 
@@ -216,25 +236,6 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                     session.Inventory.Dashes = 2;
                 } else if (FarewellOneDashRooms.Contains(session.Level)) {
                     session.Inventory.Dashes = 1;
-                }
-            }
-        }
-
-        private static void FixFarewellFinalBirdDisappear(Session session, Vector2 spawnPoint) {
-            const string roomName = "j-16";
-            if (session.Area.ToString() == "10" && session.Level == roomName) {
-                EntityID firstBird = new(roomName, 449);
-                EntityID secondBird = new(roomName, 481);
-                if (spawnPoint.X > 78296) {
-                    session.DoNotLoad.Add(firstBird);
-                } else {
-                    session.DoNotLoad.Remove(firstBird);
-                }
-
-                if (spawnPoint.X > 78896) {
-                    session.DoNotLoad.Add(secondBird);
-                } else {
-                    session.DoNotLoad.Remove(secondBird);
                 }
             }
         }

@@ -12,7 +12,9 @@ using FMOD.Studio;
 using Force.DeepCloner;
 using Force.DeepCloner.Helpers;
 using Microsoft.Xna.Framework;
+using Mono.Cecil.Cil;
 using Monocle;
+using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class StateManager {
@@ -54,6 +56,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
             On.Monocle.Scene.BeforeUpdate += SceneOnBeforeUpdate;
             On.Celeste.PlayerHair.Render += PlayerHairOnRender;
+            IL.Celeste.Level.Reload += LevelOnReload;
             RegisterHotkeys();
         }
 
@@ -63,6 +66,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             On.Celeste.PlayerDeadBody.End -= AutoLoadStateWhenDeath;
             On.Monocle.Scene.BeforeUpdate -= SceneOnBeforeUpdate;
             On.Celeste.PlayerHair.Render -= PlayerHairOnRender;
+            IL.Celeste.Level.Reload -= LevelOnReload;
         }
 
         private void RegisterHotkeys() {
@@ -134,6 +138,17 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
             } else {
                 orig(self);
+            }
+        }
+
+        private void LevelOnReload(ILContext il) {
+            ILCursor ilCursor = new(il);
+            if (ilCursor.TryGotoNext(MoveType.After,
+                ins => ins.OpCode == OpCodes.Ldarg_0,
+                ins => ins.MatchLdfld<Level>("Session"),
+                ins => ins.MatchLdfld<Session>("FirstLevel")
+            )) {
+                ilCursor.EmitDelegate<Func<bool, bool>>(firstLevel => firstLevel && !(IsSaved && !SavedByTas && Settings.DoNotRestoreTimeAndDeaths));
             }
         }
 
@@ -391,7 +406,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 SaveData clonedSaveData = savedSaveData.DeepCloneShared();
                 AreaKey areaKey = session.Area;
 
-                clonedSession.Time = session.Time;
+                clonedSession.Time = Math.Max(session.Time, clonedSession.Time);
                 clonedSaveData.Time = SaveData.Instance.Time;
                 clonedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].TimePlayed =
                     SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].TimePlayed;
@@ -410,7 +425,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     increaseDeath = 0;
                 }
 
-                clonedSession.Deaths = session.Deaths + increaseDeath;
+                clonedSession.Deaths = Math.Max(session.Deaths + increaseDeath, clonedSession.Deaths);
                 clonedSession.DeathsInCurrentLevel = session.DeathsInCurrentLevel + increaseDeath;
                 clonedSaveData.TotalDeaths = SaveData.Instance.TotalDeaths + increaseDeath;
                 clonedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths =

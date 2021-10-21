@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
@@ -182,13 +183,35 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                 ins => ins.MatchCallvirt<Scene>("get_Tracker"),
                 ins => ins.OpCode == OpCodes.Callvirt && ins.Operand.ToString().Contains("Celeste.Player")
             )) {
-                ilCursor.Emit(OpCodes.Ldarg_1).EmitDelegate<Func<Player, Scene, Player>>((player, scene) => {
-                    if (SpeedrunToolModule.Enabled && scene is Level level && level.Session.Area.ToString() == "10" && level.Session.Level == "j-16") {
+                ilCursor.Emit(OpCodes.Ldarg_1).Emit(OpCodes.Ldarg_0).EmitDelegate<Func<Player, Scene, FlingBird, Player>>((player, scene, bird) => {
+                    if (SpeedrunToolModule.Enabled && player != null && scene is Level level && level.Session.Area.ToString() == "10" &&
+                        level.Session.Level == "j-16"
+                        && scene.Entities.FindAll<FlingBird>().FirstOrDefault(flingBird => flingBird == bird) != null) {
+                        for (int i = 0; i < bird.NodeSegments.Count; i++) {
+                            if (player.X > bird.NodeSegments[i][0].X) {
+                                continue;
+                            }
+
+                            if (i > 0) {
+                                bird.SetFieldValue("segmentIndex", i);
+                                bird.Add(new Coroutine(DelayPosition(bird, bird.NodeSegments[i][0])));
+                            }
+
+                            break;
+                        }
+
                         return null;
                     }
+
                     return player;
                 });
             }
+        }
+
+        // 过早修改位置会使其排在其它鸟的后面导致被删除
+        private static IEnumerator DelayPosition(FlingBird bird, Vector2 position) {
+            bird.Position = position;
+            yield break;
         }
 
         public static void FixTeleportProblems(Session session, Vector2? startPosition) {

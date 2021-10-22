@@ -64,7 +64,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         private static readonly Dictionary<Hotkeys, HotkeyConfig> HotkeyConfigs = new List<HotkeyConfig> {
             new(Hotkeys.SaveState, Keys.F7),
             new(Hotkeys.LoadState, Keys.F8),
-            new(Hotkeys.ClearState, Keys.F3),
+            new(Hotkeys.ClearState, Keys.F4),
             new(Hotkeys.OpenDebugMap, Keys.F6, true),
             new(Hotkeys.ResetRoomTimerPb, Keys.F9),
             new(Hotkeys.SwitchRoomTimer, Keys.F10),

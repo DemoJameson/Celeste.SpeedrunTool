@@ -82,11 +82,8 @@ namespace Celeste.Mod.SpeedrunTool {
         private static void ClearUselessPlaybackFiles() {
             HashSet<string> playbackFiles = new(SpeedrunToolModule.SaveData.DeathInfos.Where(info => !string.IsNullOrEmpty(info.PlaybackFilePath))
                 .Select(info => info.PlaybackFilePath));
-
-            string.Join("\n", playbackFiles).Log();
             if (Directory.Exists(DeathStatisticsManager.PlaybackSlotDir)) {
                 foreach (string file in Directory.GetFiles(DeathStatisticsManager.PlaybackSlotDir)) {
-                    file.Log();
                     if (!playbackFiles.Contains(file)) {
                         File.Delete(file);
                     }

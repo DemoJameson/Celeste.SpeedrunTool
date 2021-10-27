@@ -258,8 +258,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // 移除当前房间的实体
             level.UnloadLevel();
 
-            // 剩下则通过 SceneEnd 处理可以不用顾忌移除顺序
-            level.Entities.ToList().ForEach(entity => entity.SceneEnd(level));
+            // 修复：电网噪声残留
+            foreach (Entity entity in level.Entities.Where(e => e.GetType().FullName?.EndsWith("Renderer") == true)) {
+                entity.Removed(level);
+            }
         }
 
         private void DoNotRestoreTimeAndDeaths(Level level) {

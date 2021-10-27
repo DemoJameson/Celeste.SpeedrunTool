@@ -193,7 +193,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             DeepClonerUtils.ClearSharedDeepCloneState();
 
             State = States.None;
-            return LoadState(tas);
+            return LoadState(tas, true);
         }
 
         // public for TAS Mod
@@ -202,7 +202,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             return LoadState(true);
         }
 
-        private bool LoadState(bool tas) {
+        private bool LoadState(bool tas, bool fromSaveState = false) {
             if (Engine.Scene is not Level level) {
                 return false;
             }
@@ -237,18 +237,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             if (tas) {
                 LoadStateComplete(level);
             } else {
-                // 加一个转场等待，避免太突兀
-                // Add a pause to avoid being too abrupt
                 level.Frozen = true;
                 level.TimerStopped = true;
                 level.PauseLock = true;
-                level.DoScreenWipe(true, () => {
-                    if (Settings.FreezeAfterLoadState) {
-                        State = States.Waiting;
-                    } else {
-                        LoadStateComplete(level);
-                    }
-                });
+                if (fromSaveState) {
+                    level.Add(new WaitLoadStateEntity());
+                } else {
+                    DoScreenWipe(level);
+                }
             }
 
             return true;
@@ -392,5 +388,30 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private StateManager() { }
         // @formatter:on
+
+        private class WaitLoadStateEntity : Entity {
+            private bool delayOneFrame = true;
+
+            public override void Render() {
+                if (delayOneFrame) {
+                    delayOneFrame = false;
+                    return;
+                }
+
+                Level level = SceneAs<Level>();
+                Instance.DoScreenWipe(level);
+                RemoveSelf();
+            }
+        }
+
+        private void DoScreenWipe(Level level) {
+            level.DoScreenWipe(true, () => {
+                if (Settings.FreezeAfterLoadState) {
+                    Instance.State = States.Waiting;
+                } else {
+                    Instance.LoadStateComplete(level);
+                }
+            });
+        }
     }
 }

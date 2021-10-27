@@ -2,46 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.RoomTimer {
     [Tracked]
-    public class EndPoint : Entity {
-        private static readonly List<EndPoint> CachedEndPoints = new();
-        private static AreaKey cachedAreaKey;
-
-        [Load]
-        private static void Load() {
-            On.Celeste.Level.End += LevelOnEnd;
-            On.Celeste.Level.Begin += LevelOnBegin;
-        }
-
-        [Unload]
-        private static void Unload() {
-            On.Celeste.Level.End -= LevelOnEnd;
-            On.Celeste.Level.Begin -= LevelOnBegin;
-        }
-
-        private static void LevelOnEnd(On.Celeste.Level.orig_End orig, Level self) {
-            CachedEndPoints.Clear();
-            CachedEndPoints.AddRange(All);
-            cachedAreaKey = self.Session.Area;
-            orig(self);
-        }
-
-        private static void LevelOnBegin(On.Celeste.Level.orig_Begin orig, Level self) {
-            orig(self);
-            if (self.Session.Area == cachedAreaKey) {
-                foreach (EndPoint endPoint in CachedEndPoints) {
-                    self.Add(endPoint);
-                }
-            } else {
-                CachedEndPoints.Clear();
-                cachedAreaKey = default;
-            }
-        }
-
+    public class EndPoint: Entity {
         public enum SpriteStyle {
             Flag,
             GoldBerry,
@@ -79,6 +46,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             Add(new PlayerCollider(OnCollidePlayer));
             Add(new BloomPoint(Vector2.UnitY * -8, 0.5f, 18f));
             Add(new VertexLight(Vector2.UnitY * -8, Color.White, 1f, 24, 48));
+            Add(new IgnoreSaveLoadComponent());
 
             // saved madeline sprite
             CreateMadelineSprite(player);
@@ -89,7 +57,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         private void SetSprite(Player player) {
             spriteStyle = SpeedrunToolModule.Settings.EndPointStyle;
             if (spriteStyle == SpriteStyle.Random) {
-                spriteStyle = (SpriteStyle) new Random().Next(Enum.GetNames(typeof(SpriteStyle)).Length - 1);
+                spriteStyle = (SpriteStyle)new Random().Next(Enum.GetNames(typeof(SpriteStyle)).Length - 1);
             }
 
             switch (spriteStyle) {
@@ -144,8 +112,10 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             Activated = false;
         }
 
-        private static void OnCollidePlayer(Player _) {
-            RoomTimerManager.UpdateTimerState(true);
+        private static void OnCollidePlayer(Player player) {
+            if (player.Scene is Level {TimerStarted: true}) {
+                RoomTimerManager.UpdateTimerState(true);
+            }
         }
 
         public void StopTime() {
@@ -185,7 +155,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 playerSprite.Color = StarFlyColor;
             }
 
-            playerSprite.Scale.X = playerSprite.Scale.Abs().X * (int) facing;
+            playerSprite.Scale.X = playerSprite.Scale.Abs().X * (int)facing;
 
             playerSprite.Active = false;
             try {
@@ -236,8 +206,8 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         }
 
         private void CreateSpriteFromBank() {
-            Sprite sprite = GFX.SpriteBank.Create(Enum.GetNames(typeof(SpriteStyle))[(int) spriteStyle].ToLower());
-            sprite.Scale.X *= -(int) facing;
+            Sprite sprite = GFX.SpriteBank.Create(Enum.GetNames(typeof(SpriteStyle))[(int)spriteStyle].ToLower());
+            sprite.Scale.X *= -(int)facing;
 
             if (spriteStyle == SpriteStyle.Oshiro) {
                 sprite.Position += Vector2.UnitY * 7;
@@ -251,7 +221,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         }
 
         private void CreateSecretSprite() {
-            string id = "secret_" + Enum.GetNames(typeof(SpriteStyle))[(int) spriteStyle].ToLower();
+            string id = "secret_" + Enum.GetNames(typeof(SpriteStyle))[(int)spriteStyle].ToLower();
             Sprite sprite = new(GFX.Game, "decals/6-reflection/" + id);
             sprite.AddLoop(id, "", 0.1f);
             sprite.Play(id);
@@ -264,7 +234,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
 
             sprite.RenderPosition += offset;
 
-            sprite.Scale.X *= -(int) facing;
+            sprite.Scale.X *= -(int)facing;
             if (spriteStyle == SpriteStyle.Towerfall) {
                 sprite.Scale.X = -sprite.Scale.X;
             }
@@ -275,6 +245,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         public static bool IsExist => Engine.Scene is Level level && level.Tracker.GetEntity<EndPoint>() != null;
 
         private static readonly List<EndPoint> EmptyList = new();
+
         public static List<EndPoint> All {
             get {
                 if (Engine.Scene is Level level && level.Tracker.Entities.ContainsKey(typeof(EndPoint))) {

@@ -91,7 +91,8 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
                     PlayerPlayback playerPlayback = new(playbackDeathInfo.PlaybackStartPosition, spriteMode, chaserStates) {
                         Depth = Depths.Player
                     };
-                    playerPlayback.IgnoreSaveLoad().Sprite.Color *= 0.8f;
+                    playerPlayback.Sprite.Color *= 0.8f;
+                    playerPlayback.Add(new ClearBeforeSaveComponent());
                     level.Add(playerPlayback);
                 }
             }

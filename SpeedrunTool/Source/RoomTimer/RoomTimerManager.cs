@@ -122,6 +122,9 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             previousRoom = null;
             NextRoomTimerData.Clear();
             CurrentRoomTimerData.Clear();
+            if (Engine.Scene is Level level) {
+                level.Tracker.GetEntities<ConfettiRenderer>().ForEach(entity => entity.RemoveSelf());
+            }
             if (clearEndPoint) {
                 EndPoint.All.ForEach(point => point.RemoveSelf());
             }

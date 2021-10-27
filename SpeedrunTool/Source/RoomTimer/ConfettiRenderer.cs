@@ -1,9 +1,9 @@
 using System;
-using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.RoomTimer {
+    [Tracked]
     internal class ConfettiRenderer : Entity {
         private static readonly Color[] ConfettiColors = {
             Calc.HexToColor("fe2074"),
@@ -13,10 +13,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
 
         private readonly Particle[] particles = new Particle[30];
 
-        public ConfettiRenderer(Vector2 position)
-            : base(position) {
-            Add(new IgnoreSaveLoadComponent());
-
+        public ConfettiRenderer(Vector2 position) : base(position) {
             Depth = -10010;
             for (int index = 0; index < particles.Length; ++index) {
                 particles[index].Position = Position + new Vector2(Calc.Random.Range(-3, 3), Calc.Random.Range(-3, 3));
@@ -50,9 +47,8 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 float rotation;
                 if (particles[index].Speed.Y < 0.0) {
                     rotation = particles[index].Speed.Angle();
-                }
-                else {
-                    rotation = (float) Math.Sin(particles[index].Timer * 4.0) * 1f;
+                } else {
+                    rotation = (float)Math.Sin(particles[index].Timer * 4.0) * 1f;
                     position += Calc.AngleToVector(1.570796f + rotation, particles[index].Approach);
                 }
 

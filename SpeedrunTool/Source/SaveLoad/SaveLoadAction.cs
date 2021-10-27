@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Celeste.Mod.Helpers;
+using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.RoomTimer;
 using FMOD;
 using FMOD.Studio;
+using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod.Cil;
 
@@ -30,16 +33,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         };
 
         private static readonly List<EventInstance> RequireMuteAudios = new();
-        private readonly Action clearState;
+        private readonly Action<bool> clearState;
+        private readonly Action<Level> beforeSaveState;
         private readonly SlAction loadState;
 
         private readonly Dictionary<Type, Dictionary<string, object>> savedValues = new();
         private readonly SlAction saveState;
 
-        public SaveLoadAction(SlAction saveState = null, SlAction loadState = null, Action clearState = null) {
+        public SaveLoadAction(SlAction saveState = null, SlAction loadState = null, Action<bool> clearState = null, Action<Level> beforeSaveState = null) {
             this.saveState = saveState;
             this.loadState = loadState;
             this.clearState = clearState;
+            this.beforeSaveState = beforeSaveState;
         }
 
         public static void Add(SaveLoadAction saveLoadAction) {
@@ -62,13 +67,19 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
         }
 
-        internal static void OnClearState() {
+        internal static void OnClearState(bool fullClear) {
             foreach (SaveLoadAction saveLoadAction in All) {
                 saveLoadAction.savedValues.Clear();
-                saveLoadAction.clearState?.Invoke();
+                saveLoadAction.clearState?.Invoke(fullClear);
             }
 
             RequireMuteAudios.Clear();
+        }
+
+        internal static void OnBeforeSaveState(Level level) {
+            foreach (SaveLoadAction saveLoadAction in All) {
+                saveLoadAction.beforeSaveState?.Invoke(level);
+            }
         }
 
         // ReSharper disable once MemberCanBePrivate.Global
@@ -116,7 +127,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SupportInput();
             SupportAudioMusic();
             MuteAnnoyingAudios();
-            SupportEntityList();
+            ExternalAction();
             On.FMOD.Studio.EventDescription.createInstance += EventDescriptionOnCreateInstance;
         }
 
@@ -169,7 +180,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 && type.FullName != null
                 && !type.FullName.StartsWith("Celeste.Mod.SpeedrunTool")
                 && !type.IsSubclassOf(typeof(Oui))
-                && type.IsSameOrSubclassOf(typeof(Entity)));
+                && type.IsSameOrSubclassOf(typeof(Entity)) || type.IsSameOrSubclassOf(typeof(Component)) ||
+                type.IsSameOrSubclassOf(typeof(Renderer)));
 
             foreach (Type entityType in entityTypes) {
                 FieldInfo[] fieldInfos = entityType.GetFieldInfos(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
@@ -191,10 +203,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     }
 
                     SaveStaticMemberValues(savedValues, typeof(Engine), "DashAssistFreeze", "DashAssistFreezePress", "DeltaTime", "FrameCounter",
-                        "FreezeTimer", "RawDeltaTime", "TimeRate", "TimeRateB");
+                        "FreezeTimer", "RawDeltaTime", "TimeRate", "TimeRateB", "Pooler");
                     SaveStaticMemberValues(savedValues, typeof(Glitch), "Value");
                     SaveStaticMemberValues(savedValues, typeof(Distort), "Anxiety", "GameRate");
                     SaveStaticMemberValues(savedValues, typeof(ScreenWipe), "WipeColor");
+                    SaveStaticMemberValues(savedValues, typeof(Audio), "currentCamera");
                 },
                 (savedValues, _) => LoadStaticMemberValues(savedValues)));
         }
@@ -220,11 +233,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                             object value = fieldInfo.GetValue(null);
                             Type fieldType = fieldInfo.FieldType;
 
-                            // 避免 SL SaveLoadIcon.Instance 这种不需要克隆的字段
-                            if (fieldType == type && value is Entity entity && entity.TagCheck(Tags.Global)) {
-                                continue;
-                            }
-
                             if (value == null) {
                                 values[fieldInfo.Name] = null;
                             } else if (fieldType.IsSimpleClass(_ =>
@@ -243,14 +251,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         Dictionary<string, object> values = clonedDict[type];
                         // ("\n\n" + string.Join("\n", values.Select(pair => type.FullName + " " + pair.Key + " " + pair.Value))).DebugLog();
                         foreach (KeyValuePair<string, object> pair in values) {
-                            object value = pair.Value;
-
-                            // 避免 SL SaveLoadIcon.Instance 这种不需要克隆的字段
-                            if (value == null && type.GetFieldValue(pair.Key) is Entity entity && entity.GetType() == type &&
-                                entity.TagCheck(Tags.Global)) {
-                                continue;
-                            }
-
                             type.SetFieldValue(pair.Key, pair.Value);
                         }
                     }
@@ -308,25 +308,31 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }));
         }
 
-        private static void SupportEntityList() {
-            string[] fieldNames = {
-                "toRemove", "removing", "toAdd", "adding", "toAwake"
-            };
+        private static void ExternalAction() {
+            Add(new SaveLoadAction(
+                    loadState: (_, _) => {
+                        RoomTimerManager.ResetTime();
+                        DeathStatisticsManager.Clear();
+                        EndPoint.All.ForEach(point => point.ReadyForTime());
+                    },
+                    clearState: fullClear => {
+                        RoomTimerManager.ClearPbTimes(fullClear);
+                        DeepClonerUtils.ClearSharedDeepCloneState();
+                        DynDataUtils.OnClearState();
+                    },
+                    beforeSaveState: level => {
+                        IgnoreSaveLoadComponent.RemoveAll(level);
+                        ClearBeforeSaveComponent.RemoveAll(level);
 
-            Add(new SaveLoadAction((savedValues, level) => {
-                Dictionary<string, object> value = new();
-                foreach (string fieldName in fieldNames) {
-                    value[fieldName] = level.Entities.GetFieldValue(fieldName);
-                }
+                        foreach (Entity entity in level.Entities.Where(entity => entity.GetType().FullName?.StartsWith("Celeste.Mod.CelesteNet.") == true)) {
+                             entity.RemoveSelf();
+                        }
 
-                savedValues[typeof(EntityList)] = value.DeepCloneShared();
-            }, (savedValues, level) => {
-                Dictionary<string, object> value = savedValues[typeof(EntityList)].DeepCloneShared();
-                foreach (string fieldName in fieldNames) {
-                    level.Entities.SetFieldValue(fieldName, value[fieldName]);
-                    // value[fieldName].DeepCloneToShared(level.Entities.GetFieldValue(fieldName));
-                }
-            }));
+                        // 冲刺残影方向错误，干脆移除屏幕不显示了
+                        level.Tracker.GetEntities<TrailManager.Snapshot>().ForEach(entity => entity.Position = level.Camera.Position - Vector2.One * 100);
+                    }
+                )
+            );
         }
 
         private static RESULT EventDescriptionOnCreateInstance(On.FMOD.Studio.EventDescription.orig_createInstance orig, EventDescription self,

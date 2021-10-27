@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reflection;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Mono.Cecil.Cil;
 using Monocle;
 using MonoMod.Cil;
@@ -16,7 +17,7 @@ namespace Celeste.Mod.SpeedrunTool.Message {
         private NonFrozenMiniTextbox(string dialogId, string message = null) : base(dialogId) {
             RemoveTag(Tags.HUD);
             AddTag(Tags.Global | TagsExt.SubHUD | Tags.FrozenUpdate | Tags.TransitionUpdate);
-
+            Add(new IgnoreSaveLoadComponent());
             if (message != null) {
                 this.SetFieldValue(
                     typeof(MiniTextbox),

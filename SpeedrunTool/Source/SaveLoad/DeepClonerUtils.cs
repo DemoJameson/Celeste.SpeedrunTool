@@ -35,7 +35,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     || type == typeof(GraphicsDevice)
                     || type == typeof(GraphicsDeviceManager)
                     || type == typeof(Monocle.Commands)
-                    || type == typeof(Pooler)
                     || type == typeof(BitTag)
                     || type == typeof(Atlas)
 
@@ -47,7 +46,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     || type.IsSubclassOf(typeof(LuaBase))
 
                     // CelesteNet
-                    || type.FullName != null && type.FullName.StartsWith("Celeste.Mod.CelesteNet.")
+                    || type.FullName != null && type.FullName.StartsWith("Celeste.Mod.CelesteNet.") && !type.IsSubclassOf(typeof(Entity))
                 ) {
                     return true;
                 }
@@ -68,20 +67,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                         return sourceObj;
                     }
-
-                    if (sourceObj is Entity entity
-                        && entity.TagCheck(Tags.Global)
-                        && !StateManager.Instance.IsRequireClonedGlobalEntity(entity)
-                        && !StateManager.Instance.IsRequireClonedRenderer(entity)
-                    ) {
-                        return sourceObj;
-                    }
-
-                    // 不要克隆 RendererList 会造成 BeforeRender 中产生空指针异常
-                    // 克隆了 level.RendererList 但不想克隆以下元素
-                    // if (sourceObj is GameplayRenderer || sourceObj is LightingRenderer) {
-                    // return sourceObj;
-                    // }
 
                     // 稍后重新创建正在播放的 SoundSource 里的 EventInstance 实例
                     // TODO SoundEmitter 的声音会存留在关卡中，切换房间后保存依然会播放

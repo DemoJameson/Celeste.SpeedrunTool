@@ -1,21 +1,59 @@
-﻿using Monocle;
+﻿using System.Collections.Generic;
+using Celeste.Mod.SpeedrunTool.RoomTimer;
+using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
+    [Tracked]
     public class IgnoreSaveLoadComponent : Component {
+        private static readonly HashSet<Entity> All = new();
         public IgnoreSaveLoadComponent() : base(false, false) { }
-    }
 
-    internal static class IgnoreSaveLoadComponentExtensions {
-        public static T IgnoreSaveLoad<T>(this T entity) where T : Entity {
-            if (entity.Get<IgnoreSaveLoadComponent>() == null) {
-                entity.Add(new IgnoreSaveLoadComponent());
+        public override void EntityAdded(Scene scene) {
+            base.EntityAdded(scene);
+            if (StateManager.Instance.State == StateManager.States.None) {
+                All.Add(Entity);
             }
-
-            return entity;
         }
 
-        public static bool IsIgnoreSaveLoad(this Entity entity) {
-            return entity.Get<IgnoreSaveLoadComponent>() != null;
+        public override void EntityRemoved(Scene scene) {
+            base.EntityRemoved(scene);
+            if (StateManager.Instance.State == StateManager.States.None) {
+                All.Remove(Entity);
+            }
+        }
+
+        public override void SceneEnd(Scene scene) {
+            if (StateManager.Instance.State == StateManager.States.None) {
+                All.Remove(Entity);
+            }
+        }
+
+        public static void RemoveAll(Level level) {
+            All.Clear();
+            level.Tracker.GetComponentsCopy<IgnoreSaveLoadComponent>().ForEach(component => {
+                All.Add(component.Entity);
+                component.Entity.RemoveSelf();
+            });
+        }
+
+        public static void ReAddAll(Level level) {
+            foreach (Entity entity in All) {
+                level.Add(entity);
+                if (entity is EndPoint point) {
+                    point.ReadyForTime();
+                }
+            }
+        }
+    }
+
+    [Tracked]
+    public class ClearBeforeSaveComponent : Component {
+        public ClearBeforeSaveComponent() : base(false, false) { }
+
+        public static void RemoveAll(Level level) {
+            level.Tracker.GetComponentsCopy<ClearBeforeSaveComponent>().ForEach(component => {
+                component.Entity.RemoveSelf();
+            });
         }
     }
 }

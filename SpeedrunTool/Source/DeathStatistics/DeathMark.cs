@@ -13,8 +13,8 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             sprite.RenderPosition -= Vector2.UnitY * 8;
             sprite.Color = Color.White * 0.5f;
             Add(sprite);
+            Add(new ClearBeforeSaveComponent());
             Depth = Depths.FormationSequences;
-            Add(new IgnoreSaveLoadComponent());
         }
     }
 }

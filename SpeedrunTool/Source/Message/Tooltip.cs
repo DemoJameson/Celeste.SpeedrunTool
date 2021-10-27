@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework;
 using Monocle;
 
@@ -16,6 +17,7 @@ namespace Celeste.Mod.SpeedrunTool.Message {
             Position = new(Padding, Engine.Height - messageSize.Y - Padding / 2f);
             Tag = TagsExt.SubHUD | Tags.Global | Tags.FrozenUpdate | Tags.TransitionUpdate;
             Add(new Coroutine(Show()));
+            Add(new IgnoreSaveLoadComponent());
         }
 
         private IEnumerator Show() {

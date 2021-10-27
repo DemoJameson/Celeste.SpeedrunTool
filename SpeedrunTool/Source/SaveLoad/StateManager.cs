@@ -258,10 +258,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // 移除当前房间的实体
             level.UnloadLevel();
 
-            // 修复：电网噪声残留
-            foreach (Entity entity in level.Entities.Where(e => e.GetType().FullName?.EndsWith("Renderer") == true)) {
-                entity.Removed(level);
-            }
+            // 移除带有声音的实体
+            level.Tracker.GetComponentsCopy<SoundSource>().ForEach(component => component.Entity.Removed(level));
         }
 
         private void DoNotRestoreTimeAndDeaths(Level level) {
@@ -384,6 +382,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             return State == States.None && !level.PausedNew() && (!level.IsPlayerDead() && !level.SkippingCutscene || tas);
         }
 
+        private void DoScreenWipe(Level level) {
+            level.DoScreenWipe(true, () => {
+                if (Settings.FreezeAfterLoadState) {
+                    Instance.State = States.Waiting;
+                } else {
+                    Instance.LoadStateComplete(level);
+                }
+            });
+        }
+
         // @formatter:off
         private static readonly Lazy<StateManager> Lazy = new(() => new StateManager());
         public static StateManager Instance => Lazy.Value;
@@ -404,16 +412,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 Instance.DoScreenWipe(level);
                 RemoveSelf();
             }
-        }
-
-        private void DoScreenWipe(Level level) {
-            level.DoScreenWipe(true, () => {
-                if (Settings.FreezeAfterLoadState) {
-                    Instance.State = States.Waiting;
-                } else {
-                    Instance.LoadStateComplete(level);
-                }
-            });
         }
     }
 }

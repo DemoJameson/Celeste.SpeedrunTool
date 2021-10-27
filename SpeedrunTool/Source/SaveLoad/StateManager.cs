@@ -258,7 +258,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private void UnloadLevel(Level level) {
             // Player 必须最早移除，不然在处理 player.triggersInside 字段时会产生空指针异常
             level.Tracker.GetEntitiesCopy<Player>().ForEach(level.Remove);
+
+            // 移除当前房间的实体
             level.UnloadLevel();
+
+            // 剩下则通过 SceneEnd 处理可以不用顾忌移除顺序
+            level.Entities.ToList().ForEach(entity => entity.SceneEnd(level));
         }
 
         private void DoNotRestoreTimeAndDeaths(Level level) {

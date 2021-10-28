@@ -191,6 +191,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     continue;
                 }
 
+                // 过滤掉实际上不存在的类型，例如未安装 DJMapHelper 时 ExtendedVariantsMode 的 AutoDestroyingReverseOshiroModder.stateMachine
+                fieldInfos = fieldInfos.Where(info => {
+                    try {
+                        info.GetValue(null);
+                        return true;
+                    } catch (TargetInvocationException) {
+                        return false;
+                    }
+                }).ToArray();
+
                 entityStaticFields[entityType] = fieldInfos;
             }
         }

@@ -255,5 +255,9 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 }
             }
         }
+
+        public static void AllReadyForTime() {
+            All.ForEach(point => point.ReadyForTime());
+        }
     }
 }

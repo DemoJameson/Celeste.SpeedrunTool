@@ -310,10 +310,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private static void ExternalAction() {
             Add(new SaveLoadAction(
-                    loadState: (_, _) => {
+                    saveState: (_, level) => {
+                        level.Entities.UpdateLists();
+                        IgnoreSaveLoadComponent.ReAddAll(level);
+                        EndPoint.AllReadyForTime();
+                    },
+                    loadState: (_, level) => {
                         RoomTimerManager.ResetTime();
                         DeathStatisticsManager.Clear();
-                        EndPoint.All.ForEach(point => point.ReadyForTime());
+                        IgnoreSaveLoadComponent.ReAddAll(level);
+                        EndPoint.AllReadyForTime();
                     },
                     clearState: fullClear => {
                         RoomTimerManager.ClearPbTimes(fullClear);

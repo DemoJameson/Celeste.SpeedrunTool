@@ -102,7 +102,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     || typeof(Input).GetFieldValue("DemoDash")?.GetPropertyValue("Pressed") as bool? == true
                     || typeof(Input).GetFieldValue("CrouchDash")?.GetPropertyValue("Pressed") as bool? == true
                 )) {
-                LoadStateComplete(level);
+                if (preCloneTask == null) {
+                    WaitSaveStateEntity.OutOfWaiting(level);
+                } else {
+                    LoadStateComplete(level);
+                }
             }
 
             orig(self);
@@ -192,8 +196,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SaveLoadAction.OnSaveState(level);
             DeepClonerUtils.ClearSharedDeepCloneState();
 
-            State = States.None;
-            return LoadState(tas, true);
+            if (tas) {
+                State = States.None;
+                return LoadState(true);
+            } else {
+                level.Add(new WaitSaveStateEntity(level));
+                return true;
+            }
         }
 
         // public for TAS Mod
@@ -202,7 +211,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             return LoadState(true);
         }
 
-        private bool LoadState(bool tas, bool fromSaveState = false) {
+        private bool LoadState(bool tas) {
             if (Engine.Scene is not Level level) {
                 return false;
             }
@@ -222,7 +231,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             UnloadLevel(level);
             savedLevel.DeepCloneToShared(level);
-            IgnoreSaveLoadComponent.ReAddAll(level);
             SaveData.Instance = savedSaveData.DeepCloneShared();
             RestoreAudio1(level);
             RestoreCassetteBlockManager1(level);
@@ -240,11 +248,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 level.Frozen = true;
                 level.TimerStopped = true;
                 level.PauseLock = true;
-                if (fromSaveState) {
-                    level.Add(new WaitLoadStateEntity());
-                } else {
-                    DoScreenWipe(level);
-                }
+                level.DoScreenWipe(true, () => {
+                    if (Settings.FreezeAfterLoadState) {
+                        Instance.State = States.Waiting;
+                    } else {
+                        Instance.LoadStateComplete(level);
+                    }
+                });
             }
 
             return true;
@@ -382,16 +392,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             return State == States.None && !level.PausedNew() && (!level.IsPlayerDead() && !level.SkippingCutscene || tas);
         }
 
-        private void DoScreenWipe(Level level) {
-            level.DoScreenWipe(true, () => {
-                if (Settings.FreezeAfterLoadState) {
-                    Instance.State = States.Waiting;
-                } else {
-                    Instance.LoadStateComplete(level);
-                }
-            });
-        }
-
         // @formatter:off
         private static readonly Lazy<StateManager> Lazy = new(() => new StateManager());
         public static StateManager Instance => Lazy.Value;
@@ -399,18 +399,55 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private StateManager() { }
         // @formatter:on
 
-        private class WaitLoadStateEntity : Entity {
-            private bool delayOneFrame = true;
+        private class WaitSaveStateEntity : Entity {
+            private static bool origFrozen;
+            private static bool origTimerStopped;
+            private static bool origPauseLock;
+            private static float origTimeActive;
+            private static float origRawTimeActive;
+
+            private bool waitOneFrame = true;
+
+            public WaitSaveStateEntity(Level level) {
+                origFrozen = level.Frozen;
+                origTimerStopped = level.TimerStopped;
+                origPauseLock = level.PauseLock;
+                origTimeActive = level.TimeActive;
+                origRawTimeActive = level.RawTimeActive;
+
+                level.Frozen = true;
+                level.TimerStopped = true;
+                level.PauseLock = true;
+            }
 
             public override void Render() {
-                if (delayOneFrame) {
-                    delayOneFrame = false;
+                if (waitOneFrame) {
+                    waitOneFrame = false;
                     return;
                 }
 
+                // 如果在这时候预克隆，部分图读档时就会游戏崩溃例如6A第一面
+                // System.ObjectDisposedException: Cannot access a disposed object.
+                // Instance.PreCloneSavedEntities();
+
                 Level level = SceneAs<Level>();
-                Instance.DoScreenWipe(level);
+                level.DoScreenWipe(true, () => {
+                    if (Settings.FreezeAfterLoadState) {
+                        Instance.State = States.Waiting;
+                    } else {
+                        OutOfWaiting(level);
+                    }
+                });
                 RemoveSelf();
+            }
+
+            public static void OutOfWaiting(Level level) {
+                level.Frozen = Instance.savedLevel?.Frozen ?? origFrozen;
+                level.TimerStopped = Instance.savedLevel?.TimerStopped ?? origTimerStopped;
+                level.PauseLock = Instance.savedLevel?.PauseLock ?? origPauseLock;
+                level.TimeActive = Instance.savedLevel?.TimeActive ?? origTimeActive;
+                level.RawTimeActive = Instance.savedLevel?.RawTimeActive ?? origRawTimeActive;
+                Instance.State = States.None;
             }
         }
     }

@@ -191,16 +191,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     continue;
                 }
 
-                // 过滤掉实际上不存在的类型，例如未安装 DJMapHelper 时 ExtendedVariantsMode 的 AutoDestroyingReverseOshiroModder.stateMachine
-                fieldInfos = fieldInfos.Where(info => {
-                    try {
-                        info.GetValue(null);
-                        return true;
-                    } catch (TargetInvocationException) {
-                        return false;
-                    }
-                }).ToArray();
-
                 entityStaticFields[entityType] = fieldInfos;
             }
         }
@@ -232,9 +222,25 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private static void SupportEntitySimpleStaticFields() {
             InitStaticFields();
-
+            bool requirePreProcessing = true;
             Add(new SaveLoadAction(
                 (dictionary, _) => {
+                    // 过滤掉实际上不存在的类型
+                    // 例如未安装 DJMapHelper 时 ExtendedVariantsMode 的 AutoDestroyingReverseOshiroModder.stateMachine
+                    if (requirePreProcessing) {
+                        requirePreProcessing = false;
+                        foreach (Type type in entityStaticFields.Keys.ToArray()) {
+                            entityStaticFields[type] = entityStaticFields[type].Where(info => {
+                                try {
+                                    info.GetValue(null);
+                                    return true;
+                                } catch (TargetInvocationException) {
+                                    return false;
+                                }
+                            }).ToArray();
+                        }
+                    }
+
                     foreach (Type type in entityStaticFields.Keys) {
                         FieldInfo[] fieldInfos = entityStaticFields[type];
                         // ("\n\n" + string.Join("\n", fieldInfos.Select(info => type.FullName + " " + info.Name + " " + info.FieldType))).DebugLog();

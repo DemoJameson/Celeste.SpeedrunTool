@@ -103,7 +103,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     || typeof(Input).GetFieldValue("CrouchDash")?.GetPropertyValue("Pressed") as bool? == true
                 )) {
                 if (preCloneTask == null) {
-                    WaitSaveStateEntity.OutOfWaiting(level);
+                    WaitingEntity.OutOfWaiting(level);
                 } else {
                     LoadStateComplete(level);
                 }
@@ -200,7 +200,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 State = States.None;
                 return LoadState(true);
             } else {
-                level.Add(new WaitSaveStateEntity(level));
+                level.Add(new WaitingEntity(level, true));
                 return true;
             }
         }
@@ -237,6 +237,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SaveLoadAction.OnLoadState(level);
 
             // 假如放在 UnloadLevel 前面，则 FNA+非D3D 的版本读档时会卡死在 preCloneTask?.Result，为什么呢
+            bool firstLoad = preCloneTask == null;
             PreCloneSavedEntities();
 
             GC.Collect();
@@ -244,17 +245,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             if (tas) {
                 LoadStateComplete(level);
+            } else if (firstLoad) {
+                level.Add(new WaitingEntity(level, false));
             } else {
-                level.Frozen = true;
-                level.TimerStopped = true;
-                level.PauseLock = true;
-                level.DoScreenWipe(true, () => {
-                    if (Settings.FreezeAfterLoadState) {
-                        Instance.State = States.Waiting;
-                    } else {
-                        Instance.LoadStateComplete(level);
-                    }
-                });
+                FreezeGame(level);
+                DoScreenWipe(level, false);
             }
 
             return true;
@@ -399,25 +394,46 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private StateManager() { }
         // @formatter:on
 
-        private class WaitSaveStateEntity : Entity {
+        private void FreezeGame(Level level) {
+            level.Frozen = true;
+            level.TimerStopped = true;
+            level.PauseLock = true;
+        }
+
+        private void DoScreenWipe(Level level, bool saveState) {
+            level.DoScreenWipe(true, () => {
+                if (Settings.FreezeAfterLoadState) {
+                    Instance.State = States.Waiting;
+                } else {
+                    if (saveState) {
+                        WaitingEntity.OutOfWaiting(level);
+                    } else {
+                        Instance.LoadStateComplete(level);
+                    }
+                }
+            });
+        }
+
+        private class WaitingEntity : Entity {
             private static bool origFrozen;
             private static bool origTimerStopped;
             private static bool origPauseLock;
             private static float origTimeActive;
             private static float origRawTimeActive;
 
+            private readonly bool saveState;
             private bool waitOneFrame = true;
 
-            public WaitSaveStateEntity(Level level) {
+            public WaitingEntity(Level level, bool saveState) {
+                this.saveState = saveState;
+
                 origFrozen = level.Frozen;
                 origTimerStopped = level.TimerStopped;
                 origPauseLock = level.PauseLock;
                 origTimeActive = level.TimeActive;
                 origRawTimeActive = level.RawTimeActive;
 
-                level.Frozen = true;
-                level.TimerStopped = true;
-                level.PauseLock = true;
+                Instance.FreezeGame(level);
             }
 
             public override void Render() {
@@ -431,13 +447,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 // Instance.PreCloneSavedEntities();
 
                 Level level = SceneAs<Level>();
-                level.DoScreenWipe(true, () => {
-                    if (Settings.FreezeAfterLoadState) {
-                        Instance.State = States.Waiting;
-                    } else {
-                        OutOfWaiting(level);
-                    }
-                });
+                Instance.DoScreenWipe(level, saveState);
                 RemoveSelf();
             }
 

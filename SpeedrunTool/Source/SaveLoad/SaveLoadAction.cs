@@ -40,7 +40,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private readonly Dictionary<Type, Dictionary<string, object>> savedValues = new();
         private readonly SlAction saveState;
 
-        public SaveLoadAction(SlAction saveState = null, SlAction loadState = null, Action<bool> clearState = null, Action<Level> beforeSaveState = null) {
+        public SaveLoadAction(SlAction saveState = null, SlAction loadState = null, Action<bool> clearState = null,
+            Action<Level> beforeSaveState = null) {
             this.saveState = saveState;
             this.loadState = loadState;
             this.clearState = clearState;
@@ -299,7 +300,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private static void MuteAnnoyingAudios() {
-            Add(new SaveLoadAction(loadState: (_, _) => {
+            Add(new SaveLoadAction(loadState: (_, level) => {
+                level.Entities.FindAll<SoundEmitter>().ForEach(emitter => {
+                    if (emitter.Source.GetFieldValue("instance") is EventInstance eventInstance) {
+                        eventInstance.setVolume(0f);
+                    }
+                });
+
                 foreach (EventInstance sfx in RequireMuteAudios) {
                     sfx.setVolume(0f);
                 }
@@ -330,12 +337,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         IgnoreSaveLoadComponent.RemoveAll(level);
                         ClearBeforeSaveComponent.RemoveAll(level);
 
-                        foreach (Entity entity in level.Entities.Where(entity => entity.GetType().FullName?.StartsWith("Celeste.Mod.CelesteNet.") == true)) {
-                             entity.RemoveSelf();
+                        foreach (Entity entity in level.Entities.Where(entity =>
+                            entity.GetType().FullName?.StartsWith("Celeste.Mod.CelesteNet.") == true)) {
+                            entity.RemoveSelf();
                         }
 
                         // 冲刺残影方向错误，干脆移除屏幕不显示了
-                        level.Tracker.GetEntities<TrailManager.Snapshot>().ForEach(entity => entity.Position = level.Camera.Position - Vector2.One * 100);
+                        level.Tracker.GetEntities<TrailManager.Snapshot>()
+                            .ForEach(entity => entity.Position = level.Camera.Position - Vector2.One * 100);
                     }
                 )
             );

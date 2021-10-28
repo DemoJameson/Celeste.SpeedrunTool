@@ -257,14 +257,20 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         // 释放资源，停止正在播放的声音等
         private void UnloadLevel(Level level) {
-            // Player 必须最早移除，不然在处理 player.triggersInside 字段时会产生空指针异常
-            level.Tracker.GetEntitiesCopy<Player>().ForEach(level.Remove);
+            List<Entity> entities = new();
 
-            // 移除当前房间的实体
-            level.UnloadLevel();
+            // Player 必须最早移除，不然在处理 player.triggersInside 字段时会产生空指针异常
+            entities.AddRange(level.Tracker.GetEntities<Player>());
+
+            // 移除当前房间的实体，照抄 level.UnloadLevel() 方法，不直接调用是因为 BingUI 在该方法中将其存储的 level 设置为了 null
+            entities.AddRange(level.GetEntitiesExcludingTagMask((int)Tags.Global));
 
             // 移除带有声音的实体
-            level.Tracker.GetComponentsCopy<SoundSource>().ForEach(component => component.Entity.Removed(level));
+            entities.AddRange(level.Tracker.GetComponents<SoundSource>().Select(component => component.Entity));
+
+            foreach (Entity entity in entities.Distinct()) {
+                entity.Removed(level);
+            }
         }
 
         private void DoNotRestoreTimeAndDeaths(Level level) {

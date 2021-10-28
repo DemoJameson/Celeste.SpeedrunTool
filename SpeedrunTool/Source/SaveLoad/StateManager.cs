@@ -363,6 +363,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private void ClearState(bool fullClear) {
+            // fix: 读档冻结时被TAS清除状态后无法解除冻结
+            if (State == States.Waiting && Engine.Scene is Level level) {
+                WaitingEntity.OutOfWaiting(level);
+            }
+
             playingEventInstances.Clear();
             savedLevel = null;
             savedSaveData = null;

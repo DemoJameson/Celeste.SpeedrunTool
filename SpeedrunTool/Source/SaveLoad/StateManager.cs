@@ -216,7 +216,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 return false;
             }
 
-            if (level.PausedNew() || State is States.Loading or States.Waiting || !IsSaved) {
+            if (!tas && level.PausedNew() || State is States.Loading or States.Waiting || !IsSaved) {
                 return false;
             }
 

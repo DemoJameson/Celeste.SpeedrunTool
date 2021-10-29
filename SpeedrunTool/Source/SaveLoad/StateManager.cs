@@ -27,12 +27,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private Level savedLevel;
         private SaveData savedSaveData;
         private Task<DeepCloneState> preCloneTask;
+        private FreezeType freezeType;
 
         public enum States {
             None,
             Saving,
             Loading,
             Waiting,
+        }
+
+        private enum FreezeType {
+            Save,
+            Load
         }
 
         private readonly HashSet<EventInstance> playingEventInstances = new();
@@ -102,11 +108,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     || typeof(Input).GetFieldValue("DemoDash")?.GetPropertyValue("Pressed") as bool? == true
                     || typeof(Input).GetFieldValue("CrouchDash")?.GetPropertyValue("Pressed") as bool? == true
                 )) {
-                if (preCloneTask == null) {
-                    WaitingEntity.OutOfWaiting(level);
-                } else {
-                    LoadStateComplete(level);
-                }
+                OutOfFreeze(level);
             }
 
             orig(self);
@@ -195,12 +197,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedSaveData = SaveData.Instance.DeepCloneShared();
             SaveLoadAction.OnSaveState(level);
             DeepClonerUtils.ClearSharedDeepCloneState();
-
             if (tas) {
                 State = States.None;
                 return LoadState(true);
             } else {
-                level.Add(new WaitingEntity(level, true));
+                PreCloneSavedEntities();
+                FreezeGame(level, FreezeType.Save);
+                level.Add(new WaitingEntity());
                 return true;
             }
         }
@@ -235,9 +238,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             RestoreAudio1(level);
             RestoreCassetteBlockManager1(level);
             SaveLoadAction.OnLoadState(level);
-
-            // 假如放在 UnloadLevel 前面，则 FNA+非D3D 的版本读档时会卡死在 preCloneTask?.Result，为什么呢
-            bool firstLoad = preCloneTask == null;
             PreCloneSavedEntities();
 
             GC.Collect();
@@ -245,11 +245,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             if (tas) {
                 LoadStateComplete(level);
-            } else if (firstLoad) {
-                level.Add(new WaitingEntity(level, false));
             } else {
-                FreezeGame(level);
-                DoScreenWipe(level, false);
+                FreezeGame(level, FreezeType.Load);
+                DoScreenWipe(level);
             }
 
             return true;
@@ -371,7 +369,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private void ClearState(bool fullClear) {
             // fix: 读档冻结时被TAS清除状态后无法解除冻结
             if (State == States.Waiting && Engine.Scene is Level level) {
-                WaitingEntity.OutOfWaiting(level);
+                OutOfFreeze(level);
             }
 
             playingEventInstances.Clear();
@@ -405,47 +403,41 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private StateManager() { }
         // @formatter:on
 
-        private void FreezeGame(Level level) {
+        private void FreezeGame(Level level, FreezeType freeze) {
+            freezeType = freeze;
             level.Frozen = true;
             level.TimerStopped = true;
             level.PauseLock = true;
         }
 
-        private void DoScreenWipe(Level level, bool saveState) {
+        private void DoScreenWipe(Level level) {
             level.DoScreenWipe(true, () => {
                 if (Settings.FreezeAfterLoadState) {
-                    Instance.State = States.Waiting;
+                    State = States.Waiting;
                 } else {
-                    if (saveState) {
-                        WaitingEntity.OutOfWaiting(level);
-                    } else {
-                        Instance.LoadStateComplete(level);
-                    }
+                    OutOfFreeze(level);
                 }
             });
         }
 
-        private class WaitingEntity : Entity {
-            private static bool origFrozen;
-            private static bool origTimerStopped;
-            private static bool origPauseLock;
-            private static float origTimeActive;
-            private static float origRawTimeActive;
+        private void OutOfFreeze(Level level) {
+            if (freezeType == FreezeType.Save || savedLevel == null) {
+                level.Frozen = savedLevel?.Frozen ?? false;
+                level.TimerStopped = savedLevel?.TimerStopped ?? false;
+                level.PauseLock = savedLevel?.PauseLock ?? false;
+                if (savedLevel != null) {
+                    level.TimeActive = savedLevel.TimeActive;
+                    level.RawTimeActive = savedLevel.RawTimeActive;
+                }
 
-            private readonly bool saveState;
-            private bool waitOneFrame = true;
-
-            public WaitingEntity(Level level, bool saveState) {
-                this.saveState = saveState;
-
-                origFrozen = level.Frozen;
-                origTimerStopped = level.TimerStopped;
-                origPauseLock = level.PauseLock;
-                origTimeActive = level.TimeActive;
-                origRawTimeActive = level.RawTimeActive;
-
-                Instance.FreezeGame(level);
+                State = States.None;
+            } else {
+                LoadStateComplete(level);
             }
+        }
+
+        private class WaitingEntity : Entity {
+            private bool waitOneFrame = true;
 
             public override void Render() {
                 if (waitOneFrame) {
@@ -453,22 +445,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     return;
                 }
 
-                // 如果在这时候预克隆，部分图读档时就会游戏崩溃例如6A第一面
-                // System.ObjectDisposedException: Cannot access a disposed object.
-                // Instance.PreCloneSavedEntities();
-
                 Level level = SceneAs<Level>();
-                Instance.DoScreenWipe(level, saveState);
+                Instance.DoScreenWipe(level);
                 RemoveSelf();
-            }
-
-            public static void OutOfWaiting(Level level) {
-                level.Frozen = Instance.savedLevel?.Frozen ?? origFrozen;
-                level.TimerStopped = Instance.savedLevel?.TimerStopped ?? origTimerStopped;
-                level.PauseLock = Instance.savedLevel?.PauseLock ?? origPauseLock;
-                level.TimeActive = Instance.savedLevel?.TimeActive ?? origTimeActive;
-                level.RawTimeActive = Instance.savedLevel?.RawTimeActive ?? origRawTimeActive;
-                Instance.State = States.None;
             }
         }
     }

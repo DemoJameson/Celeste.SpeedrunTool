@@ -16,6 +16,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class SaveLoadAction {
         public delegate void SlAction(Dictionary<Type, Dictionary<string, object>> savedValues, Level level);
 
+        public static readonly List<VirtualAsset> VirtualAssets = new();
+
         private static readonly List<SaveLoadAction> All = new();
 
         private static Dictionary<Type, FieldInfo[]> entityStaticFields;
@@ -129,6 +131,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SupportAudioMusic();
             MuteAnnoyingAudios();
             ExternalAction();
+            ReloadVirtualAssets();
             On.FMOD.Studio.EventDescription.createInstance += EventDescriptionOnCreateInstance;
         }
 
@@ -364,6 +367,23 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     }
                 )
             );
+        }
+
+        private static void ReloadVirtualAssets() {
+            Add(new SaveLoadAction(loadState: (_, _) => {
+                foreach (VirtualAsset virtualAsset in VirtualAssets) {
+                    switch (virtualAsset) {
+                        case VirtualTexture {IsDisposed: true} virtualTexture:
+                            virtualTexture.Reload();
+                            break;
+                        case VirtualRenderTarget {IsDisposed: true} virtualRenderTarget:
+                            virtualRenderTarget.Reload();
+                            break;
+                    }
+                }
+
+                VirtualAssets.Clear();
+            }));
         }
 
         private static RESULT EventDescriptionOnCreateInstance(On.FMOD.Studio.EventDescription.orig_createInstance orig, EventDescription self,

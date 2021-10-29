@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using FMOD.Studio;
 using Force.DeepCloner;
@@ -194,7 +195,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         }
                     }
 
-                    // CLone DynamicData
+                    // Clone DynamicData
                     if (DynDataUtils.ExistDynamicData(sourceObj)) {
                         object[] parameters = {sourceObj, null};
                         if ((bool)DynDataUtils.DynamicDataMap.InvokeMethod("TryGetValue", parameters)) {
@@ -206,12 +207,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         }
                     }
 
-                    if (clonedObj is VirtualTexture {IsDisposed: true} virtualTexture) {
-                        virtualTexture.Reload();
-                    }
-
-                    if (clonedObj is VirtualRenderTarget {IsDisposed: true} virtualRenderTarget) {
-                        virtualRenderTarget.Reload();
+                    // 预克隆的资源需要等待 LoadState 中移除实体之后才能判断是否需要 Reload，必须等待主线程中再操作
+                    if (clonedObj is VirtualAsset virtualAsset && Thread.CurrentThread.Name != "Main Thread") {
+                        SaveLoadAction.VirtualAssets.Add(virtualAsset);
                     }
                 }
 

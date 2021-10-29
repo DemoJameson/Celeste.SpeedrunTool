@@ -383,6 +383,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private void PreCloneSavedEntities() {
             preCloneTask = Task.Run(() => {
                 DeepCloneState deepCloneState = new();
+                // TODO FIXME 直接预克隆整个 level 会在读档之后存档时卡住
+                // savedLevel.DeepCloneTo(new Level(), deepCloneState);
                 savedLevel.Entities.DeepClone(deepCloneState);
                 savedLevel.RendererList.DeepClone(deepCloneState);
                 savedSaveData.DeepClone(deepCloneState);

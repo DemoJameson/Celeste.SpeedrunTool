@@ -370,20 +370,23 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private static void ReloadVirtualAssets() {
-            Add(new SaveLoadAction(loadState: (_, _) => {
-                foreach (VirtualAsset virtualAsset in VirtualAssets) {
-                    switch (virtualAsset) {
-                        case VirtualTexture {IsDisposed: true} virtualTexture:
-                            virtualTexture.Reload();
-                            break;
-                        case VirtualRenderTarget {IsDisposed: true} virtualRenderTarget:
-                            virtualRenderTarget.Reload();
-                            break;
-                    }
-                }
+            Add(new SaveLoadAction(
+                    loadState: (_, _) => {
+                        foreach (VirtualAsset virtualAsset in VirtualAssets) {
+                            switch (virtualAsset) {
+                                case VirtualTexture {IsDisposed: true} virtualTexture:
+                                    virtualTexture.Reload();
+                                    break;
+                                case VirtualRenderTarget {IsDisposed: true} virtualRenderTarget:
+                                    virtualRenderTarget.Reload();
+                                    break;
+                            }
+                        }
 
-                VirtualAssets.Clear();
-            }));
+                        VirtualAssets.Clear();
+                    }, clearState: _ => VirtualAssets.Clear()
+                )
+            );
         }
 
         private static RESULT EventDescriptionOnCreateInstance(On.FMOD.Studio.EventDescription.orig_createInstance orig, EventDescription self,

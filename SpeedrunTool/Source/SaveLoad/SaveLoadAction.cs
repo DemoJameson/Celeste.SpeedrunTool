@@ -37,17 +37,19 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private static readonly List<EventInstance> RequireMuteAudios = new();
         private readonly Action<bool> clearState;
         private readonly Action<Level> beforeSaveState;
+        private readonly Action preCloneEntities;
         private readonly SlAction loadState;
 
         private readonly Dictionary<Type, Dictionary<string, object>> savedValues = new();
         private readonly SlAction saveState;
 
         public SaveLoadAction(SlAction saveState = null, SlAction loadState = null, Action<bool> clearState = null,
-            Action<Level> beforeSaveState = null) {
+            Action<Level> beforeSaveState = null, Action preCloneEntities = null) {
             this.saveState = saveState;
             this.loadState = loadState;
             this.clearState = clearState;
             this.beforeSaveState = beforeSaveState;
+            this.preCloneEntities = preCloneEntities;
         }
 
         public static void Add(SaveLoadAction saveLoadAction) {
@@ -82,6 +84,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         internal static void OnBeforeSaveState(Level level) {
             foreach (SaveLoadAction saveLoadAction in All) {
                 saveLoadAction.beforeSaveState?.Invoke(level);
+            }
+        }
+
+        internal static void OnPreCloneEntities() {
+            foreach (SaveLoadAction saveLoadAction in All) {
+                saveLoadAction.preCloneEntities?.Invoke();
             }
         }
 
@@ -371,26 +379,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             );
         }
 
-        private static void ReloadVirtualAssets() {
-            Add(new SaveLoadAction(
-                    loadState: (_, _) => {
-                        foreach (VirtualAsset virtualAsset in VirtualAssets) {
-                            switch (virtualAsset) {
-                                case VirtualTexture {IsDisposed: true} virtualTexture:
-                                    virtualTexture.Reload();
-                                    break;
-                                case VirtualRenderTarget {IsDisposed: true} virtualRenderTarget:
-                                    virtualRenderTarget.Reload();
-                                    break;
-                            }
-                        }
-
-                        VirtualAssets.Clear();
-                    }, clearState: _ => VirtualAssets.Clear()
-                )
-            );
-        }
-
         private static RESULT EventDescriptionOnCreateInstance(On.FMOD.Studio.EventDescription.orig_createInstance orig, EventDescription self,
             out EventInstance instance) {
             RESULT result = orig(self, out instance);
@@ -668,6 +656,28 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     (savedValues, _) => LoadStaticMemberValues(savedValues))
                 );
             }
+        }
+
+        private static void ReloadVirtualAssets() {
+            Add(new SaveLoadAction(
+                    loadState: (_, _) => {
+                        foreach (VirtualAsset virtualAsset in VirtualAssets) {
+                            switch (virtualAsset) {
+                                case VirtualTexture {IsDisposed: true} virtualTexture:
+                                    virtualTexture.Reload();
+                                    break;
+                                case VirtualRenderTarget {IsDisposed: true} virtualRenderTarget:
+                                    virtualRenderTarget.Reload();
+                                    break;
+                            }
+                        }
+
+                        VirtualAssets.Clear();
+                    },
+                    clearState: _ => VirtualAssets.Clear(),
+                    preCloneEntities: () => VirtualAssets.Clear()
+                )
+            );
         }
     }
 }

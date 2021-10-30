@@ -131,7 +131,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SupportAudioMusic();
             MuteAnnoyingAudios();
             ExternalAction();
-            ReloadVirtualAssets();
             On.FMOD.Studio.EventDescription.createInstance += EventDescriptionOnCreateInstance;
         }
 
@@ -148,6 +147,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SupportXaphanHelper();
             SupportIsaGrabBag();
             SupportCommunalHelper();
+
+            // 放最后，确保收集了所有克隆的 VirtualAssets
+            ReloadVirtualAssets();
         }
 
         [Unload]

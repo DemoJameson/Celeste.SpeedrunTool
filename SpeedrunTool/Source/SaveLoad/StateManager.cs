@@ -197,15 +197,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedSaveData = SaveData.Instance.DeepCloneShared();
             SaveLoadAction.OnSaveState(level);
             DeepClonerUtils.ClearSharedDeepCloneState();
+            PreCloneSavedEntities();
             if (tas) {
                 State = States.None;
-                return LoadState(true);
             } else {
-                PreCloneSavedEntities();
                 FreezeGame(level, FreezeType.Save);
                 level.Add(new WaitingEntity());
-                return true;
             }
+
+            return true;
         }
 
         // public for TAS Mod

@@ -130,11 +130,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     ClearState(true);
                 }
 
-                if (self is Level) {
-                    State = States.None; // 修复：读档途中按下 PageDown/Up 后无法存档
-                    PreCloneSavedEntities();
-                }
-
                 if (self.GetSession() is { } session && session.Area != savedLevel.Session.Area) {
                     ClearState(true);
                 }
@@ -192,8 +187,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SavedByTas = tas;
 
             SaveLoadAction.OnBeforeSaveState(level);
-            savedLevel = new Level();
-            level.DeepCloneToShared(savedLevel);
+            savedLevel = level.DeepCloneShared();
             savedSaveData = SaveData.Instance.DeepCloneShared();
             SaveLoadAction.OnSaveState(level);
             DeepClonerUtils.ClearSharedDeepCloneState();
@@ -231,10 +225,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             DeepClonerUtils.SetSharedDeepCloneState(preCloneTask?.Result);
 
             DoNotRestoreTimeAndDeaths(level);
-
             UnloadLevel(level);
-            savedLevel.DeepCloneToShared(level);
+
+            level = savedLevel.DeepCloneShared();
+            Engine.Instance.SetFieldValue("scene", level);
+            Engine.Instance.SetFieldValue("nextScene", level);
             SaveData.Instance = savedSaveData.DeepCloneShared();
+
             RestoreAudio1(level);
             RestoreCassetteBlockManager1(level);
             SaveLoadAction.OnLoadState(level);
@@ -263,12 +260,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // 移除当前房间的实体，照抄 level.UnloadLevel() 方法，不直接调用是因为 BingUI 在该方法中将其存储的 level 设置为了 null
             entities.AddRange(level.GetEntitiesExcludingTagMask((int)Tags.Global));
 
-            // 移除带有声音的实体
-            entities.AddRange(level.Tracker.GetComponents<SoundSource>().Select(component => component.Entity));
-
             foreach (Entity entity in entities.Distinct()) {
                 entity.Removed(level);
             }
+
+            // 移除剩下声音组件
+            level.Tracker.GetComponentsCopy<SoundSource>().ForEach(component => component.RemoveSelf());
         }
 
         private void DoNotRestoreTimeAndDeaths(Level level) {
@@ -291,19 +288,17 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         .FirstOrDefault(info => info.Name.StartsWith("<playerStuck>")) is { } playerStuck
                 ) {
                     playerStuck.SetValue(enumerator, TimeSpan.FromTicks(session.Time));
+                    playerStuck.SetValue(enumerator.DeepCloneShared(), TimeSpan.FromTicks(session.Time));
                 }
 
-                int increaseDeath = 1;
-                if (level.IsPlayerDead()) {
-                    increaseDeath = 0;
-                }
-
+                int increaseDeath = level.IsPlayerDead() ? 0 : 1;
                 clonedSession.Deaths = savedSession.Deaths = Math.Max(session.Deaths + increaseDeath, clonedSession.Deaths);
                 clonedSession.DeathsInCurrentLevel = savedSession.DeathsInCurrentLevel =
                     Math.Max(session.DeathsInCurrentLevel + increaseDeath, clonedSession.DeathsInCurrentLevel);
-                clonedSaveData.TotalDeaths = SaveData.Instance.TotalDeaths + increaseDeath;
+                clonedSaveData.TotalDeaths = savedSaveData.TotalDeaths = SaveData.Instance.TotalDeaths + increaseDeath;
                 clonedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths =
-                    SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths + increaseDeath;
+                    savedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths =
+                        SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths + increaseDeath;
             }
         }
 
@@ -384,10 +379,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SaveLoadAction.OnPreCloneEntities();
             preCloneTask = Task.Run(() => {
                 DeepCloneState deepCloneState = new();
-                // TODO FIXME 直接预克隆整个 level 会在读档之后存档时卡住
-                // savedLevel.DeepCloneTo(new Level(), deepCloneState);
-                savedLevel.Entities.DeepClone(deepCloneState);
-                savedLevel.RendererList.DeepClone(deepCloneState);
+                savedLevel.DeepClone(deepCloneState);
                 savedSaveData.DeepClone(deepCloneState);
                 return deepCloneState;
             });

@@ -20,7 +20,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         private static readonly List<SaveLoadAction> All = new();
 
-        private static Dictionary<Type, FieldInfo[]> entityStaticFields;
+        private static Dictionary<Type, FieldInfo[]> simpleStaticFields;
+        private static Dictionary<Type, FieldInfo[]> modModuleLevelFields;
 
         private static readonly HashSet<string> RequireMuteAudioPaths = new() {
             "event:/game/general/strawberry_get",
@@ -144,9 +145,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         // code mod 需要等待此时才正式加载，才能通过 Type 查找
         [LoadContent]
-        internal static void LoadContent() {
+        private static void LoadContent() {
             SupportModSessionAndSaveData();
-            SupportEntitySimpleStaticFields();
+            SupportModModuleLevelFields();
+            SupportSimpleStaticFields();
             SupportMaxHelpingHand();
             SupportPandorasBox();
             SupportCrystallineHelper();
@@ -158,6 +160,72 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             // 放最后，确保收集了所有克隆的 VirtualAssets
             ReloadVirtualAssets();
+        }
+
+        [Initialize]
+        private static void InitFields() {
+            simpleStaticFields = new Dictionary<Type, FieldInfo[]>();
+            modModuleLevelFields = new Dictionary<Type, FieldInfo[]>();
+
+            IEnumerable<Type> types = FakeAssembly.GetFakeEntryAssembly().GetTypes().Where(type =>
+                !type.IsGenericType
+                && type.FullName != null
+                && !type.FullName.StartsWith("Celeste.Mod.SpeedrunTool")
+                && !type.IsSubclassOf(typeof(Oui))
+                && type.IsSameOrSubclassOf(typeof(Entity)) || type.IsSameOrSubclassOf(typeof(Component)) ||
+                type.IsSameOrSubclassOf(typeof(Renderer)));
+
+            foreach (Type type in types) {
+                FieldInfo[] fieldInfos = type.GetFieldInfos(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+                    .Where(info => {
+                        Type fieldType = info.FieldType;
+                        return !info.IsLiteral && fieldType.IsSimpleClass(_ =>
+                            fieldType == type
+                            || fieldType == typeof(Level)
+                            || fieldType == typeof(MTexture)
+                            || fieldType == typeof(CrystalStaticSpinner)
+                            || fieldType.IsSubclassOf(typeof(VirtualAsset))
+                        );
+                    }).ToArray();
+
+                if (fieldInfos.Length == 0) {
+                    continue;
+                }
+
+                // 过滤掉实际上不存在的类型
+                // 例如未安装 DJMapHelper 时 ExtendedVariantsMode 的 AutoDestroyingReverseOshiroModder.stateMachine
+                fieldInfos = fieldInfos.Where(info => {
+                    try {
+                        info.GetValue(null);
+                        return true;
+                    } catch (TargetInvocationException) {
+                        return false;
+                    }
+                }).ToArray();
+
+                simpleStaticFields[type] = fieldInfos;
+            }
+
+            foreach (Type type in Everest.Modules.Select(module => module.GetType())) {
+                List<FieldInfo> staticFields = new();
+                List<FieldInfo> instanceFields = new();
+
+                foreach (FieldInfo fieldInfo in type.GetFieldInfos().Where(info => !info.IsLiteral && info.FieldType == typeof(Level))) {
+                    if (fieldInfo.IsStatic) {
+                        staticFields.Add(fieldInfo);
+                    } else {
+                        instanceFields.Add(fieldInfo);
+                    }
+                }
+
+                if (staticFields.Count > 0) {
+                    simpleStaticFields[type] = staticFields.ToArray();
+                }
+
+                if (instanceFields.Count > 0) {
+                    modModuleLevelFields[type] = instanceFields.ToArray();
+                }
+            }
         }
 
         [Unload]
@@ -187,25 +255,31 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }));
         }
 
-        private static void InitStaticFields() {
-            entityStaticFields = new Dictionary<Type, FieldInfo[]>();
-            IEnumerable<Type> entityTypes = FakeAssembly.GetFakeEntryAssembly().GetTypes().Where(type =>
-                !type.IsGenericType
-                && type.FullName != null
-                && !type.FullName.StartsWith("Celeste.Mod.SpeedrunTool")
-                && !type.IsSubclassOf(typeof(Oui))
-                && type.IsSameOrSubclassOf(typeof(Entity)) || type.IsSameOrSubclassOf(typeof(Component)) ||
-                type.IsSameOrSubclassOf(typeof(Renderer)));
+        private static void SupportModModuleLevelFields() {
+            Add(new SaveLoadAction(
+                (savedValues, _) => {
+                    foreach (EverestModule module in Everest.Modules) {
+                        Dictionary<string, object> dict = new();
+                        Type moduleType = module.GetType();
+                        if (modModuleLevelFields.ContainsKey(moduleType)) {
+                            foreach (FieldInfo fieldInfo in modModuleLevelFields[moduleType]) {
+                                dict[fieldInfo.Name] = fieldInfo.GetValue(module);
+                            }
 
-            foreach (Type entityType in entityTypes) {
-                FieldInfo[] fieldInfos = entityType.GetFieldInfos(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-                    .Where(info => !info.IsLiteral).ToArray();
-                if (fieldInfos.Length == 0) {
-                    continue;
-                }
-
-                entityStaticFields[entityType] = fieldInfos;
-            }
+                            savedValues[moduleType] = dict.DeepCloneShared();
+                        }
+                    }
+                },
+                (savedValues, _) => {
+                    Dictionary<Type, Dictionary<string, object>> clonedValues = savedValues.DeepCloneShared();
+                    foreach (EverestModule module in Everest.Modules) {
+                        if (clonedValues.TryGetValue(module.GetType(), out Dictionary<string, object> dict)) {
+                            foreach (string fieldName in dict.Keys) {
+                                module.SetFieldValue(fieldName, dict[fieldName]);
+                            }
+                        }
+                    }
+                }));
         }
 
         private static void SupportExternalMember() {
@@ -233,47 +307,19 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 (savedValues, _) => LoadStaticMemberValues(savedValues)));
         }
 
-        private static void SupportEntitySimpleStaticFields() {
-            InitStaticFields();
-            bool requirePreProcessing = true;
+        private static void SupportSimpleStaticFields() {
             Add(new SaveLoadAction(
                 (dictionary, _) => {
-                    // 过滤掉实际上不存在的类型
-                    // 例如未安装 DJMapHelper 时 ExtendedVariantsMode 的 AutoDestroyingReverseOshiroModder.stateMachine
-                    if (requirePreProcessing) {
-                        requirePreProcessing = false;
-                        foreach (Type type in entityStaticFields.Keys.ToArray()) {
-                            entityStaticFields[type] = entityStaticFields[type].Where(info => {
-                                try {
-                                    info.GetValue(null);
-                                    return true;
-                                } catch (TargetInvocationException) {
-                                    return false;
-                                }
-                            }).ToArray();
-                        }
-                    }
-
-                    foreach (Type type in entityStaticFields.Keys) {
-                        FieldInfo[] fieldInfos = entityStaticFields[type];
+                    foreach (Type type in simpleStaticFields.Keys) {
+                        FieldInfo[] fieldInfos = simpleStaticFields[type];
                         // ("\n\n" + string.Join("\n", fieldInfos.Select(info => type.FullName + " " + info.Name + " " + info.FieldType))).DebugLog();
                         Dictionary<string, object> values = new();
 
                         foreach (FieldInfo fieldInfo in fieldInfos) {
-                            object value = fieldInfo.GetValue(null);
-                            Type fieldType = fieldInfo.FieldType;
-
-                            if (value == null) {
-                                values[fieldInfo.Name] = null;
-                            } else if (fieldType.IsSimpleClass(_ =>
-                                fieldType == type || fieldType == typeof(MTexture) || fieldType == typeof(CrystalStaticSpinner))) {
-                                values[fieldInfo.Name] = value;
-                            }
+                            values[fieldInfo.Name] = fieldInfo.GetValue(null);
                         }
 
-                        if (values.Keys.Count > 0) {
-                            dictionary[type] = values.DeepCloneShared();
-                        }
+                        dictionary[type] = values.DeepCloneShared();
                     }
                 }, (dictionary, _) => {
                     Dictionary<Type, Dictionary<string, object>> clonedDict = dictionary.DeepCloneShared();

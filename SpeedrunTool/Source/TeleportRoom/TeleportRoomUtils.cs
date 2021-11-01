@@ -45,16 +45,16 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
         }
 
         private static void RegisterHotkeys() {
-            Hotkeys.TeleportToPreviousRoom.RegisterPressedAction(scene => {
-                if (scene is Level { Paused: false } level && StateManager.Instance.State == StateManager.States.None) {
+            Hotkey.TeleportToPreviousRoom.RegisterPressedAction(scene => {
+                if (scene is Level { Paused: false } level && StateManager.Instance.State == State.None) {
                     if (TeleportToPreviousRoom(level) == false) {
                         PopupMessageUtils.Show(level, DialogIds.AlreadyFirstRoomTooltip.DialogClean(), DialogIds.AlreadyFirstRoomDialog);
                     }
                 }
             });
 
-            Hotkeys.TeleportToNextRoom.RegisterPressedAction(scene => {
-                if (scene is Level { Paused: false } level && StateManager.Instance.State == StateManager.States.None) {
+            Hotkey.TeleportToNextRoom.RegisterPressedAction(scene => {
+                if (scene is Level { Paused: false } level && StateManager.Instance.State == State.None) {
                     if (TeleportToNextRoom(level) == false) {
                         PopupMessageUtils.Show(level, DialogIds.AlreadyLastRoomTooltip.DialogClean(), DialogIds.AlreadyLastRoomDialog);
                     }

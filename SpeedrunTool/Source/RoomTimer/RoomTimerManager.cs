@@ -55,27 +55,27 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         }
 
         private static void RegisterHotkeys() {
-            Hotkeys.ResetRoomTimerPb.RegisterPressedAction(scene => {
+            Hotkey.ResetRoomTimerPb.RegisterPressedAction(scene => {
                 if (scene is Level {Paused: false}) {
                     ClearPbTimes();
                 }
             });
 
-            Hotkeys.SwitchRoomTimer.RegisterPressedAction(scene => {
+            Hotkey.SwitchRoomTimer.RegisterPressedAction(scene => {
                 if (scene is Level {Paused: false} level) {
                     SwitchRoomTimer((RoomTimerType)(((int)Settings.RoomTimerType + 1) % Enum.GetNames(typeof(RoomTimerType)).Length));
                     PopupMessageUtils.ShowOptionState(level, DialogIds.RoomTimer.DialogClean(), Settings.RoomTimerType.DialogClean());
                 }
             });
 
-            Hotkeys.SetEndPoint.RegisterPressedAction(scene => {
+            Hotkey.SetEndPoint.RegisterPressedAction(scene => {
                 if (scene is Level {Paused: false} level) {
                     ClearPbTimes();
                     CreateEndPoint(level);
                 }
             });
 
-            Hotkeys.SetAdditionalEndPoint.RegisterPressedAction(scene => {
+            Hotkey.SetAdditionalEndPoint.RegisterPressedAction(scene => {
                 if (scene is Level {Paused: false} level) {
                     if (!EndPoint.IsExist) {
                         ClearPbTimes();

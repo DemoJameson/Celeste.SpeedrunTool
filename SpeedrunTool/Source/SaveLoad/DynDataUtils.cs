@@ -37,7 +37,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             dynamicDataHook?.Dispose();
         }
 
-        public static void OnClearState() {
+        public static void ClearCached() {
             IgnoreObjects = new ConditionalWeakTable<object, object>();
             IgnoreTypes.Clear();
         }

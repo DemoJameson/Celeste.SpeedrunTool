@@ -42,7 +42,7 @@ namespace Celeste.Mod.SpeedrunTool.DeathStatistics {
             On.Celeste.Level.LoadLevel += LevelOnLoadLevel;
             On.Monocle.Scene.Begin += SceneOnBegin;
 
-            Hotkeys.CheckDeathStatistics.RegisterPressedAction(scene => {
+            Hotkey.CheckDeathStatistics.RegisterPressedAction(scene => {
                 if (scene.Tracker.GetEntity<DeathStatisticsUi>() is { } deathStatisticsUi) {
                     deathStatisticsUi.OnESC?.Invoke();
                 } else if (scene is Level {Paused: false} level && !level.IsPlayerDead()) {

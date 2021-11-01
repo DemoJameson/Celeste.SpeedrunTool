@@ -91,7 +91,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             On.Celeste.LevelLoader.ctor += LevelLoaderOnCtor;
             IL.Celeste.FlingBird.Awake += FlingBirdOnAwake;
 
-            Hotkeys.OpenDebugMap.RegisterPressedAction(scene => {
+            Hotkey.OpenDebugMap.RegisterPressedAction(scene => {
                 if (scene is Level level) {
                     Engine.Scene = new Editor.MapEditor(level.Session.Area);
                     Engine.Commands.Open = false;

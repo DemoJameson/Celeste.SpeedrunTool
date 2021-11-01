@@ -22,19 +22,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         // public for tas
         public bool IsSaved => savedLevel != null;
-        public States State { get; private set; } = States.None;
+        public State State { get; private set; } = State.None;
         public bool SavedByTas { get; private set; }
         private Level savedLevel;
         private SaveData savedSaveData;
         private Task<DeepCloneState> preCloneTask;
         private FreezeType freezeType;
-
-        public enum States {
-            None,
-            Saving,
-            Loading,
-            Waiting,
-        }
 
         private enum FreezeType {
             Save,
@@ -61,14 +54,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private void RegisterHotkeys() {
-            Hotkeys.SaveState.RegisterPressedAction(scene => {
+            Hotkey.SaveState.RegisterPressedAction(scene => {
                 if (scene is Level) {
                     SaveState(false);
                 }
             });
 
-            Hotkeys.LoadState.RegisterPressedAction(scene => {
-                if (scene is Level level && !level.PausedNew() && State == States.None) {
+            Hotkey.LoadState.RegisterPressedAction(scene => {
+                if (scene is Level level && !level.PausedNew() && State == State.None) {
                     if (IsSaved) {
                         LoadState(false);
                     } else {
@@ -77,14 +70,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
             });
 
-            Hotkeys.ClearState.RegisterPressedAction(scene => {
-                if (scene is Level level && !level.PausedNew() && State == States.None) {
-                    ClearState(true);
+            Hotkey.ClearState.RegisterPressedAction(scene => {
+                if (scene is Level level && !level.PausedNew() && State == State.None) {
+                    ClearState();
                     PopupMessageUtils.Show(level, DialogIds.ClearStateToolTip.DialogClean(), DialogIds.ClearStateDialog);
                 }
             });
 
-            Hotkeys.SwitchAutoLoadState.RegisterPressedAction(scene => {
+            Hotkey.SwitchAutoLoadState.RegisterPressedAction(scene => {
                 if (scene is Level level && !level.PausedNew()) {
                     Settings.AutoLoadStateAfterDeath = !Settings.AutoLoadStateAfterDeath;
                     SpeedrunToolModule.Instance.SaveSettings();
@@ -95,7 +88,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private void SceneOnBeforeUpdate(On.Monocle.Scene.orig_BeforeUpdate orig, Scene self) {
-            if (Settings.Enabled && self is Level level && State == States.Waiting && !level.PausedNew()
+            if (Settings.Enabled && self is Level level && State == State.Waiting && !level.PausedNew()
                 && (Input.Dash.Pressed
                     || Input.Grab.Check
                     || Input.Jump.Check
@@ -104,7 +97,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     || Input.MoveX != 0
                     || Input.MoveY != 0
                     || Input.Aim.Value != Vector2.Zero
-                    || HotkeyConfigUi.GetVirtualButton(Hotkeys.LoadState).Released
+                    || HotkeyConfigUi.GetVirtualButton(Hotkey.LoadState).Released
                     || typeof(Input).GetFieldValue("DemoDash")?.GetPropertyValue("Pressed") as bool? == true
                     || typeof(Input).GetFieldValue("CrouchDash")?.GetPropertyValue("Pressed") as bool? == true
                 )) {
@@ -117,7 +110,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private void UpdateBackdropWhenWaiting(On.Celeste.Level.orig_Update orig, Level level) {
             orig(level);
 
-            if (State == States.Waiting && level.Frozen) {
+            if (State == State.Waiting && level.Frozen) {
                 level.Foreground.Update(level);
                 level.Background.Update(level);
             }
@@ -127,17 +120,17 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             orig(self);
             if (IsSaved) {
                 if (self is Overworld && !SavedByTas && InGameOverworldHelperIsOpen.Value?.GetValue(null) as bool? != true) {
-                    ClearState(true);
+                    ClearState();
                 }
 
                 // 重启章节 Level 实例变更，所以之前预克隆的实体作废，需要重新克隆
                 if (self is Level) {
-                    State = States.None;
+                    State = State.None;
                     PreCloneSavedEntities();
                 }
 
                 if (self.GetSession() is { } session && session.Area != savedLevel.Session.Area) {
-                    ClearState(true);
+                    ClearState();
                 }
             }
         }
@@ -187,9 +180,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 return false;
             }
 
-            ClearState(false);
-
-            State = States.Saving;
+            State = State.Saving;
             SavedByTas = tas;
 
             SaveLoadAction.OnBeforeSaveState(level);
@@ -199,7 +190,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             DeepClonerUtils.ClearSharedDeepCloneState();
             PreCloneSavedEntities();
             if (tas) {
-                State = States.None;
+                State = State.None;
             } else {
                 FreezeGame(level, FreezeType.Save);
                 level.Add(new WaitingEntity());
@@ -219,7 +210,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 return false;
             }
 
-            if (!tas && level.PausedNew() || State is States.Loading or States.Waiting || !IsSaved) {
+            if (!tas && level.PausedNew() || State is State.Loading or State.Waiting || !IsSaved) {
                 return false;
             }
 
@@ -227,7 +218,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 return false;
             }
 
-            State = States.Loading;
+            State = State.Loading;
             DeepClonerUtils.SetSharedDeepCloneState(preCloneTask?.Result);
 
             DoNotRestoreTimeAndDeaths(level);
@@ -315,11 +306,13 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             RestoreAudio2();
             RestoreCassetteBlockManager2(level);
             DeepClonerUtils.ClearSharedDeepCloneState();
-            State = States.None;
+            State = State.None;
         }
 
         // 收集需要继续播放的声音
         private void RestoreAudio1(Level level) {
+            playingEventInstances.Clear();
+
             foreach (Component component in level.Entities.SelectMany(entity => entity.Components.ToArray())) {
                 if (component is SoundSource {Playing: true} source && source.GetFieldValue("instance") is EventInstance eventInstance) {
                     playingEventInstances.Add(eventInstance);
@@ -359,15 +352,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         // public for tas
-        // ReSharper disable once UnusedMember.Global
         // ReSharper disable once MemberCanBePrivate.Global
+        // 为了照顾使用体验（会卡顿，增加 SaveState 时间），不主动触发内存回收
         public void ClearState() {
-            ClearState(false);
-        }
-
-        private void ClearState(bool fullClear) {
             // fix: 读档冻结时被TAS清除状态后无法解除冻结
-            if (State == States.Waiting && Engine.Scene is Level level) {
+            if (State == State.Waiting && Engine.Scene is Level level) {
                 OutOfFreeze(level);
             }
 
@@ -375,8 +364,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedLevel = null;
             savedSaveData = null;
             preCloneTask = null;
-            SaveLoadAction.OnClearState(fullClear);
-            State = States.None;
+            SaveLoadAction.OnClearState();
+            State = State.None;
         }
 
         private void PreCloneSavedEntities() {
@@ -393,7 +382,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private bool IsAllowSave(Level level, bool tas) {
             // 正常游玩时禁止死亡或者跳过过场时读档，TAS 则无以上限制
             // 跳过过场时的黑屏与读档后加的黑屏冲突，会导致一直卡在跳过过场的过程中
-            return State == States.None && !level.PausedNew() && (!level.IsPlayerDead() && !level.SkippingCutscene || tas);
+            return State == State.None && !level.PausedNew() && (!level.IsPlayerDead() && !level.SkippingCutscene || tas);
         }
 
         // @formatter:off
@@ -413,7 +402,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private void DoScreenWipe(Level level) {
             level.DoScreenWipe(true, () => {
                 if (Settings.FreezeAfterLoadState) {
-                    State = States.Waiting;
+                    State = State.Waiting;
                 } else {
                     OutOfFreeze(level);
                 }
@@ -430,7 +419,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     level.RawTimeActive = savedLevel.RawTimeActive;
                 }
 
-                State = States.None;
+                State = State.None;
             } else {
                 LoadStateComplete(level);
             }
@@ -450,5 +439,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 RemoveSelf();
             }
         }
+    }
+
+    public enum State {
+        None,
+        Saving,
+        Loading,
+        Waiting,
     }
 }

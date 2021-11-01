@@ -36,7 +36,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         };
 
         private static readonly List<EventInstance> RequireMuteAudios = new();
-        private readonly Action<bool> clearState;
+        private readonly Action clearState;
         private readonly Action<Level> beforeSaveState;
         private readonly Action preCloneEntities;
         private readonly SlAction loadState;
@@ -44,7 +44,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private readonly Dictionary<Type, Dictionary<string, object>> savedValues = new();
         private readonly SlAction saveState;
 
-        public SaveLoadAction(SlAction saveState = null, SlAction loadState = null, Action<bool> clearState = null,
+        public SaveLoadAction(SlAction saveState = null, SlAction loadState = null, Action clearState = null,
             Action<Level> beforeSaveState = null, Action preCloneEntities = null) {
             this.saveState = saveState;
             this.loadState = loadState;
@@ -73,10 +73,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
         }
 
-        internal static void OnClearState(bool fullClear) {
+        internal static void OnClearState() {
             foreach (SaveLoadAction saveLoadAction in All) {
                 saveLoadAction.savedValues.Clear();
-                saveLoadAction.clearState?.Invoke(fullClear);
+                saveLoadAction.clearState?.Invoke();
             }
 
             RequireMuteAudios.Clear();
@@ -403,12 +403,16 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         IgnoreSaveLoadComponent.ReAddAll(level);
                         EndPoint.AllReadyForTime();
                     },
-                    clearState: fullClear => {
-                        RoomTimerManager.ClearPbTimes(fullClear);
+                    clearState: () => {
+                        RoomTimerManager.ClearPbTimes();
                         DeepClonerUtils.ClearSharedDeepCloneState();
-                        DynDataUtils.OnClearState();
+                        DynDataUtils.ClearCached();
                     },
                     beforeSaveState: level => {
+                        RoomTimerManager.ClearPbTimes(false);
+                        DeepClonerUtils.ClearSharedDeepCloneState();
+                        DynDataUtils.ClearCached();
+
                         IgnoreSaveLoadComponent.RemoveAll(level);
                         ClearBeforeSaveComponent.RemoveAll(level);
 
@@ -720,7 +724,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                         VirtualAssets.Clear();
                     },
-                    clearState: _ => VirtualAssets.Clear(),
+                    clearState: () => VirtualAssets.Clear(),
                     preCloneEntities: () => VirtualAssets.Clear()
                 )
             );

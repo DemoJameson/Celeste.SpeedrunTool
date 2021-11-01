@@ -79,37 +79,37 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingIgnore] public Buttons? ControllerSwitchAutoLoadState { get; set; }
         [SettingIgnore] public Buttons? ControllerToggleFullscreen { get; set; }
 
-        [SettingIgnore] public List<Keys> KeyboardSaveState { get; set; } = Hotkeys.SaveState.GetDefaultKeys();
+        [SettingIgnore] public List<Keys> KeyboardSaveState { get; set; } = Hotkey.SaveState.GetDefaultKeys();
 
-        [SettingIgnore] public List<Keys> KeyboardLoadState { get; set; } = Hotkeys.LoadState.GetDefaultKeys();
+        [SettingIgnore] public List<Keys> KeyboardLoadState { get; set; } = Hotkey.LoadState.GetDefaultKeys();
 
-        [SettingIgnore] public List<Keys> KeyboardClearState { get; set; } = Hotkeys.ClearState.GetDefaultKeys();
-
-        [SettingIgnore]
-        public List<Keys> KeyboardOpenDebugMap { get; set; } = Hotkeys.OpenDebugMap.GetDefaultKeys();
-
-        [SettingIgnore] public List<Keys> KeyboardResetRoomTimerPb { get; set; } = Hotkeys.ResetRoomTimerPb.GetDefaultKeys();
+        [SettingIgnore] public List<Keys> KeyboardClearState { get; set; } = Hotkey.ClearState.GetDefaultKeys();
 
         [SettingIgnore]
-        public List<Keys> KeyboardSwitchRoomTimer { get; set; } = Hotkeys.SwitchRoomTimer.GetDefaultKeys();
+        public List<Keys> KeyboardOpenDebugMap { get; set; } = Hotkey.OpenDebugMap.GetDefaultKeys();
 
-        [SettingIgnore] public List<Keys> KeyboardSetEndPoint { get; set; } = Hotkeys.SetEndPoint.GetDefaultKeys();
-
-        [SettingIgnore]
-        public List<Keys> KeyboardSetAdditionalEndPoint { get; set; } = Hotkeys.SetAdditionalEndPoint.GetDefaultKeys();
+        [SettingIgnore] public List<Keys> KeyboardResetRoomTimerPb { get; set; } = Hotkey.ResetRoomTimerPb.GetDefaultKeys();
 
         [SettingIgnore]
-        public List<Keys> KeyboardCheckDeathStatistics { get; set; } = Hotkeys.CheckDeathStatistics.GetDefaultKeys();
+        public List<Keys> KeyboardSwitchRoomTimer { get; set; } = Hotkey.SwitchRoomTimer.GetDefaultKeys();
 
-        [SettingIgnore] public List<Keys> KeyboardTeleportToPreviousRoom { get; set; } = Hotkeys.TeleportToPreviousRoom.GetDefaultKeys();
-
-        [SettingIgnore] public List<Keys> KeyboardTeleportToNextRoom { get; set; } = Hotkeys.TeleportToNextRoom.GetDefaultKeys();
+        [SettingIgnore] public List<Keys> KeyboardSetEndPoint { get; set; } = Hotkey.SetEndPoint.GetDefaultKeys();
 
         [SettingIgnore]
-        public List<Keys> KeyboardSwitchAutoLoadState { get; set; } = Hotkeys.SwitchAutoLoadState.GetDefaultKeys();
+        public List<Keys> KeyboardSetAdditionalEndPoint { get; set; } = Hotkey.SetAdditionalEndPoint.GetDefaultKeys();
 
         [SettingIgnore]
-        public List<Keys> KeyboardToggleFullscreen { get; set; } = Hotkeys.ToggleFullscreen.GetDefaultKeys();
+        public List<Keys> KeyboardCheckDeathStatistics { get; set; } = Hotkey.CheckDeathStatistics.GetDefaultKeys();
+
+        [SettingIgnore] public List<Keys> KeyboardTeleportToPreviousRoom { get; set; } = Hotkey.TeleportToPreviousRoom.GetDefaultKeys();
+
+        [SettingIgnore] public List<Keys> KeyboardTeleportToNextRoom { get; set; } = Hotkey.TeleportToNextRoom.GetDefaultKeys();
+
+        [SettingIgnore]
+        public List<Keys> KeyboardSwitchAutoLoadState { get; set; } = Hotkey.SwitchAutoLoadState.GetDefaultKeys();
+
+        [SettingIgnore]
+        public List<Keys> KeyboardToggleFullscreen { get; set; } = Hotkey.ToggleFullscreen.GetDefaultKeys();
 
         #endregion HotkeyConfig
     }

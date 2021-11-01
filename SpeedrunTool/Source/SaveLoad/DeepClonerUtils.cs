@@ -63,13 +63,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 }
 
                 lock (sourceObj) {
-                    if (sourceObj is Level) {
-                        // 金草莓死亡或者 PageDown/Up 切换房间后等等改变 Level 实例的情况
-                        // After golden strawberry deaths or changing rooms w/ Page Down / Up
-                        if (Engine.Scene is Level level) {
-                            return level;
+                    if (sourceObj is Scene) {
+                        if (sourceObj is Level) {
+                            // 金草莓死亡或者 PageDown/Up 切换房间后等等改变 Level 实例的情况
+                            // After golden strawberry deaths or changing rooms w/ Page Down / Up
+                            if (Engine.Scene is Level level) {
+                                return level;
+                            }
                         }
-
                         return sourceObj;
                     }
 

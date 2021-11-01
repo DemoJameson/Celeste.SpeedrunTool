@@ -130,6 +130,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     ClearState(true);
                 }
 
+                // 重启章节 Level 实例变更，所以之前预克隆的实体作废，需要重新克隆
+                if (self is Level) {
+                    State = States.None;
+                    PreCloneSavedEntities();
+                }
+
                 if (self.GetSession() is { } session && session.Area != savedLevel.Session.Area) {
                     ClearState(true);
                 }
@@ -187,7 +193,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SavedByTas = tas;
 
             SaveLoadAction.OnBeforeSaveState(level);
-            savedLevel = level.DeepCloneShared();
+            level.DeepCloneToShared(savedLevel = new Level());
             savedSaveData = SaveData.Instance.DeepCloneShared();
             SaveLoadAction.OnSaveState(level);
             DeepClonerUtils.ClearSharedDeepCloneState();
@@ -227,9 +233,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             DoNotRestoreTimeAndDeaths(level);
             UnloadLevel(level);
 
-            level = savedLevel.DeepCloneShared();
-            Engine.Instance.SetFieldValue("scene", level);
-            Engine.Instance.SetFieldValue("nextScene", level);
+            savedLevel.DeepCloneToShared(level);
             SaveData.Instance = savedSaveData.DeepCloneShared();
 
             RestoreAudio1(level);
@@ -379,7 +383,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SaveLoadAction.OnPreCloneEntities();
             preCloneTask = Task.Run(() => {
                 DeepCloneState deepCloneState = new();
-                savedLevel.DeepClone(deepCloneState);
+                savedLevel.Entities.DeepClone(deepCloneState);
+                savedLevel.RendererList.DeepClone(deepCloneState);
                 savedSaveData.DeepClone(deepCloneState);
                 return deepCloneState;
             });

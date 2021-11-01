@@ -11,7 +11,7 @@ using MonoMod.Cil;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public static class StateMarkUtils {
         private const string StartFromSaveSate = nameof(StartFromSaveSate);
-        private static SpriteBank MySpriteBank;
+        private static SpriteBank mySpriteBank;
 
         [Load]
         private static void Load() {
@@ -30,7 +30,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         [LoadContent]
         private static void LoadContent() {
-            MySpriteBank = new SpriteBank(GFX.Game, "Graphics/SpeedrunToolSprites.xml");
+            mySpriteBank = new SpriteBank(GFX.Game, "Graphics/SpeedrunToolSprites.xml");
         }
 
         private static void ReColor(Dictionary<Type, Dictionary<string, object>> savedValues, Level level) {
@@ -65,7 +65,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 _ => "speedrun_tool_goldberry"
             };
 
-            MySpriteBank.CreateOn(sprite, spriteId);
+            mySpriteBank.CreateOn(sprite, spriteId);
         }
 
         // Copy from https://github.com/rhelmot/CelesteRandomizer/blob/master/Randomizer/Patches/sessionLifecycle.cs#L144

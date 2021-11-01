@@ -62,12 +62,17 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     return null;
                 }
 
-                // 除了 Level 其它 Scene 都不要克隆
-                if (sourceObj is Scene and not Level) {
-                    return sourceObj;
-                }
-
                 lock (sourceObj) {
+                    if (sourceObj is Level) {
+                        // 金草莓死亡或者 PageDown/Up 切换房间后等等改变 Level 实例的情况
+                        // After golden strawberry deaths or changing rooms w/ Page Down / Up
+                        if (Engine.Scene is Level level) {
+                            return level;
+                        }
+
+                        return sourceObj;
+                    }
+
                     // 稍后重新创建正在播放的 SoundSource 里的 EventInstance 实例
                     if (sourceObj is SoundSource {Playing: true} source &&
                         source.GetFieldValue("instance") is EventInstance instance) {

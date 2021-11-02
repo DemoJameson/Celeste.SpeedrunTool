@@ -176,7 +176,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 type.IsSameOrSubclassOf(typeof(Renderer)));
 
             foreach (Type type in types) {
-                FieldInfo[] fieldInfos = type.GetFieldInfos(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+                FieldInfo[] fieldInfos = type.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
                     .Where(info => {
                         Type fieldType = info.FieldType;
                         return !info.IsLiteral && fieldType.IsSimpleClass(_ =>

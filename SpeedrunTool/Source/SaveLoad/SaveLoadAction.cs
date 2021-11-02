@@ -192,9 +192,19 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     continue;
                 }
 
-                // 过滤掉实际上不存在的类型
-                // 例如未安装 DJMapHelper 时 ExtendedVariantsMode 的 AutoDestroyingReverseOshiroModder.stateMachine
-                fieldInfos = fieldInfos.Where(info => {
+                simpleStaticFields[type] = fieldInfos;
+            }
+
+            InitModuleFields();
+            InitExtendedVariantsFields();
+            FilterStaticFields();
+        }
+
+        private static void FilterStaticFields() {
+            // 过滤掉非法的字段
+            // 例如未安装 DJMapHelper 时 ExtendedVariantsMode 的 AutoDestroyingReverseOshiroModder.stateMachine
+            foreach (Type type in simpleStaticFields.Keys.ToArray()) {
+                FieldInfo[] fieldInfos = simpleStaticFields[type].Where(info => {
                     try {
                         info.GetValue(null);
                         return true;
@@ -203,9 +213,15 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     }
                 }).ToArray();
 
-                simpleStaticFields[type] = fieldInfos;
+                if (fieldInfos.Length > 0) {
+                    simpleStaticFields[type] = fieldInfos;
+                } else {
+                    simpleStaticFields.Remove(type);
+                }
             }
+        }
 
+        private static void InitModuleFields() {
             foreach (Type type in Everest.Modules.Select(module => module.GetType())) {
                 List<FieldInfo> staticFields = new();
                 List<FieldInfo> instanceFields = new();
@@ -224,6 +240,21 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
                 if (instanceFields.Count > 0) {
                     modModuleLevelFields[type] = instanceFields.ToArray();
+                }
+            }
+        }
+
+        private static void InitExtendedVariantsFields() {
+            if (Type.GetType("ExtendedVariants.Variants.AbstractExtendedVariant, ExtendedVariantMode") is { } variantType) {
+                foreach (Type type in variantType.Assembly.GetTypesSafe().Where(type => type.IsSubclassOf(variantType))) {
+                    FieldInfo[] fieldInfos = type.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+                        .Where(info => !info.IsLiteral && info.FieldType.IsSimpleClass()).ToArray();
+
+                    if (fieldInfos.Length == 0) {
+                        continue;
+                    }
+
+                    simpleStaticFields[type] = fieldInfos;
                 }
             }
         }
@@ -640,28 +671,50 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
         }
 
+        // TODO 增加开关，并且检测 ExtendedVariantsTrigger 相关的值强制 SL
         private static void SupportExtendedVariants() {
-            // 修复：ExtendedVariantTrigger 设置的值在 SL 之后失效
-            if (Type.GetType("ExtendedVariants.ExtendedVariantTrigger, ExtendedVariantMode") is { } extendedVariantTrigger) {
-                Add(new SaveLoadAction(
-                    loadState: (savedValues, _) => {
-                        if (Engine.Scene.GetPlayer() is not { } player ||
-                            player.GetFieldValue("triggersInside") is not HashSet<Trigger> triggersInside) {
-                            return;
-                        }
+            // 静态字段在 InitExtendedVariantsFields() 中处理了
 
-                        foreach (Trigger trigger in triggersInside.Where(trigger =>
-                            trigger.GetType() == extendedVariantTrigger && (bool)trigger.GetFieldValue(trigger.GetType(), "revertOnLeave"))) {
-                            trigger.OnEnter(player);
-                        }
-                    }));
+            if (Type.GetType("ExtendedVariants.Module.ExtendedVariantsModule, ExtendedVariantMode") is not { } moduleType) {
+                return;
             }
 
-            if (Type.GetType("ExtendedVariants.Variants.JumpCount, ExtendedVariantMode") is { } jumpCountType) {
-                Add(new SaveLoadAction(
-                    (savedValues, _) => SaveStaticMemberValues(savedValues, jumpCountType, "jumpBuffer"),
-                    (savedValues, _) => LoadStaticMemberValues(savedValues)));
+            if (Type.GetType("ExtendedVariants.Module.ExtendedVariantsSettings, ExtendedVariantMode") is not { } settingsType) {
+                return;
             }
+
+            List<PropertyInfo> settingProperties = settingsType.GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                .Where(property => property.CanRead
+                                   && property.CanWrite
+                                   && property.GetCustomAttribute<SettingIgnoreAttribute>() != null
+                                   && !property.Name.StartsWith("Display")
+                ).ToList();
+
+            Add(new SaveLoadAction(
+                (savedValues, _) => {
+                    if (moduleType.GetPropertyValue("Settings") is not { } settingsInstance) {
+                        return;
+                    }
+
+                    Dictionary<string, object> dict = new();
+                    foreach (PropertyInfo property in settingProperties) {
+                        dict[property.Name] = property.GetValue(settingsInstance);
+                    }
+
+                    savedValues[settingsType] = dict.DeepCloneShared();
+                },
+                (savedValues, _) => {
+                    if (moduleType.GetPropertyValue("Settings") is not { } settingsInstance) {
+                        return;
+                    }
+
+                    if (savedValues.TryGetValue(settingsType, out Dictionary<string, object> dict)) {
+                        dict = dict.DeepCloneShared();
+                        foreach (string propertyName in dict.Keys) {
+                            settingsInstance.SetPropertyValue(propertyName, dict[propertyName]);
+                        }
+                    }
+                }));
         }
 
         private static void SupportXaphanHelper() {

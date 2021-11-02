@@ -671,7 +671,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             }
         }
 
-        // TODO 增加开关，并且检测 ExtendedVariantsTrigger 相关的值强制 SL
         private static void SupportExtendedVariants() {
             // 静态字段在 InitExtendedVariantsFields() 中处理了
 
@@ -704,6 +703,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     savedValues[settingsType] = dict.DeepCloneShared();
                 },
                 (savedValues, _) => {
+                    // TODO 检测 ExtendedVariantsTrigger 相关的值强制 SL
+                    if (!SpeedrunToolModule.Settings.SaveExtendedVariants && !StateManager.Instance.SavedByTas) {
+                        return;
+                    }
+
                     if (moduleType.GetPropertyValue("Settings") is not { } settingsInstance) {
                         return;
                     }

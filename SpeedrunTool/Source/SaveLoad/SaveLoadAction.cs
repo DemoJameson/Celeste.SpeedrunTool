@@ -703,7 +703,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     savedValues[settingsType] = dict.DeepCloneShared();
                 },
                 (savedValues, _) => {
-                    // TODO 检测 ExtendedVariantsTrigger 相关的值强制 SL
+                    // 本来打算将关卡中 ExtendedVariantsTrigger 涉及相关的值强制 SL，想想还是算了
                     if (!SpeedrunToolModule.Settings.SaveExtendedVariants && !StateManager.Instance.SavedByTas) {
                         return;
                     }

@@ -84,8 +84,8 @@ namespace Celeste.Mod.SpeedrunTool {
                     subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.FreezeAfterLoadState), Settings.FreezeAfterLoadState).Change(b =>
                         Settings.FreezeAfterLoadState = b));
 
-                    subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.DoNotRestoreTimeAndDeaths), Settings.DoNotRestoreTimeAndDeaths).Change(b =>
-                        Settings.DoNotRestoreTimeAndDeaths = b));
+                    subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.SaveTimeAndDeaths), Settings.SaveTimeAndDeaths).Change(b =>
+                        Settings.SaveTimeAndDeaths = b));
 
                     subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.SaveExtendedVariants), Settings.SaveExtendedVariants).Change(b =>
                         Settings.SaveExtendedVariants = b));

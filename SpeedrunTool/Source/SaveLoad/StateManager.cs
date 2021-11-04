@@ -221,7 +221,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             State = State.Loading;
             DeepClonerUtils.SetSharedDeepCloneState(preCloneTask?.Result);
 
-            DoNotRestoreTimeAndDeaths(level);
+            UpdateTimeAndDeaths(level);
             UnloadLevel(level);
 
             savedLevel.DeepCloneToShared(level);
@@ -263,38 +263,40 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             level.Tracker.GetComponentsCopy<SoundSource>().ForEach(component => component.RemoveSelf());
         }
 
-        private void DoNotRestoreTimeAndDeaths(Level level) {
-            if (!SavedByTas && Settings.DoNotRestoreTimeAndDeaths) {
-                Session session = level.Session;
-                Session savedSession = savedLevel.Session;
-                Session clonedSession = savedSession.DeepCloneShared();
-                SaveData clonedSaveData = savedSaveData.DeepCloneShared();
-                AreaKey areaKey = session.Area;
-
-                clonedSession.Time = savedSession.Time = Math.Max(session.Time, clonedSession.Time);
-                clonedSaveData.Time = SaveData.Instance.Time;
-                clonedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].TimePlayed =
-                    SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].TimePlayed;
-
-                // 修复：切屏时存档，若干秒后读档游戏会误以为卡死自动重生
-                if (savedLevel.GetFieldValue("transition") is Coroutine coroutine
-                    && coroutine.Current() is { } enumerator
-                    && enumerator.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
-                        .FirstOrDefault(info => info.Name.StartsWith("<playerStuck>")) is { } playerStuck
-                ) {
-                    playerStuck.SetValue(enumerator, TimeSpan.FromTicks(session.Time));
-                    playerStuck.SetValue(enumerator.DeepCloneShared(), TimeSpan.FromTicks(session.Time));
-                }
-
-                int increaseDeath = level.IsPlayerDead() ? 0 : 1;
-                clonedSession.Deaths = savedSession.Deaths = Math.Max(session.Deaths + increaseDeath, clonedSession.Deaths);
-                clonedSession.DeathsInCurrentLevel = savedSession.DeathsInCurrentLevel =
-                    Math.Max(session.DeathsInCurrentLevel + increaseDeath, clonedSession.DeathsInCurrentLevel);
-                clonedSaveData.TotalDeaths = savedSaveData.TotalDeaths = SaveData.Instance.TotalDeaths + increaseDeath;
-                clonedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths =
-                    savedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths =
-                        SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths + increaseDeath;
+        private void UpdateTimeAndDeaths(Level level) {
+            if (SavedByTas || Settings.SaveTimeAndDeaths) {
+                return;
             }
+
+            Session session = level.Session;
+            Session savedSession = savedLevel.Session;
+            Session clonedSession = savedSession.DeepCloneShared();
+            SaveData clonedSaveData = savedSaveData.DeepCloneShared();
+            AreaKey areaKey = session.Area;
+
+            clonedSession.Time = savedSession.Time = Math.Max(session.Time, clonedSession.Time);
+            clonedSaveData.Time = SaveData.Instance.Time;
+            clonedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].TimePlayed =
+                SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].TimePlayed;
+
+            // 修复：切屏时存档，若干秒后读档游戏会误以为卡死自动重生
+            if (savedLevel.GetFieldValue("transition") is Coroutine coroutine
+                && coroutine.Current() is { } enumerator
+                && enumerator.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
+                    .FirstOrDefault(info => info.Name.StartsWith("<playerStuck>")) is { } playerStuck
+            ) {
+                playerStuck.SetValue(enumerator, TimeSpan.FromTicks(session.Time));
+                playerStuck.SetValue(enumerator.DeepCloneShared(), TimeSpan.FromTicks(session.Time));
+            }
+
+            int increaseDeath = level.IsPlayerDead() ? 0 : 1;
+            clonedSession.Deaths = savedSession.Deaths = Math.Max(session.Deaths + increaseDeath, clonedSession.Deaths);
+            clonedSession.DeathsInCurrentLevel = savedSession.DeathsInCurrentLevel =
+                Math.Max(session.DeathsInCurrentLevel + increaseDeath, clonedSession.DeathsInCurrentLevel);
+            clonedSaveData.TotalDeaths = savedSaveData.TotalDeaths = SaveData.Instance.TotalDeaths + increaseDeath;
+            clonedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths =
+                savedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths =
+                    SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths + increaseDeath;
         }
 
         private void LoadStateComplete(Level level) {

@@ -32,7 +32,7 @@ namespace Celeste.Mod.SpeedrunTool {
         // State Manager
         public const string FreezeAfterLoadState = "SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE";
         public const string AutoLoadStateAfterDeath = "SPEEDRUN_TOOL_AUTO_LOAD_STATE_AFTER_DEATH";
-        public const string DoNotRestoreTimeAndDeaths = "SPEEDRUN_TOOL_DO_NOT_RESTORE_TIME_AND_DEATHS";
+        public const string SaveTimeAndDeaths = "SPEEDRUN_TOOL_SAVE_TIME_AND_DEATHS";
         public const string SaveExtendedVariants = "SPEEDRUN_TOOL_SAVE_EXTENDED_VARIANTS";
         public const string SaveState = "SPEEDRUN_TOOL_SAVE_STATE";
         public const string LoadState = "SPEEDRUN_TOOL_LOAD_STATE";

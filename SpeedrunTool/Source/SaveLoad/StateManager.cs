@@ -255,6 +255,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // 移除当前房间的实体，照抄 level.UnloadLevel() 方法，不直接调用是因为 BingUI 在该方法中将其存储的 level 设置为了 null
             entities.AddRange(level.GetEntitiesExcludingTagMask((int)Tags.Global));
 
+            // 恢復主音乐
+            if (level.Tracker.GetEntity<CassetteBlockManager>() is {} cassetteBlockManager) {
+                entities.Add(cassetteBlockManager);
+            }
+
             foreach (Entity entity in entities.Distinct()) {
                 entity.Removed(level);
             }

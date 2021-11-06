@@ -109,6 +109,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
             if (SpeedrunToolModule.Settings.FastTeleport) {
                 // 修复问题：死亡瞬间传送 PlayerDeadBody 没被清除，导致传送完毕后 madeline 自动爆炸
                 level.Entities.UpdateLists();
+                level.RendererList.Renderers.ForEach(renderer => (renderer as ScreenWipe)?.Cancel());
 
                 // External
                 RoomTimerManager.ResetTime();

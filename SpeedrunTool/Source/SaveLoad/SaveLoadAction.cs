@@ -490,7 +490,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     };
                     savedValues[typeof(Audio)] = saved;
                 },
-                (savedValues, _) => {
+                (savedValues, level) => {
                     Dictionary<string, object> saved = savedValues[typeof(Audio)];
 
                     Audio.SetMusic(Audio.GetEventName(saved["currentMusicEvent"] as EventInstance));
@@ -506,6 +506,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     Audio.MusicUnderwater = (bool)saved["MusicUnderwater"];
                     Audio.PauseMusic = (bool)saved["PauseMusic"];
                     Audio.PauseGameplaySfx = (bool)saved["PauseGameplaySfx"];
+                    if (!level.Paused && Level._PauseSnapshot != null) {
+                        Audio.ReleaseSnapshot(Level._PauseSnapshot);
+                        typeof(Level).SetFieldValue("PauseSnapshot", null);
+                    }
                 }
             ));
         }

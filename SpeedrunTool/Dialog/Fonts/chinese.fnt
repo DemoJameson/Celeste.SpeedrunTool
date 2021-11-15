@@ -4,16 +4,17 @@
 	<pages>
 		<page id="0" file="chinese_speedrun_tool.png"/>
 	</pages>
-	<chars count="10">
+	<chars count="11">
 		<char id="32" x="0" y="0" width="0" height="0" xoffset="-1" yoffset="-1" xadvance="11" page="0" chnl="0" />
-		<char id="20256" x="167" y="1" width="41" height="40" xoffset="0" yoffset="13" xadvance="44" page="0" chnl="0" />
-		<char id="21488" x="209" y="1" width="37" height="40" xoffset="3" yoffset="12" xadvance="44" page="0" chnl="0" />
+		<char id="20256" x="204" y="1" width="41" height="40" xoffset="0" yoffset="13" xadvance="44" page="0" chnl="0" />
+		<char id="21488" x="166" y="1" width="37" height="40" xoffset="3" yoffset="12" xadvance="44" page="0" chnl="0" />
 		<char id="21551" x="43" y="1" width="38" height="41" xoffset="0" yoffset="12" xadvance="44" page="0" chnl="0" />
-		<char id="24573" x="80" y="43" width="40" height="40" xoffset="0" yoffset="12" xadvance="44" page="0" chnl="0" />
+		<char id="24573" x="125" y="1" width="40" height="40" xoffset="0" yoffset="12" xadvance="44" page="0" chnl="0" />
+		<char id="25299" x="0" y="43" width="41" height="40" xoffset="0" yoffset="13" xadvance="44" page="0" chnl="0" />
 		<char id="26071" x="1" y="1" width="41" height="41" xoffset="0" yoffset="12" xadvance="44" page="0" chnl="0" />
-		<char id="26694" x="125" y="1" width="41" height="40" xoffset="0" yoffset="12" xadvance="44" page="0" chnl="0" />
-		<char id="27905" x="0" y="43" width="39" height="40" xoffset="1" yoffset="12" xadvance="44" page="0" chnl="0" />
-		<char id="30053" x="40" y="43" width="39" height="40" xoffset="2" yoffset="12" xadvance="44" page="0" chnl="0" />
+		<char id="26694" x="82" y="43" width="41" height="40" xoffset="0" yoffset="12" xadvance="44" page="0" chnl="0" />
+		<char id="27905" x="42" y="43" width="39" height="40" xoffset="1" yoffset="12" xadvance="44" page="0" chnl="0" />
+		<char id="30053" x="124" y="43" width="39" height="40" xoffset="2" yoffset="12" xadvance="44" page="0" chnl="0" />
 		<char id="36865" x="82" y="1" width="42" height="41" xoffset="-1" yoffset="12" xadvance="44" page="0" chnl="0" />
 	</chars>
 	<kernings count="0">

@@ -775,7 +775,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         foreach (VirtualAsset virtualAsset in VirtualAssets) {
                             switch (virtualAsset) {
                                 case VirtualTexture {IsDisposed: true} virtualTexture:
-                                    virtualTexture.Reload();
+                                    // Fix: 全屏切换然后读档煤球红边消失
+                                    if (!virtualTexture.Name.StartsWith("dust-noise-")) {
+                                        virtualTexture.Reload();
+                                    }
                                     break;
                                 case VirtualRenderTarget {IsDisposed: true} virtualRenderTarget:
                                     virtualRenderTarget.Reload();

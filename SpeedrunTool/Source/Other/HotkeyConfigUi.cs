@@ -444,12 +444,18 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             Settings.SetPropertyValue($"Controller{Hotkey}", button);
         }
 
-        public void SetKeys(List<Keys> keys) {
-            Settings.SetPropertyValue($"Keyboard{Hotkey}", keys);
+        public List<Keys> GetKeys() {
+            List<Keys> result = (List<Keys>)Settings.GetPropertyValue($"Keyboard{Hotkey}");
+            if (result == null) {
+                result = new List<Keys>();
+                SetKeys(result);
+            }
+
+            return result;
         }
 
-        public List<Keys> GetKeys() {
-            return (List<Keys>)Settings.GetPropertyValue($"Keyboard{Hotkey}");
+        public void SetKeys(List<Keys> keys) {
+            Settings.SetPropertyValue($"Keyboard{Hotkey}", keys);
         }
 
         public string GetLabel() {

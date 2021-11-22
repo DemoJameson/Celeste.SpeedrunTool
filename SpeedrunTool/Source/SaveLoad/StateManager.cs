@@ -180,6 +180,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 return false;
             }
 
+            SaveLoadAction.InitActions();
+
             State = State.Saving;
             SavedByTas = tas;
 

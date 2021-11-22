@@ -133,6 +133,25 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
         [Load]
         private static void Load() {
+            On.FMOD.Studio.EventDescription.createInstance += EventDescriptionOnCreateInstance;
+        }
+
+        [Unload]
+        private static void Unload() {
+            All.Clear();
+            On.FMOD.Studio.EventDescription.createInstance -= EventDescriptionOnCreateInstance;
+        }
+
+        // 第一次 SL 时才初始化，避免通过安装依赖功能解除禁用的 Mod 被忽略
+        private static bool initialized;
+
+        public static void InitActions() {
+            if (initialized) {
+                return;
+            }
+
+            initialized = true;
+            InitFields();
             SupportExternalMember();
             SupportCalcRandom();
             SupportMInput();
@@ -140,12 +159,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SupportAudioMusic();
             MuteAnnoyingAudios();
             ExternalAction();
-            On.FMOD.Studio.EventDescription.createInstance += EventDescriptionOnCreateInstance;
-        }
-
-        // code mod 需要等待此时才正式加载，才能通过 Type 查找
-        [LoadContent]
-        private static void LoadContent() {
             SupportModSessionAndSaveData();
             SupportModModuleLevelFields();
             SupportSimpleStaticFields();
@@ -162,7 +175,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             ReloadVirtualAssets();
         }
 
-        [Initialize]
         private static void InitFields() {
             simpleStaticFields = new Dictionary<Type, FieldInfo[]>();
             modModuleLevelFields = new Dictionary<Type, FieldInfo[]>();
@@ -257,12 +269,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     simpleStaticFields[type] = fieldInfos;
                 }
             }
-        }
-
-        [Unload]
-        private static void Unload() {
-            All.Clear();
-            On.FMOD.Studio.EventDescription.createInstance -= EventDescriptionOnCreateInstance;
         }
 
         private static void SupportModSessionAndSaveData() {
@@ -779,6 +785,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                                     if (!virtualTexture.Name.StartsWith("dust-noise-")) {
                                         virtualTexture.Reload();
                                     }
+
                                     break;
                                 case VirtualRenderTarget {IsDisposed: true} virtualRenderTarget:
                                     virtualRenderTarget.Reload();

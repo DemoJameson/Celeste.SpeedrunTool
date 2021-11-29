@@ -48,8 +48,8 @@ SPEEDRUN_TOOL_ROOM_TIMER_IGNORE_FLAG=   Ignore Flag
 SPEEDRUN_TOOL_AUTO_TURN_OFF_ROOM_TIMER= Turn Off Timer When Restarting Chapter w/o State
 
 # ================================== State Manager ==================================
-SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE=     Pause The Game After Loading State
-SPEEDRUN_TOOL_AUTO_LOAD_STATE_AFTER_DEATH= Auto Loading State After Death
+SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE=     Pause The Game after Loading State
+SPEEDRUN_TOOL_AUTO_LOAD_STATE_AFTER_DEATH= Auto Loading State after Death
 SPEEDRUN_TOOL_SAVE_TIME_AND_DEATHS=        Save Time and Deaths
 SPEEDRUN_TOOL_SAVE_EXTENDED_VARIANTS=      Save Extended Variants
 SPEEDRUN_TOOL_SAVE_STATE=                  Save State

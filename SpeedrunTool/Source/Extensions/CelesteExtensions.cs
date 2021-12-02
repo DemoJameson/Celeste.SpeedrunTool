@@ -32,14 +32,6 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
             return scene.GetPlayer()?.Dead != false;
         }
 
-        public static bool IsGlobalButExcludeSomeTypes(this Entity entity) {
-            return entity.TagCheck(Tags.Global) && entity.IsNotType<CassetteBlockManager>();
-        }
-
-        public static bool PausedNew(this Level level) {
-            return level.Paused || level.GetFieldValue("unpauseTimer") is > 0f;
-        }
-
         public static IEnumerator Current(this Coroutine coroutine) {
             if (coroutine.GetFieldValue("enumerators") is Stack<IEnumerator> {Count: > 0} enumerators) {
                 return enumerators.Peek();

@@ -61,7 +61,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             });
 
             Hotkey.LoadState.RegisterPressedAction(scene => {
-                if (scene is Level level && !level.PausedNew() && State == State.None) {
+                if (scene is Level {Paused: false} level && State == State.None) {
                     if (IsSaved) {
                         LoadState(false);
                     } else {
@@ -71,14 +71,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             });
 
             Hotkey.ClearState.RegisterPressedAction(scene => {
-                if (scene is Level level && !level.PausedNew() && State == State.None) {
+                if (scene is Level {Paused: false} level && State == State.None) {
                     ClearState();
                     PopupMessageUtils.Show(level, DialogIds.ClearStateToolTip.DialogClean(), DialogIds.ClearStateDialog);
                 }
             });
 
             Hotkey.SwitchAutoLoadState.RegisterPressedAction(scene => {
-                if (scene is Level level && !level.PausedNew()) {
+                if (scene is Level {Paused: false} level) {
                     Settings.AutoLoadStateAfterDeath = !Settings.AutoLoadStateAfterDeath;
                     SpeedrunToolModule.Instance.SaveSettings();
                     string state = (Settings.AutoLoadStateAfterDeath ? DialogIds.On : DialogIds.Off).DialogClean();
@@ -88,7 +88,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private void SceneOnBeforeUpdate(On.Monocle.Scene.orig_BeforeUpdate orig, Scene self) {
-            if (Settings.Enabled && self is Level level && State == State.Waiting && !level.PausedNew()
+            if (Settings.Enabled && self is Level level && State == State.Waiting && !level.Paused
                 && (Input.Dash.Pressed
                     || Input.Grab.Check
                     || Input.Jump.Check
@@ -212,7 +212,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 return false;
             }
 
-            if (!tas && level.PausedNew() || State is State.Loading or State.Waiting || !IsSaved) {
+            if (!tas && level.Paused || State is State.Loading or State.Waiting || !IsSaved) {
                 return false;
             }
 
@@ -389,9 +389,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         }
 
         private bool IsAllowSave(Level level, bool tas) {
-            // 正常游玩时禁止死亡或者跳过过场时读档，TAS 则无以上限制
+            // 正常游玩时禁止死亡或者跳过过场时存档，TAS 则无以上限制
             // 跳过过场时的黑屏与读档后加的黑屏冲突，会导致一直卡在跳过过场的过程中
-            return State == State.None && !level.PausedNew() && (!level.IsPlayerDead() && !level.SkippingCutscene || tas);
+            return State == State.None && !level.Paused && (!level.IsPlayerDead() && !level.SkippingCutscene || tas);
         }
 
         // @formatter:off

@@ -45,7 +45,7 @@ SPEEDRUN_TOOL_CURRENT_ROOM=             Current Room
 SPEEDRUN_TOOL_NUMBER_OF_ROOMS=          Number of Timed Rooms
 SPEEDRUN_TOOL_END_POINT_STYLE=          End Point Style
 SPEEDRUN_TOOL_ROOM_TIMER_IGNORE_FLAG=   Ignore Flag
-SPEEDRUN_TOOL_AUTO_TURN_OFF_ROOM_TIMER= Turn Off Timer When Restarting Chapter w/o State
+SPEEDRUN_TOOL_AUTO_TURN_OFF_ROOM_TIMER= Turn Off Timer When Restart Game/Chapter
 
 # ================================== State Manager ==================================
 SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE=     Pause The Game after Loading State

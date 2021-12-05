@@ -9,6 +9,40 @@ using Monocle;
 namespace Celeste.Mod.SpeedrunTool.RoomTimer {
     [Tracked]
     public class EndPoint: Entity {
+        private static readonly List<EndPoint> CachedEndPoints = new();
+        private static AreaKey cachedAreaKey;
+
+        [Load]
+        private static void Load() {
+            On.Celeste.Level.End += LevelOnEnd;
+            On.Celeste.Level.Begin += LevelOnBegin;
+        }
+
+        [Unload]
+        private static void Unload() {
+            On.Celeste.Level.End -= LevelOnEnd;
+            On.Celeste.Level.Begin -= LevelOnBegin;
+        }
+
+        private static void LevelOnEnd(On.Celeste.Level.orig_End orig, Level self) {
+            CachedEndPoints.Clear();
+            CachedEndPoints.AddRange(All);
+            cachedAreaKey = self.Session.Area;
+            orig(self);
+        }
+
+        private static void LevelOnBegin(On.Celeste.Level.orig_Begin orig, Level self) {
+            orig(self);
+            if (self.Session.Area == cachedAreaKey) {
+                foreach (EndPoint endPoint in CachedEndPoints) {
+                    self.Add(endPoint);
+                }
+            } else {
+                CachedEndPoints.Clear();
+                cachedAreaKey = default;
+            }
+        }
+
         public enum SpriteStyle {
             Flag,
             GoldBerry,

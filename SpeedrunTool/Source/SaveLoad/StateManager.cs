@@ -28,6 +28,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private SaveData savedSaveData;
         private Task<DeepCloneState> preCloneTask;
         private FreezeType freezeType;
+        private int? ignorePlayerHairException;
 
         private enum FreezeType {
             Save,
@@ -39,18 +40,20 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         #region Hook
 
         public void Load() {
+            On.Monocle.Scene.BeforeUpdate += SceneOnBeforeUpdate;
             On.Celeste.Level.Update += UpdateBackdropWhenWaiting;
             On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
-            On.Monocle.Scene.BeforeUpdate += SceneOnBeforeUpdate;
+            On.Celeste.PlayerHair.Render += PlayerHairOnRender;
             RegisterHotkeys();
         }
 
         public void Unload() {
+            On.Monocle.Scene.BeforeUpdate -= SceneOnBeforeUpdate;
             On.Celeste.Level.Update -= UpdateBackdropWhenWaiting;
             On.Monocle.Scene.Begin -= ClearStateWhenSwitchScene;
             On.Celeste.PlayerDeadBody.End -= AutoLoadStateWhenDeath;
-            On.Monocle.Scene.BeforeUpdate -= SceneOnBeforeUpdate;
+            On.Celeste.PlayerHair.Render -= PlayerHairOnRender;
         }
 
         private void RegisterHotkeys() {
@@ -114,6 +117,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 level.Foreground.Update(level);
                 level.Background.Update(level);
             }
+
+            if (ignorePlayerHairException.HasValue) {
+                ignorePlayerHairException--;
+            }
         }
 
         private void ClearStateWhenSwitchScene(On.Monocle.Scene.orig_Begin orig, Scene self) {
@@ -152,6 +159,14 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     }
                 };
                 self.RemoveSelf();
+            } else {
+                orig(self);
+            }
+        }
+
+        private void PlayerHairOnRender(On.Celeste.PlayerHair.orig_Render orig, PlayerHair self) {
+            if (ignorePlayerHairException is >= 0 && self.Sprite?.HasHair == true && self.Sprite.HairCount != self.Nodes.Count) {
+                // ignore
             } else {
                 orig(self);
             }
@@ -373,6 +388,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             savedLevel = null;
             savedSaveData = null;
             preCloneTask = null;
+            ignorePlayerHairException = null;
             SaveLoadAction.OnClearState();
             State = State.None;
         }
@@ -432,6 +448,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             } else {
                 LoadStateComplete(level);
             }
+
+            ignorePlayerHairException = 1;
         }
 
         private class WaitingEntity : Entity {

@@ -37,13 +37,13 @@
     </ItemGroup>
     <ItemGroup>
         <Reference Include="Celeste, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\lib-stripped\Celeste.exe</HintPath>
+            <HintPath>..\libs\Celeste.exe</HintPath>
         </Reference>
         <Reference Include="FNA">
-            <HintPath>..\lib-stripped\FNA.dll</HintPath>
+            <HintPath>..\libs\FNA.dll</HintPath>
         </Reference>
         <Reference Include="MMHOOK_Celeste, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\lib-stripped\MMHOOK_Celeste.dll</HintPath>
+            <HintPath>..\libs\MMHOOK_Celeste.dll</HintPath>
         </Reference>
     </ItemGroup>
     <ItemGroup>

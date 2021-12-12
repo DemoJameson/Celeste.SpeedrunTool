@@ -9,8 +9,10 @@ using Celeste.Mod.SpeedrunTool.RoomTimer;
 using FMOD;
 using FMOD.Studio;
 using Microsoft.Xna.Framework;
+using Mono.Cecil.Cil;
 using Monocle;
 using MonoMod.Cil;
+using MonoMod.RuntimeDetour;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad {
     public sealed class SaveLoadAction {
@@ -19,6 +21,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         public static readonly List<VirtualAsset> VirtualAssets = new();
 
         private static readonly List<SaveLoadAction> All = new();
+        private static ILHook modDeathTrackerHook;
 
         private static Dictionary<Type, FieldInfo[]> simpleStaticFields;
         private static Dictionary<Type, FieldInfo[]> modModuleLevelFields;
@@ -140,6 +143,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         private static void Unload() {
             All.Clear();
             On.FMOD.Studio.EventDescription.createInstance -= EventDescriptionOnCreateInstance;
+            modDeathTrackerHook?.Dispose();
+            modDeathTrackerHook = null;
         }
 
         // 第一次 SL 时才初始化，避免通过安装依赖功能解除禁用的 Mod 被忽略
@@ -169,6 +174,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             SupportExtendedVariants();
             SupportXaphanHelper();
             SupportIsaGrabBag();
+            SupportDeathTracker();
             SupportCommunalHelper();
 
             // 放最后，确保收集了所有克隆的 VirtualAssets
@@ -756,6 +762,24 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                         "playerInstance".ToBackingField()),
                     (savedValues, _) => LoadStaticMemberValues(savedValues))
                 );
+            }
+        }
+
+        private static void SupportDeathTracker() {
+            if (Type.GetType("CelesteDeathTracker.DeathTrackerModule+<>c__DisplayClass6_0, CelesteDeathTracker")?.GetMethodInfo("<Load>b__2") is {} modPlayerSpawn &&
+                Type.GetType("CelesteDeathTracker.DeathDisplay, CelesteDeathTracker") is {} deathDisplayType) {
+                modDeathTrackerHook = new ILHook(modPlayerSpawn, il => {
+                    ILCursor ilCursor = new(il);
+                    // display => player.Scene.Entities.FindFirst<DeathDisplay>()
+                    if (ilCursor.TryGotoNext(MoveType.After, ins => ins.OpCode == OpCodes.Ldarg_0,
+                            ins => ins.OpCode == OpCodes.Ldfld && ins.Operand.ToString().EndsWith("::display"))) {
+                        ilCursor.Emit(OpCodes.Pop)
+                            .Emit(OpCodes.Ldarg_1)
+                            .Emit(OpCodes.Callvirt, typeof(Entity).GetProperty("Scene").GetGetMethod())
+                            .Emit(OpCodes.Callvirt, typeof(Scene).GetProperty("Entities").GetGetMethod())
+                            .Emit(OpCodes.Callvirt, typeof(EntityList).GetMethod("FindFirst").MakeGenericMethod(deathDisplayType));
+                    }
+                });
             }
         }
 

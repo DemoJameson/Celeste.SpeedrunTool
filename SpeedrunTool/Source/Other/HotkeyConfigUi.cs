@@ -70,7 +70,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             new(Hotkey.SwitchRoomTimer, Keys.F10),
             new(Hotkey.SetEndPoint, Keys.F11),
             new(Hotkey.SetAdditionalEndPoint),
-            new(Hotkey.CheckDeathStatistics, Keys.F12),
+            new(Hotkey.CheckDeathStatistics),
             new(Hotkey.TeleportToPreviousRoom, Keys.PageUp),
             new(Hotkey.TeleportToNextRoom, Keys.PageDown),
             new(Hotkey.SwitchAutoLoadState),

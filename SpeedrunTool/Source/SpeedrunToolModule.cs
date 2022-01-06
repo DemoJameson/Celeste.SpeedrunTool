@@ -22,7 +22,7 @@ namespace Celeste.Mod.SpeedrunTool {
             }
         }
 
-        public static SpeedrunToolSettings Settings => (SpeedrunToolSettings)Instance._Settings;
+        public static SpeedrunToolSettings Settings => SpeedrunToolSettings.Instance;
         public static bool Enabled => Settings.Enabled;
 
         public SpeedrunToolModule() {

@@ -90,6 +90,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             On.Celeste.Commands.CmdLoad += CommandsOnCmdLoad;
             On.Celeste.LevelLoader.ctor += LevelLoaderOnCtor;
             IL.Celeste.FlingBird.Awake += FlingBirdOnAwake;
+            IL.Celeste.NPC06_Theo_Plateau.Awake += NPC06_Theo_PlateauOnAwake;
 
             Hotkey.OpenDebugMap.RegisterPressedAction(scene => {
                 if (scene is Level level) {
@@ -107,6 +108,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             On.Celeste.Commands.CmdLoad -= CommandsOnCmdLoad;
             On.Celeste.LevelLoader.ctor -= LevelLoaderOnCtor;
             IL.Celeste.FlingBird.Awake -= FlingBirdOnAwake;
+            IL.Celeste.NPC06_Theo_Plateau.Awake -= NPC06_Theo_PlateauOnAwake;
         }
 
         private static void CommandsOnCmdLoad(On.Celeste.Commands.orig_CmdLoad orig, int id, string level) {
@@ -179,10 +181,10 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         private static void FlingBirdOnAwake(ILContext il) {
             ILCursor ilCursor = new(il);
             if (ilCursor.TryGotoNext(MoveType.After,
-                ins => ins.OpCode == OpCodes.Ldarg_1,
-                ins => ins.MatchCallvirt<Scene>("get_Tracker"),
-                ins => ins.OpCode == OpCodes.Callvirt && ins.Operand.ToString().Contains("Celeste.Player")
-            )) {
+                    ins => ins.OpCode == OpCodes.Ldarg_1,
+                    ins => ins.MatchCallvirt<Scene>("get_Tracker"),
+                    ins => ins.OpCode == OpCodes.Callvirt && ins.Operand.ToString().Contains("Celeste.Player")
+                )) {
                 ilCursor.Emit(OpCodes.Ldarg_1).Emit(OpCodes.Ldarg_0).EmitDelegate<Func<Player, Scene, FlingBird, Player>>((player, scene, bird) => {
                     if (SpeedrunToolModule.Enabled && player != null && scene is Level level && level.Session.Area.ToString() == "10" &&
                         level.Session.Level == "j-16"
@@ -206,6 +208,46 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                     return player;
                 });
             }
+        }
+
+        private static void NPC06_Theo_PlateauOnAwake(ILContext il) {
+            ILCursor ilCursor = new(il);
+            if (!ilCursor.TryGotoNext(ins => ins.MatchCallvirt<Scene>("Add"))) {
+                return;
+            }
+
+            Instruction skipCs06Campfire = ilCursor.Next.Next;
+            if (!ilCursor.TryGotoPrev(MoveType.After, ins => ins.MatchCall<Entity>("Awake"))) {
+                return;
+            }
+
+            Vector2 startPoint = new(-176, 312);
+            ilCursor.EmitDelegate<Func<bool>>(() => {
+                Session session = Engine.Scene.GetSession();
+                bool skip = SpeedrunToolModule.Enabled && session.GetFlag("campfire_chat") || session.RespawnPoint != startPoint;
+                if (skip && Engine.Scene.GetLevel() is { } level && level.GetPlayer() is { } player
+                    && level.Entities.FindFirst<NPC06_Theo_Plateau>() is { } theo && level.Tracker.GetEntity<Bonfire>() is { } bonfire) {
+                    session.SetFlag("campfire_chat");
+                    level.Session.BloomBaseAdd = 1f;
+                    level.Bloom.Base = AreaData.Get(level).BloomBase + 1f;
+                    level.Session.Dreaming = true;
+                    level.Add(new StarJumpController());
+                    level.Add(new CS06_StarJumpEnd(theo, player, new Vector2(-4, 312), new Vector2(-184, 177.6818f)));
+                    level.Add(new FlyFeather(new Vector2(88, 256), shielded: false, singleUse: false));
+                    bonfire.Activated = false;
+                    bonfire.SetMode(Bonfire.Mode.Lit);
+                    theo.Position = new Vector2(-40, 312);
+                    theo.Sprite.Play("sleep");
+                    theo.Sprite.SetAnimationFrame(theo.Sprite.CurrentAnimationTotalFrames - 1);
+                    if (level.Session.RespawnPoint == startPoint) {
+                        player.Position = new Vector2(-4, 312);
+                        player.Facing = Facings.Left;
+                    }
+                }
+
+                return skip;
+            });
+            ilCursor.Emit(OpCodes.Brtrue, skipCs06Campfire);
         }
 
         // 过早修改位置会使其排在其它鸟的后面导致被删除

@@ -7,6 +7,12 @@ using Microsoft.Xna.Framework.Input;
 namespace Celeste.Mod.SpeedrunTool {
     [SettingName(DialogIds.SpeedrunTool)]
     public class SpeedrunToolSettings : EverestModuleSettings {
+        public static SpeedrunToolSettings Instance { get; private set; }
+
+        public SpeedrunToolSettings() {
+            Instance = this;
+        }
+
         [SettingName(DialogIds.Enabled)] public bool Enabled { get; set; } = true;
 
         #region RoomTimer

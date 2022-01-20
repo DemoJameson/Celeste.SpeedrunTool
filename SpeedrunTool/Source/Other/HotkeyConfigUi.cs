@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -12,37 +12,31 @@ using CelesteSettings = Celeste.Settings;
 namespace Celeste.Mod.SpeedrunTool.Other {
     [Tracked]
     public class HotkeyConfigUi : TextMenu {
-        private static readonly Lazy<FieldInfo> TasRunning = new(() =>
-            Type.GetType("TAS.Manager, CelesteTAS-EverestInterop")?.GetFieldInfo("Running")
-        );
+        private static readonly FieldInfo TasRunning = Type.GetType("TAS.Manager, CelesteTAS-EverestInterop")?.GetFieldInfo("Running");
 
-        private static readonly Lazy<FieldInfo> CelesteNetClientModuleInstance = new(() =>
-            Type.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientModule, CelesteNet.Client")?.GetFieldInfo("Instance"));
+        private static readonly FieldInfo CelesteNetClientModuleInstance = Type.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientModule, CelesteNet.Client")?.GetFieldInfo("Instance");
 
-        private static readonly Lazy<FieldInfo> CelesteNetClientModuleContext = new(() =>
-            Type.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientModule, CelesteNet.Client")?.GetFieldInfo("Context"));
+        private static readonly FieldInfo CelesteNetClientModuleContext = Type.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientModule, CelesteNet.Client")?.GetFieldInfo("Context");
 
-        private static readonly Lazy<FieldInfo> CelesteNetClientContextChat = new(() =>
-            Type.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientContext, CelesteNet.Client")?.GetFieldInfo("Chat"));
+        private static readonly FieldInfo CelesteNetClientContextChat = Type.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientContext, CelesteNet.Client")?.GetFieldInfo("Chat");
 
-        private static readonly Lazy<PropertyInfo> CelesteNetChatComponentActive = new(() =>
-            Type.GetType("Celeste.Mod.CelesteNet.Client.Components.CelesteNetChatComponent, CelesteNet.Client")?.GetPropertyInfo("Active"));
+        private static readonly PropertyInfo CelesteNetChatComponentActive = Type.GetType("Celeste.Mod.CelesteNet.Client.Components.CelesteNetChatComponent, CelesteNet.Client")?.GetPropertyInfo("Active");
 
         private static bool CelesteNetChatting {
             get {
-                if (CelesteNetClientModuleInstance.Value?.GetValue(null) is not { } instance) {
+                if (CelesteNetClientModuleInstance?.GetValue(null) is not { } instance) {
                     return false;
                 }
 
-                if (CelesteNetClientModuleContext.Value?.GetValue(instance) is not { } context) {
+                if (CelesteNetClientModuleContext?.GetValue(instance) is not { } context) {
                     return false;
                 }
 
-                if (CelesteNetClientContextChat.Value?.GetValue(context) is not { } chat) {
+                if (CelesteNetClientContextChat?.GetValue(context) is not { } chat) {
                     return false;
                 }
 
-                return CelesteNetChatComponentActive.Value?.GetValue(chat) as bool? == true;
+                return CelesteNetChatComponentActive?.GetValue(chat) as bool? == true;
             }
         }
 
@@ -166,7 +160,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                 return false;
             }
 
-            if (TasRunning.Value?.GetValue(null) as bool? == true) {
+            if (TasRunning?.GetValue(null) as bool? == true) {
                 return false;
             }
 

@@ -23,6 +23,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
         public static readonly object DynamicDataMap = typeof(DynamicData).GetFieldValue("_DataMap");
         private static readonly ConditionalWeakTable<object, object> DynamicDataObjects = new();
         private static ILHook dynamicDataHook;
+        private static readonly bool RunningOnMono = Type.GetType("Mono.Runtime") != null;
 
         [Load]
         private static void Load() {
@@ -61,11 +62,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             dataMap = GetDataMap(type);
 
             bool result;
-            if (Environment.OSVersion.Platform == PlatformID.Win32NT) {
+            if (RunningOnMono) {
+                result = (int) dataMap.GetFieldValue("size") == 0;
+            } else {
                 result = ((Array) dataMap.GetFieldValue("_entries")).Length == EmptyTableEntriesLength.Value &&
                          (int) dataMap.GetFieldValue("_freeList") == EmptyTableFreeList.Value;
-            } else {
-                result = (int) dataMap.GetFieldValue("size") == 0;
             }
 
             if (result) {

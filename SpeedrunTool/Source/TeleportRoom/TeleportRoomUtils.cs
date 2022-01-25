@@ -122,6 +122,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                 Distort.Anxiety = 0f;
                 Distort.GameRate = 1f;
                 Audio.SetMusicParam("fade", 1f);
+                FallEffects.Show(false);
                 level.Displacement.Clear(); // 避免冲刺后残留爆破效果
                 level.Particles.Clear();
                 level.ParticlesBG.Clear();

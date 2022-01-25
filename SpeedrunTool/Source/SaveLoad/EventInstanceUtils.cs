@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using FMOD;
 using FMOD.Studio;
@@ -40,10 +41,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             return eventInstance.GetExtendedBoolean(NeedManualCloneKey);
         }
 
-        private static Dictionary<string, float> GetSavedParameterValues(this EventInstance eventInstance) {
-            Dictionary<string, float> parameters = eventInstance.GetExtendedDataValue<Dictionary<string, float>>(ParametersKey);
+        private static ConcurrentDictionary<string, float> GetSavedParameterValues(this EventInstance eventInstance) {
+            ConcurrentDictionary<string, float> parameters = eventInstance.GetExtendedDataValue<ConcurrentDictionary<string, float>>(ParametersKey);
             if (parameters == null) {
-                parameters = new Dictionary<string, float>();
+                parameters = new ConcurrentDictionary<string, float>();
             }
 
             return parameters;
@@ -54,7 +55,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 return;
             }
 
-            Dictionary<string, float> parameters = eventInstance.GetSavedParameterValues();
+            ConcurrentDictionary<string, float> parameters = eventInstance.GetSavedParameterValues();
             parameters[param] = value;
             eventInstance.SetExtendedDataValue(ParametersKey, parameters);
         }
@@ -97,7 +98,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 cloneInstance.NeedManualClone();
             }
 
-            Dictionary<string, float> parameters = eventInstance.GetSavedParameterValues();
+            ConcurrentDictionary<string, float> parameters = eventInstance.GetSavedParameterValues();
             if (parameters != null) {
                 foreach (KeyValuePair<string, float> pair in parameters) {
                     cloneInstance.setParameterValue(pair.Key, pair.Value);
@@ -118,8 +119,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 return;
             }
 
-            Dictionary<string, float> parameterValues = new(eventInstance.GetSavedParameterValues());
-            Dictionary<string, float> clonedParameterValues = otherEventInstance.GetSavedParameterValues();
+            ConcurrentDictionary<string, float> parameterValues = new(eventInstance.GetSavedParameterValues());
+            ConcurrentDictionary<string, float> clonedParameterValues = otherEventInstance.GetSavedParameterValues();
             foreach (KeyValuePair<string, float> pair in clonedParameterValues) {
                 eventInstance.setParameterValue(pair.Key, pair.Value);
             }

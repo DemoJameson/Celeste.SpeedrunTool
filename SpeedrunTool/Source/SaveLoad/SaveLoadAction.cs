@@ -109,6 +109,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             foreach (string memberName in memberNames) {
                 if (type.GetMember(memberName, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic) is { } memberInfos) {
+                    if (memberInfos.Length == 0) {
+                        $"SaveStaticMemberValues: No member found for type {type.FullName} and member name {memberName}".Log();
+                        continue;
+                    }
+
                     if (memberInfos.First().IsField()) {
                         values[type][memberName] = type.GetFieldValue(memberName).DeepCloneShared();
                     } else {
@@ -124,6 +129,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 foreach (string memberName in pair.Value.Keys) {
                     Type type = pair.Key;
                     if (type.GetMember(memberName, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic) is { } memberInfos) {
+                        if (memberInfos.Length == 0) {
+                            $"LoadStaticMemberValues: No member found for type {type.FullName} and member name {memberName}".Log();
+                            continue;
+                        }
+
                         if (memberInfos.First().IsField()) {
                             type.SetFieldValue(memberName, pair.Value[memberName].DeepCloneShared());
                         } else {
@@ -758,8 +768,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             // 解决读档后冲进 DreamSpinner 会被刺死
             if (Type.GetType("Celeste.Mod.IsaGrabBag.GrabBagModule, IsaMods") is { } grabBagModuleType) {
                 Add(new SaveLoadAction(
-                    (savedValues, _) => SaveStaticMemberValues(savedValues, grabBagModuleType, "ZipLineState".ToBackingField(),
-                        "playerInstance".ToBackingField()),
+                    (savedValues, _) => SaveStaticMemberValues(savedValues, grabBagModuleType, "ZipLineState",
+                        "playerInstance"),
                     (savedValues, _) => LoadStaticMemberValues(savedValues))
                 );
             }

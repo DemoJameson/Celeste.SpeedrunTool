@@ -1,5 +1,4 @@
 using System;
-using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
@@ -17,7 +16,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
                 frames = "[" + (int) Math.Round(Engine.Scene.RawTimeActive / 0.0166667) + "] ";
             }
 
-            Logger.Log(Tag, $"{levelInfo}{frames}{message}");
+            Logger.Log(logLevel, Tag, $"{levelInfo}{frames}{message}");
         }
 
         public static void DebugLog(this object message, LogLevel logLevel = LogLevel.Info) {

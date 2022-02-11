@@ -212,6 +212,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                             || fieldType == typeof(Level)
                             || fieldType == typeof(MTexture)
                             || fieldType == typeof(CrystalStaticSpinner)
+                            || fieldType == typeof(Solid)
                             || fieldType.IsSubclassOf(typeof(VirtualAsset))
                         );
                     }).ToArray();

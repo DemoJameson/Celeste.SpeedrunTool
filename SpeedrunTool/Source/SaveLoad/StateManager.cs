@@ -75,8 +75,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
 
             Hotkey.ClearState.RegisterPressedAction(scene => {
                 if (scene is Level {Paused: false} level && State == State.None) {
-                    ClearState();
-                    PopupMessageUtils.Show(level, DialogIds.ClearStateToolTip.DialogClean(), DialogIds.ClearStateDialog);
+                    ClearStateAndShowMessage(level);
                 }
             });
 
@@ -391,6 +390,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             ignorePlayerHairException = null;
             SaveLoadAction.OnClearState();
             State = State.None;
+        }
+
+        public void ClearStateAndShowMessage(Level level) {
+            ClearState();
+            PopupMessageUtils.Show(level, DialogIds.ClearStateToolTip.DialogClean(), DialogIds.ClearStateDialog);
         }
 
         private void PreCloneSavedEntities() {

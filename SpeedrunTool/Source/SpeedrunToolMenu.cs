@@ -81,6 +81,9 @@ namespace Celeste.Mod.SpeedrunTool {
                     subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoLoadStateAfterDeath), Settings.AutoLoadStateAfterDeath).Change(b =>
                         Settings.AutoLoadStateAfterDeath = b));
 
+                    subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoClearStateOnScreenTransition), Settings.AutoClearStateOnScreenTransition).Change(b =>
+                        Settings.AutoClearStateOnScreenTransition = b));
+
                     subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.FreezeAfterLoadState), Settings.FreezeAfterLoadState).Change(b =>
                         Settings.FreezeAfterLoadState = b));
 

@@ -38,6 +38,9 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingName(DialogIds.AutoLoadStateAfterDeath)]
         public bool AutoLoadStateAfterDeath { get; set; } = true;
 
+        [SettingName(DialogIds.AutoClearStateOnScreenTransition)]
+        public bool AutoClearStateOnScreenTransition { get; set; } = false;
+
         [SettingName(DialogIds.FreezeAfterLoadState)]
         public bool FreezeAfterLoadState { get; set; } = true;
 

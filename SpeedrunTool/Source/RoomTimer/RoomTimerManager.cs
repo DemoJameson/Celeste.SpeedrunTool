@@ -214,17 +214,8 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             Draw.Rect(x, self.Y, topBlackBarWidth + 2, topTimeHeight, Color.Black);
             bg.Draw(new Vector2(x + topBlackBarWidth, self.Y));
 
-            float roomTimeScale = 1f;
-            if (roomTimerData.IsCompleted) {
-                Wiggler wiggler = (Wiggler)self.GetFieldValue("wiggler");
-                if (wiggler != null) {
-                    roomTimeScale = 1f + wiggler.Value * 0.15f;
-                }
-            }
-
-            SpeedrunTimerDisplay.DrawTime(new Vector2(x + timeMarginLeft, self.Y + 44f), roomTimeString, roomTimeScale,
-                true,
-                roomTimerData.IsCompleted, roomTimerData.BeatBestTime);
+            DrawTime(new Vector2(x + timeMarginLeft, self.Y + 44f), roomTimeString, 1f,
+                roomTimerData.IsCompleted, roomTimerData.BeatBestTime, 1f, true);
 
             if (roomTimerData.IsCompleted) {
                 DrawTime(
@@ -266,22 +257,11 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
         private static readonly Lazy<PixelFontSize> PixelFontSize =
             new(() => Dialog.Languages["english"].Font.Get(Dialog.Languages["english"].FontFaceSize));
 
-        private static readonly Lazy<float> NumberWidth = new(() => {
-            float numberWidth = 0f;
-            for (int index = 0; index < 10; ++index) {
-                float x1 = PixelFontSize.Value.Measure(index.ToString()).X;
-                if ((double)x1 > numberWidth) {
-                    numberWidth = x1;
-                }
-            }
-
-            return numberWidth;
-        });
-
-        private static readonly Lazy<float> SpacerWidth = new(() => PixelFontSize.Value.Measure('.').X);
+        private static readonly Lazy<float> NumberWidth = new(() => (float) typeof(SpeedrunTimerDisplay).GetFieldValue("numberWidth"));
+        private static readonly Lazy<float> SpacerWidth = new(() => (float) typeof(SpeedrunTimerDisplay).GetFieldValue("spacerWidth"));
 
         private static void DrawTime(Vector2 position, string timeString, float scale = 1f,
-            bool finished = false, bool bestTime = false, float alpha = 1f) {
+            bool finished = false, bool bestTime = false, float alpha = 1f, bool mainTime = false) {
             PixelFont font = Dialog.Languages["english"].Font;
             float fontFaceSize = Dialog.Languages["english"].FontFaceSize;
             float x = position.X;
@@ -296,12 +276,19 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 color2 = FinishedColor2 * alpha;
             }
 
+            float currentScale = scale;
             foreach (char ch in timeString) {
+                if (mainTime) {
+                    if (ch == '.') {
+                        currentScale = scale * 0.7f;
+                        y -= 5f * scale;
+                    } 
+                }
                 Color color3 = ch is ':' or '.' ? color2 : color1;
 
-                float num2 = (float)((ch is ':' or '.' ? SpacerWidth.Value : NumberWidth.Value) + 4.0) * scale;
+                float num2 = (float)((ch is ':' or '.' ? SpacerWidth.Value : NumberWidth.Value) + 4.0) * currentScale;
                 font.DrawOutline(fontFaceSize, ch.ToString(), new Vector2(x + num2 / 2f, y), new Vector2(0.5f, 1f),
-                    Vector2.One * scale, color3, 2f, Color.Black);
+                    Vector2.One * currentScale, color3, 2f, Color.Black);
                 x += num2;
             }
         }

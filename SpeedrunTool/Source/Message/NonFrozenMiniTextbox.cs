@@ -15,8 +15,7 @@ namespace Celeste.Mod.SpeedrunTool.Message {
         private static ILHook routineHook;
 
         private NonFrozenMiniTextbox(string dialogId, string message = null) : base(dialogId) {
-            RemoveTag(Tags.HUD);
-            AddTag(Tags.Global | TagsExt.SubHUD | Tags.FrozenUpdate | Tags.TransitionUpdate);
+            AddTag(Tags.Global | Tags.HUD | Tags.FrozenUpdate | Tags.PauseUpdate | Tags.TransitionUpdate);
             Add(new IgnoreSaveLoadComponent());
             if (message != null) {
                 this.SetFieldValue(
@@ -57,9 +56,11 @@ namespace Celeste.Mod.SpeedrunTool.Message {
             }
         }
 
-        public static void Show(Level level, string dialogId, string message) {
-            level.Entities.FindAll<NonFrozenMiniTextbox>().ForEach(textbox => textbox.RemoveSelf());
-            level.Add(new NonFrozenMiniTextbox(ChooseDialog(dialogId), message));
+        public static void Show(string dialogId, string message) {
+            if (Engine.Scene is { } scene) {
+                scene.Entities.FindAll<NonFrozenMiniTextbox>().ForEach(textbox => textbox.RemoveSelf());
+                scene.Add(new NonFrozenMiniTextbox(ChooseDialog(dialogId), message));
+            }
         }
 
         private static bool IsPlayAsBadeline() {

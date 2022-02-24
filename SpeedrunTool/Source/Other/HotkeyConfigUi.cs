@@ -116,8 +116,8 @@ namespace Celeste.Mod.SpeedrunTool.Other {
 
             Hotkey.ToggleFullscreen.RegisterPressedAction(scene => {
                 if (!MInput.ControllerHasFocus && scene is Overworld {
-                    Current: OuiFileNaming {UseKeyboardInput: true} or OuiModOptionString {UseKeyboardInput: true}
-                }) {
+                        Current: OuiFileNaming {UseKeyboardInput: true} or OuiModOptionString {UseKeyboardInput: true}
+                    }) {
                     return;
                 }
 
@@ -125,14 +125,12 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                 CelesteSettings.Instance.ApplyScreen();
                 UserIO.SaveHandler(false, true);
             });
-            
+
             Hotkey.ToggleHotkeys.RegisterPressedAction(scene => {
                 Settings.Hotkeys = !Settings.Hotkeys;
                 SpeedrunToolModule.Instance.SaveSettings();
-                
                 string state = (Settings.Hotkeys ? DialogIds.On : DialogIds.Off).DialogClean();
-                string message = string.Format(Dialog.Get(DialogIds.OptionState), DialogIds.Hotkeys.DialogClean(), state);
-                Tooltip.Show(message);
+                PopupMessageUtils.ShowOptionState(DialogIds.Hotkeys.DialogClean(), state);
             });
         }
 
@@ -143,13 +141,14 @@ namespace Celeste.Mod.SpeedrunTool.Other {
 
         [Initialize]
         private static void Initialize() {
-        Assembly assembly = FakeAssembly.GetFakeEntryAssembly();
-        tasRunning = assembly.GetType("TAS.Manager")?.GetFieldInfo("Running");
-        celesteNetClientModuleInstance = assembly.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientModule")?.GetFieldInfo("Instance");
-        celesteNetClientModuleContext = assembly.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientModule")?.GetFieldInfo("Context");
-        celesteNetClientContextChat = assembly.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientContext")?.GetFieldInfo("Chat");
-        celesteNetChatComponentActive = assembly.GetType("Celeste.Mod.CelesteNet.Client.Components.CelesteNetChatComponent")?.GetPropertyInfo("Active");
-            
+            Assembly assembly = FakeAssembly.GetFakeEntryAssembly();
+            tasRunning = assembly.GetType("TAS.Manager")?.GetFieldInfo("Running");
+            celesteNetClientModuleInstance = assembly.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientModule")?.GetFieldInfo("Instance");
+            celesteNetClientModuleContext = assembly.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientModule")?.GetFieldInfo("Context");
+            celesteNetClientContextChat = assembly.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientContext")?.GetFieldInfo("Chat");
+            celesteNetChatComponentActive =
+                assembly.GetType("Celeste.Mod.CelesteNet.Client.Components.CelesteNetChatComponent")?.GetPropertyInfo("Active");
+
             foreach (HotkeyConfig buttonInfo in HotkeyConfigs.Values) {
                 buttonInfo.UpdateVirtualButton();
             }
@@ -173,7 +172,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             if (!Settings.Hotkeys && hotkey != Hotkey.ToggleHotkeys) {
                 return false;
             }
-            
+
             bool pressed = GetVirtualButton(hotkey).Pressed;
             if (!pressed) {
                 return false;
@@ -246,7 +245,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             Setting setting = new(HotkeyConfigs[hotkeyType].GetLabel(), Keys.None);
             setting.Pressed(() => Remap(hotkeyType));
             if (button != null) {
-                setting.Set(new List<Buttons> {(Buttons)button});
+                setting.Set(new List<Buttons> {(Buttons) button});
             }
 
             Add(setting);
@@ -442,7 +441,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         }
 
         public Buttons? GetButton() {
-            return (Buttons?)Settings.GetPropertyValue($"Controller{Hotkey}");
+            return (Buttons?) Settings.GetPropertyValue($"Controller{Hotkey}");
         }
 
         public void SetButton(Buttons? button) {
@@ -450,7 +449,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         }
 
         public List<Keys> GetKeys() {
-            List<Keys> result = (List<Keys>)Settings.GetPropertyValue($"Keyboard{Hotkey}");
+            List<Keys> result = (List<Keys>) Settings.GetPropertyValue($"Keyboard{Hotkey}");
             if (result == null) {
                 result = new List<Keys>();
                 SetKeys(result);

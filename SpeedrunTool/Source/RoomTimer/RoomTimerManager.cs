@@ -62,9 +62,9 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             });
 
             Hotkey.SwitchRoomTimer.RegisterPressedAction(scene => {
-                if (scene is Level {Paused: false} level) {
+                if (scene is Level {Paused: false}) {
                     SwitchRoomTimer((RoomTimerType)(((int)Settings.RoomTimerType + 1) % Enum.GetNames(typeof(RoomTimerType)).Length));
-                    PopupMessageUtils.ShowOptionState(level, DialogIds.RoomTimer.DialogClean(), Settings.RoomTimerType.DialogClean());
+                    PopupMessageUtils.ShowOptionState(DialogIds.RoomTimer.DialogClean(), Settings.RoomTimerType.DialogClean());
                 }
             });
 

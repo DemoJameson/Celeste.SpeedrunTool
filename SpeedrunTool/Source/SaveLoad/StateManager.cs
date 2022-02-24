@@ -64,18 +64,18 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             });
 
             Hotkey.LoadState.RegisterPressedAction(scene => {
-                if (scene is Level {Paused: false} level && State == State.None) {
+                if (scene is Level {Paused: false} && State == State.None) {
                     if (IsSaved) {
                         LoadState(false);
                     } else {
-                        PopupMessageUtils.Show(level, DialogIds.NotSavedStateTooltip.DialogClean(), DialogIds.NotSavedStateYetDialog);
+                        PopupMessageUtils.Show(DialogIds.NotSavedStateTooltip.DialogClean(), DialogIds.NotSavedStateYetDialog);
                     }
                 }
             });
 
             Hotkey.ClearState.RegisterPressedAction(scene => {
                 if (scene is Level {Paused: false} level && State == State.None) {
-                    ClearStateAndShowMessage(level);
+                    ClearStateAndShowMessage();
                 }
             });
 
@@ -84,7 +84,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                     Settings.AutoLoadStateAfterDeath = !Settings.AutoLoadStateAfterDeath;
                     SpeedrunToolModule.Instance.SaveSettings();
                     string state = (Settings.AutoLoadStateAfterDeath ? DialogIds.On : DialogIds.Off).DialogClean();
-                    PopupMessageUtils.ShowOptionState(level, DialogIds.AutoLoadStateAfterDeath.DialogClean(), state);
+                    PopupMessageUtils.ShowOptionState( DialogIds.AutoLoadStateAfterDeath.DialogClean(), state);
                 }
             });
         }
@@ -392,9 +392,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
             State = State.None;
         }
 
-        public void ClearStateAndShowMessage(Level level) {
+        public void ClearStateAndShowMessage() {
             ClearState();
-            PopupMessageUtils.Show(level, DialogIds.ClearStateToolTip.DialogClean(), DialogIds.ClearStateDialog);
+            PopupMessageUtils.Show(DialogIds.ClearStateToolTip.DialogClean(), DialogIds.ClearStateDialog);
         }
 
         private void PreCloneSavedEntities() {

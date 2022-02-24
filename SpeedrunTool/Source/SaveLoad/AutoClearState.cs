@@ -18,9 +18,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad {
                 && SpeedrunToolModule.Settings.AutoClearStateOnScreenTransition
                 && StateManager.Instance.IsSaved
                 && !StateManager.Instance.SavedByTas
-                && self.Scene is Level level
+                && self.Scene is Level
                ) {
-                StateManager.Instance.ClearStateAndShowMessage(level);
+                StateManager.Instance.ClearStateAndShowMessage();
             }
         }
     }

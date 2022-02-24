@@ -46,17 +46,17 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
 
         private static void RegisterHotkeys() {
             Hotkey.TeleportToPreviousRoom.RegisterPressedAction(scene => {
-                if (scene is Level { Paused: false } level && StateManager.Instance.State == State.None) {
+                if (scene is Level {Paused: false} level && StateManager.Instance.State == State.None) {
                     if (TeleportToPreviousRoom(level) == false) {
-                        PopupMessageUtils.Show(level, DialogIds.AlreadyFirstRoomTooltip.DialogClean(), DialogIds.AlreadyFirstRoomDialog);
+                        PopupMessageUtils.Show(DialogIds.AlreadyFirstRoomTooltip.DialogClean(), DialogIds.AlreadyFirstRoomDialog);
                     }
                 }
             });
 
             Hotkey.TeleportToNextRoom.RegisterPressedAction(scene => {
-                if (scene is Level { Paused: false } level && StateManager.Instance.State == State.None) {
+                if (scene is Level {Paused: false} level && StateManager.Instance.State == State.None) {
                     if (TeleportToNextRoom(level) == false) {
-                        PopupMessageUtils.Show(level, DialogIds.AlreadyLastRoomTooltip.DialogClean(), DialogIds.AlreadyLastRoomDialog);
+                        PopupMessageUtils.Show(DialogIds.AlreadyLastRoomTooltip.DialogClean(), DialogIds.AlreadyLastRoomDialog);
                     }
                 }
             });
@@ -79,6 +79,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
                 session.RespawnPoint = RespawnPoint;
                 RespawnPoint = null;
             }
+
             if (AllowRecord) {
                 RecordTransitionRoom(session);
             }
@@ -330,7 +331,7 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
             flagList.Sort((first, second) => first.Int("number") - second.Int("number"));
             if (flagList.Count > 0) {
                 EntityData summitCheckpoint = next ? flagList.Last() : flagList.First();
-                level.Session.RespawnPoint = level.GetSpawnPoint(levelData.Position+summitCheckpoint.Position);
+                level.Session.RespawnPoint = level.GetSpawnPoint(levelData.Position + summitCheckpoint.Position);
                 level.Session.SetFlag(FlagPrefix + summitCheckpoint.Int("number"));
             }
         }

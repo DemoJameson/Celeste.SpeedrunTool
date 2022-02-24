@@ -54,6 +54,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         };
 
         private static readonly Dictionary<Hotkey, HotkeyConfig> HotkeyConfigs = new List<HotkeyConfig> {
+            new(Hotkey.ToggleHotkeys),
             new(Hotkey.SaveState, Keys.F7),
             new(Hotkey.LoadState, Keys.F8),
             new(Hotkey.ClearState, Keys.F4),
@@ -67,7 +68,6 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             new(Hotkey.TeleportToNextRoom, Keys.PageDown),
             new(Hotkey.SwitchAutoLoadState),
             new(Hotkey.ToggleFullscreen),
-            new(Hotkey.ToggleHotkeys),
         }.ToDictionary(info => info.Hotkey, info => info);
 
         private bool closing;
@@ -473,6 +473,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
     }
 
     public enum Hotkey {
+        ToggleHotkeys,
         SaveState,
         LoadState,
         ClearState,
@@ -486,7 +487,6 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         TeleportToNextRoom,
         SwitchAutoLoadState,
         ToggleFullscreen,
-        ToggleHotkeys
     }
 
     internal static class HotkeysExtensions {

@@ -67,6 +67,7 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string Keyboard = "SPEEDRUN_TOOL_KEYBOARD";
         public const string Controller = "SPEEDRUN_TOOL_CONTROLLER";
         public const string PressDeleteToRemoveButton = "SPEEDRUN_TOOL_PRESS_DELETE_TO_REMOVE_BUTTON";
+        public const string ToggleHotkeys = "SPEEDRUN_TOOL_TOGGLE_HOTKEYS";
         public const string OpenDebugMap = "SPEEDRUN_TOOL_OPEN_DEBUG_MAP";
         public const string ResetRoomTimerPb = "SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB";
         public const string SwitchRoomTimer = "SPEEDRUN_TOOL_SWITCH_ROOM_TIMER";
@@ -82,7 +83,6 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string AlreadyLastRoomDialogBadeline = "SPEEDRUN_TOOL_ALREADY_LAST_ROOM_DIALOG_BADELINE";
         public const string SwitchAutoLoadState = "SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE";
         public const string ToggleFullscreen = "SPEEDRUN_TOOL_TOGGLE_FULLSCREEN";
-        public const string ToggleHotkeys = "SPEEDRUN_TOOL_TOGGLE_HOTKEYS";
 
         // Death Statistics
         public const string MaxNumberOfDeathData = "SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA";
@@ -100,6 +100,7 @@ namespace Celeste.Mod.SpeedrunTool {
 
         // More Options
         public const string RespawnSpeed = "SPEEDRUN_TOOL_RESPAWN_SPEED";
+        public const string FastRestartChapter = "SPEEDRUN_TOOL_FAST_RESTART_CHAPTER";
         public const string FastTeleport = "SPEEDRUN_TOOL_FAST_TELEPORT";
         public const string FastTeleportDescription = "SPEEDRUN_TOOL_FAST_TELEPORT_DESCRIPTION";
         public const string MuteInBackground = "SPEEDRUN_TOOL_MUTE_IN_BACKGROUND";

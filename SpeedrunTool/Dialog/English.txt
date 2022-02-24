@@ -91,6 +91,7 @@ SPEEDRUN_TOOL_RANDOM=     Random
 SPEEDRUN_TOOL_KEYBOARD=                      Keyboard
 SPEEDRUN_TOOL_CONTROLLER=                    Controller
 SPEEDRUN_TOOL_PRESS_DELETE_TO_REMOVE_BUTTON= Press Delete to Remove Button
+SPEEDRUN_TOOL_TOGGLE_HOTKEYS=                Toggle Hotkeys
 SPEEDRUN_TOOL_OPEN_DEBUG_MAP=                Open Debug Map
 SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB=           Reset Room Timer PB
 SPEEDRUN_TOOL_SWITCH_ROOM_TIMER=             Switch Room Timer
@@ -114,7 +115,6 @@ SPEEDRUN_TOOL_ALREADY_LAST_ROOM_DIALOG_BADELINE=
     Already in the last room!
 SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE=        Toggle Auto Load State
 SPEEDRUN_TOOL_TOGGLE_FULLSCREEN=             Toggle Fullscreen
-SPEEDRUN_TOOL_TOGGLE_HOTKEYS=                Toggle Hotkeys
 
 # ================================== Death Statistics ==================================
 SPEEDRUN_TOOL_DEATH_STATISTICS=              Death Statistics
@@ -133,6 +133,7 @@ SPEEDRUN_TOOL_NO_DATA=                       No Data
 
 # ================================== More Options ==================================
 SPEEDRUN_TOOL_RESPAWN_SPEED=              Respawn Speed
+SPEEDRUN_TOOL_FAST_RESTART_CHAPTER=       Fast Restart Chapter
 SPEEDRUN_TOOL_FAST_TELEPORT=              Fast Teleport
 SPEEDRUN_TOOL_FAST_TELEPORT_DESCRIPTION=  Make PageDown/Up teleport more faster, no need to reload the whole map
 SPEEDRUN_TOOL_MUTE_IN_BACKGROUND=         Mute in Background

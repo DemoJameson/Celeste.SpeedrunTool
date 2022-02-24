@@ -67,6 +67,7 @@ namespace Celeste.Mod.SpeedrunTool {
         #region MoreOptions
 
         [SettingRange(1, 9)] public int RespawnSpeed { get; set; } = 1;
+        public bool FastRestartChapter { get; set; } = false;
 
         [SettingName(DialogIds.FastTeleport)]
         [SettingSubText(DialogIds.FastTeleportDescription)]
@@ -80,6 +81,7 @@ namespace Celeste.Mod.SpeedrunTool {
 
         #region HotkeyConfig
 
+        [SettingIgnore] public List<Keys> KeyboardToggleHotkeys { get; set; } = Hotkey.ToggleHotkeys.GetDefaultKeys();
         [SettingIgnore] public List<Keys> KeyboardSaveState { get; set; } = Hotkey.SaveState.GetDefaultKeys();
         [SettingIgnore] public List<Keys> KeyboardLoadState { get; set; } = Hotkey.LoadState.GetDefaultKeys();
         [SettingIgnore] public List<Keys> KeyboardClearState { get; set; } = Hotkey.ClearState.GetDefaultKeys();
@@ -93,8 +95,8 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingIgnore] public List<Keys> KeyboardTeleportToNextRoom { get; set; } = Hotkey.TeleportToNextRoom.GetDefaultKeys();
         [SettingIgnore] public List<Keys> KeyboardSwitchAutoLoadState { get; set; } = Hotkey.SwitchAutoLoadState.GetDefaultKeys();
         [SettingIgnore] public List<Keys> KeyboardToggleFullscreen { get; set; } = Hotkey.ToggleFullscreen.GetDefaultKeys();
-        [SettingIgnore] public List<Keys> KeyboardToggleHotkeys { get; set; } = Hotkey.ToggleHotkeys.GetDefaultKeys();
 
+        [SettingIgnore] public Buttons? ControllerToggleHotkeys { get; set; }
         [SettingIgnore] public Buttons? ControllerSaveState { get; set; }
         [SettingIgnore] public Buttons? ControllerLoadState { get; set; }
         [SettingIgnore] public Buttons? ControllerClearState { get; set; }
@@ -108,7 +110,6 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingIgnore] public Buttons? ControllerTeleportToNextRoom { get; set; }
         [SettingIgnore] public Buttons? ControllerSwitchAutoLoadState { get; set; }
         [SettingIgnore] public Buttons? ControllerToggleFullscreen { get; set; }
-        [SettingIgnore] public Buttons? ControllerToggleHotkeys { get; set; }
 
         #endregion HotkeyConfig
     }

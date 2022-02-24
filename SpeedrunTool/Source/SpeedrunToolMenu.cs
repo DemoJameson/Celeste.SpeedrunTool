@@ -118,6 +118,10 @@ namespace Celeste.Mod.SpeedrunTool {
                     subMenu.Add(new TextMenuExt.IntSlider(Dialog.Clean(DialogIds.RespawnSpeed), 1, 9, Settings.RespawnSpeed).Change(i =>
                         Settings.RespawnSpeed = i));
 
+                    subMenu.Add(
+                        new TextMenu.OnOff(Dialog.Clean(DialogIds.FastRestartChapter), Settings.FastRestartChapter).Change(b =>
+                            Settings.FastRestartChapter = b));
+
                     TextMenu.Item fastTeleportItem;
                     subMenu.Add(
                         fastTeleportItem =
@@ -133,7 +137,7 @@ namespace Celeste.Mod.SpeedrunTool {
                         CreateEnumerableOptions<PopupMessageStyle>(), Settings.PopupMessageStyle).Change(value => {
                         Settings.PopupMessageStyle = value;
                     }));
-                    
+
                     subMenu.Add(
                         new TextMenu.OnOff(Dialog.Clean(DialogIds.Hotkeys), Settings.Hotkeys).Change(b =>
                             Settings.Hotkeys = b));

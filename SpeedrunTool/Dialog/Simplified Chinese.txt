@@ -115,6 +115,7 @@ SPEEDRUN_TOOL_ALREADY_LAST_ROOM_DIALOG_BADELINE=
     已经在最后一个房间了！
 SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE=        开关死亡自动加载状态
 SPEEDRUN_TOOL_TOGGLE_FULLSCREEN=             开关全屏
+SPEEDRUN_TOOL_TOGGLE_HOTKEYS=                开关快捷键
 
 # ================================== Death Statistics ==================================
 SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA=      死亡数据数量
@@ -139,5 +140,5 @@ SPEEDRUN_TOOL_POPUP_MESSAGE_STYLE=        提示信息样式
 SPEEDRUN_TOOL_TOOLTIP=                    简洁
 SPEEDRUN_TOOL_DIALOG_BOX=                 对话框
 SPEEDRUN_TOOL_OPTION_STATE=               {0}：{1}
-SPEEDRUN_TOOL_HOTKEY=                     按键
-SPEEDRUN_TOOL_HOTKEY_CONFIG=              按键设置
+SPEEDRUN_TOOL_HOTKEYS=                    快捷键
+SPEEDRUN_TOOL_HOTKEYS_CONFIG=             快捷键设置

@@ -114,6 +114,7 @@ SPEEDRUN_TOOL_ALREADY_LAST_ROOM_DIALOG_BADELINE=
     Already in the last room!
 SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE=        Toggle Auto Load State
 SPEEDRUN_TOOL_TOGGLE_FULLSCREEN=             Toggle Fullscreen
+SPEEDRUN_TOOL_TOGGLE_HOTKEYS=                Toggle Hotkeys
 
 # ================================== Death Statistics ==================================
 SPEEDRUN_TOOL_DEATH_STATISTICS=              Death Statistics
@@ -139,5 +140,5 @@ SPEEDRUN_TOOL_POPUP_MESSAGE_STYLE=        Popup Message Style
 SPEEDRUN_TOOL_TOOLTIP=                    Tooltip
 SPEEDRUN_TOOL_DIALOG_BOX=                 Dialog Box
 SPEEDRUN_TOOL_OPTION_STATE=               {0}: {1}
-SPEEDRUN_TOOL_HOTKEY=                     Hotkey
-SPEEDRUN_TOOL_HOTKEY_CONFIG=              Hotkey Config
+SPEEDRUN_TOOL_HOTKEYS=                    Hotkeys
+SPEEDRUN_TOOL_HOTKEYS_CONFIG=             Hotkeys Config

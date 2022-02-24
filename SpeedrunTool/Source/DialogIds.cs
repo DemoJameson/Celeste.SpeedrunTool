@@ -82,6 +82,7 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string AlreadyLastRoomDialogBadeline = "SPEEDRUN_TOOL_ALREADY_LAST_ROOM_DIALOG_BADELINE";
         public const string SwitchAutoLoadState = "SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE";
         public const string ToggleFullscreen = "SPEEDRUN_TOOL_TOGGLE_FULLSCREEN";
+        public const string ToggleHotkeys = "SPEEDRUN_TOOL_TOGGLE_HOTKEYS";
 
         // Death Statistics
         public const string MaxNumberOfDeathData = "SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA";
@@ -104,7 +105,7 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string MuteInBackground = "SPEEDRUN_TOOL_MUTE_IN_BACKGROUND";
         public const string PopupMessageStyle = "SPEEDRUN_TOOL_POPUP_MESSAGE_STYLE";
         public const string OptionState = "SPEEDRUN_TOOL_OPTION_STATE";
-        public const string Hotkey = "SPEEDRUN_TOOL_HOTKEY";
-        public const string HotkeyConfig = "SPEEDRUN_TOOL_HOTKEY_CONFIG";
+        public const string Hotkeys = "SPEEDRUN_TOOL_HOTKEYS";
+        public const string HotkeysConfig = "SPEEDRUN_TOOL_HOTKEYS_CONFIG";
     }
 }

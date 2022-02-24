@@ -2,7 +2,7 @@
     public static class PopupMessageUtils {
         public static void Show(Level level, string message, string dialogId) {
             if (SpeedrunToolModule.Settings.PopupMessageStyle == PopupMessageStyle.Tooltip) {
-                Tooltip.Show(level, message);
+                Tooltip.Show(message);
             } else {
                 if (dialogId == null) {
                     NonFrozenMiniTextbox.Show(level, null, message);

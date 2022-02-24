@@ -15,7 +15,7 @@ namespace Celeste.Mod.SpeedrunTool.Message {
             this.message = message;
             Vector2 messageSize = ActiveFont.Measure(message);
             Position = new(Padding, Engine.Height - messageSize.Y - Padding / 2f);
-            Tag = TagsExt.SubHUD | Tags.Global | Tags.FrozenUpdate | Tags.TransitionUpdate;
+            Tag = Tags.HUD | Tags.Global | Tags.FrozenUpdate | Tags.TransitionUpdate;
             Add(new Coroutine(Show()));
             Add(new IgnoreSaveLoadComponent());
         }
@@ -47,9 +47,11 @@ namespace Celeste.Mod.SpeedrunTool.Message {
                 Color.Black * alpha * alpha * alpha);
         }
 
-        public static void Show(Level level, string message) {
-            level.Tracker.GetEntities<Tooltip>().ForEach(entity => entity.RemoveSelf());
-            level.Add(new Tooltip(message));
+        public static void Show(string message) {
+            if (Engine.Scene is {} scene) {
+                scene.Tracker.GetEntities<Tooltip>().ForEach(entity => entity.RemoveSelf());
+                scene.Add(new Tooltip(message));
+            }
         }
     }
 }

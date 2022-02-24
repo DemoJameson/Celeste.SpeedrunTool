@@ -74,11 +74,26 @@ namespace Celeste.Mod.SpeedrunTool {
 
         public bool MuteInBackground { get; set; }
         public PopupMessageStyle PopupMessageStyle { get; set; } = PopupMessageStyle.Tooltip;
-        public bool Hotkey { get; set; } = true;
+        public bool Hotkeys { get; set; } = true;
 
         #endregion
 
         #region HotkeyConfig
+
+        [SettingIgnore] public List<Keys> KeyboardSaveState { get; set; } = Hotkey.SaveState.GetDefaultKeys();
+        [SettingIgnore] public List<Keys> KeyboardLoadState { get; set; } = Hotkey.LoadState.GetDefaultKeys();
+        [SettingIgnore] public List<Keys> KeyboardClearState { get; set; } = Hotkey.ClearState.GetDefaultKeys();
+        [SettingIgnore] public List<Keys> KeyboardOpenDebugMap { get; set; } = Hotkey.OpenDebugMap.GetDefaultKeys();
+        [SettingIgnore] public List<Keys> KeyboardResetRoomTimerPb { get; set; } = Hotkey.ResetRoomTimerPb.GetDefaultKeys();
+        [SettingIgnore] public List<Keys> KeyboardSwitchRoomTimer { get; set; } = Hotkey.SwitchRoomTimer.GetDefaultKeys();
+        [SettingIgnore] public List<Keys> KeyboardSetEndPoint { get; set; } = Hotkey.SetEndPoint.GetDefaultKeys();
+        [SettingIgnore] public List<Keys> KeyboardSetAdditionalEndPoint { get; set; } = Hotkey.SetAdditionalEndPoint.GetDefaultKeys();
+        [SettingIgnore] public List<Keys> KeyboardCheckDeathStatistics { get; set; } = Hotkey.CheckDeathStatistics.GetDefaultKeys();
+        [SettingIgnore] public List<Keys> KeyboardTeleportToPreviousRoom { get; set; } = Hotkey.TeleportToPreviousRoom.GetDefaultKeys();
+        [SettingIgnore] public List<Keys> KeyboardTeleportToNextRoom { get; set; } = Hotkey.TeleportToNextRoom.GetDefaultKeys();
+        [SettingIgnore] public List<Keys> KeyboardSwitchAutoLoadState { get; set; } = Hotkey.SwitchAutoLoadState.GetDefaultKeys();
+        [SettingIgnore] public List<Keys> KeyboardToggleFullscreen { get; set; } = Hotkey.ToggleFullscreen.GetDefaultKeys();
+        [SettingIgnore] public List<Keys> KeyboardToggleHotkeys { get; set; } = Hotkey.ToggleHotkeys.GetDefaultKeys();
 
         [SettingIgnore] public Buttons? ControllerSaveState { get; set; }
         [SettingIgnore] public Buttons? ControllerLoadState { get; set; }
@@ -93,20 +108,7 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingIgnore] public Buttons? ControllerTeleportToNextRoom { get; set; }
         [SettingIgnore] public Buttons? ControllerSwitchAutoLoadState { get; set; }
         [SettingIgnore] public Buttons? ControllerToggleFullscreen { get; set; }
-
-        [SettingIgnore] public List<Keys> KeyboardSaveState { get; set; } = HotkeyEnum.SaveState.GetDefaultKeys();
-        [SettingIgnore] public List<Keys> KeyboardLoadState { get; set; } = HotkeyEnum.LoadState.GetDefaultKeys();
-        [SettingIgnore] public List<Keys> KeyboardClearState { get; set; } = HotkeyEnum.ClearState.GetDefaultKeys();
-        [SettingIgnore] public List<Keys> KeyboardOpenDebugMap { get; set; } = HotkeyEnum.OpenDebugMap.GetDefaultKeys();
-        [SettingIgnore] public List<Keys> KeyboardResetRoomTimerPb { get; set; } = HotkeyEnum.ResetRoomTimerPb.GetDefaultKeys();
-        [SettingIgnore] public List<Keys> KeyboardSwitchRoomTimer { get; set; } = HotkeyEnum.SwitchRoomTimer.GetDefaultKeys();
-        [SettingIgnore] public List<Keys> KeyboardSetEndPoint { get; set; } = HotkeyEnum.SetEndPoint.GetDefaultKeys();
-        [SettingIgnore] public List<Keys> KeyboardSetAdditionalEndPoint { get; set; } = HotkeyEnum.SetAdditionalEndPoint.GetDefaultKeys();
-        [SettingIgnore] public List<Keys> KeyboardCheckDeathStatistics { get; set; } = HotkeyEnum.CheckDeathStatistics.GetDefaultKeys();
-        [SettingIgnore] public List<Keys> KeyboardTeleportToPreviousRoom { get; set; } = HotkeyEnum.TeleportToPreviousRoom.GetDefaultKeys();
-        [SettingIgnore] public List<Keys> KeyboardTeleportToNextRoom { get; set; } = HotkeyEnum.TeleportToNextRoom.GetDefaultKeys();
-        [SettingIgnore] public List<Keys> KeyboardSwitchAutoLoadState { get; set; } = HotkeyEnum.SwitchAutoLoadState.GetDefaultKeys();
-        [SettingIgnore] public List<Keys> KeyboardToggleFullscreen { get; set; } = HotkeyEnum.ToggleFullscreen.GetDefaultKeys();
+        [SettingIgnore] public Buttons? ControllerToggleHotkeys { get; set; }
 
         #endregion HotkeyConfig
     }

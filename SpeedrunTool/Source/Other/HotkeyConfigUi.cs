@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using Celeste.Mod.Helpers;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.UI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
@@ -66,6 +67,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             new(Hotkey.TeleportToNextRoom, Keys.PageDown),
             new(Hotkey.SwitchAutoLoadState),
             new(Hotkey.ToggleFullscreen),
+            new(Hotkey.ToggleHotkeys),
         }.ToDictionary(info => info.Hotkey, info => info);
 
         private bool closing;
@@ -123,6 +125,15 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                 CelesteSettings.Instance.ApplyScreen();
                 UserIO.SaveHandler(false, true);
             });
+            
+            Hotkey.ToggleHotkeys.RegisterPressedAction(scene => {
+                Settings.Hotkeys = !Settings.Hotkeys;
+                SpeedrunToolModule.Instance.SaveSettings();
+                
+                string state = (Settings.Hotkeys ? DialogIds.On : DialogIds.Off).DialogClean();
+                string message = string.Format(Dialog.Get(DialogIds.OptionState), DialogIds.Hotkeys.DialogClean(), state);
+                Tooltip.Show(message);
+            });
         }
 
         [Unload]
@@ -147,7 +158,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         private static void MInputOnUpdate(On.Monocle.MInput.orig_Update orig) {
             orig();
 
-            if (Engine.Scene is { } scene && Settings.Enabled && Settings.Hotkey) {
+            if (Engine.Scene is { } scene && Settings.Enabled) {
                 foreach (Hotkey hotkey in Enum.GetValues(typeof(Hotkey)).Cast<Hotkey>()) {
                     HotkeyConfig hotkeyConfig = GetHotkeyConfig(hotkey);
                     if (Pressed(hotkey, scene)) {
@@ -159,6 +170,10 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         }
 
         private static bool Pressed(Hotkey hotkey, Scene scene) {
+            if (!Settings.Hotkeys && hotkey != Hotkey.ToggleHotkeys) {
+                return false;
+            }
+            
             bool pressed = GetVirtualButton(hotkey).Pressed;
             if (!pressed) {
                 return false;
@@ -190,7 +205,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         private void Reload(int index = -1) {
             Clear();
 
-            Add(new Header(Dialog.Clean(DialogIds.HotkeyConfig)));
+            Add(new Header(Dialog.Clean(DialogIds.HotkeysConfig)));
 
             Add(new SubHeader(Dialog.Clean(DialogIds.PressDeleteToRemoveButton)));
 
@@ -449,7 +464,11 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         }
 
         public string GetLabel() {
-            return (typeof(DialogIds).GetFieldValue(Hotkey.ToString()) as string).DialogClean();
+            if (typeof(DialogIds).GetFieldValue(Hotkey.ToString()) is string label) {
+                return label.DialogClean();
+            } else {
+                return $"DialogIds{Hotkey} not found";
+            }
         }
     }
 
@@ -466,7 +485,8 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         TeleportToPreviousRoom,
         TeleportToNextRoom,
         SwitchAutoLoadState,
-        ToggleFullscreen
+        ToggleFullscreen,
+        ToggleHotkeys
     }
 
     internal static class HotkeysExtensions {

@@ -114,19 +114,13 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         private static void Load() {
             On.Monocle.MInput.Update += MInputOnUpdate;
 
-            Hotkey.ToggleFullscreen.RegisterPressedAction(scene => {
-                if (!MInput.ControllerHasFocus && scene is Overworld {
-                        Current: OuiFileNaming {UseKeyboardInput: true} or OuiModOptionString {UseKeyboardInput: true}
-                    }) {
-                    return;
-                }
-
+            Hotkey.ToggleFullscreen.RegisterPressedAction(_ => {
                 CelesteSettings.Instance.Fullscreen = !CelesteSettings.Instance.Fullscreen;
                 CelesteSettings.Instance.ApplyScreen();
                 UserIO.SaveHandler(false, true);
             });
 
-            Hotkey.ToggleHotkeys.RegisterPressedAction(scene => {
+            Hotkey.ToggleHotkeys.RegisterPressedAction(_ => {
                 Settings.Hotkeys = !Settings.Hotkeys;
                 SpeedrunToolModule.Instance.SaveSettings();
                 string state = (Settings.Hotkeys ? DialogIds.On : DialogIds.Off).DialogClean();
@@ -187,6 +181,13 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             }
 
             if (scene.Tracker.Entities.TryGetValue(typeof(HotkeyConfigUi), out List<Entity> entities) && entities.Count > 0) {
+                return false;
+            }
+
+            // 避免输入文字时触发快捷键
+            if (!MInput.ControllerHasFocus && scene is Overworld {
+                    Current: OuiFileNaming {UseKeyboardInput: true} or OuiModOptionString {UseKeyboardInput: true}
+                }) {
                 return false;
             }
 

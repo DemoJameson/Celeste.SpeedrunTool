@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Linq;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -49,7 +50,10 @@ namespace Celeste.Mod.SpeedrunTool.Message {
 
         public static void Show(string message) {
             if (Engine.Scene is {} scene) {
-                scene.Tracker.GetEntities<Tooltip>().ForEach(entity => entity.RemoveSelf());
+                if (!scene.Tracker.Entities.TryGetValue(typeof(Tooltip), out var tooltips)) {
+                    tooltips = scene.Entities.FindAll<Tooltip>().Cast<Entity>().ToList();
+                }
+                tooltips.ForEach(entity => entity.RemoveSelf());
                 scene.Add(new Tooltip(message));
             }
         }

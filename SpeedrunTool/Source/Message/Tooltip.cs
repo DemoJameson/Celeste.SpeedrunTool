@@ -15,7 +15,7 @@ namespace Celeste.Mod.SpeedrunTool.Message {
             this.message = message;
             Vector2 messageSize = ActiveFont.Measure(message);
             Position = new(Padding, Engine.Height - messageSize.Y - Padding / 2f);
-            Tag = Tags.HUD | Tags.Global | Tags.FrozenUpdate | Tags.TransitionUpdate;
+            Tag = Tags.HUD | Tags.Global | Tags.FrozenUpdate | Tags.PauseUpdate| Tags.TransitionUpdate;
             Add(new Coroutine(Show()));
             Add(new IgnoreSaveLoadComponent());
         }

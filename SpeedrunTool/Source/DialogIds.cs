@@ -104,6 +104,7 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string MuteInBackground = "SPEEDRUN_TOOL_MUTE_IN_BACKGROUND";
         public const string PopupMessageStyle = "SPEEDRUN_TOOL_POPUP_MESSAGE_STYLE";
         public const string OptionState = "SPEEDRUN_TOOL_OPTION_STATE";
+        public const string Hotkey = "SPEEDRUN_TOOL_HOTKEY";
         public const string HotkeyConfig = "SPEEDRUN_TOOL_HOTKEY_CONFIG";
     }
 }

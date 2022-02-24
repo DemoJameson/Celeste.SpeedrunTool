@@ -139,4 +139,5 @@ SPEEDRUN_TOOL_POPUP_MESSAGE_STYLE=        Popup Message Style
 SPEEDRUN_TOOL_TOOLTIP=                    Tooltip
 SPEEDRUN_TOOL_DIALOG_BOX=                 Dialog Box
 SPEEDRUN_TOOL_OPTION_STATE=               {0}: {1}
+SPEEDRUN_TOOL_HOTKEY=                     Hotkey
 SPEEDRUN_TOOL_HOTKEY_CONFIG=              Hotkey Config

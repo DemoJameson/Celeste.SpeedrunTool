@@ -56,7 +56,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             new(Hotkey.SaveState, Keys.F7),
             new(Hotkey.LoadState, Keys.F8),
             new(Hotkey.ClearState, Keys.F4),
-            new(Hotkey.OpenDebugMap, Keys.F6, true),
+            new(Hotkey.OpenDebugMap),
             new(Hotkey.ResetRoomTimerPb, Keys.F9),
             new(Hotkey.SwitchRoomTimer, Keys.F10),
             new(Hotkey.SetEndPoint, Keys.F11),
@@ -147,7 +147,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         private static void MInputOnUpdate(On.Monocle.MInput.orig_Update orig) {
             orig();
 
-            if (Engine.Scene is { } scene && Settings.Enabled) {
+            if (Engine.Scene is { } scene && Settings.Enabled && Settings.Hotkey) {
                 foreach (Hotkey hotkey in Enum.GetValues(typeof(Hotkey)).Cast<Hotkey>()) {
                     HotkeyConfig hotkeyConfig = GetHotkeyConfig(hotkey);
                     if (Pressed(hotkey, scene)) {
@@ -287,20 +287,17 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             remapping = false;
             inputDelay = 0.25f;
             HotkeyConfigs[remappingType].With(info => {
-                if (info.GetKeys().Contains(key) && !(info.FixedDefaultKeys && info.DefaultKeys.Contains(key))) {
+                if (info.GetKeys().Contains(key)) {
                     info.GetKeys().Remove(key);
                 } else {
-                    if (!info.FixedDefaultKeys) {
-                        info.GetKeys().Clear();
-                    }
-
+                    info.GetKeys().Clear();
                     info.GetKeys().Add(key);
                     foreach (HotkeyConfig otherInfo in HotkeyConfigs.Values) {
                         if (otherInfo == info) {
                             continue;
                         }
 
-                        if (otherInfo.GetKeys().Contains(key) && !(otherInfo.FixedDefaultKeys && otherInfo.DefaultKeys.Contains(key))) {
+                        if (otherInfo.GetKeys().Contains(key)) {
                             otherInfo.GetKeys().Remove(key);
                             otherInfo.UpdateVirtualButton();
                         }
@@ -359,9 +356,6 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                 HotkeyConfig hotkeyConfig = HotkeyConfigs.Values.ToList()[index];
                 if (keyboard) {
                     hotkeyConfig.GetKeys().Clear();
-                    if (hotkeyConfig.FixedDefaultKeys) {
-                        hotkeyConfig.SetKeys(hotkeyConfig.DefaultKeys.ToList());
-                    }
                 } else {
                     hotkeyConfig.SetButton(null);
                 }
@@ -410,16 +404,14 @@ namespace Celeste.Mod.SpeedrunTool.Other {
 
     public class HotkeyConfig {
         public readonly Keys[] DefaultKeys;
-        public readonly bool FixedDefaultKeys;
 
         public readonly Hotkey Hotkey;
         public readonly Lazy<VirtualButton> VirtualButton = new(() => new VirtualButton(0.08f));
         public Action<Scene> OnPressed;
 
-        public HotkeyConfig(Hotkey hotkey, Keys? defaultKey = null, bool fixedDefaultKeys = false) {
+        public HotkeyConfig(Hotkey hotkey, Keys? defaultKey = null) {
             Hotkey = hotkey;
             DefaultKeys = defaultKey == null ? new Keys[0] : new[] {defaultKey.Value};
-            FixedDefaultKeys = fixedDefaultKeys;
         }
 
         private static SpeedrunToolSettings Settings => SpeedrunToolModule.Settings;

@@ -133,6 +133,10 @@ namespace Celeste.Mod.SpeedrunTool {
                         CreateEnumerableOptions<PopupMessageStyle>(), Settings.PopupMessageStyle).Change(value => {
                         Settings.PopupMessageStyle = value;
                     }));
+                    
+                    subMenu.Add(
+                        new TextMenu.OnOff(Dialog.Clean(DialogIds.Hotkey), Settings.Hotkey).Change(b =>
+                            Settings.Hotkey = b));
 
                     subMenu.Add(new TextMenu.Button(Dialog.Clean(DialogIds.HotkeyConfig)).Pressed(() => {
                         // 修复：在 overworld 界面 hot reload 之后打开按键设置菜单游戏崩溃

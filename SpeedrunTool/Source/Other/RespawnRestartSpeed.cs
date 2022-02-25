@@ -54,9 +54,13 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             }
 
             // 加速章节启动
-            if (Settings.RestartChapterSpeed > 1 && !level.TimerStarted && player?.StateMachine.State != Player.StIntroRespawn) {
-                for (int i = 1; i < Settings.RestartChapterSpeed; i++) {
-                    orig(self, time);
+            if (Settings.RestartChapterSpeed > 1) {
+                if (!level.TimerStarted && player?.StateMachine.State != Player.StIntroRespawn ||
+                    level.TimerStarted && level.Session.FirstLevel && player?.StateMachine.State == Player.StDummy
+                    ) {
+                    for (int i = 1; i < Settings.RestartChapterSpeed; i++) {
+                        orig(self, time);
+                    }
                 }
             }
         }

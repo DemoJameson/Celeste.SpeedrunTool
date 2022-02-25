@@ -107,74 +107,65 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom {
             session.Deaths = level.Session.Deaths + increaseDeath;
             session.DeathsInCurrentLevel = level.Session.DeathsInCurrentLevel + increaseDeath;
 
-            if (SpeedrunToolModule.Settings.FastTeleport) {
-                // 修复问题：死亡瞬间传送 PlayerDeadBody 没被清除，导致传送完毕后 madeline 自动爆炸
-                level.Entities.UpdateLists();
-                level.RendererList.Renderers.ForEach(renderer => (renderer as ScreenWipe)?.Cancel());
+            // 修复问题：死亡瞬间传送 PlayerDeadBody 没被清除，导致传送完毕后 madeline 自动爆炸
+            level.Entities.UpdateLists();
+            level.RendererList.Renderers.ForEach(renderer => (renderer as ScreenWipe)?.Cancel());
 
-                // External
-                RoomTimerManager.ResetTime();
-                DeathStatisticsManager.Clear();
+            // External
+            RoomTimerManager.ResetTime();
+            DeathStatisticsManager.Clear();
 
-                level.SetFieldValue("transition", null); // 允许切换房间时传送
-                Glitch.Value = 0f;
-                Engine.TimeRate = 1f;
-                Engine.FreezeTimer = 0f;
-                Distort.Anxiety = 0f;
-                Distort.GameRate = 1f;
-                Audio.SetMusicParam("fade", 1f);
-                FallEffects.Show(false);
-                level.Displacement.Clear(); // 避免冲刺后残留爆破效果
-                level.Particles.Clear();
-                level.ParticlesBG.Clear();
-                level.ParticlesFG.Clear();
-                TrailManager.Clear(); // 清除冲刺的残影
+            level.SetFieldValue("transition", null); // 允许切换房间时传送
+            Glitch.Value = 0f;
+            Engine.TimeRate = 1f;
+            Engine.FreezeTimer = 0f;
+            Distort.Anxiety = 0f;
+            Distort.GameRate = 1f;
+            Audio.SetMusicParam("fade", 1f);
+            FallEffects.Show(false);
+            level.Displacement.Clear(); // 避免冲刺后残留爆破效果
+            level.Particles.Clear();
+            level.ParticlesBG.Clear();
+            level.ParticlesFG.Clear();
+            TrailManager.Clear(); // 清除冲刺的残影
 
-                if (!fromHistory) {
-                    BetterMapEditor.FixTeleportProblems(session, session.RespawnPoint);
-                }
-
-                session.DeepCloneTo(level.Session);
-
-                // 修改自 level.TeleportTo(player, session.Level, Player.IntroTypes.Respawn);
-                level.Tracker.GetEntitiesCopy<Player>().ForEach(entity => entity.RemoveSelf());
-
-                if (level.Entities.FindFirst<SpeedrunTimerDisplay>() is Entity timer) {
-                    level.Remove(timer);
-                }
-
-                level.UnloadLevel();
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
-
-                level.Completed = false;
-                level.InCutscene = false;
-                level.SkippingCutscene = false;
-
-                // 修复：章节计时器在章节完成隐藏后传送无法重新显示
-                level.Add(new SpeedrunTimerDisplay());
-                level.LoadLevel(Player.IntroTypes.Respawn);
-                level.Entities.UpdateLists();
-
-                // 节奏块房间传送出来时恢复音乐
-                if (level.Tracker.GetEntities<CassetteBlock>().Count == 0) {
-                    level.Tracker.GetEntity<CassetteBlockManager>()?.RemoveSelf();
-                }
-
-                // new player instance
-                if (level.GetPlayer() != null) {
-                    level.Camera.Position = level.GetPlayer().CameraTarget;
-                }
-
-                level.Update();
-            } else {
-                if (!fromHistory) {
-                    BetterMapEditor.ShouldFixTeleportProblems = true;
-                }
-
-                RespawnPoint = session.RespawnPoint;
-                Engine.Scene = new LevelLoader(session.DeepClone());
+            if (!fromHistory) {
+                BetterMapEditor.FixTeleportProblems(session, session.RespawnPoint);
             }
+
+            session.DeepCloneTo(level.Session);
+
+            // 修改自 level.TeleportTo(player, session.Level, Player.IntroTypes.Respawn);
+            level.Tracker.GetEntitiesCopy<Player>().ForEach(entity => entity.RemoveSelf());
+
+            if (level.Entities.FindFirst<SpeedrunTimerDisplay>() is Entity timer) {
+                level.Remove(timer);
+            }
+
+            level.UnloadLevel();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+
+            level.Completed = false;
+            level.InCutscene = false;
+            level.SkippingCutscene = false;
+
+            // 修复：章节计时器在章节完成隐藏后传送无法重新显示
+            level.Add(new SpeedrunTimerDisplay());
+            level.LoadLevel(Player.IntroTypes.Respawn);
+            level.Entities.UpdateLists();
+
+            // 节奏块房间传送出来时恢复音乐
+            if (level.Tracker.GetEntities<CassetteBlock>().Count == 0) {
+                level.Tracker.GetEntity<CassetteBlockManager>()?.RemoveSelf();
+            }
+
+            // new player instance
+            if (level.GetPlayer() != null) {
+                level.Camera.Position = level.GetPlayer().CameraTarget;
+            }
+
+            level.Update();
         }
 
         private static void LevelExitOnCtor(On.Celeste.LevelExit.orig_ctor orig, LevelExit self, LevelExit.Mode mode,

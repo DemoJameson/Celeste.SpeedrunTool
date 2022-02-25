@@ -102,8 +102,6 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string RespawnSpeed = "SPEEDRUN_TOOL_RESPAWN_SPEED";
         public const string RestartChapterSpeed = "SPEEDRUN_TOOL_RESTART_CHAPTER_SPEED";
         public const string SkipRestartChapterScreenWipe = "SPEEDRUN_TOOL_SKIP_RESTART_CHAPTER_SCREEN_WIPE";
-        public const string FastTeleport = "SPEEDRUN_TOOL_FAST_TELEPORT";
-        public const string FastTeleportDescription = "SPEEDRUN_TOOL_FAST_TELEPORT_DESCRIPTION";
         public const string MuteInBackground = "SPEEDRUN_TOOL_MUTE_IN_BACKGROUND";
         public const string PopupMessageStyle = "SPEEDRUN_TOOL_POPUP_MESSAGE_STYLE";
         public const string OptionState = "SPEEDRUN_TOOL_OPTION_STATE";

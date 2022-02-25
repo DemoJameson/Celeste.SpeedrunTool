@@ -69,11 +69,6 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingRange(1, 9)] public int RespawnSpeed { get; set; } = 1;
         [SettingRange(1, 9)] public int RestartChapterSpeed { get; set; } = 1;
         public bool SkipRestartChapterScreenWipe { get; set; } = false;
-
-        [SettingName(DialogIds.FastTeleport)]
-        [SettingSubText(DialogIds.FastTeleportDescription)]
-        public bool FastTeleport { get; set; } = true;
-
         public bool MuteInBackground { get; set; }
         public PopupMessageStyle PopupMessageStyle { get; set; } = PopupMessageStyle.Tooltip;
         public bool Hotkeys { get; set; } = true;

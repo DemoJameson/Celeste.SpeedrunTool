@@ -132,14 +132,15 @@ SPEEDRUN_TOOL_TOTAL_LOST_TIME=               总损失时间
 SPEEDRUN_TOOL_NO_DATA=                       无数据
 
 # ================================== More Options ==================================
-SPEEDRUN_TOOL_RESPAWN_SPEED=              复活速度
-SPEEDRUN_TOOL_RESTART_CHAPTER_SPEED=      重启章节速度
-SPEEDRUN_TOOL_FAST_TELEPORT=              快速传送
-SPEEDRUN_TOOL_FAST_TELEPORT_DESCRIPTION=  PageDown/Up 传送时更加快速，无需重载整个地图
-SPEEDRUN_TOOL_MUTE_IN_BACKGROUND=         游戏后台运行时静音
-SPEEDRUN_TOOL_POPUP_MESSAGE_STYLE=        提示信息样式
-SPEEDRUN_TOOL_TOOLTIP=                    简洁
-SPEEDRUN_TOOL_DIALOG_BOX=                 对话框
-SPEEDRUN_TOOL_OPTION_STATE=               {0}：{1}
-SPEEDRUN_TOOL_HOTKEYS=                    快捷键
-SPEEDRUN_TOOL_HOTKEYS_CONFIG=             快捷键设置
+SPEEDRUN_TOOL_RESPAWN_SPEED=                    复活速度
+SPEEDRUN_TOOL_RESTART_CHAPTER_SPEED=            重启章节速度
+SPEEDRUN_TOOL_SKIP_RESTART_CHAPTER_SCREEN_WIPE= 跳过重启章节的黑屏动画
+SPEEDRUN_TOOL_FAST_TELEPORT=                    快速传送
+SPEEDRUN_TOOL_FAST_TELEPORT_DESCRIPTION=        PageDown/Up 传送时更加快速，无需重载整个地图
+SPEEDRUN_TOOL_MUTE_IN_BACKGROUND=               游戏后台运行时静音
+SPEEDRUN_TOOL_POPUP_MESSAGE_STYLE=              提示信息样式
+SPEEDRUN_TOOL_TOOLTIP=                          简洁
+SPEEDRUN_TOOL_DIALOG_BOX=                       对话框
+SPEEDRUN_TOOL_OPTION_STATE=                     {0}：{1}
+SPEEDRUN_TOOL_HOTKEYS=                          快捷键
+SPEEDRUN_TOOL_HOTKEYS_CONFIG=                   快捷键设置

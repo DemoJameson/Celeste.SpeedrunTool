@@ -72,7 +72,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                 )) {
                 object skipScreenWipe = ilCursor.Prev.Operand;
                 ilCursor.EmitDelegate<Func<bool>>(() => {
-                    if (Settings.Enabled && Settings.RestartChapterSpeed > 1 && Engine.Scene is Level level) {
+                    if (Settings.Enabled && Settings.SkipRestartChapterScreenWipe && Engine.Scene is Level level) {
                         Engine.Scene = new LevelLoader(level.Session.Restart());
                         return true;
                     } else {

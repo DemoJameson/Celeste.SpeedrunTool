@@ -132,14 +132,15 @@ SPEEDRUN_TOOL_TOTAL_LOST_TIME=               Total Lost Time
 SPEEDRUN_TOOL_NO_DATA=                       No Data
 
 # ================================== More Options ==================================
-SPEEDRUN_TOOL_RESPAWN_SPEED=              Respawn Speed
-SPEEDRUN_TOOL_RESTART_CHAPTER_SPEED=      Restart Chapter Speed
-SPEEDRUN_TOOL_FAST_TELEPORT=              Fast Teleport
-SPEEDRUN_TOOL_FAST_TELEPORT_DESCRIPTION=  Make PageDown/Up teleport more faster, no need to reload the whole map
-SPEEDRUN_TOOL_MUTE_IN_BACKGROUND=         Mute in Background
-SPEEDRUN_TOOL_POPUP_MESSAGE_STYLE=        Popup Message Style
-SPEEDRUN_TOOL_TOOLTIP=                    Tooltip
-SPEEDRUN_TOOL_DIALOG_BOX=                 Dialog Box
-SPEEDRUN_TOOL_OPTION_STATE=               {0}: {1}
-SPEEDRUN_TOOL_HOTKEYS=                    Hotkeys
-SPEEDRUN_TOOL_HOTKEYS_CONFIG=             Hotkeys Config
+SPEEDRUN_TOOL_RESPAWN_SPEED=                    Respawn Speed
+SPEEDRUN_TOOL_RESTART_CHAPTER_SPEED=            Restart Chapter Speed
+SPEEDRUN_TOOL_SKIP_RESTART_CHAPTER_SCREEN_WIPE= Skip Restart Chapter Screen Wipe
+SPEEDRUN_TOOL_FAST_TELEPORT=                    Fast Teleport
+SPEEDRUN_TOOL_FAST_TELEPORT_DESCRIPTION=        Make PageDown/Up teleport more faster, no need to reload the whole map
+SPEEDRUN_TOOL_MUTE_IN_BACKGROUND=               Mute in Background
+SPEEDRUN_TOOL_POPUP_MESSAGE_STYLE=              Popup Message Style
+SPEEDRUN_TOOL_TOOLTIP=                          Tooltip
+SPEEDRUN_TOOL_DIALOG_BOX=                       Dialog Box
+SPEEDRUN_TOOL_OPTION_STATE=                     {0}: {1}
+SPEEDRUN_TOOL_HOTKEYS=                          Hotkeys
+SPEEDRUN_TOOL_HOTKEYS_CONFIG=                   Hotkeys Config

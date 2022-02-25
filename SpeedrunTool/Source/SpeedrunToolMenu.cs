@@ -121,6 +121,9 @@ namespace Celeste.Mod.SpeedrunTool {
                     subMenu.Add(new TextMenuExt.IntSlider(Dialog.Clean(DialogIds.RestartChapterSpeed), 1, 9, Settings.RestartChapterSpeed).Change(i =>
                         Settings.RestartChapterSpeed = i));
 
+                    subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.SkipRestartChapterScreenWipe), Settings.SkipRestartChapterScreenWipe).Change(b =>
+                        Settings.SkipRestartChapterScreenWipe = b));
+
                     TextMenu.Item fastTeleportItem;
                     subMenu.Add(
                         fastTeleportItem =

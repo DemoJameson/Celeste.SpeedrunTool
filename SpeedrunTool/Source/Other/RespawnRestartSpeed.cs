@@ -47,22 +47,19 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             Player player = level.GetPlayer();
 
             // 加速复活过程
-            if (Settings.RespawnSpeed > 1 && (player == null || player.StateMachine.State == Player.StIntroRespawn)) {
-                for (int i = 1; i < Settings.RespawnSpeed; i++) {
-                    orig(self, time);
-                }
+            for (int i = 1; i < Settings.RespawnSpeed && (player == null || player.StateMachine.State == Player.StIntroRespawn); i++) {
+                orig(self, time);
             }
 
             // 加速章节启动
-            if (Settings.RestartChapterSpeed > 1) {
-                if (!level.TimerStarted && player?.StateMachine.State != Player.StIntroRespawn ||
-                    level.TimerStarted && level.Session.FirstLevel && !level.InCutscene && player?.StateMachine.State == Player.StDummy
-                    ) {
-                    for (int i = 1; i < Settings.RestartChapterSpeed; i++) {
-                        orig(self, time);
-                    }
-                }
+            for (int i = 1; i < Settings.RestartChapterSpeed && RequireFastRestart(level, player); i++) {
+                orig(self, time);
             }
+        }
+
+        private static bool RequireFastRestart(Level level, Player player) {
+            return !level.TimerStarted && player?.StateMachine.State != Player.StIntroRespawn ||
+                   level.TimerStarted && level.Session.FirstLevel && !level.InCutscene && player?.StateMachine.State == Player.StDummy;
         }
 
         // 移除重启章节前面的黑屏

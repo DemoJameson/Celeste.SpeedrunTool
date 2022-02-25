@@ -5,6 +5,7 @@ using Monocle;
 namespace Celeste.Mod.SpeedrunTool.Other {
     public static class MuteInBackground {
         private static bool init;
+        private static bool muted;
         private static SpeedrunToolSettings ModSettings => SpeedrunToolModule.Settings;
 
         [Load]
@@ -25,6 +26,9 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             Engine.Instance.Window.ClientSizeChanged -= WindowOnClientSizeChanged;
             Engine.Instance.Activated -= InstanceOnActivated;
             Engine.Instance.Deactivated -= InstanceOnDeactivated;
+
+            muted = true;
+            RestoreAudio();
         }
 
         /*延迟添加这些事件，不然 FNA 版本启动崩溃
@@ -66,16 +70,18 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         }
 
         private static void MuteAudio() {
-            if (ModSettings.MuteInBackground) {
+            if (ModSettings.Enabled && ModSettings.MuteInBackground) {
                 Audio.MusicVolume = 0f;
                 Audio.SfxVolume = 0f;
+                muted = true;
             }
         }
 
         private static void RestoreAudio() {
-            if (ModSettings.MuteInBackground) {
+            if (muted) {
                 Settings.Instance.ApplyMusicVolume();
                 Settings.Instance.ApplySFXVolume();
+                muted = false;
             }
         }
     }

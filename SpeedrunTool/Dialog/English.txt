@@ -133,7 +133,7 @@ SPEEDRUN_TOOL_NO_DATA=                       No Data
 
 # ================================== More Options ==================================
 SPEEDRUN_TOOL_RESPAWN_SPEED=              Respawn Speed
-SPEEDRUN_TOOL_FAST_RESTART_CHAPTER=       Fast Restart Chapter
+SPEEDRUN_TOOL_RESTART_CHAPTER_SPEED=      Restart Chapter Speed
 SPEEDRUN_TOOL_FAST_TELEPORT=              Fast Teleport
 SPEEDRUN_TOOL_FAST_TELEPORT_DESCRIPTION=  Make PageDown/Up teleport more faster, no need to reload the whole map
 SPEEDRUN_TOOL_MUTE_IN_BACKGROUND=         Mute in Background

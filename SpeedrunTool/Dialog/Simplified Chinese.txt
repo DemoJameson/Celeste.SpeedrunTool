@@ -133,7 +133,7 @@ SPEEDRUN_TOOL_NO_DATA=                       无数据
 
 # ================================== More Options ==================================
 SPEEDRUN_TOOL_RESPAWN_SPEED=              复活速度
-SPEEDRUN_TOOL_FAST_RESTART_CHAPTER=       快速重启章节
+SPEEDRUN_TOOL_RESTART_CHAPTER_SPEED=      重启章节速度
 SPEEDRUN_TOOL_FAST_TELEPORT=              快速传送
 SPEEDRUN_TOOL_FAST_TELEPORT_DESCRIPTION=  PageDown/Up 传送时更加快速，无需重载整个地图
 SPEEDRUN_TOOL_MUTE_IN_BACKGROUND=         游戏后台运行时静音

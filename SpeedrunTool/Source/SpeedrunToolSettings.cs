@@ -67,7 +67,7 @@ namespace Celeste.Mod.SpeedrunTool {
         #region MoreOptions
 
         [SettingRange(1, 9)] public int RespawnSpeed { get; set; } = 1;
-        public bool FastRestartChapter { get; set; } = false;
+        [SettingRange(1, 9)] public int RestartChapterSpeed { get; set; } = 1;
 
         [SettingName(DialogIds.FastTeleport)]
         [SettingSubText(DialogIds.FastTeleportDescription)]

@@ -59,8 +59,18 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         }
 
         private static bool RequireFastRestart(Level level, Player player) {
-            return !level.TimerStarted && player?.StateMachine.State != Player.StIntroRespawn ||
-                   level.TimerStarted && level.Session.FirstLevel && !level.InCutscene && player?.StateMachine.State == Player.StDummy;
+            if (level.Session.GetFlag("StopFastRestart")) {
+                return false;
+            }
+
+            bool result = !level.TimerStarted && !level.SkippingCutscene && player?.StateMachine.State != Player.StIntroRespawn ||
+                   level.TimerStarted && !level.InCutscene && level.Session.FirstLevel && player?.InControl != true;
+
+            if (!result) {
+               level.Session.SetFlag("StopFastRestart");
+            }
+
+            return result;
         }
 
         // 移除重启章节前面的黑屏

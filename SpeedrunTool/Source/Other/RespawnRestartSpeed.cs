@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.Utils;
 using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
 using Monocle;
@@ -32,7 +33,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         private static void RespawnSpeed(On.Monocle.Engine.orig_Update orig, Engine self, GameTime time) {
             orig(self, time);
 
-            if (!Settings.Enabled || (Settings.RespawnSpeed == 1 && Settings.RestartChapterSpeed == 1)) {
+            if (!Settings.Enabled || Settings.RespawnSpeed == 1 && Settings.RestartChapterSpeed == 1 || TasUtils.Running) {
                 return;
             }
 
@@ -72,7 +73,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                 )) {
                 object skipScreenWipe = ilCursor.Prev.Operand;
                 ilCursor.EmitDelegate<Func<bool>>(() => {
-                    if (Settings.Enabled && Settings.SkipRestartChapterScreenWipe && Engine.Scene is Level level) {
+                    if (Settings.Enabled && Settings.SkipRestartChapterScreenWipe && Engine.Scene is Level level && !TasUtils.Running) {
                         Engine.Scene = new LevelLoader(level.Session.Restart());
                         return true;
                     } else {

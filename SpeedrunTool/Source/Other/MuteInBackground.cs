@@ -1,5 +1,6 @@
 using System;
 using Celeste.Mod.SpeedrunTool.Extensions;
+using Celeste.Mod.SpeedrunTool.Utils;
 using Monocle;
 
 namespace Celeste.Mod.SpeedrunTool.Other {
@@ -70,7 +71,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         }
 
         private static void MuteAudio() {
-            if (ModSettings.Enabled && ModSettings.MuteInBackground) {
+            if (ModSettings.Enabled && ModSettings.MuteInBackground && !TasUtils.Running) {
                 Audio.MusicVolume = 0f;
                 Audio.SfxVolume = 0f;
                 muted = true;

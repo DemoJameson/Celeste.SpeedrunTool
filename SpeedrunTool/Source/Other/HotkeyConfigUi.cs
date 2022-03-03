@@ -5,6 +5,7 @@ using System.Reflection;
 using Celeste.Mod.Helpers;
 using Celeste.Mod.SpeedrunTool.Extensions;
 using Celeste.Mod.SpeedrunTool.Message;
+using Celeste.Mod.SpeedrunTool.Utils;
 using Celeste.Mod.UI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
@@ -14,7 +15,6 @@ using CelesteSettings = Celeste.Settings;
 namespace Celeste.Mod.SpeedrunTool.Other {
     [Tracked]
     public class HotkeyConfigUi : TextMenu {
-        private static FieldInfo tasRunning;
         private static FieldInfo celesteNetClientModuleInstance;
         private static FieldInfo celesteNetClientModuleContext;
         private static FieldInfo celesteNetClientContextChat;
@@ -136,7 +136,6 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         [Initialize]
         private static void Initialize() {
             Assembly assembly = FakeAssembly.GetFakeEntryAssembly();
-            tasRunning = assembly.GetType("TAS.Manager")?.GetFieldInfo("Running");
             celesteNetClientModuleInstance = assembly.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientModule")?.GetFieldInfo("Instance");
             celesteNetClientModuleContext = assembly.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientModule")?.GetFieldInfo("Context");
             celesteNetClientContextChat = assembly.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientContext")?.GetFieldInfo("Chat");
@@ -151,7 +150,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         private static void MInputOnUpdate(On.Monocle.MInput.orig_Update orig) {
             orig();
 
-            if (Engine.Scene is { } scene && Settings.Enabled) {
+            if (Engine.Scene is { } scene && Settings.Enabled && !TasUtils.Running) {
                 foreach (Hotkey hotkey in Enum.GetValues(typeof(Hotkey)).Cast<Hotkey>()) {
                     HotkeyConfig hotkeyConfig = GetHotkeyConfig(hotkey);
                     if (Pressed(hotkey, scene)) {
@@ -169,10 +168,6 @@ namespace Celeste.Mod.SpeedrunTool.Other {
 
             bool pressed = GetVirtualButton(hotkey).Pressed;
             if (!pressed) {
-                return false;
-            }
-
-            if (tasRunning?.GetValue(null) as bool? == true) {
                 return false;
             }
 

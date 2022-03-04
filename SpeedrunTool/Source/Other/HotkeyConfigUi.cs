@@ -354,7 +354,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                 }
 
                 timeout -= Engine.DeltaTime;
-            } else if (MInput.Keyboard.Pressed(Keys.Delete) && Selection >= 3 && Selection < Items.Count - 1) {
+            } else if ((Input.MenuJournal.Pressed || MInput.Keyboard.Pressed(Keys.Delete) || MInput.Keyboard.Pressed(Keys.Back)) && Selection >= 3 && Selection < Items.Count - 1) {
                 int index = Selection - 3;
                 bool keyboard = true;
                 if (index > HotkeyConfigs.Count - 1) {

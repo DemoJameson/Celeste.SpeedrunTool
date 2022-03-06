@@ -68,6 +68,8 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             new(Hotkey.TeleportToNextRoom, Keys.PageDown),
             new(Hotkey.SwitchAutoLoadState),
             new(Hotkey.ToggleFullscreen),
+            new(Hotkey.IncreaseTimedRooms),
+            new(Hotkey.DecreaseTimedRooms),
         }.ToDictionary(info => info.Hotkey, info => info);
 
         private bool closing;
@@ -482,6 +484,8 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         TeleportToNextRoom,
         SwitchAutoLoadState,
         ToggleFullscreen,
+        IncreaseTimedRooms,
+        DecreaseTimedRooms,
     }
 
     internal static class HotkeysExtensions {

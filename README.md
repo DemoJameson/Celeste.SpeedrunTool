@@ -2,6 +2,9 @@
 
 [中文说明](./README_CN.md)
 
+## About This Branch
+This branch is not intended for general use. I made it to include changes that I like for city-specific QOL but may break general functionality / be generally cursed. See the master branch of this fork for more general-use changes. 
+
 ## Download
 [GameBanana](https://gamebanana.com/tools/6597)
 

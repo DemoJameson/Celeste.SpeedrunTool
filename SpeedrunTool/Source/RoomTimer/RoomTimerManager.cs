@@ -84,6 +84,24 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                     CreateEndPoint(level, true);
                 }
             });
+
+            Hotkey.IncreaseTimedRooms.RegisterPressedAction(scene => {
+                if (scene is Level {Paused: false} level) {
+                    if (Settings.NumberOfRooms < 99) {
+                        Settings.NumberOfRooms++;
+                    }
+                    Tooltip.Show(string.Format(Dialog.Get(DialogIds.OptionState), DialogIds.NumberOfRooms.DialogClean(), Settings.NumberOfRooms));
+                }
+            });
+
+            Hotkey.DecreaseTimedRooms.RegisterPressedAction(scene => {
+                if (scene is Level { Paused: false } level) {
+                    if (Settings.NumberOfRooms > 1) {
+                        Settings.NumberOfRooms--;
+                    }
+                    Tooltip.Show(string.Format(Dialog.Get(DialogIds.OptionState), DialogIds.NumberOfRooms.DialogClean(), Settings.NumberOfRooms));
+                }
+            });
         }
 
         private static void SpeedrunTimerDisplayOnUpdate(ILContext il) {

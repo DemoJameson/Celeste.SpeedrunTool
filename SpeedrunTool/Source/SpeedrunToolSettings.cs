@@ -84,6 +84,8 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingIgnore] public List<Keys> KeyboardOpenDebugMap { get; set; } = Hotkey.OpenDebugMap.GetDefaultKeys();
         [SettingIgnore] public List<Keys> KeyboardResetRoomTimerPb { get; set; } = Hotkey.ResetRoomTimerPb.GetDefaultKeys();
         [SettingIgnore] public List<Keys> KeyboardSwitchRoomTimer { get; set; } = Hotkey.SwitchRoomTimer.GetDefaultKeys();
+        [SettingIgnore] public List<Keys> KeyboardIncreaseTimedRooms { get; set; } = Hotkey.IncreaseTimedRooms.GetDefaultKeys();
+        [SettingIgnore] public List<Keys> KeyboardDecreaseTimedRooms { get; set; } = Hotkey.DecreaseTimedRooms.GetDefaultKeys();
         [SettingIgnore] public List<Keys> KeyboardSetEndPoint { get; set; } = Hotkey.SetEndPoint.GetDefaultKeys();
         [SettingIgnore] public List<Keys> KeyboardSetAdditionalEndPoint { get; set; } = Hotkey.SetAdditionalEndPoint.GetDefaultKeys();
         [SettingIgnore] public List<Keys> KeyboardCheckDeathStatistics { get; set; } = Hotkey.CheckDeathStatistics.GetDefaultKeys();
@@ -91,8 +93,6 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingIgnore] public List<Keys> KeyboardTeleportToNextRoom { get; set; } = Hotkey.TeleportToNextRoom.GetDefaultKeys();
         [SettingIgnore] public List<Keys> KeyboardSwitchAutoLoadState { get; set; } = Hotkey.SwitchAutoLoadState.GetDefaultKeys();
         [SettingIgnore] public List<Keys> KeyboardToggleFullscreen { get; set; } = Hotkey.ToggleFullscreen.GetDefaultKeys();
-        [SettingIgnore] public List<Keys> KeyboardIncreaseTimedRooms { get; set; } = Hotkey.IncreaseTimedRooms.GetDefaultKeys();
-        [SettingIgnore] public List<Keys> KeyboardDecreaseTimedRooms { get; set; } = Hotkey.DecreaseTimedRooms.GetDefaultKeys();
 
         [SettingIgnore] public Buttons? ControllerToggleHotkeys { get; set; }
         [SettingIgnore] public Buttons? ControllerSaveState { get; set; }
@@ -101,6 +101,8 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingIgnore] public Buttons? ControllerOpenDebugMap { get; set; }
         [SettingIgnore] public Buttons? ControllerResetRoomTimerPb { get; set; }
         [SettingIgnore] public Buttons? ControllerSwitchRoomTimer { get; set; }
+        [SettingIgnore] public Buttons? ControllerIncreaseTimedRooms { get; set; }
+        [SettingIgnore] public Buttons? ControllerDecreaseTimedRooms { get; set; }
         [SettingIgnore] public Buttons? ControllerSetEndPoint { get; set; }
         [SettingIgnore] public Buttons? ControllerSetAdditionalEndPoint { get; set; }
         [SettingIgnore] public Buttons? ControllerCheckDeathStatistics { get; set; }

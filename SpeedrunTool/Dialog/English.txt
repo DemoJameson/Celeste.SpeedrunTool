@@ -95,6 +95,8 @@ SPEEDRUN_TOOL_TOGGLE_HOTKEYS=                Toggle Hotkeys
 SPEEDRUN_TOOL_OPEN_DEBUG_MAP=                Open Debug Map
 SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB=           Reset Room Timer PB
 SPEEDRUN_TOOL_SWITCH_ROOM_TIMER=             Switch Room Timer
+SPEEDRUN_TOOL_INCREASE_TIMED_ROOMS=          Increase Number of Timed Rooms
+SPEEDRUN_TOOL_DECREASE_TIMED_ROOMS=          Decrease Number of Timed Rooms
 SPEEDRUN_TOOL_SET_END_POINT=                 Set Room Timer End Point
 SPEEDRUN_TOOL_SET_ADDITIONAL_END_POINT=      Set Room Timer Additional End Point
 SPEEDRUN_TOOL_TELEPORT_TO_PREVIOUS_ROOM=     Teleport to Previous Room
@@ -115,8 +117,6 @@ SPEEDRUN_TOOL_ALREADY_LAST_ROOM_DIALOG_BADELINE=
     Already in the last room!
 SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE=        Toggle Auto Load State
 SPEEDRUN_TOOL_TOGGLE_FULLSCREEN=             Toggle Fullscreen
-SPEEDRUN_TOOL_INCREASE_TIMED_ROOMS=          Increase Number of Timed Rooms
-SPEEDRUN_TOOL_DECREASE_TIMED_ROOMS=          Decrease Number of Timed Rooms
 
 # ================================== Death Statistics ==================================
 SPEEDRUN_TOOL_DEATH_STATISTICS=              Death Statistics

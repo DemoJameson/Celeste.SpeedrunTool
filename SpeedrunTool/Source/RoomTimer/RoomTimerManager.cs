@@ -68,6 +68,28 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                 }
             });
 
+            Hotkey.IncreaseTimedRooms.RegisterPressedAction(scene => {
+                if (scene is Level {Paused: false}) {
+                    if (Settings.NumberOfRooms < 99) {
+                        Settings.NumberOfRooms++;
+                        SpeedrunToolModule.Instance.SaveSettings();
+                    }
+
+                    PopupMessageUtils.ShowOptionState(DialogIds.NumberOfRooms.DialogClean(), Settings.NumberOfRooms.ToString());
+                }
+            });
+
+            Hotkey.DecreaseTimedRooms.RegisterPressedAction(scene => {
+                if (scene is Level { Paused: false }) {
+                    if (Settings.NumberOfRooms > 1) {
+                        Settings.NumberOfRooms--;
+                        SpeedrunToolModule.Instance.SaveSettings();
+                    }
+
+                    PopupMessageUtils.ShowOptionState(DialogIds.NumberOfRooms.DialogClean(), Settings.NumberOfRooms.ToString());
+                }
+            });
+
             Hotkey.SetEndPoint.RegisterPressedAction(scene => {
                 if (scene is Level {Paused: false} level) {
                     ClearPbTimes();
@@ -82,24 +104,6 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                     }
 
                     CreateEndPoint(level, true);
-                }
-            });
-
-            Hotkey.IncreaseTimedRooms.RegisterPressedAction(scene => {
-                if (scene is Level {Paused: false} level) {
-                    if (Settings.NumberOfRooms < 99) {
-                        Settings.NumberOfRooms++;
-                    }
-                    Tooltip.Show(string.Format(Dialog.Get(DialogIds.OptionState), DialogIds.NumberOfRooms.DialogClean(), Settings.NumberOfRooms));
-                }
-            });
-
-            Hotkey.DecreaseTimedRooms.RegisterPressedAction(scene => {
-                if (scene is Level { Paused: false } level) {
-                    if (Settings.NumberOfRooms > 1) {
-                        Settings.NumberOfRooms--;
-                    }
-                    Tooltip.Show(string.Format(Dialog.Get(DialogIds.OptionState), DialogIds.NumberOfRooms.DialogClean(), Settings.NumberOfRooms));
                 }
             });
         }
@@ -300,7 +304,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
                     if (ch == '.') {
                         currentScale = scale * 0.7f;
                         y -= 5f * scale;
-                    } 
+                    }
                 }
                 Color color3 = ch is ':' or '.' ? color2 : color1;
 

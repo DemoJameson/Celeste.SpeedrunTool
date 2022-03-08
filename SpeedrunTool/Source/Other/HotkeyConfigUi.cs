@@ -61,6 +61,8 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             new(Hotkey.OpenDebugMap),
             new(Hotkey.ResetRoomTimerPb, Keys.F9),
             new(Hotkey.SwitchRoomTimer, Keys.F10),
+            new(Hotkey.IncreaseTimedRooms),
+            new(Hotkey.DecreaseTimedRooms),
             new(Hotkey.SetEndPoint, Keys.F11),
             new(Hotkey.SetAdditionalEndPoint),
             new(Hotkey.CheckDeathStatistics),
@@ -68,8 +70,6 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             new(Hotkey.TeleportToNextRoom, Keys.PageDown),
             new(Hotkey.SwitchAutoLoadState),
             new(Hotkey.ToggleFullscreen),
-            new(Hotkey.IncreaseTimedRooms),
-            new(Hotkey.DecreaseTimedRooms),
         }.ToDictionary(info => info.Hotkey, info => info);
 
         private bool closing;
@@ -477,6 +477,8 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         OpenDebugMap,
         ResetRoomTimerPb,
         SwitchRoomTimer,
+        IncreaseTimedRooms,
+        DecreaseTimedRooms,
         SetEndPoint,
         SetAdditionalEndPoint,
         CheckDeathStatistics,
@@ -484,8 +486,6 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         TeleportToNextRoom,
         SwitchAutoLoadState,
         ToggleFullscreen,
-        IncreaseTimedRooms,
-        DecreaseTimedRooms,
     }
 
     internal static class HotkeysExtensions {

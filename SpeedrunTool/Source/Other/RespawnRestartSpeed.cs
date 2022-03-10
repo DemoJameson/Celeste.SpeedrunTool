@@ -63,7 +63,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
                 return false;
             }
 
-            bool result = !level.TimerStarted && AreaData.Get(level)?.Interlude == false && !level.SkippingCutscene && player?.StateMachine.State != Player.StIntroRespawn ||
+            bool result = !level.TimerStarted && level.Session.Area.ID != 8 && !level.SkippingCutscene && player?.StateMachine.State != Player.StIntroRespawn ||
                    level.TimerStarted && !level.InCutscene && level.Session.FirstLevel && player?.InControl != true;
 
             if (!result) {

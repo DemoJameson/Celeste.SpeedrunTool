@@ -26,6 +26,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         [Unload]
         private static void Unload() {
             On.Celeste.Player.Die -= PlayerOnDie;
+            IL.Celeste.RisingLava.OnPlayer -= EnableInvincible;
             IL.Celeste.SandwichLava.OnPlayer -= EnableInvincible;
             ilHook?.Dispose();
         }

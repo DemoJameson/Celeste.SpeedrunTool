@@ -116,6 +116,7 @@ SPEEDRUN_TOOL_ALREADY_LAST_ROOM_DIALOG_BADELINE=
     [BADELINE left yell]
     Already in the last room!
 SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE=        Toggle Auto Load State
+SPEEDRUN_TOOL_SPAWN_TOWER_VIEWER=            Spawn Tower Viewer
 SPEEDRUN_TOOL_TOGGLE_FULLSCREEN=             Toggle Fullscreen
 
 # ================================== Death Statistics ==================================

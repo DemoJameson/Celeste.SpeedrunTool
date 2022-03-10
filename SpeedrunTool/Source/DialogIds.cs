@@ -71,6 +71,8 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string OpenDebugMap = "SPEEDRUN_TOOL_OPEN_DEBUG_MAP";
         public const string ResetRoomTimerPb = "SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB";
         public const string SwitchRoomTimer = "SPEEDRUN_TOOL_SWITCH_ROOM_TIMER";
+        public const string IncreaseTimedRooms = "SPEEDRUN_TOOL_INCREASE_TIMED_ROOMS";
+        public const string DecreaseTimedRooms = "SPEEDRUN_TOOL_DECREASE_TIMED_ROOMS";
         public const string SetEndPoint = "SPEEDRUN_TOOL_SET_END_POINT";
         public const string SetAdditionalEndPoint = "SPEEDRUN_TOOL_SET_ADDITIONAL_END_POINT";
         public const string TeleportToPreviousRoom = "SPEEDRUN_TOOL_TELEPORT_TO_PREVIOUS_ROOM";
@@ -82,9 +84,8 @@ namespace Celeste.Mod.SpeedrunTool {
         public const string AlreadyLastRoomDialog = "SPEEDRUN_TOOL_ALREADY_LAST_ROOM_DIALOG";
         public const string AlreadyLastRoomDialogBadeline = "SPEEDRUN_TOOL_ALREADY_LAST_ROOM_DIALOG_BADELINE";
         public const string SwitchAutoLoadState = "SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE";
+        public const string SpawnTowerViewer = "SPEEDRUN_TOOL_SPAWN_TOWER_VIEWER";
         public const string ToggleFullscreen = "SPEEDRUN_TOOL_TOGGLE_FULLSCREEN";
-        public const string IncreaseTimedRooms = "SPEEDRUN_TOOL_INCREASE_TIMED_ROOMS";
-        public const string DecreaseTimedRooms = "SPEEDRUN_TOOL_DECREASE_TIMED_ROOMS";
 
         // Death Statistics
         public const string MaxNumberOfDeathData = "SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA";

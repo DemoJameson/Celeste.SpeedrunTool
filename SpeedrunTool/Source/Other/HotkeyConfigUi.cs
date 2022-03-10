@@ -69,6 +69,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             new(Hotkey.TeleportToPreviousRoom, Keys.PageUp),
             new(Hotkey.TeleportToNextRoom, Keys.PageDown),
             new(Hotkey.SwitchAutoLoadState),
+            new(Hotkey.SpawnTowerViewer),
             new(Hotkey.ToggleFullscreen),
         }.ToDictionary(info => info.Hotkey, info => info);
 
@@ -464,7 +465,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
             if (typeof(DialogIds).GetFieldValue(Hotkey.ToString()) is string label) {
                 return label.DialogClean();
             } else {
-                return $"DialogIds{Hotkey} not found";
+                return $"DialogIds.{Hotkey} not found";
             }
         }
     }
@@ -485,6 +486,7 @@ namespace Celeste.Mod.SpeedrunTool.Other {
         TeleportToPreviousRoom,
         TeleportToNextRoom,
         SwitchAutoLoadState,
+        SpawnTowerViewer,
         ToggleFullscreen,
     }
 

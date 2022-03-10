@@ -276,9 +276,6 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer {
             return result;
         }
 
-        private static readonly Lazy<PixelFontSize> PixelFontSize =
-            new(() => Dialog.Languages["english"].Font.Get(Dialog.Languages["english"].FontFaceSize));
-
         private static readonly Lazy<float> NumberWidth = new(() => (float) typeof(SpeedrunTimerDisplay).GetFieldValue("numberWidth"));
         private static readonly Lazy<float> SpacerWidth = new(() => (float) typeof(SpeedrunTimerDisplay).GetFieldValue("spacerWidth"));
 

@@ -92,6 +92,7 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingIgnore] public List<Keys> KeyboardTeleportToPreviousRoom { get; set; } = Hotkey.TeleportToPreviousRoom.GetDefaultKeys();
         [SettingIgnore] public List<Keys> KeyboardTeleportToNextRoom { get; set; } = Hotkey.TeleportToNextRoom.GetDefaultKeys();
         [SettingIgnore] public List<Keys> KeyboardSwitchAutoLoadState { get; set; } = Hotkey.SwitchAutoLoadState.GetDefaultKeys();
+        [SettingIgnore] public List<Keys> KeyboardSpawnTowerViewer { get; set; } = Hotkey.SpawnTowerViewer.GetDefaultKeys();
         [SettingIgnore] public List<Keys> KeyboardToggleFullscreen { get; set; } = Hotkey.ToggleFullscreen.GetDefaultKeys();
 
         [SettingIgnore] public Buttons? ControllerToggleHotkeys { get; set; }
@@ -109,6 +110,7 @@ namespace Celeste.Mod.SpeedrunTool {
         [SettingIgnore] public Buttons? ControllerTeleportToPreviousRoom { get; set; }
         [SettingIgnore] public Buttons? ControllerTeleportToNextRoom { get; set; }
         [SettingIgnore] public Buttons? ControllerSwitchAutoLoadState { get; set; }
+        [SettingIgnore] public Buttons? ControllerSpawnTowerViewer { get; set; }
         [SettingIgnore] public Buttons? ControllerToggleFullscreen { get; set; }
 
         #endregion HotkeyConfig

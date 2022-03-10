@@ -117,6 +117,7 @@ SPEEDRUN_TOOL_ALREADY_LAST_ROOM_DIALOG_BADELINE=
     [BADELINE left yell]
     已经在最后一个房间了！
 SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE=        开关死亡自动加载状态
+SPEEDRUN_TOOL_SPAWN_TOWER_VIEWER=            一键望远镜
 SPEEDRUN_TOOL_TOGGLE_FULLSCREEN=             开关全屏
 
 # ================================== Death Statistics ==================================

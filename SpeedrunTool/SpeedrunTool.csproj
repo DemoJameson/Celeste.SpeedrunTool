@@ -3,7 +3,7 @@
         <ProjectGuid>{C7DFDD37-907C-4A75-96DA-1C5828C97F96}</ProjectGuid>
         <RootNamespace>Celeste.Mod.SpeedrunTool</RootNamespace>
         <TargetFramework>net452</TargetFramework>
-        <LangVersion>9</LangVersion>
+        <LangVersion>10</LangVersion>
         <AssemblyTitle>SpeedrunTool</AssemblyTitle>
         <Product>SpeedrunTool</Product>
         <Copyright>Copyright © 2019</Copyright>

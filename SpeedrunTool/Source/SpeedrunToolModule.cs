@@ -1,65 +1,63 @@
-﻿using System;
-using Celeste.Mod.SpeedrunTool.Extensions;
-using Celeste.Mod.SpeedrunTool.SaveLoad;
+﻿using Celeste.Mod.SpeedrunTool.SaveLoad;
 using FMOD.Studio;
 
-namespace Celeste.Mod.SpeedrunTool {
-    // ReSharper disable once ClassNeverInstantiated.Global
-    public class SpeedrunToolModule : EverestModule {
-        public static SpeedrunToolModule Instance { get; private set; }
+namespace Celeste.Mod.SpeedrunTool;
 
-        public static SpeedrunToolSaveData SaveData {
-            get {
-                // copy from max480
-                // failsafe: if DeathInfos is null, initialize it. THIS SHOULD NEVER HAPPEN, but already happened in a case of a corrupted save.
-                if (((SpeedrunToolSaveData)Instance._SaveData)?.DeathInfos == null) {
-                    Logger.Log("SpeedrunTool/DeathStatisticsManager",
-                        "WARNING: SaveData was null. This should not happen. Initializing it to an empty save data.");
-                    Instance._SaveData = new SpeedrunToolSaveData();
-                }
+// ReSharper disable once ClassNeverInstantiated.Global
+public class SpeedrunToolModule : EverestModule {
+    public static SpeedrunToolModule Instance { get; private set; }
 
-                return (SpeedrunToolSaveData)Instance._SaveData;
+    public static SpeedrunToolSaveData SaveData {
+        get {
+            // copy from max480
+            // failsafe: if DeathInfos is null, initialize it. THIS SHOULD NEVER HAPPEN, but already happened in a case of a corrupted save.
+            if (((SpeedrunToolSaveData)Instance._SaveData)?.DeathInfos == null) {
+                Logger.Log("SpeedrunTool/DeathStatisticsManager",
+                    "WARNING: SaveData was null. This should not happen. Initializing it to an empty save data.");
+                Instance._SaveData = new SpeedrunToolSaveData();
             }
+
+            return (SpeedrunToolSaveData)Instance._SaveData;
         }
+    }
 
-        public static SpeedrunToolSettings Settings => SpeedrunToolSettings.Instance;
-        public static bool Enabled => Settings.Enabled;
+    public static SpeedrunToolSettings Settings => SpeedrunToolSettings.Instance;
+    public static bool Enabled => Settings.Enabled;
 
-        public SpeedrunToolModule() {
-            Instance = this;
-            AttributeUtils.CollectMethods<LoadAttribute>();
-            AttributeUtils.CollectMethods<UnloadAttribute>();
-            AttributeUtils.CollectMethods<LoadContentAttribute>();
-            AttributeUtils.CollectMethods<InitializeAttribute>();
+    public SpeedrunToolModule() {
+        Instance = this;
+        AttributeUtils.CollectMethods<LoadAttribute>();
+        AttributeUtils.CollectMethods<UnloadAttribute>();
+        AttributeUtils.CollectMethods<LoadContentAttribute>();
+        AttributeUtils.CollectMethods<InitializeAttribute>();
+    }
+
+    public override Type SettingsType => typeof(SpeedrunToolSettings);
+
+    public override Type SaveDataType => typeof(SpeedrunToolSaveData);
+
+    public override void Load() {
+        StateManager.Instance.Load();
+        AttributeUtils.Invoke<LoadAttribute>();
+    }
+
+    public override void Unload() {
+        StateManager.Instance.Unload();
+        AttributeUtils.Invoke<UnloadAttribute>();
+    }
+
+    public override void Initialize() {
+        AttributeUtils.Invoke<InitializeAttribute>();
+    }
+
+    public override void LoadContent(bool firstLoad) {
+        if (firstLoad) {
+            AttributeUtils.Invoke<LoadContentAttribute>();
         }
+    }
 
-        public override Type SettingsType => typeof(SpeedrunToolSettings);
-
-        public override Type SaveDataType => typeof(SpeedrunToolSaveData);
-
-        public override void Load() {
-            StateManager.Instance.Load();
-            AttributeUtils.Invoke<LoadAttribute>();
-        }
-
-        public override void Unload() {
-            StateManager.Instance.Unload();
-            AttributeUtils.Invoke<UnloadAttribute>();
-        }
-
-        public override void Initialize() {
-            AttributeUtils.Invoke<InitializeAttribute>();
-        }
-
-        public override void LoadContent(bool firstLoad) {
-            if (firstLoad) {
-                AttributeUtils.Invoke<LoadContentAttribute>();
-            }
-        }
-
-        public override void CreateModMenuSection(TextMenu menu, bool inGame, EventInstance snapshot) {
-            CreateModMenuSectionHeader(menu, inGame, snapshot);
-            SpeedrunToolMenu.Create(menu, inGame, snapshot);
-        }
+    public override void CreateModMenuSection(TextMenu menu, bool inGame, EventInstance snapshot) {
+        CreateModMenuSectionHeader(menu, inGame, snapshot);
+        SpeedrunToolMenu.Create(menu, inGame, snapshot);
     }
 }

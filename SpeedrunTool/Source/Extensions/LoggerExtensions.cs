@@ -1,7 +1,4 @@
-using System;
-using Monocle;
 #if DEBUG
-using Microsoft.Xna.Framework;
 #endif
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {

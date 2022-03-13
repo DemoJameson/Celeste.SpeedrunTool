@@ -63,15 +63,6 @@ public class SpeedrunToolSaveData : EverestModuleSaveData {
         On.Celeste.SaveData.LoadModSaveData -= SaveDataOnLoadModSaveData;
     }
 
-    [Initialize]
-    private static void ClearObsoletePlaybackFiles() {
-        if (Directory.Exists(DeathStatisticsManager.PlaybackDir)) {
-            foreach (string file in Directory.GetFiles(DeathStatisticsManager.PlaybackDir).Where(file => file.EndsWith(".bin"))) {
-                File.Delete(file);
-            }
-        }
-    }
-
     private static void SaveDataOnLoadModSaveData(On.Celeste.SaveData.orig_LoadModSaveData orig, int slot) {
         orig(slot);
         ClearUselessPlaybackFiles();

@@ -1,10 +1,11 @@
 using System.Collections;
 using System.Reflection;
+using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
 
-namespace Celeste.Mod.SpeedrunTool.Other; 
+namespace Celeste.Mod.SpeedrunTool.Other;
 
 public static class LookoutBuilder {
     private static readonly MethodInfo InteractMethod = typeof(Lookout).GetMethodInfo("Interact");
@@ -48,6 +49,21 @@ public static class LookoutBuilder {
         ILCursor ilCursor = new(il);
         if (ilCursor.TryGotoNext(MoveType.After, ins => ins.MatchCallvirt<Actor>("OnGround"))) {
             ilCursor.EmitDelegate<Func<bool, bool>>(onGround => PortableLookout.Exists || onGround);
+        }
+
+        SpeedUp("<accel>");
+        SpeedUp("<maxspd>");
+
+        void SpeedUp(string fieldName) {
+            if (ilCursor.TryGotoNext(ins => ins.OpCode == OpCodes.Stfld && ins.Operand.ToString().Contains(fieldName))) {
+                ilCursor.EmitDelegate<Func<float, float>>(speed => {
+                    if (PortableLookout.Exists) {
+                        return speed * 2;
+                    } else {
+                        return speed;
+                    }
+                });
+            }
         }
     }
 

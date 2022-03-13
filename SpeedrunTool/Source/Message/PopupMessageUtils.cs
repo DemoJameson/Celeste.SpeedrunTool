@@ -1,8 +1,8 @@
-﻿namespace Celeste.Mod.SpeedrunTool.Message; 
+﻿namespace Celeste.Mod.SpeedrunTool.Message;
 
 public static class PopupMessageUtils {
     public static void Show(string message, string dialogId) {
-        if (SpeedrunToolModule.Settings.PopupMessageStyle == PopupMessageStyle.Tooltip || Engine.Scene is not Level) {
+        if (ModSettings.PopupMessageStyle == PopupMessageStyle.Tooltip || Engine.Scene is not Level) {
             Tooltip.Show(message);
         } else {
             if (dialogId == null) {

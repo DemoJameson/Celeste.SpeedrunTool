@@ -4,7 +4,7 @@ using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad; 
+namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
 public static class StateMarkUtils {
     private const string StartFromSaveSate = nameof(StartFromSaveSate);
@@ -86,7 +86,7 @@ public static class StateMarkUtils {
         }
 
         cursor.EmitDelegate<Func<bool>>(() =>
-            SpeedrunToolModule.Settings.RoomTimerType == RoomTimerType.Off
+            ModSettings.RoomTimerType == RoomTimerType.Off
             && Engine.Scene is Level {Completed: false} level && level.GetExtendedBoolean(StartFromSaveSate) && !StateManager.Instance.SavedByTas
         );
 

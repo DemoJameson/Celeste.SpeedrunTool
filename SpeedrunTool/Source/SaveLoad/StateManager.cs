@@ -11,8 +11,6 @@ using Force.DeepCloner.Helpers;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
 public sealed class StateManager {
-    private static SpeedrunToolSettings Settings => SpeedrunToolModule.Settings;
-
     private static readonly Lazy<PropertyInfo> InGameOverworldHelperIsOpen = new(
         () => Type.GetType("Celeste.Mod.CollabUtils2.UI.InGameOverworldHelper, CollabUtils2")?.GetPropertyInfo("IsOpen")
     );
@@ -78,16 +76,16 @@ public sealed class StateManager {
 
         Hotkey.SwitchAutoLoadState.RegisterPressedAction(scene => {
             if (scene is Level {Paused: false} level) {
-                Settings.AutoLoadStateAfterDeath = !Settings.AutoLoadStateAfterDeath;
+                ModSettings.AutoLoadStateAfterDeath = !ModSettings.AutoLoadStateAfterDeath;
                 SpeedrunToolModule.Instance.SaveSettings();
-                string state = (Settings.AutoLoadStateAfterDeath ? DialogIds.On : DialogIds.Off).DialogClean();
+                string state = (ModSettings.AutoLoadStateAfterDeath ? DialogIds.On : DialogIds.Off).DialogClean();
                 PopupMessageUtils.ShowOptionState( DialogIds.AutoLoadStateAfterDeath.DialogClean(), state);
             }
         });
     }
 
     private void SceneOnBeforeUpdate(On.Monocle.Scene.orig_BeforeUpdate orig, Scene self) {
-        if (Settings.Enabled && self is Level level && State == State.Waiting && !level.Paused
+        if (ModSettings.Enabled && self is Level level && State == State.Waiting && !level.Paused
             && (Input.Dash.Pressed
                 || Input.Grab.Check
                 || Input.Jump.Check
@@ -139,8 +137,8 @@ public sealed class StateManager {
     }
 
     private void AutoLoadStateWhenDeath(On.Celeste.PlayerDeadBody.orig_End orig, PlayerDeadBody self) {
-        if (SpeedrunToolModule.Settings.Enabled
-            && SpeedrunToolModule.Settings.AutoLoadStateAfterDeath
+        if (GlobalVariables.ModSettings.Enabled
+            && GlobalVariables.ModSettings.AutoLoadStateAfterDeath
             && IsSaved
             && !SavedByTas
             && !(bool)self.GetFieldValue("finished")
@@ -282,7 +280,7 @@ public sealed class StateManager {
     }
 
     private void UpdateTimeAndDeaths(Level level) {
-        if (SavedByTas || Settings.SaveTimeAndDeaths) {
+        if (SavedByTas || ModSettings.SaveTimeAndDeaths) {
             return;
         }
 
@@ -427,7 +425,7 @@ public sealed class StateManager {
 
     private void DoScreenWipe(Level level) {
         level.DoScreenWipe(true, () => {
-            if (Settings.FreezeAfterLoadState) {
+            if (ModSettings.FreezeAfterLoadState) {
                 State = State.Waiting;
             } else {
                 OutOfFreeze(level);

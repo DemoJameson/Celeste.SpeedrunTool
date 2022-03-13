@@ -8,7 +8,7 @@ using Celeste.Mod.UI;
 using Microsoft.Xna.Framework.Input;
 using CelesteSettings = Celeste.Settings;
 
-namespace Celeste.Mod.SpeedrunTool.Other; 
+namespace Celeste.Mod.SpeedrunTool.Other;
 
 [Tracked]
 public class HotkeyConfigUi : TextMenu {
@@ -108,8 +108,6 @@ public class HotkeyConfigUi : TextMenu {
         Alpha = 0.0f;
     }
 
-    private static SpeedrunToolSettings Settings => SpeedrunToolModule.Settings;
-
     [Load]
     private static void Load() {
         On.Monocle.MInput.Update += MInputOnUpdate;
@@ -121,9 +119,9 @@ public class HotkeyConfigUi : TextMenu {
         });
 
         Hotkey.ToggleHotkeys.RegisterPressedAction(_ => {
-            Settings.Hotkeys = !Settings.Hotkeys;
+            ModSettings.Hotkeys = !ModSettings.Hotkeys;
             SpeedrunToolModule.Instance.SaveSettings();
-            string state = (Settings.Hotkeys ? DialogIds.On : DialogIds.Off).DialogClean();
+            string state = (ModSettings.Hotkeys ? DialogIds.On : DialogIds.Off).DialogClean();
             PopupMessageUtils.ShowOptionState(DialogIds.Hotkeys.DialogClean(), state);
         });
     }
@@ -150,7 +148,7 @@ public class HotkeyConfigUi : TextMenu {
     private static void MInputOnUpdate(On.Monocle.MInput.orig_Update orig) {
         orig();
 
-        if (Engine.Scene is { } scene && Settings.Enabled && !TasUtils.Running) {
+        if (Engine.Scene is { } scene && ModSettings.Enabled && !TasUtils.Running) {
             foreach (Hotkey hotkey in Enum.GetValues(typeof(Hotkey)).Cast<Hotkey>()) {
                 HotkeyConfig hotkeyConfig = GetHotkeyConfig(hotkey);
                 if (Pressed(hotkey, scene)) {
@@ -162,7 +160,7 @@ public class HotkeyConfigUi : TextMenu {
     }
 
     private static bool Pressed(Hotkey hotkey, Scene scene) {
-        if (!Settings.Hotkeys && hotkey != Hotkey.ToggleHotkeys) {
+        if (!ModSettings.Hotkeys && hotkey != Hotkey.ToggleHotkeys) {
             return false;
         }
 
@@ -424,8 +422,6 @@ public class HotkeyConfig {
         DefaultKeys = defaultKey == null ? new Keys[0] : new[] {defaultKey.Value};
     }
 
-    private static SpeedrunToolSettings Settings => SpeedrunToolModule.Settings;
-
     public void UpdateVirtualButton() {
         List<VirtualButton.Node> nodes = VirtualButton.Value.Nodes;
         nodes.Clear();
@@ -437,15 +433,15 @@ public class HotkeyConfig {
     }
 
     public Buttons? GetButton() {
-        return (Buttons?) Settings.GetPropertyValue($"Controller{Hotkey}");
+        return (Buttons?) ModSettings.GetPropertyValue($"Controller{Hotkey}");
     }
 
     public void SetButton(Buttons? button) {
-        Settings.SetPropertyValue($"Controller{Hotkey}", button);
+        ModSettings.SetPropertyValue($"Controller{Hotkey}", button);
     }
 
     public List<Keys> GetKeys() {
-        List<Keys> result = (List<Keys>) Settings.GetPropertyValue($"Keyboard{Hotkey}");
+        List<Keys> result = (List<Keys>) ModSettings.GetPropertyValue($"Keyboard{Hotkey}");
         if (result == null) {
             result = new List<Keys>();
             SetKeys(result);
@@ -455,7 +451,7 @@ public class HotkeyConfig {
     }
 
     public void SetKeys(List<Keys> keys) {
-        Settings.SetPropertyValue($"Keyboard{Hotkey}", keys);
+        ModSettings.SetPropertyValue($"Keyboard{Hotkey}", keys);
     }
 
     public string GetLabel() {

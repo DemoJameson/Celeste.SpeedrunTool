@@ -4,10 +4,9 @@ using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 
-namespace Celeste.Mod.SpeedrunTool.Other; 
+namespace Celeste.Mod.SpeedrunTool.Other;
 
 public static class RespawnRestartSpeed {
-    private static SpeedrunToolSettings Settings => SpeedrunToolModule.Settings;
     private static ILHook ilHook;
 
     [Load]
@@ -30,7 +29,7 @@ public static class RespawnRestartSpeed {
     private static void RespawnSpeed(On.Monocle.Engine.orig_Update orig, Engine self, GameTime time) {
         orig(self, time);
 
-        if (!Settings.Enabled || Settings.RespawnSpeed == 1 && Settings.RestartChapterSpeed == 1 || TasUtils.Running) {
+        if (!ModSettings.Enabled || ModSettings.RespawnSpeed == 1 && ModSettings.RestartChapterSpeed == 1 || TasUtils.Running) {
             return;
         }
 
@@ -45,12 +44,12 @@ public static class RespawnRestartSpeed {
         Player player = level.GetPlayer();
 
         // 加速复活过程
-        for (int i = 1; i < Settings.RespawnSpeed && (player == null || player.StateMachine.State == Player.StIntroRespawn); i++) {
+        for (int i = 1; i < ModSettings.RespawnSpeed && (player == null || player.StateMachine.State == Player.StIntroRespawn); i++) {
             orig(self, time);
         }
 
         // 加速章节启动
-        for (int i = 1; i < Settings.RestartChapterSpeed && RequireFastRestart(level, player); i++) {
+        for (int i = 1; i < ModSettings.RestartChapterSpeed && RequireFastRestart(level, player); i++) {
             orig(self, time);
         }
     }
@@ -80,7 +79,7 @@ public static class RespawnRestartSpeed {
             )) {
             object skipScreenWipe = ilCursor.Prev.Operand;
             ilCursor.EmitDelegate<Func<bool>>(() => {
-                if (Settings.Enabled && Settings.SkipRestartChapterScreenWipe && Engine.Scene is Level level && !TasUtils.Running) {
+                if (ModSettings.Enabled && ModSettings.SkipRestartChapterScreenWipe && Engine.Scene is Level level && !TasUtils.Running) {
                     Engine.Scene = new LevelLoader(level.Session.Restart());
                     return true;
                 } else {

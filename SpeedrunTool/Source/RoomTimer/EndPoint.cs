@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 
-namespace Celeste.Mod.SpeedrunTool.RoomTimer; 
+namespace Celeste.Mod.SpeedrunTool.RoomTimer;
 
 [Tracked]
 public class EndPoint: Entity {
@@ -86,7 +86,7 @@ public class EndPoint: Entity {
     }
 
     private void SetSprite(Player player) {
-        spriteStyle = SpeedrunToolModule.Settings.EndPointStyle;
+        spriteStyle = ModSettings.EndPointStyle;
         if (spriteStyle == SpriteStyle.Random) {
             spriteStyle = (SpriteStyle)new Random().Next(Enum.GetNames(typeof(SpriteStyle)).Length - 1);
         }

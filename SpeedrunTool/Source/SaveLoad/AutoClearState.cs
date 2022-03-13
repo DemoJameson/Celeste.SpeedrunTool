@@ -13,8 +13,8 @@ public static class AutoClearState {
 
     private static void PlayerOnOnTransition(On.Celeste.Player.orig_OnTransition orig, Player self) {
         orig(self);
-        if (SpeedrunToolModule.Settings.Enabled
-            && SpeedrunToolModule.Settings.AutoClearStateOnScreenTransition
+        if (ModSettings.Enabled
+            && ModSettings.AutoClearStateOnScreenTransition
             && StateManager.Instance.IsSaved
             && !StateManager.Instance.SavedByTas
             && self.Scene is Level

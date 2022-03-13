@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Celeste.Mod.SpeedrunTool.RoomTimer; 
+namespace Celeste.Mod.SpeedrunTool.RoomTimer;
 
 internal class RoomTimerData {
     public long LastPbTime;
@@ -54,7 +54,7 @@ internal class RoomTimerData {
             case TimerState.WaitToStart:
                 if (!endPoint) {
                     timerState = TimerState.Timing;
-                    numberOfRooms = SpeedrunToolModule.Settings.NumberOfRooms;
+                    numberOfRooms = ModSettings.NumberOfRooms;
                 }
 
                 break;
@@ -87,7 +87,7 @@ internal class RoomTimerData {
     public void ResetTime() {
         pbTimeKey = "";
         timerState = IsNextRoomType ? TimerState.WaitToStart : TimerState.Timing;
-        numberOfRooms = SpeedrunToolModule.Settings.NumberOfRooms;
+        numberOfRooms = ModSettings.NumberOfRooms;
         Time = 0;
         LastPbTime = 0;
     }

@@ -24,7 +24,7 @@ public class SpeedrunToolSaveData : EverestModuleSaveData {
 
     public void Add(DeathInfo deathInfo) {
         DeathInfos.Insert(0, deathInfo);
-        int max = SpeedrunToolModule.Settings.MaxNumberOfDeathData * 10;
+        int max = ModSettings.MaxNumberOfDeathData * 10;
         if (max <= 0) {
             max = 0;
         }

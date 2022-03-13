@@ -9,14 +9,14 @@ using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Force.DeepCloner;
 using MonoMod.RuntimeDetour;
 
-namespace Celeste.Mod.SpeedrunTool.DeathStatistics; 
+namespace Celeste.Mod.SpeedrunTool.DeathStatistics;
 
 public static class DeathStatisticsManager {
     public static readonly string PlaybackDir =
         Path.Combine(typeof(UserIO).GetFieldValue("SavePath").ToString(), "SpeedrunTool", "DeathPlayback");
 
     public static string PlaybackSlotDir => Path.Combine(PlaybackDir, SaveData.Instance?.FileSlot.ToString() ?? "-1");
-    private static bool Enabled => SpeedrunToolModule.Settings.Enabled && SpeedrunToolModule.Settings.DeathStatistics;
+    private static bool Enabled => ModSettings.Enabled && ModSettings.DeathStatistics;
     private static long lastTime;
     private static bool died;
     private static DeathInfo currentDeathInfo;

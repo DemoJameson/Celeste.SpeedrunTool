@@ -10,7 +10,7 @@ using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad; 
+namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
 public sealed class SaveLoadAction {
     public delegate void SlAction(Dictionary<Type, Dictionary<string, object>> savedValues, Level level);
@@ -728,7 +728,7 @@ public sealed class SaveLoadAction {
             },
             (savedValues, _) => {
                 // 本来打算将关卡中 ExtendedVariantsTrigger 涉及相关的值强制 SL，想想还是算了
-                if (!SpeedrunToolModule.Settings.SaveExtendedVariants && !StateManager.Instance.SavedByTas) {
+                if (!ModSettings.SaveExtendedVariants && !StateManager.Instance.SavedByTas) {
                     return;
                 }
 

@@ -27,8 +27,6 @@ public static class RoomTimerManager {
     private static readonly RoomTimerData CurrentRoomTimerData = new(RoomTimerType.CurrentRoom);
     private static readonly RoomTimerData NextRoomTimerData = new(RoomTimerType.NextRoom);
 
-    private static SpeedrunToolSettings Settings => SpeedrunToolModule.Settings;
-
     private static string previousRoom;
 
     [Load]
@@ -60,30 +58,30 @@ public static class RoomTimerManager {
 
         Hotkey.SwitchRoomTimer.RegisterPressedAction(scene => {
             if (scene is Level {Paused: false}) {
-                SwitchRoomTimer((RoomTimerType)(((int)Settings.RoomTimerType + 1) % Enum.GetNames(typeof(RoomTimerType)).Length));
-                PopupMessageUtils.ShowOptionState(DialogIds.RoomTimer.DialogClean(), Settings.RoomTimerType.DialogClean());
+                SwitchRoomTimer((RoomTimerType)(((int)ModSettings.RoomTimerType + 1) % Enum.GetNames(typeof(RoomTimerType)).Length));
+                PopupMessageUtils.ShowOptionState(DialogIds.RoomTimer.DialogClean(), ModSettings.RoomTimerType.DialogClean());
             }
         });
 
         Hotkey.IncreaseTimedRooms.RegisterPressedAction(scene => {
             if (scene is Level {Paused: false}) {
-                if (Settings.NumberOfRooms < 99) {
-                    Settings.NumberOfRooms++;
+                if (ModSettings.NumberOfRooms < 99) {
+                    ModSettings.NumberOfRooms++;
                     SpeedrunToolModule.Instance.SaveSettings();
                 }
 
-                PopupMessageUtils.ShowOptionState(DialogIds.NumberOfRooms.DialogClean(), Settings.NumberOfRooms.ToString());
+                PopupMessageUtils.ShowOptionState(DialogIds.NumberOfRooms.DialogClean(), ModSettings.NumberOfRooms.ToString());
             }
         });
 
         Hotkey.DecreaseTimedRooms.RegisterPressedAction(scene => {
             if (scene is Level { Paused: false }) {
-                if (Settings.NumberOfRooms > 1) {
-                    Settings.NumberOfRooms--;
+                if (ModSettings.NumberOfRooms > 1) {
+                    ModSettings.NumberOfRooms--;
                     SpeedrunToolModule.Instance.SaveSettings();
                 }
 
-                PopupMessageUtils.ShowOptionState(DialogIds.NumberOfRooms.DialogClean(), Settings.NumberOfRooms.ToString());
+                PopupMessageUtils.ShowOptionState(DialogIds.NumberOfRooms.DialogClean(), ModSettings.NumberOfRooms.ToString());
             }
         });
 
@@ -113,7 +111,7 @@ public static class RoomTimerManager {
                 ins => ins.MatchLdfld<SpeedrunTimerDisplay>("DrawLerp"),
                 ins => ins.OpCode == OpCodes.Ldloc_1
             )) {
-            ilCursor.EmitDelegate<Func<bool, bool>>(showTimer => showTimer || Settings.RoomTimerType != RoomTimerType.Off);
+            ilCursor.EmitDelegate<Func<bool, bool>>(showTimer => showTimer || ModSettings.RoomTimerType != RoomTimerType.Off);
         }
     }
 
@@ -128,7 +126,7 @@ public static class RoomTimerManager {
     }
 
     public static void SwitchRoomTimer(RoomTimerType roomTimerType) {
-        Settings.RoomTimerType = roomTimerType;
+        ModSettings.RoomTimerType = roomTimerType;
 
         if (roomTimerType == RoomTimerType.Off) {
             ClearPbTimes();
@@ -168,7 +166,7 @@ public static class RoomTimerManager {
     private static void UpdateTimerStateOnTouchFlag(On.Celeste.SummitCheckpoint.orig_Update orig, SummitCheckpoint self) {
         bool lastActivated = self.Activated;
         orig(self);
-        if (!Settings.RoomTimerIgnoreFlag && !lastActivated && self.Activated) {
+        if (!ModSettings.RoomTimerIgnoreFlag && !lastActivated && self.Activated) {
             UpdateTimerState();
         }
     }
@@ -176,13 +174,13 @@ public static class RoomTimerManager {
     private static void LevelExitOnCtor(On.Celeste.LevelExit.orig_ctor orig, LevelExit self, LevelExit.Mode mode, Session session,
         HiresSnow snow) {
         orig(self, mode, session, snow);
-        if (Settings.AutoResetRoomTimer && mode == LevelExit.Mode.Restart) {
+        if (ModSettings.AutoResetRoomTimer && mode == LevelExit.Mode.Restart) {
             SwitchRoomTimer(RoomTimerType.Off);
         }
     }
 
     public static void UpdateTimerState(bool endPoint = false) {
-        switch (Settings.RoomTimerType) {
+        switch (ModSettings.RoomTimerType) {
             case RoomTimerType.NextRoom:
                 NextRoomTimerData.UpdateTimerState(endPoint);
                 break;
@@ -203,12 +201,12 @@ public static class RoomTimerManager {
     }
 
     private static void Render(On.Celeste.SpeedrunTimerDisplay.orig_Render orig, SpeedrunTimerDisplay self) {
-        if (!Settings.Enabled || Settings.RoomTimerType == RoomTimerType.Off || self.DrawLerp <= 0f) {
+        if (!ModSettings.Enabled || ModSettings.RoomTimerType == RoomTimerType.Off || self.DrawLerp <= 0f) {
             orig(self);
             return;
         }
 
-        RoomTimerData roomTimerData = Settings.RoomTimerType == RoomTimerType.NextRoom ? NextRoomTimerData : CurrentRoomTimerData;
+        RoomTimerData roomTimerData = ModSettings.RoomTimerType == RoomTimerType.NextRoom ? NextRoomTimerData : CurrentRoomTimerData;
 
         string roomTimeString = roomTimerData.TimeString;
         string pbTimeString = $"PB {roomTimerData.PbTimeString}";
@@ -310,7 +308,7 @@ public static class RoomTimerManager {
     }
 
     private static void TryTurnOffRoomTimer() {
-        if (Settings.AutoResetRoomTimer) {
+        if (ModSettings.AutoResetRoomTimer) {
             SwitchRoomTimer(RoomTimerType.Off);
         }
     }

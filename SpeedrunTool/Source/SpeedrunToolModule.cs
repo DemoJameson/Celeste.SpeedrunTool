@@ -21,9 +21,6 @@ public class SpeedrunToolModule : EverestModule {
         }
     }
 
-    public static SpeedrunToolSettings Settings => SpeedrunToolSettings.Instance;
-    public static bool Enabled => Settings.Enabled;
-
     public SpeedrunToolModule() {
         Instance = this;
         AttributeUtils.CollectMethods<LoadAttribute>();

@@ -1,11 +1,10 @@
 using Celeste.Mod.SpeedrunTool.Utils;
 
-namespace Celeste.Mod.SpeedrunTool.Other; 
+namespace Celeste.Mod.SpeedrunTool.Other;
 
 public static class MuteInBackground {
     private static bool init;
     private static bool muted;
-    private static SpeedrunToolSettings ModSettings => SpeedrunToolModule.Settings;
 
     [Load]
     private static void Load() {

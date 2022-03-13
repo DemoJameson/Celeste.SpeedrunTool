@@ -10,12 +10,11 @@ namespace Celeste.Mod.SpeedrunTool;
 
 public static class SpeedrunToolMenu {
     private static readonly Regex RegexFormatName = new(@"([a-z])([A-Z])", RegexOptions.Compiled);
-    private static SpeedrunToolSettings Settings => SpeedrunToolModule.Settings;
     private static List<EaseInSubMenu> options;
 
     public static void Create(TextMenu menu, bool inGame, EventInstance snapshot) {
-        menu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.Enabled), Settings.Enabled).Change((value) => {
-            Settings.Enabled = value;
+        menu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.Enabled), ModSettings.Enabled).Change((value) => {
+            ModSettings.Enabled = value;
             foreach (EaseInSubMenu item in options) {
                 item.FadeVisible = value;
             }
@@ -56,52 +55,52 @@ public static class SpeedrunToolMenu {
         options = new List<EaseInSubMenu> {
             new EaseInSubMenu(Dialog.Clean(DialogIds.RoomTimer), false).With(subMenu => {
                 subMenu.Add(new TextMenuExt.EnumerableSlider<RoomTimerType>(Dialog.Clean(DialogIds.Enabled),
-                    CreateEnumerableOptions<RoomTimerType>(), Settings.RoomTimerType).Change(RoomTimerManager.SwitchRoomTimer));
+                    CreateEnumerableOptions<RoomTimerType>(), ModSettings.RoomTimerType).Change(RoomTimerManager.SwitchRoomTimer));
 
-                subMenu.Add(new TextMenuExt.IntSlider(Dialog.Clean(DialogIds.NumberOfRooms), 1, 99, Settings.NumberOfRooms).Change(i =>
-                    Settings.NumberOfRooms = i));
+                subMenu.Add(new TextMenuExt.IntSlider(Dialog.Clean(DialogIds.NumberOfRooms), 1, 99, ModSettings.NumberOfRooms).Change(i =>
+                    ModSettings.NumberOfRooms = i));
 
                 subMenu.Add(new TextMenuExt.EnumerableSlider<EndPoint.SpriteStyle>(Dialog.Clean(DialogIds.EndPointStyle),
-                    CreateEnumerableOptions<EndPoint.SpriteStyle>(), Settings.EndPointStyle).Change(value => {
-                    Settings.EndPointStyle = value;
+                    CreateEnumerableOptions<EndPoint.SpriteStyle>(), ModSettings.EndPointStyle).Change(value => {
+                    ModSettings.EndPointStyle = value;
                     EndPoint.All.ForEach(endPoint => endPoint.ResetSprite());
                 }));
 
-                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.RoomTimerIgnoreFlag), Settings.RoomTimerIgnoreFlag).Change(b =>
-                    Settings.RoomTimerIgnoreFlag = b));
+                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.RoomTimerIgnoreFlag), ModSettings.RoomTimerIgnoreFlag).Change(b =>
+                    ModSettings.RoomTimerIgnoreFlag = b));
 
-                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoTurnOffRoomTimer), Settings.AutoResetRoomTimer).Change(b =>
-                    Settings.AutoResetRoomTimer = b));
+                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoTurnOffRoomTimer), ModSettings.AutoResetRoomTimer).Change(b =>
+                    ModSettings.AutoResetRoomTimer = b));
             }),
 
             new EaseInSubMenu(Dialog.Clean(DialogIds.State), false).With(subMenu => {
-                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoLoadStateAfterDeath), Settings.AutoLoadStateAfterDeath).Change(b =>
-                    Settings.AutoLoadStateAfterDeath = b));
+                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoLoadStateAfterDeath), ModSettings.AutoLoadStateAfterDeath).Change(b =>
+                    ModSettings.AutoLoadStateAfterDeath = b));
 
-                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoClearStateOnScreenTransition), Settings.AutoClearStateOnScreenTransition).Change(b =>
-                    Settings.AutoClearStateOnScreenTransition = b));
+                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoClearStateOnScreenTransition), ModSettings.AutoClearStateOnScreenTransition).Change(b =>
+                    ModSettings.AutoClearStateOnScreenTransition = b));
 
-                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.FreezeAfterLoadState), Settings.FreezeAfterLoadState).Change(b =>
-                    Settings.FreezeAfterLoadState = b));
+                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.FreezeAfterLoadState), ModSettings.FreezeAfterLoadState).Change(b =>
+                    ModSettings.FreezeAfterLoadState = b));
 
-                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.SaveTimeAndDeaths), Settings.SaveTimeAndDeaths).Change(b =>
-                    Settings.SaveTimeAndDeaths = b));
+                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.SaveTimeAndDeaths), ModSettings.SaveTimeAndDeaths).Change(b =>
+                    ModSettings.SaveTimeAndDeaths = b));
 
-                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.SaveExtendedVariants), Settings.SaveExtendedVariants).Change(b =>
-                    Settings.SaveExtendedVariants = b));
+                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.SaveExtendedVariants), ModSettings.SaveExtendedVariants).Change(b =>
+                    ModSettings.SaveExtendedVariants = b));
             }),
 
             new EaseInSubMenu(Dialog.Clean(DialogIds.DeathStatistics), false).With(subMenu => {
-                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.Enabled), Settings.DeathStatistics).Change(b =>
-                    Settings.DeathStatistics = b));
+                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.Enabled), ModSettings.DeathStatistics).Change(b =>
+                    ModSettings.DeathStatistics = b));
 
                 subMenu.Add(new TextMenu.Slider(
                     DialogIds.MaxNumberOfDeathData.DialogClean(),
                     value => (value * 10).ToString(),
                     1,
                     9,
-                    Settings.MaxNumberOfDeathData
-                ).Change(i => Settings.MaxNumberOfDeathData = i));
+                    ModSettings.MaxNumberOfDeathData
+                ).Change(i => ModSettings.MaxNumberOfDeathData = i));
 
                 subMenu.Add(new TextMenu.Button(Dialog.Clean(DialogIds.CheckDeathStatistics)).Pressed(() => {
                     subMenu.Focused = false;
@@ -112,27 +111,27 @@ public static class SpeedrunToolMenu {
             }),
 
             new EaseInSubMenu(Dialog.Clean(DialogIds.MoreOptions), false).With(subMenu => {
-                subMenu.Add(new TextMenuExt.IntSlider(Dialog.Clean(DialogIds.RespawnSpeed), 1, 9, Settings.RespawnSpeed).Change(i =>
-                    Settings.RespawnSpeed = i));
+                subMenu.Add(new TextMenuExt.IntSlider(Dialog.Clean(DialogIds.RespawnSpeed), 1, 9, ModSettings.RespawnSpeed).Change(i =>
+                    ModSettings.RespawnSpeed = i));
 
-                subMenu.Add(new TextMenuExt.IntSlider(Dialog.Clean(DialogIds.RestartChapterSpeed), 1, 9, Settings.RestartChapterSpeed).Change(i =>
-                    Settings.RestartChapterSpeed = i));
+                subMenu.Add(new TextMenuExt.IntSlider(Dialog.Clean(DialogIds.RestartChapterSpeed), 1, 9, ModSettings.RestartChapterSpeed).Change(i =>
+                    ModSettings.RestartChapterSpeed = i));
 
-                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.SkipRestartChapterScreenWipe), Settings.SkipRestartChapterScreenWipe).Change(b =>
-                    Settings.SkipRestartChapterScreenWipe = b));
+                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.SkipRestartChapterScreenWipe), ModSettings.SkipRestartChapterScreenWipe).Change(b =>
+                    ModSettings.SkipRestartChapterScreenWipe = b));
 
                 subMenu.Add(
-                    new TextMenu.OnOff(Dialog.Clean(DialogIds.MuteInBackground), Settings.MuteInBackground).Change(b =>
-                        Settings.MuteInBackground = b));
+                    new TextMenu.OnOff(Dialog.Clean(DialogIds.MuteInBackground), ModSettings.MuteInBackground).Change(b =>
+                        ModSettings.MuteInBackground = b));
 
                 subMenu.Add(new TextMenuExt.EnumerableSlider<PopupMessageStyle>(Dialog.Clean(DialogIds.PopupMessageStyle),
-                    CreateEnumerableOptions<PopupMessageStyle>(), Settings.PopupMessageStyle).Change(value => {
-                    Settings.PopupMessageStyle = value;
+                    CreateEnumerableOptions<PopupMessageStyle>(), ModSettings.PopupMessageStyle).Change(value => {
+                    ModSettings.PopupMessageStyle = value;
                 }));
 
                 subMenu.Add(
-                    new TextMenu.OnOff(Dialog.Clean(DialogIds.Hotkeys), Settings.Hotkeys).Change(b =>
-                        Settings.Hotkeys = b));
+                    new TextMenu.OnOff(Dialog.Clean(DialogIds.Hotkeys), ModSettings.Hotkeys).Change(b =>
+                        ModSettings.Hotkeys = b));
 
                 subMenu.Add(new TextMenu.Button(Dialog.Clean(DialogIds.HotkeysConfig)).Pressed(() => {
                     // 修复：在 overworld 界面 hot reload 之后打开按键设置菜单游戏崩溃
@@ -160,8 +159,8 @@ internal class EaseInSubMenu : TextMenuExt.SubMenu {
     private readonly MTexture icon;
 
     public EaseInSubMenu(string label, bool enterOnSelect) : base(label, enterOnSelect) {
-        alpha = unEasedAlpha = SpeedrunToolModule.Settings.Enabled ? 1f : 0f;
-        FadeVisible = Visible = SpeedrunToolModule.Settings.Enabled;
+        alpha = unEasedAlpha = ModSettings.Enabled ? 1f : 0f;
+        FadeVisible = Visible = ModSettings.Enabled;
         icon = GFX.Gui["downarrow"];
     }
 

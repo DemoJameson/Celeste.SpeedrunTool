@@ -6,7 +6,7 @@ using MonoMod.Cil;
 using On.Celeste.Editor;
 using LevelTemplate = Celeste.Editor.LevelTemplate;
 
-namespace Celeste.Mod.SpeedrunTool.Other; 
+namespace Celeste.Mod.SpeedrunTool.Other;
 
 public static class BetterMapEditor {
     private const string StartChasingLevel = "3";
@@ -109,7 +109,7 @@ public static class BetterMapEditor {
     }
 
     private static void CommandsOnCmdLoad(On.Celeste.Commands.orig_CmdLoad orig, int id, string level) {
-        if (!SpeedrunToolModule.Enabled) {
+        if (!ModSettings.Enabled) {
             orig(id, level);
             return;
         }
@@ -124,7 +124,7 @@ public static class BetterMapEditor {
         Vector2 offset) {
         orig(self, data, offset);
 
-        if (!SpeedrunToolModule.Enabled) {
+        if (!ModSettings.Enabled) {
             return;
         }
 
@@ -147,7 +147,7 @@ public static class BetterMapEditor {
     }
 
     private static void FixWindSoundNotPlay(On.Celeste.WindController.orig_SetAmbienceStrength orig, WindController self, bool strong) {
-        if (SpeedrunToolModule.Enabled && Audio.CurrentAmbienceEventInstance == null && Engine.Scene.GetSession()?.Area.LevelSet == "Celeste") {
+        if (ModSettings.Enabled && Audio.CurrentAmbienceEventInstance == null && Engine.Scene.GetSession()?.Area.LevelSet == "Celeste") {
             Audio.SetAmbience("event:/env/amb/04_main");
         }
 
@@ -156,7 +156,7 @@ public static class BetterMapEditor {
 
     private static void MapEditorOnLoadLevel(MapEditor.orig_LoadLevel orig, Editor.MapEditor self,
         LevelTemplate level, Vector2 at) {
-        if (!SpeedrunToolModule.Enabled) {
+        if (!ModSettings.Enabled) {
             orig(self, level, at);
             return;
         }
@@ -183,7 +183,7 @@ public static class BetterMapEditor {
                 ins => ins.OpCode == OpCodes.Callvirt && ins.Operand.ToString().Contains("Celeste.Player")
             )) {
             ilCursor.Emit(OpCodes.Ldarg_1).Emit(OpCodes.Ldarg_0).EmitDelegate<Func<Player, Scene, FlingBird, Player>>((player, scene, bird) => {
-                if (SpeedrunToolModule.Enabled && player != null && scene is Level level && level.Session.Area.ToString() == "10" &&
+                if (ModSettings.Enabled && player != null && scene is Level level && level.Session.Area.ToString() == "10" &&
                     level.Session.Level == "j-16"
                     && scene.Entities.FindAll<FlingBird>().FirstOrDefault(flingBird => flingBird == bird) != null) {
                     for (int i = 0; i < bird.NodeSegments.Count; i++) {
@@ -221,7 +221,7 @@ public static class BetterMapEditor {
         Vector2 startPoint = new(-176, 312);
         ilCursor.EmitDelegate<Func<bool>>(() => {
             Session session = Engine.Scene.GetSession();
-            bool skip = SpeedrunToolModule.Enabled && session.GetFlag("campfire_chat") || session.RespawnPoint != startPoint;
+            bool skip = ModSettings.Enabled && session.GetFlag("campfire_chat") || session.RespawnPoint != startPoint;
             if (skip && Engine.Scene.GetLevel() is { } level && level.GetPlayer() is { } player
                 && level.Entities.FindFirst<NPC06_Theo_Plateau>() is { } theo && level.Tracker.GetEntity<Bonfire>() is { } bonfire) {
                 session.SetFlag("campfire_chat");
@@ -254,7 +254,7 @@ public static class BetterMapEditor {
     }
 
     public static void FixTeleportProblems(Session session, Vector2? startPosition) {
-        if (SpeedrunToolModule.Enabled && session.LevelData != null) {
+        if (ModSettings.Enabled && session.LevelData != null) {
             Vector2 spawnPoint;
             if (session.RespawnPoint.HasValue) {
                 spawnPoint = session.RespawnPoint.Value;

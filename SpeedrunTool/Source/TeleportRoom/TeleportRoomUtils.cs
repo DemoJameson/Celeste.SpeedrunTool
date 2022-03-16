@@ -10,7 +10,7 @@ using Force.DeepCloner;
 using On.Celeste.Editor;
 using LevelTemplate = Celeste.Editor.LevelTemplate;
 
-namespace Celeste.Mod.SpeedrunTool.TeleportRoom; 
+namespace Celeste.Mod.SpeedrunTool.TeleportRoom;
 
 public static class TeleportRoomUtils {
     private const string FlagPrefix = "summit_checkpoint_";
@@ -97,6 +97,10 @@ public static class TeleportRoomUtils {
     private static void TeleportTo(Session session, bool fromHistory = false) {
         if (Engine.Scene is not Level level) {
             return;
+        }
+
+        if (!fromHistory && session.Area.ToString() == "10" && session.Level == "g-06") {
+            session.RespawnPoint = new Vector2(28280, -8080);
         }
 
         session.Time = level.Session.Time;

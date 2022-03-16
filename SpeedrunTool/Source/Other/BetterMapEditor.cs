@@ -1,16 +1,16 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Celeste.Editor;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
-using On.Celeste.Editor;
-using LevelTemplate = Celeste.Editor.LevelTemplate;
 
 namespace Celeste.Mod.SpeedrunTool.Other;
 
 public static class BetterMapEditor {
     private const string StartChasingLevel = "3";
-    public static bool ShouldFixTeleportProblems;
+    private static bool shouldFixTeleportProblems;
+    private static bool shouldFixFarewellSpawnPoint;
 
     private static readonly HashSet<string> CoreIceRooms = new() {
         // 8A
@@ -81,7 +81,7 @@ public static class BetterMapEditor {
 
     [Load]
     private static void Load() {
-        MapEditor.LoadLevel += MapEditorOnLoadLevel;
+        On.Celeste.Editor.MapEditor.LoadLevel += MapEditorOnLoadLevel;
         On.Celeste.WindController.SetAmbienceStrength += FixWindSoundNotPlay;
         On.Celeste.OshiroTrigger.ctor += RestoreOshiroTrigger;
         On.Celeste.Commands.CmdLoad += CommandsOnCmdLoad;
@@ -99,7 +99,7 @@ public static class BetterMapEditor {
 
     [Unload]
     private static void Unload() {
-        MapEditor.LoadLevel -= MapEditorOnLoadLevel;
+        On.Celeste.Editor.MapEditor.LoadLevel -= MapEditorOnLoadLevel;
         On.Celeste.WindController.SetAmbienceStrength -= FixWindSoundNotPlay;
         On.Celeste.OshiroTrigger.ctor -= RestoreOshiroTrigger;
         On.Celeste.Commands.CmdLoad -= CommandsOnCmdLoad;
@@ -109,12 +109,8 @@ public static class BetterMapEditor {
     }
 
     private static void CommandsOnCmdLoad(On.Celeste.Commands.orig_CmdLoad orig, int id, string level) {
-        if (!ModSettings.Enabled) {
-            orig(id, level);
-            return;
-        }
-
-        ShouldFixTeleportProblems = true;
+        shouldFixTeleportProblems = ModSettings.Enabled;
+        shouldFixFarewellSpawnPoint = ModSettings.Enabled && id == 10 && level == "g-06";
         orig(id, level);
     }
 
@@ -154,21 +150,21 @@ public static class BetterMapEditor {
         orig(self, strong);
     }
 
-    private static void MapEditorOnLoadLevel(MapEditor.orig_LoadLevel orig, Editor.MapEditor self,
+    private static void MapEditorOnLoadLevel(On.Celeste.Editor.MapEditor.orig_LoadLevel orig, Editor.MapEditor self,
         LevelTemplate level, Vector2 at) {
         if (!ModSettings.Enabled) {
             orig(self, level, at);
             return;
         }
 
-        ShouldFixTeleportProblems = true;
+        shouldFixTeleportProblems = true;
         orig(self, level, at);
     }
 
     private static void LevelLoaderOnCtor(On.Celeste.LevelLoader.orig_ctor orig, LevelLoader self, Session session,
         Vector2? startPosition) {
-        if (ShouldFixTeleportProblems) {
-            ShouldFixTeleportProblems = false;
+        if (shouldFixTeleportProblems) {
+            shouldFixTeleportProblems = false;
             FixTeleportProblems(session, startPosition);
         }
 
@@ -272,6 +268,7 @@ public static class BetterMapEditor {
             FixMirrorTempleColorGrade(session);
             FixFarewellCassetteRoomColorGrade(session, spawnPoint);
             FixFarewellDashes(session);
+            FixFarewellSpawnPoint(session);
         }
     }
 
@@ -289,6 +286,13 @@ public static class BetterMapEditor {
             } else {
                 session.ColorGrade = "none";
             }
+        }
+    }
+
+    private static void FixFarewellSpawnPoint(Session session) {
+        if (shouldFixFarewellSpawnPoint) {
+            shouldFixFarewellSpawnPoint = false;
+            session.RespawnPoint = new Vector2(28280, -8080);
         }
     }
 

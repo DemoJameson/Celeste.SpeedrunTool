@@ -40,7 +40,6 @@ public sealed class StateManager {
         On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
         On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
         On.Celeste.PlayerHair.Render += PlayerHairOnRender;
-        On.Celeste.CassetteBlockManager.AdvanceMusic += CassetteBlockManagerOnAdvanceMusic;
         RegisterHotkeys();
     }
 
@@ -50,7 +49,6 @@ public sealed class StateManager {
         On.Monocle.Scene.Begin -= ClearStateWhenSwitchScene;
         On.Celeste.PlayerDeadBody.End -= AutoLoadStateWhenDeath;
         On.Celeste.PlayerHair.Render -= PlayerHairOnRender;
-        On.Celeste.CassetteBlockManager.AdvanceMusic -= CassetteBlockManagerOnAdvanceMusic;
     }
 
     private void RegisterHotkeys() {
@@ -168,14 +166,6 @@ public sealed class StateManager {
         }
     }
 
-    // fix game crash during loading state
-    // https://discord.com/channels/403698615446536203/954507384183738438/954507384183738438
-    private void CassetteBlockManagerOnAdvanceMusic(On.Celeste.CassetteBlockManager.orig_AdvanceMusic orig, CassetteBlockManager self, float time) {
-        if (State != State.Loading) {
-            orig(self, time);
-        }
-    }
-
     #endregion Hook
 
     // public for TAS Mod
@@ -282,7 +272,11 @@ public sealed class StateManager {
         }
 
         foreach (Entity entity in entities.Distinct()) {
-            entity.Removed(level);
+            try {
+                entity.Removed(level);
+            } catch (NullReferenceException) {
+                // ignore https://discord.com/channels/403698615446536203/954507384183738438/954507384183738438
+            }
         }
 
         // 移除剩下声音组件

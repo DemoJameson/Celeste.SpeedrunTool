@@ -70,7 +70,7 @@ public static class RoomTimerManager {
                     SpeedrunToolModule.Instance.SaveSettings();
                 }
 
-                PopupMessageUtils.ShowOptionState(DialogIds.NumberOfRooms.DialogClean(), ModSettings.NumberOfRooms.ToString());
+                Tooltip.Show(string.Format(Dialog.Get(DialogIds.OptionState), DialogIds.NumberOfRooms.DialogClean(), ModSettings.NumberOfRooms));
             }
         });
 
@@ -81,7 +81,7 @@ public static class RoomTimerManager {
                     SpeedrunToolModule.Instance.SaveSettings();
                 }
 
-                PopupMessageUtils.ShowOptionState(DialogIds.NumberOfRooms.DialogClean(), ModSettings.NumberOfRooms.ToString());
+                Tooltip.Show(string.Format(Dialog.Get(DialogIds.OptionState), DialogIds.NumberOfRooms.DialogClean(), ModSettings.NumberOfRooms));
             }
         });
 

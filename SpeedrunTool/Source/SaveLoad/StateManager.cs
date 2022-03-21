@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
+using Celeste.Mod.SpeedrunTool.Utils;
 using FMOD.Studio;
 using Force.DeepCloner;
 using Force.DeepCloner.Helpers;
@@ -16,7 +17,7 @@ public sealed class StateManager {
     private StateManager() { }
 
     private static readonly Lazy<PropertyInfo> InGameOverworldHelperIsOpen = new(
-        () => Type.GetType("Celeste.Mod.CollabUtils2.UI.InGameOverworldHelper, CollabUtils2")?.GetPropertyInfo("IsOpen")
+        () => ModUtils.GetType("CollabUtils2", "Celeste.Mod.CollabUtils2.UI.InGameOverworldHelper")?.GetPropertyInfo("IsOpen")
     );
 
     // public for tas

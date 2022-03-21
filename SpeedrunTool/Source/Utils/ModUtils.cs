@@ -5,6 +5,8 @@ using Celeste.Mod.Helpers;
 namespace Celeste.Mod.SpeedrunTool.Utils;
 
 internal static class ModUtils {
+    public static readonly Assembly VanillaAssembly = typeof(Player).Assembly;
+
     public static Type GetType(string modName, string name, bool throwOnError = false, bool ignoreCase = false) {
         return GetAssembly(modName)?.GetType(name, throwOnError, ignoreCase);
     }

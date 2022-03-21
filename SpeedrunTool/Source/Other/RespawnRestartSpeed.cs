@@ -16,7 +16,7 @@ public static class RespawnRestartSpeed {
         }
 
 
-        if (Type.GetType("Celeste.Level+<>c__DisplayClass150_0")?.GetMethodInfo("<GiveUp>b__0") is { } methodInfo) {
+        if (ModUtils.VanillaAssembly.GetType("Celeste.Level+<>c__DisplayClass150_0")?.GetMethodInfo("<GiveUp>b__0") is { } methodInfo) {
             ilHook = new ILHook(methodInfo, Manipulator);
         }
     }

@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Celeste.Mod.Helpers;
 using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Utils;
 using Celeste.Mod.UI;
@@ -133,15 +132,15 @@ public class HotkeyConfigUi : TextMenu {
 
     [Initialize]
     private static void Initialize() {
-        Assembly assembly = FakeAssembly.GetFakeEntryAssembly();
-        celesteNetClientModuleInstance = assembly.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientModule")?.GetFieldInfo("Instance");
-        celesteNetClientModuleContext = assembly.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientModule")?.GetFieldInfo("Context");
-        celesteNetClientContextChat = assembly.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientContext")?.GetFieldInfo("Chat");
-        celesteNetChatComponentActive =
-            assembly.GetType("Celeste.Mod.CelesteNet.Client.Components.CelesteNetChatComponent")?.GetPropertyInfo("Active");
+        if (ModUtils.GetAssembly("CelesteNet.Client") is {} assembly) {
+            celesteNetClientModuleInstance = assembly.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientModule")?.GetFieldInfo("Instance");
+            celesteNetClientModuleContext = assembly.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientModule")?.GetFieldInfo("Context");
+            celesteNetClientContextChat = assembly.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientContext")?.GetFieldInfo("Chat");
+            celesteNetChatComponentActive = assembly.GetType("Celeste.Mod.CelesteNet.Client.Components.CelesteNetChatComponent")?.GetPropertyInfo("Active");
+        }
 
-        foreach (HotkeyConfig buttonInfo in HotkeyConfigs.Values) {
-            buttonInfo.UpdateVirtualButton();
+        foreach (HotkeyConfig hotkeyConfig in HotkeyConfigs.Values) {
+            hotkeyConfig.UpdateVirtualButton();
         }
     }
 

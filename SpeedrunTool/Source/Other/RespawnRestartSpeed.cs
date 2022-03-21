@@ -15,7 +15,8 @@ public static class RespawnRestartSpeed {
             On.Monocle.Engine.Update += RespawnSpeed;
         }
 
-        if (Type.GetType("Celeste.Level+<>c__DisplayClass150_0, Celeste")?.GetMethodInfo("<GiveUp>b__0") is { } methodInfo) {
+
+        if (Type.GetType("Celeste.Level+<>c__DisplayClass150_0")?.GetMethodInfo("<GiveUp>b__0") is { } methodInfo) {
             ilHook = new ILHook(methodInfo, Manipulator);
         }
     }

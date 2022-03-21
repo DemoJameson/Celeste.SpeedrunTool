@@ -4,6 +4,7 @@ using System.Reflection;
 using Celeste.Mod.Helpers;
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
+using Celeste.Mod.SpeedrunTool.Utils;
 using FMOD;
 using FMOD.Studio;
 using Mono.Cecil.Cil;
@@ -271,7 +272,7 @@ public sealed class SaveLoadAction {
     }
 
     private static void InitExtendedVariantsFields() {
-        if (Type.GetType("ExtendedVariants.Variants.AbstractExtendedVariant, ExtendedVariantMode") is { } variantType) {
+        if (ModUtils.GetType("ExtendedVariantMode", "ExtendedVariants.Variants.AbstractExtendedVariant") is { } variantType) {
             foreach (Type type in variantType.Assembly.GetTypesSafe().Where(type => type.IsSubclassOf(variantType))) {
                 FieldInfo[] fieldInfos = type.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
                     .Where(info => !info.IsLiteral && info.FieldType.IsSimpleClass()).ToArray();
@@ -537,7 +538,7 @@ public sealed class SaveLoadAction {
     private static void SupportPandorasBox() {
         // 部分支持，因为 TimeField.targetPlayer 和 TimeField.lingeringTarget 未进行 SL
         // 之所以不处理该字段是因为 WeakReference<T> 类型的实例在 SL 多次并且内存回收之后 target 可能会指向错误的对象，原因未知
-        if (Type.GetType("Celeste.Mod.PandorasBox.TimeField, PandorasBox") is { } timeFieldType
+        if (ModUtils.GetType("PandorasBox", "Celeste.Mod.PandorasBox.TimeField") is { } timeFieldType
             && Delegate.CreateDelegate(typeof(On.Celeste.Player.hook_Update), timeFieldType.GetMethodInfo("PlayerUpdateHook")) is
                 On.Celeste.Player.hook_Update hookUpdate) {
             Add(new SaveLoadAction(
@@ -560,7 +561,7 @@ public sealed class SaveLoadAction {
     }
 
     private static void SupportMaxHelpingHand() {
-        if (Type.GetType("Celeste.Mod.MaxHelpingHand.Entities.RainbowSpinnerColorController, MaxHelpingHand") is { } colorControllerType
+        if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.RainbowSpinnerColorController") is { } colorControllerType
             && Delegate.CreateDelegate(typeof(On.Celeste.CrystalStaticSpinner.hook_GetHue),
                     colorControllerType.GetMethodInfo("getRainbowSpinnerHue")) is
                 On.Celeste.CrystalStaticSpinner.hook_GetHue hookGetHue
@@ -577,7 +578,7 @@ public sealed class SaveLoadAction {
             ));
         }
 
-        if (Type.GetType("Celeste.Mod.MaxHelpingHand.Entities.SeekerBarrierColorController, MaxHelpingHand") is
+        if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.SeekerBarrierColorController") is
             { } seekerBarrierColorControllerType) {
             Add(new SaveLoadAction(
                 loadState: (savedValues, _) => {
@@ -591,7 +592,7 @@ public sealed class SaveLoadAction {
             ));
         }
 
-        if (Type.GetType("Celeste.Mod.MaxHelpingHand.Triggers.GradientDustTrigger, MaxHelpingHand") is { } gradientDustTriggerType) {
+        if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Triggers.GradientDustTrigger") is { } gradientDustTriggerType) {
             Add(new SaveLoadAction(
                 loadState: (savedValues, _) => {
                     if ((bool)gradientDustTriggerType.GetFieldValue("hooked")) {
@@ -606,7 +607,7 @@ public sealed class SaveLoadAction {
             ));
         }
 
-        if (Type.GetType("Celeste.Mod.MaxHelpingHand.Entities.ParallaxFadeOutController, MaxHelpingHand") is { } parallaxFadeOutControllerType
+        if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.ParallaxFadeOutController") is { } parallaxFadeOutControllerType
             && Delegate.CreateDelegate(typeof(ILContext.Manipulator),
                 parallaxFadeOutControllerType.GetMethodInfo("onBackdropRender")) is ILContext.Manipulator onBackdropRender
            ) {
@@ -622,7 +623,7 @@ public sealed class SaveLoadAction {
             ));
         }
 
-        if (Type.GetType("Celeste.Mod.MaxHelpingHand.Effects.BlackholeCustomColors, MaxHelpingHand") is { } blackHoleCustomColorsType) {
+        if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Effects.BlackholeCustomColors") is { } blackHoleCustomColorsType) {
             Add(new SaveLoadAction(
                 (savedValues, _) => SaveStaticMemberValues(savedValues, blackHoleCustomColorsType, "colorsMild"),
                 (savedValues, _) => LoadStaticMemberValues(savedValues)));
@@ -630,7 +631,7 @@ public sealed class SaveLoadAction {
     }
 
     private static void SupportCrystallineHelper() {
-        Type vitModuleType = Type.GetType("vitmod.VitModule, vitmod");
+        Type vitModuleType = ModUtils.GetType("CrystallineHelper", "vitmod.VitModule");
         if (vitModuleType == null) {
             return;
         }
@@ -642,7 +643,7 @@ public sealed class SaveLoadAction {
     }
 
     private static void SupportSpringCollab2020() {
-        if (Type.GetType("Celeste.Mod.SpringCollab2020.Entities.RainbowSpinnerColorController, SpringCollab2020") is { } colorControllerType
+        if (ModUtils.GetType("SpringCollab2020", "Celeste.Mod.SpringCollab2020.Entities.RainbowSpinnerColorController") is { } colorControllerType
             && Delegate.CreateDelegate(typeof(On.Celeste.CrystalStaticSpinner.hook_GetHue),
                     colorControllerType.GetMethodInfo("getRainbowSpinnerHue")) is
                 On.Celeste.CrystalStaticSpinner.hook_GetHue hookGetHue
@@ -659,7 +660,7 @@ public sealed class SaveLoadAction {
             ));
         }
 
-        if (Type.GetType("Celeste.Mod.SpringCollab2020.Entities.RainbowSpinnerColorAreaController, SpringCollab2020") is
+        if (ModUtils.GetType("SpringCollab2020", "Celeste.Mod.SpringCollab2020.Entities.RainbowSpinnerColorAreaController") is
                 { } colorAreaControllerType
             && Delegate.CreateDelegate(typeof(On.Celeste.CrystalStaticSpinner.hook_GetHue),
                     colorAreaControllerType.GetMethodInfo("getRainbowSpinnerHue")) is
@@ -677,7 +678,7 @@ public sealed class SaveLoadAction {
             ));
         }
 
-        if (Type.GetType("Celeste.Mod.SpringCollab2020.Entities.SpikeJumpThroughController, SpringCollab2020") is
+        if (ModUtils.GetType("SpringCollab2020", "Celeste.Mod.SpringCollab2020.Entities.SpikeJumpThroughController") is
                 { } spikeJumpThroughControllerType
             && Delegate.CreateDelegate(typeof(On.Celeste.Spikes.hook_OnCollide),
                 spikeJumpThroughControllerType.GetMethodInfo("OnCollideHook")) is On.Celeste.Spikes.hook_OnCollide onCollideHook
@@ -698,11 +699,11 @@ public sealed class SaveLoadAction {
     private static void SupportExtendedVariants() {
         // 静态字段在 InitExtendedVariantsFields() 中处理了
 
-        if (Type.GetType("ExtendedVariants.Module.ExtendedVariantsModule, ExtendedVariantMode") is not { } moduleType) {
+        if (ModUtils.GetType("ExtendedVariantMode", "ExtendedVariants.Module.ExtendedVariantsModule") is not { } moduleType) {
             return;
         }
 
-        if (Type.GetType("ExtendedVariants.Module.ExtendedVariantsSettings, ExtendedVariantMode") is not { } settingsType) {
+        if (ModUtils.GetType("ExtendedVariantMode", "ExtendedVariants.Module.ExtendedVariantsSettings") is not { } settingsType) {
             return;
         }
 
@@ -746,7 +747,7 @@ public sealed class SaveLoadAction {
     }
 
     private static void SupportXaphanHelper() {
-        if (Type.GetType("Celeste.Mod.XaphanHelper.Upgrades.SpaceJump, XaphanHelper") is { } spaceJumpType) {
+        if (ModUtils.GetType("XaphanHelper", "Celeste.Mod.XaphanHelper.Upgrades.SpaceJump") is { } spaceJumpType) {
             Add(new SaveLoadAction(
                 (savedValues, _) => SaveStaticMemberValues(savedValues, spaceJumpType, "jumpBuffer"),
                 (savedValues, _) => LoadStaticMemberValues(savedValues))
@@ -756,7 +757,7 @@ public sealed class SaveLoadAction {
 
     private static void SupportIsaGrabBag() {
         // 解决 DreamSpinnerBorder 读档后影像残留在屏幕中
-        if (Type.GetType("Celeste.Mod.IsaGrabBag.DreamSpinnerBorder, IsaMods") is { } borderType) {
+        if (ModUtils.GetType("IsaGrabBag", "Celeste.Mod.IsaGrabBag.DreamSpinnerBorder") is { } borderType) {
             Add(new SaveLoadAction(
                     loadState: (_, level) => level.Entities.FirstOrDefault(entity => entity.GetType() == borderType)?.Update()
                 )
@@ -764,7 +765,7 @@ public sealed class SaveLoadAction {
         }
 
         // 解决读档后冲进 DreamSpinner 会被刺死
-        if (Type.GetType("Celeste.Mod.IsaGrabBag.GrabBagModule, IsaMods") is { } grabBagModuleType) {
+        if (ModUtils.GetType("IsaGrabBag", "Celeste.Mod.IsaGrabBag.GrabBagModule") is { } grabBagModuleType) {
             Add(new SaveLoadAction(
                 (savedValues, _) => SaveStaticMemberValues(savedValues, grabBagModuleType, "ZipLineState",
                     "playerInstance"),
@@ -774,8 +775,8 @@ public sealed class SaveLoadAction {
     }
 
     private static void SupportDeathTracker() {
-        if (Type.GetType("CelesteDeathTracker.DeathTrackerModule+<>c__DisplayClass6_0, CelesteDeathTracker")?.GetMethodInfo("<Load>b__2") is {} modPlayerSpawn &&
-            Type.GetType("CelesteDeathTracker.DeathDisplay, CelesteDeathTracker") is {} deathDisplayType) {
+        if (ModUtils.GetType("DeathTracker", "CelesteDeathTracker.DeathTrackerModule+<>c__DisplayClass6_0")?.GetMethodInfo("<Load>b__2") is {} modPlayerSpawn &&
+            ModUtils.GetType("DeathTracker", "CelesteDeathTracker.DeathDisplay") is {} deathDisplayType) {
             modDeathTrackerHook = new ILHook(modPlayerSpawn, il => {
                 ILCursor ilCursor = new(il);
                 // display => player.Scene.Entities.FindFirst<DeathDisplay>()
@@ -792,7 +793,7 @@ public sealed class SaveLoadAction {
     }
 
     private static void SupportCommunalHelper() {
-        if (Type.GetType("Celeste.Mod.CommunalHelper.Entities.DreamTunnelDash, CommunalHelper") is { } dreamTunnelDashType) {
+        if (ModUtils.GetType("CommunalHelper", "Celeste.Mod.CommunalHelper.Entities.DreamTunnelDash") is { } dreamTunnelDashType) {
             Add(new SaveLoadAction(
                 (savedValues, _) => SaveStaticMemberValues(savedValues, dreamTunnelDashType,
                     "StDreamTunnelDash",

@@ -69,13 +69,13 @@ public sealed class StateManager {
         });
 
         Hotkey.ClearState.RegisterPressedAction(scene => {
-            if (scene is Level {Paused: false} level && State == State.None) {
+            if (scene is Level {Paused: false} && State == State.None) {
                 ClearStateAndShowMessage();
             }
         });
 
         Hotkey.SwitchAutoLoadState.RegisterPressedAction(scene => {
-            if (scene is Level {Paused: false} level) {
+            if (scene is Level {Paused: false}) {
                 ModSettings.AutoLoadStateAfterDeath = !ModSettings.AutoLoadStateAfterDeath;
                 SpeedrunToolModule.Instance.SaveSettings();
                 string state = (ModSettings.AutoLoadStateAfterDeath ? DialogIds.On : DialogIds.Off).DialogClean();
@@ -137,8 +137,8 @@ public sealed class StateManager {
     }
 
     private void AutoLoadStateWhenDeath(On.Celeste.PlayerDeadBody.orig_End orig, PlayerDeadBody self) {
-        if (GlobalVariables.ModSettings.Enabled
-            && GlobalVariables.ModSettings.AutoLoadStateAfterDeath
+        if (ModSettings.Enabled
+            && ModSettings.AutoLoadStateAfterDeath
             && IsSaved
             && !SavedByTas
             && !(bool)self.GetFieldValue("finished")

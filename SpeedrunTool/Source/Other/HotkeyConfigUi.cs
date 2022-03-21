@@ -125,11 +125,6 @@ public class HotkeyConfigUi : TextMenu {
         });
     }
 
-    [Unload]
-    private static void Unload() {
-        On.Monocle.MInput.Update -= MInputOnUpdate;
-    }
-
     [Initialize]
     private static void Initialize() {
         if (ModUtils.GetAssembly("CelesteNet.Client") is {} assembly) {
@@ -141,6 +136,14 @@ public class HotkeyConfigUi : TextMenu {
 
         foreach (HotkeyConfig hotkeyConfig in HotkeyConfigs.Values) {
             hotkeyConfig.UpdateVirtualButton();
+        }
+    }
+
+    [Unload]
+    private static void Unload() {
+        On.Monocle.MInput.Update -= MInputOnUpdate;
+        foreach (HotkeyConfig hotkeyConfig in HotkeyConfigs.Values) {
+            hotkeyConfig.VirtualButton.Value.Deregister();
         }
     }
 

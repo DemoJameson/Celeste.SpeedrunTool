@@ -49,7 +49,7 @@ public class HotkeyConfigUi : TextMenu {
         Buttons.BigButton,
     };
 
-    private static readonly Dictionary<Hotkey, HotkeyConfig> HotkeyConfigs = new List<HotkeyConfig> {
+    public static readonly Dictionary<Hotkey, HotkeyConfig> HotkeyConfigs = new List<HotkeyConfig> {
         new(Hotkey.ToggleHotkeys),
         new(Hotkey.SaveState, Keys.F7),
         new(Hotkey.LoadState, Keys.F8),
@@ -127,11 +127,12 @@ public class HotkeyConfigUi : TextMenu {
 
     [Initialize]
     private static void Initialize() {
-        if (ModUtils.GetAssembly("CelesteNet.Client") is {} assembly) {
+        if (ModUtils.GetAssembly("CelesteNet.Client") is { } assembly) {
             celesteNetClientModuleInstance = assembly.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientModule")?.GetFieldInfo("Instance");
             celesteNetClientModuleContext = assembly.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientModule")?.GetFieldInfo("Context");
             celesteNetClientContextChat = assembly.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientContext")?.GetFieldInfo("Chat");
-            celesteNetChatComponentActive = assembly.GetType("Celeste.Mod.CelesteNet.Client.Components.CelesteNetChatComponent")?.GetPropertyInfo("Active");
+            celesteNetChatComponentActive =
+                assembly.GetType("Celeste.Mod.CelesteNet.Client.Components.CelesteNetChatComponent")?.GetPropertyInfo("Active");
         }
 
         foreach (HotkeyConfig hotkeyConfig in HotkeyConfigs.Values) {
@@ -152,7 +153,7 @@ public class HotkeyConfigUi : TextMenu {
 
         if (Engine.Scene is { } scene && ModSettings.Enabled && !TasUtils.Running) {
             foreach (Hotkey hotkey in Enum.GetValues(typeof(Hotkey)).Cast<Hotkey>()) {
-                HotkeyConfig hotkeyConfig = GetHotkeyConfig(hotkey);
+                HotkeyConfig hotkeyConfig = hotkey.GetHotkeyConfig();
                 if (Pressed(hotkey, scene)) {
                     hotkeyConfig.VirtualButton.Value.ConsumePress();
                     hotkeyConfig.OnPressed?.Invoke(scene);
@@ -166,7 +167,7 @@ public class HotkeyConfigUi : TextMenu {
             return false;
         }
 
-        bool pressed = GetVirtualButton(hotkey).Pressed;
+        bool pressed = hotkey.Pressed();
         if (!pressed) {
             return false;
         }
@@ -189,20 +190,12 @@ public class HotkeyConfigUi : TextMenu {
         return true;
     }
 
-    public static HotkeyConfig GetHotkeyConfig(Hotkey hotkey) {
-        return HotkeyConfigs[hotkey];
-    }
-
-    public static VirtualButton GetVirtualButton(Hotkey hotkey) {
-        return HotkeyConfigs[hotkey].VirtualButton.Value;
-    }
-
     private void Reload(int index = -1) {
         Clear();
 
         Add(new Header(Dialog.Clean(DialogIds.HotkeysConfig)));
-
-        Add(new SubHeader(Dialog.Clean(DialogIds.PressDeleteToRemoveButton)));
+        Add(new SubHeader(Dialog.Clean(DialogIds.ComboHotkeyDescription)));
+        Add(new SubHeader(Dialog.Clean(DialogIds.PressDeleteToRemoveButton), false));
 
         Add(new SubHeader(Dialog.Clean(DialogIds.Keyboard)));
         foreach (KeyValuePair<Hotkey, HotkeyConfig> pair in HotkeyConfigs) {
@@ -211,7 +204,7 @@ public class HotkeyConfigUi : TextMenu {
 
         Add(new SubHeader(Dialog.Clean(DialogIds.Controller)));
         foreach (KeyValuePair<Hotkey, HotkeyConfig> pair in HotkeyConfigs) {
-            AddControllerSetting(pair.Key, pair.Value.GetButton());
+            AddControllerSetting(pair.Key, pair.Value.GetButtons());
         }
 
         Add(new SubHeader(""));
@@ -237,14 +230,9 @@ public class HotkeyConfigUi : TextMenu {
         Add(resetButton);
     }
 
-    private void AddControllerSetting(Hotkey hotkeyType, Buttons? button) {
-        Setting setting = new(HotkeyConfigs[hotkeyType].GetLabel(), Keys.None);
-        setting.Pressed(() => Remap(hotkeyType));
-        if (button != null) {
-            setting.Set(new List<Buttons> {(Buttons) button});
-        }
-
-        Add(setting);
+    private void AddControllerSetting(Hotkey hotkeyType, List<Buttons> buttons) {
+        HotkeyConfig hotkeyConfig = HotkeyConfigs[hotkeyType];
+        Add(new Setting(hotkeyConfig.GetLabel(), buttons).Pressed(() => Remap(hotkeyType)));
     }
 
     private void AddKeyboardSetting(Hotkey hotkeyType, List<Keys> keys) {
@@ -253,13 +241,12 @@ public class HotkeyConfigUi : TextMenu {
     }
 
     private static void SetDefaultButtons() {
-        foreach (HotkeyConfig buttonInfo in HotkeyConfigs.Values) {
-            buttonInfo.SetButton(null);
-            buttonInfo.SetKeys(buttonInfo.DefaultKeys.ToList());
-            buttonInfo.UpdateVirtualButton();
+        foreach (HotkeyConfig hotkeyConfig in HotkeyConfigs.Values) {
+            hotkeyConfig.SetButtons(new List<Buttons>());
+            hotkeyConfig.SetKeys(hotkeyConfig.DefaultKeys.ToList());
+            hotkeyConfig.UpdateVirtualButton();
         }
     }
-
 
     private void Remap(Hotkey hotkey, bool remapKeyboard = false) {
         remapping = true;
@@ -272,24 +259,15 @@ public class HotkeyConfigUi : TextMenu {
     private void SetRemap(Buttons button) {
         remapping = false;
         inputDelay = 0.25f;
-        HotkeyConfig info = HotkeyConfigs[remappingType];
-        if (info.GetButton() is { } currentButton && currentButton == button) {
-            info.SetButton(null);
-        } else {
-            info.SetButton(button);
-            foreach (HotkeyConfig otherInfo in HotkeyConfigs.Values) {
-                if (otherInfo == info) {
-                    continue;
-                }
-
-                if (otherInfo.GetButton() is { } otherButton && otherButton == button) {
-                    otherInfo.SetButton(null);
-                    otherInfo.UpdateVirtualButton();
-                }
+        HotkeyConfigs[remappingType].With(info => {
+            if (info.GetButtons().Contains(button)) {
+                info.GetButtons().Remove(button);
+            } else {
+                info.GetButtons().Add(button);
             }
-        }
 
-        info.UpdateVirtualButton();
+            info.UpdateVirtualButton();
+        });
         Reload(Selection);
     }
 
@@ -300,18 +278,7 @@ public class HotkeyConfigUi : TextMenu {
             if (info.GetKeys().Contains(key)) {
                 info.GetKeys().Remove(key);
             } else {
-                info.GetKeys().Clear();
                 info.GetKeys().Add(key);
-                foreach (HotkeyConfig otherInfo in HotkeyConfigs.Values) {
-                    if (otherInfo == info) {
-                        continue;
-                    }
-
-                    if (otherInfo.GetKeys().Contains(key)) {
-                        otherInfo.GetKeys().Remove(key);
-                        otherInfo.UpdateVirtualButton();
-                    }
-                }
             }
 
             info.UpdateVirtualButton();
@@ -354,8 +321,9 @@ public class HotkeyConfigUi : TextMenu {
             }
 
             timeout -= Engine.DeltaTime;
-        } else if ((Input.MenuJournal.Pressed || MInput.Keyboard.Pressed(Keys.Delete) || MInput.Keyboard.Pressed(Keys.Back)) && Selection >= 3 && Selection < Items.Count - 1) {
-            int index = Selection - 3;
+        } else if ((Input.MenuJournal.Pressed || MInput.Keyboard.Pressed(Keys.Delete) || MInput.Keyboard.Pressed(Keys.Back)) && Selection >= 4 &&
+                   Selection < Items.Count - 1) {
+            int index = Selection - 4;
             bool keyboard = true;
             if (index > HotkeyConfigs.Count - 1) {
                 index--;
@@ -367,7 +335,7 @@ public class HotkeyConfigUi : TextMenu {
             if (keyboard) {
                 hotkeyConfig.GetKeys().Clear();
             } else {
-                hotkeyConfig.SetButton(null);
+                hotkeyConfig.GetButtons().Clear();
             }
 
             hotkeyConfig.UpdateVirtualButton();
@@ -416,34 +384,39 @@ public class HotkeyConfig {
     public readonly Keys[] DefaultKeys;
 
     public readonly Hotkey Hotkey;
-    public readonly Lazy<VirtualButton> VirtualButton = new(() => new VirtualButton(0.08f));
+    public readonly Lazy<VirtualButton> VirtualButton = new(() => new VirtualButton(0.08f) {AutoConsumeBuffer = true});
     public Action<Scene> OnPressed;
+    public List<VirtualButton.KeyboardKey> KeyboardKeys { get; private set; } = new();
+    public List<VirtualButton.PadButton> PadButtons { get; private set; } = new();
 
-    public HotkeyConfig(Hotkey hotkey, Keys? defaultKey = null) {
+    public HotkeyConfig(Hotkey hotkey, params Keys[] defaultKeys) {
         Hotkey = hotkey;
-        DefaultKeys = defaultKey == null ? new Keys[0] : new[] {defaultKey.Value};
+        DefaultKeys = defaultKeys;
     }
 
     public void UpdateVirtualButton() {
         List<VirtualButton.Node> nodes = VirtualButton.Value.Nodes;
         nodes.Clear();
-        nodes.AddRange(GetKeys().Select(key => new VirtualButton.KeyboardKey(key)));
+        nodes.AddRange(KeyboardKeys = GetKeys().Select(key => new VirtualButton.KeyboardKey(key)).ToList());
+        nodes.AddRange(PadButtons = GetButtons().Select(button => new VirtualButton.PadButton(Input.Gamepad, button)).ToList());
+    }
 
-        if (GetButton() is { } button) {
-            nodes.Add(new VirtualButton.PadButton(Input.Gamepad, button));
+    public List<Buttons> GetButtons() {
+        List<Buttons> result = (List<Buttons>)ModSettings.GetPropertyValue($"Controller{Hotkey}");
+        if (result == null) {
+            result = new List<Buttons>();
+            SetButtons(result);
         }
+
+        return result;
     }
 
-    public Buttons? GetButton() {
-        return (Buttons?) ModSettings.GetPropertyValue($"Controller{Hotkey}");
-    }
-
-    public void SetButton(Buttons? button) {
-        ModSettings.SetPropertyValue($"Controller{Hotkey}", button);
+    public void SetButtons(List<Buttons> buttons) {
+        ModSettings.SetPropertyValue($"Controller{Hotkey}", buttons);
     }
 
     public List<Keys> GetKeys() {
-        List<Keys> result = (List<Keys>) ModSettings.GetPropertyValue($"Keyboard{Hotkey}");
+        List<Keys> result = (List<Keys>)ModSettings.GetPropertyValue($"Keyboard{Hotkey}");
         if (result == null) {
             result = new List<Keys>();
             SetKeys(result);
@@ -486,11 +459,41 @@ public enum Hotkey {
 }
 
 internal static class HotkeysExtensions {
+    public static HotkeyConfig GetHotkeyConfig(this Hotkey hotkey) {
+        return HotkeyConfigUi.HotkeyConfigs[hotkey];
+    }
+
     public static void RegisterPressedAction(this Hotkey hotkey, Action<Scene> onPressed) {
-        HotkeyConfigUi.GetHotkeyConfig(hotkey).OnPressed = onPressed;
+        hotkey.GetHotkeyConfig().OnPressed = onPressed;
     }
 
     public static List<Keys> GetDefaultKeys(this Hotkey hotkey) {
-        return HotkeyConfigUi.GetHotkeyConfig(hotkey).DefaultKeys.ToList();
+        return hotkey.GetHotkeyConfig().DefaultKeys.ToList();
+    }
+
+    // 检查键盘或者手柄全部按键按下
+    public static bool Pressed(this Hotkey hotkey) {
+        VirtualButton virtualButton = hotkey.GetHotkeyConfig().VirtualButton.Value;
+        HotkeyConfig hotkeyConfig = hotkey.GetHotkeyConfig();
+
+        List<VirtualButton.KeyboardKey> keyboardKeys = hotkeyConfig.KeyboardKeys;
+        bool keyPressed = keyboardKeys.Count > 0 && keyboardKeys.All(node => node.Check) && keyboardKeys.Any(node => node.Pressed);
+        if (keyPressed) {
+            if (virtualButton.AutoConsumeBuffer) {
+                virtualButton.ConsumeBuffer();
+            }
+            return true;
+        }
+
+        List<VirtualButton.PadButton> padButtons = hotkeyConfig.PadButtons;
+        bool buttonPressed = padButtons.Count > 0 && padButtons.All(node => node.Check) && padButtons.Any(node => node.Pressed);
+        if (buttonPressed) {
+            if (virtualButton.AutoConsumeBuffer) {
+                virtualButton.ConsumeBuffer();
+            }
+            return true;
+        }
+
+        return false;
     }
 }

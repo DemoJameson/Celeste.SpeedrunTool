@@ -90,6 +90,7 @@ SPEEDRUN_TOOL_RANDOM=     Random
 # ================================== Hotkey Config ==================================
 SPEEDRUN_TOOL_KEYBOARD=                      Keyboard
 SPEEDRUN_TOOL_CONTROLLER=                    Controller
+SPEEDRUN_TOOL_COMBO_HOTKEY_DESCRIPTION=      Binding multiple keys to a control will cause those keys to act as a keycombo
 SPEEDRUN_TOOL_PRESS_DELETE_TO_REMOVE_BUTTON= Press Delete/Journal Key to Remove Button
 SPEEDRUN_TOOL_TOGGLE_HOTKEYS=                Toggle Hotkeys
 SPEEDRUN_TOOL_OPEN_DEBUG_MAP=                Open Debug Map

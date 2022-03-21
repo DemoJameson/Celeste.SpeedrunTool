@@ -11,6 +11,10 @@ using Force.DeepCloner.Helpers;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
 public sealed class StateManager {
+    private static readonly Lazy<StateManager> Lazy = new(() => new StateManager());
+    public static StateManager Instance => Lazy.Value;
+    private StateManager() { }
+
     private static readonly Lazy<PropertyInfo> InGameOverworldHelperIsOpen = new(
         () => Type.GetType("Celeste.Mod.CollabUtils2.UI.InGameOverworldHelper, CollabUtils2")?.GetPropertyInfo("IsOpen")
     );
@@ -79,7 +83,7 @@ public sealed class StateManager {
                 ModSettings.AutoLoadStateAfterDeath = !ModSettings.AutoLoadStateAfterDeath;
                 SpeedrunToolModule.Instance.SaveSettings();
                 string state = (ModSettings.AutoLoadStateAfterDeath ? DialogIds.On : DialogIds.Off).DialogClean();
-                PopupMessageUtils.ShowOptionState( DialogIds.AutoLoadStateAfterDeath.DialogClean(), state);
+                PopupMessageUtils.ShowOptionState(DialogIds.AutoLoadStateAfterDeath.DialogClean(), state);
             }
         });
     }
@@ -94,7 +98,6 @@ public sealed class StateManager {
                 || Input.MoveX != 0
                 || Input.MoveY != 0
                 || Input.Aim.Value != Vector2.Zero
-                || HotkeyConfigUi.GetVirtualButton(Hotkey.LoadState).Released
                 || typeof(Input).GetFieldValue("DemoDash")?.GetPropertyValue("Pressed") as bool? == true
                 || typeof(Input).GetFieldValue("CrouchDash")?.GetPropertyValue("Pressed") as bool? == true
             )) {
@@ -267,7 +270,7 @@ public sealed class StateManager {
         entities.AddRange(level.GetEntitiesExcludingTagMask((int)Tags.Global));
 
         // 恢復主音乐
-        if (level.Tracker.GetEntity<CassetteBlockManager>() is {} cassetteBlockManager) {
+        if (level.Tracker.GetEntity<CassetteBlockManager>() is { } cassetteBlockManager) {
             entities.Add(cassetteBlockManager);
         }
 
@@ -412,13 +415,6 @@ public sealed class StateManager {
         // 跳过过场时的黑屏与读档后加的黑屏冲突，会导致一直卡在跳过过场的过程中
         return State == State.None && !level.Paused && (!level.IsPlayerDead() && !level.SkippingCutscene || tas);
     }
-
-        // @formatter:off
-        private static readonly Lazy<StateManager> Lazy = new(() => new StateManager());
-        public static StateManager Instance => Lazy.Value;
-
-        private StateManager() { }
-    // @formatter:on
 
     private void FreezeGame(Level level, FreezeType freeze) {
         freezeType = freeze;

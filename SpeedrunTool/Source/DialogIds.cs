@@ -1,4 +1,4 @@
-namespace Celeste.Mod.SpeedrunTool; 
+namespace Celeste.Mod.SpeedrunTool;
 
 public static class DialogIds {
     public const string Prefix = "SPEEDRUN_TOOL_";
@@ -67,6 +67,7 @@ public static class DialogIds {
     // Hotkey Config
     public const string Keyboard = "SPEEDRUN_TOOL_KEYBOARD";
     public const string Controller = "SPEEDRUN_TOOL_CONTROLLER";
+    public const string ComboHotkeyDescription = "SPEEDRUN_TOOL_COMBO_HOTKEY_DESCRIPTION";
     public const string PressDeleteToRemoveButton = "SPEEDRUN_TOOL_PRESS_DELETE_TO_REMOVE_BUTTON";
     public const string ToggleHotkeys = "SPEEDRUN_TOOL_TOGGLE_HOTKEYS";
     public const string OpenDebugMap = "SPEEDRUN_TOOL_OPEN_DEBUG_MAP";

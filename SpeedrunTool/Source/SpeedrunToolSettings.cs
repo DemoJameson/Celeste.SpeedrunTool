@@ -5,7 +5,7 @@ using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Microsoft.Xna.Framework.Input;
 using HotkeyEnum = Celeste.Mod.SpeedrunTool.Other.Hotkey;
 
-namespace Celeste.Mod.SpeedrunTool; 
+namespace Celeste.Mod.SpeedrunTool;
 
 [SettingName(DialogIds.SpeedrunTool)]
 public class SpeedrunToolSettings : EverestModuleSettings {
@@ -96,23 +96,23 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     [SettingIgnore] public List<Keys> KeyboardSpawnTowerViewer { get; set; } = Hotkey.SpawnTowerViewer.GetDefaultKeys();
     [SettingIgnore] public List<Keys> KeyboardToggleFullscreen { get; set; } = Hotkey.ToggleFullscreen.GetDefaultKeys();
 
-    [SettingIgnore] public Buttons? ControllerToggleHotkeys { get; set; }
-    [SettingIgnore] public Buttons? ControllerSaveState { get; set; }
-    [SettingIgnore] public Buttons? ControllerLoadState { get; set; }
-    [SettingIgnore] public Buttons? ControllerClearState { get; set; }
-    [SettingIgnore] public Buttons? ControllerOpenDebugMap { get; set; }
-    [SettingIgnore] public Buttons? ControllerResetRoomTimerPb { get; set; }
-    [SettingIgnore] public Buttons? ControllerSwitchRoomTimer { get; set; }
-    [SettingIgnore] public Buttons? ControllerIncreaseTimedRooms { get; set; }
-    [SettingIgnore] public Buttons? ControllerDecreaseTimedRooms { get; set; }
-    [SettingIgnore] public Buttons? ControllerSetEndPoint { get; set; }
-    [SettingIgnore] public Buttons? ControllerSetAdditionalEndPoint { get; set; }
-    [SettingIgnore] public Buttons? ControllerCheckDeathStatistics { get; set; }
-    [SettingIgnore] public Buttons? ControllerTeleportToPreviousRoom { get; set; }
-    [SettingIgnore] public Buttons? ControllerTeleportToNextRoom { get; set; }
-    [SettingIgnore] public Buttons? ControllerSwitchAutoLoadState { get; set; }
-    [SettingIgnore] public Buttons? ControllerSpawnTowerViewer { get; set; }
-    [SettingIgnore] public Buttons? ControllerToggleFullscreen { get; set; }
+    [SettingIgnore] public List<Buttons> ControllerToggleHotkeys { get; set; } = new List<Buttons>();
+    [SettingIgnore] public List<Buttons> ControllerSaveState { get; set; } = new List<Buttons>();
+    [SettingIgnore] public List<Buttons> ControllerLoadState { get; set; } = new List<Buttons>();
+    [SettingIgnore] public List<Buttons> ControllerClearState { get; set; } = new List<Buttons>();
+    [SettingIgnore] public List<Buttons> ControllerOpenDebugMap { get; set; } = new List<Buttons>();
+    [SettingIgnore] public List<Buttons> ControllerResetRoomTimerPb { get; set; } = new List<Buttons>();
+    [SettingIgnore] public List<Buttons> ControllerSwitchRoomTimer { get; set; } = new List<Buttons>();
+    [SettingIgnore] public List<Buttons> ControllerIncreaseTimedRooms { get; set; } = new List<Buttons>();
+    [SettingIgnore] public List<Buttons> ControllerDecreaseTimedRooms { get; set; } = new List<Buttons>();
+    [SettingIgnore] public List<Buttons> ControllerSetEndPoint { get; set; } = new List<Buttons>();
+    [SettingIgnore] public List<Buttons> ControllerSetAdditionalEndPoint { get; set; } = new List<Buttons>();
+    [SettingIgnore] public List<Buttons> ControllerCheckDeathStatistics { get; set; } = new List<Buttons>();
+    [SettingIgnore] public List<Buttons> ControllerTeleportToPreviousRoom { get; set; } = new List<Buttons>();
+    [SettingIgnore] public List<Buttons> ControllerTeleportToNextRoom { get; set; } = new List<Buttons>();
+    [SettingIgnore] public List<Buttons> ControllerSwitchAutoLoadState { get; set; } = new List<Buttons>();
+    [SettingIgnore] public List<Buttons> ControllerSpawnTowerViewer { get; set; } = new List<Buttons>();
+    [SettingIgnore] public List<Buttons> ControllerToggleFullscreen { get; set; } = new List<Buttons>();
 
     #endregion HotkeyConfig
 }

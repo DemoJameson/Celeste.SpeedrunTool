@@ -91,6 +91,7 @@ SPEEDRUN_TOOL_RANDOM=    随机
 # ================================== Hotkey Config ==================================
 SPEEDRUN_TOOL_KEYBOARD=                      键盘
 SPEEDRUN_TOOL_CONTROLLER=                    手柄
+SPEEDRUN_TOOL_COMBO_HOTKEY_DESCRIPTION=      绑定多个按键表示组合键，需要同时按下才能触发相应操作
 SPEEDRUN_TOOL_PRESS_DELETE_TO_REMOVE_BUTTON= 按下删除或者日志键移除按钮
 SPEEDRUN_TOOL_TOGGLE_HOTKEYS=                开关快捷键
 SPEEDRUN_TOOL_OPEN_DEBUG_MAP=                打开地图

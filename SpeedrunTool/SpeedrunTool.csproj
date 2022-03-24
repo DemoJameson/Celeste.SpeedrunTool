@@ -64,6 +64,9 @@
         </Content>
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="..\DeepCloner\DeepCloner\DeepCloner.csproj" />
+        <Compile Include="..\DeepCloner\DeepCloner\**\*.cs">
+            <Link>Source\DeepCloner\%(RecursiveDir)%(FileName)%(Extension)</Link>
+        </Compile>
+        <Compile Remove="..\DeepCloner\DeepCloner\Properties\**" />
     </ItemGroup>
 </Project>

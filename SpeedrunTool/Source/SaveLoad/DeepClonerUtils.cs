@@ -5,7 +5,6 @@ using FMOD.Studio;
 using Force.DeepCloner;
 using Force.DeepCloner.Helpers;
 using Microsoft.Xna.Framework.Graphics;
-using MonoMod.Utils;
 using NLua;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
@@ -155,9 +154,9 @@ public static class DeepClonerUtils {
                     && !dictKeyType.IsSimple() && clonedObj is IDictionary {Count: > 0} clonedDict
                    ) {
                     Dictionary<object, object> backupDict = new();
-                    backupDict.AddRange(clonedDict);
+                    backupDict.AddRangeSafe(clonedDict);
                     clonedDict.Clear();
-                    clonedDict.AddRange(backupDict);
+                    clonedDict.AddRangeSafe(backupDict);
                 }
 
                 // LightingRenderer 需要，不然不会发光

@@ -62,7 +62,7 @@ public sealed class StateManager {
 #if DEBUG
                 JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();
                 SaveState(false);
-                JetBrains.Profiler.Api.MeasureProfiler.StopCollectingData();
+                JetBrains.Profiler.Api.MeasureProfiler.SaveData();
 #else
                 SaveState(false);
 #endif

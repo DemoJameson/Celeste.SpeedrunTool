@@ -119,6 +119,8 @@ public static class DeepClonerUtils {
             return null;
         });
 
+        List<object> backupHashSet = new();
+        Dictionary<object, object> backupDict = new();
         // Clone 对象的字段后，进行自定的处理
         // After cloning, perform custom processing
         DeepCloner.SetPostCloneProcessor((sourceObj, clonedObj, deepCloneState) => {
@@ -135,18 +137,18 @@ public static class DeepClonerUtils {
                 if (type.IsHashSet(out Type hashSetElementType) && !hashSetElementType.IsSimple()) {
                     IEnumerator enumerator = ((IEnumerable)clonedObj).GetEnumerator();
 
-                    List<object> backup = new();
+                    backupHashSet.Clear();
                     while (enumerator.MoveNext()) {
-                        backup.Add(enumerator.Current);
+                        backupHashSet.Add(enumerator.Current);
                     }
 
-                    if (backup.Count == 0) {
+                    if (backupHashSet.Count == 0) {
                         return clonedObj;
                     }
 
                     clonedObj.InvokeMethod("Clear");
                     FastReflectionDelegate addDelegate = type.GetMethodDelegate("Add");
-                    backup.ForEach(obj => {
+                    backupHashSet.ForEach(obj => {
                         if (obj != null) {
                             addDelegate(clonedObj, obj);
                         }
@@ -157,7 +159,7 @@ public static class DeepClonerUtils {
                 if (type.IsIDictionary(out Type dictKeyType, out Type _)
                     && !dictKeyType.IsSimple() && clonedObj is IDictionary {Count: > 0} clonedDict
                    ) {
-                    Dictionary<object, object> backupDict = new();
+                    backupDict.Clear();
                     backupDict.AddRangeSafe(clonedDict);
                     clonedDict.Clear();
                     clonedDict.AddRangeSafe(backupDict);

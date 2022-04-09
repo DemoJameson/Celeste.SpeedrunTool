@@ -95,7 +95,11 @@ internal static class ReflectionExtensions {
     public static bool IsHashSet(this Type type, out Type genericType) {
         genericType = null;
 
-        Type[] genericTypeArguments = type.GenericTypeArguments;
+        if (!type.IsGenericType || type.IsGenericTypeDefinition || !type.IsClass) {
+            return false;
+        }
+
+        Type[] genericTypeArguments = type.GetGenericArguments();
 
         if (genericTypeArguments.Length != 1) {
             return false;
@@ -123,7 +127,11 @@ internal static class ReflectionExtensions {
         keyType = null;
         valueType = null;
 
-        Type[] genericTypeArguments = type.GenericTypeArguments;
+        if (!type.IsGenericType || type.IsGenericTypeDefinition || !type.IsClass) {
+            return false;
+        }
+
+        Type[] genericTypeArguments = type.GetGenericArguments();
 
         if (genericTypeArguments.Length != 2) {
             return false;

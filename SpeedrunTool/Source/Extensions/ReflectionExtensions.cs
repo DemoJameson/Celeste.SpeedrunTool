@@ -3,12 +3,16 @@ using System.Linq;
 using System.Reflection;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Celeste.Mod.SpeedrunTool.Extensions; 
+namespace Celeste.Mod.SpeedrunTool.Extensions;
 
-internal static class ReflectionExtensions {
-    private const BindingFlags InstanceAnyVisibility = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
-    private const BindingFlags InstanceAnyVisibilityDeclaredOnly = InstanceAnyVisibility | BindingFlags.DeclaredOnly;
-    private const BindingFlags StaticInstanceAnyVisibility = InstanceAnyVisibility | BindingFlags.Static;
+public static class ReflectionExtensions {
+    private const BindingFlags StaticInstanceAnyVisibility = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
+
+    private static readonly Dictionary<int, FieldInfo> CachedFieldInfos = new();
+    private static readonly Dictionary<int, PropertyInfo> CachedPropertyInfos = new();
+    private static readonly Dictionary<int, MethodInfo> CachedMethodInfos = new();
+    private static readonly Dictionary<int, MethodInfo> CachedGetMethodInfos = new();
+    private static readonly Dictionary<int, MethodInfo> CachedSetMethodInfos = new();
 
     private static readonly object[] NoArg = { };
 
@@ -35,21 +39,6 @@ internal static class ReflectionExtensions {
                || IsSimpleStack(type, extraGenericTypes)
                || IsSimpleHashSet(type, extraGenericTypes)
                || IsSimpleDictionary(type, extraGenericTypes);
-    }
-
-    public static void CopyAllSimpleTypeFieldsAndNull(this object to, object from) {
-        if (to.GetType() != from.GetType()) {
-            throw new ArgumentException("object to and from not the same type");
-        }
-
-        foreach (FieldInfo fieldInfo in to.GetType().GetAllFieldInfos(InstanceAnyVisibilityDeclaredOnly)) {
-            object fromValue = fieldInfo.GetValue(from);
-            if (fromValue == null) {
-                fieldInfo.SetValue(to, null);
-            } else if (fieldInfo.FieldType.IsSimple()) {
-                fieldInfo.SetValue(to, fromValue);
-            }
-        }
     }
 
     public static bool IsSimpleArray(this Type type, Func<Type, bool> extraGenericTypes = null) {
@@ -186,126 +175,49 @@ internal static class ReflectionExtensions {
         return $"<{fieldName}>k__BackingField";
     }
 
-    public static MethodInfo GetMethodInfo(this Type type, string name, BindingFlags bindingFlags = StaticInstanceAnyVisibility) {
-        string key = $"ReflectionExtensions-GetMethodInfo-{name}-{bindingFlags}";
-
-        MethodInfo methodInfo = type.GetExtendedDataValue<MethodInfo>(key);
-        if (methodInfo == null) {
-            methodInfo = type.GetMethod(name, bindingFlags);
-            if (methodInfo != null) {
-                type.SetExtendedDataValue(key, methodInfo);
-            }
+    public static FieldInfo GetFieldInfo(this Type type, string name) {
+        int key = type.CombineHashCode(name);
+        if (CachedFieldInfos.TryGetValue(key, out var result)) {
+            return result;
         }
 
-        return methodInfo;
+        return CachedFieldInfos[key] = type.GetField(name, StaticInstanceAnyVisibility);
     }
 
-    public static FieldInfo GetFieldInfo(this Type type, string name, BindingFlags bindingFlags = StaticInstanceAnyVisibility) {
-        string key = $"ReflectionExtensions-GetFieldInfo-{name}-{bindingFlags}";
-        FieldInfo fieldInfo = type.GetExtendedDataValue<FieldInfo>(key);
-        if (fieldInfo == null) {
-            fieldInfo = type.GetField(name, bindingFlags);
-            if (fieldInfo != null) {
-                type.SetExtendedDataValue(key, fieldInfo);
-            } else {
-                return null;
-            }
+    public static PropertyInfo GetPropertyInfo(this Type type, string name) {
+        int key = type.CombineHashCode(name);
+        if (CachedPropertyInfos.TryGetValue(key, out var result)) {
+            return result;
         }
 
-        return fieldInfo;
-    }
-
-    public static FieldInfo[] GetFieldInfos(this Type type, BindingFlags bindingFlags = StaticInstanceAnyVisibility,
-        bool filterBackingField = false) {
-        string key = $"ReflectionExtensions-GetFieldInfos-{bindingFlags}-{filterBackingField}";
-
-        FieldInfo[] fieldInfos = type.GetExtendedDataValue<FieldInfo[]>(key);
-        if (fieldInfos == null) {
-            fieldInfos = type.GetFields(bindingFlags);
-            if (filterBackingField) {
-                fieldInfos = fieldInfos.Where(info => !info.Name.EndsWith("k__BackingField")).ToArray();
-            }
-
-            type.SetExtendedDataValue(key, fieldInfos);
-        }
-
-        return fieldInfos;
-    }
-
-    public static List<FieldInfo> GetAllFieldInfos(this Type type, BindingFlags bindingFlags = StaticInstanceAnyVisibility,
-        bool filterBackingField = false) {
-        string key = $"ReflectionExtensions-GetAllFieldInfos-{bindingFlags}-{filterBackingField}";
-        List<FieldInfo> result = type.GetExtendedDataValue<List<FieldInfo>>(key);
-        if (result == null) {
-            result = new List<FieldInfo>();
-            while (type != null && type.IsSubclassOf(typeof(object))) {
-                FieldInfo[] fieldInfos = type.GetFieldInfos(bindingFlags, filterBackingField);
-                foreach (FieldInfo fieldInfo in fieldInfos) {
-                    if (result.Contains(fieldInfo)) {
-                        continue;
-                    }
-
-                    result.Add(fieldInfo);
-                }
-
-                type = type.BaseType;
-            }
-
-            type.SetExtendedDataValue(key, result);
-        }
-
-        return result;
-    }
-
-    public static PropertyInfo GetPropertyInfo(this Type type, string name, BindingFlags bindingFlags = StaticInstanceAnyVisibility) {
-        string key = $"ReflectionExtensions-GetPropertyInfo-{name}-{bindingFlags}";
-        PropertyInfo propertyInfo = type.GetExtendedDataValue<PropertyInfo>(key);
-        if (propertyInfo == null) {
-            propertyInfo = type.GetProperty(name, bindingFlags);
-            if (propertyInfo != null) {
-                type.SetExtendedDataValue(key, propertyInfo);
-            } else {
-                return null;
-            }
-        }
-
-        return propertyInfo;
-    }
-
-    public static PropertyInfo[] GetPropertyInfos(this Type type, BindingFlags bindingFlags = StaticInstanceAnyVisibility) {
-        string key = $"ReflectionExtensions-GetPropertyInfos-{bindingFlags}";
-
-        PropertyInfo[] propertyInfos = type.GetExtendedDataValue<PropertyInfo[]>(key);
-        if (propertyInfos == null) {
-            propertyInfos = type.GetProperties(bindingFlags);
-            type.SetExtendedDataValue(key, propertyInfos);
-        }
-
-        return propertyInfos;
+        return CachedPropertyInfos[key] = type.GetProperty(name, StaticInstanceAnyVisibility);
     }
 
     public static MethodInfo GetPropertyGetMethod(this Type type, string name) {
-        string key = $"ReflectionExtensions-GetPropertyGetMethod-{name}";
-
-        MethodInfo methodInfo = type.GetExtendedDataValue<MethodInfo>(key);
-        if (methodInfo == null) {
-            methodInfo = type.GetPropertyInfo(name)?.GetGetMethod(true);
-            type.SetExtendedDataValue(key, methodInfo);
+        int key = type.CombineHashCode(name);
+        if (CachedGetMethodInfos.TryGetValue(key, out var result)) {
+            return result;
         }
 
-        return methodInfo;
+        return CachedGetMethodInfos[key] = type.GetPropertyInfo(name)?.GetGetMethod(true);
     }
 
     public static MethodInfo GetPropertySetMethod(this Type type, string name) {
-        string key = $"ReflectionExtensions-GetPropertySetMethod-{name}";
-
-        MethodInfo methodInfo = type.GetExtendedDataValue<MethodInfo>(key);
-        if (methodInfo == null) {
-            methodInfo = type.GetPropertyInfo(name)?.GetSetMethod(true);
-            type.SetExtendedDataValue(key, methodInfo);
+        int key = type.CombineHashCode(name);
+        if (CachedSetMethodInfos.TryGetValue(key, out var result)) {
+            return result;
         }
 
-        return methodInfo;
+        return CachedSetMethodInfos[key] = type.GetPropertyInfo(name)?.GetSetMethod(true);
+    }
+
+    public static MethodInfo GetMethodInfo(this Type type, string name) {
+        int key = type.CombineHashCode(name);
+        if (CachedMethodInfos.TryGetValue(key, out var result)) {
+            return result;
+        }
+
+        return CachedMethodInfos[key] = type.GetMethod(name, StaticInstanceAnyVisibility);
     }
 
     public static object GetFieldValue(this object obj, string name) {
@@ -414,5 +326,28 @@ internal static class ReflectionExtensions {
 
     public static object InvokeMethod(this object obj, Type type, string name, params object[] parameters) {
         return GetMethodInfo(type, name)?.CreateFastDelegate().Invoke(obj, parameters);
+    }
+}
+
+internal static class HashCodeExtensions {
+    public static int GetCustomHashCode<T>(this IEnumerable<T> enumerable) {
+        if (enumerable == null) {
+            return 0;
+        }
+
+        unchecked {
+            int hash = 17;
+            foreach (T item in enumerable) {
+                hash = hash * -1521134295 + EqualityComparer<T>.Default.GetHashCode(item);
+            }
+
+            return hash;
+        }
+    }
+
+    public static int CombineHashCode<T1, T2>(this T1 t1, T2 t2) {
+        unchecked {
+            return EqualityComparer<T1>.Default.GetHashCode(t1) * -1521134295 + EqualityComparer<T2>.Default.GetHashCode(t2);
+        }
     }
 }

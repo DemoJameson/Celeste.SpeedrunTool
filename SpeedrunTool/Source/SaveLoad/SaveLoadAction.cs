@@ -253,7 +253,8 @@ public sealed class SaveLoadAction {
             List<FieldInfo> staticFields = new();
             List<FieldInfo> instanceFields = new();
 
-            foreach (FieldInfo fieldInfo in type.GetFieldInfos().Where(info => !info.IsLiteral && info.FieldType == typeof(Level))) {
+            FieldInfo[] fieldInfos = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+            foreach (FieldInfo fieldInfo in fieldInfos.Where(info => !info.IsLiteral && info.FieldType == typeof(Level))) {
                 if (fieldInfo.IsStatic) {
                     staticFields.Add(fieldInfo);
                 } else {

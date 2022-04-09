@@ -1,17 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
 using System.Reflection;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using MonoMod.Utils;
 
-namespace Celeste.Mod.SpeedrunTool.Extensions; 
+namespace Celeste.Mod.SpeedrunTool.Extensions;
 
 internal static class ThreadSafeFastReflectionHelper {
-    public delegate object FastReflectionDelegate(object target, params object[] args);
-
     private static readonly Type[] _DynamicMethodDelegateArgs = {typeof(object), typeof(object[])};
-
-    private static readonly IDictionary<MethodInfo, FastReflectionDelegate> _MethodCache = new Dictionary<MethodInfo, FastReflectionDelegate>();
+    private static readonly ConcurrentDictionary<MethodInfo, FastReflectionDelegate> _MethodCache = new();
 
     private static FastReflectionDelegate _CreateFastDelegate(MethodBase method, bool directBoxValueAccess = true) {
         DynamicMethodDefinition dmd =
@@ -103,17 +100,17 @@ internal static class ThreadSafeFastReflectionHelper {
 
         il.Emit(OpCodes.Ret);
 
-        return (FastReflectionDelegate) dmd.Generate().CreateDelegate(typeof(FastReflectionDelegate));
+        return (FastReflectionDelegate)dmd.Generate().CreateDelegate(typeof(FastReflectionDelegate));
     }
 
     public static FastReflectionDelegate CreateFastDelegate(this MethodInfo method, bool directBoxValueAccess = true) {
-        lock (_DynamicMethodDelegateArgs) {
-            if (_MethodCache.TryGetValue(method, out FastReflectionDelegate dmd)) {
-                return dmd;
-            }
+        if (_MethodCache.TryGetValue(method, out FastReflectionDelegate dmd)) {
+            return dmd;
+        }
 
+        lock (_DynamicMethodDelegateArgs) {
             dmd = _CreateFastDelegate(method, directBoxValueAccess);
-            _MethodCache.Add(method, dmd);
+            _MethodCache.TryAdd(method, dmd);
             return dmd;
         }
     }

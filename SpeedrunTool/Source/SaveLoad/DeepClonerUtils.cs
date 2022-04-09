@@ -5,6 +5,7 @@ using FMOD.Studio;
 using Force.DeepCloner;
 using Force.DeepCloner.Helpers;
 using Microsoft.Xna.Framework.Graphics;
+using MonoMod.Utils;
 using NLua;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
@@ -144,9 +145,10 @@ public static class DeepClonerUtils {
                     }
 
                     clonedObj.InvokeMethod("Clear");
+                    FastReflectionDelegate addDelegate = type.GetMethodDelegate("Add");
                     backup.ForEach(obj => {
                         if (obj != null) {
-                            clonedObj.InvokeMethod("Add", obj);
+                            addDelegate(clonedObj, obj);
                         }
                     });
                 }
@@ -197,10 +199,10 @@ public static class DeepClonerUtils {
                 // Clone DynamicData
                 if (DynDataUtils.ExistDynamicData(sourceObj)) {
                     object[] parameters = {sourceObj, null};
-                    if ((bool)DynDataUtils.DynamicDataMap.InvokeMethod("TryGetValue", parameters)) {
+                    if (DynDataUtils.DataMapTryGetValue(parameters)) {
                         object sourceValue = parameters[1];
                         if (sourceValue.GetFieldValue("Data") is Dictionary<string, object> data && data.Count != 0) {
-                            DynDataUtils.DynamicDataMap.InvokeMethod("Add", clonedObj, sourceValue.DeepClone(deepCloneState));
+                            DynDataUtils.DataMapAdd(clonedObj, sourceValue.DeepClone(deepCloneState));
                             DynDataUtils.RecordDynamicDataObject(clonedObj);
                         }
                     }

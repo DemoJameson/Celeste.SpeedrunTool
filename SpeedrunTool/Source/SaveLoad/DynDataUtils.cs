@@ -23,6 +23,8 @@ internal static class DynDataUtils {
     private static readonly ConditionalWeakTable<object, object> DynamicDataObjects = new();
     private static ILHook dynamicDataHook;
     private static readonly bool RunningOnMono = Type.GetType("Mono.Runtime") != null;
+    private static FastReflectionDelegate TryGetValueDelegate;
+    private static FastReflectionDelegate AddDelegate;
 
     [Load]
     private static void Load() {
@@ -73,6 +75,16 @@ internal static class DynDataUtils {
         }
 
         return result;
+    }
+
+    public static bool DataMapTryGetValue(object[] parameters) {
+        TryGetValueDelegate ??= DynamicDataMap.GetType().GetMethodDelegate("TryGetValue");
+        return (bool)TryGetValueDelegate(DynamicDataMap, parameters);
+    }
+
+    public static void DataMapAdd(object key, object value) {
+        AddDelegate ??= DynamicDataMap.GetType().GetMethodDelegate("Add");
+        AddDelegate(DynamicDataMap, key, value);
     }
 
     private static object GetDataMap(Type type) {

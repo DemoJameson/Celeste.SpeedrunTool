@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.Xna.Framework.Graphics;
+using MonoMod.Utils;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions;
 
@@ -11,10 +12,13 @@ internal static class ReflectionExtensions {
     private static readonly ConcurrentDictionary<int, FieldInfo> CachedFieldInfos = new();
     private static readonly ConcurrentDictionary<int, PropertyInfo> CachedPropertyInfos = new();
     private static readonly ConcurrentDictionary<int, MethodInfo> CachedMethodInfos = new();
+    private static readonly ConcurrentDictionary<int, FastReflectionDelegate> CachedMethodDelegates = new();
     private static readonly ConcurrentDictionary<int, MethodInfo> CachedGetMethodInfos = new();
     private static readonly ConcurrentDictionary<int, MethodInfo> CachedSetMethodInfos = new();
 
     private static readonly object[] NoArg = { };
+    private static readonly object[] NullArg = { null };
+    private static readonly Type[] EmptyTypes = { };
 
     private static readonly HashSet<Type> SimpleTypes = new() {
         typeof(byte), typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong),
@@ -229,13 +233,28 @@ internal static class ReflectionExtensions {
         return CachedSetMethodInfos[key] = type.GetPropertyInfo(name)?.GetSetMethod(true);
     }
 
-    public static MethodInfo GetMethodInfo(this Type type, string name) {
-        int key = type.CombineHashCode(name);
+    public static MethodInfo GetMethodInfo(this Type type, string name, Type[] types = null) {
+        int key = type.CombineHashCode(name).CombineHashCode(types.GetCustomHashCode());
         if (CachedMethodInfos.TryGetValue(key, out var result)) {
             return result;
         }
 
-        return CachedMethodInfos[key] = type.GetMethod(name, StaticInstanceAnyVisibility);
+        if (types == null) {
+            result = type.GetMethod(name, StaticInstanceAnyVisibility);
+        } else {
+            result = type.GetMethod(name, StaticInstanceAnyVisibility, null, types, null);
+        }
+
+        return CachedMethodInfos[key] = result;
+    }
+
+    public static FastReflectionDelegate GetMethodDelegate(this Type type, string name, Type[] types = null) {
+        int key = type.CombineHashCode(name).CombineHashCode(types.GetCustomHashCode());
+        if (CachedMethodDelegates.TryGetValue(key, out var result)) {
+            return result;
+        }
+
+        return CachedMethodDelegates[key] = type.GetMethodInfo(name, types)?.CreateFastDelegate();
     }
 
     public static object GetFieldValue(this object obj, string name) {
@@ -343,7 +362,26 @@ internal static class ReflectionExtensions {
     }
 
     public static object InvokeMethod(this object obj, Type type, string name, params object[] parameters) {
-        return GetMethodInfo(type, name)?.CreateFastDelegate().Invoke(obj, parameters);
+        parameters ??= NullArg;
+        return GetMethodDelegate(type, name)?.Invoke(obj, parameters);
+    }
+
+    public static object InvokeOverloadedMethod(this object obj, string name, Type[] types = null, params object[] parameters) {
+        return obj.InvokeOverloadedMethod(obj.GetType(), name, types, parameters);
+    }
+
+    public static object InvokeOverloadedMethod<T>(this T obj, string name, Type[] types = null, params object[] parameters) {
+        return obj.InvokeOverloadedMethod(typeof(T), name, types, parameters);
+    }
+
+    public static object InvokeOverloadedMethod(this Type type, string name, Type[] types = null, params object[] parameters) {
+        return InvokeOverloadedMethod(null, type, name, types, parameters);
+    }
+
+    public static object InvokeOverloadedMethod(this object obj, Type type, string name, Type[] types = null, params object[] parameters) {
+        types ??= EmptyTypes;
+        parameters ??= NullArg;
+        return GetMethodDelegate(type, name, types)?.Invoke(obj, types, parameters);
     }
 }
 

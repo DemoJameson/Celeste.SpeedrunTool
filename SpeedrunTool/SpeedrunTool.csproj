@@ -72,4 +72,7 @@
         </Compile>
         <Compile Remove="..\DeepCloner\DeepCloner\Properties\**" />
     </ItemGroup>
+    <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Release'">
+        <Delete Files="$(TargetDir)JetBrains.Profiler.Api.dll" />
+    </Target>
 </Project>

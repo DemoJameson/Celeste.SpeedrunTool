@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -9,7 +8,6 @@ namespace Celeste.Mod.SpeedrunTool.Extensions;
 internal static class ReflectionExtensions {
     private const BindingFlags StaticInstanceAnyVisibility = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
 
-    private static readonly ConcurrentDictionary<Type, Tuple<Type, Type, bool>> CachedIsIDictionary = new();
     private static readonly ConcurrentDictionary<int, FieldInfo> CachedFieldInfos = new();
     private static readonly ConcurrentDictionary<int, PropertyInfo> CachedPropertyInfos = new();
     private static readonly ConcurrentDictionary<int, MethodInfo> CachedMethodInfos = new();
@@ -110,22 +108,28 @@ internal static class ReflectionExtensions {
     }
 
     public static bool IsIDictionary(this Type type, out Type keyType, out Type valueType) {
-        if (CachedIsIDictionary.TryGetValue(type, out var result)) {
-            keyType = result.Item1;
-            valueType = result.Item2;
-            return result.Item3;
+        keyType = null;
+        valueType = null;
+
+        bool resultBool = type.IsGenericType;
+        if (!resultBool) {
+            return false;
         }
 
-        bool resultBool = type.IsGenericType && type.GetInterfaces()
-                                             .Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>))
-                                         && type.GenericTypeArguments.Length == 2;
+        Type[] genericTypeArguments = type.GenericTypeArguments;
 
-        keyType = resultBool ? type.GenericTypeArguments[0] : null;
-        valueType = resultBool ? type.GenericTypeArguments[1] : null;
-
-        CachedIsIDictionary[type] = Tuple.Create(keyType, valueType, resultBool);
-
-        return resultBool;
+        if (genericTypeArguments.Length != 2) {
+            return false;
+        } else {
+            foreach (Type @interface in type.GetInterfaces()) {
+                if (@interface.IsGenericType && @interface.GetGenericTypeDefinition() == typeof(IDictionary<,>)) {
+                    keyType = genericTypeArguments[0];
+                    valueType = genericTypeArguments[1];
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public static bool IsWeakReference(this Type type, out Type genericType) {

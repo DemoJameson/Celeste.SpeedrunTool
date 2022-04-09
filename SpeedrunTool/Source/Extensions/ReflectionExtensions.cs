@@ -89,12 +89,20 @@ internal static class ReflectionExtensions {
     }
 
     public static bool IsHashSet(this Type type, out Type genericType) {
-        bool result = type.IsGenericType && type.GetGenericTypeDefinition().IsAssignableFrom(typeof(HashSet<>))
-                                         && type.GenericTypeArguments.Length == 1;
+        genericType = null;
 
-        genericType = result ? type.GenericTypeArguments[0] : null;
+        Type[] genericTypeArguments = type.GenericTypeArguments;
 
-        return result;
+        if (genericTypeArguments.Length != 1) {
+            return false;
+        }
+
+        if (type.GetGenericTypeDefinition().IsAssignableFrom(typeof(HashSet<>))) {
+            genericType = genericTypeArguments[0];
+            return true;
+        }
+
+        return false;
     }
 
     public static bool IsDictionary(this Type type, out Type keyType, out Type valueType) {
@@ -111,11 +119,6 @@ internal static class ReflectionExtensions {
         keyType = null;
         valueType = null;
 
-        bool resultBool = type.IsGenericType;
-        if (!resultBool) {
-            return false;
-        }
-
         Type[] genericTypeArguments = type.GenericTypeArguments;
 
         if (genericTypeArguments.Length != 2) {
@@ -129,6 +132,7 @@ internal static class ReflectionExtensions {
                 }
             }
         }
+
         return false;
     }
 

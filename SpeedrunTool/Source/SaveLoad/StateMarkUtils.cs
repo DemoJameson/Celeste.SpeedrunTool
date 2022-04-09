@@ -7,7 +7,7 @@ using MonoMod.Cil;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
 public static class StateMarkUtils {
-    private const string StartFromSaveSate = nameof(StartFromSaveSate);
+    private const string SavedSateFlag = "SpeedrunTool_SavedSate)";
     private static SpriteBank mySpriteBank;
 
     [Load]
@@ -41,12 +41,12 @@ public static class StateMarkUtils {
         }
 
         // recolor timer
-        level.SetExtendedBoolean(StartFromSaveSate, true);
+        level.Session.SetFlag(SavedSateFlag);
     }
 
     private static void StrawberryOnAdded(On.Celeste.Strawberry.orig_Added orig, Strawberry self, Scene scene) {
         orig(self, scene);
-        if (self.Golden && !StateManager.Instance.SavedByTas && scene.GetExtendedBoolean(StartFromSaveSate)) {
+        if (self.Golden && !StateManager.Instance.SavedByTas && scene is Level level && level.Session.GetFlag(SavedSateFlag)) {
             TryRecolorSprite(self);
         }
     }
@@ -87,7 +87,7 @@ public static class StateMarkUtils {
 
         cursor.EmitDelegate<Func<bool>>(() =>
             ModSettings.RoomTimerType == RoomTimerType.Off
-            && Engine.Scene is Level {Completed: false} level && level.GetExtendedBoolean(StartFromSaveSate) && !StateManager.Instance.SavedByTas
+            && Engine.Scene is Level {Completed: false} level && level.Session.GetFlag(SavedSateFlag) && !StateManager.Instance.SavedByTas
         );
 
         ILLabel beforeInstr = cursor.DefineLabel();
@@ -117,7 +117,7 @@ public static class StateMarkUtils {
             )) {
             ilCursor.Emit(OpCodes.Ldarg_0).EmitDelegate<Action<Level>>(level => {
                 if (!StateManager.Instance.IsSaved) {
-                    level.SetExtendedBoolean(StartFromSaveSate, false);
+                    level.Session.SetFlag(SavedSateFlag, false);
                 }
             });
         }

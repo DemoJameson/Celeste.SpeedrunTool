@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
@@ -10,6 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
 internal static class DynDataUtils {
     // DynData
+    private static readonly Dictionary<Type, object> CachedDataMaps = new();
     public static ConditionalWeakTable<object, object> IgnoreObjects = new();
     private static readonly HashSet<Type> IgnoreTypes = new();
 
@@ -76,16 +76,11 @@ internal static class DynDataUtils {
     }
 
     private static object GetDataMap(Type type) {
-        string key = $"DynDataUtils-GetDataMap-{type}";
-
-        object result = type.GetExtendedDataValue<object>(key);
-
-        if (result == null) {
-            result = typeof(DynData<>).MakeGenericType(type)
-                .GetField("_DataMap", BindingFlags.Static | BindingFlags.NonPublic)?.GetValue(null);
-            type.SetExtendedDataValue(key, result);
+        if (CachedDataMaps.TryGetValue(type, out var result)) {
+            return result;
+        } else {
+            result = typeof(DynData<>).MakeGenericType(type).GetFieldValue("_DataMap");
+            return CachedDataMaps[type] = result;
         }
-
-        return result;
     }
 }

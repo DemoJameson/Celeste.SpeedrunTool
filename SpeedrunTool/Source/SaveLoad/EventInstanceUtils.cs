@@ -1,9 +1,10 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using FMOD;
 using FMOD.Studio;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad; 
+namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
 internal static class EventInstanceUtils {
     [Load]
@@ -28,26 +29,22 @@ internal static class EventInstanceUtils {
 }
 
 internal static class EventInstanceExtensions {
-    private const string NeedManualCloneKey = "EventInstanceExtensions-NeedManualCloneKey";
-    private const string ParametersKey = "EventInstanceExtensions-ParametersKey";
-    private const string TimelinePositionKey = "EventInstanceExtensions-TimelinePositionKey";
+    private static readonly ConditionalWeakTable<EventInstance, ConcurrentDictionary<string, float>> CachedParameters = new();
+    private static readonly ConditionalWeakTable<EventInstance, object> NeedManualClonedEventInstances = new();
+    private static readonly ConditionalWeakTable<EventInstance, object> CachedTimelinePositions = new();
 
     public static EventInstance NeedManualClone(this EventInstance eventInstance) {
-        eventInstance.SetExtendedBoolean(NeedManualCloneKey, true);
+        NeedManualClonedEventInstances.Remove(eventInstance);
+        NeedManualClonedEventInstances.Add(eventInstance, null);
         return eventInstance;
     }
 
     public static bool IsNeedManualClone(this EventInstance eventInstance) {
-        return eventInstance.GetExtendedBoolean(NeedManualCloneKey);
+        return NeedManualClonedEventInstances.TryGetValue(eventInstance, out _);
     }
 
     private static ConcurrentDictionary<string, float> GetSavedParameterValues(this EventInstance eventInstance) {
-        ConcurrentDictionary<string, float> parameters = eventInstance.GetExtendedDataValue<ConcurrentDictionary<string, float>>(ParametersKey);
-        if (parameters == null) {
-            parameters = new ConcurrentDictionary<string, float>();
-        }
-
-        return parameters;
+        return CachedParameters.GetOrCreateValue(eventInstance);
     }
 
     internal static void SaveParameters(this EventInstance eventInstance, string param, float value) {
@@ -57,11 +54,13 @@ internal static class EventInstanceExtensions {
 
         ConcurrentDictionary<string, float> parameters = eventInstance.GetSavedParameterValues();
         parameters[param] = value;
-        eventInstance.SetExtendedDataValue(ParametersKey, parameters);
     }
 
     public static int LoadTimelinePosition(this EventInstance eventInstance) {
-        int saved = eventInstance.GetExtendedInt(TimelinePositionKey);
+        int saved = 0;
+        if (CachedTimelinePositions.TryGetValue(eventInstance, out object savedObj)) {
+            saved = (int)savedObj;
+        }
         if (saved > 0) {
             return saved;
         }
@@ -72,7 +71,8 @@ internal static class EventInstanceExtensions {
     }
 
     public static void SaveTimelinePosition(this EventInstance eventInstance, int timelinePosition) {
-        eventInstance.SetExtendedInt(TimelinePositionKey, timelinePosition);
+        CachedTimelinePositions.Remove(eventInstance);
+        CachedTimelinePositions.Add(eventInstance, timelinePosition);
     }
 
     private static void CopyTimelinePosition(this EventInstance eventInstance, EventInstance otherEventInstance) {

@@ -59,7 +59,13 @@ public sealed class StateManager {
     private void RegisterHotkeys() {
         Hotkey.SaveState.RegisterPressedAction(scene => {
             if (scene is Level) {
+#if DEBUG
+                JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();
                 SaveState(false);
+                JetBrains.Profiler.Api.MeasureProfiler.StopCollectingData();
+#else
+                SaveState(false);
+#endif
             }
         });
 

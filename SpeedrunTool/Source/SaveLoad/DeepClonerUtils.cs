@@ -17,7 +17,7 @@ public static class DeepClonerUtils {
     private static void Config() {
         // Clone 开始时，判断哪些类型是直接使用原对象而不 DeepClone 的
         // Before cloning, determine which types use the original object directly
-        DeepCloner.AddKnownTypesProcessor(type => {
+        DeepCloner.SetKnownTypesProcessor(type => {
             if (
                 // Celeste Singleton
                 type == typeof(Celeste)
@@ -53,7 +53,7 @@ public static class DeepClonerUtils {
 
         // Clone 对象的字段前，判断哪些类型是直接使用原对象或者自行通过其它方法 clone
         // Before cloning object's field, determine which types are directly used by the original object
-        DeepCloner.AddPreCloneProcessor((sourceObj, deepCloneState) => {
+        DeepCloner.SetPreCloneProcessor((sourceObj, deepCloneState) => {
             if (sourceObj == null) {
                 return null;
             }
@@ -120,16 +120,18 @@ public static class DeepClonerUtils {
 
         // Clone 对象的字段后，进行自定的处理
         // After cloning, perform custom processing
-        DeepCloner.AddPostCloneProcessor((sourceObj, clonedObj, deepCloneState) => {
+        DeepCloner.SetPostCloneProcessor((sourceObj, clonedObj, deepCloneState) => {
             if (clonedObj == null) {
                 return null;
             }
 
             lock (sourceObj) {
+                Type type = clonedObj.GetType();
+
                 // 修复：DeepClone 的 hashSet.Containes(里面存在的引用对象) 总是返回 False
                 // 原因：没有重写 GetHashCode 方法 https://github.com/force-net/DeepCloner/issues/17#issuecomment-678650032
                 // Fix: DeepClone's hashSet.Contains (ReferenceType) always returns false, Dictionary has no such problem
-                if (clonedObj.GetType().IsHashSet(out Type hashSetElementType) && !hashSetElementType.IsSimple()) {
+                if (type.IsHashSet(out Type hashSetElementType) && !hashSetElementType.IsSimple()) {
                     IEnumerator enumerator = ((IEnumerable)clonedObj).GetEnumerator();
 
                     List<object> backup = new();
@@ -150,7 +152,7 @@ public static class DeepClonerUtils {
                 }
 
                 // 同上
-                if (clonedObj.GetType().IsIDictionary(out Type dictKeyType, out Type _)
+                if (type.IsIDictionary(out Type dictKeyType, out Type _)
                     && !dictKeyType.IsSimple() && clonedObj is IDictionary {Count: > 0} clonedDict
                    ) {
                     Dictionary<object, object> backupDict = new();
@@ -165,7 +167,7 @@ public static class DeepClonerUtils {
                 }
 
                 // Clone dynData.Data
-                if (sourceObj.GetType() is {IsClass: true} objType && !DynDataUtils.IgnoreObjects.TryGetValue(sourceObj, out object _)) {
+                if (type is {IsClass: true} objType && !DynDataUtils.IgnoreObjects.TryGetValue(sourceObj, out object _)) {
                     bool cloned = false;
 
                     do {
@@ -217,9 +219,9 @@ public static class DeepClonerUtils {
 
     [Unload]
     private static void Clear() {
-        DeepCloner.ClearKnownTypesProcessors();
-        DeepCloner.ClearPreCloneProcessors();
-        DeepCloner.ClearPostCloneProcessors();
+        DeepCloner.ClearKnownTypesProcessor();
+        DeepCloner.ClearPreCloneProcessor();
+        DeepCloner.ClearPostCloneProcessor();
     }
 
     private static void InitSharedDeepCloneState() {

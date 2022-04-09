@@ -27,6 +27,9 @@
         <Prefer32bit>false</Prefer32bit>
     </PropertyGroup>
     <ItemGroup>
+        <PackageReference Include="JetBrains.Profiler.Api" Version="1.1.8">
+            <IncludeAssets Condition="'$(Configuration)' == 'Debug'">all</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="KeraLua" Version="1.0.22" />
         <PackageReference Include="Mono.Cecil" Version="0.11.3" />
         <PackageReference Include="MonoMod" Version="21.4.29.1" />

@@ -119,12 +119,13 @@ public static class DeepClonerUtils {
             return null;
         });
 
-        List<object> backupHashSet = new();
+        Stack<Component> backupComponents = new();
+        Stack<object> backupHashSet = new();
         Dictionary<object, object> backupDict = new();
         // Clone 对象的字段后，进行自定的处理
         // After cloning, perform custom processing
         DeepCloner.SetPostCloneProcessor((sourceObj, clonedObj, deepCloneState) => {
-            if (clonedObj == null) {
+            if (sourceObj == null) {
                 return null;
             }
 
@@ -134,40 +135,51 @@ public static class DeepClonerUtils {
                 // 修复：DeepClone 的 hashSet.Containes(里面存在的引用对象) 总是返回 False
                 // 原因：没有重写 GetHashCode 方法 https://github.com/force-net/DeepCloner/issues/17#issuecomment-678650032
                 // Fix: DeepClone's hashSet.Contains (ReferenceType) always returns false, Dictionary has no such problem
-                if (type.IsHashSet(out Type hashSetElementType) && !hashSetElementType.IsSimple()) {
+
+                // 手动处理最常见的 HashSet<Component>/Dictionary<string, object> 类型，避免使用发射以及判断类型
+                if (clonedObj is HashSet<Component> hashSet) {
+                    foreach (Component component in hashSet) {
+                        if (component != null) {
+                            backupComponents.Push(component);
+                        }
+                    }
+                    hashSet.Clear();
+                    while(backupComponents.Count > 0) {
+                        hashSet.Add(backupComponents.Pop());
+                    }
+                } else if (clonedObj is Dictionary<string, object> dictionary) {
+                    backupDict.SetRange(dictionary);
+                    dictionary.Clear();
+                    dictionary.SetRange(backupDict);
+                    backupDict.Clear();
+                } else if (clonedObj is VertexLight vertexLight) {
+                    // LightingRenderer 需要，不然不会发光
+                    vertexLight.Index = -1;
+                } else if (clonedObj is VirtualAsset virtualAsset
+                           && (Thread.CurrentThread.Name != "Main Thread" || StateManager.Instance.State == State.Loading)) {
+                    // 预克隆的资源需要等待 LoadState 中移除实体之后才能判断是否需要 Reload，必须等待主线程中再操作
+                    SaveLoadAction.VirtualAssets.Add(virtualAsset);
+                } else if (type.IsHashSet(out Type hashSetElementType) && !hashSetElementType.IsSimple()) {
                     IEnumerator enumerator = ((IEnumerable)clonedObj).GetEnumerator();
 
-                    backupHashSet.Clear();
                     while (enumerator.MoveNext()) {
-                        backupHashSet.Add(enumerator.Current);
-                    }
-
-                    if (backupHashSet.Count == 0) {
-                        return clonedObj;
-                    }
-
-                    clonedObj.InvokeMethod("Clear");
-                    FastReflectionDelegate addDelegate = type.GetMethodDelegate("Add");
-                    backupHashSet.ForEach(obj => {
-                        if (obj != null) {
-                            addDelegate(clonedObj, obj);
+                        if (enumerator.Current is {} element) {
+                            backupHashSet.Push(element);
                         }
-                    });
-                }
+                    }
 
-                // 同上
-                if (type.IsIDictionary(out Type dictKeyType, out Type _)
-                    && !dictKeyType.IsSimple() && clonedObj is IDictionary {Count: > 0} clonedDict
-                   ) {
-                    backupDict.Clear();
-                    backupDict.AddRangeSafe(clonedDict);
+                    if (backupHashSet.Count >= 0) {
+                        clonedObj.InvokeMethod("Clear");
+                        FastReflectionDelegate addDelegate = type.GetMethodDelegate("Add");
+                        while (backupHashSet.Count > 0) {
+                            addDelegate.Invoke(clonedObj, backupHashSet.Pop());
+                        }
+                    }
+                } else if (type.IsIDictionary(out Type dictKeyType, out Type _) && !dictKeyType.IsSimple() && clonedObj is IDictionary {Count: > 0} clonedDict) {
+                    backupDict.SetRange(clonedDict);
                     clonedDict.Clear();
-                    clonedDict.AddRangeSafe(backupDict);
-                }
-
-                // LightingRenderer 需要，不然不会发光
-                if (clonedObj is VertexLight vertexLight) {
-                    vertexLight.Index = -1;
+                    clonedDict.SetRange(backupDict);
+                    backupDict.Clear();
                 }
 
                 // Clone dynData.Data
@@ -208,12 +220,6 @@ public static class DeepClonerUtils {
                             DynDataUtils.RecordDynamicDataObject(clonedObj);
                         }
                     }
-                }
-
-                // 预克隆的资源需要等待 LoadState 中移除实体之后才能判断是否需要 Reload，必须等待主线程中再操作
-                if (clonedObj is VirtualAsset virtualAsset
-                    && (Thread.CurrentThread.Name != "Main Thread" || StateManager.Instance.State == State.Loading)) {
-                    SaveLoadAction.VirtualAssets.Add(virtualAsset);
                 }
             }
 

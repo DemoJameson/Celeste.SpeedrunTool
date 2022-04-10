@@ -18,11 +18,9 @@ internal static class CommonExtensions {
         return defaultValue;
     }
 
-    public static void AddRangeSafe(this IDictionary dict, IDictionary other) {
+    public static void SetRange(this IDictionary dict, IDictionary other) {
         foreach (DictionaryEntry dictionaryEntry in other) {
-            if (!dict.Contains(other)) {
-                dict.Add(dictionaryEntry.Key, dictionaryEntry.Value);
-            }
+            dict[dictionaryEntry.Key] = dictionaryEntry.Value;
         }
     }
 }

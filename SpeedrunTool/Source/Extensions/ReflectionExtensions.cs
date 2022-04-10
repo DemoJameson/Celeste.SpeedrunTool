@@ -297,20 +297,6 @@ internal static class ReflectionExtensions {
         GetFieldInfo(type, name)?.SetValue(obj, value);
     }
 
-    public static void CopyFieldValue(this object obj, object fromObj, params string[] names) {
-        obj.CopyFieldValue(obj.GetType(), fromObj, names);
-    }
-
-    public static void CopyFieldValue<T>(this T obj, T fromObj, params string[] names) {
-        obj.CopyFieldValue(typeof(T), fromObj, names);
-    }
-
-    public static void CopyFieldValue(this object obj, Type type, object fromObj, params string[] names) {
-        foreach (string name in names) {
-            obj.SetFieldValue(type, name, fromObj.GetFieldValue(type, name));
-        }
-    }
-
     public static object GetPropertyValue(this object obj, string name) {
         return obj.GetPropertyValue(obj.GetType(), name);
     }
@@ -343,20 +329,6 @@ internal static class ReflectionExtensions {
         GetPropertySetMethod(type, name)?.CreateFastDelegate().Invoke(obj, value);
     }
 
-    public static void CopyPropertyValue(this object obj, object fromObj, params string[] names) {
-        obj.CopyPropertyValue(obj.GetType(), fromObj, names);
-    }
-
-    public static void CopyPropertyValue<T>(this T obj, T fromObj, params string[] names) {
-        obj.CopyPropertyValue(typeof(T), fromObj, names);
-    }
-
-    public static void CopyPropertyValue(this object obj, Type type, object fromObj, params string[] names) {
-        foreach (string name in names) {
-            obj.SetPropertyValue(type, name, fromObj.GetPropertyValue(type, name));
-        }
-    }
-
     public static object InvokeMethod(this object obj, string name, params object[] parameters) {
         return obj.InvokeMethod(obj.GetType(), name, parameters);
     }
@@ -369,7 +341,7 @@ internal static class ReflectionExtensions {
         return InvokeMethod(null, type, name, parameters);
     }
 
-    public static object InvokeMethod(this object obj, Type type, string name, params object[] parameters) {
+    private static object InvokeMethod(this object obj, Type type, string name, params object[] parameters) {
         parameters ??= NullArg;
         return GetMethodDelegate(type, name)?.Invoke(obj, parameters);
     }
@@ -386,7 +358,7 @@ internal static class ReflectionExtensions {
         return InvokeOverloadedMethod(null, type, name, types, parameters);
     }
 
-    public static object InvokeOverloadedMethod(this object obj, Type type, string name, Type[] types = null, params object[] parameters) {
+    private static object InvokeOverloadedMethod(this object obj, Type type, string name, Type[] types = null, params object[] parameters) {
         types ??= EmptyTypes;
         parameters ??= NullArg;
         return GetMethodDelegate(type, name, types)?.Invoke(obj, types, parameters);

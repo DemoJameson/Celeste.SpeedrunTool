@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Microsoft.Xna.Framework.Graphics;
 using MonoMod.Utils;
@@ -7,17 +8,18 @@ using MonoMod.Utils;
 namespace Celeste.Mod.SpeedrunTool.Extensions;
 
 internal static class ReflectionExtensions {
-    private const BindingFlags StaticInstanceAnyVisibility = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
+    private const BindingFlags StaticInstanceAnyVisibility =
+        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
 
     private static readonly ConcurrentDictionary<int, FieldInfo> CachedFieldInfos = new();
     private static readonly ConcurrentDictionary<int, PropertyInfo> CachedPropertyInfos = new();
     private static readonly ConcurrentDictionary<int, MethodInfo> CachedMethodInfos = new();
     private static readonly ConcurrentDictionary<int, FastReflectionDelegate> CachedMethodDelegates = new();
-    private static readonly ConcurrentDictionary<int, MethodInfo> CachedGetMethodInfos = new();
-    private static readonly ConcurrentDictionary<int, MethodInfo> CachedSetMethodInfos = new();
+    private static readonly ConcurrentDictionary<int, FastReflectionDelegate> CachedGetMethodInfos = new();
+    private static readonly ConcurrentDictionary<int, FastReflectionDelegate> CachedSetMethodInfos = new();
 
     private static readonly object[] NoArg = { };
-    private static readonly object[] NullArg = { null };
+    private static readonly object[] NullArg = {null};
     private static readonly Type[] EmptyTypes = { };
 
     private static readonly HashSet<Type> SimpleTypes = new() {
@@ -211,7 +213,11 @@ internal static class ReflectionExtensions {
             return result;
         }
 
-        return CachedFieldInfos[key] = type.GetField(name, StaticInstanceAnyVisibility);
+        do {
+            result = type.GetField(name, StaticInstanceAnyVisibility);
+        } while (result == null && (type = type.BaseType) != null);
+
+        return CachedFieldInfos[key] = result;
     }
 
     public static PropertyInfo GetPropertyInfo(this Type type, string name) {
@@ -220,38 +226,42 @@ internal static class ReflectionExtensions {
             return result;
         }
 
-        return CachedPropertyInfos[key] = type.GetProperty(name, StaticInstanceAnyVisibility);
+        do {
+            result = type.GetProperty(name, StaticInstanceAnyVisibility);
+        } while (result == null && (type = type.BaseType) != null);
+
+        return CachedPropertyInfos[key] = result;
     }
 
-    public static MethodInfo GetPropertyGetMethod(this Type type, string name) {
+    public static FastReflectionDelegate GetPropertyGetDelegate(this Type type, string name) {
         int key = type.CombineHashCode(name);
         if (CachedGetMethodInfos.TryGetValue(key, out var result)) {
             return result;
         }
 
-        return CachedGetMethodInfos[key] = type.GetPropertyInfo(name)?.GetGetMethod(true);
+        return CachedGetMethodInfos[key] = type.GetPropertyInfo(name)?.GetGetMethod(true)?.CreateFastDelegate();
     }
 
-    public static MethodInfo GetPropertySetMethod(this Type type, string name) {
+    public static FastReflectionDelegate GetPropertySetDelegate(this Type type, string name) {
         int key = type.CombineHashCode(name);
         if (CachedSetMethodInfos.TryGetValue(key, out var result)) {
             return result;
         }
 
-        return CachedSetMethodInfos[key] = type.GetPropertyInfo(name)?.GetSetMethod(true);
+        return CachedSetMethodInfos[key] = type.GetPropertyInfo(name)?.GetSetMethod(true)?.CreateFastDelegate();
     }
 
     public static MethodInfo GetMethodInfo(this Type type, string name, Type[] types = null) {
         int key = type.CombineHashCode(name).CombineHashCode(types.GetCustomHashCode());
-        if (CachedMethodInfos.TryGetValue(key, out var result)) {
+        if (CachedMethodInfos.TryGetValue(key, out MethodInfo result)) {
             return result;
         }
 
-        if (types == null) {
-            result = type.GetMethod(name, StaticInstanceAnyVisibility);
-        } else {
-            result = type.GetMethod(name, StaticInstanceAnyVisibility, null, types, null);
-        }
+        do {
+            MethodInfo[] methodInfos = type.GetMethods(StaticInstanceAnyVisibility);
+            result = methodInfos.FirstOrDefault(info =>
+                info.Name == name && types?.SequenceEqual(info.GetParameters().Select(i => i.ParameterType)) != false);
+        } while (result == null && (type = type.BaseType) != null);
 
         return CachedMethodInfos[key] = result;
     }
@@ -266,99 +276,88 @@ internal static class ReflectionExtensions {
     }
 
     public static object GetFieldValue(this object obj, string name) {
-        return obj.GetFieldValue(obj.GetType(), name);
-    }
-
-    public static object GetFieldValue<T>(this T obj, string name) where T : class {
-        return obj.GetFieldValue(typeof(T), name);
+        return GetFieldValueImpl<object>(obj, obj.GetType(), name);
     }
 
     public static object GetFieldValue(this Type type, string name) {
-        return GetFieldValue(null, type, name);
+        return GetFieldValueImpl<object>(null, type, name);
     }
 
-    public static object GetFieldValue(this object obj, Type type, string name) {
-        return GetFieldInfo(type, name)?.GetValue(obj);
+    public static T GetFieldValue<T>(this object obj, string name) {
+        return GetFieldValueImpl<T>(obj, obj.GetType(), name);
+    }
+
+    public static T GetFieldValue<T>(this Type type, string name) {
+        return GetFieldValueImpl<T>(null, type, name);
+    }
+
+    private static T GetFieldValueImpl<T>(object obj, Type type, string name) {
+        object result = type.GetFieldInfo(name)?.GetValue(obj);
+        if (result == null) {
+            return default;
+        } else {
+            return (T)result;
+        }
     }
 
     public static void SetFieldValue(this object obj, string name, object value) {
-        obj.SetFieldValue(obj.GetType(), name, value);
-    }
-
-    public static void SetFieldValue<T>(this T obj, string name, object value) {
-        obj.SetFieldValue(typeof(T), name, value);
+        SetFieldValueImpl(obj, obj.GetType(), name, value);
     }
 
     public static void SetFieldValue(this Type type, string name, object value) {
-        SetFieldValue(null, type, name, value);
+        SetFieldValueImpl(null, type, name, value);
     }
 
-    public static void SetFieldValue(this object obj, Type type, string name, object value) {
+    private static void SetFieldValueImpl(object obj, Type type, string name, object value) {
         GetFieldInfo(type, name)?.SetValue(obj, value);
     }
 
     public static object GetPropertyValue(this object obj, string name) {
-        return obj.GetPropertyValue(obj.GetType(), name);
-    }
-
-    public static object GetPropertyValue<T>(this T obj, string name) {
-        return obj.GetPropertyValue(typeof(T), name);
+        return GetPropertyValueImpl(obj, obj.GetType(), name);
     }
 
     public static object GetPropertyValue(this Type type, string name) {
-        return GetPropertyValue(null, type, name);
+        return GetPropertyValueImpl(null, type, name);
     }
 
-    public static object GetPropertyValue(this object obj, Type type, string name) {
-        return GetPropertyGetMethod(type, name)?.CreateFastDelegate().Invoke(obj, NoArg);
+    private static object GetPropertyValueImpl(object obj, Type type, string name) {
+        return GetPropertyGetDelegate(type, name)?.Invoke(obj, NoArg);
     }
 
     public static void SetPropertyValue(this object obj, string name, object value) {
-        obj.SetPropertyValue(obj.GetType(), name, value);
-    }
-
-    public static void SetPropertyValue<T>(this T obj, string name, object value) {
-        obj.SetPropertyValue(typeof(T), name, value);
+        SetPropertyValueImpl(obj, obj.GetType(), name, value);
     }
 
     public static void SetPropertyValue(this Type type, string name, object value) {
-        SetPropertyValue(null, type, name, value);
+        SetPropertyValueImpl(null, type, name, value);
     }
 
-    public static void SetPropertyValue(this object obj, Type type, string name, object value) {
-        GetPropertySetMethod(type, name)?.CreateFastDelegate().Invoke(obj, value);
+    private static void SetPropertyValueImpl(object obj, Type type, string name, object value) {
+        GetPropertySetDelegate(type, name)?.Invoke(obj, value);
     }
 
     public static object InvokeMethod(this object obj, string name, params object[] parameters) {
-        return obj.InvokeMethod(obj.GetType(), name, parameters);
-    }
-
-    public static object InvokeMethod<T>(this T obj, string name, params object[] parameters) {
-        return obj.InvokeMethod(typeof(T), name, parameters);
+        return InvokeMethodImpl(obj, obj.GetType(), name, parameters);
     }
 
     public static object InvokeMethod(this Type type, string name, params object[] parameters) {
-        return InvokeMethod(null, type, name, parameters);
+        return InvokeMethodImpl(null, type, name, parameters);
     }
 
-    private static object InvokeMethod(this object obj, Type type, string name, params object[] parameters) {
+    private static object InvokeMethodImpl(this object obj, Type type, string name, params object[] parameters) {
         parameters ??= NullArg;
         return GetMethodDelegate(type, name)?.Invoke(obj, parameters);
     }
 
     public static object InvokeOverloadedMethod(this object obj, string name, Type[] types = null, params object[] parameters) {
-        return obj.InvokeOverloadedMethod(obj.GetType(), name, types, parameters);
-    }
-
-    public static object InvokeOverloadedMethod<T>(this T obj, string name, Type[] types = null, params object[] parameters) {
-        return obj.InvokeOverloadedMethod(typeof(T), name, types, parameters);
+        return InvokeOverloadedMethodImpl(obj, obj.GetType(), name, types, parameters);
     }
 
     public static object InvokeOverloadedMethod(this Type type, string name, Type[] types = null, params object[] parameters) {
-        return InvokeOverloadedMethod(null, type, name, types, parameters);
+        return InvokeOverloadedMethodImpl(null, type, name, types, parameters);
     }
 
-    private static object InvokeOverloadedMethod(this object obj, Type type, string name, Type[] types = null, params object[] parameters) {
+    private static object InvokeOverloadedMethodImpl(object obj, Type type, string name, Type[] types = null, params object[] parameters) {
         types ??= EmptyTypes;
         parameters ??= NullArg;
         return GetMethodDelegate(type, name, types)?.Invoke(obj, types, parameters);

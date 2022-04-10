@@ -544,7 +544,7 @@ public sealed class SaveLoadAction {
                 On.Celeste.Player.hook_Update hookUpdate) {
             Add(new SaveLoadAction(
                 loadState: (_, _) => {
-                    if ((bool)timeFieldType.GetFieldValue("hookAdded")) {
+                    if (timeFieldType.GetFieldValue<bool>("hookAdded")) {
                         On.Celeste.Player.Update -= hookUpdate;
                         On.Celeste.Player.Update += hookUpdate;
                     } else {
@@ -569,7 +569,7 @@ public sealed class SaveLoadAction {
            ) {
             Add(new SaveLoadAction(
                 loadState: (_, _) => {
-                    if ((bool)colorControllerType.GetFieldValue("rainbowSpinnerHueHooked")) {
+                    if (colorControllerType.GetFieldValue<bool>("rainbowSpinnerHueHooked")) {
                         On.Celeste.CrystalStaticSpinner.GetHue -= hookGetHue;
                         On.Celeste.CrystalStaticSpinner.GetHue += hookGetHue;
                     } else {
@@ -583,7 +583,7 @@ public sealed class SaveLoadAction {
             { } seekerBarrierColorControllerType) {
             Add(new SaveLoadAction(
                 loadState: (savedValues, _) => {
-                    if ((bool)seekerBarrierColorControllerType.GetFieldValue("seekerBarrierRendererHooked")) {
+                    if (seekerBarrierColorControllerType.GetFieldValue<bool>("seekerBarrierRendererHooked")) {
                         seekerBarrierColorControllerType.InvokeMethod("unhookSeekerBarrierRenderer");
                         seekerBarrierColorControllerType.InvokeMethod("hookSeekerBarrierRenderer");
                     } else {
@@ -596,7 +596,7 @@ public sealed class SaveLoadAction {
         if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Triggers.GradientDustTrigger") is { } gradientDustTriggerType) {
             Add(new SaveLoadAction(
                 loadState: (savedValues, _) => {
-                    if ((bool)gradientDustTriggerType.GetFieldValue("hooked")) {
+                    if (gradientDustTriggerType.GetFieldValue<bool>("hooked")) {
                         gradientDustTriggerType.InvokeMethod("unhook");
                         gradientDustTriggerType.InvokeMethod("hook");
                     } else {
@@ -614,7 +614,7 @@ public sealed class SaveLoadAction {
            ) {
             Add(new SaveLoadAction(
                 loadState: (savedValues, _) => {
-                    if ((bool)parallaxFadeOutControllerType.GetFieldValue("backdropRendererHooked")) {
+                    if (parallaxFadeOutControllerType.GetFieldValue<bool>("backdropRendererHooked")) {
                         IL.Celeste.BackdropRenderer.Render -= onBackdropRender;
                         IL.Celeste.BackdropRenderer.Render += onBackdropRender;
                     } else {
@@ -651,7 +651,7 @@ public sealed class SaveLoadAction {
            ) {
             Add(new SaveLoadAction(
                 loadState: (savedValues, _) => {
-                    if ((bool)colorControllerType.GetFieldValue("rainbowSpinnerHueHooked")) {
+                    if (colorControllerType.GetFieldValue<bool>("rainbowSpinnerHueHooked")) {
                         On.Celeste.CrystalStaticSpinner.GetHue -= hookGetHue;
                         On.Celeste.CrystalStaticSpinner.GetHue += hookGetHue;
                     } else {
@@ -669,7 +669,7 @@ public sealed class SaveLoadAction {
            ) {
             Add(new SaveLoadAction(
                 loadState: (savedValues, _) => {
-                    if ((bool)colorAreaControllerType.GetFieldValue("rainbowSpinnerHueHooked")) {
+                    if (colorAreaControllerType.GetFieldValue<bool>("rainbowSpinnerHueHooked")) {
                         On.Celeste.CrystalStaticSpinner.GetHue -= hookSpinnerGetHue;
                         On.Celeste.CrystalStaticSpinner.GetHue += hookSpinnerGetHue;
                     } else {
@@ -686,7 +686,7 @@ public sealed class SaveLoadAction {
            ) {
             Add(new SaveLoadAction(
                 loadState: (savedValues, _) => {
-                    if ((bool)spikeJumpThroughControllerType.GetFieldValue("SpikeHooked")) {
+                    if (spikeJumpThroughControllerType.GetFieldValue<bool>("SpikeHooked")) {
                         On.Celeste.Spikes.OnCollide -= onCollideHook;
                         On.Celeste.Spikes.OnCollide += onCollideHook;
                     } else {

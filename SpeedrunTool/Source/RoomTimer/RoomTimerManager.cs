@@ -271,8 +271,8 @@ public static class RoomTimerManager {
         return result;
     }
 
-    private static readonly Lazy<float> NumberWidth = new(() => (float) typeof(SpeedrunTimerDisplay).GetFieldValue("numberWidth"));
-    private static readonly Lazy<float> SpacerWidth = new(() => (float) typeof(SpeedrunTimerDisplay).GetFieldValue("spacerWidth"));
+    private static readonly Lazy<float> NumberWidth = new(() => typeof(SpeedrunTimerDisplay).GetFieldValue<float>("numberWidth"));
+    private static readonly Lazy<float> SpacerWidth = new(() => typeof(SpeedrunTimerDisplay).GetFieldValue<float>("spacerWidth"));
 
     private static void DrawTime(Vector2 position, string timeString, float scale = 1f,
         bool finished = false, bool bestTime = false, float alpha = 1f, bool mainTime = false) {

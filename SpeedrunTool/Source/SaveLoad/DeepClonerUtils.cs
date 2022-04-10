@@ -86,8 +86,7 @@ public static class DeepClonerUtils {
 
                 if (sourceObj is CassetteBlockManager manager) {
                     // isLevelMusic = true 时 sfx 自动等于 Audio.CurrentMusicEventInstance，无需重建
-                    if (manager.GetFieldValue("sfx") is EventInstance sfx &&
-                        !(bool)manager.GetFieldValue("isLevelMusic")) {
+                    if (manager.GetFieldValue("sfx") is EventInstance sfx && !manager.GetFieldValue<bool>("isLevelMusic")) {
                         sfx.NeedManualClone();
                     }
 

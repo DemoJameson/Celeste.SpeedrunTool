@@ -14,9 +14,9 @@ internal static class DynDataUtils {
     private static readonly HashSet<Type> IgnoreTypes = new();
 
     private static readonly Lazy<int> EmptyTableEntriesLength =
-        new(() => ((Array) new ConditionalWeakTable<object, object>().GetFieldValue("_entries")).Length);
+        new(() => new ConditionalWeakTable<object, object>().GetFieldValue<Array>("_entries").Length);
 
-    private static readonly Lazy<int> EmptyTableFreeList = new(() => (int) new ConditionalWeakTable<object, object>().GetFieldValue("_freeList"));
+    private static readonly Lazy<int> EmptyTableFreeList = new(() => new ConditionalWeakTable<object, object>().GetFieldValue<int>("_freeList"));
 
     // DynamicData
     public static readonly object DynamicDataMap = typeof(DynamicData).GetFieldValue("_DataMap");
@@ -64,10 +64,10 @@ internal static class DynDataUtils {
 
         bool result;
         if (RunningOnMono) {
-            result = (int) dataMap.GetFieldValue("size") == 0;
+            result = dataMap.GetFieldValue<int>("size") == 0;
         } else {
-            result = ((Array) dataMap.GetFieldValue("_entries")).Length == EmptyTableEntriesLength.Value &&
-                     (int) dataMap.GetFieldValue("_freeList") == EmptyTableFreeList.Value;
+            result = dataMap.GetFieldValue<Array>("_entries").Length == EmptyTableEntriesLength.Value &&
+                     dataMap.GetFieldValue<int>("_freeList") == EmptyTableFreeList.Value;
         }
 
         if (result) {

@@ -151,7 +151,7 @@ public sealed class StateManager {
             && ModSettings.AutoLoadStateAfterDeath
             && IsSaved
             && !SavedByTas
-            && !(bool)self.GetFieldValue("finished")
+            && !self.GetFieldValue<bool>("finished")
             && Engine.Scene is Level level
             && level.Entities.FindFirst<PlayerSeeker>() == null
            ) {
@@ -374,11 +374,8 @@ public sealed class StateManager {
     // 第二步：播放节奏音乐
     private void RestoreCassetteBlockManager2(Level level) {
         if (level.Tracker.GetEntity<CassetteBlockManager>() is { } manager) {
-            if (manager.GetFieldValue("sfx") is EventInstance sfx &&
-                !(bool)manager.GetFieldValue("isLevelMusic")) {
-                if ((int)manager.GetFieldValue("leadBeats") <= 0) {
-                    sfx.start();
-                }
+            if (manager.GetFieldValue("sfx") is EventInstance sfx && !manager.GetFieldValue<bool>("isLevelMusic") && manager.GetFieldValue<int>("leadBeats") <= 0) {
+                sfx.start();
             }
         }
     }

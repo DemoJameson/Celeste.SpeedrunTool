@@ -5,7 +5,7 @@ using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
 
-namespace Celeste.Mod.SpeedrunTool.Message; 
+namespace Celeste.Mod.SpeedrunTool.Message;
 
 [Tracked]
 public class NonFrozenMiniTextbox : MiniTextbox {
@@ -17,7 +17,6 @@ public class NonFrozenMiniTextbox : MiniTextbox {
         Add(new IgnoreSaveLoadComponent());
         if (message != null) {
             this.SetFieldValue(
-                typeof(MiniTextbox),
                 "text",
                 FancyText.Parse($"{{portrait {(IsPlayAsBadeline() ? "BADELINE" : "MADELINE")} left normal}}{message}", 1544, 2)
             );

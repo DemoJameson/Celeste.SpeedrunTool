@@ -12,8 +12,8 @@ using MonoMod.RuntimeDetour;
 namespace Celeste.Mod.SpeedrunTool.DeathStatistics;
 
 public static class DeathStatisticsManager {
-    public static readonly string PlaybackDir =
-        Path.Combine(typeof(UserIO).GetFieldValue("SavePath").ToString(), "SpeedrunTool", "DeathPlayback");
+    private static readonly string PlaybackDir =
+        Path.Combine(typeof(UserIO).GetFieldValue<string>("SavePath"), "SpeedrunTool", "DeathPlayback");
 
     public static string PlaybackSlotDir => Path.Combine(PlaybackDir, SaveData.Instance?.FileSlot.ToString() ?? "-1");
     private static bool Enabled => ModSettings.Enabled && ModSettings.DeathStatistics;

@@ -195,7 +195,7 @@ internal class EaseInSubMenu : TextMenuExt.SubMenu {
         DrawIcon(titlePosition, iconJustify, true, Items.Count < 1 ? Color.DarkSlateGray : color, alpha);
         ActiveFont.DrawOutline(Label, titlePosition, justify, Vector2.One, color, 2f, strokeColor);
 
-        if (Focused && (float)this.GetFieldValue<TextMenuExt.SubMenu>("ease") > 0.9f) {
+        if (Focused && this.GetFieldValue<float>("ease") > 0.9f) {
             Vector2 menuPosition = new(top.X + ItemIndent, top.Y + TitleHeight + ItemSpacing);
             RecalculateSize();
             foreach (TextMenu.Item item in Items) {

@@ -11,12 +11,21 @@ internal static class ReflectionExtensions {
     private const BindingFlags StaticInstanceAnyVisibility =
         BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
 
-    private static readonly ConcurrentDictionary<int, FieldInfo> CachedFieldInfos = new();
-    private static readonly ConcurrentDictionary<int, PropertyInfo> CachedPropertyInfos = new();
-    private static readonly ConcurrentDictionary<int, MethodInfo> CachedMethodInfos = new();
-    private static readonly ConcurrentDictionary<int, FastReflectionDelegate> CachedMethodDelegates = new();
-    private static readonly ConcurrentDictionary<int, FastReflectionDelegate> CachedGetMethodInfos = new();
-    private static readonly ConcurrentDictionary<int, FastReflectionDelegate> CachedSetMethodInfos = new();
+    private record struct MemberKey(Type Type, string Name) {
+        public Type Type = Type;
+        public string Name = Name;
+    }
+
+    private record struct MethodKey(Type Type, string Name, long Types) {
+        public Type Type = Type;
+        public string Name = Name;
+        public long Types = Types;
+    }
+
+    private static readonly ConcurrentDictionary<MemberKey, FieldInfo> CachedFieldInfos = new();
+    private static readonly ConcurrentDictionary<MemberKey, PropertyInfo> CachedPropertyInfos = new();
+    private static readonly ConcurrentDictionary<MethodKey, MethodInfo> CachedMethodInfos = new();
+    private static readonly ConcurrentDictionary<MethodKey, FastReflectionDelegate> CachedMethodDelegates = new();
 
     private static readonly object[] NoArg = { };
     private static readonly object[] NullArg = {null};
@@ -208,7 +217,7 @@ internal static class ReflectionExtensions {
     }
 
     public static FieldInfo GetFieldInfo(this Type type, string name) {
-        int key = type.CombineHashCode(name);
+        var key = new MemberKey(type, name);
         if (CachedFieldInfos.TryGetValue(key, out var result)) {
             return result;
         }
@@ -221,7 +230,7 @@ internal static class ReflectionExtensions {
     }
 
     public static PropertyInfo GetPropertyInfo(this Type type, string name) {
-        int key = type.CombineHashCode(name);
+        var key = new MemberKey(type, name);
         if (CachedPropertyInfos.TryGetValue(key, out var result)) {
             return result;
         }
@@ -233,26 +242,8 @@ internal static class ReflectionExtensions {
         return CachedPropertyInfos[key] = result;
     }
 
-    public static FastReflectionDelegate GetPropertyGetDelegate(this Type type, string name) {
-        int key = type.CombineHashCode(name);
-        if (CachedGetMethodInfos.TryGetValue(key, out var result)) {
-            return result;
-        }
-
-        return CachedGetMethodInfos[key] = type.GetPropertyInfo(name)?.GetGetMethod(true)?.CreateFastDelegate();
-    }
-
-    public static FastReflectionDelegate GetPropertySetDelegate(this Type type, string name) {
-        int key = type.CombineHashCode(name);
-        if (CachedSetMethodInfos.TryGetValue(key, out var result)) {
-            return result;
-        }
-
-        return CachedSetMethodInfos[key] = type.GetPropertyInfo(name)?.GetSetMethod(true)?.CreateFastDelegate();
-    }
-
     public static MethodInfo GetMethodInfo(this Type type, string name, Type[] types = null) {
-        int key = type.CombineHashCode(name).CombineHashCode(types.GetCustomHashCode());
+        var key = new MethodKey(type, name, types.GetCustomHashCode());
         if (CachedMethodInfos.TryGetValue(key, out MethodInfo result)) {
             return result;
         }
@@ -267,7 +258,7 @@ internal static class ReflectionExtensions {
     }
 
     public static FastReflectionDelegate GetMethodDelegate(this Type type, string name, Type[] types = null) {
-        int key = type.CombineHashCode(name).CombineHashCode(types.GetCustomHashCode());
+        var key = new MethodKey(type, name, types.GetCustomHashCode());
         if (CachedMethodDelegates.TryGetValue(key, out var result)) {
             return result;
         }
@@ -321,7 +312,7 @@ internal static class ReflectionExtensions {
     }
 
     private static object GetPropertyValueImpl(object obj, Type type, string name) {
-        return GetPropertyGetDelegate(type, name)?.Invoke(obj, NoArg);
+        return GetPropertyInfo(type, name)?.GetValue(obj, NoArg);
     }
 
     public static void SetPropertyValue(this object obj, string name, object value) {
@@ -333,7 +324,7 @@ internal static class ReflectionExtensions {
     }
 
     private static void SetPropertyValueImpl(object obj, Type type, string name, object value) {
-        GetPropertySetDelegate(type, name)?.Invoke(obj, value);
+        GetPropertyInfo(type, name)?.SetValue(obj, value);
     }
 
     public static object InvokeMethod(this object obj, string name, params object[] parameters) {
@@ -365,24 +356,18 @@ internal static class ReflectionExtensions {
 }
 
 internal static class HashCodeExtensions {
-    public static int GetCustomHashCode<T>(this IEnumerable<T> enumerable) {
+    public static long GetCustomHashCode<T>(this IEnumerable<T> enumerable) {
         if (enumerable == null) {
             return 0;
         }
 
         unchecked {
-            int hash = 17;
+            long hash = 17;
             foreach (T item in enumerable) {
                 hash = hash * -1521134295 + EqualityComparer<T>.Default.GetHashCode(item);
             }
 
             return hash;
-        }
-    }
-
-    public static int CombineHashCode<T1, T2>(this T1 t1, T2 t2) {
-        unchecked {
-            return EqualityComparer<T1>.Default.GetHashCode(t1) * -1521134295 + EqualityComparer<T2>.Default.GetHashCode(t2);
         }
     }
 }

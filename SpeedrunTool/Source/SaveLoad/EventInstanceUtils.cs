@@ -34,13 +34,12 @@ internal static class EventInstanceExtensions {
     private static readonly ConditionalWeakTable<EventInstance, object> CachedTimelinePositions = new();
 
     public static EventInstance NeedManualClone(this EventInstance eventInstance) {
-        NeedManualClonedEventInstances.Remove(eventInstance);
-        NeedManualClonedEventInstances.Add(eventInstance, null);
+        NeedManualClonedEventInstances.Set(eventInstance, null);
         return eventInstance;
     }
 
     public static bool IsNeedManualClone(this EventInstance eventInstance) {
-        return NeedManualClonedEventInstances.TryGetValue(eventInstance, out _);
+        return NeedManualClonedEventInstances.ContainsKey(eventInstance);
     }
 
     private static ConcurrentDictionary<string, float> GetSavedParameterValues(this EventInstance eventInstance) {
@@ -71,8 +70,7 @@ internal static class EventInstanceExtensions {
     }
 
     public static void SaveTimelinePosition(this EventInstance eventInstance, int timelinePosition) {
-        CachedTimelinePositions.Remove(eventInstance);
-        CachedTimelinePositions.Add(eventInstance, timelinePosition);
+        CachedTimelinePositions.Set(eventInstance, timelinePosition);
     }
 
     private static void CopyTimelinePosition(this EventInstance eventInstance, EventInstance otherEventInstance) {

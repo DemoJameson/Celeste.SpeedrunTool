@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad; 
+namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
 [Tracked]
 public class IgnoreSaveLoadComponent : Component {
@@ -21,7 +21,7 @@ public class IgnoreSaveLoadComponent : Component {
         All.Remove(Entity);
 
         // 重新添加 RemoveAll 中被移除的实体
-        if (ReAdd.TryGetValue(Entity, out object _)) {
+        if (ReAdd.ContainsKey(Entity)) {
             All.Add(Entity);
             ReAdd.Remove(Entity);
         }

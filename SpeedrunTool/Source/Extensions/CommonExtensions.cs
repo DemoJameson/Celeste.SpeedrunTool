@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions;
 
@@ -22,5 +23,14 @@ internal static class CommonExtensions {
         foreach (DictionaryEntry dictionaryEntry in other) {
             dict[dictionaryEntry.Key] = dictionaryEntry.Value;
         }
+    }
+
+    public static void Set<TKey, TValue>(this ConditionalWeakTable<TKey, TValue> weakTable, TKey key, TValue value) where TKey : class where TValue : class {
+        weakTable.Remove(key);
+        weakTable.Add(key, value);
+    }
+
+    public static bool ContainsKey<TKey, TValue>(this ConditionalWeakTable<TKey, TValue> weakTable, TKey key) where TKey : class where TValue : class {
+        return weakTable.TryGetValue(key, out TValue _);
     }
 }

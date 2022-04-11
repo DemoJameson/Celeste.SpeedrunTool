@@ -19,7 +19,7 @@ internal static class DynDataUtils {
     private static readonly Lazy<int> EmptyTableFreeList = new(() => new ConditionalWeakTable<object, object>().GetFieldValue<int>("_freeList"));
 
     // DynamicData
-    public static readonly object DynamicDataMap = typeof(DynamicData).GetFieldValue("_DataMap");
+    private static readonly object DynamicDataMap = typeof(DynamicData).GetFieldValue("_DataMap");
     private static readonly ConditionalWeakTable<object, object> DynamicDataObjects = new();
     private static ILHook dynamicDataHook;
     private static readonly bool RunningOnMono = Type.GetType("Mono.Runtime") != null;
@@ -45,13 +45,13 @@ internal static class DynDataUtils {
     }
 
     public static void RecordDynamicDataObject(object target) {
-        if (target != null && !DynamicDataObjects.TryGetValue(target, out object _)) {
+        if (target != null && !DynamicDataObjects.ContainsKey(target)) {
             DynamicDataObjects.Add(target, null);
         }
     }
 
     public static bool ExistDynamicData(object target) {
-        return DynamicDataObjects.TryGetValue(target, out object _);
+        return DynamicDataObjects.ContainsKey(target);
     }
 
     public static bool NotExistDynData(Type type, out object dataMap) {
@@ -62,19 +62,19 @@ internal static class DynDataUtils {
 
         dataMap = GetDataMap(type);
 
-        bool result;
+        bool isEmpty;
         if (RunningOnMono) {
-            result = dataMap.GetFieldValue<int>("size") == 0;
+            isEmpty = dataMap.GetFieldValue<int>("size") == 0;
         } else {
-            result = dataMap.GetFieldValue<Array>("_entries").Length == EmptyTableEntriesLength.Value &&
+            isEmpty = dataMap.GetFieldValue<Array>("_entries").Length == EmptyTableEntriesLength.Value &&
                      dataMap.GetFieldValue<int>("_freeList") == EmptyTableFreeList.Value;
         }
 
-        if (result) {
+        if (isEmpty) {
             IgnoreTypes.Add(type);
         }
 
-        return result;
+        return isEmpty;
     }
 
     public static bool DataMapTryGetValue(object[] parameters) {

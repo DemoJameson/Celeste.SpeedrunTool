@@ -182,7 +182,7 @@ public static class DeepClonerUtils {
                 }
 
                 // Clone dynData.Data
-                if (type is {IsClass: true} objType && !DynDataUtils.IgnoreObjects.TryGetValue(sourceObj, out object _)) {
+                if (type is {IsClass: true} objType && !DynDataUtils.IgnoreObjects.ContainsKey(sourceObj)) {
                     bool cloned = false;
 
                     do {

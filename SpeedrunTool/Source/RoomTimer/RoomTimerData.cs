@@ -7,9 +7,12 @@ internal class RoomTimerData {
     public long LastPbTime;
     public long Time;
 
+    private readonly Dictionary<string, long> thisRunTimes = new();
     private readonly Dictionary<string, long> pbTimes = new();
     private readonly RoomTimerType roomTimerType;
-    private int numberOfRooms;
+    private int roomNumber;
+    private string timeKeyPrefix = "";
+    private string thisRunTimeKey = "";
     private string pbTimeKey = "";
     private TimerState timerState;
 
@@ -18,32 +21,41 @@ internal class RoomTimerData {
         ResetTime();
     }
 
+    public long GetSelectedRoomTime => IsCompleted ? thisRunTimes[pbTimeKey] : Time;
+    public long GetSelectedPbTime => PbTime;
     private bool IsNextRoomType => roomTimerType == RoomTimerType.NextRoom;
-    public string TimeString => FormatTime(Time, false);
+    public string TimeString => FormatTime(GetSelectedRoomTime, false);
     private long PbTime => pbTimes.GetValueOrDefault(pbTimeKey, 0);
-    public string PbTimeString => FormatTime(PbTime, true);
+    public string PbTimeString => FormatTime(GetSelectedPbTime, true);
     public bool IsCompleted => timerState == TimerState.Completed;
-    public bool BeatBestTime => timerState == TimerState.Completed && (Time < LastPbTime || LastPbTime == 0);
+    public bool BeatBestTime => timerState == TimerState.Completed && (GetSelectedRoomTime < GetSelectedPbTime || GetSelectedPbTime == 0);
 
-    public void Timing(Level level) {
-        if (timerState != TimerState.Timing) {
-            return;
-        }
-
-        if (pbTimeKey == "") {
+    public void UpdateTimeKeys(Level level) {
+        if (timeKeyPrefix == "") {
             Session session = level.Session;
-            pbTimeKey = session.Area + session.Level;
+            timeKeyPrefix = session.Area + session.Level;
             string closestFlag = session.Flags.Where(flagName => flagName.StartsWith(RoomTimerManager.FlagPrefix))
                 .OrderBy(flagName => {
                     flagName = flagName.Replace(RoomTimerManager.FlagPrefix, "");
                     return int.Parse(flagName);
                 }).FirstOrDefault();
-            pbTimeKey += closestFlag;
-            pbTimeKey += numberOfRooms;
+            timeKeyPrefix += closestFlag;
+        }
+        pbTimeKey = timeKeyPrefix + ModSettings.NumberOfRooms;
+        thisRunTimeKey = timeKeyPrefix + roomNumber;
+    }
+
+    public void Timing(Level level) {
+        UpdateTimeKeys(level);
+
+        if (level.TimerStopped || timerState == TimerState.WaitToStart) {
+            return;
         }
 
-        if (level.TimerStopped) {
-            return;
+        if (roomNumber > ModSettings.NumberOfRooms && !EndPoint.IsExist || level is { Completed: true }) {
+            timerState = TimerState.Completed;
+        } else {
+            timerState = TimerState.Timing;
         }
 
         Time += TimeSpan.FromSeconds(Engine.RawDeltaTime).Ticks;
@@ -54,30 +66,29 @@ internal class RoomTimerData {
             case TimerState.WaitToStart:
                 if (!endPoint) {
                     timerState = TimerState.Timing;
-                    numberOfRooms = ModSettings.NumberOfRooms;
+                    roomNumber = 1;
                 }
 
                 break;
             case TimerState.Timing:
-                Level level = Engine.Scene as Level;
-                if (numberOfRooms <= 1 && !EndPoint.IsExist
-                    || endPoint && EndPoint.IsExist
-                    || level is {Completed: true}) {
-                    timerState = TimerState.Completed;
-                    LastPbTime = pbTimes.GetValueOrDefault(pbTimeKey, 0);
-                    if (Time < LastPbTime || LastPbTime == 0) {
-                        pbTimes[pbTimeKey] = Time;
-                    }
+                thisRunTimes[thisRunTimeKey] = Time;
+                roomNumber++;
 
-                    if (level is {Completed: false}) {
+                Level level = Engine.Scene as Level;
+                if (roomNumber >= ModSettings.NumberOfRooms && !EndPoint.IsExist
+                        || endPoint && EndPoint.IsExist
+                        || level is { Completed: true }) {
+                    timerState = TimerState.Completed;
+
+                    if (level is { Completed: false }) {
                         EndPoint.All.ForEach(point => point.StopTime());
                     }
-                } else {
-                    numberOfRooms--;
                 }
 
                 break;
             case TimerState.Completed:
+                thisRunTimes[thisRunTimeKey] = Time;
+                roomNumber++;
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -85,11 +96,20 @@ internal class RoomTimerData {
     }
 
     public void ResetTime() {
+        foreach (KeyValuePair<string, long> timePair in thisRunTimes) {
+            LastPbTime = pbTimes.GetValueOrDefault(timePair.Key, 0);
+            if (timePair.Value < LastPbTime || LastPbTime == 0) {
+                pbTimes[timePair.Key] = timePair.Value;
+            }
+        }
+        timeKeyPrefix = "";
+        thisRunTimeKey = "";
         pbTimeKey = "";
         timerState = IsNextRoomType ? TimerState.WaitToStart : TimerState.Timing;
-        numberOfRooms = ModSettings.NumberOfRooms;
+        roomNumber = 1;
         Time = 0;
         LastPbTime = 0;
+        thisRunTimes.Clear();
     }
 
     public void Clear() {

@@ -128,9 +128,9 @@ public static class RoomTimerManager {
     public static void SwitchRoomTimer(RoomTimerType roomTimerType) {
         ModSettings.RoomTimerType = roomTimerType;
 
-        if (roomTimerType == RoomTimerType.Off) {
-            ClearPbTimes();
-        }
+        //if (roomTimerType == RoomTimerType.Off) {
+        //    ClearPbTimes();
+        //}
 
         SpeedrunToolModule.Instance.SaveSettings();
     }
@@ -161,6 +161,8 @@ public static class RoomTimerManager {
             NextRoomTimerData.Timing(self);
             CurrentRoomTimerData.Timing(self);
         }
+        NextRoomTimerData.UpdateTimeKeys(self);
+        CurrentRoomTimerData.UpdateTimeKeys(self);
     }
 
     private static void UpdateTimerStateOnTouchFlag(On.Celeste.SummitCheckpoint.orig_Update orig, SummitCheckpoint self) {
@@ -182,9 +184,8 @@ public static class RoomTimerManager {
     public static void UpdateTimerState(bool endPoint = false) {
         switch (ModSettings.RoomTimerType) {
             case RoomTimerType.NextRoom:
-                NextRoomTimerData.UpdateTimerState(endPoint);
-                break;
             case RoomTimerType.CurrentRoom:
+                NextRoomTimerData.UpdateTimerState(endPoint);
                 CurrentRoomTimerData.UpdateTimerState(endPoint);
                 break;
             case RoomTimerType.Off:
@@ -205,12 +206,12 @@ public static class RoomTimerManager {
             orig(self);
             return;
         }
-
+        
         RoomTimerData roomTimerData = ModSettings.RoomTimerType == RoomTimerType.NextRoom ? NextRoomTimerData : CurrentRoomTimerData;
 
         string roomTimeString = roomTimerData.TimeString;
         string pbTimeString = $"PB {roomTimerData.PbTimeString}";
-        string comparePbString = ComparePb(roomTimerData.Time, roomTimerData.LastPbTime);
+        string comparePbString = ComparePb(roomTimerData.GetSelectedRoomTime, roomTimerData.GetSelectedPbTime);
 
         float topBlackBarWidth = 0f;
         float pbWidth = 60;

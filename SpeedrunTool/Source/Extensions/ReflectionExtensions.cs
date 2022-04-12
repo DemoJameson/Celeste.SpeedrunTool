@@ -31,12 +31,14 @@ internal static class ReflectionExtensions {
     // ReSharper restore UnusedMember.Local
 
     public delegate T GetDelegate<out T>(object instance);
+    public delegate void SetDelegate<in T>(object instance, T value);
 
     private static readonly ConcurrentDictionary<MemberKey, FieldInfo> CachedFieldInfos = new();
     private static readonly ConcurrentDictionary<MemberKey, PropertyInfo> CachedPropertyInfos = new();
     private static readonly ConcurrentDictionary<MethodKey, MethodInfo> CachedMethodInfos = new();
     private static readonly ConcurrentDictionary<MethodKey, FastReflectionDelegate> CachedMethodDelegates = new();
     private static readonly ConcurrentDictionary<DelegateKey, Delegate> CachedFieldGetDelegates = new();
+    private static readonly ConcurrentDictionary<DelegateKey, Delegate> CachedFieldSetDelegates = new();
 
     private static readonly object[] NoArg = { };
     private static readonly object[] NullArg = {null};
@@ -126,16 +128,27 @@ internal static class ReflectionExtensions {
         return (GetDelegate<TReturn>)(CachedFieldGetDelegates[key] = type.GetFieldInfo(fieldName)?.CreateGetDelegate<TReturn>());
     }
 
+    public static SetDelegate<TValue> GetFieldSetDelegate<TValue>(this Type type, string fieldName) {
+        var key = new DelegateKey(type, fieldName, typeof(TValue));
+        if (CachedFieldSetDelegates.TryGetValue(key, out var result)) {
+            return (SetDelegate<TValue>)result;
+        }
+
+        return (SetDelegate<TValue>)(CachedFieldSetDelegates[key] = type.GetFieldInfo(fieldName)?.CreateSetDelegate<TValue>());
+    }
+
     private static GetDelegate<TReturn> CreateGetDelegate<TReturn>(this FieldInfo field) {
         if (field == null) {
             throw new ArgumentException("Field cannot be null.", nameof(field));
         }
 
-        if (!typeof(TReturn).IsAssignableFrom(field.FieldType)) {
-            throw new InvalidCastException($"{field.Name} is of type {field.FieldType}, it cannot be assigned to the type {typeof(TReturn)}.");
+        Type returnType = typeof(TReturn);
+        Type fieldType = field.FieldType;
+        if (!returnType.IsAssignableFrom(fieldType)) {
+            throw new InvalidCastException($"{field.Name} is of type {fieldType}, it cannot be assigned to the type {returnType}.");
         }
 
-        using var method = new DynamicMethodDefinition($"{field} Getter", typeof(TReturn), new[] {typeof(object)});
+        using var method = new DynamicMethodDefinition($"{field} Getter", returnType, new[] {typeof(object)});
         var il = method.GetILProcessor();
 
         if (field.IsStatic) {
@@ -149,14 +162,48 @@ internal static class ReflectionExtensions {
             il.Emit(OpCodes.Ldfld, field);
         }
 
-        if (field.FieldType.IsValueType && !typeof(TReturn).IsValueType) {
-            il.Emit(OpCodes.Box, field.FieldType);
+        if (fieldType.IsValueType && !returnType.IsValueType) {
+            il.Emit(OpCodes.Box, fieldType);
         }
 
         il.Emit(OpCodes.Ret);
 
         return (GetDelegate<TReturn>)method.Generate().CreateDelegate(typeof(GetDelegate<TReturn>));
     }
+
+    private static SetDelegate<TValue> CreateSetDelegate<TValue>(this FieldInfo field) {
+        if (field == null) {
+            throw new ArgumentException("Field cannot be null.", nameof(field));
+        }
+
+        Type parameterType = typeof(TValue);
+        Type fieldType = field.FieldType;
+        if (parameterType != typeof(object) && !fieldType.IsAssignableFrom(parameterType)) {
+            throw new InvalidCastException($"{field.Name} is of type {fieldType}. An instance of {parameterType} cannot be assigned to it.");
+        }
+
+        using var method = new DynamicMethodDefinition($"{field} Setter", typeof(void), new[] { typeof(object), parameterType });
+        var il = method.GetILProcessor();
+
+        if (!field.IsStatic) {
+            il.Emit(OpCodes.Ldarg_0);
+        }
+
+        il.Emit(OpCodes.Ldarg_1);
+
+        if (!fieldType.IsValueType && parameterType.IsValueType) {
+            il.Emit(OpCodes.Box, parameterType);
+        } else if (fieldType.IsValueType && !parameterType.IsValueType) {
+            il.Emit(OpCodes.Unbox_Any, fieldType);
+        }
+
+        il.Emit(!field.IsStatic ? OpCodes.Stfld : OpCodes.Stsfld, field);
+
+        il.Emit(OpCodes.Ret);
+
+        return (SetDelegate<TValue>)method.Generate().CreateDelegate(typeof(SetDelegate<TValue>));
+    }
+
 
     public static void SetFieldValue(this object obj, string name, object value) {
         SetFieldValueImpl(obj, obj.GetType(), name, value);
@@ -167,7 +214,7 @@ internal static class ReflectionExtensions {
     }
 
     private static void SetFieldValueImpl(object obj, Type type, string name, object value) {
-        GetFieldInfo(type, name)?.SetValue(obj, value);
+        type.GetFieldSetDelegate<object>(name)?.Invoke(obj, value);
     }
 
     public static object GetPropertyValue(this object obj, string name) {

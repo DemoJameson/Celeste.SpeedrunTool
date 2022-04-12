@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions;
 
 internal static class ThreadSafeFastReflectionHelper {
     private static readonly Type[] _DynamicMethodDelegateArgs = {typeof(object), typeof(object[])};
-    private static readonly ConcurrentDictionary<MethodInfo, FastReflectionDelegate> _MethodCache = new();
+    private static readonly ConcurrentDictionary<MethodBase, FastReflectionDelegate> _MethodCache = new();
 
     private static FastReflectionDelegate _CreateFastDelegate(MethodBase method, bool directBoxValueAccess = true) {
         DynamicMethodDefinition dmd =
@@ -103,7 +103,7 @@ internal static class ThreadSafeFastReflectionHelper {
         return (FastReflectionDelegate)dmd.Generate().CreateDelegate(typeof(FastReflectionDelegate));
     }
 
-    public static FastReflectionDelegate CreateFastDelegate(this MethodInfo method, bool directBoxValueAccess = true) {
+    public static FastReflectionDelegate CreateFastDelegate(this MethodBase method, bool directBoxValueAccess = true) {
         if (_MethodCache.TryGetValue(method, out FastReflectionDelegate dmd)) {
             return dmd;
         }

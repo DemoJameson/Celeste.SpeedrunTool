@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Xna.Framework.Graphics;
+using Mono.Cecil.Cil;
 using MonoMod.Utils;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions;
@@ -22,12 +23,21 @@ internal static class ReflectionExtensions {
         public readonly string Name = Name;
         public readonly long Types = Types;
     }
+
+    private record struct DelegateKey(Type Type, string Name, Type ReturnType) {
+        public readonly Type Type = Type;
+        public readonly string Name = Name;
+        public readonly Type ReturnType = ReturnType;
+    }
     // ReSharper restore UnusedMember.Local
+
+    public delegate T GetDelegate<out T>(object instance);
 
     private static readonly ConcurrentDictionary<MemberKey, FieldInfo> CachedFieldInfos = new();
     private static readonly ConcurrentDictionary<MemberKey, PropertyInfo> CachedPropertyInfos = new();
     private static readonly ConcurrentDictionary<MethodKey, MethodInfo> CachedMethodInfos = new();
     private static readonly ConcurrentDictionary<MethodKey, FastReflectionDelegate> CachedMethodDelegates = new();
+    private static readonly ConcurrentDictionary<DelegateKey, Delegate> CachedFieldGetDelegates = new();
 
     private static readonly object[] NoArg = { };
     private static readonly object[] NullArg = {null};
@@ -285,12 +295,53 @@ internal static class ReflectionExtensions {
     }
 
     private static T GetFieldValueImpl<T>(object obj, Type type, string name) {
-        object result = type.GetFieldInfo(name)?.GetValue(obj);
+        object result = type.GetFieldGetDelegate<object>(name)?.Invoke(obj);
         if (result == null) {
             return default;
         } else {
             return (T)result;
         }
+    }
+
+    public static GetDelegate<TReturn> GetFieldGetDelegate<TReturn>(this Type type, string fieldName) {
+        var key = new DelegateKey(type, fieldName, typeof(TReturn));
+        if (CachedFieldGetDelegates.TryGetValue(key, out var result)) {
+            return (GetDelegate<TReturn>)result;
+        }
+
+        return (GetDelegate<TReturn>)(CachedFieldGetDelegates[key] = type.GetFieldInfo(fieldName)?.CreateGetDelegate<TReturn>());
+    }
+
+    private static GetDelegate<TReturn> CreateGetDelegate<TReturn>(this FieldInfo field) {
+        if (field == null) {
+            throw new ArgumentException("Field cannot be null.", nameof(field));
+        }
+
+        if (!typeof(TReturn).IsAssignableFrom(field.FieldType)) {
+            throw new InvalidCastException($"{field.Name} is of type {field.FieldType}, it cannot be assigned to the type {typeof(TReturn)}.");
+        }
+
+        using var method = new DynamicMethodDefinition($"{field} Getter", typeof(TReturn), new[] {typeof(object)});
+        var il = method.GetILProcessor();
+
+        if (field.IsStatic) {
+            il.Emit(OpCodes.Ldsfld, field);
+        } else {
+            il.Emit(OpCodes.Ldarg_0);
+            if (field.DeclaringType.IsValueType) {
+                il.Emit(OpCodes.Unbox_Any, field.DeclaringType);
+            }
+
+            il.Emit(OpCodes.Ldfld, field);
+        }
+
+        if (field.FieldType.IsValueType && !typeof(TReturn).IsValueType) {
+            il.Emit(OpCodes.Box, field.FieldType);
+        }
+
+        il.Emit(OpCodes.Ret);
+
+        return (GetDelegate<TReturn>)method.Generate().CreateDelegate(typeof(GetDelegate<TReturn>));
     }
 
     public static void SetFieldValue(this object obj, string name, object value) {

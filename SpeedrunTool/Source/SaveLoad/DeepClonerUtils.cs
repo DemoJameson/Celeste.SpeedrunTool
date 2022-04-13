@@ -11,6 +11,11 @@ using NLua;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
 public static class DeepClonerUtils {
+    [ThreadStatic] private static Stack<Component> backupComponents;
+    [ThreadStatic] private static Stack<object> backupHashSet;
+    [ThreadStatic] private static Dictionary<object, object> backupDict;
+    private static readonly ThreadLocal<bool> IsMainThread = new(() => Thread.CurrentThread.Name == "Main Thread");
+
     // 共用 DeepCloneState 可使多次 DeepClone 复用相同对象避免多次克隆同一对象
     private static DeepCloneState sharedDeepCloneState = new();
 
@@ -119,10 +124,6 @@ public static class DeepClonerUtils {
             return null;
         });
 
-        ThreadLocal<Stack<Component>> backupComponentsThreadLocal = new(() => new Stack<Component>());
-        ThreadLocal<Stack<object>> backupHashSetThreadLocal = new(() => new Stack<object>());
-        ThreadLocal<Dictionary<object, object>> backupDictThreadLocal = new(() => new Dictionary<object, object>());
-
         // Clone 对象的字段后，进行自定的处理
         // After cloning, perform custom processing
         DeepCloner.SetPostCloneProcessor((sourceObj, clonedObj, deepCloneState) => {
@@ -139,7 +140,7 @@ public static class DeepClonerUtils {
 
                 // 手动处理最常见的 HashSet<Component>/Dictionary<string, object> 类型，避免使用发射以及判断类型
                 if (clonedObj is HashSet<Component> hashSet) {
-                    var backupComponents = backupComponentsThreadLocal.Value;
+                    backupComponents ??= new Stack<Component>();
                     foreach (Component component in hashSet) {
                         if (component != null) {
                             backupComponents.Push(component);
@@ -151,7 +152,7 @@ public static class DeepClonerUtils {
                         hashSet.Add(backupComponents.Pop());
                     }
                 } else if (clonedObj is Dictionary<string, object> dictionary) {
-                    var backupDict = backupDictThreadLocal.Value;
+                    backupDict ??= new Dictionary<object, object>();
                     backupDict.SetRange(dictionary);
                     dictionary.Clear();
                     dictionary.SetRange(backupDict);
@@ -160,13 +161,12 @@ public static class DeepClonerUtils {
                     // LightingRenderer 需要，不然不会发光
                     vertexLight.Index = -1;
                 } else if (clonedObj is VirtualAsset virtualAsset
-                           && (StateManager.Instance.State == State.Loading || !Thread.CurrentThread.IsMainThread())) {
+                           && (StateManager.Instance.State == State.Loading || !IsMainThread.Value)) {
                     // 预克隆的资源需要等待 LoadState 中移除实体之后才能判断是否需要 Reload，必须等待主线程中再操作
                     SaveLoadAction.VirtualAssets.Add(virtualAsset);
                 } else if (type.IsHashSet(out Type hashSetElementType) && !hashSetElementType.IsSimple()) {
                     IEnumerator enumerator = ((IEnumerable)clonedObj).GetEnumerator();
-
-                    var backupHashSet = backupHashSetThreadLocal.Value;
+                    backupHashSet ??= new Stack<object>();
                     while (enumerator.MoveNext()) {
                         if (enumerator.Current is { } element) {
                             backupHashSet.Push(element);
@@ -180,8 +180,9 @@ public static class DeepClonerUtils {
                             addDelegate.Invoke(clonedObj, backupHashSet.Pop());
                         }
                     }
-                } else if (type.IsIDictionary(out Type dictKeyType, out Type _) && !dictKeyType.IsSimple() && clonedObj is IDictionary {Count: > 0} clonedDict) {
-                    var backupDict = backupDictThreadLocal.Value;
+                } else if (type.IsIDictionary(out Type dictKeyType, out Type _) && !dictKeyType.IsSimple() &&
+                           clonedObj is IDictionary {Count: > 0} clonedDict) {
+                    backupDict ??= new Dictionary<object, object>();
                     backupDict.SetRange(clonedDict);
                     clonedDict.Clear();
                     clonedDict.SetRange(backupDict);

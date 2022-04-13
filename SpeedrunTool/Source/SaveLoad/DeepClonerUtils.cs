@@ -14,7 +14,6 @@ public static class DeepClonerUtils {
     [ThreadStatic] private static Stack<Component> backupComponents;
     [ThreadStatic] private static Stack<object> backupHashSet;
     [ThreadStatic] private static Dictionary<object, object> backupDict;
-    private static readonly ThreadLocal<bool> IsMainThread = new(() => Thread.CurrentThread.Name == "Main Thread");
 
     // 共用 DeepCloneState 可使多次 DeepClone 复用相同对象避免多次克隆同一对象
     private static DeepCloneState sharedDeepCloneState = new();
@@ -161,7 +160,7 @@ public static class DeepClonerUtils {
                     // LightingRenderer 需要，不然不会发光
                     vertexLight.Index = -1;
                 } else if (clonedObj is VirtualAsset virtualAsset
-                           && (StateManager.Instance.State == State.Loading || !IsMainThread.Value)) {
+                           && (StateManager.Instance.State == State.Loading || !Thread.CurrentThread.IsMainThread())) {
                     // 预克隆的资源需要等待 LoadState 中移除实体之后才能判断是否需要 Reload，必须等待主线程中再操作
                     SaveLoadAction.VirtualAssets.Add(virtualAsset);
                 } else if (type.IsHashSet(out Type hashSetElementType) && !hashSetElementType.IsSimple()) {

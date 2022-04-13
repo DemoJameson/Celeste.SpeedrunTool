@@ -41,12 +41,12 @@ public static class StateMarkUtils {
         }
 
         // recolor timer
-        level.Session.SetFlag(SavedStateFlag);
+        SetSavedStateFlag(level);
     }
 
     private static void StrawberryOnAdded(On.Celeste.Strawberry.orig_Added orig, Strawberry self, Scene scene) {
         orig(self, scene);
-        if (self.Golden && !StateManager.Instance.SavedByTas && scene is Level level && level.Session.GetFlag(SavedStateFlag)) {
+        if (self.Golden && !StateManager.Instance.SavedByTas && scene is Level level && GetSavedStateFlag(level)) {
             TryRecolorSprite(self);
         }
     }
@@ -87,7 +87,7 @@ public static class StateMarkUtils {
 
         cursor.EmitDelegate<Func<bool>>(() =>
             ModSettings.RoomTimerType == RoomTimerType.Off
-            && Engine.Scene is Level {Completed: false} level && level.Session.GetFlag(SavedStateFlag) && !StateManager.Instance.SavedByTas
+            && Engine.Scene is Level {Completed: false} level && GetSavedStateFlag(level) && !StateManager.Instance.SavedByTas
         );
 
         ILLabel beforeInstr = cursor.DefineLabel();
@@ -117,9 +117,25 @@ public static class StateMarkUtils {
             )) {
             ilCursor.Emit(OpCodes.Ldarg_0).EmitDelegate<Action<Level>>(level => {
                 if (!StateManager.Instance.IsSaved) {
-                    level.Session.SetFlag(SavedStateFlag, false);
+                    RemoveSavedStateFlag(level);
                 }
             });
         }
+    }
+
+    private static void SetSavedStateFlag(Level level) {
+        level.Session.SetFlag(SavedStateFlag);
+    }
+
+    private static bool GetSavedStateFlag(Level level) {
+        return level.Session.GetFlag(SavedStateFlag);
+    }
+
+    private static void RemoveSavedStateFlag(Level level) {
+        level.Session.SetFlag(SavedStateFlag, false);
+    }
+
+    public static void CopySavedStateFlag(Session from, Session to) {
+        to.SetFlag(SavedStateFlag, from.GetFlag(SavedStateFlag));
     }
 }

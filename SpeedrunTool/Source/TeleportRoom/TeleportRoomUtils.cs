@@ -15,9 +15,9 @@ namespace Celeste.Mod.SpeedrunTool.TeleportRoom;
 public static class TeleportRoomUtils {
     private const string FlagPrefix = "summit_checkpoint_";
     private static readonly List<Session> RoomHistory = new();
-    private static int HistoryIndex = -1;
-    private static bool AllowRecord;
-    private static Vector2? RespawnPoint;
+    private static int historyIndex = -1;
+    private static bool allowRecord;
+    private static Vector2? respawnPoint;
 
     [Load]
     private static void Load() {
@@ -72,21 +72,21 @@ public static class TeleportRoomUtils {
     private static void LevelLoaderOnCtor(On.Celeste.LevelLoader.orig_ctor orig, LevelLoader self, Session session,
         Vector2? startPosition) {
         orig(self, session, startPosition);
-        if (RespawnPoint.HasValue) {
-            session.RespawnPoint = RespawnPoint;
-            RespawnPoint = null;
+        if (respawnPoint.HasValue) {
+            session.RespawnPoint = respawnPoint;
+            respawnPoint = null;
         }
 
-        if (AllowRecord) {
+        if (allowRecord) {
             RecordTransitionRoom(session);
         }
     }
 
     private static void MapEditorOnLoadLevel(MapEditor.orig_LoadLevel orig, Editor.MapEditor self,
         LevelTemplate level, Vector2 at) {
-        AllowRecord = true;
+        allowRecord = true;
         orig(self, level, at);
-        AllowRecord = false;
+        allowRecord = false;
     }
 
     private static IEnumerator WaitSessionReady(Session self) {
@@ -102,6 +102,8 @@ public static class TeleportRoomUtils {
         if (!fromHistory && session.Area.ToString() == "10" && session.Level == "g-06") {
             session.RespawnPoint = new Vector2(28280, -8080);
         }
+
+        StateMarkUtils.CopySavedStateFlag(level.Session, session);
 
         session.Time = level.Session.Time;
         int increaseDeath = level.IsPlayerDead() || level.GetPlayer().JustRespawned ? 0 : 1;
@@ -180,17 +182,17 @@ public static class TeleportRoomUtils {
 
     private static void Reset() {
         RoomHistory.Clear();
-        HistoryIndex = -1;
+        historyIndex = -1;
     }
 
     private static bool? TeleportToPreviousRoom(Level level) {
-        if (HistoryIndex > 0 && HistoryIndex < RoomHistory.Count) {
+        if (historyIndex > 0 && historyIndex < RoomHistory.Count) {
             // Glyph 这种传送到其他房间是不做记录的，所以只回到当前记录的房间
-            if (level.Session.Level == RoomHistory[HistoryIndex].Level) {
-                HistoryIndex--;
+            if (level.Session.Level == RoomHistory[historyIndex].Level) {
+                historyIndex--;
             }
 
-            TeleportTo(RoomHistory[HistoryIndex]);
+            TeleportTo(RoomHistory[historyIndex]);
             return true;
         }
 
@@ -234,9 +236,9 @@ public static class TeleportRoomUtils {
     }
 
     private static bool? TeleportToNextRoom(Level level) {
-        if (HistoryIndex >= 0 && HistoryIndex < RoomHistory.Count - 1) {
-            HistoryIndex++;
-            TeleportTo(RoomHistory[HistoryIndex], true);
+        if (historyIndex >= 0 && historyIndex < RoomHistory.Count - 1) {
+            historyIndex++;
+            TeleportTo(RoomHistory[historyIndex], true);
             return true;
         }
 
@@ -338,13 +340,13 @@ public static class TeleportRoomUtils {
         }
 
         // 非初始房间
-        if (HistoryIndex != -1) {
+        if (historyIndex != -1) {
             return;
         }
 
         // 进入章节的第一个房间
         RoomHistory.Add(self.Session.DeepClone());
-        HistoryIndex = 0;
+        historyIndex = 0;
     }
 
     private static IEnumerator LevelOnTransitionRoutine(On.Celeste.Level.orig_TransitionRoutine orig, Level self,
@@ -361,8 +363,8 @@ public static class TeleportRoomUtils {
     // 记录自行进入的房间或者触碰的旗子
     private static void RecordTransitionRoom(Session currentSession) {
         // 如果不是指向末尾证明曾经后退过，所以要记录新数据前必须清除后面的记录
-        if (HistoryIndex < RoomHistory.Count - 1) {
-            RoomHistory.RemoveRange(HistoryIndex + 1, RoomHistory.Count - HistoryIndex - 1);
+        if (historyIndex < RoomHistory.Count - 1) {
+            RoomHistory.RemoveRange(historyIndex + 1, RoomHistory.Count - historyIndex - 1);
         }
 
         // 增加记录
@@ -385,6 +387,6 @@ public static class TeleportRoomUtils {
         }
 
         RoomHistory.Add(session.DeepClone());
-        HistoryIndex = RoomHistory.Count - 1;
+        historyIndex = RoomHistory.Count - 1;
     }
 }

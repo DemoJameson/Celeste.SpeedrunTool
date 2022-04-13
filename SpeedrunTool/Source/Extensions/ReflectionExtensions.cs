@@ -150,13 +150,14 @@ internal static class ReflectionExtensions {
 
         if (field.IsLiteral && !field.IsInitOnly) {
             Func<object, TReturn> func = obj => {
-                object result = (TReturn)field.GetValue(obj);
+                object result = field.GetValue(obj);
                 if (result == null) {
                     return default;
                 } else {
                     return (TReturn) result;
                 }
             };
+
             return func.CastDelegate<GetDelegate<TReturn>>();
         }
 

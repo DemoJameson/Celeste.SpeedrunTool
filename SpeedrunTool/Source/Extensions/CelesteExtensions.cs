@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using System.Threading;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions;
 
@@ -39,9 +38,5 @@ internal static class CelesteExtensions {
         } else {
             return null;
         }
-    }
-
-    public static bool IsMainThread(this Thread thread) {
-        return Thread.CurrentThread.Name == "Main Thread";
     }
 }

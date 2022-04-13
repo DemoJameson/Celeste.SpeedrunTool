@@ -148,6 +148,18 @@ internal static class ReflectionExtensions {
             throw new InvalidCastException($"{field.Name} is of type {fieldType}, it cannot be assigned to the type {returnType}.");
         }
 
+        if (field.IsLiteral && !field.IsInitOnly) {
+            Func<object, TReturn> func = obj => {
+                object result = (TReturn)field.GetValue(obj);
+                if (result == null) {
+                    return default;
+                } else {
+                    return (TReturn) result;
+                }
+            };
+            return func.CastDelegate<GetDelegate<TReturn>>();
+        }
+
         using var method = new DynamicMethodDefinition($"{field} Getter", returnType, new[] {typeof(object)});
         var il = method.GetILProcessor();
 
@@ -180,6 +192,10 @@ internal static class ReflectionExtensions {
         Type fieldType = field.FieldType;
         if (parameterType != typeof(object) && !fieldType.IsAssignableFrom(parameterType)) {
             throw new InvalidCastException($"{field.Name} is of type {fieldType}. An instance of {parameterType} cannot be assigned to it.");
+        }
+
+        if (field.IsLiteral && !field.IsInitOnly) {
+            throw new FieldAccessException($"Unable to set constant field {field.Name} of type {field.DeclaringType.FullName}.");
         }
 
         using var method = new DynamicMethodDefinition($"{field} Setter", typeof(void), new[] { typeof(object), parameterType });

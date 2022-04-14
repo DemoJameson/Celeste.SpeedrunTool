@@ -119,8 +119,6 @@ SPEEDRUN_TOOL_ALREADY_LAST_ROOM_DIALOG_BADELINE=
 SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE=        Toggle Auto Load State
 SPEEDRUN_TOOL_SPAWN_TOWER_VIEWER=            Spawn Tower Viewer
 SPEEDRUN_TOOL_TOGGLE_FULLSCREEN=             Toggle Fullscreen
-SPEEDRUN_TOOL_INCREASE_TIMED_ROOMS=          Increase Number of Timed Rooms
-SPEEDRUN_TOOL_DECREASE_TIMED_ROOMS=          Decrease Number of Timed Rooms
 
 # ================================== Death Statistics ==================================
 SPEEDRUN_TOOL_DEATH_STATISTICS=              Death Statistics

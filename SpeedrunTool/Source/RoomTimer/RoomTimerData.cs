@@ -16,6 +16,7 @@ internal class RoomTimerData {
     private string thisRunTimeKey = "";
     private string pbTimeKey = "";
     private TimerState timerState;
+    private bool hitEndPoint = false;
 
     public RoomTimerData(RoomTimerType roomTimerType) {
         this.roomTimerType = roomTimerType;
@@ -42,8 +43,13 @@ internal class RoomTimerData {
                 }).FirstOrDefault();
             timeKeyPrefix += closestFlag;
         }
-        pbTimeKey = timeKeyPrefix + ModSettings.NumberOfRooms;
-        thisRunTimeKey = timeKeyPrefix + roomNumber;
+        if (!EndPoint.IsExist) {
+            pbTimeKey = timeKeyPrefix + ModSettings.NumberOfRooms;
+            thisRunTimeKey = timeKeyPrefix + roomNumber;
+        } else {
+            pbTimeKey = timeKeyPrefix + "EndPoint";
+            thisRunTimeKey = timeKeyPrefix + "EndPoint";
+        }
     }
 
     public void Timing(Level level) {
@@ -51,7 +57,7 @@ internal class RoomTimerData {
             return;
         }
 
-        if (roomNumber > ModSettings.NumberOfRooms && !EndPoint.IsExist || level is { Completed: true }) {
+        if (roomNumber > ModSettings.NumberOfRooms && !EndPoint.IsExist || hitEndPoint || level is { Completed: true }) {
             timerState = TimerState.Completed;
         } else {
             timerState = TimerState.Timing;
@@ -70,31 +76,39 @@ internal class RoomTimerData {
 
                 break;
             case TimerState.Timing:
-                thisRunTimes[thisRunTimeKey] = Time;
-                LastPbTime = pbTimes.GetValueOrDefault(thisRunTimeKey, 0);
-                if (Time < LastPbTime || LastPbTime == 0) {
-                    pbTimes[thisRunTimeKey] = Time;
-                }
-                roomNumber++;
-
                 Level level = Engine.Scene as Level;
-                if (roomNumber >= ModSettings.NumberOfRooms && !EndPoint.IsExist
-                        || endPoint && EndPoint.IsExist
-                        || level is { Completed: true }) {
-                    timerState = TimerState.Completed;
 
+                if (!EndPoint.IsExist) {
+                    thisRunTimes[thisRunTimeKey] = Time;
+                    LastPbTime = pbTimes.GetValueOrDefault(thisRunTimeKey, 0);
+                    if (Time < LastPbTime || LastPbTime == 0) {
+                        pbTimes[thisRunTimeKey] = Time;
+                    }
+                    roomNumber++;
+                    if (roomNumber >= ModSettings.NumberOfRooms || level is { Completed: true }) {
+                        timerState = TimerState.Completed;
+                    }
+                } else if (endPoint) {
+                    thisRunTimes[thisRunTimeKey] = Time;
+                    LastPbTime = pbTimes.GetValueOrDefault(thisRunTimeKey, 0);
+                    if (Time < LastPbTime || LastPbTime == 0) {
+                        pbTimes[thisRunTimeKey] = Time;
+                    }
+                    timerState = TimerState.Completed;
+                    hitEndPoint = true;
                     if (level is { Completed: false }) {
                         EndPoint.All.ForEach(point => point.StopTime());
                     }
                 }
-
                 break;
             case TimerState.Completed:
-                thisRunTimes[thisRunTimeKey] = Time;
-                roomNumber++;
-                LastPbTime = pbTimes.GetValueOrDefault(thisRunTimeKey, 0);
-                if (Time < LastPbTime || LastPbTime == 0) {
-                    pbTimes[thisRunTimeKey] = Time;
+                if (!EndPoint.IsExist) {
+                    thisRunTimes[thisRunTimeKey] = Time;
+                    roomNumber++;
+                    LastPbTime = pbTimes.GetValueOrDefault(thisRunTimeKey, 0);
+                    if (Time < LastPbTime || LastPbTime == 0) {
+                        pbTimes[thisRunTimeKey] = Time;
+                    }
                 }
                 break;
             default:
@@ -114,6 +128,7 @@ internal class RoomTimerData {
         Time = 0;
         LastPbTime = 0;
         thisRunTimes.Clear();
+        hitEndPoint = false;
     }
 
     public void Clear() {

@@ -182,17 +182,9 @@ public static class RoomTimerManager {
     }
 
     public static void UpdateTimerState(bool endPoint = false) {
-        switch (ModSettings.RoomTimerType) {
-            case RoomTimerType.NextRoom:
-            case RoomTimerType.CurrentRoom:
-                NextRoomTimerData.UpdateTimerState(endPoint);
-                CurrentRoomTimerData.UpdateTimerState(endPoint);
-                break;
-            case RoomTimerType.Off:
-                break;
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
+        // always run both timers; they'll just run in the background if not selected
+        NextRoomTimerData.UpdateTimerState(endPoint);
+        CurrentRoomTimerData.UpdateTimerState(endPoint);
     }
 
     public static void ResetTime() {

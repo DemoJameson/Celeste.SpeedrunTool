@@ -128,9 +128,8 @@ public static class RoomTimerManager {
     public static void SwitchRoomTimer(RoomTimerType roomTimerType) {
         ModSettings.RoomTimerType = roomTimerType;
 
-        //if (roomTimerType == RoomTimerType.Off) {
-        //    ClearPbTimes();
-        //}
+        // no longer clear room times if switching to off mode
+        // to allow cycling through modes while checking times
 
         SpeedrunToolModule.Instance.SaveSettings();
     }
@@ -157,6 +156,7 @@ public static class RoomTimerManager {
             UpdateTimerState();
         }
 
+        // update time keys separately from timing to allow changing room count at level end
         NextRoomTimerData.UpdateTimeKeys(self);
         CurrentRoomTimerData.UpdateTimeKeys(self);
         if (!self.Completed && self.TimerStarted) {

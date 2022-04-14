@@ -31,6 +31,7 @@ internal static class ReflectionExtensions {
     // ReSharper restore UnusedMember.Local
 
     public delegate T GetDelegate<out T>(object instance);
+
     public delegate void SetDelegate<in T>(object instance, T value);
 
     private static readonly ConcurrentDictionary<MemberKey, FieldInfo> CachedFieldInfos = new();
@@ -149,14 +150,9 @@ internal static class ReflectionExtensions {
         }
 
         if (field.IsLiteral && !field.IsInitOnly) {
-            Func<object, TReturn> func = obj => {
-                object result = field.GetValue(obj);
-                if (result == null) {
-                    return default;
-                } else {
-                    return (TReturn) result;
-                }
-            };
+            object value = field.GetValue(null);
+            TReturn returnValue = value == null ? default : (TReturn)value;
+            Func<object, TReturn> func = _ => returnValue;
 
             return func.CastDelegate<GetDelegate<TReturn>>();
         }
@@ -199,7 +195,7 @@ internal static class ReflectionExtensions {
             throw new FieldAccessException($"Unable to set constant field {field.Name} of type {field.DeclaringType.FullName}.");
         }
 
-        using var method = new DynamicMethodDefinition($"{field} Setter", typeof(void), new[] { typeof(object), parameterType });
+        using var method = new DynamicMethodDefinition($"{field} Setter", typeof(void), new[] {typeof(object), parameterType});
         var il = method.GetILProcessor();
 
         if (!field.IsStatic) {

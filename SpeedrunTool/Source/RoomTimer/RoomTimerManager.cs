@@ -157,12 +157,12 @@ public static class RoomTimerManager {
             UpdateTimerState();
         }
 
+        NextRoomTimerData.UpdateTimeKeys(self);
+        CurrentRoomTimerData.UpdateTimeKeys(self);
         if (!self.Completed && self.TimerStarted) {
             NextRoomTimerData.Timing(self);
             CurrentRoomTimerData.Timing(self);
         }
-        NextRoomTimerData.UpdateTimeKeys(self);
-        CurrentRoomTimerData.UpdateTimeKeys(self);
     }
 
     private static void UpdateTimerStateOnTouchFlag(On.Celeste.SummitCheckpoint.orig_Update orig, SummitCheckpoint self) {
@@ -211,7 +211,7 @@ public static class RoomTimerManager {
 
         string roomTimeString = roomTimerData.TimeString;
         string pbTimeString = $"PB {roomTimerData.PbTimeString}";
-        string comparePbString = ComparePb(roomTimerData.GetSelectedRoomTime, roomTimerData.GetSelectedPbTime);
+        string comparePbString = ComparePb(roomTimerData.GetSelectedRoomTime, roomTimerData.GetSelectedLastPbTime);
 
         float topBlackBarWidth = 0f;
         float pbWidth = 60;

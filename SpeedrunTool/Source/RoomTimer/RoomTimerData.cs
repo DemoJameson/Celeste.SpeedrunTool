@@ -9,6 +9,7 @@ internal class RoomTimerData {
 
     private readonly Dictionary<string, long> thisRunTimes = new();
     private readonly Dictionary<string, long> pbTimes = new();
+    private readonly Dictionary<string, long> lastPbTimes = new();
     private readonly RoomTimerType roomTimerType;
     private int roomNumber;
     private string timeKeyPrefix = "";
@@ -22,13 +23,13 @@ internal class RoomTimerData {
     }
 
     public long GetSelectedRoomTime => IsCompleted ? thisRunTimes[pbTimeKey] : Time;
-    public long GetSelectedPbTime => PbTime;
+    public long GetSelectedPbTime => pbTimes.GetValueOrDefault(pbTimeKey, 0);
+    public long GetSelectedLastPbTime => lastPbTimes.GetValueOrDefault(pbTimeKey, 0);
     private bool IsNextRoomType => roomTimerType == RoomTimerType.NextRoom;
     public string TimeString => FormatTime(GetSelectedRoomTime, false);
-    private long PbTime => pbTimes.GetValueOrDefault(pbTimeKey, 0);
     public string PbTimeString => FormatTime(GetSelectedPbTime, true);
     public bool IsCompleted => timerState == TimerState.Completed;
-    public bool BeatBestTime => timerState == TimerState.Completed && (GetSelectedRoomTime < GetSelectedPbTime || GetSelectedPbTime == 0);
+    public bool BeatBestTime => IsCompleted && (GetSelectedRoomTime < GetSelectedLastPbTime || GetSelectedLastPbTime == 0);
 
     public void UpdateTimeKeys(Level level) {
         if (timeKeyPrefix == "") {
@@ -46,8 +47,6 @@ internal class RoomTimerData {
     }
 
     public void Timing(Level level) {
-        UpdateTimeKeys(level);
-
         if (level.TimerStopped || timerState == TimerState.WaitToStart) {
             return;
         }
@@ -72,6 +71,10 @@ internal class RoomTimerData {
                 break;
             case TimerState.Timing:
                 thisRunTimes[thisRunTimeKey] = Time;
+                LastPbTime = pbTimes.GetValueOrDefault(thisRunTimeKey, 0);
+                if (Time < LastPbTime || LastPbTime == 0) {
+                    pbTimes[thisRunTimeKey] = Time;
+                }
                 roomNumber++;
 
                 Level level = Engine.Scene as Level;
@@ -89,6 +92,10 @@ internal class RoomTimerData {
             case TimerState.Completed:
                 thisRunTimes[thisRunTimeKey] = Time;
                 roomNumber++;
+                LastPbTime = pbTimes.GetValueOrDefault(thisRunTimeKey, 0);
+                if (Time < LastPbTime || LastPbTime == 0) {
+                    pbTimes[thisRunTimeKey] = Time;
+                }
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -96,11 +103,8 @@ internal class RoomTimerData {
     }
 
     public void ResetTime() {
-        foreach (KeyValuePair<string, long> timePair in thisRunTimes) {
-            LastPbTime = pbTimes.GetValueOrDefault(timePair.Key, 0);
-            if (timePair.Value < LastPbTime || LastPbTime == 0) {
-                pbTimes[timePair.Key] = timePair.Value;
-            }
+        foreach (KeyValuePair<string, long> timePair in pbTimes) {
+            lastPbTimes[timePair.Key] = timePair.Value;
         }
         timeKeyPrefix = "";
         thisRunTimeKey = "";
@@ -115,6 +119,7 @@ internal class RoomTimerData {
     public void Clear() {
         ResetTime();
         pbTimes.Clear();
+        lastPbTimes.Clear();
     }
 
     private static string FormatTime(long time, bool isPbTime) {

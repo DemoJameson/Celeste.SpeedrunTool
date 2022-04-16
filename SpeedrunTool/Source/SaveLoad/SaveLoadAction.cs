@@ -184,6 +184,7 @@ public sealed class SaveLoadAction {
         SupportIsaGrabBag();
         SupportDeathTracker();
         SupportCommunalHelper();
+        SupportBounceHelper();
 
         // 放最后，确保收集了所有克隆的 VirtualAssets
         ReloadVirtualAssets();
@@ -804,6 +805,15 @@ public sealed class SaveLoadAction {
                     "overrideDreamDashCheck",
                     "dreamTunnelDashAttacking"
                 ),
+                (savedValues, _) => LoadStaticMemberValues(savedValues))
+            );
+        }
+    }
+
+    private static void SupportBounceHelper() {
+        if (ModUtils.GetType("BounceHelper", "Celeste.Mod.BounceHelper.BounceHelperModule") is { } bounceHelperModule) {
+            Add(new SaveLoadAction(
+                (savedValues, _) => SaveStaticMemberValues(savedValues, bounceHelperModule, "enabled"),
                 (savedValues, _) => LoadStaticMemberValues(savedValues))
             );
         }

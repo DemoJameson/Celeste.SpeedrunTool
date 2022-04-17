@@ -813,7 +813,7 @@ public sealed class SaveLoadAction {
     private static void SupportBounceHelper() {
         if (ModUtils.GetType("BounceHelper", "Celeste.Mod.BounceHelper.BounceHelperModule") is { } bounceHelperModule) {
             Add(new SaveLoadAction(
-                (savedValues, _) => SaveStaticMemberValues(savedValues, bounceHelperModule, "enabled"),
+                (savedValues, _) => SaveStaticMemberValues(savedValues, bounceHelperModule, "enabled", "session"),
                 (savedValues, _) => LoadStaticMemberValues(savedValues))
             );
         }

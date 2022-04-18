@@ -22,7 +22,7 @@ public sealed class SaveLoadAction {
     private static ILHook modDeathTrackerHook;
 
     private static Dictionary<Type, FieldInfo[]> simpleStaticFields;
-    private static Dictionary<Type, FieldInfo[]> modModuleLevelFields;
+    private static Dictionary<Type, FieldInfo[]> modModuleFields;
 
     private static readonly HashSet<string> RequireMuteAudioPaths = new() {
         "event:/game/general/strawberry_get",
@@ -173,7 +173,7 @@ public sealed class SaveLoadAction {
         MuteAnnoyingAudios();
         ExternalAction();
         SupportModSessionAndSaveData();
-        SupportModModuleLevelFields();
+        SupportModModuleFields();
         SupportSimpleStaticFields();
         SupportMaxHelpingHand();
         SupportPandorasBox();
@@ -192,7 +192,7 @@ public sealed class SaveLoadAction {
 
     private static void InitFields() {
         simpleStaticFields = new Dictionary<Type, FieldInfo[]>();
-        modModuleLevelFields = new Dictionary<Type, FieldInfo[]>();
+        modModuleFields = new Dictionary<Type, FieldInfo[]>();
 
         IEnumerable<Type> types = FakeAssembly.GetFakeEntryAssembly().GetTypes().Where(type =>
             !type.IsGenericType
@@ -206,7 +206,7 @@ public sealed class SaveLoadAction {
             FieldInfo[] fieldInfos = type.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
                 .Where(info => {
                     Type fieldType = info.FieldType;
-                    return !info.IsLiteral && fieldType.IsSimpleClass(_ =>
+                    return !info.IsConst() && fieldType.IsSimpleClass(_ =>
                         fieldType == type
                         || fieldType == typeof(Level)
                         || fieldType == typeof(MTexture)
@@ -255,7 +255,7 @@ public sealed class SaveLoadAction {
             List<FieldInfo> instanceFields = new();
 
             FieldInfo[] fieldInfos = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
-            foreach (FieldInfo fieldInfo in fieldInfos.Where(info => !info.IsLiteral && info.FieldType == typeof(Level))) {
+            foreach (FieldInfo fieldInfo in fieldInfos.Where(info => !info.IsInitOnly && (info.FieldType == typeof(Level) || info.FieldType == typeof(Session)))) {
                 if (fieldInfo.IsStatic) {
                     staticFields.Add(fieldInfo);
                 } else {
@@ -268,7 +268,7 @@ public sealed class SaveLoadAction {
             }
 
             if (instanceFields.Count > 0) {
-                modModuleLevelFields[type] = instanceFields.ToArray();
+                modModuleFields[type] = instanceFields.ToArray();
             }
         }
     }
@@ -277,7 +277,7 @@ public sealed class SaveLoadAction {
         if (ModUtils.GetType("ExtendedVariantMode", "ExtendedVariants.Variants.AbstractExtendedVariant") is { } variantType) {
             foreach (Type type in variantType.Assembly.GetTypesSafe().Where(type => type.IsSubclassOf(variantType))) {
                 FieldInfo[] fieldInfos = type.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-                    .Where(info => !info.IsLiteral && info.FieldType.IsSimpleClass()).ToArray();
+                    .Where(info => !info.IsConst() && info.FieldType.IsSimpleClass()).ToArray();
 
                 if (fieldInfos.Length == 0) {
                     continue;
@@ -309,14 +309,14 @@ public sealed class SaveLoadAction {
             }));
     }
 
-    private static void SupportModModuleLevelFields() {
+    private static void SupportModModuleFields() {
         Add(new SaveLoadAction(
             (savedValues, _) => {
                 foreach (EverestModule module in Everest.Modules) {
                     Dictionary<string, object> dict = new();
                     Type moduleType = module.GetType();
-                    if (modModuleLevelFields.ContainsKey(moduleType)) {
-                        foreach (FieldInfo fieldInfo in modModuleLevelFields[moduleType]) {
+                    if (modModuleFields.ContainsKey(moduleType)) {
+                        foreach (FieldInfo fieldInfo in modModuleFields[moduleType]) {
                             dict[fieldInfo.Name] = fieldInfo.GetValue(module);
                         }
 
@@ -813,7 +813,7 @@ public sealed class SaveLoadAction {
     private static void SupportBounceHelper() {
         if (ModUtils.GetType("BounceHelper", "Celeste.Mod.BounceHelper.BounceHelperModule") is { } bounceHelperModule) {
             Add(new SaveLoadAction(
-                (savedValues, _) => SaveStaticMemberValues(savedValues, bounceHelperModule, "enabled", "session"),
+                (savedValues, _) => SaveStaticMemberValues(savedValues, bounceHelperModule, "enabled"),
                 (savedValues, _) => LoadStaticMemberValues(savedValues))
             );
         }

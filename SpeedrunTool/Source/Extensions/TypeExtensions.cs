@@ -150,6 +150,10 @@ internal static class TypeExtensions {
         return type.Name.StartsWith("<");
     }
 
+    public static bool IsConst(this FieldInfo fieldInfo) {
+        return fieldInfo.IsLiteral && !fieldInfo.IsInitOnly;
+    }
+
     public static bool IsProperty(this MemberInfo memberInfo) {
         return (memberInfo.MemberType & MemberTypes.Property) != 0;
     }

@@ -23,7 +23,7 @@ internal class RoomTimerData {
         ResetTime();
     }
 
-    public long GetSelectedRoomTime => IsCompleted ? thisRunTimes[pbTimeKey] : Time;
+    public long GetSelectedRoomTime => IsCompleted ? thisRunTimes.GetValueOrDefault(pbTimeKey, 0) : Time;
     public long GetSelectedPbTime => pbTimes.GetValueOrDefault(pbTimeKey, 0);
     public long GetSelectedLastPbTime => lastPbTimes.GetValueOrDefault(pbTimeKey, 0);
     public string TimeString => FormatTime(GetSelectedRoomTime, false);
@@ -69,6 +69,7 @@ internal class RoomTimerData {
     }
 
     public void UpdateTimerState(bool endPoint) {
+        Level level = Engine.Scene as Level;
         switch (timerState) {
             case TimerState.WaitToStart:
                 if (!endPoint) {
@@ -78,7 +79,6 @@ internal class RoomTimerData {
                 break;
 
             case TimerState.Timing:
-                Level level = Engine.Scene as Level;
 
                 // if not using endpoint, track this run's time and pb times for each room number
                 if (!EndPoint.IsExist) {
@@ -87,9 +87,20 @@ internal class RoomTimerData {
                     if (Time < LastPbTime || LastPbTime == 0) {
                         pbTimes[thisRunTimeKey] = Time;
                     }
-                    roomNumber++;
+                    // don't overflow room number at level end
+                    if (level is { Completed: false }) {
+                        roomNumber++;
+                    }
                     if (roomNumber >= ModSettings.NumberOfRooms || level is { Completed: true }) {
                         timerState = TimerState.Completed;
+                    }
+                    // preserve behavior of reporting the finish time on level end even if number of rooms is too large
+                    if (level is { Completed: true } && roomNumber < ModSettings.NumberOfRooms) {
+                        thisRunTimes[pbTimeKey] = Time;
+                        LastPbTime = pbTimes.GetValueOrDefault(pbTimeKey, 0);
+                        if (Time < LastPbTime || LastPbTime == 0) {
+                            pbTimes[pbTimeKey] = Time;
+                        }
                     }
                 } 
                 // if using endpoint, ignore room count and only track a single complete time and pb time
@@ -111,7 +122,10 @@ internal class RoomTimerData {
                 // if not using endpoint, still track room times in the background
                 if (!EndPoint.IsExist) {
                     thisRunTimes[thisRunTimeKey] = Time;
-                    roomNumber++;
+                    // don't overflow room number at level end
+                    if (level is { Completed: false }) {
+                        roomNumber++;
+                    }
                     LastPbTime = pbTimes.GetValueOrDefault(thisRunTimeKey, 0);
                     if (Time < LastPbTime || LastPbTime == 0) {
                         pbTimes[thisRunTimeKey] = Time;

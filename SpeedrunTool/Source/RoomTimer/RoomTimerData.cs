@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Celeste.Mod.SpeedrunTool.SaveLoad;
 
 namespace Celeste.Mod.SpeedrunTool.RoomTimer;
 
@@ -42,7 +43,7 @@ internal class RoomTimerData {
             pbTimeKey += numberOfRooms;
         }
 
-        if (level.TimerStopped) {
+        if (StateManager.Instance.State != State.None) {
             return;
         }
 

@@ -28,7 +28,6 @@ public sealed class StateManager {
     private SaveData savedSaveData;
     private Task<DeepCloneState> preCloneTask;
     private FreezeType freezeType;
-    private int? ignorePlayerHairException;
 
     private enum FreezeType {
         None,
@@ -45,7 +44,6 @@ public sealed class StateManager {
         On.Celeste.Level.Update += UpdateBackdropWhenWaiting;
         On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
         On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
-        On.Celeste.PlayerHair.Render += PlayerHairOnRender;
         RegisterHotkeys();
     }
 
@@ -54,7 +52,6 @@ public sealed class StateManager {
         On.Celeste.Level.Update -= UpdateBackdropWhenWaiting;
         On.Monocle.Scene.Begin -= ClearStateWhenSwitchScene;
         On.Celeste.PlayerDeadBody.End -= AutoLoadStateWhenDeath;
-        On.Celeste.PlayerHair.Render -= PlayerHairOnRender;
     }
 
     private void RegisterHotkeys() {
@@ -125,10 +122,6 @@ public sealed class StateManager {
         }
 
         orig(level);
-
-        if (ignorePlayerHairException.HasValue) {
-            ignorePlayerHairException--;
-        }
     }
 
     private void ClearStateWhenSwitchScene(On.Monocle.Scene.orig_Begin orig, Scene self) {
@@ -167,14 +160,6 @@ public sealed class StateManager {
                 }
             };
             self.RemoveSelf();
-        } else {
-            orig(self);
-        }
-    }
-
-    private void PlayerHairOnRender(On.Celeste.PlayerHair.orig_Render orig, PlayerHair self) {
-        if (ignorePlayerHairException is >= 0 && self.Sprite?.HasHair == true && self.Sprite.HairCount != self.Nodes.Count) {
-            // ignore
         } else {
             orig(self);
         }
@@ -394,7 +379,6 @@ public sealed class StateManager {
         savedLevel = null;
         savedSaveData = null;
         preCloneTask = null;
-        ignorePlayerHairException = null;
         SaveLoadAction.OnClearState();
         State = State.None;
     }
@@ -448,7 +432,6 @@ public sealed class StateManager {
         }
 
         freezeType = FreezeType.None;
-        ignorePlayerHairException = 1;
     }
 
     private class WaitingEntity : Entity {

@@ -157,10 +157,8 @@ public static class RoomTimerManager {
             UpdateTimerState();
         }
 
-        if (!self.Completed && self.TimerStarted) {
-            NextRoomTimerData.Timing(self);
-            CurrentRoomTimerData.Timing(self);
-        }
+        NextRoomTimerData.Timing(self);
+        CurrentRoomTimerData.Timing(self);
     }
 
     private static void UpdateTimerStateOnTouchFlag(On.Celeste.SummitCheckpoint.orig_Update orig, SummitCheckpoint self) {

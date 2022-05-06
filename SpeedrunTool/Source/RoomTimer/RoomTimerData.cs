@@ -43,6 +43,10 @@ internal class RoomTimerData {
             pbTimeKey += numberOfRooms;
         }
 
+        if (level.Completed || !level.TimerStarted || level.TimerStopped) {
+            return;
+        }
+
         if (StateManager.Instance.State != State.None) {
             return;
         }

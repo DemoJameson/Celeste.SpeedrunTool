@@ -118,6 +118,8 @@ public sealed class StateManager {
             level.HiresSnow?.Update(level);
             level.Foreground.Update(level);
             level.Background.Update(level);
+            level.Tracker.GetEntity<Tooltip>()?.Update();
+            level.Tracker.GetEntity<NonFrozenMiniTextbox>()?.Update();
             return;
         }
 

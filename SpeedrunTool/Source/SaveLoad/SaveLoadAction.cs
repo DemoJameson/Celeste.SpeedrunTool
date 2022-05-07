@@ -165,6 +165,7 @@ public sealed class SaveLoadAction {
 
         initialized = true;
         InitFields();
+        BetterCasualPlay();
         SupportExternalMember();
         SupportCalcRandom();
         SupportMInput();
@@ -336,14 +337,22 @@ public sealed class SaveLoadAction {
             }));
     }
 
+    private static void BetterCasualPlay() {
+        Add(new SaveLoadAction(beforeSaveState: level => {
+            if (StateManager.Instance.SavedByTas) {
+                return;
+            }
+
+            // 移除冻结帧，移除暂停帧，移除暂停黑屏
+            Engine.FreezeTimer = 0f;
+            level.SetFieldValue("unpauseTimer", 0f);
+            level.HudRenderer.BackgroundFade = 0f;
+        }));
+    }
+
     private static void SupportExternalMember() {
         Add(new SaveLoadAction(
             (savedValues, _) => {
-                // 手动保存时移除冻结帧
-                if (!StateManager.Instance.SavedByTas) {
-                    Engine.FreezeTimer = 0f;
-                }
-
                 SaveStaticMemberValues(savedValues, typeof(Engine), "DashAssistFreeze", "DashAssistFreezePress", "DeltaTime", "FrameCounter",
                     "FreezeTimer", "RawDeltaTime", "TimeRate", "TimeRateB", "Pooler");
                 SaveStaticMemberValues(savedValues, typeof(Glitch), "Value");

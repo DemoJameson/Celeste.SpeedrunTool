@@ -165,6 +165,9 @@ public sealed class SaveLoadAction {
 
         initialized = true;
         InitFields();
+        SupportSimpleStaticFields();
+        SupportModModuleFields();
+        FixSaveLoadIcon();
         BetterCasualPlay();
         SupportExternalMember();
         SupportCalcRandom();
@@ -174,8 +177,6 @@ public sealed class SaveLoadAction {
         MuteAnnoyingAudios();
         ExternalAction();
         SupportModSessionAndSaveData();
-        SupportModModuleFields();
-        SupportSimpleStaticFields();
         SupportMaxHelpingHand();
         SupportPandorasBox();
         SupportCrystallineHelper();
@@ -289,25 +290,31 @@ public sealed class SaveLoadAction {
         }
     }
 
-    private static void SupportModSessionAndSaveData() {
+    private static void SupportSimpleStaticFields() {
         Add(new SaveLoadAction(
-            (savedValues, _) => {
-                foreach (EverestModule module in Everest.Modules.Where(module => module.GetType().Name != "NullModule")) {
-                    savedValues[module.GetType()] = new Dictionary<string, object> {
-                        {"_Session", module._Session},
-                        {"_SaveData", module._SaveData},
-                    }.DeepCloneShared();
+            (dictionary, _) => {
+                foreach (Type type in simpleStaticFields.Keys) {
+                    FieldInfo[] fieldInfos = simpleStaticFields[type];
+                    // ("\n\n" + string.Join("\n", fieldInfos.Select(info => type.FullName + " " + info.Name + " " + info.FieldType))).DebugLog();
+                    Dictionary<string, object> values = new();
+
+                    foreach (FieldInfo fieldInfo in fieldInfos) {
+                        values[fieldInfo.Name] = fieldInfo.GetValue(null);
+                    }
+
+                    dictionary[type] = values.DeepCloneShared();
                 }
-            },
-            (savedValues, _) => {
-                Dictionary<Type, Dictionary<string, object>> clonedValues = savedValues.DeepCloneShared();
-                foreach (EverestModule module in Everest.Modules.Where(module => module.GetType().Name != "NullModule")) {
-                    if (clonedValues.TryGetValue(module.GetType(), out Dictionary<string, object> dictionary)) {
-                        module._Session = dictionary["_Session"] as EverestModuleSession;
-                        module._SaveData = dictionary["_SaveData"] as EverestModuleSaveData;
+            }, (dictionary, _) => {
+                Dictionary<Type, Dictionary<string, object>> clonedDict = dictionary.DeepCloneShared();
+                foreach (Type type in clonedDict.Keys) {
+                    Dictionary<string, object> values = clonedDict[type];
+                    // ("\n\n" + string.Join("\n", values.Select(pair => type.FullName + " " + pair.Key + " " + pair.Value))).DebugLog();
+                    foreach (KeyValuePair<string, object> pair in values) {
+                        type.SetFieldValue(pair.Key, pair.Value);
                     }
                 }
-            }));
+            }
+        ));
     }
 
     private static void SupportModModuleFields() {
@@ -335,6 +342,15 @@ public sealed class SaveLoadAction {
                     }
                 }
             }));
+    }
+
+    private static void FixSaveLoadIcon() {
+        Add(new SaveLoadAction(loadState: (_, _) => {
+            // 修复右下角存档图标残留
+            if (!typeof(UserIO).GetFieldValue<bool>("savingInternal")) {
+                SaveLoadIcon.Hide();
+            }
+        }));
     }
 
     private static void BetterCasualPlay() {
@@ -368,33 +384,6 @@ public sealed class SaveLoadAction {
         Add(new SaveLoadAction(
             (savedValues, _) => SaveStaticMemberValues(savedValues, type, "Random", "randomStack"),
             (savedValues, _) => LoadStaticMemberValues(savedValues)));
-    }
-
-    private static void SupportSimpleStaticFields() {
-        Add(new SaveLoadAction(
-            (dictionary, _) => {
-                foreach (Type type in simpleStaticFields.Keys) {
-                    FieldInfo[] fieldInfos = simpleStaticFields[type];
-                    // ("\n\n" + string.Join("\n", fieldInfos.Select(info => type.FullName + " " + info.Name + " " + info.FieldType))).DebugLog();
-                    Dictionary<string, object> values = new();
-
-                    foreach (FieldInfo fieldInfo in fieldInfos) {
-                        values[fieldInfo.Name] = fieldInfo.GetValue(null);
-                    }
-
-                    dictionary[type] = values.DeepCloneShared();
-                }
-            }, (dictionary, _) => {
-                Dictionary<Type, Dictionary<string, object>> clonedDict = dictionary.DeepCloneShared();
-                foreach (Type type in clonedDict.Keys) {
-                    Dictionary<string, object> values = clonedDict[type];
-                    // ("\n\n" + string.Join("\n", values.Select(pair => type.FullName + " " + pair.Key + " " + pair.Value))).DebugLog();
-                    foreach (KeyValuePair<string, object> pair in values) {
-                        type.SetFieldValue(pair.Key, pair.Value);
-                    }
-                }
-            }
-        ));
     }
 
     private static void SupportMInput() {
@@ -490,6 +479,27 @@ public sealed class SaveLoadAction {
                 }
             )
         );
+    }
+    
+    private static void SupportModSessionAndSaveData() {
+        Add(new SaveLoadAction(
+            (savedValues, _) => {
+                foreach (EverestModule module in Everest.Modules.Where(module => module.GetType().Name != "NullModule")) {
+                    savedValues[module.GetType()] = new Dictionary<string, object> {
+                        {"_Session", module._Session},
+                        {"_SaveData", module._SaveData},
+                    }.DeepCloneShared();
+                }
+            },
+            (savedValues, _) => {
+                Dictionary<Type, Dictionary<string, object>> clonedValues = savedValues.DeepCloneShared();
+                foreach (EverestModule module in Everest.Modules.Where(module => module.GetType().Name != "NullModule")) {
+                    if (clonedValues.TryGetValue(module.GetType(), out Dictionary<string, object> dictionary)) {
+                        module._Session = dictionary["_Session"] as EverestModuleSession;
+                        module._SaveData = dictionary["_SaveData"] as EverestModuleSaveData;
+                    }
+                }
+            }));
     }
 
     private static RESULT EventDescriptionOnCreateInstance(On.FMOD.Studio.EventDescription.orig_createInstance orig, EventDescription self,

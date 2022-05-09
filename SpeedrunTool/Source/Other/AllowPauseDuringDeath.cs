@@ -49,7 +49,7 @@ public static class AllowPauseDuringDeath {
     private static void DisableRetryMenu(ILCursor ilCursor, ILContext ilContext) {
         if (ilCursor.TryGotoNext(MoveType.After, ins => ins.MatchLdfld<Level>("CanRetry"))) {
             ilCursor.EmitDelegate<Func<bool, bool>>(canRetry => {
-                if (!ModSettings.Enabled || !ModSettings.AllowPauseDuringDeath) {
+                if (!ModSettings.Enabled || !ModSettings.AllowPauseDuringDeath || TasUtils.Running) {
                     return canRetry;
                 }
 

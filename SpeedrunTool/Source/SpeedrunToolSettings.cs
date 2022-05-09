@@ -70,6 +70,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     [SettingRange(1, 9)] public int RespawnSpeed { get; set; } = 1;
     [SettingRange(1, 9)] public int RestartChapterSpeed { get; set; } = 1;
     public bool SkipRestartChapterScreenWipe { get; set; } = false;
+    public bool AllowPauseDuringDeath { get; set; } = false;
     public bool MuteInBackground { get; set; }
     public PopupMessageStyle PopupMessageStyle { get; set; } = PopupMessageStyle.Tooltip;
     public bool Hotkeys { get; set; } = true;

@@ -1,8 +1,8 @@
 ﻿using System.Reflection;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
+using Celeste.Mod.SpeedrunTool.Utils;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
-using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
 
 namespace Celeste.Mod.SpeedrunTool.Message;
@@ -10,7 +10,6 @@ namespace Celeste.Mod.SpeedrunTool.Message;
 [Tracked]
 public class NonFrozenMiniTextbox : MiniTextbox {
     private static readonly MethodInfo RoutineMethod = typeof(MiniTextbox).GetMethodInfo("Routine").GetStateMachineTarget();
-    private static ILHook routineHook;
 
     private NonFrozenMiniTextbox(string dialogId, string message = null) : base(dialogId) {
         AddTag(Tags.Global | Tags.HUD | Tags.FrozenUpdate | Tags.PauseUpdate | Tags.TransitionUpdate);
@@ -26,18 +25,15 @@ public class NonFrozenMiniTextbox : MiniTextbox {
     [Load]
     private static void Load() {
         IL.Celeste.MiniTextbox.Render += MiniTextboxOnRender;
-        routineHook = new ILHook(RoutineMethod, QuicklyClose);
+        RoutineMethod.ILHook(QuicklyClose);
     }
 
     [Unload]
     private static void Unload() {
         IL.Celeste.MiniTextbox.Render -= MiniTextboxOnRender;
-        routineHook?.Dispose();
-        routineHook = null;
     }
 
-    private static void QuicklyClose(ILContext il) {
-        ILCursor ilCursor = new(il);
+    private static void QuicklyClose(ILCursor ilCursor, ILContext il) {
         if (ilCursor.TryGotoNext(MoveType.After, i => i.OpCode == OpCodes.Ldarg_0, i => i.MatchLdcR4(3))) {
             ilCursor.Emit(OpCodes.Ldarg_0);
             ilCursor.Emit(OpCodes.Ldfld, RoutineMethod.DeclaringType.GetField("<>4__this"));

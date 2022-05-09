@@ -85,10 +85,7 @@ public static class StateMarkUtils {
             return;
         }
 
-        cursor.EmitDelegate<Func<bool>>(() =>
-            ModSettings.RoomTimerType == RoomTimerType.Off
-            && Engine.Scene is Level {Completed: false} level && GetSavedStateFlag(level) && !StateManager.Instance.SavedByTas
-        );
+        cursor.EmitDelegate<Func<bool>>(IsChangeTimerColor);
 
         ILLabel beforeInstr = cursor.DefineLabel();
         cursor.Emit(OpCodes.Brfalse, beforeInstr);
@@ -107,6 +104,10 @@ public static class StateMarkUtils {
 
         cursor.Emit(OpCodes.Br, afterInstr);
         cursor.MarkLabel(beforeInstr);
+    }
+
+    private static bool IsChangeTimerColor() {
+        return ModSettings.RoomTimerType == RoomTimerType.Off && Engine.Scene is Level {Completed: false} level && GetSavedStateFlag(level) && !StateManager.Instance.SavedByTas;
     }
 
     private static void LevelOnReload(ILContext il) {

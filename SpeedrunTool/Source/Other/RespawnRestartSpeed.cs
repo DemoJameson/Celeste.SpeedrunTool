@@ -10,8 +10,6 @@ namespace Celeste.Mod.SpeedrunTool.Other;
 public static class RespawnRestartSpeed {
     private const string StopFastRestartFlag = nameof(StopFastRestartFlag);
 
-    private static ILHook ilHook;
-
     [Load]
     private static void Load() {
         using (new DetourContext {After = new List<string> {"*"}}) {
@@ -19,7 +17,7 @@ public static class RespawnRestartSpeed {
         }
 
         if (ModUtils.VanillaAssembly.GetType("Celeste.Level+<>c__DisplayClass150_0")?.GetMethodInfo("<GiveUp>b__0") is { } methodInfo) {
-            ilHook = new ILHook(methodInfo, Manipulator);
+            methodInfo.ILHook(ModRestartMenu);
         }
 
         SaveLoadAction.Add(new SaveLoadAction(beforeSaveState: level => level.Session.SetFlag(StopFastRestartFlag)));
@@ -28,7 +26,6 @@ public static class RespawnRestartSpeed {
     [Unload]
     private static void Unload() {
         On.Monocle.Engine.Update -= RespawnSpeed;
-        ilHook?.Dispose();
     }
 
     private static void RespawnSpeed(On.Monocle.Engine.orig_Update orig, Engine self, GameTime time) {
@@ -76,8 +73,7 @@ public static class RespawnRestartSpeed {
     }
 
     // 移除重启章节前面的黑屏
-    private static void Manipulator(ILContext il) {
-        ILCursor ilCursor = new(il);
+    private static void ModRestartMenu(ILCursor ilCursor, ILContext il) {
         if (ilCursor.TryGotoNext(
                 MoveType.After,
                 ins => ins.OpCode == OpCodes.Ldfld && ins.Operand.ToString().EndsWith("::restartArea"),

@@ -9,7 +9,6 @@ using FMOD;
 using FMOD.Studio;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
-using MonoMod.RuntimeDetour;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
@@ -19,7 +18,6 @@ public sealed class SaveLoadAction {
     public static readonly List<VirtualAsset> VirtualAssets = new();
 
     private static readonly List<SaveLoadAction> All = new();
-    private static ILHook modDeathTrackerHook;
 
     private static Dictionary<Type, FieldInfo[]> simpleStaticFields;
     private static Dictionary<Type, FieldInfo[]> modModuleFields;
@@ -151,8 +149,6 @@ public sealed class SaveLoadAction {
     private static void Unload() {
         All.Clear();
         On.FMOD.Studio.EventDescription.createInstance -= EventDescriptionOnCreateInstance;
-        modDeathTrackerHook?.Dispose();
-        modDeathTrackerHook = null;
     }
 
     // 第一次 SL 时才初始化，避免通过安装依赖功能解除禁用的 Mod 被忽略
@@ -798,8 +794,7 @@ public sealed class SaveLoadAction {
     private static void SupportDeathTracker() {
         if (ModUtils.GetType("DeathTracker", "CelesteDeathTracker.DeathTrackerModule+<>c__DisplayClass6_0")?.GetMethodInfo("<Load>b__2") is {} modPlayerSpawn &&
             ModUtils.GetType("DeathTracker", "CelesteDeathTracker.DeathDisplay") is {} deathDisplayType) {
-            modDeathTrackerHook = new ILHook(modPlayerSpawn, il => {
-                ILCursor ilCursor = new(il);
+            modPlayerSpawn.ILHook((ilCursor, _) => {
                 // display => player.Scene.Entities.FindFirst<DeathDisplay>()
                 if (ilCursor.TryGotoNext(MoveType.After, ins => ins.OpCode == OpCodes.Ldarg_0,
                         ins => ins.OpCode == OpCodes.Ldfld && ins.Operand.ToString().EndsWith("::display"))) {

@@ -111,8 +111,12 @@ public static class RoomTimerManager {
                 ins => ins.MatchLdfld<SpeedrunTimerDisplay>("DrawLerp"),
                 ins => ins.OpCode == OpCodes.Ldloc_1
             )) {
-            ilCursor.EmitDelegate<Func<bool, bool>>(showTimer => showTimer || ModSettings.RoomTimerType != RoomTimerType.Off);
+            ilCursor.EmitDelegate<Func<bool, bool>>(IsShowTimer);
         }
+    }
+
+    private static bool IsShowTimer(bool showTimer) {
+        return showTimer || ModSettings.RoomTimerType != RoomTimerType.Off;
     }
 
     private static void CreateEndPoint(Level level, bool additional = false) {

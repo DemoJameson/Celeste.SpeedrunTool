@@ -1,4 +1,5 @@
 ﻿using Celeste.Mod.SpeedrunTool.Utils;
+using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.Other;
 
@@ -8,6 +9,7 @@ public static class AllowPauseDuringDeath {
     [Load]
     private static void Load() {
         On.Celeste.Level.Update += LevelOnUpdate;
+        typeof(Level).GetMethodInfo("orig_Pause").ILHook(DisableRetryMenu);
     }
 
     [Unload]
@@ -42,5 +44,17 @@ public static class AllowPauseDuringDeath {
             Input.ESC.ConsumeBuffer();
             level.Pause();
         }
+    }
+
+    private static void DisableRetryMenu(ILCursor ilCursor, ILContext ilContext) {
+        if (ilCursor.TryGotoNext(MoveType.After, ins => ins.MatchLdfld<Level>("CanRetry"))) {
+            ilCursor.EmitDelegate<Func<bool, bool>>(canRetry => {
+                if (!ModSettings.Enabled || !ModSettings.AllowPauseDuringDeath) {
+                    return canRetry;
+                }
+
+                return !Engine.Scene.IsPlayerDead() && canRetry;
+            });
+        } 
     }
 }

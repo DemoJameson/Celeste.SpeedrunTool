@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Celeste.Mod.SpeedrunTool.Utils;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
@@ -7,7 +8,7 @@ using MonoMod.RuntimeDetour;
 namespace Celeste.Mod.SpeedrunTool.Other;
 
 public static class RespawnRestartSpeed {
-    private static ILHook ilHook;
+    private const string StopFastRestartFlag = nameof(StopFastRestartFlag);
 
     [Load]
     private static void Load() {
@@ -15,16 +16,16 @@ public static class RespawnRestartSpeed {
             On.Monocle.Engine.Update += RespawnSpeed;
         }
 
-
         if (ModUtils.VanillaAssembly.GetType("Celeste.Level+<>c__DisplayClass150_0")?.GetMethodInfo("<GiveUp>b__0") is { } methodInfo) {
-            ilHook = new ILHook(methodInfo, Manipulator);
+            methodInfo.ILHook(ModRestartMenu);
         }
+
+        SaveLoadAction.Add(new SaveLoadAction(beforeSaveState: level => level.Session.SetFlag(StopFastRestartFlag)));
     }
 
     [Unload]
     private static void Unload() {
         On.Monocle.Engine.Update -= RespawnSpeed;
-        ilHook?.Dispose();
     }
 
     private static void RespawnSpeed(On.Monocle.Engine.orig_Update orig, Engine self, GameTime time) {
@@ -56,23 +57,23 @@ public static class RespawnRestartSpeed {
     }
 
     private static bool RequireFastRestart(Level level, Player player) {
-        if (level.Session.GetFlag("StopFastRestart")) {
+        if (level.Session.GetFlag(StopFastRestartFlag)) {
             return false;
         }
 
-        bool result = !level.TimerStarted && level.Session.Area.ID != 8 && !level.SkippingCutscene && player?.StateMachine.State != Player.StIntroRespawn ||
+        bool result = !level.TimerStarted && level.Session.Area.ID != 8 && !level.SkippingCutscene &&
+                      player?.StateMachine.State != Player.StIntroRespawn ||
                       level.TimerStarted && !level.InCutscene && level.Session.FirstLevel && player?.InControl != true;
 
         if (!result) {
-            level.Session.SetFlag("StopFastRestart");
+            level.Session.SetFlag(StopFastRestartFlag);
         }
 
         return result;
     }
 
     // 移除重启章节前面的黑屏
-    private static void Manipulator(ILContext il) {
-        ILCursor ilCursor = new(il);
+    private static void ModRestartMenu(ILCursor ilCursor, ILContext il) {
         if (ilCursor.TryGotoNext(
                 MoveType.After,
                 ins => ins.OpCode == OpCodes.Ldfld && ins.Operand.ToString().EndsWith("::restartArea"),

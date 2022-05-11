@@ -28,9 +28,9 @@ public sealed class StateManager {
     private SaveData savedSaveData;
     private Task<DeepCloneState> preCloneTask;
     private FreezeType freezeType;
-    private int? ignorePlayerHairException;
 
     private enum FreezeType {
+        None,
         Save,
         Load
     }
@@ -44,7 +44,6 @@ public sealed class StateManager {
         On.Celeste.Level.Update += UpdateBackdropWhenWaiting;
         On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
         On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
-        On.Celeste.PlayerHair.Render += PlayerHairOnRender;
         RegisterHotkeys();
     }
 
@@ -53,7 +52,6 @@ public sealed class StateManager {
         On.Celeste.Level.Update -= UpdateBackdropWhenWaiting;
         On.Monocle.Scene.Begin -= ClearStateWhenSwitchScene;
         On.Celeste.PlayerDeadBody.End -= AutoLoadStateWhenDeath;
-        On.Celeste.PlayerHair.Render -= PlayerHairOnRender;
     }
 
     private void RegisterHotkeys() {
@@ -115,16 +113,17 @@ public sealed class StateManager {
     }
 
     private void UpdateBackdropWhenWaiting(On.Celeste.Level.orig_Update orig, Level level) {
-        orig(level);
-
-        if (State == State.Waiting && level.Frozen) {
+        if (State != State.None) {
+            level.Wipe?.Update(level);
+            level.HiresSnow?.Update(level);
             level.Foreground.Update(level);
             level.Background.Update(level);
+            level.Tracker.GetEntity<Tooltip>()?.Update();
+            level.Tracker.GetEntity<NonFrozenMiniTextbox>()?.Update();
+            return;
         }
 
-        if (ignorePlayerHairException.HasValue) {
-            ignorePlayerHairException--;
-        }
+        orig(level);
     }
 
     private void ClearStateWhenSwitchScene(On.Monocle.Scene.orig_Begin orig, Scene self) {
@@ -168,14 +167,6 @@ public sealed class StateManager {
         }
     }
 
-    private void PlayerHairOnRender(On.Celeste.PlayerHair.orig_Render orig, PlayerHair self) {
-        if (ignorePlayerHairException is >= 0 && self.Sprite?.HasHair == true && self.Sprite.HairCount != self.Nodes.Count) {
-            // ignore
-        } else {
-            orig(self);
-        }
-    }
-
     #endregion Hook
 
     // public for TAS Mod
@@ -213,7 +204,7 @@ public sealed class StateManager {
         if (tas) {
             State = State.None;
         } else {
-            FreezeGame(level, FreezeType.Save);
+            FreezeGame(FreezeType.Save);
             level.Add(new WaitingEntity());
         }
 
@@ -259,7 +250,7 @@ public sealed class StateManager {
         if (tas) {
             LoadStateComplete(level);
         } else {
-            FreezeGame(level, FreezeType.Load);
+            FreezeGame(FreezeType.Load);
             DoScreenWipe(level);
         }
 
@@ -330,9 +321,6 @@ public sealed class StateManager {
     }
 
     private void LoadStateComplete(Level level) {
-        level.Frozen = savedLevel.Frozen;
-        level.TimerStopped = savedLevel.TimerStopped;
-        level.PauseLock = savedLevel.PauseLock;
         level.TimeActive = savedLevel.TimeActive;
         level.RawTimeActive = savedLevel.RawTimeActive;
         RestoreAudio2();
@@ -393,7 +381,6 @@ public sealed class StateManager {
         savedLevel = null;
         savedSaveData = null;
         preCloneTask = null;
-        ignorePlayerHairException = null;
         SaveLoadAction.OnClearState();
         State = State.None;
     }
@@ -420,11 +407,8 @@ public sealed class StateManager {
         return State == State.None && !level.Paused && (!level.IsPlayerDead() && !level.SkippingCutscene || tas);
     }
 
-    private void FreezeGame(Level level, FreezeType freeze) {
+    private void FreezeGame(FreezeType freeze) {
         freezeType = freeze;
-        level.Frozen = true;
-        level.TimerStopped = true;
-        level.PauseLock = true;
     }
 
     private void DoScreenWipe(Level level) {
@@ -439,9 +423,6 @@ public sealed class StateManager {
 
     private void OutOfFreeze(Level level) {
         if (freezeType == FreezeType.Save || savedLevel == null) {
-            level.Frozen = savedLevel?.Frozen ?? false;
-            level.TimerStopped = savedLevel?.TimerStopped ?? false;
-            level.PauseLock = savedLevel?.PauseLock ?? false;
             if (savedLevel != null) {
                 level.TimeActive = savedLevel.TimeActive;
                 level.RawTimeActive = savedLevel.RawTimeActive;
@@ -452,7 +433,7 @@ public sealed class StateManager {
             LoadStateComplete(level);
         }
 
-        ignorePlayerHairException = 1;
+        freezeType = FreezeType.None;
     }
 
     private class WaitingEntity : Entity {

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Celeste.Mod.SpeedrunTool.SaveLoad;
 
 namespace Celeste.Mod.SpeedrunTool.RoomTimer;
 
@@ -53,7 +54,15 @@ internal class RoomTimerData {
     }
 
     public void Timing(Level level) {
-        if (level.TimerStopped || timerState == TimerState.WaitToStart) {
+        UpdateTimeKeys(level);
+
+        if (timerState == TimerState.WaitToStart) {
+            return;
+        }
+        if (level.Completed || !level.TimerStarted || level.TimerStopped) {
+            return;
+        }
+        if (StateManager.Instance.State != State.None) {
             return;
         }
 

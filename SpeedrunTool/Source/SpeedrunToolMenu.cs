@@ -119,6 +119,9 @@ public static class SpeedrunToolMenu {
 
                 subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.SkipRestartChapterScreenWipe), ModSettings.SkipRestartChapterScreenWipe).Change(b =>
                     ModSettings.SkipRestartChapterScreenWipe = b));
+                
+                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AllowPauseDuringDeath), ModSettings.AllowPauseDuringDeath).Change(b =>
+                    ModSettings.AllowPauseDuringDeath = b));
 
                 subMenu.Add(
                     new TextMenu.OnOff(Dialog.Clean(DialogIds.MuteInBackground), ModSettings.MuteInBackground).Change(b =>

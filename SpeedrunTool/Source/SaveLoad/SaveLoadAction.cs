@@ -9,7 +9,6 @@ using FMOD;
 using FMOD.Studio;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
-using MonoMod.RuntimeDetour;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
@@ -19,10 +18,9 @@ public sealed class SaveLoadAction {
     public static readonly List<VirtualAsset> VirtualAssets = new();
 
     private static readonly List<SaveLoadAction> All = new();
-    private static ILHook modDeathTrackerHook;
 
     private static Dictionary<Type, FieldInfo[]> simpleStaticFields;
-    private static Dictionary<Type, FieldInfo[]> modModuleLevelFields;
+    private static Dictionary<Type, FieldInfo[]> modModuleFields;
 
     private static readonly HashSet<string> RequireMuteAudioPaths = new() {
         "event:/game/general/strawberry_get",
@@ -151,8 +149,6 @@ public sealed class SaveLoadAction {
     private static void Unload() {
         All.Clear();
         On.FMOD.Studio.EventDescription.createInstance -= EventDescriptionOnCreateInstance;
-        modDeathTrackerHook?.Dispose();
-        modDeathTrackerHook = null;
     }
 
     // 第一次 SL 时才初始化，避免通过安装依赖功能解除禁用的 Mod 被忽略
@@ -165,6 +161,10 @@ public sealed class SaveLoadAction {
 
         initialized = true;
         InitFields();
+        SupportSimpleStaticFields();
+        SupportModModuleFields();
+        FixSaveLoadIcon();
+        BetterCasualPlay();
         SupportExternalMember();
         SupportCalcRandom();
         SupportMInput();
@@ -173,8 +173,6 @@ public sealed class SaveLoadAction {
         MuteAnnoyingAudios();
         ExternalAction();
         SupportModSessionAndSaveData();
-        SupportModModuleLevelFields();
-        SupportSimpleStaticFields();
         SupportMaxHelpingHand();
         SupportPandorasBox();
         SupportCrystallineHelper();
@@ -184,6 +182,7 @@ public sealed class SaveLoadAction {
         SupportIsaGrabBag();
         SupportDeathTracker();
         SupportCommunalHelper();
+        SupportBounceHelper();
 
         // 放最后，确保收集了所有克隆的 VirtualAssets
         ReloadVirtualAssets();
@@ -191,7 +190,7 @@ public sealed class SaveLoadAction {
 
     private static void InitFields() {
         simpleStaticFields = new Dictionary<Type, FieldInfo[]>();
-        modModuleLevelFields = new Dictionary<Type, FieldInfo[]>();
+        modModuleFields = new Dictionary<Type, FieldInfo[]>();
 
         IEnumerable<Type> types = FakeAssembly.GetFakeEntryAssembly().GetTypes().Where(type =>
             !type.IsGenericType
@@ -205,7 +204,7 @@ public sealed class SaveLoadAction {
             FieldInfo[] fieldInfos = type.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
                 .Where(info => {
                     Type fieldType = info.FieldType;
-                    return !info.IsLiteral && fieldType.IsSimpleClass(_ =>
+                    return !info.IsConst() && fieldType.IsSimpleClass(_ =>
                         fieldType == type
                         || fieldType == typeof(Level)
                         || fieldType == typeof(MTexture)
@@ -254,7 +253,7 @@ public sealed class SaveLoadAction {
             List<FieldInfo> instanceFields = new();
 
             FieldInfo[] fieldInfos = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
-            foreach (FieldInfo fieldInfo in fieldInfos.Where(info => !info.IsLiteral && info.FieldType == typeof(Level))) {
+            foreach (FieldInfo fieldInfo in fieldInfos.Where(info => !info.IsInitOnly && (info.FieldType == typeof(Level) || info.FieldType == typeof(Session)))) {
                 if (fieldInfo.IsStatic) {
                     staticFields.Add(fieldInfo);
                 } else {
@@ -267,7 +266,7 @@ public sealed class SaveLoadAction {
             }
 
             if (instanceFields.Count > 0) {
-                modModuleLevelFields[type] = instanceFields.ToArray();
+                modModuleFields[type] = instanceFields.ToArray();
             }
         }
     }
@@ -276,7 +275,7 @@ public sealed class SaveLoadAction {
         if (ModUtils.GetType("ExtendedVariantMode", "ExtendedVariants.Variants.AbstractExtendedVariant") is { } variantType) {
             foreach (Type type in variantType.Assembly.GetTypesSafe().Where(type => type.IsSubclassOf(variantType))) {
                 FieldInfo[] fieldInfos = type.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-                    .Where(info => !info.IsLiteral && info.FieldType.IsSimpleClass()).ToArray();
+                    .Where(info => !info.IsConst() && info.FieldType.IsSimpleClass()).ToArray();
 
                 if (fieldInfos.Length == 0) {
                     continue;
@@ -285,79 +284,6 @@ public sealed class SaveLoadAction {
                 simpleStaticFields[type] = fieldInfos;
             }
         }
-    }
-
-    private static void SupportModSessionAndSaveData() {
-        Add(new SaveLoadAction(
-            (savedValues, _) => {
-                foreach (EverestModule module in Everest.Modules.Where(module => module.GetType().Name != "NullModule")) {
-                    savedValues[module.GetType()] = new Dictionary<string, object> {
-                        {"_Session", module._Session},
-                        {"_SaveData", module._SaveData},
-                    }.DeepCloneShared();
-                }
-            },
-            (savedValues, _) => {
-                Dictionary<Type, Dictionary<string, object>> clonedValues = savedValues.DeepCloneShared();
-                foreach (EverestModule module in Everest.Modules.Where(module => module.GetType().Name != "NullModule")) {
-                    if (clonedValues.TryGetValue(module.GetType(), out Dictionary<string, object> dictionary)) {
-                        module._Session = dictionary["_Session"] as EverestModuleSession;
-                        module._SaveData = dictionary["_SaveData"] as EverestModuleSaveData;
-                    }
-                }
-            }));
-    }
-
-    private static void SupportModModuleLevelFields() {
-        Add(new SaveLoadAction(
-            (savedValues, _) => {
-                foreach (EverestModule module in Everest.Modules) {
-                    Dictionary<string, object> dict = new();
-                    Type moduleType = module.GetType();
-                    if (modModuleLevelFields.ContainsKey(moduleType)) {
-                        foreach (FieldInfo fieldInfo in modModuleLevelFields[moduleType]) {
-                            dict[fieldInfo.Name] = fieldInfo.GetValue(module);
-                        }
-
-                        savedValues[moduleType] = dict.DeepCloneShared();
-                    }
-                }
-            },
-            (savedValues, _) => {
-                Dictionary<Type, Dictionary<string, object>> clonedValues = savedValues.DeepCloneShared();
-                foreach (EverestModule module in Everest.Modules) {
-                    if (clonedValues.TryGetValue(module.GetType(), out Dictionary<string, object> dict)) {
-                        foreach (string fieldName in dict.Keys) {
-                            module.SetFieldValue(fieldName, dict[fieldName]);
-                        }
-                    }
-                }
-            }));
-    }
-
-    private static void SupportExternalMember() {
-        Add(new SaveLoadAction(
-            (savedValues, _) => {
-                // 手动保存时移除冻结帧
-                if (!StateManager.Instance.SavedByTas) {
-                    Engine.FreezeTimer = 0f;
-                }
-
-                SaveStaticMemberValues(savedValues, typeof(Engine), "DashAssistFreeze", "DashAssistFreezePress", "DeltaTime", "FrameCounter",
-                    "FreezeTimer", "RawDeltaTime", "TimeRate", "TimeRateB", "Pooler");
-                SaveStaticMemberValues(savedValues, typeof(Glitch), "Value");
-                SaveStaticMemberValues(savedValues, typeof(Distort), "Anxiety", "GameRate");
-                SaveStaticMemberValues(savedValues, typeof(ScreenWipe), "WipeColor");
-                SaveStaticMemberValues(savedValues, typeof(Audio), "currentCamera");
-            },
-            (savedValues, _) => LoadStaticMemberValues(savedValues)));
-    }
-
-    private static void SupportCalcRandom() {
-        Type type = typeof(Calc);
-        Add(new SaveLoadAction(
-            (savedValues, _) => SaveStaticMemberValues(savedValues, type, "Random", "randomStack"),
-            (savedValues, _) => LoadStaticMemberValues(savedValues)));
     }
 
     private static void SupportSimpleStaticFields() {
@@ -385,6 +311,75 @@ public sealed class SaveLoadAction {
                 }
             }
         ));
+    }
+
+    private static void SupportModModuleFields() {
+        Add(new SaveLoadAction(
+            (savedValues, _) => {
+                foreach (EverestModule module in Everest.Modules) {
+                    Dictionary<string, object> dict = new();
+                    Type moduleType = module.GetType();
+                    if (modModuleFields.ContainsKey(moduleType)) {
+                        foreach (FieldInfo fieldInfo in modModuleFields[moduleType]) {
+                            dict[fieldInfo.Name] = fieldInfo.GetValue(module);
+                        }
+
+                        savedValues[moduleType] = dict.DeepCloneShared();
+                    }
+                }
+            },
+            (savedValues, _) => {
+                Dictionary<Type, Dictionary<string, object>> clonedValues = savedValues.DeepCloneShared();
+                foreach (EverestModule module in Everest.Modules) {
+                    if (clonedValues.TryGetValue(module.GetType(), out Dictionary<string, object> dict)) {
+                        foreach (string fieldName in dict.Keys) {
+                            module.SetFieldValue(fieldName, dict[fieldName]);
+                        }
+                    }
+                }
+            }));
+    }
+
+    private static void FixSaveLoadIcon() {
+        Add(new SaveLoadAction(loadState: (_, _) => {
+            // 修复右下角存档图标残留
+            if (!typeof(UserIO).GetFieldValue<bool>("savingInternal")) {
+                SaveLoadIcon.Hide();
+            }
+        }));
+    }
+
+    private static void BetterCasualPlay() {
+        Add(new SaveLoadAction(beforeSaveState: level => {
+            if (StateManager.Instance.SavedByTas) {
+                return;
+            }
+
+            // 移除冻结帧，移除暂停帧，移除暂停黑屏
+            Engine.FreezeTimer = 0f;
+            level.SetFieldValue("unpauseTimer", 0f);
+            level.HudRenderer.BackgroundFade = 0f;
+        }));
+    }
+
+    private static void SupportExternalMember() {
+        Add(new SaveLoadAction(
+            (savedValues, _) => {
+                SaveStaticMemberValues(savedValues, typeof(Engine), "DashAssistFreeze", "DashAssistFreezePress", "DeltaTime", "FrameCounter",
+                    "FreezeTimer", "RawDeltaTime", "TimeRate", "TimeRateB", "Pooler");
+                SaveStaticMemberValues(savedValues, typeof(Glitch), "Value");
+                SaveStaticMemberValues(savedValues, typeof(Distort), "Anxiety", "GameRate");
+                SaveStaticMemberValues(savedValues, typeof(ScreenWipe), "WipeColor");
+                SaveStaticMemberValues(savedValues, typeof(Audio), "currentCamera");
+            },
+            (savedValues, _) => LoadStaticMemberValues(savedValues)));
+    }
+
+    private static void SupportCalcRandom() {
+        Type type = typeof(Calc);
+        Add(new SaveLoadAction(
+            (savedValues, _) => SaveStaticMemberValues(savedValues, type, "Random", "randomStack"),
+            (savedValues, _) => LoadStaticMemberValues(savedValues)));
     }
 
     private static void SupportMInput() {
@@ -480,6 +475,27 @@ public sealed class SaveLoadAction {
                 }
             )
         );
+    }
+    
+    private static void SupportModSessionAndSaveData() {
+        Add(new SaveLoadAction(
+            (savedValues, _) => {
+                foreach (EverestModule module in Everest.Modules.Where(module => module.GetType().Name != "NullModule")) {
+                    savedValues[module.GetType()] = new Dictionary<string, object> {
+                        {"_Session", module._Session},
+                        {"_SaveData", module._SaveData},
+                    }.DeepCloneShared();
+                }
+            },
+            (savedValues, _) => {
+                Dictionary<Type, Dictionary<string, object>> clonedValues = savedValues.DeepCloneShared();
+                foreach (EverestModule module in Everest.Modules.Where(module => module.GetType().Name != "NullModule")) {
+                    if (clonedValues.TryGetValue(module.GetType(), out Dictionary<string, object> dictionary)) {
+                        module._Session = dictionary["_Session"] as EverestModuleSession;
+                        module._SaveData = dictionary["_SaveData"] as EverestModuleSaveData;
+                    }
+                }
+            }));
     }
 
     private static RESULT EventDescriptionOnCreateInstance(On.FMOD.Studio.EventDescription.orig_createInstance orig, EventDescription self,
@@ -778,8 +794,7 @@ public sealed class SaveLoadAction {
     private static void SupportDeathTracker() {
         if (ModUtils.GetType("DeathTracker", "CelesteDeathTracker.DeathTrackerModule+<>c__DisplayClass6_0")?.GetMethodInfo("<Load>b__2") is {} modPlayerSpawn &&
             ModUtils.GetType("DeathTracker", "CelesteDeathTracker.DeathDisplay") is {} deathDisplayType) {
-            modDeathTrackerHook = new ILHook(modPlayerSpawn, il => {
-                ILCursor ilCursor = new(il);
+            modPlayerSpawn.ILHook((ilCursor, _) => {
                 // display => player.Scene.Entities.FindFirst<DeathDisplay>()
                 if (ilCursor.TryGotoNext(MoveType.After, ins => ins.OpCode == OpCodes.Ldarg_0,
                         ins => ins.OpCode == OpCodes.Ldfld && ins.Operand.ToString().EndsWith("::display"))) {
@@ -804,6 +819,15 @@ public sealed class SaveLoadAction {
                     "overrideDreamDashCheck",
                     "dreamTunnelDashAttacking"
                 ),
+                (savedValues, _) => LoadStaticMemberValues(savedValues))
+            );
+        }
+    }
+
+    private static void SupportBounceHelper() {
+        if (ModUtils.GetType("BounceHelper", "Celeste.Mod.BounceHelper.BounceHelperModule") is { } bounceHelperModule) {
+            Add(new SaveLoadAction(
+                (savedValues, _) => SaveStaticMemberValues(savedValues, bounceHelperModule, "enabled"),
                 (savedValues, _) => LoadStaticMemberValues(savedValues))
             );
         }

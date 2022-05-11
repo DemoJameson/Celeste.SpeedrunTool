@@ -111,8 +111,12 @@ public static class RoomTimerManager {
                 ins => ins.MatchLdfld<SpeedrunTimerDisplay>("DrawLerp"),
                 ins => ins.OpCode == OpCodes.Ldloc_1
             )) {
-            ilCursor.EmitDelegate<Func<bool, bool>>(showTimer => showTimer || ModSettings.RoomTimerType != RoomTimerType.Off);
+            ilCursor.EmitDelegate<Func<bool, bool>>(IsShowTimer);
         }
+    }
+
+    private static bool IsShowTimer(bool showTimer) {
+        return showTimer || ModSettings.RoomTimerType != RoomTimerType.Off;
     }
 
     private static void CreateEndPoint(Level level, bool additional = false) {
@@ -156,13 +160,8 @@ public static class RoomTimerManager {
             UpdateTimerState();
         }
 
-        // update time keys separately from timing to allow changing room count at level end
-        NextRoomTimerData.UpdateTimeKeys(self);
-        CurrentRoomTimerData.UpdateTimeKeys(self);
-        if (!self.Completed && self.TimerStarted) {
-            NextRoomTimerData.Timing(self);
-            CurrentRoomTimerData.Timing(self);
-        }
+        NextRoomTimerData.Timing(self);
+        CurrentRoomTimerData.Timing(self);
     }
 
     private static void UpdateTimerStateOnTouchFlag(On.Celeste.SummitCheckpoint.orig_Update orig, SummitCheckpoint self) {

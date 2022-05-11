@@ -1,8 +1,8 @@
 using System.Collections;
 using System.Reflection;
+using Celeste.Mod.SpeedrunTool.Utils;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
-using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
 
 namespace Celeste.Mod.SpeedrunTool.Other;
@@ -10,14 +10,13 @@ namespace Celeste.Mod.SpeedrunTool.Other;
 public static class LookoutBuilder {
     private static readonly MethodInfo InteractMethod = typeof(Lookout).GetMethodInfo("Interact");
     private static readonly FieldInfo InteractingField = typeof(Lookout).GetFieldInfo("interacting");
-    private static ILHook ilHook;
 
     [Load]
     private static void Load() {
         On.Celeste.Player.Die += PlayerOnDie;
         IL.Celeste.RisingLava.OnPlayer += EnableInvincible;
         IL.Celeste.SandwichLava.OnPlayer += EnableInvincible;
-        ilHook = new ILHook(typeof(Lookout).GetMethodInfo("LookRoutine").GetStateMachineTarget(), ModLookRoutine);
+        typeof(Lookout).GetMethodInfo("LookRoutine").GetStateMachineTarget().ILHook(ModLookRoutine);
         Hotkey.SpawnTowerViewer.RegisterPressedAction(OnHotkeyPressed);
     }
 
@@ -26,7 +25,6 @@ public static class LookoutBuilder {
         On.Celeste.Player.Die -= PlayerOnDie;
         IL.Celeste.RisingLava.OnPlayer -= EnableInvincible;
         IL.Celeste.SandwichLava.OnPlayer -= EnableInvincible;
-        ilHook?.Dispose();
     }
 
     private static PlayerDeadBody PlayerOnDie(On.Celeste.Player.orig_Die orig, Player self, Vector2 direction, bool evenIfInvincible, bool registerDeathInStats) {
@@ -45,8 +43,7 @@ public static class LookoutBuilder {
         }
     }
 
-    private static void ModLookRoutine(ILContext il) {
-        ILCursor ilCursor = new(il);
+    private static void ModLookRoutine(ILCursor ilCursor, ILContext il) {
         if (ilCursor.TryGotoNext(MoveType.After, ins => ins.MatchCallvirt<Actor>("OnGround"))) {
             ilCursor.EmitDelegate<Func<bool, bool>>(onGround => PortableLookout.Exists || onGround);
         }

@@ -149,7 +149,7 @@ internal static class ReflectionExtensions {
             throw new InvalidCastException($"{field.Name} is of type {fieldType}, it cannot be assigned to the type {returnType}.");
         }
 
-        if (field.IsLiteral && !field.IsInitOnly) {
+        if (field.IsConst()) {
             object value = field.GetValue(null);
             TReturn returnValue = value == null ? default : (TReturn)value;
             Func<object, TReturn> func = _ => returnValue;
@@ -191,7 +191,7 @@ internal static class ReflectionExtensions {
             throw new InvalidCastException($"{field.Name} is of type {fieldType}. An instance of {parameterType} cannot be assigned to it.");
         }
 
-        if (field.IsLiteral && !field.IsInitOnly) {
+        if (field.IsConst()) {
             throw new FieldAccessException($"Unable to set constant field {field.Name} of type {field.DeclaringType.FullName}.");
         }
 

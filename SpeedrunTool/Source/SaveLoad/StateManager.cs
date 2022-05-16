@@ -94,7 +94,7 @@ public sealed class StateManager {
     }
 
     private void SceneOnBeforeUpdate(On.Monocle.Scene.orig_BeforeUpdate orig, Scene self) {
-        if (ModSettings.Enabled && self is Level level && State == State.Waiting && !level.Paused
+        if (ModSettings.Enabled && self is Level level && State == State.Waiting
             && (Input.Dash.Pressed
                 || Input.Grab.Check
                 || Input.Jump.Check
@@ -103,6 +103,7 @@ public sealed class StateManager {
                 || Input.MoveX != 0
                 || Input.MoveY != 0
                 || Input.Aim.Value != Vector2.Zero
+                || Hotkey.CheckDeathStatistics.Pressed()
                 || typeof(Input).GetFieldValue("DemoDash")?.GetPropertyValue("Pressed") as bool? == true
                 || typeof(Input).GetFieldValue("CrouchDash")?.GetPropertyValue("Pressed") as bool? == true
             )) {

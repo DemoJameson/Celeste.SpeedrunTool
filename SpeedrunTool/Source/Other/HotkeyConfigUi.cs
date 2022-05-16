@@ -473,27 +473,16 @@ internal static class HotkeysExtensions {
 
     // 检查键盘或者手柄全部按键按下
     public static bool Pressed(this Hotkey hotkey) {
-        VirtualButton virtualButton = hotkey.GetHotkeyConfig().VirtualButton.Value;
         HotkeyConfig hotkeyConfig = hotkey.GetHotkeyConfig();
 
         List<VirtualButton.KeyboardKey> keyboardKeys = hotkeyConfig.KeyboardKeys;
         bool keyPressed = keyboardKeys.Count > 0 && keyboardKeys.All(node => node.Check) && keyboardKeys.Any(node => node.Pressed);
         if (keyPressed) {
-            if (virtualButton.AutoConsumeBuffer) {
-                virtualButton.ConsumeBuffer();
-            }
             return true;
         }
 
         List<VirtualButton.PadButton> padButtons = hotkeyConfig.PadButtons;
         bool buttonPressed = padButtons.Count > 0 && padButtons.All(node => node.Check) && padButtons.Any(node => node.Pressed);
-        if (buttonPressed) {
-            if (virtualButton.AutoConsumeBuffer) {
-                virtualButton.ConsumeBuffer();
-            }
-            return true;
-        }
-
-        return false;
+        return buttonPressed;
     }
 }

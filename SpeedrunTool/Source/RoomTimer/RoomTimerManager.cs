@@ -132,9 +132,8 @@ public static class RoomTimerManager {
     public static void SwitchRoomTimer(RoomTimerType roomTimerType) {
         ModSettings.RoomTimerType = roomTimerType;
 
-        if (roomTimerType == RoomTimerType.Off) {
-            ClearPbTimes();
-        }
+        // no longer clear room times if switching to off mode
+        // to allow cycling through modes while checking times
 
         SpeedrunToolModule.Instance.SaveSettings();
     }
@@ -182,18 +181,9 @@ public static class RoomTimerManager {
     }
 
     public static void UpdateTimerState(bool endPoint = false) {
-        switch (ModSettings.RoomTimerType) {
-            case RoomTimerType.NextRoom:
-                NextRoomTimerData.UpdateTimerState(endPoint);
-                break;
-            case RoomTimerType.CurrentRoom:
-                CurrentRoomTimerData.UpdateTimerState(endPoint);
-                break;
-            case RoomTimerType.Off:
-                break;
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
+        // always run both timers; they'll just run in the background if not selected
+        NextRoomTimerData.UpdateTimerState(endPoint);
+        CurrentRoomTimerData.UpdateTimerState(endPoint);
     }
 
     public static void ResetTime() {
@@ -207,12 +197,12 @@ public static class RoomTimerManager {
             orig(self);
             return;
         }
-
+        
         RoomTimerData roomTimerData = ModSettings.RoomTimerType == RoomTimerType.NextRoom ? NextRoomTimerData : CurrentRoomTimerData;
 
         string roomTimeString = roomTimerData.TimeString;
         string pbTimeString = $"PB {roomTimerData.PbTimeString}";
-        string comparePbString = ComparePb(roomTimerData.Time, roomTimerData.LastPbTime);
+        string comparePbString = ComparePb(roomTimerData.GetSelectedRoomTime, roomTimerData.GetSelectedLastPbTime);
 
         float topBlackBarWidth = 0f;
         float pbWidth = 60;

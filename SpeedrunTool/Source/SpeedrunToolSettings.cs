@@ -67,6 +67,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
 
     #region MoreOptions
 
+    public TeleportRoomCategory TeleportRoomCategory { get; set; } = TeleportRoomCategory.Any;
     [SettingRange(1, 9)] public int RespawnSpeed { get; set; } = 1;
     [SettingRange(1, 9)] public int RestartChapterSpeed { get; set; } = 1;
     public bool SkipRestartChapterScreenWipe { get; set; } = false;
@@ -119,7 +120,9 @@ public class SpeedrunToolSettings : EverestModuleSettings {
 }
 
 public enum FreezeAfterLoadStateType {
-    Off,
-    On,
-    IgnoreHoldingKeys,
+    Off, On, IgnoreHoldingKeys
+}
+
+public enum TeleportRoomCategory {
+    Default, Any
 }

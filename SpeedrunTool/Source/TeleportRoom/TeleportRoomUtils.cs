@@ -27,8 +27,15 @@ public static class TeleportRoomUtils {
         On.Celeste.SummitCheckpoint.Update += SummitCheckpointOnUpdate;
         MapEditor.LoadLevel += MapEditorOnLoadLevel;
         On.Celeste.LevelLoader.ctor += LevelLoaderOnCtor;
+        On.Celeste.Player.Added += PlayerOnAdded;
 
         RegisterHotkeys();
+    }
+
+    private static void PlayerOnAdded(On.Celeste.Player.orig_Added orig, Player self, Scene scene) {
+        orig(self, scene);
+
+        TextInput.SetClipboardText($", {self.X}, {self.Y}");
     }
 
     [Unload]
@@ -192,18 +199,8 @@ public static class TeleportRoomUtils {
                 historyIndex--;
             }
 
-            TeleportTo(RoomHistory[historyIndex]);
+            TeleportTo(RoomHistory[historyIndex], true);
             return true;
-        }
-
-        List<LevelData> levelDatas = LevelDataReorderUtils.GetReorderLevelDatas(level);
-        if (levelDatas == null) {
-            return null;
-        }
-
-        LevelData currentLevelData = level.Session?.LevelData;
-        if (currentLevelData == null) {
-            return null;
         }
 
         if (SearchSummitCheckpoint(false, level)) {
@@ -211,26 +208,43 @@ public static class TeleportRoomUtils {
             return true;
         }
 
-        int index = levelDatas.IndexOf(currentLevelData);
-        if (index <= 0) {
+        List<ReorderedData> levelDataList = LevelDataReorderUtils.GetReorderedLevelDataList(level);
+        int index = IndexOf(levelDataList, level);
+
+        if (index == 0) {
             return false;
+        } else if (index == -1) {
+            if (ModSettings.TeleportRoomCategory != TeleportRoomCategory.Default) {
+                var defaultLevelDataList = LevelDataReorderUtils.GetReorderedLevelDataList(level, TeleportRoomCategory.Default);
+                index = IndexOf(defaultLevelDataList, level);
+                if (index == 0) {
+                    return false;
+                } else if (index > 0) {
+                    levelDataList = defaultLevelDataList;
+                } else {
+                    index = 1;
+                }
+            } else {
+                index = 1;
+            }
         }
 
         index--;
-        LevelData lastLevelData = levelDatas[index];
-        while (lastLevelData.Dummy && index > 0) {
+        ReorderedData lastReorderedData = levelDataList[index];
+        while (lastReorderedData.LevelData.Dummy && index > 0) {
             index--;
-            lastLevelData = levelDatas[index];
+            lastReorderedData = levelDataList[index];
         }
 
-        if (lastLevelData.Dummy) {
+        if (lastReorderedData.LevelData.Dummy) {
             return false;
         }
 
-        level.Session.Level = lastLevelData.Name;
-        level.Session.RespawnPoint = null;
+        level.Session.Level = lastReorderedData.LevelData.Name;
+        level.Session.RespawnPoint = lastReorderedData.RespawnPoint;
+        level.StartPosition = null;
 
-        SearchSummitCheckpoint(false, lastLevelData, level);
+        SearchSummitCheckpoint(false, lastReorderedData.LevelData, level);
         TeleportTo(level.Session);
         return true;
     }
@@ -242,43 +256,54 @@ public static class TeleportRoomUtils {
             return true;
         }
 
-        List<LevelData> levelDatas = LevelDataReorderUtils.GetReorderLevelDatas(level);
-        if (levelDatas == null) {
-            return null;
-        }
-
-        LevelData currentLevelData = level.Session?.LevelData;
-        if (currentLevelData == null) {
-            return null;
-        }
-
         if (SearchSummitCheckpoint(true, level)) {
             RecordAndTeleportToNextRoom(level.Session);
             return true;
         }
 
-        int index = levelDatas.IndexOf(currentLevelData);
-        if (index < 0 || index == levelDatas.Count - 1) {
+        List<ReorderedData> levelDataList = LevelDataReorderUtils.GetReorderedLevelDataList(level);
+        int index = IndexOf(levelDataList, level);
+
+        if (index == levelDataList.Count - 1) {
             return false;
+        } else if (index == -1 && ModSettings.TeleportRoomCategory != TeleportRoomCategory.Default) {
+            var defaultLevelDataList = LevelDataReorderUtils.GetReorderedLevelDataList(level, TeleportRoomCategory.Default);
+            index = IndexOf(defaultLevelDataList, level);
+            if (index == defaultLevelDataList.Count - 1) {
+                return false;
+            } else if (index > 0) {
+                levelDataList = defaultLevelDataList;
+            }
         }
 
         index++;
-        LevelData nextLevelData = levelDatas[index];
-        while (nextLevelData.Dummy && index < levelDatas.Count - 1) {
+        ReorderedData nextReorderedData = levelDataList[index];
+        while (nextReorderedData.LevelData.Dummy && index < levelDataList.Count - 1) {
             index++;
-            nextLevelData = levelDatas[index];
+            nextReorderedData = levelDataList[index];
         }
 
-        if (nextLevelData.Dummy) {
+        if (nextReorderedData.LevelData.Dummy) {
             return false;
         }
 
-        level.Session.Level = nextLevelData.Name;
-        level.Session.RespawnPoint = null;
+        level.Session.Level = nextReorderedData.LevelData.Name;
+        level.Session.RespawnPoint = nextReorderedData.RespawnPoint;
+        level.StartPosition = null;
 
-        SearchSummitCheckpoint(true, nextLevelData, level);
+        SearchSummitCheckpoint(true, nextReorderedData.LevelData, level);
         RecordAndTeleportToNextRoom(level.Session);
         return true;
+    }
+
+    private static int IndexOf(List<ReorderedData> levelDataList, Level level) {
+        LevelData currentLevelData = level.Session.LevelData;
+        int index = levelDataList.FindIndex(data => data.LevelData == currentLevelData && data.RespawnPoint == level.Session.RespawnPoint);
+        if (index == -1) {
+            index = levelDataList.FindIndex(data => data.LevelData == currentLevelData);
+        }
+
+        return index;
     }
 
     private static bool SearchSummitCheckpoint(bool next, Level level) {

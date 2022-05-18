@@ -18,6 +18,11 @@ public static class SpeedrunToolMenu {
         {FreezeAfterLoadStateType.On, Dialog.Clean(DialogIds.On)},
         {FreezeAfterLoadStateType.IgnoreHoldingKeys, Dialog.Clean(DialogIds.IgnoreHoldingKeys)},
     }.ToArray();
+    
+    private static readonly KeyValuePair<TeleportRoomCategory, string>[] TeleportRoomCategories = new Dictionary<TeleportRoomCategory, string> {
+        {TeleportRoomCategory.Default, Dialog.Clean(DialogIds.Default)},
+        {TeleportRoomCategory.Any, Dialog.Clean(DialogIds.Any)},
+    }.ToArray();
 
     public static void Create(TextMenu menu, bool inGame, EventInstance snapshot) {
         menu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.Enabled), ModSettings.Enabled).Change((value) => {
@@ -119,6 +124,9 @@ public static class SpeedrunToolMenu {
             }),
 
             new EaseInSubMenu(Dialog.Clean(DialogIds.MoreOptions), false).With(subMenu => {
+                subMenu.Add(new TextMenuExt.EnumerableSlider<TeleportRoomCategory>(Dialog.Clean(DialogIds.TeleportRoomCategory), TeleportRoomCategories,
+                    ModSettings.TeleportRoomCategory).Change(b => ModSettings.TeleportRoomCategory = b));
+                
                 subMenu.Add(new TextMenuExt.IntSlider(Dialog.Clean(DialogIds.RespawnSpeed), 1, 9, ModSettings.RespawnSpeed).Change(i =>
                     ModSettings.RespawnSpeed = i));
 

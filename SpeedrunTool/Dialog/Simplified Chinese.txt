@@ -50,6 +50,7 @@ SPEEDRUN_TOOL_AUTO_TURN_OFF_ROOM_TIMER= 重启章节/游戏时关闭房间计时
 
 # ================================== State Manager ==================================
 SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE=     加载状态后冻结游戏
+SPEEDRUN_TOOL_IGNORE_HOLDING_KEYS=         忽略按住的键
 SPEEDRUN_TOOL_AUTO_LOAD_STATE_AFTER_DEATH= 死亡后自动加载状态
 SPEEDRUN_TOOL_AUTO_CLEAR_STATE_ON_SCREEN_TRANSITION= 切屏时自动清除状态
 SPEEDRUN_TOOL_SAVE_TIME_AND_DEATHS=        保存时间和死亡数

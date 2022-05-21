@@ -49,6 +49,7 @@ SPEEDRUN_TOOL_AUTO_TURN_OFF_ROOM_TIMER= Turn Off Timer When Restart Game/Chapter
 
 # ================================== State Manager ==================================
 SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE=     Pause The Game after Loading State
+SPEEDRUN_TOOL_IGNORE_HOLDING_KEYS=         Ignore Holding Keys
 SPEEDRUN_TOOL_AUTO_LOAD_STATE_AFTER_DEATH= Auto Load State after Death
 SPEEDRUN_TOOL_AUTO_CLEAR_STATE_ON_SCREEN_TRANSITION= Auto Clear State on Screen Transition
 SPEEDRUN_TOOL_SAVE_TIME_AND_DEATHS=        Save Time and Deaths
@@ -136,6 +137,9 @@ SPEEDRUN_TOOL_TOTAL_LOST_TIME=               Total Lost Time
 SPEEDRUN_TOOL_NO_DATA=                       No Data
 
 # ================================== More Options ==================================
+SPEEDRUN_TOOL_TELEPORT_ROOM_CATEGORY=           Teleport Room Category
+SPEEDRUN_TOOL_DEFAULT=                          Default
+SPEEDRUN_TOOL_ANY=                              Any%
 SPEEDRUN_TOOL_RESPAWN_SPEED=                    Respawn Speed
 SPEEDRUN_TOOL_RESTART_CHAPTER_SPEED=            Restart Chapter Speed
 SPEEDRUN_TOOL_SKIP_RESTART_CHAPTER_SCREEN_WIPE= Skip Restart Chapter Screen Wipe

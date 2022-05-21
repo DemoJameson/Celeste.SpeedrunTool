@@ -32,6 +32,7 @@ public static class DialogIds {
 
     // State Manager
     public const string FreezeAfterLoadState = "SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE";
+    public const string IgnoreHoldingKeys = "SPEEDRUN_TOOL_IGNORE_HOLDING_KEYS";
     public const string AutoLoadStateAfterDeath = "SPEEDRUN_TOOL_AUTO_LOAD_STATE_AFTER_DEATH";
     public const string AutoClearStateOnScreenTransition = "SPEEDRUN_TOOL_AUTO_CLEAR_STATE_ON_SCREEN_TRANSITION";
     public const string SaveTimeAndDeaths = "SPEEDRUN_TOOL_SAVE_TIME_AND_DEATHS";
@@ -104,6 +105,9 @@ public static class DialogIds {
     public const string NoData = "SPEEDRUN_TOOL_NO_DATA";
 
     // More Options
+    public const string TeleportRoomCategory = "SPEEDRUN_TOOL_TELEPORT_ROOM_CATEGORY";
+    public const string Default = "SPEEDRUN_TOOL_DEFAULT";
+    public const string Any = "SPEEDRUN_TOOL_ANY";
     public const string RespawnSpeed = "SPEEDRUN_TOOL_RESPAWN_SPEED";
     public const string RestartChapterSpeed = "SPEEDRUN_TOOL_RESTART_CHAPTER_SPEED";
     public const string SkipRestartChapterScreenWipe = "SPEEDRUN_TOOL_SKIP_RESTART_CHAPTER_SCREEN_WIPE";

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.Message;
@@ -11,6 +12,17 @@ namespace Celeste.Mod.SpeedrunTool;
 public static class SpeedrunToolMenu {
     private static readonly Regex RegexFormatName = new(@"([a-z])([A-Z])", RegexOptions.Compiled);
     private static List<EaseInSubMenu> options;
+
+    private static readonly KeyValuePair<FreezeAfterLoadStateType, string>[] FreezeAfterLoadStateTypes = new Dictionary<FreezeAfterLoadStateType, string> {
+        {FreezeAfterLoadStateType.Off, Dialog.Clean(DialogIds.Off)},
+        {FreezeAfterLoadStateType.On, Dialog.Clean(DialogIds.On)},
+        {FreezeAfterLoadStateType.IgnoreHoldingKeys, Dialog.Clean(DialogIds.IgnoreHoldingKeys)},
+    }.ToArray();
+    
+    private static readonly KeyValuePair<TeleportRoomCategory, string>[] TeleportRoomCategories = new Dictionary<TeleportRoomCategory, string> {
+        {TeleportRoomCategory.Default, Dialog.Clean(DialogIds.Default)},
+        {TeleportRoomCategory.Any, Dialog.Clean(DialogIds.Any)},
+    }.ToArray();
 
     public static void Create(TextMenu menu, bool inGame, EventInstance snapshot) {
         menu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.Enabled), ModSettings.Enabled).Change((value) => {
@@ -80,8 +92,9 @@ public static class SpeedrunToolMenu {
                 subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoClearStateOnScreenTransition), ModSettings.AutoClearStateOnScreenTransition).Change(b =>
                     ModSettings.AutoClearStateOnScreenTransition = b));
 
-                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.FreezeAfterLoadState), ModSettings.FreezeAfterLoadState).Change(b =>
-                    ModSettings.FreezeAfterLoadState = b));
+                subMenu.Add(new TextMenuExt.EnumerableSlider<FreezeAfterLoadStateType>(Dialog.Clean(DialogIds.FreezeAfterLoadState), FreezeAfterLoadStateTypes,
+                    ModSettings.FreezeAfterLoadStateType).Change(b =>
+                    ModSettings.FreezeAfterLoadStateType = b));
 
                 subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.SaveTimeAndDeaths), ModSettings.SaveTimeAndDeaths).Change(b =>
                     ModSettings.SaveTimeAndDeaths = b));
@@ -111,6 +124,9 @@ public static class SpeedrunToolMenu {
             }),
 
             new EaseInSubMenu(Dialog.Clean(DialogIds.MoreOptions), false).With(subMenu => {
+                subMenu.Add(new TextMenuExt.EnumerableSlider<TeleportRoomCategory>(Dialog.Clean(DialogIds.TeleportRoomCategory), TeleportRoomCategories,
+                    ModSettings.TeleportRoomCategory).Change(b => ModSettings.TeleportRoomCategory = b));
+                
                 subMenu.Add(new TextMenuExt.IntSlider(Dialog.Clean(DialogIds.RespawnSpeed), 1, 9, ModSettings.RespawnSpeed).Change(i =>
                     ModSettings.RespawnSpeed = i));
 

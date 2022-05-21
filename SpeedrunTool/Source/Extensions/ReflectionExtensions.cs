@@ -154,7 +154,7 @@ internal static class ReflectionExtensions {
             TReturn returnValue = value == null ? default : (TReturn)value;
             Func<object, TReturn> func = _ => returnValue;
 
-            return func.CastDelegate<GetDelegate<TReturn>>();
+            return (GetDelegate<TReturn>)func.Method.CreateDelegate(typeof(GetDelegate<TReturn>), func.Target);
         }
 
         using var method = new DynamicMethodDefinition($"{field} Getter", returnType, new[] {typeof(object)});

@@ -44,7 +44,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public bool AutoClearStateOnScreenTransition { get; set; } = false;
 
     [SettingName(DialogIds.FreezeAfterLoadState)]
-    public bool FreezeAfterLoadState { get; set; } = true;
+    public FreezeAfterLoadStateType FreezeAfterLoadStateType { get; set; } = FreezeAfterLoadStateType.On;
 
     [SettingName(DialogIds.SaveTimeAndDeaths)]
     public bool SaveTimeAndDeaths { get; set; } = false;
@@ -67,6 +67,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
 
     #region MoreOptions
 
+    public TeleportRoomCategory TeleportRoomCategory { get; set; } = TeleportRoomCategory.Any;
     [SettingRange(1, 9)] public int RespawnSpeed { get; set; } = 1;
     [SettingRange(1, 9)] public int RestartChapterSpeed { get; set; } = 1;
     public bool SkipRestartChapterScreenWipe { get; set; } = false;
@@ -116,4 +117,12 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     [SettingIgnore] public List<Buttons> ControllerToggleFullscreen { get; set; } = new List<Buttons>();
 
     #endregion HotkeyConfig
+}
+
+public enum FreezeAfterLoadStateType {
+    Off, On, IgnoreHoldingKeys
+}
+
+public enum TeleportRoomCategory {
+    Default, Any
 }

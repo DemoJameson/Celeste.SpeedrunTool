@@ -266,6 +266,7 @@ public static class BetterMapEditor {
             FixBadelineChase(session, spawnPoint);
             FixHugeMessRoomLight(session);
             FixMirrorTempleColorGrade(session);
+            FixReflectionBloomBase(session);
             FixFarewellCassetteRoomColorGrade(session, spawnPoint);
             FixFarewellDashes(session);
             FixFarewellSpawnPoint(session);
@@ -337,6 +338,12 @@ public static class BetterMapEditor {
     private static void FixMirrorTempleColorGrade(Session session) {
         if (session.Area.ToString() == "5") {
             session.ColorGrade = session.Level == "void" ? "templevoid" : null;
+        }
+    }
+    
+    private static void FixReflectionBloomBase(Session session) {
+        if (session.Area.ToString() == "6") {
+            session.BloomBaseAdd = session.Level == "start" ? 1f : 0f;
         }
     }
 

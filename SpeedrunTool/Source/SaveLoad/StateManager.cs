@@ -19,6 +19,8 @@ public sealed class StateManager {
     private static readonly Lazy<PropertyInfo> InGameOverworldHelperIsOpen = new(
         () => ModUtils.GetType("CollabUtils2", "Celeste.Mod.CollabUtils2.UI.InGameOverworldHelper")?.GetPropertyInfo("IsOpen")
     );
+    
+    private readonly Dictionary<VirtualInput, bool> lastInputs = new();
 
     // public for tas
     public bool IsSaved => savedLevel != null;
@@ -44,6 +46,12 @@ public sealed class StateManager {
         On.Celeste.Level.Update += UpdateBackdropWhenWaiting;
         On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
         On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
+        SaveLoadAction.Add(new SaveLoadAction(
+                (_, _) => UpdateLastInputs(),
+                (_, _) => UpdateLastInputs(),
+                ()=> lastInputs.Clear()
+            )
+        );
         RegisterHotkeys();
     }
 
@@ -93,20 +101,54 @@ public sealed class StateManager {
         });
     }
 
+    private void UpdateLastInputs() {
+        if (ModSettings.FreezeAfterLoadStateType != FreezeAfterLoadStateType.IgnoreHoldingKeys) {
+            return;
+        }
+
+        lastInputs[Input.Dash] = Input.Dash.Check;
+        lastInputs[Input.Grab] = Input.Grab.Check;
+        lastInputs[Input.Jump] = Input.Jump.Check;
+        lastInputs[Input.Pause] = Input.Pause.Check;
+        lastInputs[Input.Talk] = Input.Talk.Check;
+        lastInputs[Input.MoveX] = Input.MoveX.Value != 0;
+        lastInputs[Input.MoveY] = Input.MoveY.Value != 0;
+        lastInputs[Input.Aim] = Input.Aim.Value != Vector2.Zero;
+        
+        if (typeof(Input).GetFieldValue("DemoDash") is VirtualButton demoDash && demoDash.GetPropertyValue("Check") is bool demoDashPressed) {
+            lastInputs[demoDash] = demoDashPressed;
+        }
+        
+        if (typeof(Input).GetFieldValue("CrouchDash") is VirtualButton crouchDash && crouchDash.GetPropertyValue("Check") is bool crouchDashPressed) {
+            lastInputs[crouchDash] = crouchDashPressed;
+        }
+    }
+    
+    private bool IsCheckLastFrame(VirtualInput input) {
+        return ModSettings.FreezeAfterLoadStateType == FreezeAfterLoadStateType.IgnoreHoldingKeys && input != null && lastInputs.TryGetValue(input, out var value) && value;
+    }
+
     private void SceneOnBeforeUpdate(On.Monocle.Scene.orig_BeforeUpdate orig, Scene self) {
-        if (ModSettings.Enabled && self is Level level && State == State.Waiting && !level.Paused
-            && (Input.Dash.Pressed
-                || Input.Grab.Check
-                || Input.Jump.Check
-                || Input.Pause.Check
-                || Input.Talk.Check
-                || Input.MoveX != 0
-                || Input.MoveY != 0
-                || Input.Aim.Value != Vector2.Zero
-                || typeof(Input).GetFieldValue("DemoDash")?.GetPropertyValue("Pressed") as bool? == true
-                || typeof(Input).GetFieldValue("CrouchDash")?.GetPropertyValue("Pressed") as bool? == true
-            )) {
-            OutOfFreeze(level);
+        if (ModSettings.Enabled && self is Level level && State == State.Waiting) {
+            if (!IsCheckLastFrame(Input.Dash) && Input.Dash.Check
+                || !IsCheckLastFrame(Input.Grab) && Input.Grab.Check
+                || !IsCheckLastFrame(Input.Jump) && Input.Jump.Check
+                || !IsCheckLastFrame(Input.Pause) && Input.Pause.Check
+                || !IsCheckLastFrame(Input.Talk) && Input.Talk.Check
+                || !IsCheckLastFrame(Input.MoveX) && Input.MoveX.Value != 0
+                || !IsCheckLastFrame(Input.MoveY) && Input.MoveY.Value != 0
+                || !IsCheckLastFrame(Input.Aim) && Input.Aim.Value != Vector2.Zero
+                || typeof(Input).GetFieldValue("DemoDash") is VirtualButton demoDash && !IsCheckLastFrame(demoDash) && demoDash.GetPropertyValue("Check") as bool? == true
+                || typeof(Input).GetFieldValue("CrouchDash") is VirtualButton crouchDash && !IsCheckLastFrame(crouchDash) && crouchDash.GetPropertyValue("Check") as bool? == true
+                || Hotkey.CheckDeathStatistics.Pressed()
+               ) {
+                lastInputs.Clear();
+                OutOfFreeze(level);
+            }
+
+            if (State == State.Waiting) {
+                UpdateLastInputs();
+            }
         }
 
         orig(self);
@@ -413,7 +455,7 @@ public sealed class StateManager {
 
     private void DoScreenWipe(Level level) {
         level.DoScreenWipe(true, () => {
-            if (ModSettings.FreezeAfterLoadState) {
+            if (ModSettings.FreezeAfterLoadStateType != FreezeAfterLoadStateType.Off) {
                 State = State.Waiting;
             } else {
                 OutOfFreeze(level);

@@ -387,7 +387,9 @@ public sealed class SaveLoadAction {
             (savedValues, _) => SaveStaticMemberValues(savedValues, typeof(MInput), "Active", "Disabled", "Keyboard", "Mouse", "GamePads"),
             (savedValues, _) => {
                 LoadStaticMemberValues(savedValues);
-                Input.RumbleSpecific(0f, 0f);
+
+                // 关闭手柄震动
+                MInput.GamePads[Input.Gamepad].Rumble(0f, 0f);
             }));
     }
 

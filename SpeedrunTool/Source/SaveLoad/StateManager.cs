@@ -19,8 +19,33 @@ public sealed class StateManager {
     private static readonly Lazy<PropertyInfo> InGameOverworldHelperIsOpen = new(
         () => ModUtils.GetType("CollabUtils2", "Celeste.Mod.CollabUtils2.UI.InGameOverworldHelper")?.GetPropertyInfo("IsOpen")
     );
-    
-    private readonly Dictionary<VirtualInput, bool> lastInputs = new();
+
+    private readonly Dictionary<VirtualInput, bool> lastChecks = new();
+
+    private readonly List<VirtualInput> unfreezeInputs = new();
+    private List<VirtualInput> UnfreezeInputs {
+        get {
+            unfreezeInputs.Clear();
+            unfreezeInputs.Add(Input.Dash);
+            unfreezeInputs.Add(Input.Jump);
+            unfreezeInputs.Add(Input.Grab);
+            unfreezeInputs.Add(Input.MoveX);
+            unfreezeInputs.Add(Input.MoveY);
+            unfreezeInputs.Add(Input.Dash);
+            unfreezeInputs.Add(Input.Aim);
+            unfreezeInputs.Add(Input.Pause);
+
+            if (typeof(Input).GetFieldValue("DemoDash") is VirtualInput demoDash) {
+                unfreezeInputs.Add(demoDash);
+            }
+
+            if (typeof(Input).GetFieldValue("CrouchDash") is VirtualInput crouchDash) {
+                unfreezeInputs.Add(crouchDash);
+            }
+
+            return unfreezeInputs;
+        }
+    }
 
     // public for tas
     public bool IsSaved => savedLevel != null;
@@ -47,9 +72,9 @@ public sealed class StateManager {
         On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
         On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
         SaveLoadAction.Add(new SaveLoadAction(
-                (_, _) => UpdateLastInputs(),
-                (_, _) => UpdateLastInputs(),
-                ()=> lastInputs.Clear()
+                (_, _) => UpdateLastChecks(),
+                (_, _) => UpdateLastChecks(),
+                () => lastChecks.Clear()
             )
         );
         RegisterHotkeys();
@@ -101,53 +126,35 @@ public sealed class StateManager {
         });
     }
 
-    private void UpdateLastInputs() {
+    private void UpdateLastChecks() {
         if (ModSettings.FreezeAfterLoadStateType != FreezeAfterLoadStateType.IgnoreHoldingKeys) {
             return;
         }
 
-        lastInputs[Input.Dash] = Input.Dash.Check;
-        lastInputs[Input.Grab] = Input.Grab.Check;
-        lastInputs[Input.Jump] = Input.Jump.Check;
-        lastInputs[Input.Pause] = Input.Pause.Check;
-        lastInputs[Input.Talk] = Input.Talk.Check;
-        lastInputs[Input.MoveX] = Input.MoveX.Value != 0;
-        lastInputs[Input.MoveY] = Input.MoveY.Value != 0;
-        lastInputs[Input.Aim] = Input.Aim.Value != Vector2.Zero;
-        
-        if (typeof(Input).GetFieldValue("DemoDash") is VirtualButton demoDash && demoDash.GetPropertyValue("Check") is bool demoDashPressed) {
-            lastInputs[demoDash] = demoDashPressed;
-        }
-        
-        if (typeof(Input).GetFieldValue("CrouchDash") is VirtualButton crouchDash && crouchDash.GetPropertyValue("Check") is bool crouchDashPressed) {
-            lastInputs[crouchDash] = crouchDashPressed;
+        foreach (VirtualInput virtualInput in UnfreezeInputs) {
+            lastChecks[virtualInput] = virtualInput.IsCheck();
         }
     }
-    
-    private bool IsCheckLastFrame(VirtualInput input) {
-        return ModSettings.FreezeAfterLoadStateType == FreezeAfterLoadStateType.IgnoreHoldingKeys && input != null && lastInputs.TryGetValue(input, out var value) && value;
+
+    private bool IsUnfreeze(VirtualInput input) {
+        if (!input.IsCheck()) {
+            return false;
+        }
+
+        bool lastCheck = ModSettings.FreezeAfterLoadStateType == FreezeAfterLoadStateType.IgnoreHoldingKeys &&
+                         lastChecks.TryGetValue(input, out bool value) && value;
+        return !lastCheck;
     }
 
     private void SceneOnBeforeUpdate(On.Monocle.Scene.orig_BeforeUpdate orig, Scene self) {
         if (ModSettings.Enabled && self is Level level && State == State.Waiting) {
-            if (!IsCheckLastFrame(Input.Dash) && Input.Dash.Check
-                || !IsCheckLastFrame(Input.Grab) && Input.Grab.Check
-                || !IsCheckLastFrame(Input.Jump) && Input.Jump.Check
-                || !IsCheckLastFrame(Input.Pause) && Input.Pause.Check
-                || !IsCheckLastFrame(Input.Talk) && Input.Talk.Check
-                || !IsCheckLastFrame(Input.MoveX) && Input.MoveX.Value != 0
-                || !IsCheckLastFrame(Input.MoveY) && Input.MoveY.Value != 0
-                || !IsCheckLastFrame(Input.Aim) && Input.Aim.Value != Vector2.Zero
-                || typeof(Input).GetFieldValue("DemoDash") is VirtualButton demoDash && !IsCheckLastFrame(demoDash) && demoDash.GetPropertyValue("Check") as bool? == true
-                || typeof(Input).GetFieldValue("CrouchDash") is VirtualButton crouchDash && !IsCheckLastFrame(crouchDash) && crouchDash.GetPropertyValue("Check") as bool? == true
-                || Hotkey.CheckDeathStatistics.Pressed()
-               ) {
-                lastInputs.Clear();
+            if (UnfreezeInputs.Any(IsUnfreeze) || Hotkey.CheckDeathStatistics.Pressed() || Hotkey.LoadState.Pressed()) {
+                lastChecks.Clear();
                 OutOfFreeze(level);
             }
 
             if (State == State.Waiting) {
-                UpdateLastInputs();
+                UpdateLastChecks();
             }
         }
 
@@ -404,7 +411,8 @@ public sealed class StateManager {
     // 第二步：播放节奏音乐
     private void RestoreCassetteBlockManager2(Level level) {
         if (level.Tracker.GetEntity<CassetteBlockManager>() is { } manager) {
-            if (manager.GetFieldValue("sfx") is EventInstance sfx && !manager.GetFieldValue<bool>("isLevelMusic") && manager.GetFieldValue<int>("leadBeats") <= 0) {
+            if (manager.GetFieldValue("sfx") is EventInstance sfx && !manager.GetFieldValue<bool>("isLevelMusic") &&
+                manager.GetFieldValue<int>("leadBeats") <= 0) {
                 sfx.start();
             }
         }

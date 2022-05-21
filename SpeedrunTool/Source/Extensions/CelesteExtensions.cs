@@ -44,4 +44,14 @@ internal static class CelesteExtensions {
     public static bool IsMainThread(this Thread thread) {
         return thread == MainThreadHelper.MainThread;
     }
+
+    public static bool IsCheck(this VirtualInput virtualInput) {
+        return virtualInput switch {
+            VirtualButton virtualButton => virtualButton.Check,
+            VirtualIntegerAxis virtualIntegerAxis => virtualIntegerAxis.Value != 0,
+            VirtualJoystick virtualJoystick => virtualJoystick.Value != Vector2.Zero,
+            VirtualAxis virtualAxis => virtualAxis.Value != 0,
+            _ => false
+        };
+    }
 }

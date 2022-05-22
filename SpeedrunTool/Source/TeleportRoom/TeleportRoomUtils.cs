@@ -27,15 +27,7 @@ public static class TeleportRoomUtils {
         On.Celeste.SummitCheckpoint.Update += SummitCheckpointOnUpdate;
         MapEditor.LoadLevel += MapEditorOnLoadLevel;
         On.Celeste.LevelLoader.ctor += LevelLoaderOnCtor;
-        On.Celeste.Player.Added += PlayerOnAdded;
-
         RegisterHotkeys();
-    }
-
-    private static void PlayerOnAdded(On.Celeste.Player.orig_Added orig, Player self, Scene scene) {
-        orig(self, scene);
-
-        TextInput.SetClipboardText($", {self.X}, {self.Y}");
     }
 
     [Unload]

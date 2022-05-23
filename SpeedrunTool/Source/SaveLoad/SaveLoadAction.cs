@@ -355,10 +355,15 @@ public sealed class SaveLoadAction {
                 return;
             }
 
-            // 移除冻结帧，移除暂停帧，移除暂停黑屏
+            // 移除冻结帧，移除暂停黑屏
             Engine.FreezeTimer = 0f;
-            level.SetFieldValue("unpauseTimer", 0f);
             level.HudRenderer.BackgroundFade = 0f;
+
+            // 移除暂停帧
+            if (!level.Paused) {
+                level.SetFieldValue("unpauseTimer", 0f);
+                level.SetFieldValue("wasPaused", false); 
+            }
         }));
     }
 

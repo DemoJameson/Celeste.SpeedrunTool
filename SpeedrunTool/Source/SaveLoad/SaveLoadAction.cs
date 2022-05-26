@@ -351,14 +351,22 @@ public sealed class SaveLoadAction {
 
     private static void BetterCasualPlay() {
         Add(new SaveLoadAction(beforeSaveState: level => {
+            level.Session.SetFlag("SpeedrunTool_Reset_unpauseTimer", false);
             if (StateManager.Instance.SavedByTas) {
                 return;
             }
 
-            // 移除冻结帧，移除暂停帧，移除暂停黑屏
+            // 移除冻结帧，移除暂停黑屏
             Engine.FreezeTimer = 0f;
-            level.SetFieldValue("unpauseTimer", 0f);
             level.HudRenderer.BackgroundFade = 0f;
+
+            // 移除暂停帧
+            if (level.GetFieldValue<float>("unpauseTimer") > 0f) {
+                level.Session.SetFlag("SpeedrunTool_Reset_unpauseTimer");
+                level.SetFieldValue("unpauseTimer", 0f);
+                level.SetFieldValue("wasPaused", false); 
+                level.InvokeMethod("EndPauseEffects");
+            }
         }));
     }
 
@@ -478,7 +486,7 @@ public sealed class SaveLoadAction {
             )
         );
     }
-    
+
     private static void SupportModSessionAndSaveData() {
         Add(new SaveLoadAction(
             (savedValues, _) => {
@@ -514,7 +522,7 @@ public sealed class SaveLoadAction {
 
     private static void SupportAudioMusic() {
         Add(new SaveLoadAction(
-            (savedValues, _) => {
+            (savedValues, level) => {
                 Dictionary<string, object> saved = new() {
                     {
                         "currentMusicEvent",
@@ -528,6 +536,13 @@ public sealed class SaveLoadAction {
                     {"PauseMusic", Audio.PauseMusic},
                     {"PauseGameplaySfx", Audio.PauseGameplaySfx},
                 };
+
+                // EndPauseEffects() 之后立即读取该值依然为 true，所以需要加上这个判断
+                if (level.Session.GetFlag("SpeedrunTool_Reset_unpauseTimer")) {
+                    saved["PauseMusic"] = false;
+                    saved["PauseGameplaySfx"] = false;
+                }
+
                 savedValues[typeof(Audio)] = saved;
             },
             (savedValues, level) => {
@@ -794,8 +809,9 @@ public sealed class SaveLoadAction {
     }
 
     private static void SupportDeathTracker() {
-        if (ModUtils.GetType("DeathTracker", "CelesteDeathTracker.DeathTrackerModule+<>c__DisplayClass6_0")?.GetMethodInfo("<Load>b__2") is {} modPlayerSpawn &&
-            ModUtils.GetType("DeathTracker", "CelesteDeathTracker.DeathDisplay") is {} deathDisplayType) {
+        if (ModUtils.GetType("DeathTracker", "CelesteDeathTracker.DeathTrackerModule+<>c__DisplayClass6_0")?.GetMethodInfo("<Load>b__2") is
+                { } modPlayerSpawn &&
+            ModUtils.GetType("DeathTracker", "CelesteDeathTracker.DeathDisplay") is { } deathDisplayType) {
             modPlayerSpawn.ILHook((ilCursor, _) => {
                 // display => player.Scene.Entities.FindFirst<DeathDisplay>()
                 if (ilCursor.TryGotoNext(MoveType.After, ins => ins.OpCode == OpCodes.Ldarg_0,

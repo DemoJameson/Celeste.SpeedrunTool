@@ -113,7 +113,7 @@ internal class RoomTimerData {
                     }
                 } 
                 // if using endpoint, ignore room count and only track a single complete time and pb time
-                else if (endPoint) {
+                else if (endPoint || level is { Completed: true }) {
                     thisRunTimes[thisRunTimeKey] = Time;
                     LastPbTime = pbTimes.GetValueOrDefault(thisRunTimeKey, 0);
                     if (Time < LastPbTime || LastPbTime == 0) {

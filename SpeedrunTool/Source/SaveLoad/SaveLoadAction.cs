@@ -52,8 +52,21 @@ public sealed class SaveLoadAction {
         this.preCloneEntities = preCloneEntities;
     }
 
+    [Obsolete("crash on macOS if speedrun tool is not installed, use SafeAdd() instead")]
     public static void Add(SaveLoadAction saveLoadAction) {
         All.Add(saveLoadAction);
+    }
+
+    public static object SafeAdd(Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState = null,
+        Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState = null, Action clearState = null,
+        Action<Level> beforeSaveState = null, Action preCloneEntities = null) {
+        SaveLoadAction saveLoadAction = new(CreateSlAction(saveState), CreateSlAction(loadState), clearState, beforeSaveState, preCloneEntities);
+        All.Add(saveLoadAction);
+        return saveLoadAction;
+    }
+
+    private static SlAction CreateSlAction(Action<Dictionary<Type, Dictionary<string, object>>, Level> action) {
+        return (SlAction)action?.Method.CreateDelegate(typeof(SlAction), action.Target);
     }
 
     public static bool Remove(SaveLoadAction saveLoadAction) {
@@ -253,7 +266,8 @@ public sealed class SaveLoadAction {
             List<FieldInfo> instanceFields = new();
 
             FieldInfo[] fieldInfos = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
-            foreach (FieldInfo fieldInfo in fieldInfos.Where(info => !info.IsInitOnly && (info.FieldType == typeof(Level) || info.FieldType == typeof(Session)))) {
+            foreach (FieldInfo fieldInfo in fieldInfos.Where(info =>
+                         !info.IsInitOnly && (info.FieldType == typeof(Level) || info.FieldType == typeof(Session)))) {
                 if (fieldInfo.IsStatic) {
                     staticFields.Add(fieldInfo);
                 } else {
@@ -287,7 +301,7 @@ public sealed class SaveLoadAction {
     }
 
     private static void SupportSimpleStaticFields() {
-        Add(new SaveLoadAction(
+        SafeAdd(
             (dictionary, _) => {
                 foreach (Type type in simpleStaticFields.Keys) {
                     FieldInfo[] fieldInfos = simpleStaticFields[type];
@@ -310,11 +324,11 @@ public sealed class SaveLoadAction {
                     }
                 }
             }
-        ));
+        );
     }
 
     private static void SupportModModuleFields() {
-        Add(new SaveLoadAction(
+        SafeAdd(
             (savedValues, _) => {
                 foreach (EverestModule module in Everest.Modules) {
                     Dictionary<string, object> dict = new();
@@ -337,20 +351,20 @@ public sealed class SaveLoadAction {
                         }
                     }
                 }
-            }));
+            });
     }
 
     private static void FixSaveLoadIcon() {
-        Add(new SaveLoadAction(loadState: (_, _) => {
+        SafeAdd(loadState: (_, _) => {
             // 修复右下角存档图标残留
             if (!typeof(UserIO).GetFieldValue<bool>("savingInternal")) {
                 SaveLoadIcon.Hide();
             }
-        }));
+        });
     }
 
     private static void BetterCasualPlay() {
-        Add(new SaveLoadAction(beforeSaveState: level => {
+        SafeAdd(beforeSaveState: level => {
             level.Session.SetFlag("SpeedrunTool_Reset_unpauseTimer", false);
             if (StateManager.Instance.SavedByTas) {
                 return;
@@ -364,14 +378,14 @@ public sealed class SaveLoadAction {
             if (level.GetFieldValue<float>("unpauseTimer") > 0f) {
                 level.Session.SetFlag("SpeedrunTool_Reset_unpauseTimer");
                 level.SetFieldValue("unpauseTimer", 0f);
-                level.SetFieldValue("wasPaused", false); 
+                level.SetFieldValue("wasPaused", false);
                 level.InvokeMethod("EndPauseEffects");
             }
-        }));
+        });
     }
 
     private static void SupportExternalMember() {
-        Add(new SaveLoadAction(
+        SafeAdd(
             (savedValues, _) => {
                 SaveStaticMemberValues(savedValues, typeof(Engine), "DashAssistFreeze", "DashAssistFreezePress", "DeltaTime", "FrameCounter",
                     "FreezeTimer", "RawDeltaTime", "TimeRate", "TimeRateB", "Pooler");
@@ -380,31 +394,31 @@ public sealed class SaveLoadAction {
                 SaveStaticMemberValues(savedValues, typeof(ScreenWipe), "WipeColor");
                 SaveStaticMemberValues(savedValues, typeof(Audio), "currentCamera");
             },
-            (savedValues, _) => LoadStaticMemberValues(savedValues)));
+            (savedValues, _) => LoadStaticMemberValues(savedValues));
     }
 
     private static void SupportCalcRandom() {
         Type type = typeof(Calc);
-        Add(new SaveLoadAction(
+        SafeAdd(
             (savedValues, _) => SaveStaticMemberValues(savedValues, type, "Random", "randomStack"),
-            (savedValues, _) => LoadStaticMemberValues(savedValues)));
+            (savedValues, _) => LoadStaticMemberValues(savedValues));
     }
 
     private static void SupportMInput() {
-        Add(new SaveLoadAction(
+        SafeAdd(
             (savedValues, _) => SaveStaticMemberValues(savedValues, typeof(MInput), "Active", "Disabled", "Keyboard", "Mouse", "GamePads"),
             (savedValues, _) => {
                 LoadStaticMemberValues(savedValues);
 
                 // 关闭手柄震动
                 MInput.GamePads[Input.Gamepad].Rumble(0f, 0f);
-            }));
+            });
     }
 
     private static void SupportInput() {
         Type type = typeof(Input);
-        Add(new SaveLoadAction(
-            (savedValues, level) => {
+        SafeAdd(
+            (savedValues, _) => {
                 Dictionary<string, object> dictionary = new();
                 foreach (FieldInfo fieldInfo in type.GetFields(BindingFlags.Public | BindingFlags.Static).Where(info =>
                              info.FieldType == typeof(VirtualJoystick) || info.FieldType == typeof(VirtualIntegerAxis))) {
@@ -416,7 +430,7 @@ public sealed class SaveLoadAction {
                 }
 
                 savedValues[type] = dictionary.DeepCloneShared();
-            }, (savedValues, level) => {
+            }, (savedValues, _) => {
                 Dictionary<string, object> dictionary = savedValues[type];
                 foreach (string fieldName in dictionary.Keys) {
                     if (type.GetFieldValue(fieldName) is VirtualJoystick virtualJoystick &&
@@ -429,11 +443,11 @@ public sealed class SaveLoadAction {
                     }
                 }
             }
-        ));
+        );
     }
 
     private static void MuteAnnoyingAudios() {
-        Add(new SaveLoadAction(loadState: (_, level) => {
+        SafeAdd(loadState: (_, level) => {
             level.Entities.FindAll<SoundEmitter>().ForEach(emitter => {
                 if (emitter.Source.GetFieldValue("instance") is EventInstance eventInstance) {
                     eventInstance.setVolume(0f);
@@ -445,11 +459,11 @@ public sealed class SaveLoadAction {
             }
 
             RequireMuteAudios.Clear();
-        }));
+        });
     }
 
     private static void ExternalAction() {
-        Add(new SaveLoadAction(
+        SafeAdd(
                 saveState: (_, level) => {
                     level.Entities.UpdateLists();
                     IgnoreSaveLoadComponent.ReAddAll(level);
@@ -484,11 +498,11 @@ public sealed class SaveLoadAction {
                         .ForEach(entity => entity.Position = level.Camera.Position - Vector2.One * 100);
                 }
             )
-        );
+            ;
     }
 
     private static void SupportModSessionAndSaveData() {
-        Add(new SaveLoadAction(
+        SafeAdd(
             (savedValues, _) => {
                 foreach (EverestModule module in Everest.Modules.Where(module => module.GetType().Name != "NullModule")) {
                     savedValues[module.GetType()] = new Dictionary<string, object> {
@@ -505,7 +519,7 @@ public sealed class SaveLoadAction {
                         module._SaveData = dictionary["_SaveData"] as EverestModuleSaveData;
                     }
                 }
-            }));
+            });
     }
 
     private static RESULT EventDescriptionOnCreateInstance(On.FMOD.Studio.EventDescription.orig_createInstance orig, EventDescription self,
@@ -521,7 +535,7 @@ public sealed class SaveLoadAction {
     }
 
     private static void SupportAudioMusic() {
-        Add(new SaveLoadAction(
+        SafeAdd(
             (savedValues, level) => {
                 Dictionary<string, object> saved = new() {
                     {
@@ -566,7 +580,7 @@ public sealed class SaveLoadAction {
                     typeof(Level).SetFieldValue("PauseSnapshot", null);
                 }
             }
-        ));
+        );
     }
 
     private static void SupportPandorasBox() {
@@ -575,7 +589,7 @@ public sealed class SaveLoadAction {
         if (ModUtils.GetType("PandorasBox", "Celeste.Mod.PandorasBox.TimeField") is { } timeFieldType
             && Delegate.CreateDelegate(typeof(On.Celeste.Player.hook_Update), timeFieldType.GetMethodInfo("PlayerUpdateHook")) is
                 On.Celeste.Player.hook_Update hookUpdate) {
-            Add(new SaveLoadAction(
+            SafeAdd(
                 loadState: (_, _) => {
                     if (timeFieldType.GetFieldValue<bool>("hookAdded")) {
                         On.Celeste.Player.Update -= hookUpdate;
@@ -584,14 +598,14 @@ public sealed class SaveLoadAction {
                         On.Celeste.Player.Update -= hookUpdate;
                     }
                 }
-            ));
+            );
         }
 
         // Fixed: Game crashes after save DustSpriteColorController
-        Add(new SaveLoadAction(
+        SafeAdd(
             (savedValues, _) => SaveStaticMemberValues(savedValues, typeof(DustStyles), "Styles"),
             (savedValues, _) => LoadStaticMemberValues(savedValues)
-        ));
+        );
     }
 
     private static void SupportMaxHelpingHand() {
@@ -600,7 +614,7 @@ public sealed class SaveLoadAction {
                     colorControllerType.GetMethodInfo("getRainbowSpinnerHue")) is
                 On.Celeste.CrystalStaticSpinner.hook_GetHue hookGetHue
            ) {
-            Add(new SaveLoadAction(
+            SafeAdd(
                 loadState: (_, _) => {
                     if (colorControllerType.GetFieldValue<bool>("rainbowSpinnerHueHooked")) {
                         On.Celeste.CrystalStaticSpinner.GetHue -= hookGetHue;
@@ -609,13 +623,13 @@ public sealed class SaveLoadAction {
                         On.Celeste.CrystalStaticSpinner.GetHue -= hookGetHue;
                     }
                 }
-            ));
+            );
         }
 
         if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.SeekerBarrierColorController") is
             { } seekerBarrierColorControllerType) {
-            Add(new SaveLoadAction(
-                loadState: (savedValues, _) => {
+            SafeAdd(
+                loadState: (_, _) => {
                     if (seekerBarrierColorControllerType.GetFieldValue<bool>("seekerBarrierRendererHooked")) {
                         seekerBarrierColorControllerType.InvokeMethod("unhookSeekerBarrierRenderer");
                         seekerBarrierColorControllerType.InvokeMethod("hookSeekerBarrierRenderer");
@@ -623,12 +637,12 @@ public sealed class SaveLoadAction {
                         seekerBarrierColorControllerType.InvokeMethod("unhookSeekerBarrierRenderer");
                     }
                 }
-            ));
+            );
         }
 
         if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Triggers.GradientDustTrigger") is { } gradientDustTriggerType) {
-            Add(new SaveLoadAction(
-                loadState: (savedValues, _) => {
+            SafeAdd(
+                loadState: (_, _) => {
                     if (gradientDustTriggerType.GetFieldValue<bool>("hooked")) {
                         gradientDustTriggerType.InvokeMethod("unhook");
                         gradientDustTriggerType.InvokeMethod("hook");
@@ -638,15 +652,15 @@ public sealed class SaveLoadAction {
                         gradientDustTriggerType.InvokeMethod("unhook");
                     }
                 }
-            ));
+            );
         }
 
         if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.ParallaxFadeOutController") is { } parallaxFadeOutControllerType
             && Delegate.CreateDelegate(typeof(ILContext.Manipulator),
                 parallaxFadeOutControllerType.GetMethodInfo("onBackdropRender")) is ILContext.Manipulator onBackdropRender
            ) {
-            Add(new SaveLoadAction(
-                loadState: (savedValues, _) => {
+            SafeAdd(
+                loadState: (_, _) => {
                     if (parallaxFadeOutControllerType.GetFieldValue<bool>("backdropRendererHooked")) {
                         IL.Celeste.BackdropRenderer.Render -= onBackdropRender;
                         IL.Celeste.BackdropRenderer.Render += onBackdropRender;
@@ -654,13 +668,13 @@ public sealed class SaveLoadAction {
                         IL.Celeste.BackdropRenderer.Render -= onBackdropRender;
                     }
                 }
-            ));
+            );
         }
 
         if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Effects.BlackholeCustomColors") is { } blackHoleCustomColorsType) {
-            Add(new SaveLoadAction(
+            SafeAdd(
                 (savedValues, _) => SaveStaticMemberValues(savedValues, blackHoleCustomColorsType, "colorsMild"),
-                (savedValues, _) => LoadStaticMemberValues(savedValues)));
+                (savedValues, _) => LoadStaticMemberValues(savedValues));
         }
     }
 
@@ -670,10 +684,10 @@ public sealed class SaveLoadAction {
             return;
         }
 
-        Add(new SaveLoadAction(
+        SafeAdd(
             (savedValues, _) => SaveStaticMemberValues(savedValues, vitModuleType, "timeStopScaleTimer", "noMoveScaleTimer"),
             (savedValues, _) => LoadStaticMemberValues(savedValues)
-        ));
+        );
     }
 
     private static void SupportSpringCollab2020() {
@@ -682,8 +696,8 @@ public sealed class SaveLoadAction {
                     colorControllerType.GetMethodInfo("getRainbowSpinnerHue")) is
                 On.Celeste.CrystalStaticSpinner.hook_GetHue hookGetHue
            ) {
-            Add(new SaveLoadAction(
-                loadState: (savedValues, _) => {
+            SafeAdd(
+                loadState: (_, _) => {
                     if (colorControllerType.GetFieldValue<bool>("rainbowSpinnerHueHooked")) {
                         On.Celeste.CrystalStaticSpinner.GetHue -= hookGetHue;
                         On.Celeste.CrystalStaticSpinner.GetHue += hookGetHue;
@@ -691,7 +705,7 @@ public sealed class SaveLoadAction {
                         On.Celeste.CrystalStaticSpinner.GetHue -= hookGetHue;
                     }
                 }
-            ));
+            );
         }
 
         if (ModUtils.GetType("SpringCollab2020", "Celeste.Mod.SpringCollab2020.Entities.RainbowSpinnerColorAreaController") is
@@ -700,8 +714,8 @@ public sealed class SaveLoadAction {
                     colorAreaControllerType.GetMethodInfo("getRainbowSpinnerHue")) is
                 On.Celeste.CrystalStaticSpinner.hook_GetHue hookSpinnerGetHue
            ) {
-            Add(new SaveLoadAction(
-                loadState: (savedValues, _) => {
+            SafeAdd(
+                loadState: (_, _) => {
                     if (colorAreaControllerType.GetFieldValue<bool>("rainbowSpinnerHueHooked")) {
                         On.Celeste.CrystalStaticSpinner.GetHue -= hookSpinnerGetHue;
                         On.Celeste.CrystalStaticSpinner.GetHue += hookSpinnerGetHue;
@@ -709,7 +723,7 @@ public sealed class SaveLoadAction {
                         On.Celeste.CrystalStaticSpinner.GetHue -= hookSpinnerGetHue;
                     }
                 }
-            ));
+            );
         }
 
         if (ModUtils.GetType("SpringCollab2020", "Celeste.Mod.SpringCollab2020.Entities.SpikeJumpThroughController") is
@@ -717,8 +731,8 @@ public sealed class SaveLoadAction {
             && Delegate.CreateDelegate(typeof(On.Celeste.Spikes.hook_OnCollide),
                 spikeJumpThroughControllerType.GetMethodInfo("OnCollideHook")) is On.Celeste.Spikes.hook_OnCollide onCollideHook
            ) {
-            Add(new SaveLoadAction(
-                loadState: (savedValues, _) => {
+            SafeAdd(
+                loadState: (_, _) => {
                     if (spikeJumpThroughControllerType.GetFieldValue<bool>("SpikeHooked")) {
                         On.Celeste.Spikes.OnCollide -= onCollideHook;
                         On.Celeste.Spikes.OnCollide += onCollideHook;
@@ -726,7 +740,7 @@ public sealed class SaveLoadAction {
                         On.Celeste.Spikes.OnCollide -= onCollideHook;
                     }
                 }
-            ));
+            );
         }
     }
 
@@ -748,7 +762,7 @@ public sealed class SaveLoadAction {
                                && !property.Name.StartsWith("Display")
             ).ToList();
 
-        Add(new SaveLoadAction(
+        SafeAdd(
             (savedValues, _) => {
                 if (moduleType.GetPropertyValue("Settings") is not { } settingsInstance) {
                     return;
@@ -777,34 +791,31 @@ public sealed class SaveLoadAction {
                         settingsInstance.SetPropertyValue(propertyName, dict[propertyName]);
                     }
                 }
-            }));
+            });
     }
 
     private static void SupportXaphanHelper() {
         if (ModUtils.GetType("XaphanHelper", "Celeste.Mod.XaphanHelper.Upgrades.SpaceJump") is { } spaceJumpType) {
-            Add(new SaveLoadAction(
+            SafeAdd(
                 (savedValues, _) => SaveStaticMemberValues(savedValues, spaceJumpType, "jumpBuffer"),
-                (savedValues, _) => LoadStaticMemberValues(savedValues))
-            );
+                (savedValues, _) => LoadStaticMemberValues(savedValues));
         }
     }
 
     private static void SupportIsaGrabBag() {
         // 解决 DreamSpinnerBorder 读档后影像残留在屏幕中
         if (ModUtils.GetType("IsaGrabBag", "Celeste.Mod.IsaGrabBag.DreamSpinnerBorder") is { } borderType) {
-            Add(new SaveLoadAction(
-                    loadState: (_, level) => level.Entities.FirstOrDefault(entity => entity.GetType() == borderType)?.Update()
-                )
+            SafeAdd(
+                loadState: (_, level) => level.Entities.FirstOrDefault(entity => entity.GetType() == borderType)?.Update()
             );
         }
 
         // 解决读档后冲进 DreamSpinner 会被刺死
         if (ModUtils.GetType("IsaGrabBag", "Celeste.Mod.IsaGrabBag.GrabBagModule") is { } grabBagModuleType) {
-            Add(new SaveLoadAction(
+            SafeAdd(
                 (savedValues, _) => SaveStaticMemberValues(savedValues, grabBagModuleType, "ZipLineState",
                     "playerInstance"),
-                (savedValues, _) => LoadStaticMemberValues(savedValues))
-            );
+                (savedValues, _) => LoadStaticMemberValues(savedValues));
         }
     }
 
@@ -828,7 +839,7 @@ public sealed class SaveLoadAction {
 
     private static void SupportCommunalHelper() {
         if (ModUtils.GetType("CommunalHelper", "Celeste.Mod.CommunalHelper.Entities.DreamTunnelDash") is { } dreamTunnelDashType) {
-            Add(new SaveLoadAction(
+            SafeAdd(
                 (savedValues, _) => SaveStaticMemberValues(savedValues, dreamTunnelDashType,
                     "StDreamTunnelDash",
                     "hasDreamTunnelDash",
@@ -837,43 +848,40 @@ public sealed class SaveLoadAction {
                     "overrideDreamDashCheck",
                     "dreamTunnelDashAttacking"
                 ),
-                (savedValues, _) => LoadStaticMemberValues(savedValues))
-            );
+                (savedValues, _) => LoadStaticMemberValues(savedValues));
         }
     }
 
     private static void SupportBounceHelper() {
         if (ModUtils.GetType("BounceHelper", "Celeste.Mod.BounceHelper.BounceHelperModule") is { } bounceHelperModule) {
-            Add(new SaveLoadAction(
+            SafeAdd(
                 (savedValues, _) => SaveStaticMemberValues(savedValues, bounceHelperModule, "enabled"),
-                (savedValues, _) => LoadStaticMemberValues(savedValues))
-            );
+                (savedValues, _) => LoadStaticMemberValues(savedValues));
         }
     }
 
     private static void ReloadVirtualAssets() {
-        Add(new SaveLoadAction(
-                loadState: (_, _) => {
-                    foreach (VirtualAsset virtualAsset in VirtualAssets) {
-                        switch (virtualAsset) {
-                            case VirtualTexture {IsDisposed: true} virtualTexture:
-                                // Fix: 全屏切换然后读档煤球红边消失
-                                if (!virtualTexture.Name.StartsWith("dust-noise-")) {
-                                    virtualTexture.Reload();
-                                }
+        SafeAdd(
+            loadState: (_, _) => {
+                foreach (VirtualAsset virtualAsset in VirtualAssets) {
+                    switch (virtualAsset) {
+                        case VirtualTexture {IsDisposed: true} virtualTexture:
+                            // Fix: 全屏切换然后读档煤球红边消失
+                            if (!virtualTexture.Name.StartsWith("dust-noise-")) {
+                                virtualTexture.Reload();
+                            }
 
-                                break;
-                            case VirtualRenderTarget {IsDisposed: true} virtualRenderTarget:
-                                virtualRenderTarget.Reload();
-                                break;
-                        }
+                            break;
+                        case VirtualRenderTarget {IsDisposed: true} virtualRenderTarget:
+                            virtualRenderTarget.Reload();
+                            break;
                     }
+                }
 
-                    VirtualAssets.Clear();
-                },
-                clearState: () => VirtualAssets.Clear(),
-                preCloneEntities: () => VirtualAssets.Clear()
-            )
+                VirtualAssets.Clear();
+            },
+            clearState: () => VirtualAssets.Clear(),
+            preCloneEntities: () => VirtualAssets.Clear()
         );
     }
 }

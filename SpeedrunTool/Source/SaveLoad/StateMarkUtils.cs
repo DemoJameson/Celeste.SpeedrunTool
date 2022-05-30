@@ -15,7 +15,7 @@ public static class StateMarkUtils {
         On.Celeste.Strawberry.Added += StrawberryOnAdded;
         IL.Celeste.SpeedrunTimerDisplay.DrawTime += SetSaveStateColor;
         IL.Celeste.Level.Reload += LevelOnReload;
-        SaveLoadAction.Add(new SaveLoadAction(ReColor, ReColor));
+        SaveLoadAction.SafeAdd(ReColor, ReColor);
     }
 
     [Unload]

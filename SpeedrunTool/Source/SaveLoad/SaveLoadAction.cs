@@ -52,6 +52,7 @@ public sealed class SaveLoadAction {
         this.preCloneEntities = preCloneEntities;
     }
 
+    // ReSharper disable once UnusedMember.Global
     [Obsolete("crash on macOS if speedrun tool is not installed, use SafeAdd() instead")]
     public static void Add(SaveLoadAction saveLoadAction) {
         All.Add(saveLoadAction);

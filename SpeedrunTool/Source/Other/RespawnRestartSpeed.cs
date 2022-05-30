@@ -20,7 +20,7 @@ public static class RespawnRestartSpeed {
             methodInfo.ILHook(ModRestartMenu);
         }
 
-        SaveLoadAction.Add(new SaveLoadAction(beforeSaveState: level => level.Session.SetFlag(StopFastRestartFlag)));
+        SaveLoadAction.SafeAdd(beforeSaveState: level => level.Session.SetFlag(StopFastRestartFlag));
     }
 
     [Unload]

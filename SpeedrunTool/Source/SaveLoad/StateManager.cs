@@ -71,11 +71,10 @@ public sealed class StateManager {
         On.Celeste.Level.Update += UpdateBackdropWhenWaiting;
         On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
         On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
-        SaveLoadAction.Add(new SaveLoadAction(
+        SaveLoadAction.SafeAdd(
                 (_, _) => UpdateLastChecks(),
                 (_, _) => UpdateLastChecks(),
                 () => lastChecks.Clear()
-            )
         );
         RegisterHotkeys();
     }

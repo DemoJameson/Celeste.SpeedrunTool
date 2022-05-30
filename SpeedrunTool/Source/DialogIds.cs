@@ -21,6 +21,7 @@ public static class DialogIds {
     public const string NumberOfRooms = "SPEEDRUN_TOOL_NUMBER_OF_ROOMS";
     public const string RoomTimerIgnoreFlag = "SPEEDRUN_TOOL_ROOM_TIMER_IGNORE_FLAG";
     public const string AutoTurnOffRoomTimer = "SPEEDRUN_TOOL_AUTO_TURN_OFF_ROOM_TIMER";
+    public const string RoomIdEndPoint = "SPEEDRUN_TOOL_ROOM_ID_END_POINT";
 
     // Mod Options
     public const string SpeedrunTool = "SPEEDRUN_TOOL";
@@ -78,6 +79,10 @@ public static class DialogIds {
     public const string DecreaseTimedRooms = "SPEEDRUN_TOOL_DECREASE_TIMED_ROOMS";
     public const string SetEndPoint = "SPEEDRUN_TOOL_SET_END_POINT";
     public const string SetAdditionalEndPoint = "SPEEDRUN_TOOL_SET_ADDITIONAL_END_POINT";
+    public const string SetRoomIdEndPoint = "SPEEDRUN_TOOL_SET_ROOM_ID_END_POINT";
+    public const string ClearRoomIdEndPoint = "SPEEDRUN_TOOL_CLEAR_ROOM_ID_END_POINT";
+    public const string ClearRoomIdEndPointTooltip = "SPEEDRUN_TOOL_CLEAR_ROOM_ID_END_POINT_TOOLTIP";
+    public const string ClearRoomIdEndPointDialog = "SPEEDRUN_TOOL_CLEAR_ROOM_ID_END_POINT_DIALOG";
     public const string TeleportToPreviousRoom = "SPEEDRUN_TOOL_TELEPORT_TO_PREVIOUS_ROOM";
     public const string TeleportToNextRoom = "SPEEDRUN_TOOL_TELEPORT_TO_NEXT_ROOM";
     public const string AlreadyFirstRoomTooltip = "SPEEDRUN_TOOL_ALREADY_FIRST_ROOM_TOOLTIP";

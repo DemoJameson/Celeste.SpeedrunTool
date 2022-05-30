@@ -1,5 +1,6 @@
 using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
+using Microsoft.Xna.Framework.Graphics;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 
@@ -29,6 +30,8 @@ public static class RoomTimerManager {
 
     private static string previousRoom;
 
+    private static float setRoomIdRenderDelay = 0f;
+
     [Load]
     private static void Load() {
         IL.Celeste.SpeedrunTimerDisplay.Update += SpeedrunTimerDisplayOnUpdate;
@@ -36,6 +39,7 @@ public static class RoomTimerManager {
         On.Celeste.Level.Update += Timing;
         On.Celeste.SummitCheckpoint.Update += UpdateTimerStateOnTouchFlag;
         On.Celeste.LevelExit.ctor += LevelExitOnCtor;
+        On.Celeste.Editor.MapEditor.Render += MapEditorOnRender;
         TryTurnOffRoomTimer();
         RegisterHotkeys();
     }
@@ -47,6 +51,7 @@ public static class RoomTimerManager {
         On.Celeste.Level.Update -= Timing;
         On.Celeste.SummitCheckpoint.Update -= UpdateTimerStateOnTouchFlag;
         On.Celeste.LevelExit.ctor -= LevelExitOnCtor;
+        On.Celeste.Editor.MapEditor.Render -= MapEditorOnRender;
     }
 
     private static void RegisterHotkeys() {
@@ -99,6 +104,26 @@ public static class RoomTimerManager {
                 }
 
                 CreateEndPoint(level, true);
+            }
+        });
+
+        Hotkey.SetRoomIdEndPoint.RegisterPressedAction(scene => {
+            if (scene is Editor.MapEditor) {
+                Editor.LevelTemplate level = (Editor.LevelTemplate)scene.InvokeMethod("TestCheck", scene.GetFieldValue<Vector2>("mousePosition"));
+                if (level is not null && level.Type is not Editor.LevelTemplateType.Filler) {
+                    ModSettings.RoomIdEndPoint = level.Name;
+                    ClearPbTimes();
+                    setRoomIdRenderDelay = 1f;
+                }
+            }
+        });
+
+        Hotkey.ClearRoomIdEndPoint.RegisterPressedAction(scene => {
+            if (scene is Level {Paused: false}) {
+                ModSettings.RoomIdEndPoint = "";
+                SpeedrunToolModule.Instance.SaveSettings();
+                ClearPbTimes();
+                PopupMessageUtils.Show(DialogIds.ClearRoomIdEndPointTooltip.DialogClean(), DialogIds.ClearRoomIdEndPointDialog);
             }
         });
     }
@@ -302,6 +327,18 @@ public static class RoomTimerManager {
     private static void TryTurnOffRoomTimer() {
         if (ModSettings.AutoResetRoomTimer) {
             SwitchRoomTimer(RoomTimerType.Off);
+        }
+    }
+
+    private static void MapEditorOnRender(On.Celeste.Editor.MapEditor.orig_Render orig, Editor.MapEditor self) {
+        orig(self);
+        if (setRoomIdRenderDelay > 0f) {
+            string text = Dialog.Clean(DialogIds.RoomIdEndPoint) + ": " + ModSettings.RoomIdEndPoint;
+            Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullNone, null, Engine.ScreenMatrix);
+            Draw.Rect(0f, 1020f, ActiveFont.WidthToNextLine(text, 0) + 20f, ActiveFont.HeightOf(text), Color.Black * 0.8f);
+            ActiveFont.Draw(text, new Vector2(10f, 1020f), Color.AliceBlue);
+            Draw.SpriteBatch.End();
+            setRoomIdRenderDelay -= Engine.DeltaTime;
         }
     }
 }

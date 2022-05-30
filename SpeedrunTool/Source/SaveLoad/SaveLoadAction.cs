@@ -377,9 +377,13 @@ public sealed class SaveLoadAction {
             level.HudRenderer.BackgroundFade = 0f;
 
             // 移除暂停帧
-            if (level.GetFieldValue<float>("unpauseTimer") > 0f) {
+            if (level.GetFieldValue<float>("unpauseTimer") > 0f || !level.Paused && level.GetFieldValue<bool>("wasPaused")) {
                 level.Session.SetFlag("SpeedrunTool_Reset_unpauseTimer");
-                level.SetFieldValue("unpauseTimer", 0f);
+
+                if (level.GetFieldValue<float>("unpauseTimer") > 0f) {
+                    level.SetFieldValue("unpauseTimer", 0f);
+                }
+
                 level.SetFieldValue("wasPaused", false);
                 level.InvokeMethod("EndPauseEffects");
             }

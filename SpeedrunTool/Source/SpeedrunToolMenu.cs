@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
@@ -83,6 +83,12 @@ public static class SpeedrunToolMenu {
 
                 subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoTurnOffRoomTimer), ModSettings.AutoResetRoomTimer).Change(b =>
                     ModSettings.AutoResetRoomTimer = b));
+
+                if (!string.IsNullOrEmpty(ModSettings.RoomIdEndPoint)) {
+                    TextMenu.Button roomIdEndPoint = new (Dialog.Clean(DialogIds.RoomIdEndPoint) + ": " + ModSettings.RoomIdEndPoint);
+                    roomIdEndPoint.Selectable = false;
+                    subMenu.Add(roomIdEndPoint);
+                }
             }),
 
             new EaseInSubMenu(Dialog.Clean(DialogIds.State), false).With(subMenu => {

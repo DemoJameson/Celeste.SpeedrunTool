@@ -44,7 +44,7 @@ internal class RoomTimerData {
                 }).FirstOrDefault();
             timeKeyPrefix += closestFlag;
         }
-        if (!EndPoint.IsExist) {
+        if (!EndPoint.IsExist && string.IsNullOrEmpty(ModSettings.RoomIdEndPoint)) {
             pbTimeKey = timeKeyPrefix + ModSettings.NumberOfRooms;
             thisRunTimeKey = timeKeyPrefix + roomNumber;
         } else {
@@ -68,7 +68,7 @@ internal class RoomTimerData {
 
         // need to continually poll this condition because you can now
         // change number of timed rooms to reactivate the timer
-        if (roomNumber > ModSettings.NumberOfRooms && !EndPoint.IsExist || hitEndPoint || level is { Completed: true }) {
+        if (roomNumber > ModSettings.NumberOfRooms && !EndPoint.IsExist && string.IsNullOrEmpty(ModSettings.RoomIdEndPoint) || level.Session.Level == ModSettings.RoomIdEndPoint || hitEndPoint || level is { Completed: true }) {
             timerState = TimerState.Completed;
         } else {
             timerState = TimerState.Timing;
@@ -89,8 +89,8 @@ internal class RoomTimerData {
 
             case TimerState.Timing:
 
-                // if not using endpoint, track this run's time and pb times for each room number
-                if (!EndPoint.IsExist) {
+                // if not using endpoint/room id, track this run's time and pb times for each room number
+                if (!EndPoint.IsExist && string.IsNullOrEmpty(ModSettings.RoomIdEndPoint)) {
                     thisRunTimes[thisRunTimeKey] = Time;
                     LastPbTime = pbTimes.GetValueOrDefault(thisRunTimeKey, 0);
                     if (Time < LastPbTime || LastPbTime == 0) {
@@ -111,9 +111,9 @@ internal class RoomTimerData {
                             pbTimes[pbTimeKey] = Time;
                         }
                     }
-                } 
-                // if using endpoint, ignore room count and only track a single complete time and pb time
-                else if (endPoint || level is { Completed: true }) {
+                }
+                // if using endpoint/room id, ignore room count and only track a single complete time and pb time
+                else if (endPoint || level is { Completed: true } || level.Session.Level == ModSettings.RoomIdEndPoint) {
                     thisRunTimes[thisRunTimeKey] = Time;
                     LastPbTime = pbTimes.GetValueOrDefault(thisRunTimeKey, 0);
                     if (Time < LastPbTime || LastPbTime == 0) {
@@ -121,15 +121,15 @@ internal class RoomTimerData {
                     }
                     timerState = TimerState.Completed;
                     hitEndPoint = true;
-                    if (level is { Completed: false }) {
+                    if (level is { Completed: false } && level.Session.Level != ModSettings.RoomIdEndPoint) {
                         EndPoint.All.ForEach(point => point.StopTime());
                     }
                 }
                 break;
 
             case TimerState.Completed:
-                // if not using endpoint, still track room times in the background
-                if (!EndPoint.IsExist) {
+                // if not using endpoint/room id, still track room times in the background
+                if (!EndPoint.IsExist && string.IsNullOrEmpty(ModSettings.RoomIdEndPoint)) {
                     thisRunTimes[thisRunTimeKey] = Time;
                     // don't overflow room number at level end
                     if (level is { Completed: false }) {

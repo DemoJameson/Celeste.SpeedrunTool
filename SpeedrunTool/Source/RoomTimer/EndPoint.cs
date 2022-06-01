@@ -6,6 +6,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer;
 
 [Tracked]
 public class EndPoint: Entity {
+    public static string RoomIdEndPoint;
     private static readonly List<EndPoint> CachedEndPoints = new();
     private static AreaKey cachedAreaKey;
 

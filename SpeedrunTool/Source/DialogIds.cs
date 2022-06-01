@@ -81,8 +81,8 @@ public static class DialogIds {
     public const string SetAdditionalEndPoint = "SPEEDRUN_TOOL_SET_ADDITIONAL_END_POINT";
     public const string SetRoomIdEndPoint = "SPEEDRUN_TOOL_SET_ROOM_ID_END_POINT";
     public const string ClearRoomIdEndPoint = "SPEEDRUN_TOOL_CLEAR_ROOM_ID_END_POINT";
-    public const string ClearRoomIdEndPointTooltip = "SPEEDRUN_TOOL_CLEAR_ROOM_ID_END_POINT_TOOLTIP";
-    public const string ClearRoomIdEndPointDialog = "SPEEDRUN_TOOL_CLEAR_ROOM_ID_END_POINT_DIALOG";
+    public const string ResetRoomTimerPbTooltip = "SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB_TOOLTIP";
+    public const string ResetRoomTimerPbDialog = "SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB_DIALOG";
     public const string TeleportToPreviousRoom = "SPEEDRUN_TOOL_TELEPORT_TO_PREVIOUS_ROOM";
     public const string TeleportToNextRoom = "SPEEDRUN_TOOL_TELEPORT_TO_NEXT_ROOM";
     public const string AlreadyFirstRoomTooltip = "SPEEDRUN_TOOL_ALREADY_FIRST_ROOM_TOOLTIP";

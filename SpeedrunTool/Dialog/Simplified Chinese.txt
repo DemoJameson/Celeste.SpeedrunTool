@@ -41,12 +41,17 @@ SPEEDRUN_TOOL_DEATH_STATISTICS= 死亡数据
 SPEEDRUN_TOOL_MORE_OPTIONS=     更多选项
 
 # ================================== Room Timer Options ==================================
-SPEEDRUN_TOOL_NEXT_ROOM=                下个房间
-SPEEDRUN_TOOL_CURRENT_ROOM=             当前房间
-SPEEDRUN_TOOL_NUMBER_OF_ROOMS=          计时房间数
-SPEEDRUN_TOOL_END_POINT_STYLE=          终点样式
-SPEEDRUN_TOOL_ROOM_TIMER_IGNORE_FLAG=   忽略旗子
-SPEEDRUN_TOOL_AUTO_TURN_OFF_ROOM_TIMER= 重启章节/游戏时关闭房间计时器
+SPEEDRUN_TOOL_NEXT_ROOM=                   下个房间
+SPEEDRUN_TOOL_CURRENT_ROOM=                当前房间
+SPEEDRUN_TOOL_NUMBER_OF_ROOMS=             计时房间数
+SPEEDRUN_TOOL_END_POINT_STYLE=             终点样式
+SPEEDRUN_TOOL_ROOM_TIMER_IGNORE_FLAG=      忽略旗子
+SPEEDRUN_TOOL_AUTO_TURN_OFF_ROOM_TIMER=    重启章节/游戏时关闭房间计时器
+SPEEDRUN_TOOL_ROOM_ID_END_POINT=           房间终点: {0}
+SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB_TOOLTIP= 清除房间计时记录与终点
+SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB_DIALOG=
+    [MADELINE left normal]
+    清除房间计时记录与终点~
 
 # ================================== State Manager ==================================
 SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE=     加载状态后冻结游戏

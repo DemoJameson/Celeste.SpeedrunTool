@@ -33,9 +33,6 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     [SettingName(DialogIds.AutoTurnOffRoomTimer)]
     public bool AutoResetRoomTimer { get; set; } = true;
 
-    [SettingName(DialogIds.RoomIdEndPoint)]
-    public string RoomIdEndPoint { get; set; } = "";
-
     #endregion
 
     #region State
@@ -94,8 +91,6 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     [SettingIgnore] public List<Keys> KeyboardDecreaseTimedRooms { get; set; } = Hotkey.DecreaseTimedRooms.GetDefaultKeys();
     [SettingIgnore] public List<Keys> KeyboardSetEndPoint { get; set; } = Hotkey.SetEndPoint.GetDefaultKeys();
     [SettingIgnore] public List<Keys> KeyboardSetAdditionalEndPoint { get; set; } = Hotkey.SetAdditionalEndPoint.GetDefaultKeys();
-    [SettingIgnore] public List<Keys> KeyboardSetRoomIdEndPoint { get; set; } = Hotkey.SetRoomIdEndPoint.GetDefaultKeys();
-    [SettingIgnore] public List<Keys> KeyboardClearRoomIdEndPoint { get; set; } = Hotkey.ClearRoomIdEndPoint.GetDefaultKeys();
     [SettingIgnore] public List<Keys> KeyboardCheckDeathStatistics { get; set; } = Hotkey.CheckDeathStatistics.GetDefaultKeys();
     [SettingIgnore] public List<Keys> KeyboardTeleportToPreviousRoom { get; set; } = Hotkey.TeleportToPreviousRoom.GetDefaultKeys();
     [SettingIgnore] public List<Keys> KeyboardTeleportToNextRoom { get; set; } = Hotkey.TeleportToNextRoom.GetDefaultKeys();

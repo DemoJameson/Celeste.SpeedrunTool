@@ -40,13 +40,17 @@ SPEEDRUN_TOOL_STATE=        State
 SPEEDRUN_TOOL_MORE_OPTIONS= More Options
 
 # ================================== Room Timer Options ==================================
-SPEEDRUN_TOOL_NEXT_ROOM=                Next Room
-SPEEDRUN_TOOL_CURRENT_ROOM=             Current Room
-SPEEDRUN_TOOL_NUMBER_OF_ROOMS=          Number of Timed Rooms
-SPEEDRUN_TOOL_END_POINT_STYLE=          End Point Style
-SPEEDRUN_TOOL_ROOM_TIMER_IGNORE_FLAG=   Ignore Flag
-SPEEDRUN_TOOL_AUTO_TURN_OFF_ROOM_TIMER= Turn Off Timer When Restart Game/Chapter
-SPEEDRUN_TOOL_ROOM_ID_END_POINT=        Room ID End Point
+SPEEDRUN_TOOL_NEXT_ROOM=                   Next Room
+SPEEDRUN_TOOL_CURRENT_ROOM=                Current Room
+SPEEDRUN_TOOL_NUMBER_OF_ROOMS=             Number of Timed Rooms
+SPEEDRUN_TOOL_END_POINT_STYLE=             End Point Style
+SPEEDRUN_TOOL_ROOM_TIMER_IGNORE_FLAG=      Ignore Flag
+SPEEDRUN_TOOL_AUTO_TURN_OFF_ROOM_TIMER=    Turn Off Timer When Restart Game/Chapter
+SPEEDRUN_TOOL_ROOM_ID_END_POINT=           Room ID End Point: {0}
+SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB_TOOLTIP= Reset Room Timer PB and End Point
+SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB_DIALOG=
+    [MADELINE left normal]
+    Cleared room timer PB and end point~
 
 # ================================== State Manager ==================================
 SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE=     Pause The Game after Loading State
@@ -102,12 +106,6 @@ SPEEDRUN_TOOL_INCREASE_TIMED_ROOMS=          Increase Number of Timed Rooms
 SPEEDRUN_TOOL_DECREASE_TIMED_ROOMS=          Decrease Number of Timed Rooms
 SPEEDRUN_TOOL_SET_END_POINT=                 Set Room Timer End Point
 SPEEDRUN_TOOL_SET_ADDITIONAL_END_POINT=      Set Room Timer Additional End Point
-SPEEDRUN_TOOL_SET_ROOM_ID_END_POINT=         Set Room ID as End Point
-SPEEDRUN_TOOL_CLEAR_ROOM_ID_END_POINT=       Clear Room ID End Point
-SPEEDRUN_TOOL_CLEAR_ROOM_ID_END_POINT_TOOLTIP= Cleared Room ID End Point
-SPEEDRUN_TOOL_CLEAR_ROOM_ID_END_POINT_DIALOG= 
-    [Madeline left normal]
-    Cleared Room ID End Point~
 SPEEDRUN_TOOL_TELEPORT_TO_PREVIOUS_ROOM=     Teleport to Previous Room
 SPEEDRUN_TOOL_TELEPORT_TO_NEXT_ROOM=         Teleport to Next Room
 SPEEDRUN_TOOL_ALREADY_FIRST_ROOM_TOOLTIP=    Already in the first room

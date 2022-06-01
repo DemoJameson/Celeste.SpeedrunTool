@@ -1,3 +1,4 @@
+using Celeste.Editor;
 using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
 using Microsoft.Xna.Framework.Graphics;
@@ -30,7 +31,7 @@ public static class RoomTimerManager {
 
     private static string previousRoom;
 
-    private static float setRoomIdRenderDelay = 0f;
+    private static float setRoomIdRenderDuration = 0f;
 
     [Load]
     private static void Load() {
@@ -56,8 +57,9 @@ public static class RoomTimerManager {
 
     private static void RegisterHotkeys() {
         Hotkey.ResetRoomTimerPb.RegisterPressedAction(scene => {
-            if (scene is Level {Paused: false}) {
+            if (scene is Level {Paused: false} or MapEditor) {
                 ClearPbTimes();
+                PopupMessageUtils.Show(DialogIds.ResetRoomTimerPbTooltip.DialogClean(), DialogIds.ResetRoomTimerPbDialog);
             }
         });
 
@@ -90,42 +92,24 @@ public static class RoomTimerManager {
             }
         });
 
-        Hotkey.SetEndPoint.RegisterPressedAction(scene => {
-            if (scene is Level {Paused: false} level) {
+        Hotkey.SetEndPoint.RegisterPressedAction(scene => SetEndPoint(scene, false));
+        Hotkey.SetAdditionalEndPoint.RegisterPressedAction(scene => SetEndPoint(scene, true));
+    }
+
+    private static void SetEndPoint(Scene scene, bool additional) {
+        if (scene is Level {Paused: false} level) {
+            if (!additional || !EndPoint.IsExist) {
                 ClearPbTimes();
-                CreateEndPoint(level);
             }
-        });
-
-        Hotkey.SetAdditionalEndPoint.RegisterPressedAction(scene => {
-            if (scene is Level {Paused: false} level) {
-                if (!EndPoint.IsExist) {
-                    ClearPbTimes();
-                }
-
-                CreateEndPoint(level, true);
-            }
-        });
-
-        Hotkey.SetRoomIdEndPoint.RegisterPressedAction(scene => {
-            if (scene is Editor.MapEditor) {
-                Editor.LevelTemplate level = (Editor.LevelTemplate)scene.InvokeMethod("TestCheck", scene.GetFieldValue<Vector2>("mousePosition"));
-                if (level is not null && level.Type is not Editor.LevelTemplateType.Filler) {
-                    ModSettings.RoomIdEndPoint = level.Name;
-                    ClearPbTimes();
-                    setRoomIdRenderDelay = 1f;
-                }
-            }
-        });
-
-        Hotkey.ClearRoomIdEndPoint.RegisterPressedAction(scene => {
-            if (scene is Level {Paused: false}) {
-                ModSettings.RoomIdEndPoint = "";
-                SpeedrunToolModule.Instance.SaveSettings();
+            CreateEndPoint(level, additional);
+        } else if (scene is MapEditor) {
+            LevelTemplate levelTemplate = (LevelTemplate)scene.InvokeMethod("TestCheck", scene.GetFieldValue<Vector2>("mousePosition"));
+            if (levelTemplate is not null && levelTemplate.Type is not LevelTemplateType.Filler) {
                 ClearPbTimes();
-                PopupMessageUtils.Show(DialogIds.ClearRoomIdEndPointTooltip.DialogClean(), DialogIds.ClearRoomIdEndPointDialog);
+                EndPoint.RoomIdEndPoint = levelTemplate.Name;
+                setRoomIdRenderDuration = 2f;
             }
-        });
+        }
     }
 
     private static void SpeedrunTimerDisplayOnUpdate(ILContext il) {
@@ -144,7 +128,7 @@ public static class RoomTimerManager {
         return showTimer || ModSettings.RoomTimerType != RoomTimerType.Off;
     }
 
-    private static void CreateEndPoint(Level level, bool additional = false) {
+    private static void CreateEndPoint(Level level, bool additional) {
         if (level.GetPlayer() is {Dead: false} player) {
             if (!additional) {
                 EndPoint.All.ForEach(point => point.RemoveSelf());
@@ -172,6 +156,7 @@ public static class RoomTimerManager {
         }
         if (clearEndPoint) {
             EndPoint.All.ForEach(point => point.RemoveSelf());
+            EndPoint.RoomIdEndPoint = "";
         }
     }
 
@@ -330,15 +315,15 @@ public static class RoomTimerManager {
         }
     }
 
-    private static void MapEditorOnRender(On.Celeste.Editor.MapEditor.orig_Render orig, Editor.MapEditor self) {
+    private static void MapEditorOnRender(On.Celeste.Editor.MapEditor.orig_Render orig, MapEditor self) {
         orig(self);
-        if (setRoomIdRenderDelay > 0f) {
-            string text = Dialog.Clean(DialogIds.RoomIdEndPoint) + ": " + ModSettings.RoomIdEndPoint;
+        if (setRoomIdRenderDuration > 0f && !string.IsNullOrEmpty(EndPoint.RoomIdEndPoint)) {
+            string text = string.Format(Dialog.Get(DialogIds.RoomIdEndPoint), EndPoint.RoomIdEndPoint);
             Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullNone, null, Engine.ScreenMatrix);
             Draw.Rect(0f, 1020f, ActiveFont.WidthToNextLine(text, 0) + 20f, ActiveFont.HeightOf(text), Color.Black * 0.8f);
             ActiveFont.Draw(text, new Vector2(10f, 1020f), Color.AliceBlue);
             Draw.SpriteBatch.End();
-            setRoomIdRenderDelay -= Engine.DeltaTime;
+            setRoomIdRenderDuration -= Engine.RawDeltaTime;
         }
     }
 }

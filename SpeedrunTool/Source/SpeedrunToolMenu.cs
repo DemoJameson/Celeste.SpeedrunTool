@@ -84,9 +84,10 @@ public static class SpeedrunToolMenu {
                 subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoTurnOffRoomTimer), ModSettings.AutoResetRoomTimer).Change(b =>
                     ModSettings.AutoResetRoomTimer = b));
 
-                if (!string.IsNullOrEmpty(ModSettings.RoomIdEndPoint)) {
-                    TextMenu.Button roomIdEndPoint = new (Dialog.Clean(DialogIds.RoomIdEndPoint) + ": " + ModSettings.RoomIdEndPoint);
-                    roomIdEndPoint.Selectable = false;
+                if (!string.IsNullOrEmpty(EndPoint.RoomIdEndPoint)) {
+                    TextMenu.Button roomIdEndPoint = new (string.Format(Dialog.Get(DialogIds.RoomIdEndPoint), EndPoint.RoomIdEndPoint)) {
+                        Selectable = false
+                    };
                     subMenu.Add(roomIdEndPoint);
                 }
             }),

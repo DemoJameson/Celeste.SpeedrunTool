@@ -182,8 +182,9 @@ public class HotkeyConfigUi : TextMenu {
             return false;
         }
 
+        // 反射兼容 v1312
         // 避免输入文字时触发快捷键
-        if (!MInput.ControllerHasFocus && scene is Overworld {
+        if (!typeof(MInput).GetFieldValue<bool>("ControllerHasFocus") && scene is Overworld {
                 Current: OuiFileNaming {UseKeyboardInput: true} or OuiModOptionString {UseKeyboardInput: true}
             }) {
             return false;
@@ -197,7 +198,10 @@ public class HotkeyConfigUi : TextMenu {
 
         Add(new Header(Dialog.Clean(DialogIds.HotkeysConfig)));
         Add(new SubHeader(Dialog.Clean(DialogIds.ComboHotkeyDescription)));
-        Add(new SubHeader(Dialog.Clean(DialogIds.PressDeleteToRemoveButton), false));
+        Add(new SubHeader(Dialog.Clean(DialogIds.PressDeleteToRemoveButton)).With(header => {
+            // 兼容 v1312
+            header.SetFieldValue("TopPadding", false);
+        }));
 
         Add(new SubHeader(Dialog.Clean(DialogIds.Keyboard)));
         foreach (KeyValuePair<Hotkey, HotkeyConfig> pair in HotkeyConfigs) {
@@ -386,7 +390,7 @@ public class HotkeyConfig {
     public readonly Keys[] DefaultKeys;
 
     public readonly Hotkey Hotkey;
-    public readonly Lazy<VirtualButton> VirtualButton = new(() => new VirtualButton(0.08f) {AutoConsumeBuffer = true});
+    public readonly Lazy<VirtualButton> VirtualButton = new(() => new VirtualButton(0.08f));
     public Action<Scene> OnPressed;
     public List<VirtualButton.KeyboardKey> KeyboardKeys { get; private set; } = new();
     public List<VirtualButton.PadButton> PadButtons { get; private set; } = new();

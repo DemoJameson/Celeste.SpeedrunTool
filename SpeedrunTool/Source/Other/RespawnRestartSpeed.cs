@@ -18,6 +18,9 @@ public static class RespawnRestartSpeed {
 
         if (ModUtils.VanillaAssembly.GetType("Celeste.Level+<>c__DisplayClass150_0")?.GetMethodInfo("<GiveUp>b__0") is { } methodInfo) {
             methodInfo.ILHook(ModRestartMenu);
+        } else if (ModUtils.VanillaAssembly.GetType("Celeste.Level+<>c__DisplayClass147_0")?.GetMethodInfo("<GiveUp>b__0") is { } methodInfo1312) {
+            // 兼容 v1312
+            methodInfo1312.ILHook(ModRestartMenu);
         }
 
         SaveLoadAction.SafeAdd(beforeSaveState: level => level.Session.SetFlag(StopFastRestartFlag));

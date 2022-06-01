@@ -35,6 +35,7 @@ public sealed class StateManager {
             unfreezeInputs.Add(Input.Aim);
             unfreezeInputs.Add(Input.Pause);
 
+            // 反射兼容 v1312
             if (typeof(Input).GetFieldValue("DemoDash") is VirtualInput demoDash) {
                 unfreezeInputs.Add(demoDash);
             }

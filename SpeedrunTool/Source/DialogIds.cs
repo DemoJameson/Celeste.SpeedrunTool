@@ -20,6 +20,7 @@ public static class DialogIds {
     public const string EndPointStyle = "SPEEDRUN_TOOL_END_POINT_STYLE";
     public const string NumberOfRooms = "SPEEDRUN_TOOL_NUMBER_OF_ROOMS";
     public const string TimeSummitFlag = "SPEEDRUN_TOOL_TIME_SUMMIT_FLAG";
+    public const string TimeHeartCassette = "SPEEDRUN_TOOL_TIME_HEART_CASSETTE";
     public const string AutoTurnOffRoomTimer = "SPEEDRUN_TOOL_AUTO_TURN_OFF_ROOM_TIMER";
     public const string RoomIdEndPoint = "SPEEDRUN_TOOL_ROOM_ID_END_POINT";
 

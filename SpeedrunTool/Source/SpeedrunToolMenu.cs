@@ -80,16 +80,12 @@ public static class SpeedrunToolMenu {
 
                 subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.TimeSummitFlag), ModSettings.TimeSummitFlag).Change(b =>
                     ModSettings.TimeSummitFlag = b));
+                
+                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.TimeHeartCassette), ModSettings.TimeHeartCassette).Change(b =>
+                    ModSettings.TimeHeartCassette = b));
 
                 subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoTurnOffRoomTimer), ModSettings.AutoResetRoomTimer).Change(b =>
                     ModSettings.AutoResetRoomTimer = b));
-
-                if (!string.IsNullOrEmpty(EndPoint.RoomIdEndPoint)) {
-                    TextMenu.Button roomIdEndPoint = new (string.Format(Dialog.Get(DialogIds.RoomIdEndPoint), EndPoint.RoomIdEndPoint)) {
-                        Selectable = false
-                    };
-                    subMenu.Add(roomIdEndPoint);
-                }
             }),
 
             new EaseInSubMenu(Dialog.Clean(DialogIds.State), false).With(subMenu => {

@@ -35,6 +35,8 @@ public static class RoomTimerManager {
         On.Celeste.SpeedrunTimerDisplay.Render += Render;
         On.Celeste.Level.Update += Timing;
         On.Celeste.SummitCheckpoint.Update += UpdateTimerStateOnTouchFlag;
+        On.Celeste.HeartGem.Collect += HeartGemOnCollect;
+        On.Celeste.Cassette.OnPlayer += CassetteOnOnPlayer;
         On.Celeste.LevelExit.ctor += LevelExitOnCtor;
         TryTurnOffRoomTimer();
         RegisterHotkeys();
@@ -46,6 +48,8 @@ public static class RoomTimerManager {
         On.Celeste.SpeedrunTimerDisplay.Render -= Render;
         On.Celeste.Level.Update -= Timing;
         On.Celeste.SummitCheckpoint.Update -= UpdateTimerStateOnTouchFlag;
+        On.Celeste.HeartGem.Collect -= HeartGemOnCollect;
+        On.Celeste.Cassette.OnPlayer -= CassetteOnOnPlayer;
         On.Celeste.LevelExit.ctor -= LevelExitOnCtor;
     }
 
@@ -145,6 +149,22 @@ public static class RoomTimerManager {
         bool lastActivated = self.Activated;
         orig(self);
         if (ModSettings.TimeSummitFlag && !lastActivated && self.Activated) {
+            UpdateTimerState();
+        }
+    }
+
+    private static void CassetteOnOnPlayer(On.Celeste.Cassette.orig_OnPlayer orig, Cassette self, Player player) {
+        if (ModSettings.TimeHeartCassette && !self.GetFieldValue<bool>("collected")) {
+            UpdateTimerState();
+        }
+
+        orig(self, player);
+    }
+
+    private static void HeartGemOnCollect(On.Celeste.HeartGem.orig_Collect orig, HeartGem self, Player player) {
+        orig(self, player);
+
+        if (ModSettings.TimeHeartCassette) {
             UpdateTimerState();
         }
     }

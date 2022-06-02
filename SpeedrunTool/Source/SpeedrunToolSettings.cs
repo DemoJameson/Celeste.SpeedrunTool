@@ -29,6 +29,9 @@ public class SpeedrunToolSettings : EverestModuleSettings {
 
     [SettingName(DialogIds.TimeSummitFlag)]
     public bool TimeSummitFlag { get; set; } = true;
+    
+    [SettingName(DialogIds.TimeHeartCassette)]
+    public bool TimeHeartCassette { get; set; } = true;
 
     [SettingName(DialogIds.AutoTurnOffRoomTimer)]
     public bool AutoResetRoomTimer { get; set; } = true;

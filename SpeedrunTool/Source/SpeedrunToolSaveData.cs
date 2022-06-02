@@ -52,31 +52,4 @@ public class SpeedrunToolSaveData : EverestModuleSaveData {
     public void SetSelection(int selection) {
         Selection = selection;
     }
-
-    [Load]
-    private static void Load() {
-        On.Celeste.SaveData.LoadModSaveData += SaveDataOnLoadModSaveData;
-    }
-
-    [Unload]
-    private static void Unload() {
-        On.Celeste.SaveData.LoadModSaveData -= SaveDataOnLoadModSaveData;
-    }
-
-    private static void SaveDataOnLoadModSaveData(On.Celeste.SaveData.orig_LoadModSaveData orig, int slot) {
-        orig(slot);
-        ClearUselessPlaybackFiles();
-    }
-
-    private static void ClearUselessPlaybackFiles() {
-        HashSet<string> playbackFiles = new(SpeedrunToolModule.SaveData.DeathInfos.Where(info => info.PlaybackFilePath.IsNotNullAndEmpty())
-            .Select(info => info.PlaybackFilePath));
-        if (Directory.Exists(DeathStatisticsManager.PlaybackSlotDir)) {
-            foreach (string file in Directory.GetFiles(DeathStatisticsManager.PlaybackSlotDir)) {
-                if (!playbackFiles.Contains(file)) {
-                    File.Delete(file);
-                }
-            }
-        }
-    }
 }

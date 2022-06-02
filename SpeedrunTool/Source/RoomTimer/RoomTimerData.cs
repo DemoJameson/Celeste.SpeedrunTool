@@ -68,7 +68,7 @@ internal class RoomTimerData {
 
         // need to continually poll this condition because you can now
         // change number of timed rooms to reactivate the timer
-        if (roomNumber > ModSettings.NumberOfRooms && !EndPoint.IsExist || level.Session.Level == EndPoint.RoomIdEndPoint || hitEndPoint || level is { Completed: true }) {
+        if (roomNumber > ModSettings.NumberOfRooms && !EndPoint.IsExist || hitEndPoint || level is { Completed: true }) {
             timerState = TimerState.Completed;
         } else {
             timerState = TimerState.Timing;
@@ -78,13 +78,17 @@ internal class RoomTimerData {
     }
 
     public void UpdateTimerState(bool endPoint) {
-        Level level = Engine.Scene as Level;
+        if (Engine.Scene is not Level level) {
+            return;
+        }
+
         switch (timerState) {
             case TimerState.WaitToStart:
                 if (!endPoint) {
                     timerState = TimerState.Timing;
                     roomNumber = 1;
                 }
+
                 break;
 
             case TimerState.Timing:
@@ -113,7 +117,7 @@ internal class RoomTimerData {
                     }
                 }
                 // if using endpoint/room id, ignore room count and only track a single complete time and pb time
-                else if (endPoint || level is { Completed: true } || level.Session.Level == EndPoint.RoomIdEndPoint) {
+                else if (endPoint || level is { Completed: true }) {
                     thisRunTimes[thisRunTimeKey] = Time;
                     LastPbTime = pbTimes.GetValueOrDefault(thisRunTimeKey, 0);
                     if (Time < LastPbTime || LastPbTime == 0) {
@@ -121,7 +125,7 @@ internal class RoomTimerData {
                     }
                     timerState = TimerState.Completed;
                     hitEndPoint = true;
-                    if (level is { Completed: false } && level.Session.Level != EndPoint.RoomIdEndPoint) {
+                    if (level is { Completed: false }) {
                         EndPoint.AllStopTime();
                     }
                 }

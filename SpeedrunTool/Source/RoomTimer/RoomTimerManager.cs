@@ -132,10 +132,10 @@ public static class RoomTimerManager {
         orig(self);
 
         string currentRoom = self.Session.Level;
-        bool nextRoom = previousRoom != null && previousRoom != currentRoom;
+        bool enteringNextRoom = previousRoom != null && previousRoom != currentRoom;
         previousRoom = currentRoom;
-        if (self.Completed || nextRoom) {
-            UpdateTimerState();
+        if (self.Completed || enteringNextRoom || EndPoint.IsReachedRoomIdEndPoint) {
+            UpdateTimerState(EndPoint.IsReachedRoomIdEndPoint);
         }
 
         NextRoomTimerData.Timing(self);

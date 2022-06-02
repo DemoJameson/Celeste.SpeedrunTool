@@ -8,7 +8,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer;
 
 [Tracked]
 public class EndPoint : Entity {
-    public static string RoomIdEndPoint;
+    public static string RoomIdEndPoint { get; private set; }
     private static readonly List<EndPoint> CachedEndPoints = new();
     private static AreaKey cachedAreaKey;
 
@@ -292,6 +292,7 @@ public class EndPoint : Entity {
     }
 
     public static bool IsExist => Engine.Scene is Level level && level.Tracker.GetEntity<EndPoint>() != null || !string.IsNullOrEmpty(RoomIdEndPoint);
+    public static bool IsReachedRoomIdEndPoint => !string.IsNullOrEmpty(RoomIdEndPoint) && Engine.Scene is Level level && level.Session.Level == RoomIdEndPoint;
 
     private static readonly List<EndPoint> EmptyList = new();
 

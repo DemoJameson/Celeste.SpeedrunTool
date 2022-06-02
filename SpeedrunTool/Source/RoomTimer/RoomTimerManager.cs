@@ -138,7 +138,7 @@ public static class RoomTimerManager {
         bool enteringNextRoom = previousRoom != null && previousRoom != currentRoom;
         previousRoom = currentRoom;
         if (self.Completed || enteringNextRoom || EndPoint.IsReachedRoomIdEndPoint) {
-            UpdateTimerState(EndPoint.IsReachedRoomIdEndPoint);
+            UpdateTimerState();
         }
 
         NextRoomTimerData.Timing(self);

@@ -3,6 +3,8 @@ using System.Linq;
 using Celeste.Editor;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework.Graphics;
+using Mono.Cecil.Cil;
+using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.RoomTimer;
 
@@ -17,6 +19,8 @@ public class EndPoint : Entity {
         On.Celeste.Level.End += LevelOnEnd;
         On.Celeste.Level.Begin += LevelOnBegin;
         On.Celeste.Editor.MapEditor.Render += MapEditorOnRender;
+        IL.Celeste.Editor.LevelTemplate.RenderContents += LevelTemplateOnRenderContents;
+        IL.Celeste.Editor.LevelTemplate.RenderOutline += LevelTemplateOnRenderOutline;
     }
 
     [Unload]
@@ -24,6 +28,8 @@ public class EndPoint : Entity {
         On.Celeste.Level.End -= LevelOnEnd;
         On.Celeste.Level.Begin -= LevelOnBegin;
         On.Celeste.Editor.MapEditor.Render -= MapEditorOnRender;
+        IL.Celeste.Editor.LevelTemplate.RenderContents -= LevelTemplateOnRenderContents;
+        IL.Celeste.Editor.LevelTemplate.RenderOutline -= LevelTemplateOnRenderOutline;
     }
 
     private static void LevelOnEnd(On.Celeste.Level.orig_End orig, Level self) {
@@ -49,12 +55,34 @@ public class EndPoint : Entity {
     private static void MapEditorOnRender(On.Celeste.Editor.MapEditor.orig_Render orig, MapEditor self) {
         orig(self);
 
-        if (!string.IsNullOrEmpty(EndPoint.RoomIdEndPoint)) {
+        if (!string.IsNullOrEmpty(RoomIdEndPoint)) {
             string text = string.Format(Dialog.Get(DialogIds.RoomIdEndPoint), EndPoint.RoomIdEndPoint);
-            Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullNone, null, Engine.ScreenMatrix);
+            Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearClamp, DepthStencilState.None,
+                RasterizerState.CullNone, null, Engine.ScreenMatrix);
             Draw.Rect(0f, 1020f, ActiveFont.WidthToNextLine(text, 0) + 20f, ActiveFont.HeightOf(text), Color.Black * 0.8f);
             ActiveFont.Draw(text, new Vector2(10f, 1020f), Color.AliceBlue);
             Draw.SpriteBatch.End();
+        }
+    }
+
+    private static void LevelTemplateOnRenderContents(ILContext il) {
+        ILCursor ilCursor = new(il);
+        if (ilCursor.TryGotoNext(MoveType.After,
+                ins => ins.MatchLdfld<LevelTemplate>("EditorColorIndex"),
+                ins => ins.OpCode == OpCodes.Ldelem_Any
+            )) {
+            ilCursor.Emit(OpCodes.Ldarg_0)
+                .EmitDelegate<Func<Color, LevelTemplate, Color>>((color, template) => template.Name == RoomIdEndPoint ? Color.Yellow : color);
+        }
+    }
+
+    private static void LevelTemplateOnRenderOutline(ILContext il) {
+        ILCursor ilCursor = new(il);
+        if (ilCursor.TryGotoNext(MoveType.After,
+                ins => ins.MatchLdsfld<LevelTemplate>("inactiveBorderColor")
+            )) {
+            ilCursor.Emit(OpCodes.Ldarg_0)
+                .EmitDelegate<Func<Color, LevelTemplate, Color>>((color, template) => template.Name == RoomIdEndPoint ? Color.Yellow : color);
         }
     }
 
@@ -313,7 +341,7 @@ public class EndPoint : Entity {
     public static void AllStopTime() {
         All.ForEach(point => point.StopTime());
     }
-    
+
     public static void AllResetSprite() {
         All.ForEach(point => point.ResetSprite());
     }
@@ -339,7 +367,7 @@ public class EndPoint : Entity {
             }
         }
     }
-    
+
     private static void CreateEndPoint(Level level, bool additional) {
         if (level.GetPlayer() is {Dead: false} player) {
             if (!additional) {

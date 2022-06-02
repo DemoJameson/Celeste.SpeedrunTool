@@ -47,7 +47,7 @@ SPEEDRUN_TOOL_END_POINT_STYLE=             End Point Style
 SPEEDRUN_TOOL_ROOM_TIMER_IGNORE_FLAG=      Ignore Flag
 SPEEDRUN_TOOL_AUTO_TURN_OFF_ROOM_TIMER=    Turn Off Timer When Restart Game/Chapter
 SPEEDRUN_TOOL_ROOM_ID_END_POINT=           Room ID End Point: {0}
-SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB_TOOLTIP= Reset Room Timer PB and End Point
+SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB_TOOLTIP= Cleared Room Timer PB and End Point
 SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB_DIALOG=
     [MADELINE left normal]
     Cleared room timer PB and end point~

@@ -1,11 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
+using Celeste.Editor;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace Celeste.Mod.SpeedrunTool.RoomTimer;
 
 [Tracked]
-public class EndPoint: Entity {
+public class EndPoint : Entity {
     public static string RoomIdEndPoint;
     private static readonly List<EndPoint> CachedEndPoints = new();
     private static AreaKey cachedAreaKey;
@@ -14,12 +16,14 @@ public class EndPoint: Entity {
     private static void Load() {
         On.Celeste.Level.End += LevelOnEnd;
         On.Celeste.Level.Begin += LevelOnBegin;
+        On.Celeste.Editor.MapEditor.Render += MapEditorOnRender;
     }
 
     [Unload]
     private static void Unload() {
         On.Celeste.Level.End -= LevelOnEnd;
         On.Celeste.Level.Begin -= LevelOnBegin;
+        On.Celeste.Editor.MapEditor.Render -= MapEditorOnRender;
     }
 
     private static void LevelOnEnd(On.Celeste.Level.orig_End orig, Level self) {
@@ -38,6 +42,19 @@ public class EndPoint: Entity {
         } else {
             CachedEndPoints.Clear();
             cachedAreaKey = default;
+            RoomIdEndPoint = "";
+        }
+    }
+
+    private static void MapEditorOnRender(On.Celeste.Editor.MapEditor.orig_Render orig, MapEditor self) {
+        orig(self);
+
+        if (!string.IsNullOrEmpty(EndPoint.RoomIdEndPoint)) {
+            string text = string.Format(Dialog.Get(DialogIds.RoomIdEndPoint), EndPoint.RoomIdEndPoint);
+            Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullNone, null, Engine.ScreenMatrix);
+            Draw.Rect(0f, 1020f, ActiveFont.WidthToNextLine(text, 0) + 20f, ActiveFont.HeightOf(text), Color.Black * 0.8f);
+            ActiveFont.Draw(text, new Vector2(10f, 1020f), Color.AliceBlue);
+            Draw.SpriteBatch.End();
         }
     }
 
@@ -274,11 +291,11 @@ public class EndPoint: Entity {
         Add(sprite);
     }
 
-    public static bool IsExist => Engine.Scene is Level level && level.Tracker.GetEntity<EndPoint>() != null;
+    public static bool IsExist => Engine.Scene is Level level && level.Tracker.GetEntity<EndPoint>() != null || !string.IsNullOrEmpty(RoomIdEndPoint);
 
     private static readonly List<EndPoint> EmptyList = new();
 
-    public static List<EndPoint> All {
+    private static List<EndPoint> All {
         get {
             if (Engine.Scene is Level level && level.Tracker.Entities.ContainsKey(typeof(EndPoint))) {
                 return level.Tracker.GetEntities<EndPoint>().Cast<EndPoint>().ToList();
@@ -290,5 +307,45 @@ public class EndPoint: Entity {
 
     public static void AllReadyForTime() {
         All.ForEach(point => point.ReadyForTime());
+    }
+
+    public static void AllStopTime() {
+        All.ForEach(point => point.StopTime());
+    }
+    
+    public static void AllResetSprite() {
+        All.ForEach(point => point.ResetSprite());
+    }
+
+    public static void ClearAll() {
+        CachedEndPoints.Clear();
+        All.ForEach(point => point.RemoveSelf());
+        RoomIdEndPoint = "";
+    }
+
+    public static void SetEndPoint(Scene scene, bool additional) {
+        if (scene is Level {Paused: false} level) {
+            if (!additional || All.Count == 0) {
+                RoomTimerManager.ClearPbTimes();
+            }
+
+            CreateEndPoint(level, additional);
+        } else if (scene is MapEditor) {
+            LevelTemplate levelTemplate = (LevelTemplate)scene.InvokeMethod("TestCheck", scene.GetFieldValue<Vector2>("mousePosition"));
+            if (levelTemplate is not null && levelTemplate.Type is not LevelTemplateType.Filler) {
+                RoomTimerManager.ClearPbTimes();
+                RoomIdEndPoint = levelTemplate.Name;
+            }
+        }
+    }
+    
+    private static void CreateEndPoint(Level level, bool additional) {
+        if (level.GetPlayer() is {Dead: false} player) {
+            if (!additional) {
+                All.ForEach(point => point.RemoveSelf());
+            }
+
+            level.Add(new EndPoint(player));
+        }
     }
 }

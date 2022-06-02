@@ -75,7 +75,7 @@ public static class SpeedrunToolMenu {
                 subMenu.Add(new TextMenuExt.EnumerableSlider<EndPoint.SpriteStyle>(Dialog.Clean(DialogIds.EndPointStyle),
                     CreateEnumerableOptions<EndPoint.SpriteStyle>(), ModSettings.EndPointStyle).Change(value => {
                     ModSettings.EndPointStyle = value;
-                    EndPoint.All.ForEach(endPoint => endPoint.ResetSprite());
+                    EndPoint.AllResetSprite();
                 }));
 
                 subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.RoomTimerIgnoreFlag), ModSettings.RoomTimerIgnoreFlag).Change(b =>

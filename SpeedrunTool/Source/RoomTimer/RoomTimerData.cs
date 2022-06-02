@@ -5,8 +5,10 @@ using Celeste.Mod.SpeedrunTool.SaveLoad;
 namespace Celeste.Mod.SpeedrunTool.RoomTimer;
 
 internal class RoomTimerData {
-    public long LastPbTime;
-    public long Time;
+    private const string FlagPrefix = "summit_checkpoint_";
+
+    private long lastPbTime;
+    private long time;
 
     private readonly Dictionary<string, long> thisRunTimes = new();
     private readonly Dictionary<string, long> pbTimes = new();
@@ -24,7 +26,7 @@ internal class RoomTimerData {
         ResetTime();
     }
 
-    public long GetSelectedRoomTime => IsCompleted ? thisRunTimes.GetValueOrDefault(pbTimeKey, 0) : Time;
+    public long GetSelectedRoomTime => IsCompleted ? thisRunTimes.GetValueOrDefault(pbTimeKey, 0) : time;
     public long GetSelectedPbTime => pbTimes.GetValueOrDefault(pbTimeKey, 0);
     public long GetSelectedLastPbTime => lastPbTimes.GetValueOrDefault(pbTimeKey, 0);
     public string TimeString => FormatTime(GetSelectedRoomTime, false);
@@ -33,13 +35,13 @@ internal class RoomTimerData {
     public bool IsCompleted => timerState == TimerState.Completed;
     public bool BeatBestTime => IsCompleted && (GetSelectedRoomTime < GetSelectedLastPbTime || GetSelectedLastPbTime == 0);
 
-    public void UpdateTimeKeys(Level level) {
+    private void UpdateTimeKeys(Level level) {
         if (timeKeyPrefix == "") {
             Session session = level.Session;
             timeKeyPrefix = session.Area + session.Level;
-            string closestFlag = session.Flags.Where(flagName => flagName.StartsWith(RoomTimerManager.FlagPrefix))
+            string closestFlag = session.Flags.Where(flagName => flagName.StartsWith(FlagPrefix))
                 .OrderBy(flagName => {
-                    flagName = flagName.Replace(RoomTimerManager.FlagPrefix, "");
+                    flagName = flagName.Replace(FlagPrefix, "");
                     return int.Parse(flagName);
                 }).FirstOrDefault();
             timeKeyPrefix += closestFlag;
@@ -74,7 +76,7 @@ internal class RoomTimerData {
             timerState = TimerState.Timing;
         }
 
-        Time += TimeSpan.FromSeconds(Engine.RawDeltaTime).Ticks;
+        time += TimeSpan.FromSeconds(Engine.RawDeltaTime).Ticks;
     }
 
     public void UpdateTimerState(bool endPoint) {
@@ -95,10 +97,10 @@ internal class RoomTimerData {
 
                 // if not using endpoint/room id, track this run's time and pb times for each room number
                 if (!EndPoint.IsExist) {
-                    thisRunTimes[thisRunTimeKey] = Time;
-                    LastPbTime = pbTimes.GetValueOrDefault(thisRunTimeKey, 0);
-                    if (Time < LastPbTime || LastPbTime == 0) {
-                        pbTimes[thisRunTimeKey] = Time;
+                    thisRunTimes[thisRunTimeKey] = time;
+                    lastPbTime = pbTimes.GetValueOrDefault(thisRunTimeKey, 0);
+                    if (time < lastPbTime || lastPbTime == 0) {
+                        pbTimes[thisRunTimeKey] = time;
                     }
                     // don't overflow room number at level end
                     if (level is { Completed: false }) {
@@ -109,19 +111,19 @@ internal class RoomTimerData {
                     }
                     // preserve behavior of reporting the finish time on level end even if number of rooms is too large
                     if (level is { Completed: true } && roomNumber < ModSettings.NumberOfRooms) {
-                        thisRunTimes[pbTimeKey] = Time;
-                        LastPbTime = pbTimes.GetValueOrDefault(pbTimeKey, 0);
-                        if (Time < LastPbTime || LastPbTime == 0) {
-                            pbTimes[pbTimeKey] = Time;
+                        thisRunTimes[pbTimeKey] = time;
+                        lastPbTime = pbTimes.GetValueOrDefault(pbTimeKey, 0);
+                        if (time < lastPbTime || lastPbTime == 0) {
+                            pbTimes[pbTimeKey] = time;
                         }
                     }
                 }
                 // if using endpoint/room id, ignore room count and only track a single complete time and pb time
                 else if (endPoint || level is { Completed: true }) {
-                    thisRunTimes[thisRunTimeKey] = Time;
-                    LastPbTime = pbTimes.GetValueOrDefault(thisRunTimeKey, 0);
-                    if (Time < LastPbTime || LastPbTime == 0) {
-                        pbTimes[thisRunTimeKey] = Time;
+                    thisRunTimes[thisRunTimeKey] = time;
+                    lastPbTime = pbTimes.GetValueOrDefault(thisRunTimeKey, 0);
+                    if (time < lastPbTime || lastPbTime == 0) {
+                        pbTimes[thisRunTimeKey] = time;
                     }
                     timerState = TimerState.Completed;
                     hitEndPoint = true;
@@ -134,14 +136,14 @@ internal class RoomTimerData {
             case TimerState.Completed:
                 // if not using endpoint/room id, still track room times in the background
                 if (!EndPoint.IsExist) {
-                    thisRunTimes[thisRunTimeKey] = Time;
+                    thisRunTimes[thisRunTimeKey] = time;
                     // don't overflow room number at level end
                     if (level is { Completed: false }) {
                         roomNumber++;
                     }
-                    LastPbTime = pbTimes.GetValueOrDefault(thisRunTimeKey, 0);
-                    if (Time < LastPbTime || LastPbTime == 0) {
-                        pbTimes[thisRunTimeKey] = Time;
+                    lastPbTime = pbTimes.GetValueOrDefault(thisRunTimeKey, 0);
+                    if (time < lastPbTime || lastPbTime == 0) {
+                        pbTimes[thisRunTimeKey] = time;
                     }
                 }
                 break;
@@ -159,8 +161,8 @@ internal class RoomTimerData {
         pbTimeKey = "";
         timerState = IsNextRoomType ? TimerState.WaitToStart : TimerState.Timing;
         roomNumber = 1;
-        Time = 0;
-        LastPbTime = 0;
+        time = 0;
+        lastPbTime = 0;
         thisRunTimes.Clear();
         hitEndPoint = false;
     }

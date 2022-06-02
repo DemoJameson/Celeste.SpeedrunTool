@@ -111,7 +111,7 @@ public class EndPoint : Entity {
     private SpriteStyle spriteStyle;
     private readonly string roomName;
 
-    public EndPoint(Player player) {
+    private EndPoint(Player player) {
         Tag = Tags.Global;
 
         facing = player.Facing;
@@ -174,7 +174,7 @@ public class EndPoint : Entity {
         Add(new FlagComponent(spriteStyle == SpriteStyle.Flag));
     }
 
-    public void ResetSprite() {
+    private void ResetSprite() {
         if (Engine.Scene.GetPlayer() is { } player) {
             Get<Sprite>()?.RemoveSelf();
             Get<PlayerHair>()?.RemoveSelf();
@@ -195,7 +195,7 @@ public class EndPoint : Entity {
         }
     }
 
-    public void StopTime() {
+    private void StopTime() {
         if (!Activated) {
             Activated = true;
             SceneAs<Level>().Displacement.AddBurst(TopCenter, 0.5f, 4f, 24f, 0.5f);

@@ -24,7 +24,6 @@ public static class RoomTimerManager {
     private static readonly Color FinishedColor1 = Calc.HexToColor("6ded87");
     private static readonly Color FinishedColor2 = Calc.HexToColor("43d14c");
 
-    public const string FlagPrefix = "summit_checkpoint_";
     private static readonly RoomTimerData CurrentRoomTimerData = new(RoomTimerType.CurrentRoom);
     private static readonly RoomTimerData NextRoomTimerData = new(RoomTimerType.NextRoom);
 
@@ -145,7 +144,7 @@ public static class RoomTimerManager {
     private static void UpdateTimerStateOnTouchFlag(On.Celeste.SummitCheckpoint.orig_Update orig, SummitCheckpoint self) {
         bool lastActivated = self.Activated;
         orig(self);
-        if (!ModSettings.RoomTimerIgnoreFlag && !lastActivated && self.Activated) {
+        if (ModSettings.TimeSummitFlag && !lastActivated && self.Activated) {
             UpdateTimerState();
         }
     }

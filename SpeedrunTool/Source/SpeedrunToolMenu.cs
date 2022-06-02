@@ -78,8 +78,8 @@ public static class SpeedrunToolMenu {
                     EndPoint.AllResetSprite();
                 }));
 
-                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.RoomTimerIgnoreFlag), ModSettings.RoomTimerIgnoreFlag).Change(b =>
-                    ModSettings.RoomTimerIgnoreFlag = b));
+                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.TimeSummitFlag), ModSettings.TimeSummitFlag).Change(b =>
+                    ModSettings.TimeSummitFlag = b));
 
                 subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoTurnOffRoomTimer), ModSettings.AutoResetRoomTimer).Change(b =>
                     ModSettings.AutoResetRoomTimer = b));

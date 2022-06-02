@@ -27,8 +27,8 @@ public class SpeedrunToolSettings : EverestModuleSettings {
 
     public EndPoint.SpriteStyle EndPointStyle { get; set; } = EndPoint.SpriteStyle.Flag;
 
-    [SettingName(DialogIds.RoomTimerIgnoreFlag)]
-    public bool RoomTimerIgnoreFlag { get; set; } = false;
+    [SettingName(DialogIds.TimeSummitFlag)]
+    public bool TimeSummitFlag { get; set; } = true;
 
     [SettingName(DialogIds.AutoTurnOffRoomTimer)]
     public bool AutoResetRoomTimer { get; set; } = true;

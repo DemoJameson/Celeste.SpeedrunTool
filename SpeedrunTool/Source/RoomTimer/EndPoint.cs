@@ -10,7 +10,7 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer;
 
 [Tracked]
 public class EndPoint : Entity {
-    public static string RoomIdEndPoint { get; private set; }
+    private static string roomIdEndPoint;
     private static readonly List<EndPoint> CachedEndPoints = new();
     private static AreaKey cachedAreaKey;
 
@@ -20,7 +20,7 @@ public class EndPoint : Entity {
         On.Celeste.Level.Begin += LevelOnBegin;
         On.Celeste.Editor.MapEditor.Render += MapEditorOnRender;
         IL.Celeste.Editor.LevelTemplate.RenderContents += LevelTemplateOnRenderContents;
-        IL.Celeste.Editor.LevelTemplate.RenderOutline += LevelTemplateOnRenderOutline;
+        On.Celeste.Editor.LevelTemplate.RenderHighlight += LevelTemplateOnRenderHighlight;
     }
 
     [Unload]
@@ -29,7 +29,7 @@ public class EndPoint : Entity {
         On.Celeste.Level.Begin -= LevelOnBegin;
         On.Celeste.Editor.MapEditor.Render -= MapEditorOnRender;
         IL.Celeste.Editor.LevelTemplate.RenderContents -= LevelTemplateOnRenderContents;
-        IL.Celeste.Editor.LevelTemplate.RenderOutline -= LevelTemplateOnRenderOutline;
+        On.Celeste.Editor.LevelTemplate.RenderHighlight -= LevelTemplateOnRenderHighlight;
     }
 
     private static void LevelOnEnd(On.Celeste.Level.orig_End orig, Level self) {
@@ -48,15 +48,15 @@ public class EndPoint : Entity {
         } else {
             CachedEndPoints.Clear();
             cachedAreaKey = default;
-            RoomIdEndPoint = "";
+            roomIdEndPoint = "";
         }
     }
 
     private static void MapEditorOnRender(On.Celeste.Editor.MapEditor.orig_Render orig, MapEditor self) {
         orig(self);
 
-        if (!string.IsNullOrEmpty(RoomIdEndPoint)) {
-            string text = string.Format(Dialog.Get(DialogIds.RoomIdEndPoint), EndPoint.RoomIdEndPoint);
+        if (!string.IsNullOrEmpty(roomIdEndPoint)) {
+            string text = string.Format(Dialog.Get(DialogIds.RoomIdEndPoint), EndPoint.roomIdEndPoint);
             Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearClamp, DepthStencilState.None,
                 RasterizerState.CullNone, null, Engine.ScreenMatrix);
             Draw.Rect(0f, 1020f, ActiveFont.WidthToNextLine(text, 0) + 20f, ActiveFont.HeightOf(text), Color.Black * 0.8f);
@@ -72,17 +72,16 @@ public class EndPoint : Entity {
                 ins => ins.OpCode == OpCodes.Ldelem_Any
             )) {
             ilCursor.Emit(OpCodes.Ldarg_0)
-                .EmitDelegate<Func<Color, LevelTemplate, Color>>((color, template) => template.Name == RoomIdEndPoint ? Color.Yellow : color);
+                .EmitDelegate<Func<Color, LevelTemplate, Color>>((color, template) => template.Name == roomIdEndPoint ? Color.Yellow : color);
         }
     }
+    
+    private static void LevelTemplateOnRenderHighlight(On.Celeste.Editor.LevelTemplate.orig_RenderHighlight orig, LevelTemplate self, Camera camera, bool hovered, bool selected) {
+        orig(self, camera, hovered, selected);
 
-    private static void LevelTemplateOnRenderOutline(ILContext il) {
-        ILCursor ilCursor = new(il);
-        if (ilCursor.TryGotoNext(MoveType.After,
-                ins => ins.MatchLdsfld<LevelTemplate>("inactiveBorderColor")
-            )) {
-            ilCursor.Emit(OpCodes.Ldarg_0)
-                .EmitDelegate<Func<Color, LevelTemplate, Color>>((color, template) => template.Name == RoomIdEndPoint ? Color.Yellow : color);
+        if (!hovered && !selected && self.Name == roomIdEndPoint) {
+            float thickness = 1f / camera.Zoom * 2f;
+            self.InvokeMethod("Outline", (float) self.X, (float) self.Y, (float) self.Width, (float) self.Height, thickness, Color.Yellow);
         }
     }
 
@@ -319,8 +318,8 @@ public class EndPoint : Entity {
         Add(sprite);
     }
 
-    public static bool IsExist => Engine.Scene is Level level && level.Tracker.GetEntity<EndPoint>() != null || !string.IsNullOrEmpty(RoomIdEndPoint);
-    public static bool IsReachedRoomIdEndPoint => !string.IsNullOrEmpty(RoomIdEndPoint) && Engine.Scene is Level level && level.Session.Level == RoomIdEndPoint;
+    public static bool IsExist => Engine.Scene is Level level && level.Tracker.GetEntity<EndPoint>() != null || !string.IsNullOrEmpty(roomIdEndPoint);
+    public static bool IsReachedRoomIdEndPoint => !string.IsNullOrEmpty(roomIdEndPoint) && Engine.Scene is Level level && level.Session.Level == roomIdEndPoint;
 
     private static readonly List<EndPoint> EmptyList = new();
 
@@ -349,7 +348,7 @@ public class EndPoint : Entity {
     public static void ClearAll() {
         CachedEndPoints.Clear();
         All.ForEach(point => point.RemoveSelf());
-        RoomIdEndPoint = "";
+        roomIdEndPoint = "";
     }
 
     public static void SetEndPoint(Scene scene, bool additional) {
@@ -363,7 +362,7 @@ public class EndPoint : Entity {
             LevelTemplate levelTemplate = (LevelTemplate)scene.InvokeMethod("TestCheck", scene.GetFieldValue<Vector2>("mousePosition"));
             if (levelTemplate is not null && levelTemplate.Type is not LevelTemplateType.Filler) {
                 RoomTimerManager.ClearPbTimes();
-                RoomIdEndPoint = levelTemplate.Name;
+                roomIdEndPoint = levelTemplate.Name;
             }
         }
     }

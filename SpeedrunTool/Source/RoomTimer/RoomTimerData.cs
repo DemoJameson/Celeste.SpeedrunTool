@@ -122,7 +122,7 @@ internal class RoomTimerData {
 
                     timerState = TimerState.Completed;
                     hitEndPoint = true;
-                    if (level is {Completed: false}) {
+                    if (level is {Completed: false} && ModSettings.RoomTimerType == roomTimerType) {
                         EndPoint.AllStopTime();
                     }
                 }

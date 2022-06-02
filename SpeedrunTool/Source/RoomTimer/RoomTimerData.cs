@@ -1,12 +1,9 @@
 using System.Collections.Generic;
-using System.Linq;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 
 namespace Celeste.Mod.SpeedrunTool.RoomTimer;
 
 internal class RoomTimerData {
-    private const string FlagPrefix = "summit_checkpoint_";
-
     private long lastPbTime;
     private long time;
 
@@ -39,13 +36,8 @@ internal class RoomTimerData {
         if (timeKeyPrefix == "") {
             Session session = level.Session;
             timeKeyPrefix = session.Area + session.Level;
-            string closestFlag = session.Flags.Where(flagName => flagName.StartsWith(FlagPrefix))
-                .OrderBy(flagName => {
-                    flagName = flagName.Replace(FlagPrefix, "");
-                    return int.Parse(flagName);
-                }).FirstOrDefault();
-            timeKeyPrefix += closestFlag;
         }
+
         if (!EndPoint.IsExist) {
             pbTimeKey = timeKeyPrefix + ModSettings.NumberOfRooms;
             thisRunTimeKey = timeKeyPrefix + roomNumber;

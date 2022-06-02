@@ -33,4 +33,12 @@ internal static class CommonExtensions {
     public static bool ContainsKey<TKey, TValue>(this ConditionalWeakTable<TKey, TValue> weakTable, TKey key) where TKey : class where TValue : class {
         return weakTable.TryGetValue(key, out TValue _);
     }
+
+    public static bool IsNullOrEmpty(this string str) {
+        return string.IsNullOrEmpty(str);
+    }
+    
+    public static bool IsNotNullAndEmpty(this string str) {
+        return !string.IsNullOrEmpty(str);
+    }
 }

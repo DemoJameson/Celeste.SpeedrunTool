@@ -83,7 +83,7 @@ internal static class EventInstanceExtensions {
 
     public static EventInstance Clone(this EventInstance eventInstance) {
         string path = Audio.GetEventName(eventInstance);
-        if (string.IsNullOrEmpty(path)) {
+        if (path.IsNullOrEmpty()) {
             return null;
         }
 

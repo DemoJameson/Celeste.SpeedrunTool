@@ -79,7 +79,7 @@ public static class DeepClonerUtils {
                 // 稍后重新创建正在播放的 SoundSource 里的 EventInstance 实例
                 if (sourceObj is SoundSource {Playing: true} source &&
                     source.GetFieldValue("instance") is EventInstance instance) {
-                    if (string.IsNullOrEmpty(source.EventName)) {
+                    if (source.EventName.IsNullOrEmpty()) {
                         return null;
                     }
 

@@ -69,7 +69,7 @@ public class SpeedrunToolSaveData : EverestModuleSaveData {
     }
 
     private static void ClearUselessPlaybackFiles() {
-        HashSet<string> playbackFiles = new(SpeedrunToolModule.SaveData.DeathInfos.Where(info => !string.IsNullOrEmpty(info.PlaybackFilePath))
+        HashSet<string> playbackFiles = new(SpeedrunToolModule.SaveData.DeathInfos.Where(info => info.PlaybackFilePath.IsNotNullAndEmpty())
             .Select(info => info.PlaybackFilePath));
         if (Directory.Exists(DeathStatisticsManager.PlaybackSlotDir)) {
             foreach (string file in Directory.GetFiles(DeathStatisticsManager.PlaybackSlotDir)) {

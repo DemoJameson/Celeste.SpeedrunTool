@@ -78,7 +78,7 @@ public static class DeathStatisticsManager {
         if (IsPlayback()) {
             level.Add(new DeathMark(playbackDeathInfo.DeathPosition));
 
-            if (!string.IsNullOrEmpty(playbackDeathInfo.PlaybackFilePath) && File.Exists(playbackDeathInfo.PlaybackFilePath)) {
+            if (playbackDeathInfo.PlaybackFilePath.IsNotNullAndEmpty() && File.Exists(playbackDeathInfo.PlaybackFilePath)) {
                 List<Player.ChaserState> chaserStates = PlaybackData.Import(FileProxy.ReadAllBytes(playbackDeathInfo.PlaybackFilePath));
                 PlayerSpriteMode spriteMode = level.Session.Inventory.Backpack ? PlayerSpriteMode.Madeline : PlayerSpriteMode.MadelineNoBackpack;
                 if (SaveData.Instance.Assists.PlayAsBadeline) {

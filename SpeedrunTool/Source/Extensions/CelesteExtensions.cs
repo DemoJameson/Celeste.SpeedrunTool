@@ -54,4 +54,13 @@ internal static class CelesteExtensions {
             _ => false
         };
     }
+
+    public static bool IsPressed(this VirtualInput virtualInput) {
+        return virtualInput switch {
+            VirtualButton virtualButton => virtualButton.Pressed,
+            VirtualIntegerAxis virtualIntegerAxis => virtualIntegerAxis.GetFieldValue<bool>("turned"),
+            VirtualJoystick virtualJoystick => virtualJoystick.GetFieldValue<bool>("hTurned") || virtualJoystick.GetFieldValue<bool>("vTurned"),
+            _ => false
+        };
+    }
 }

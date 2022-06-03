@@ -137,6 +137,10 @@ public sealed class StateManager {
     }
 
     private bool IsUnfreeze(VirtualInput input) {
+        if (input.IsPressed()) {
+            return true;
+        }
+        
         if (!input.IsCheck()) {
             return false;
         }

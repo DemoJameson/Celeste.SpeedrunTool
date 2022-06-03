@@ -146,6 +146,9 @@ public static class SpeedrunToolMenu {
                     new TextMenu.OnOff(Dialog.Clean(DialogIds.MuteInBackground), ModSettings.MuteInBackground).Change(b =>
                         ModSettings.MuteInBackground = b));
 
+                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.FixCoreRefillDashAfterTeleport), ModSettings.FixCoreRefillDashAfterTeleport).Change(b =>
+                    ModSettings.FixCoreRefillDashAfterTeleport = b));
+
                 subMenu.Add(new TextMenuExt.EnumerableSlider<PopupMessageStyle>(Dialog.Clean(DialogIds.PopupMessageStyle),
                     CreateEnumerableOptions<PopupMessageStyle>(), ModSettings.PopupMessageStyle).Change(value => {
                     ModSettings.PopupMessageStyle = value;

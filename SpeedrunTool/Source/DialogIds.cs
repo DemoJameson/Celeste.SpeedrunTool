@@ -119,6 +119,7 @@ public static class DialogIds {
     public const string SkipRestartChapterScreenWipe = "SPEEDRUN_TOOL_SKIP_RESTART_CHAPTER_SCREEN_WIPE";
     public const string AllowPauseDuringDeath = "SPEEDRUN_TOOL_ALLOW_PAUSE_DURING_DEATH";
     public const string MuteInBackground = "SPEEDRUN_TOOL_MUTE_IN_BACKGROUND";
+    public const string FixCoreRefillDashAfterTeleport = "SPEEDRUN_TOOL_FIX_CORE_REFILL_DASH_AFTER_TELEPORT";
     public const string PopupMessageStyle = "SPEEDRUN_TOOL_POPUP_MESSAGE_STYLE";
     public const string OptionState = "SPEEDRUN_TOOL_OPTION_STATE";
     public const string Hotkeys = "SPEEDRUN_TOOL_HOTKEYS";

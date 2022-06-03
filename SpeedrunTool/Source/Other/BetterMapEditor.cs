@@ -354,7 +354,7 @@ public static class BetterMapEditor {
     }
 
     private static void FixCoreRefillDash(Session session) {
-        if (session.Area.ID == 9) {
+        if (session.Area.ID == 9 && ModSettings.FixCoreRefillDashAfterTeleport) {
             session.Inventory.NoRefills = !CoreRefillDashRooms.Contains(session.Level);
         }
     }

@@ -35,8 +35,8 @@ public static class RoomTimerManager {
         On.Celeste.SpeedrunTimerDisplay.Render += Render;
         On.Celeste.Level.Update += Timing;
         On.Celeste.SummitCheckpoint.Update += UpdateTimerStateOnTouchFlag;
-        On.Celeste.HeartGem.Collect += HeartGemOnCollect;
-        On.Celeste.Cassette.OnPlayer += CassetteOnOnPlayer;
+        On.Celeste.HeartGem.RegisterAsCollected += HeartGemOnRegisterAsCollected;
+        On.Celeste.SaveData.RegisterCassette += SaveDataOnRegisterCassette;
         On.Celeste.LevelExit.ctor += LevelExitOnCtor;
         TryTurnOffRoomTimer();
         RegisterHotkeys();
@@ -48,8 +48,8 @@ public static class RoomTimerManager {
         On.Celeste.SpeedrunTimerDisplay.Render -= Render;
         On.Celeste.Level.Update -= Timing;
         On.Celeste.SummitCheckpoint.Update -= UpdateTimerStateOnTouchFlag;
-        On.Celeste.HeartGem.Collect -= HeartGemOnCollect;
-        On.Celeste.Cassette.OnPlayer -= CassetteOnOnPlayer;
+        On.Celeste.HeartGem.RegisterAsCollected -= HeartGemOnRegisterAsCollected;
+        On.Celeste.SaveData.RegisterCassette += SaveDataOnRegisterCassette;
         On.Celeste.LevelExit.ctor -= LevelExitOnCtor;
     }
 
@@ -153,16 +153,16 @@ public static class RoomTimerManager {
         }
     }
 
-    private static void CassetteOnOnPlayer(On.Celeste.Cassette.orig_OnPlayer orig, Cassette self, Player player) {
-        if (ModSettings.TimeHeartCassette && !self.GetFieldValue<bool>("collected")) {
+    private static void HeartGemOnRegisterAsCollected(On.Celeste.HeartGem.orig_RegisterAsCollected orig, HeartGem self, Level level, string poemId) {
+        orig(self, level, poemId);
+
+        if (ModSettings.TimeHeartCassette) {
             UpdateTimerState();
         }
-
-        orig(self, player);
     }
 
-    private static void HeartGemOnCollect(On.Celeste.HeartGem.orig_Collect orig, HeartGem self, Player player) {
-        orig(self, player);
+    private static void SaveDataOnRegisterCassette(On.Celeste.SaveData.orig_RegisterCassette orig, SaveData self, AreaKey area) {
+        orig(self, area);
 
         if (ModSettings.TimeHeartCassette) {
             UpdateTimerState();

@@ -564,7 +564,7 @@ public sealed class SaveLoadAction {
                     saved["PauseGameplaySfx"] = false;
                 }
 
-                savedValues[typeof(Audio)] = saved;
+                savedValues[typeof(Audio)] = saved.DeepCloneShared();
             },
             (savedValues, level) => {
                 Dictionary<string, object> saved = savedValues[typeof(Audio)];

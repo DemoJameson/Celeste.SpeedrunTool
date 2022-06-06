@@ -32,7 +32,11 @@ public static class AllowPauseDuringDeath {
             return;
         }
 
-        if (level.Paused || level.PauseLock || level.SkippingCutscene || level.Transitioning || level.Wipe != null || GetWasPaused(level)) {
+        if (level.Paused || level.PauseLock || level.SkippingCutscene || level.Transitioning || GetWasPaused(level)) {
+            return;
+        }
+
+        if (level.Wipe != null && level.GetPlayer()?.StateMachine.State != Player.StIntroRespawn) {
             return;
         }
 

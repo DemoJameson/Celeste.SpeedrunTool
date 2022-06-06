@@ -42,8 +42,8 @@ internal static class EventInstanceExtensions {
         return NeedManualClonedEventInstances.ContainsKey(eventInstance);
     }
 
-    private static ConcurrentDictionary<string, float> GetSavedParameterValues(this EventInstance eventInstance) {
-        return CachedParameters.GetOrCreateValue(eventInstance);
+    public static ConcurrentDictionary<string, float> GetSavedParameterValues(this EventInstance eventInstance) {
+        return eventInstance == null ? null : CachedParameters.GetOrCreateValue(eventInstance);
     }
 
     internal static void SaveParameters(this EventInstance eventInstance, string param, float value) {
@@ -108,22 +108,18 @@ internal static class EventInstanceExtensions {
         return cloneInstance;
     }
 
-    public static void CopyParametersFrom(this EventInstance eventInstance, EventInstance otherEventInstance) {
-        if (eventInstance == null || otherEventInstance == null) {
-            return;
-        }
-
-        if (Audio.GetEventName(eventInstance) != Audio.GetEventName(otherEventInstance)) {
+    public static void CopyParametersFrom(this EventInstance eventInstance, ConcurrentDictionary<string, float> parameters) {
+        if (eventInstance == null || parameters == null) {
             return;
         }
 
         ConcurrentDictionary<string, float> parameterValues = new(eventInstance.GetSavedParameterValues());
-        ConcurrentDictionary<string, float> clonedParameterValues = otherEventInstance.GetSavedParameterValues();
-        foreach (KeyValuePair<string, float> pair in clonedParameterValues) {
+        foreach (KeyValuePair<string, float> pair in parameters) {
             eventInstance.setParameterValue(pair.Key, pair.Value);
         }
+
         foreach (KeyValuePair<string, float> pair in parameterValues) {
-            if (!clonedParameterValues.ContainsKey(pair.Key)) {
+            if (!parameters.ContainsKey(pair.Key)) {
                 if (eventInstance.getDescription(out EventDescription description) != RESULT.OK) {
                     continue;
                 }

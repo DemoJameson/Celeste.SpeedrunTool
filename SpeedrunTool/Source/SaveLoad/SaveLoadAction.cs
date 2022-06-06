@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Celeste.Mod.Helpers;
@@ -544,15 +545,14 @@ public sealed class SaveLoadAction {
     private static void SupportAudioMusic() {
         SafeAdd(
             (savedValues, level) => {
+                EventInstance currentAltMusicEvent = typeof(Audio).GetFieldValue<EventInstance>("currentAltMusicEvent");
                 Dictionary<string, object> saved = new() {
-                    {
-                        "currentMusicEvent",
-                        (typeof(Audio).GetFieldValue("currentMusicEvent") as EventInstance)?.NeedManualClone().DeepCloneShared()
-                    },
-                    {"CurrentAmbienceEventInstance", Audio.CurrentAmbienceEventInstance?.NeedManualClone().DeepCloneShared()}, {
-                        "currentAltMusicEvent",
-                        (typeof(Audio).GetFieldValue("currentAltMusicEvent") as EventInstance)?.NeedManualClone().DeepCloneShared()
-                    },
+                    {"currentMusicEvent", Audio.GetEventName(Audio.CurrentMusicEventInstance)},
+                    {"currentMusicEventParameters", Audio.CurrentMusicEventInstance.GetSavedParameterValues()},
+                    {"CurrentAmbienceEventInstance", Audio.GetEventName(Audio.CurrentAmbienceEventInstance)},
+                    {"CurrentAmbienceEventInstanceParameters", Audio.CurrentAmbienceEventInstance.GetSavedParameterValues()},
+                    {"currentAltMusicEvent", Audio.GetEventName(currentAltMusicEvent)},
+                    {"currentAltMusicEventParameters", currentAltMusicEvent.GetSavedParameterValues()},
                     {"MusicUnderwater", Audio.MusicUnderwater},
                     {"PauseMusic", Audio.PauseMusic},
                     {"PauseGameplaySfx", Audio.PauseGameplaySfx},
@@ -569,15 +569,14 @@ public sealed class SaveLoadAction {
             (savedValues, level) => {
                 Dictionary<string, object> saved = savedValues[typeof(Audio)];
 
-                Audio.SetMusic(Audio.GetEventName(saved["currentMusicEvent"] as EventInstance));
-                Audio.CurrentMusicEventInstance?.CopyParametersFrom(saved["currentMusicEvent"] as EventInstance);
+                Audio.SetMusic(saved["currentMusicEvent"] as string);
+                Audio.CurrentMusicEventInstance?.CopyParametersFrom(saved["currentMusicEventParameters"] as ConcurrentDictionary<string, float>);
 
-                Audio.SetAmbience(Audio.GetEventName(saved["CurrentAmbienceEventInstance"] as EventInstance));
-                Audio.CurrentAmbienceEventInstance?.CopyParametersFrom(saved["CurrentAmbienceEventInstance"] as EventInstance);
+                Audio.SetAmbience(saved["CurrentAmbienceEventInstance"] as string);
+                Audio.CurrentAmbienceEventInstance?.CopyParametersFrom(saved["CurrentAmbienceEventInstanceParameters"] as ConcurrentDictionary<string, float>);
 
-                Audio.SetAltMusic(Audio.GetEventName(saved["currentAltMusicEvent"] as EventInstance));
-                (typeof(Audio).GetFieldValue("currentAltMusicEvent") as EventInstance)?.CopyParametersFrom(
-                    saved["currentAltMusicEvent"] as EventInstance);
+                Audio.SetAltMusic(saved["currentAltMusicEvent"] as string);
+                (typeof(Audio).GetFieldValue("currentAltMusicEvent") as EventInstance)?.CopyParametersFrom(saved["currentAltMusicEventParameters"] as ConcurrentDictionary<string, float>);
 
                 Audio.MusicUnderwater = (bool)saved["MusicUnderwater"];
                 Audio.PauseMusic = (bool)saved["PauseMusic"];

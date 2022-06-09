@@ -227,6 +227,7 @@ public sealed class SaveLoadAction {
                         || fieldType == typeof(MTexture)
                         || fieldType == typeof(CrystalStaticSpinner)
                         || fieldType == typeof(Solid)
+                        || fieldType.IsSubclassOf(typeof(Renderer))
                         || fieldType.IsSubclassOf(typeof(VirtualAsset))
                     );
                 }).ToArray();
@@ -809,8 +810,9 @@ public sealed class SaveLoadAction {
     }
 
     private static void SupportIsaGrabBag() {
-        // 解决 DreamSpinnerBorder 读档后影像残留在屏幕中
-        if (ModUtils.GetType("IsaGrabBag", "Celeste.Mod.IsaGrabBag.DreamSpinnerBorder") is { } borderType) {
+        // 解决 v1.6.0 之前的版本读档后影像残留在屏幕中
+        if (ModUtils.GetModule("IsaGrabBag") is { } module && module.Metadata.Version < new Version(1, 6, 0) &&
+            ModUtils.GetType("IsaGrabBag", "Celeste.Mod.IsaGrabBag.DreamSpinnerBorder") is { } borderType) {
             SafeAdd(
                 loadState: (_, level) => level.Entities.FirstOrDefault(entity => entity.GetType() == borderType)?.Update()
             );

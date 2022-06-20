@@ -154,6 +154,11 @@ public static class SpeedrunToolMenu {
                     ModSettings.PopupMessageStyle = value;
                 }));
 
+                subMenu.Add(new TextMenuExt.EnumerableSlider<SpeedrunType>(Dialog.Clean(DialogIds.EnableTimerOnAreaComplete),
+                    CreateEnumerableOptions<SpeedrunType>(), ModSettings.AreaCompleteEnableTimerType).Change(value => {
+                    ModSettings.AreaCompleteEnableTimerType = value;
+                }));
+
                 subMenu.Add(
                     new TextMenu.OnOff(Dialog.Clean(DialogIds.Hotkeys), ModSettings.Hotkeys).Change(b =>
                         ModSettings.Hotkeys = b));

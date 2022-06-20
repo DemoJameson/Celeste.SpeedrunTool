@@ -78,6 +78,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public bool MuteInBackground { get; set; } = false;
     public bool FixCoreRefillDashAfterTeleport { get; set; } = true;
     public PopupMessageStyle PopupMessageStyle { get; set; } = PopupMessageStyle.Tooltip;
+    public SpeedrunType AreaCompleteEnableTimerType { get; set; } = SpeedrunType.Off;
     public bool Hotkeys { get; set; } = true;
 
     #endregion

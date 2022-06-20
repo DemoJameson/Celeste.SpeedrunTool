@@ -156,5 +156,7 @@ SPEEDRUN_TOOL_POPUP_MESSAGE_STYLE=                 提示信息样式
 SPEEDRUN_TOOL_TOOLTIP=                             简洁
 SPEEDRUN_TOOL_DIALOG_BOX=                          对话框
 SPEEDRUN_TOOL_OPTION_STATE=                        {0}：{1}
+SPEEDRUN_TOOL_ENABLE_TIMER_ON_AREA_COMPLETE=       完成关卡时打开计时器
+SPEEDRUN_TOOL_FILE=                                文件
 SPEEDRUN_TOOL_HOTKEYS=                             快捷键
 SPEEDRUN_TOOL_HOTKEYS_CONFIG=                      快捷键设置

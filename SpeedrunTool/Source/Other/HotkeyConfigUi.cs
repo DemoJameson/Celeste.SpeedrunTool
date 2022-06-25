@@ -196,7 +196,7 @@ public class HotkeyConfigUi : TextMenu {
 
         Add(new Header(Dialog.Clean(DialogIds.HotkeysConfig)));
         Add(new SubHeader(Dialog.Clean(DialogIds.ComboHotkeyDescription)));
-        Add(new SubHeader(Dialog.Clean(DialogIds.PressDeleteToRemoveButton)).With(header => {
+        Add(new SubHeader(Dialog.Clean(DialogIds.PressDeleteToClearHotkeys)).With(header => {
             // 兼容 v1312
             header.SetFieldValue("TopPadding", false);
         }));

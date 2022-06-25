@@ -49,7 +49,6 @@ public static class DialogIds {
     public const string ClearStateDialogBadeline = "SPEEDRUN_TOOL_CLEAR_STATE_DIALOG_BADELINE";
     public const string NotSavedStateYetDialogBadeline = "SPEEDRUN_TOOL_NOT_SAVED_STATE_YET_DIALOG_BADELINE";
 
-    // ReSharper disable UnusedMember.Global
     // End Point Style
     public const string Flag = "SPEEDRUN_TOOL_FLAG";
     public const string GoldBerry = "SPEEDRUN_TOOL_GOLD_BERRY";
@@ -65,13 +64,12 @@ public static class DialogIds {
     public const string Towerfall = "SPEEDRUN_TOOL_TOWERFALL";
     public const string Yuri = "SPEEDRUN_TOOL_YURI";
     public const string Random = "SPEEDRUN_TOOL_RANDOM";
-    // ReSharper restore UnusedMember.Global
 
     // Hotkey Config
     public const string Keyboard = "SPEEDRUN_TOOL_KEYBOARD";
     public const string Controller = "SPEEDRUN_TOOL_CONTROLLER";
     public const string ComboHotkeyDescription = "SPEEDRUN_TOOL_COMBO_HOTKEY_DESCRIPTION";
-    public const string PressDeleteToRemoveButton = "SPEEDRUN_TOOL_PRESS_DELETE_TO_REMOVE_BUTTON";
+    public const string PressDeleteToClearHotkeys = "SPEEDRUN_TOOL_PRESS_DELETE_TO_CLEAR_HOTKEYS";
     public const string ToggleHotkeys = "SPEEDRUN_TOOL_TOGGLE_HOTKEYS";
     public const string OpenDebugMap = "SPEEDRUN_TOOL_OPEN_DEBUG_MAP";
     public const string ResetRoomTimerPb = "SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB";
@@ -121,9 +119,9 @@ public static class DialogIds {
     public const string MuteInBackground = "SPEEDRUN_TOOL_MUTE_IN_BACKGROUND";
     public const string FixCoreRefillDashAfterTeleport = "SPEEDRUN_TOOL_FIX_CORE_REFILL_DASH_AFTER_TELEPORT";
     public const string PopupMessageStyle = "SPEEDRUN_TOOL_POPUP_MESSAGE_STYLE";
+    public const string OptionState = "SPEEDRUN_TOOL_OPTION_STATE";
     public const string EnableTimerOnAreaComplete = "SPEEDRUN_TOOL_ENABLE_TIMER_ON_AREA_COMPLETE";
     public const string File = "SPEEDRUN_TOOL_FILE";
-    public const string OptionState = "SPEEDRUN_TOOL_OPTION_STATE";
     public const string Hotkeys = "SPEEDRUN_TOOL_HOTKEYS";
     public const string HotkeysConfig = "SPEEDRUN_TOOL_HOTKEYS_CONFIG";
 }

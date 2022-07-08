@@ -431,6 +431,8 @@ public sealed class StateManager {
     // ReSharper disable once MemberCanBePrivate.Global
     // 为了照顾使用体验（会卡顿，增加 SaveState 时间），不主动触发内存回收
     public void ClearState() {
+        preCloneTask?.Wait();
+
         // fix: 读档冻结时被TAS清除状态后无法解除冻结
         if (State == State.Waiting && Engine.Scene is Level level) {
             OutOfFreeze(level);

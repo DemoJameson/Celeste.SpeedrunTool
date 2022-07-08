@@ -49,6 +49,15 @@ public class HotkeyConfigUi : TextMenu {
         Buttons.BigButton,
     };
 
+    private static readonly HashSet<Keys> ModifierKeys = new() {
+        Keys.LeftControl,
+        Keys.RightControl,
+        Keys.LeftAlt,
+        Keys.RightAlt,
+        Keys.LeftShift,
+        Keys.RightShift,
+    };
+
     public static readonly Dictionary<Hotkey, HotkeyConfig> HotkeyConfigs = new List<HotkeyConfig> {
         new(Hotkey.ToggleHotkeys),
         new(Hotkey.SaveState, Keys.F7),
@@ -68,7 +77,7 @@ public class HotkeyConfigUi : TextMenu {
         new(Hotkey.SpawnTowerViewer),
         new(Hotkey.ToggleFullscreen),
     }.ToDictionary(info => info.Hotkey, info => info);
-
+    
     private bool closing;
     private float inputDelay;
     private bool remapping;
@@ -282,7 +291,11 @@ public class HotkeyConfigUi : TextMenu {
             if (info.GetKeys().Contains(key)) {
                 info.GetKeys().Remove(key);
             } else {
-                info.GetKeys().Add(key);
+                if (ModifierKeys.Contains(key)) {
+                    info.GetKeys().Insert(0, key);
+                } else {
+                    info.GetKeys().Add(key);
+                }
             }
 
             info.UpdateVirtualButton();

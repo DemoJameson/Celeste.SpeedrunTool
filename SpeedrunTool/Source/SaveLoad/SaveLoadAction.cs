@@ -17,6 +17,8 @@ public sealed class SaveLoadAction {
     public delegate void SlAction(Dictionary<Type, Dictionary<string, object>> savedValues, Level level);
 
     public static readonly List<VirtualAsset> VirtualAssets = new();
+    public static readonly List<EventInstance> ClonedEventInstancesWhenSave = new();
+    public static readonly List<EventInstance> ClonedEventInstancesWhenPreClone = new();
 
     private static readonly List<SaveLoadAction> All = new();
 
@@ -201,8 +203,9 @@ public sealed class SaveLoadAction {
         SupportCommunalHelper();
         SupportBounceHelper();
 
-        // 放最后，确保收集了所有克隆的 VirtualAssets
+        // 放最后，确保收集了所有克隆的 VirtualAssets 与 EventInstance
         ReloadVirtualAssets();
+        ReleaseEventInstances();
     }
 
     private static void InitFields() {
@@ -891,5 +894,20 @@ public sealed class SaveLoadAction {
             clearState: () => VirtualAssets.Clear(),
             preCloneEntities: () => VirtualAssets.Clear()
         );
+    }
+    
+    private static void ReleaseEventInstances() {
+        SafeAdd(
+            clearState: () => {
+                foreach (EventInstance eventInstance in ClonedEventInstancesWhenSave.Union(ClonedEventInstancesWhenPreClone)) {
+                    Audio.ReleaseSnapshot(eventInstance);
+                }
+
+                ClonedEventInstancesWhenSave.Clear();
+                ClonedEventInstancesWhenPreClone.Clear();
+            },
+            preCloneEntities: () => {
+                ClonedEventInstancesWhenPreClone.Clear();
+            });
     }
 }

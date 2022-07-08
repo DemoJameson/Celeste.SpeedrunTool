@@ -244,6 +244,10 @@ public sealed class StateManager {
             return false;
         }
 
+        if (IsSaved) {
+            ClearState();
+        }
+
         SaveLoadAction.InitActions();
 
         State = State.Saving;

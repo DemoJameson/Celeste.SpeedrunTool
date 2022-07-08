@@ -104,7 +104,16 @@ public static class DeepClonerUtils {
 
                 // 重新创建正在播放的 EventInstance 实例
                 if (sourceObj is EventInstance eventInstance && eventInstance.IsNeedManualClone()) {
-                    return eventInstance.Clone();
+                    EventInstance clonedEventInstance = eventInstance.Clone();
+
+                    bool isMainThread = Thread.CurrentThread.IsMainThread();
+                    if (StateManager.Instance.State == State.Saving && isMainThread) {
+                        SaveLoadAction.ClonedEventInstancesWhenSave.Add(clonedEventInstance);
+                    } else if (!isMainThread) {
+                        SaveLoadAction.ClonedEventInstancesWhenPreClone.Add(clonedEventInstance);
+                    }
+
+                    return clonedEventInstance;
                 }
 
                 // Fixes: 克隆 WeakReference 后 Target 没有一起被克隆的问题，修复 dynData.Weak 克隆不完整导致的一些报错

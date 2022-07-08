@@ -1,8 +1,10 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Celeste.Editor;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 
@@ -21,6 +23,7 @@ public class EndPoint : Entity {
         On.Celeste.Editor.MapEditor.Render += MapEditorOnRender;
         IL.Celeste.Editor.LevelTemplate.RenderContents += LevelTemplateOnRenderContents;
         On.Celeste.Editor.LevelTemplate.RenderHighlight += LevelTemplateOnRenderHighlight;
+        IL.Celeste.Editor.MapEditor.RenderManualText += MapEditorOnRenderManualText;
     }
 
     [Unload]
@@ -30,6 +33,7 @@ public class EndPoint : Entity {
         On.Celeste.Editor.MapEditor.Render -= MapEditorOnRender;
         IL.Celeste.Editor.LevelTemplate.RenderContents -= LevelTemplateOnRenderContents;
         On.Celeste.Editor.LevelTemplate.RenderHighlight -= LevelTemplateOnRenderHighlight;
+        IL.Celeste.Editor.MapEditor.RenderManualText -= MapEditorOnRenderManualText;
     }
 
     private static void LevelOnEnd(On.Celeste.Level.orig_End orig, Level self) {
@@ -75,13 +79,51 @@ public class EndPoint : Entity {
                 .EmitDelegate<Func<Color, LevelTemplate, Color>>((color, template) => template.Name == roomIdEndPoint ? Color.Yellow : color);
         }
     }
-    
-    private static void LevelTemplateOnRenderHighlight(On.Celeste.Editor.LevelTemplate.orig_RenderHighlight orig, LevelTemplate self, Camera camera, bool hovered, bool selected) {
+
+    private static void LevelTemplateOnRenderHighlight(On.Celeste.Editor.LevelTemplate.orig_RenderHighlight orig, LevelTemplate self, Camera camera,
+        bool hovered, bool selected) {
         orig(self, camera, hovered, selected);
 
         if (!hovered && !selected && self.Name == roomIdEndPoint) {
             float thickness = 1f / camera.Zoom * 2f;
-            self.InvokeMethod("Outline", (float) self.X, (float) self.Y, (float) self.Width, (float) self.Height, thickness, Color.Yellow);
+            self.InvokeMethod("Outline", (float)self.X, (float)self.Y, (float)self.Width, (float)self.Height, thickness, Color.Yellow);
+        }
+    }
+
+    private static void MapEditorOnRenderManualText(ILContext il) {
+        string GetKeyText(params IList[] lists) {
+            foreach (IList list in lists) {
+                if (list.Count == 0) {
+                    return null;
+                }
+
+                switch (list) {
+                    case List<Keys> keys:
+                        return string.Join("+", keys) + ": ";
+                    case List<Buttons> buttons:
+                        return string.Join("+", buttons) + ": ";
+                }
+            }
+
+            return null;
+        }
+
+        ILCursor ilCursor = new(il);
+        if (ilCursor.TryGotoNext(
+                ins => ins.MatchLdstr(typeof(MapEditor).GetFieldValue<string>("ManualText")),
+                ins => ins.OpCode == OpCodes.Stloc_0
+            )) {
+            ilCursor.Index++;
+            ilCursor.EmitDelegate<Func<string, string>>(manualText => {
+                string keyText = GetKeyText(
+                    ModSettings.KeyboardSetEndPoint,
+                    ModSettings.KeyboardSetAdditionalEndPoint,
+                    ModSettings.ControllerSetEndPoint,
+                    ModSettings.ControllerSetEndPoint
+                );
+
+                return keyText == null ? manualText : $"{keyText,-14}Set room as timer endpoint\n\n{manualText}";
+            });
         }
     }
 
@@ -319,7 +361,9 @@ public class EndPoint : Entity {
     }
 
     public static bool IsExist => Engine.Scene is Level level && level.Tracker.GetEntity<EndPoint>() != null || !roomIdEndPoint.IsNullOrEmpty();
-    public static bool IsReachedRoomIdEndPoint => !roomIdEndPoint.IsNullOrEmpty() && Engine.Scene is Level level && level.Session.Level == roomIdEndPoint;
+
+    public static bool IsReachedRoomIdEndPoint =>
+        !roomIdEndPoint.IsNullOrEmpty() && Engine.Scene is Level level && level.Session.Level == roomIdEndPoint;
 
     private static readonly List<EndPoint> EmptyList = new();
 

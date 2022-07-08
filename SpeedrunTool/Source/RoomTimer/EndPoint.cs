@@ -405,8 +405,11 @@ public class EndPoint : Entity {
         } else if (scene is MapEditor) {
             LevelTemplate levelTemplate = (LevelTemplate)scene.InvokeMethod("TestCheck", scene.GetFieldValue<Vector2>("mousePosition"));
             if (levelTemplate is not null && levelTemplate.Type is not LevelTemplateType.Filler) {
+                string lastRoomIdEndPoint = roomIdEndPoint;
                 RoomTimerManager.ClearPbTimes();
-                roomIdEndPoint = levelTemplate.Name;
+                if (lastRoomIdEndPoint != levelTemplate.Name) {
+                    roomIdEndPoint = levelTemplate.Name;
+                }
             }
         }
     }

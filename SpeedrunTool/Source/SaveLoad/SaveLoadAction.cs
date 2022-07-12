@@ -849,15 +849,29 @@ public sealed class SaveLoadAction {
     }
 
     private static void SupportCommunalHelper() {
-        if (ModUtils.GetType("CommunalHelper", "Celeste.Mod.CommunalHelper.Entities.DreamTunnelDash") is { } dreamTunnelDashType) {
+        if (ModUtils.GetType("CommunalHelper", "Celeste.Mod.CommunalHelper.DashStates.DreamTunnelDash") is { } dreamTunnelDashType) {
             SafeAdd(
                 (savedValues, _) => SaveStaticMemberValues(savedValues, dreamTunnelDashType,
                     "StDreamTunnelDash",
                     "hasDreamTunnelDash",
                     "dreamTunnelDashAttacking",
                     "dreamTunnelDashTimer",
+                    "nextDashFeather",
+                    "FeatherMode",
                     "overrideDreamDashCheck",
-                    "dreamTunnelDashAttacking"
+                    "DreamTrailColorIndex"
+                ),
+                (savedValues, _) => LoadStaticMemberValues(savedValues));
+        }
+        
+        if (ModUtils.GetType("CommunalHelper", "Celeste.Mod.CommunalHelper.DashStates.SeekerDash") is { } SeekerDashType) {
+            SafeAdd(
+                (savedValues, _) => SaveStaticMemberValues(savedValues, SeekerDashType,
+                    "hasSeekerDash",
+                    "seekerDashAttacking",
+                    "seekerDashTimer",
+                    "seekerDashLaunched",
+                    "launchPossible"
                 ),
                 (savedValues, _) => LoadStaticMemberValues(savedValues));
         }
@@ -895,7 +909,7 @@ public sealed class SaveLoadAction {
             preCloneEntities: () => VirtualAssets.Clear()
         );
     }
-    
+
     private static void ReleaseEventInstances() {
         SafeAdd(
             clearState: () => {
@@ -906,8 +920,7 @@ public sealed class SaveLoadAction {
                 ClonedEventInstancesWhenSave.Clear();
                 ClonedEventInstancesWhenPreClone.Clear();
             },
-            preCloneEntities: () => {
-                ClonedEventInstancesWhenPreClone.Clear();
-            });
+            preCloneEntities: () => ClonedEventInstancesWhenPreClone.Clear()
+            );
     }
 }

@@ -18,6 +18,9 @@
             <Private>False</Private>
         </Reference>
     </ItemDefinitionGroup>
+    <PropertyGroup>
+        <PathMap>$(MSBuildProjectDirectory)=SpeedrunTool/</PathMap>
+    </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
         <PlatformTarget>AnyCPU</PlatformTarget>
         <Prefer32bit>false</Prefer32bit>

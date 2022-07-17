@@ -98,10 +98,6 @@ public static class TeleportRoomUtils {
             return;
         }
 
-        if (!fromHistory && session.Area.ToString() == "10" && session.Level == "g-06") {
-            session.RespawnPoint = new Vector2(28280, -8080);
-        }
-
         // 修复问题：死亡瞬间传送 PlayerDeadBody 没被清除，导致传送完毕后 madeline 自动爆炸
         level.Entities.UpdateLists();
         level.RendererList.Renderers.ForEach(renderer => (renderer as ScreenWipe)?.Cancel());

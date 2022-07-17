@@ -10,9 +10,11 @@ public class Tooltip : Entity {
     private readonly string message;
     private float alpha;
     private float unEasedAlpha;
+    private readonly float duration;
 
-    private Tooltip(string message) {
+    private Tooltip(string message, float duration = 1f) {
         this.message = message;
+        this.duration = duration;
         Vector2 messageSize = ActiveFont.Measure(message);
         Position = new(Padding, Engine.Height - messageSize.Y - Padding / 2f);
         Tag = Tags.HUD | Tags.Global | Tags.FrozenUpdate | Tags.PauseUpdate| Tags.TransitionUpdate;
@@ -31,7 +33,7 @@ public class Tooltip : Entity {
     }
 
     private IEnumerator Dismiss() {
-        yield return 1f;
+        yield return duration;
         while (alpha > 0f) {
             unEasedAlpha = Calc.Approach(unEasedAlpha, 0f, Engine.RawDeltaTime * 5f);
             alpha = Ease.SineIn(unEasedAlpha);
@@ -47,13 +49,13 @@ public class Tooltip : Entity {
             Color.Black * alpha * alpha * alpha);
     }
 
-    public static void Show(string message) {
+    public static void Show(string message, float duration = 1f) {
         if (Engine.Scene is {} scene) {
             if (!scene.Tracker.Entities.TryGetValue(typeof(Tooltip), out var tooltips)) {
                 tooltips = scene.Entities.FindAll<Tooltip>().Cast<Entity>().ToList();
             }
             tooltips.ForEach(entity => entity.RemoveSelf());
-            scene.Add(new Tooltip(message));
+            scene.Add(new Tooltip(message, duration));
         }
     }
 }

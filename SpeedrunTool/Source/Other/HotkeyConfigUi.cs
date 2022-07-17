@@ -204,11 +204,7 @@ public class HotkeyConfigUi : TextMenu {
         Clear();
 
         Add(new Header(Dialog.Clean(DialogIds.HotkeysConfig)));
-        Add(new SubHeader(Dialog.Clean(DialogIds.ComboHotkeyDescription)));
-        Add(new SubHeader(Dialog.Clean(DialogIds.PressDeleteToClearHotkeys)).With(header => {
-            // 兼容 v1312
-            header.SetFieldValue("TopPadding", false);
-        }));
+        Add(new SubHeader(Dialog.Clean(DialogIds.PressDeleteToClearHotkeys)));
 
         Add(new SubHeader(Dialog.Clean(DialogIds.Keyboard)));
         foreach (KeyValuePair<Hotkey, HotkeyConfig> pair in HotkeyConfigs) {
@@ -378,6 +374,12 @@ public class HotkeyConfigUi : TextMenu {
         Vector2 position = new Vector2(1920f, 1080f) * 0.5f;
 
         if (remappingKeyboard || Input.GuiInputController()) {
+            ActiveFont.Draw(
+                Dialog.Get(DialogIds.ComboHotkeyDescription),
+                position + new Vector2(0.0f, -32f),
+                new Vector2(0.5f, 2f),
+                Vector2.One * 0.7f,
+                Color.LightGray * Ease.CubeIn(remappingEase));
             ActiveFont.Draw(
                 remappingKeyboard
                     ? Dialog.Get(DialogIds.KeyConfigChanging)

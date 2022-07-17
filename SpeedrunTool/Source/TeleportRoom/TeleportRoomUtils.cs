@@ -102,13 +102,6 @@ public static class TeleportRoomUtils {
             session.RespawnPoint = new Vector2(28280, -8080);
         }
 
-        StateMarkUtils.CopySavedStateFlag(level.Session, session);
-
-        session.Time = level.Session.Time;
-        int increaseDeath = level.IsPlayerDead() || level.GetPlayer().JustRespawned ? 0 : 1;
-        session.Deaths = level.Session.Deaths + increaseDeath;
-        session.DeathsInCurrentLevel = level.Session.DeathsInCurrentLevel + increaseDeath;
-
         // 修复问题：死亡瞬间传送 PlayerDeadBody 没被清除，导致传送完毕后 madeline 自动爆炸
         level.Entities.UpdateLists();
         level.RendererList.Renderers.ForEach(renderer => (renderer as ScreenWipe)?.Cancel());
@@ -134,8 +127,22 @@ public static class TeleportRoomUtils {
         if (!fromHistory) {
             BetterMapEditor.FixTeleportProblems(session, session.RespawnPoint);
         }
+        
+        bool savedState = StateMarkUtils.GetSavedStateFlag(level);
+        long time = Math.Max(session.Time, level.Session.Time);
+        int increaseDeath = level.IsPlayerDead() || level.GetPlayer().JustRespawned ? 0 : 1;
+        int deaths = Math.Max(session.Deaths, level.Session.Deaths) + increaseDeath;
+        int deathsInCurrentLevel = Math.Max(session.DeathsInCurrentLevel, level.Session.DeathsInCurrentLevel) + increaseDeath;
 
         session.DeepCloneTo(level.Session);
+
+        if (savedState) {
+            StateMarkUtils.SetSavedStateFlag(level);
+        }
+
+        level.Session.Time = time;
+        level.Session.Deaths = deaths;
+        level.Session.DeathsInCurrentLevel = deathsInCurrentLevel;
 
         // 修改自 level.TeleportTo(player, session.Level, Player.IntroTypes.Respawn);
         level.Tracker.GetEntitiesCopy<Player>().ForEach(entity => entity.RemoveSelf());

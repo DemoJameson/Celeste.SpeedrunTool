@@ -124,19 +124,15 @@ public static class StateMarkUtils {
         }
     }
 
-    private static void SetSavedStateFlag(Level level) {
+    public static void SetSavedStateFlag(Level level) {
         level.Session.SetFlag(SavedStateFlag);
     }
 
-    private static bool GetSavedStateFlag(Level level) {
+    public static bool GetSavedStateFlag(Level level) {
         return level.Session.GetFlag(SavedStateFlag);
     }
 
     private static void RemoveSavedStateFlag(Level level) {
         level.Session.SetFlag(SavedStateFlag, false);
-    }
-
-    public static void CopySavedStateFlag(Session from, Session to) {
-        to.SetFlag(SavedStateFlag, from.GetFlag(SavedStateFlag));
     }
 }

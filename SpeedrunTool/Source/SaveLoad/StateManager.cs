@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
@@ -6,9 +7,9 @@ using System.Threading.Tasks;
 using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.Utils;
-using FMOD.Studio;
 using Force.DeepCloner;
 using Force.DeepCloner.Helpers;
+using EventInstance = FMOD.Studio.EventInstance;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
@@ -57,6 +58,7 @@ public sealed class StateManager {
     private SaveData savedSaveData;
     private Task<DeepCloneState> preCloneTask;
     private FreezeType freezeType;
+    private Process celesteProcess;
 
     private enum FreezeType {
         None,
@@ -74,9 +76,9 @@ public sealed class StateManager {
         On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
         On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
         SaveLoadAction.SafeAdd(
-                (_, _) => UpdateLastChecks(),
-                (_, _) => UpdateLastChecks(),
-                () => lastChecks.Clear()
+            (_, _) => UpdateLastChecks(),
+            (_, _) => UpdateLastChecks(),
+            () => lastChecks.Clear()
         );
         RegisterHotkeys();
     }
@@ -141,7 +143,7 @@ public sealed class StateManager {
         if (input.IsPressed()) {
             return true;
         }
-        
+
         if (!input.IsCheck()) {
             return false;
         }
@@ -301,9 +303,7 @@ public sealed class StateManager {
         RestoreCassetteBlockManager1(level);
         SaveLoadAction.OnLoadState(level);
         PreCloneSavedEntities();
-
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
+        GcCollect();
 
         if (tas) {
             LoadStateComplete(level);
@@ -313,6 +313,21 @@ public sealed class StateManager {
         }
 
         return true;
+    }
+
+    // 32 位应用且使用内存超过 2GB 才回收垃圾
+    private void GcCollect() {
+        if (!Environment.Is64BitProcess && celesteProcess == null) {
+            celesteProcess = Process.GetCurrentProcess();
+        }
+
+        if (celesteProcess != null) {
+            celesteProcess.Refresh();
+            if (celesteProcess.PrivateMemorySize64 > 1024L * 1024L * 1024L * 2) {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+            }
+        }
     }
 
     // 释放资源，停止正在播放的声音等
@@ -429,7 +444,7 @@ public sealed class StateManager {
 
     // public for tas
     // ReSharper disable once MemberCanBePrivate.Global
-    // 为了照顾使用体验（会卡顿，增加 SaveState 时间），不主动触发内存回收
+    // 为了照顾使用体验，不主动触发内存回收（会卡顿，增加 SaveState 时间）
     public void ClearState() {
         preCloneTask?.Wait();
 
@@ -442,6 +457,8 @@ public sealed class StateManager {
         savedLevel = null;
         savedSaveData = null;
         preCloneTask = null;
+        celesteProcess?.Dispose();
+        celesteProcess = null;
         SaveLoadAction.OnClearState();
         State = State.None;
     }

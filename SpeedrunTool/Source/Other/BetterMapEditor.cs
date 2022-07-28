@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Celeste.Editor;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
@@ -90,10 +92,15 @@ public static class BetterMapEditor {
         IL.Celeste.NPC06_Theo_Plateau.Awake += NPC06_Theo_PlateauOnAwake;
 
         Hotkey.OpenDebugMap.RegisterPressedAction(scene => {
-            if (scene is Level level) {
-                Engine.Scene = new Editor.MapEditor(level.Session.Area);
-                Engine.Commands.Open = false;
-            }
+            Task.Run(() => {
+                Thread.Sleep(1);
+                MainThreadHelper.Do(() => {
+                    if (scene is Level level && Engine.NextScene is not MapEditor) {
+                        Engine.Scene = new MapEditor(level.Session.Area);
+                        Engine.Commands.Open = false;
+                    }
+                });
+            });
         });
     }
 

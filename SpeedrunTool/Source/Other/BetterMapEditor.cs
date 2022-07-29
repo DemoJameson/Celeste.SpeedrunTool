@@ -1,8 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Celeste.Editor;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
@@ -92,15 +90,9 @@ public static class BetterMapEditor {
         IL.Celeste.NPC06_Theo_Plateau.Awake += NPC06_Theo_PlateauOnAwake;
 
         Hotkey.OpenDebugMap.RegisterPressedAction(scene => {
-            Task.Run(() => {
-                Thread.Sleep(1);
-                MainThreadHelper.Do(() => {
-                    if (scene is Level level && Engine.NextScene is not MapEditor) {
-                        Engine.Scene = new MapEditor(level.Session.Area);
-                        Engine.Commands.Open = false;
-                    }
-                });
-            });
+            if (scene is Level level) {
+                level.HelperEntity.Add(new Coroutine(DelayedOpenDebug(level)));
+            }
         });
     }
 
@@ -347,7 +339,7 @@ public static class BetterMapEditor {
             session.ColorGrade = session.Level == "void" ? "templevoid" : null;
         }
     }
-    
+
     private static void FixReflectionBloomBase(Session session) {
         if (session.Area.ToString() == "6") {
             session.BloomBaseAdd = session.Level == "start" ? 1f : 0f;
@@ -363,6 +355,14 @@ public static class BetterMapEditor {
     private static void FixCoreRefillDash(Session session) {
         if (session.Area.ID == 9 && ModSettings.FixCoreRefillDashAfterTeleport) {
             session.Inventory.NoRefills = !CoreRefillDashRooms.Contains(session.Level);
+        }
+    }
+
+    private static IEnumerator DelayedOpenDebug(Level level) {
+        yield return null;
+        if (Engine.NextScene is not MapEditor) {
+            Engine.Scene = new MapEditor(level.Session.Area);
+            Engine.Commands.Open = false;
         }
     }
 }

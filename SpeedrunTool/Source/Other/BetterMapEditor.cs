@@ -78,6 +78,8 @@ public static class BetterMapEditor {
         "j-10", "j-11", "j-12", "j-13", "j-14", "j-14b", "j-15", "j-16", "j-17", "j-18", "j-19",
         "end-golden", "end-cinematic", "end-granny"
     };
+    
+    private static bool delayedOpenDebugMap;
 
     [Load]
     private static void Load() {
@@ -88,10 +90,11 @@ public static class BetterMapEditor {
         On.Celeste.LevelLoader.ctor += LevelLoaderOnCtor;
         IL.Celeste.FlingBird.Awake += FlingBirdOnAwake;
         IL.Celeste.NPC06_Theo_Plateau.Awake += NPC06_Theo_PlateauOnAwake;
+        On.Monocle.Engine.Update += EngineOnUpdate;
 
         Hotkey.OpenDebugMap.RegisterPressedAction(scene => {
-            if (scene is Level level) {
-                level.HelperEntity.Add(new Coroutine(DelayedOpenDebug(level)));
+            if (scene is Level) {
+                delayedOpenDebugMap = true;
             }
         });
     }
@@ -105,6 +108,7 @@ public static class BetterMapEditor {
         On.Celeste.LevelLoader.ctor -= LevelLoaderOnCtor;
         IL.Celeste.FlingBird.Awake -= FlingBirdOnAwake;
         IL.Celeste.NPC06_Theo_Plateau.Awake -= NPC06_Theo_PlateauOnAwake;
+        On.Monocle.Engine.Update -= EngineOnUpdate;
     }
 
     private static void CommandsOnCmdLoad(On.Celeste.Commands.orig_CmdLoad orig, int id, string level) {
@@ -242,6 +246,17 @@ public static class BetterMapEditor {
         ilCursor.Emit(OpCodes.Brtrue, skipCs06Campfire);
     }
 
+    private static void EngineOnUpdate(On.Monocle.Engine.orig_Update orig, Engine self, GameTime gameTime) {
+        orig(self, gameTime);
+        if (delayedOpenDebugMap) {
+            delayedOpenDebugMap = false;
+            if (Engine.Scene is Level level && Engine.NextScene is not MapEditor) {
+                Engine.Scene = new MapEditor(level.Session.Area);
+                Engine.Commands.Open = false;
+            }
+        }
+    }
+
     // 过早修改位置会使其排在其它鸟的后面导致被删除
     private static IEnumerator DelayPosition(FlingBird bird, Vector2 position) {
         bird.Position = position;
@@ -355,14 +370,6 @@ public static class BetterMapEditor {
     private static void FixCoreRefillDash(Session session) {
         if (session.Area.ID == 9 && ModSettings.FixCoreRefillDashAfterTeleport) {
             session.Inventory.NoRefills = !CoreRefillDashRooms.Contains(session.Level);
-        }
-    }
-
-    private static IEnumerator DelayedOpenDebug(Level level) {
-        yield return null;
-        if (Engine.NextScene is not MapEditor) {
-            Engine.Scene = new MapEditor(level.Session.Area);
-            Engine.Commands.Open = false;
         }
     }
 }

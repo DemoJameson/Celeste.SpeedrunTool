@@ -127,6 +127,13 @@ public static class DeepClonerUtils {
                 if (sourceObj is WeakReference sourceWeak) {
                     return new WeakReference(sourceWeak.Target.DeepClone(deepCloneState), sourceWeak.TrackResurrection);
                 }
+
+                // 手动克隆 WeakReference<T> 
+                if (sourceObj.GetType() is { } type && type.IsWeakReference(out Type genericType)) {
+                    object[] parameters = {null};
+                    sourceObj.InvokeMethod("TryGetTarget", parameters);
+                    return type.GetConstructor(new[] {genericType}).Invoke(parameters.DeepClone(deepCloneState));
+                }
             }
 
             return null;

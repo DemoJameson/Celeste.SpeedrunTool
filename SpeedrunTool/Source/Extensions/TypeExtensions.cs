@@ -27,7 +27,8 @@ internal static class TypeExtensions {
                || IsSimpleList(type, extraGenericTypes)
                || IsSimpleStack(type, extraGenericTypes)
                || IsSimpleHashSet(type, extraGenericTypes)
-               || IsSimpleDictionary(type, extraGenericTypes);
+               || IsSimpleDictionary(type, extraGenericTypes)
+               || IsSimpleWeakReference(type, extraGenericTypes);
     }
 
     public static bool IsSimpleArray(this Type type, Func<Type, bool> extraGenericTypes = null) {

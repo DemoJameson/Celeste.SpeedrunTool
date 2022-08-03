@@ -224,14 +224,23 @@ public sealed class SaveLoadAction {
             FieldInfo[] fieldInfos = type.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
                 .Where(info => {
                     Type fieldType = info.FieldType;
-                    return !info.IsConst() && fieldType.IsSimpleClass(_ =>
+                    return !info.IsConst() && fieldType.IsSimpleClass(genericType =>
                         fieldType == type
                         || fieldType == typeof(Level)
+                        || fieldType == typeof(Player)
                         || fieldType == typeof(MTexture)
                         || fieldType == typeof(CrystalStaticSpinner)
                         || fieldType == typeof(Solid)
                         || fieldType.IsSubclassOf(typeof(Renderer))
                         || fieldType.IsSubclassOf(typeof(VirtualAsset))
+                        || genericType == type
+                        || genericType == typeof(Level)
+                        || genericType == typeof(Player)
+                        || genericType == typeof(MTexture)
+                        || genericType == typeof(CrystalStaticSpinner)
+                        || genericType == typeof(Solid)
+                        || genericType.IsSubclassOf(typeof(Renderer))
+                        || genericType.IsSubclassOf(typeof(VirtualAsset))
                     );
                 }).ToArray();
 
@@ -594,8 +603,8 @@ public sealed class SaveLoadAction {
     }
 
     private static void SupportPandorasBox() {
-        // 部分支持，因为 TimeField.targetPlayer 和 TimeField.lingeringTarget 未进行 SL
-        // 之所以不处理该字段是因为 WeakReference<T> 类型的实例在 SL 多次并且内存回收之后 target 可能会指向错误的对象，原因未知
+        // TimeField.targetPlayer 和 TimeField.lingeringTarget 等
+        // WeakReference<T> 类型的实例在 SL 多次并且内存回收之后 target 可能会指向错误的对象，原因未知
         if (ModUtils.GetType("PandorasBox", "Celeste.Mod.PandorasBox.TimeField") is { } timeFieldType
             && Delegate.CreateDelegate(typeof(On.Celeste.Player.hook_Update), timeFieldType.GetMethodInfo("PlayerUpdateHook")) is
                 On.Celeste.Player.hook_Update hookUpdate) {

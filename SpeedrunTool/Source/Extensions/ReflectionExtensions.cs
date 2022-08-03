@@ -28,6 +28,11 @@ internal static class ReflectionExtensions {
         public readonly string Name = Name;
         public readonly Type ReturnType = ReturnType;
     }
+
+    private record struct ConstructorKey(Type Type, long Types) {
+        public readonly Type Type = Type;
+        public readonly long Types = Types;
+    }
     // ReSharper restore UnusedMember.Local
 
     public delegate T GetDelegate<out T>(object instance);
@@ -38,6 +43,7 @@ internal static class ReflectionExtensions {
     private static readonly ConcurrentDictionary<MemberKey, PropertyInfo> CachedPropertyInfos = new();
     private static readonly ConcurrentDictionary<MethodKey, MethodInfo> CachedMethodInfos = new();
     private static readonly ConcurrentDictionary<MethodKey, FastReflectionDelegate> CachedMethodDelegates = new();
+    private static readonly ConcurrentDictionary<ConstructorKey, ConstructorInfo> CachedConstructorInfos = new();
     private static readonly ConcurrentDictionary<DelegateKey, Delegate> CachedFieldGetDelegates = new();
     private static readonly ConcurrentDictionary<DelegateKey, Delegate> CachedFieldSetDelegates = new();
 
@@ -94,7 +100,18 @@ internal static class ReflectionExtensions {
 
         return CachedMethodDelegates[key] = type.GetMethodInfo(name, types)?.CreateFastDelegate();
     }
+    
+    public static ConstructorInfo GetConstructorInfo(this Type type, params Type[] types) {
+        var key = new ConstructorKey(type, types.GetCustomHashCode());
+        if (CachedConstructorInfos.TryGetValue(key, out ConstructorInfo result)) {
+            return result;
+        }
 
+        ConstructorInfo[] constructors = type.GetConstructors(StaticInstanceAnyVisibility);
+        result = constructors.FirstOrDefault(info => types.SequenceEqual(info.GetParameters().Select(i => i.ParameterType)));
+        return CachedConstructorInfos[key] = result;
+    }
+    
     public static object GetFieldValue(this object obj, string name) {
         return GetFieldValueImpl<object>(obj, obj.GetType(), name);
     }

@@ -132,7 +132,7 @@ public static class DeepClonerUtils {
                 if (sourceObj.GetType() is { } type && type.IsWeakReference(out Type genericType)) {
                     object[] parameters = {null};
                     sourceObj.InvokeMethod("TryGetTarget", parameters);
-                    return type.GetConstructor(new[] {genericType}).Invoke(parameters.DeepClone(deepCloneState));
+                    return type.GetConstructorInfo(genericType).Invoke(parameters.DeepClone(deepCloneState));
                 }
             }
 

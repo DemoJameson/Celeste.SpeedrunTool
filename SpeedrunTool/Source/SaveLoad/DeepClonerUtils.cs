@@ -39,7 +39,6 @@ public static class DeepClonerUtils {
                 || type == typeof(Monocle.Commands)
                 || type == typeof(BitTag)
                 || type == typeof(Atlas)
-                || type == typeof(MTexture)
 
                 // XNA GraphicsResource
                 || type.IsSubclassOf(typeof(GraphicsResource))

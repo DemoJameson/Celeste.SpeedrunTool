@@ -201,7 +201,6 @@ public sealed class SaveLoadAction {
         SupportIsaGrabBag();
         SupportDeathTracker();
         SupportCommunalHelper();
-        SupportBounceHelper();
 
         // 放最后，确保收集了所有克隆的 VirtualAssets 与 EventInstance
         ReloadVirtualAssets();
@@ -882,14 +881,6 @@ public sealed class SaveLoadAction {
                     "seekerDashLaunched",
                     "launchPossible"
                 ),
-                (savedValues, _) => LoadStaticMemberValues(savedValues));
-        }
-    }
-
-    private static void SupportBounceHelper() {
-        if (ModUtils.GetType("BounceHelper", "Celeste.Mod.BounceHelper.BounceHelperModule") is { } bounceHelperModule) {
-            SafeAdd(
-                (savedValues, _) => SaveStaticMemberValues(savedValues, bounceHelperModule, "enabled"),
                 (savedValues, _) => LoadStaticMemberValues(savedValues));
         }
     }

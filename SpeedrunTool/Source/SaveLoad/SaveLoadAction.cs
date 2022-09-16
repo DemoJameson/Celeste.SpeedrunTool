@@ -139,7 +139,7 @@ public sealed class SaveLoadAction {
     }
 
     // ReSharper disable once MemberCanBePrivate.Global
-    private static void LoadStaticMemberValues(Dictionary<Type, Dictionary<string, object>> values) {
+    public static void LoadStaticMemberValues(Dictionary<Type, Dictionary<string, object>> values) {
         foreach (KeyValuePair<Type, Dictionary<string, object>> pair in values) {
             foreach (string memberName in pair.Value.Keys) {
                 Type type = pair.Key;

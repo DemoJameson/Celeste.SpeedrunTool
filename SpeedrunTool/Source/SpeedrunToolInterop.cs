@@ -12,10 +12,22 @@ public static class SpeedrunToolInterop {
     // ReSharper disable once MemberCanBePrivate.Global
     [ModExportName("SpeedrunTool.SaveLoad")]
     public static class SaveLoadExports {
-        public static void RegisterStaticTypes(Type t, params string[] memberNames) {
-            SaveLoadAction.SafeAdd(
-                (savedValues, _) => SaveLoadAction.SaveStaticMemberValues(savedValues, t, memberNames),
+        /// <summary>
+        /// Specify the static members to be cloned
+        /// </summary>
+        /// <returns>SaveLoadAction instance, used for unregister</returns>
+        public static object RegisterStaticTypes(Type type, params string[] memberNames) {
+            return SaveLoadAction.SafeAdd(
+                (savedValues, _) => SaveLoadAction.SaveStaticMemberValues(savedValues, type, memberNames),
                 (savedValues, _) => SaveLoadAction.LoadStaticMemberValues(savedValues));
+        }
+        
+        /// <summary>
+        /// Unregister the SaveLoadAction return from RegisterStaticTypes()
+        /// </summary>
+        /// <param name="obj">The object return from RegisterStaticTypes()</param>
+        public static void Unregister(object obj) {
+            SaveLoadAction.Remove((SaveLoadAction)obj);
         }
     }
 }

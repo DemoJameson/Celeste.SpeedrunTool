@@ -432,6 +432,9 @@ public sealed class SaveLoadAction {
 
                 // 关闭手柄震动
                 MInput.GamePads[Input.Gamepad].Rumble(0f, 0f);
+                
+                // Fix https://github.com/DemoJameson/CelesteSpeedrunTool/issues/19
+                typeof(MInput).InvokeMethod("UpdateVirtualInputs");
             });
     }
 

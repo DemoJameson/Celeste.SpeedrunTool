@@ -52,7 +52,7 @@ public static class StateMarkUtils {
     }
 
     private static void TryRecolorSprite(Strawberry berry) {
-        if (berry.GetFieldValue("sprite") is not Sprite sprite) {
+        if (berry.sprite is not { } sprite) {
             return;
         }
 

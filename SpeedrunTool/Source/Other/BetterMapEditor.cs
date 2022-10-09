@@ -191,7 +191,7 @@ public static class BetterMapEditor {
                         }
 
                         if (i > 0) {
-                            bird.SetFieldValue("segmentIndex", i);
+                            bird.segmentIndex = i;
                             bird.Add(new Coroutine(DelayPosition(bird, bird.NodeSegments[i][0])));
                         }
 

@@ -206,7 +206,7 @@ public sealed class StateManager {
             && ModSettings.AutoLoadStateAfterDeath
             && IsSaved
             && !SavedByTas
-            && !self.GetFieldValue<bool>("finished")
+            && !self.finished
             && Engine.Scene is Level level
             && level.Entities.FindFirst<PlayerSeeker>() == null
            ) {
@@ -374,10 +374,9 @@ public sealed class StateManager {
             SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].TimePlayed;
 
         // 修复：切屏时存档，若干秒后读档游戏会误以为卡死自动重生
-        if (savedLevel.GetFieldValue("transition") is Coroutine coroutine
-            && coroutine.Current() is { } enumerator
-            && enumerator.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
-                .FirstOrDefault(info => info.Name.StartsWith("<playerStuck>")) is { } playerStuck
+        if (savedLevel.transition is { } coroutine && coroutine.Current() is { } enumerator
+                                                   && enumerator.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
+                                                       .FirstOrDefault(info => info.Name.StartsWith("<playerStuck>")) is { } playerStuck
            ) {
             playerStuck.SetValue(enumerator, TimeSpan.FromTicks(session.Time));
             playerStuck.SetValue(enumerator.DeepCloneShared(), TimeSpan.FromTicks(session.Time));
@@ -407,7 +406,7 @@ public sealed class StateManager {
         playingEventInstances.Clear();
 
         foreach (Component component in level.Entities.SelectMany(entity => entity.Components.ToArray())) {
-            if (component is SoundSource {Playing: true} source && source.GetFieldValue("instance") is EventInstance eventInstance) {
+            if (component is SoundSource {Playing: true, instance: { } eventInstance}) {
                 playingEventInstances.Add(eventInstance);
             }
         }
@@ -426,17 +425,14 @@ public sealed class StateManager {
     // 第一步：停止播放主音乐
     private void RestoreCassetteBlockManager1(Level level) {
         if (level.Tracker.GetEntity<CassetteBlockManager>() is { } manager) {
-            if (manager.GetFieldValue("snapshot") is EventInstance snapshot) {
-                snapshot.start();
-            }
+            manager.snapshot?.start();
         }
     }
 
     // 第二步：播放节奏音乐
     private void RestoreCassetteBlockManager2(Level level) {
         if (level.Tracker.GetEntity<CassetteBlockManager>() is { } manager) {
-            if (manager.GetFieldValue("sfx") is EventInstance sfx && !manager.GetFieldValue<bool>("isLevelMusic") &&
-                manager.GetFieldValue<int>("leadBeats") <= 0) {
+            if (manager.sfx is { } sfx && !manager.isLevelMusic && manager.leadBeats <= 0) {
                 sfx.start();
             }
         }

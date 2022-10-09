@@ -106,7 +106,7 @@ public static class TeleportRoomUtils {
         RoomTimerManager.ResetTime();
         DeathStatisticsManager.Clear();
 
-        level.SetFieldValue("transition", null); // 允许切换房间时传送
+        level.transition = null; // 允许切换房间时传送
         Glitch.Value = 0f;
         Engine.TimeRate = 1f;
         Engine.FreezeTimer = 0f;

@@ -15,10 +15,7 @@ public class NonFrozenMiniTextbox : MiniTextbox {
         AddTag(Tags.Global | Tags.HUD | Tags.FrozenUpdate | Tags.PauseUpdate | Tags.TransitionUpdate);
         Add(new IgnoreSaveLoadComponent());
         if (message != null) {
-            this.SetFieldValue(
-                "text",
-                FancyText.Parse($"{{portrait {(IsPlayAsBadeline() ? "BADELINE" : "MADELINE")} left normal}}{message}", 1544, 2)
-            );
+            text = FancyText.Parse($"{{portrait {(IsPlayAsBadeline() ? "BADELINE" : "MADELINE")} left normal}}{message}", 1544, 2);
         }
     }
 

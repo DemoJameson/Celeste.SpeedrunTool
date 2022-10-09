@@ -4,8 +4,6 @@ using MonoMod.Cil;
 namespace Celeste.Mod.SpeedrunTool.Other;
 
 public static class AllowPauseDuringDeath {
-    private static readonly ReflectionExtensions.GetDelegate<bool> GetWasPaused = typeof(Level).GetFieldGetDelegate<bool>("wasPaused");
-
     [Load]
     private static void Load() {
         On.Celeste.Level.Update += LevelOnUpdate;
@@ -32,7 +30,7 @@ public static class AllowPauseDuringDeath {
             return;
         }
 
-        if (level.Paused || level.PauseLock || level.SkippingCutscene || level.Transitioning || GetWasPaused(level)) {
+        if (level.Paused || level.PauseLock || level.SkippingCutscene || level.Transitioning || level.wasPaused) {
             return;
         }
 

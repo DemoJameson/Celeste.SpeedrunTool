@@ -86,7 +86,7 @@ public class EndPoint : Entity {
 
         if (!hovered && !selected && self.Name == roomIdEndPoint) {
             float thickness = 1f / camera.Zoom * 2f;
-            self.InvokeMethod("Outline", (float)self.X, (float)self.Y, (float)self.Width, (float)self.Height, thickness, Color.Yellow);
+            self.Outline(self.X, self.Y, self.Width, self.Height, thickness, Color.Yellow);
         }
     }
 
@@ -402,8 +402,8 @@ public class EndPoint : Entity {
             }
 
             CreateEndPoint(level, additional);
-        } else if (scene is MapEditor) {
-            LevelTemplate levelTemplate = (LevelTemplate)scene.InvokeMethod("TestCheck", scene.GetFieldValue<Vector2>("mousePosition"));
+        } else if (scene is MapEditor mapEditor) {
+            LevelTemplate levelTemplate = mapEditor.TestCheck(mapEditor.mousePosition);
             if (levelTemplate is not null && levelTemplate.Type is not LevelTemplateType.Filler) {
                 string lastRoomIdEndPoint = roomIdEndPoint;
                 RoomTimerManager.ClearPbTimes();

@@ -77,8 +77,7 @@ public static class DeepClonerUtils {
                 }
 
                 // 稍后重新创建正在播放的 SoundSource 里的 EventInstance 实例
-                if (sourceObj is SoundSource {Playing: true} source &&
-                    source.GetFieldValue("instance") is EventInstance instance) {
+                if (sourceObj is SoundSource {Playing: true, instance: { } instance} source) {
                     if (source.EventName.IsNullOrEmpty()) {
                         return null;
                     }
@@ -91,11 +90,11 @@ public static class DeepClonerUtils {
 
                 if (sourceObj is CassetteBlockManager manager) {
                     // isLevelMusic = true 时 sfx 自动等于 Audio.CurrentMusicEventInstance，无需重建
-                    if (manager.GetFieldValue("sfx") is EventInstance sfx && !manager.GetFieldValue<bool>("isLevelMusic")) {
+                    if (manager.sfx is { } sfx && !manager.isLevelMusic) {
                         sfx.NeedManualClone();
                     }
 
-                    if (manager.GetFieldValue("snapshot") is EventInstance snapshot) {
+                    if (manager.snapshot is { } snapshot) {
                         snapshot.NeedManualClone();
                     }
 
@@ -233,15 +232,8 @@ public static class DeepClonerUtils {
                 }
 
                 // Clone DynamicData
-                if (DynDataUtils.ExistDynamicData(sourceObj)) {
-                    object[] parameters = {sourceObj, null};
-                    if (DynDataUtils.DataMapTryGetValue(parameters)) {
-                        object sourceValue = parameters[1];
-                        if (sourceValue.GetFieldValue("Data") is Dictionary<string, object> data && data.Count != 0) {
-                            DynDataUtils.DataMapAdd(clonedObj, sourceValue.DeepClone(deepCloneState));
-                            DynDataUtils.RecordDynamicDataObject(clonedObj);
-                        }
-                    }
+                if (DynamicData._DataMap.TryGetValue(sourceObj, out DynamicData._Data_ value) && value.Data.Count > 0) {
+                    DynamicData._DataMap.Add(clonedObj, value.DeepClone(deepCloneState));
                 }
             }
 

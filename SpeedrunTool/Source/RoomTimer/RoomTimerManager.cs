@@ -260,9 +260,6 @@ public static class RoomTimerManager {
         return result;
     }
 
-    private static readonly Lazy<float> NumberWidth = new(() => typeof(SpeedrunTimerDisplay).GetFieldValue<float>("numberWidth"));
-    private static readonly Lazy<float> SpacerWidth = new(() => typeof(SpeedrunTimerDisplay).GetFieldValue<float>("spacerWidth"));
-
     private static void DrawTime(Vector2 position, string timeString, float scale = 1f,
         bool finished = false, bool bestTime = false, float alpha = 1f, bool mainTime = false) {
         PixelFont font = Dialog.Languages["english"].Font;
@@ -289,7 +286,7 @@ public static class RoomTimerManager {
             }
             Color color3 = ch is ':' or '.' ? color2 : color1;
 
-            float num2 = (float)((ch is ':' or '.' ? SpacerWidth.Value : NumberWidth.Value) + 4.0) * currentScale;
+            float num2 = (float)((ch is ':' or '.' ? SpeedrunTimerDisplay.spacerWidth : SpeedrunTimerDisplay.numberWidth) + 4.0) * currentScale;
             font.DrawOutline(fontFaceSize, ch.ToString(), new Vector2(x + num2 / 2f, y), new Vector2(0.5f, 1f),
                 Vector2.One * currentScale, color3, 2f, Color.Black);
             x += num2;

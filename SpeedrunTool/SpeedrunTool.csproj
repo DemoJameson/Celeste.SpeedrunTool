@@ -11,6 +11,7 @@
         <OutputPath>bin\$(Configuration)\</OutputPath>
         <DebugType>portable</DebugType>
         <MSBuildWarningsAsMessages>$(MSBuildWarningsAsMessages);MSB3270</MSBuildWarningsAsMessages>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
     <ItemDefinitionGroup>
         <PackageReference IncludeAssets="compile" />
@@ -34,16 +35,12 @@
             <IncludeAssets Condition="'$(Configuration)' == 'Debug'">all</IncludeAssets>
         </PackageReference>
         <PackageReference Include="KeraLua" Version="1.0.22" />
-        <PackageReference Include="Mono.Cecil" Version="0.11.3" />
-        <PackageReference Include="MonoMod" Version="21.4.29.1" />
-        <PackageReference Include="MonoMod.RuntimeDetour" Version="21.4.29.1" />
-        <PackageReference Include="MonoMod.Utils" Version="21.4.29.1" />
         <PackageReference Include="NLua" Version="1.4.25" />
         <PackageReference Include="YamlDotNet" Version="8.1.2" />
     </ItemGroup>
     <ItemGroup>
         <Reference Include="Celeste, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\libs\Celeste.exe</HintPath>
+            <HintPath>..\libs\Celeste-nstrip.exe</HintPath>
         </Reference>
         <Reference Include="CelesteTAS-EverestInterop, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
           <HintPath>..\libs\CelesteTAS-EverestInterop.dll</HintPath>
@@ -53,6 +50,15 @@
         </Reference>
         <Reference Include="MMHOOK_Celeste, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
             <HintPath>..\libs\MMHOOK_Celeste.dll</HintPath>
+        </Reference>
+        <Reference Include="MonoMod.Utils">
+            <HintPath>..\libs\MonoMod.Utils-nstrip.dll</HintPath>
+        </Reference>
+        <Reference Include="MonoMod.RuntimeDetour">
+            <HintPath>..\libs\MonoMod.RuntimeDetour.dll</HintPath>
+        </Reference>
+        <Reference Include="Mono.Cecil">
+            <HintPath>..\libs\Mono.Cecil.dll</HintPath>
         </Reference>
     </ItemGroup>
     <ItemGroup>

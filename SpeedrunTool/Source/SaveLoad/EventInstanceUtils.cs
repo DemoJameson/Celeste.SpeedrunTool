@@ -64,9 +64,8 @@ internal static class EventInstanceExtensions {
             return saved;
         }
 
-        object[] args = {0};
-        eventInstance.InvokeMethod("getTimelinePosition", args);
-        return (int) args[0];
+        eventInstance.getTimelinePosition(out int position);
+        return position;
     }
 
     public static void SaveTimelinePosition(this EventInstance eventInstance, int timelinePosition) {
@@ -76,7 +75,7 @@ internal static class EventInstanceExtensions {
     private static void CopyTimelinePosition(this EventInstance eventInstance, EventInstance otherEventInstance) {
         int timelinePosition = otherEventInstance.LoadTimelinePosition();
         if (timelinePosition > 0) {
-            eventInstance.InvokeMethod("setTimelinePosition", timelinePosition);
+            eventInstance.setTimelinePosition(timelinePosition);
             eventInstance.SaveTimelinePosition(otherEventInstance.LoadTimelinePosition());
         }
     }

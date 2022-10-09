@@ -10,7 +10,7 @@ public static class MuteInBackground {
     private static void Load() {
         On.Celeste.Audio.Init += AudioOnInit;
         On.Celeste.Audio.Unload += AudioOnUnload;
-        if (typeof(Audio).GetFieldValue<bool>("ready")) {
+        if (Audio.ready) {
             Engine.Instance.Window.ClientSizeChanged += WindowOnClientSizeChanged;
             Engine.Instance.Activated += InstanceOnActivated;
             Engine.Instance.Deactivated += InstanceOnDeactivated;

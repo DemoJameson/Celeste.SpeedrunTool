@@ -373,7 +373,7 @@ public sealed class SaveLoadAction {
     private static void FixSaveLoadIcon() {
         SafeAdd(loadState: (_, _) => {
             // 修复右下角存档图标残留
-            if (!typeof(UserIO).GetFieldValue<bool>("savingInternal")) {
+            if (!UserIO.savingInternal) {
                 SaveLoadIcon.Hide();
             }
         });
@@ -391,15 +391,15 @@ public sealed class SaveLoadAction {
             level.HudRenderer.BackgroundFade = 0f;
 
             // 移除暂停帧
-            if (level.GetFieldValue<float>("unpauseTimer") > 0f || !level.Paused && level.GetFieldValue<bool>("wasPaused")) {
+            if (level.GetFieldValue<float>("unpauseTimer") > 0f || !level.Paused && level.wasPaused) {
                 level.Session.SetFlag("SpeedrunTool_Reset_unpauseTimer");
 
                 if (level.GetFieldValue<float>("unpauseTimer") > 0f) {
                     level.SetFieldValue("unpauseTimer", 0f);
                 }
 
-                level.SetFieldValue("wasPaused", false);
-                level.InvokeMethod("EndPauseEffects");
+                level.wasPaused = false;
+                level.EndPauseEffects();
             }
         });
     }
@@ -407,26 +407,36 @@ public sealed class SaveLoadAction {
     private static void SupportExternalMember() {
         SafeAdd(
             (savedValues, _) => {
-                SaveStaticMemberValues(savedValues, typeof(Engine), "DashAssistFreeze", "DashAssistFreezePress", "DeltaTime", "FrameCounter",
-                    "FreezeTimer", "RawDeltaTime", "TimeRate", "TimeRateB", "Pooler");
-                SaveStaticMemberValues(savedValues, typeof(Glitch), "Value");
-                SaveStaticMemberValues(savedValues, typeof(Distort), "Anxiety", "GameRate");
-                SaveStaticMemberValues(savedValues, typeof(ScreenWipe), "WipeColor");
-                SaveStaticMemberValues(savedValues, typeof(Audio), "currentCamera");
+                SaveStaticMemberValues(savedValues, typeof(Engine),
+                    nameof(Engine.DashAssistFreeze),
+                    nameof(Engine.DashAssistFreezePress),
+                    nameof(Engine.DeltaTime),
+                    nameof(Engine.FrameCounter),
+                    nameof(Engine.FreezeTimer),
+                    nameof(Engine.RawDeltaTime),
+                    nameof(Engine.TimeRate),
+                    nameof(Engine.TimeRateB),
+                    nameof(Engine.Pooler)
+                    );
+                SaveStaticMemberValues(savedValues, typeof(Glitch), nameof(Glitch.Value));
+                SaveStaticMemberValues(savedValues, typeof(Distort), nameof(Distort.Anxiety), nameof(Distort.GameRate));
+                SaveStaticMemberValues(savedValues, typeof(ScreenWipe), nameof(ScreenWipe.WipeColor));
+                SaveStaticMemberValues(savedValues, typeof(Audio), nameof(Audio.currentCamera));
             },
             (savedValues, _) => LoadStaticMemberValues(savedValues));
     }
 
     private static void SupportCalcRandom() {
-        Type type = typeof(Calc);
         SafeAdd(
-            (savedValues, _) => SaveStaticMemberValues(savedValues, type, "Random", "randomStack"),
+            (savedValues, _) => SaveStaticMemberValues(savedValues, typeof(Calc), 
+                nameof(Calc.Random), nameof(Calc.randomStack)),
             (savedValues, _) => LoadStaticMemberValues(savedValues));
     }
 
     private static void SupportMInput() {
         SafeAdd(
-            (savedValues, _) => SaveStaticMemberValues(savedValues, typeof(MInput), "Active", "Disabled", "Keyboard", "Mouse", "GamePads"),
+            (savedValues, _) => SaveStaticMemberValues(savedValues, typeof(MInput), 
+                nameof(MInput.Active), nameof(MInput.Disabled), nameof(MInput.Keyboard), nameof(MInput.Mouse), nameof(MInput.GamePads)),
             (savedValues, _) => {
                 LoadStaticMemberValues(savedValues);
 
@@ -434,7 +444,7 @@ public sealed class SaveLoadAction {
                 MInput.GamePads[Input.Gamepad].Rumble(0f, 0f);
                 
                 // Fix https://github.com/DemoJameson/CelesteSpeedrunTool/issues/19
-                typeof(MInput).InvokeMethod("UpdateVirtualInputs");
+                MInput.UpdateVirtualInputs();
             });
     }
 
@@ -472,7 +482,7 @@ public sealed class SaveLoadAction {
     private static void MuteAnnoyingAudios() {
         SafeAdd(loadState: (_, level) => {
             level.Entities.FindAll<SoundEmitter>().ForEach(emitter => {
-                if (emitter.Source.GetFieldValue("instance") is EventInstance eventInstance) {
+                if (emitter.Source.instance is { } eventInstance) {
                     eventInstance.setVolume(0f);
                 }
             });
@@ -560,14 +570,13 @@ public sealed class SaveLoadAction {
     private static void SupportAudioMusic() {
         SafeAdd(
             (savedValues, level) => {
-                EventInstance currentAltMusicEvent = typeof(Audio).GetFieldValue<EventInstance>("currentAltMusicEvent");
                 Dictionary<string, object> saved = new() {
                     {"currentMusicEvent", Audio.GetEventName(Audio.CurrentMusicEventInstance)},
                     {"currentMusicEventParameters", Audio.CurrentMusicEventInstance.GetSavedParameterValues()},
                     {"CurrentAmbienceEventInstance", Audio.GetEventName(Audio.CurrentAmbienceEventInstance)},
                     {"CurrentAmbienceEventInstanceParameters", Audio.CurrentAmbienceEventInstance.GetSavedParameterValues()},
-                    {"currentAltMusicEvent", Audio.GetEventName(currentAltMusicEvent)},
-                    {"currentAltMusicEventParameters", currentAltMusicEvent.GetSavedParameterValues()},
+                    {"currentAltMusicEvent", Audio.GetEventName(Audio.currentAltMusicEvent)},
+                    {"currentAltMusicEventParameters", Audio.currentAltMusicEvent.GetSavedParameterValues()},
                     {"MusicUnderwater", Audio.MusicUnderwater},
                     {"PauseMusic", Audio.PauseMusic},
                     {"PauseGameplaySfx", Audio.PauseGameplaySfx},
@@ -591,14 +600,14 @@ public sealed class SaveLoadAction {
                 Audio.CurrentAmbienceEventInstance?.CopyParametersFrom(saved["CurrentAmbienceEventInstanceParameters"] as ConcurrentDictionary<string, float>);
 
                 Audio.SetAltMusic(saved["currentAltMusicEvent"] as string);
-                (typeof(Audio).GetFieldValue("currentAltMusicEvent") as EventInstance)?.CopyParametersFrom(saved["currentAltMusicEventParameters"] as ConcurrentDictionary<string, float>);
+                Audio.currentAltMusicEvent?.CopyParametersFrom(saved["currentAltMusicEventParameters"] as ConcurrentDictionary<string, float>);
 
                 Audio.MusicUnderwater = (bool)saved["MusicUnderwater"];
                 Audio.PauseMusic = (bool)saved["PauseMusic"];
                 Audio.PauseGameplaySfx = (bool)saved["PauseGameplaySfx"];
                 if (!level.Paused && Level._PauseSnapshot != null) {
                     Audio.ReleaseSnapshot(Level._PauseSnapshot);
-                    typeof(Level).SetFieldValue("PauseSnapshot", null);
+                    Level.PauseSnapshot = null;
                 }
             }
         );
@@ -875,9 +884,9 @@ public sealed class SaveLoadAction {
                 (savedValues, _) => LoadStaticMemberValues(savedValues));
         }
         
-        if (ModUtils.GetType("CommunalHelper", "Celeste.Mod.CommunalHelper.DashStates.SeekerDash") is { } SeekerDashType) {
+        if (ModUtils.GetType("CommunalHelper", "Celeste.Mod.CommunalHelper.DashStates.SeekerDash") is { } seekerDashType) {
             SafeAdd(
-                (savedValues, _) => SaveStaticMemberValues(savedValues, SeekerDashType,
+                (savedValues, _) => SaveStaticMemberValues(savedValues, seekerDashType,
                     "hasSeekerDash",
                     "seekerDashAttacking",
                     "seekerDashTimer",

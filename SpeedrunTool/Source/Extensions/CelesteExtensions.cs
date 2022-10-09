@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using System.Threading;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions;
@@ -34,7 +33,7 @@ internal static class CelesteExtensions {
     }
 
     public static IEnumerator Current(this Coroutine coroutine) {
-        if (coroutine.GetFieldValue("enumerators") is Stack<IEnumerator> {Count: > 0} enumerators) {
+        if (coroutine.enumerators is {Count: > 0} enumerators) {
             return enumerators.Peek();
         } else {
             return null;
@@ -58,8 +57,8 @@ internal static class CelesteExtensions {
     public static bool IsPressed(this VirtualInput virtualInput) {
         return virtualInput switch {
             VirtualButton virtualButton => virtualButton.Pressed,
-            VirtualIntegerAxis virtualIntegerAxis => virtualIntegerAxis.GetFieldValue<bool>("turned"),
-            VirtualJoystick virtualJoystick => virtualJoystick.GetFieldValue<bool>("hTurned") || virtualJoystick.GetFieldValue<bool>("vTurned"),
+            VirtualIntegerAxis virtualIntegerAxis => virtualIntegerAxis.turned,
+            VirtualJoystick virtualJoystick => virtualJoystick.hTurned || virtualJoystick.vTurned,
             _ => false
         };
     }

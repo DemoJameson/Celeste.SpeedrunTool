@@ -1,3 +1,4 @@
 [submodule "DeepCloner"]
 	path = DeepCloner
 	url = https://github.com/DemoJameson/DeepCloner.git
+	branch = feature/customProcessor

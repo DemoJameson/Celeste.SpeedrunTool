@@ -15,8 +15,8 @@ internal static class AttributeUtils {
     }
 
     public static void Invoke<T>() where T : Attribute {
-        if (MethodInfos.ContainsKey(typeof(T))) {
-            foreach (MethodInfo methodInfo in MethodInfos[typeof(T)]) {
+        if (MethodInfos.TryGetValue(typeof(T), out var methodInfos)) {
+            foreach (MethodInfo methodInfo in methodInfos) {
                 methodInfo.Invoke(null, Parameterless);
             }
         }

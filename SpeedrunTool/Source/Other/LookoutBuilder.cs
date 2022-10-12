@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Reflection;
 using Celeste.Mod.SpeedrunTool.Utils;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
@@ -8,9 +7,6 @@ using MonoMod.Utils;
 namespace Celeste.Mod.SpeedrunTool.Other;
 
 public static class LookoutBuilder {
-    private static readonly MethodInfo InteractMethod = typeof(Lookout).GetMethodInfo("Interact");
-    private static readonly FieldInfo InteractingField = typeof(Lookout).GetFieldInfo("interacting");
-
     [Load]
     private static void Load() {
         On.Celeste.Player.Die += PlayerOnDie;
@@ -69,8 +65,7 @@ public static class LookoutBuilder {
             return;
         }
 
-        Player player = level.Tracker.GetEntity<Player>();
-        if (player == null) {
+        if (level.GetPlayer() is not {} player) {
             return;
         }
 
@@ -101,7 +96,7 @@ public static class LookoutBuilder {
             yield break;
         }
 
-        InteractMethod?.Invoke(lookout, new object[] {player});
+        lookout.Interact(player);
 
         Level level = player.SceneAs<Level>();
         Level.CameraLockModes savedCameraLockMode = level.CameraLockMode;
@@ -110,16 +105,13 @@ public static class LookoutBuilder {
 
         Entity underfootPlatform = player.CollideFirstOutside<FloatySpaceBlock>(player.Position + Vector2.UnitY);
 
-        bool interacting = (bool)InteractingField.GetValue(lookout);
-        while (!interacting) {
+        while (!lookout.interacting) {
             player.Position = lookout.Position;
-            interacting = (bool)InteractingField.GetValue(lookout);
             yield return null;
         }
 
-        while (interacting) {
+        while (lookout.interacting) {
             player.Position = lookout.Position;
-            interacting = (bool)InteractingField.GetValue(lookout);
             yield return null;
         }
 

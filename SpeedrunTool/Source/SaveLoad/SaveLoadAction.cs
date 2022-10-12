@@ -189,6 +189,7 @@ public sealed class SaveLoadAction {
         SupportMInput();
         SupportInput();
         SupportAudioMusic();
+        FixVertexLight();
         MuteAnnoyingAudios();
         ExternalAction();
         SupportModSessionAndSaveData();
@@ -611,6 +612,19 @@ public sealed class SaveLoadAction {
                 }
             }
         );
+    }
+    
+    // fix: 5A黑暗房间读档后灯光问题
+    private static void FixVertexLight() {
+        SafeAdd(loadState: (_, level) => {
+            VertexLight[] lights = level.Lighting.lights;
+            for (int i = 0; i < lights.Length; i++) {
+                if (lights[i] is { } light) {
+                    light.Index = -1;
+                    lights[i] = null;
+                }
+            }
+        });
     }
 
     private static void SupportPandorasBox() {

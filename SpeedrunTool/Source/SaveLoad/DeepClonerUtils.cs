@@ -171,9 +171,6 @@ public static class DeepClonerUtils {
                     dictionary.Clear();
                     dictionary.SetRange(backupDict);
                     backupDict.Clear();
-                } else if (clonedObj is VertexLight vertexLight) {
-                    // LightingRenderer 需要，不然不会发光
-                    vertexLight.Index = -1;
                 } else if (clonedObj is VirtualAsset virtualAsset
                            && (StateManager.Instance.State == State.Loading || !Thread.CurrentThread.IsMainThread())) {
                     // 预克隆的资源需要等待 LoadState 中移除实体之后才能判断是否需要 Reload，必须等待主线程中再操作

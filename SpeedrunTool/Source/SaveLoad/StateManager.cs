@@ -54,6 +54,7 @@ public sealed class StateManager {
     public bool IsSaved => savedLevel != null;
     public State State { get; private set; } = State.None;
     public bool SavedByTas { get; private set; }
+    public bool LoadByTas { get; private set; }
     private Level savedLevel;
     private SaveData savedSaveData;
     private Task<DeepCloneState> preCloneTask;
@@ -290,6 +291,7 @@ public sealed class StateManager {
             return false;
         }
 
+        LoadByTas = tas;
         State = State.Loading;
         DeepClonerUtils.SetSharedDeepCloneState(preCloneTask?.Result);
 

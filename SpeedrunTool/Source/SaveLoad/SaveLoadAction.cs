@@ -492,11 +492,28 @@ public sealed class SaveLoadAction {
             }, (savedValues, _) => {
                 savedValues = savedValues.DeepCloneShared();
 
-                MInput.VirtualInputs = (List<VirtualInput>)savedValues[typeof(MInput)][nameof(MInput.VirtualInputs)];
+                if (StateManager.Instance.LoadByTas) {
+                    MInput.VirtualInputs = (List<VirtualInput>)savedValues[typeof(MInput)][nameof(MInput.VirtualInputs)];
+                }
 
                 Dictionary<string, object> dictionary = savedValues[inputType];
                 foreach (string fieldName in dictionary.Keys) {
-                    inputType.SetFieldValue(fieldName, dictionary[fieldName]);
+                    object virtualInput = dictionary[fieldName];
+
+                    if (StateManager.Instance.LoadByTas) {
+                        inputType.SetFieldValue(fieldName, virtualInput);
+                    } else {
+                        object fieldValue = inputType.GetFieldValue(fieldName);
+
+                        if (fieldValue is VirtualJoystick virtualJoystick &&
+                            virtualInput is VirtualJoystick savedVirtualJoystick) {
+                            virtualJoystick.InvertedX = savedVirtualJoystick.InvertedX;
+                            virtualJoystick.InvertedY = savedVirtualJoystick.InvertedY;
+                        } else if (fieldValue is VirtualIntegerAxis virtualIntegerAxis &&
+                                   virtualInput is VirtualIntegerAxis savedVirtualIntegerAxis) {
+                            virtualIntegerAxis.Inverted = savedVirtualIntegerAxis.Inverted;
+                        }
+                    }
                 }
 
                 foreach (EverestModule everestModule in Everest.Modules) {
@@ -517,7 +534,21 @@ public sealed class SaveLoadAction {
                     }
 
                     foreach (string propertyName in settingsDict.Keys) {
-                        settingsInstance.SetPropertyValue(propertyName, settingsDict[propertyName]);
+                        object virtualInput = settingsDict[propertyName];
+                        if (StateManager.Instance.LoadByTas) {
+                            settingsInstance.SetPropertyValue(propertyName, virtualInput);
+                        } else {
+                            object propertyValue = settingsInstance.GetPropertyValue(propertyName);
+
+                            if (propertyValue is VirtualJoystick virtualJoystick &&
+                                virtualInput is VirtualJoystick savedVirtualJoystick) {
+                                virtualJoystick.InvertedX = savedVirtualJoystick.InvertedX;
+                                virtualJoystick.InvertedY = savedVirtualJoystick.InvertedY;
+                            } else if (propertyValue is VirtualIntegerAxis virtualIntegerAxis &&
+                                       virtualInput is VirtualIntegerAxis savedVirtualIntegerAxis) {
+                                virtualIntegerAxis.Inverted = savedVirtualIntegerAxis.Inverted;
+                            }
+                        }
                     }
                 }
             }

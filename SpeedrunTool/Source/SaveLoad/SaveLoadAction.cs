@@ -443,37 +443,81 @@ public sealed class SaveLoadAction {
 
                 // 关闭手柄震动
                 MInput.GamePads[Input.Gamepad].Rumble(0f, 0f);
-                
-                // Fix https://github.com/DemoJameson/CelesteSpeedrunTool/issues/19
-                MInput.UpdateVirtualInputs();
             });
     }
 
+    // Fix https://github.com/DemoJameson/CelesteSpeedrunTool/issues/19
     private static void SupportInput() {
-        Type type = typeof(Input);
+        Type inputType = typeof(Input);
         SafeAdd(
             (savedValues, _) => {
-                Dictionary<string, object> dictionary = new();
-                foreach (FieldInfo fieldInfo in type.GetFields(BindingFlags.Public | BindingFlags.Static).Where(info =>
-                             info.FieldType == typeof(VirtualJoystick) || info.FieldType == typeof(VirtualIntegerAxis))) {
-                    if (fieldInfo.GetValue(null) is VirtualJoystick virtualJoystick) {
-                        dictionary[fieldInfo.Name] = virtualJoystick;
-                    } else if (fieldInfo.GetValue(null) is VirtualIntegerAxis virtualIntegerAxis) {
-                        dictionary[fieldInfo.Name] = virtualIntegerAxis;
-                    }
+                SaveStaticMemberValues(savedValues, typeof(MInput), nameof(MInput.VirtualInputs));
+
+                Dictionary<string, object> inputDict = new();
+                foreach (FieldInfo fieldInfo in typeof(Input).GetFields(BindingFlags.Public | BindingFlags.Static).Where(info =>
+                             info.FieldType.IsSameOrSubclassOf(typeof(VirtualInput)))) {
+                    inputDict[fieldInfo.Name] = fieldInfo.GetValue(null);
                 }
 
-                savedValues[type] = dictionary.DeepCloneShared();
+                savedValues[inputType] = inputDict.DeepCloneShared();
+                
+                foreach (EverestModule everestModule in Everest.Modules) {
+                    if (everestModule.Metadata?.Name == "CelesteTAS" || everestModule == SpeedrunToolModule.Instance) {
+                        continue;
+                    }
+                    
+                    if (everestModule.GetPropertyValue("SettingsType") is not Type settingsType) {
+                        continue;
+                    }
+
+                    if (everestModule.GetPropertyValue("_Settings") is not {} settingsInstance) {
+                        continue;
+                    }
+
+                    Dictionary<string, object> settingsDict = new();
+                    foreach (PropertyInfo propertyInfo in settingsType.GetProperties(BindingFlags.Public | BindingFlags.Instance)) {
+                        if (propertyInfo.PropertyType != typeof(ButtonBinding)) {
+                            continue;
+                        }
+
+                        settingsDict[propertyInfo.Name] = propertyInfo.GetValue(settingsInstance);
+                    }
+
+                    if (settingsDict.Count == 0) {
+                        continue;
+                    }
+
+                    savedValues[settingsType] = settingsDict;
+                }
             }, (savedValues, _) => {
-                Dictionary<string, object> dictionary = savedValues[type];
+                savedValues = savedValues.DeepCloneShared();
+
+                MInput.VirtualInputs = (List<VirtualInput>)savedValues[typeof(MInput)][nameof(MInput.VirtualInputs)];
+
+                Dictionary<string, object> dictionary = savedValues[inputType];
                 foreach (string fieldName in dictionary.Keys) {
-                    if (type.GetFieldValue(fieldName) is VirtualJoystick virtualJoystick &&
-                        dictionary[fieldName] is VirtualJoystick savedVirtualJoystick) {
-                        virtualJoystick.InvertedX = savedVirtualJoystick.InvertedX;
-                        virtualJoystick.InvertedY = savedVirtualJoystick.InvertedY;
-                    } else if (type.GetFieldValue(fieldName) is VirtualIntegerAxis virtualIntegerAxis &&
-                               dictionary[fieldName] is VirtualIntegerAxis savedVirtualIntegerAxis) {
-                        virtualIntegerAxis.Inverted = savedVirtualIntegerAxis.Inverted;
+                    inputType.SetFieldValue(fieldName, dictionary[fieldName]);
+                }
+
+                foreach (EverestModule everestModule in Everest.Modules) {
+                    if (everestModule.Metadata?.Name == "CelesteTAS" || everestModule == SpeedrunToolModule.Instance) {
+                        continue;
+                    }
+                    
+                    if (everestModule.GetPropertyValue("SettingsType") is not Type settingsType) {
+                        continue;
+                    }
+
+                    if (!savedValues.TryGetValue(settingsType, out var settingsDict)) {
+                        continue;
+                    }
+                    
+                    if (everestModule.GetPropertyValue("_Settings") is not {} settingsInstance) {
+                        continue;
+                    }
+
+                    foreach (string propertyName in settingsDict.Keys) {
+                        settingsInstance.SetPropertyValue(propertyName, settingsDict[propertyName]);
                     }
                 }
             }

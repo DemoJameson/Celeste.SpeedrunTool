@@ -202,6 +202,7 @@ public sealed class SaveLoadAction {
         SupportIsaGrabBag();
         SupportDeathTracker();
         SupportCommunalHelper();
+        SupportBrokemiaHelper();
 
         // 放最后，确保收集了所有克隆的 VirtualAssets 与 EventInstance
         ReloadVirtualAssets();
@@ -418,7 +419,7 @@ public sealed class SaveLoadAction {
                     nameof(Engine.TimeRate),
                     nameof(Engine.TimeRateB),
                     nameof(Engine.Pooler)
-                    );
+                );
                 SaveStaticMemberValues(savedValues, typeof(Glitch), nameof(Glitch.Value));
                 SaveStaticMemberValues(savedValues, typeof(Distort), nameof(Distort.Anxiety), nameof(Distort.GameRate));
                 SaveStaticMemberValues(savedValues, typeof(ScreenWipe), nameof(ScreenWipe.WipeColor));
@@ -429,14 +430,14 @@ public sealed class SaveLoadAction {
 
     private static void SupportCalcRandom() {
         SafeAdd(
-            (savedValues, _) => SaveStaticMemberValues(savedValues, typeof(Calc), 
+            (savedValues, _) => SaveStaticMemberValues(savedValues, typeof(Calc),
                 nameof(Calc.Random), nameof(Calc.randomStack)),
             (savedValues, _) => LoadStaticMemberValues(savedValues));
     }
 
     private static void SupportMInput() {
         SafeAdd(
-            (savedValues, _) => SaveStaticMemberValues(savedValues, typeof(MInput), 
+            (savedValues, _) => SaveStaticMemberValues(savedValues, typeof(MInput),
                 nameof(MInput.Active), nameof(MInput.Disabled), nameof(MInput.Keyboard), nameof(MInput.Mouse), nameof(MInput.GamePads)),
             (savedValues, _) => {
                 LoadStaticMemberValues(savedValues);
@@ -460,17 +461,17 @@ public sealed class SaveLoadAction {
                 }
 
                 savedValues[inputType] = inputDict.DeepCloneShared();
-                
+
                 foreach (EverestModule everestModule in Everest.Modules) {
                     if (everestModule.Metadata?.Name == "CelesteTAS" || everestModule == SpeedrunToolModule.Instance) {
                         continue;
                     }
-                    
+
                     if (everestModule.GetPropertyValue("SettingsType") is not Type settingsType) {
                         continue;
                     }
 
-                    if (everestModule.GetPropertyValue("_Settings") is not {} settingsInstance) {
+                    if (everestModule.GetPropertyValue("_Settings") is not { } settingsInstance) {
                         continue;
                     }
 
@@ -520,7 +521,7 @@ public sealed class SaveLoadAction {
                     if (everestModule.Metadata?.Name == "CelesteTAS" || everestModule == SpeedrunToolModule.Instance) {
                         continue;
                     }
-                    
+
                     if (everestModule.GetPropertyValue("SettingsType") is not Type settingsType) {
                         continue;
                     }
@@ -528,8 +529,8 @@ public sealed class SaveLoadAction {
                     if (!savedValues.TryGetValue(settingsType, out var settingsDict)) {
                         continue;
                     }
-                    
-                    if (everestModule.GetPropertyValue("_Settings") is not {} settingsInstance) {
+
+                    if (everestModule.GetPropertyValue("_Settings") is not { } settingsInstance) {
                         continue;
                     }
 
@@ -673,7 +674,8 @@ public sealed class SaveLoadAction {
                 Audio.CurrentMusicEventInstance?.CopyParametersFrom(saved["currentMusicEventParameters"] as ConcurrentDictionary<string, float>);
 
                 Audio.SetAmbience(saved["CurrentAmbienceEventInstance"] as string);
-                Audio.CurrentAmbienceEventInstance?.CopyParametersFrom(saved["CurrentAmbienceEventInstanceParameters"] as ConcurrentDictionary<string, float>);
+                Audio.CurrentAmbienceEventInstance?.CopyParametersFrom(
+                    saved["CurrentAmbienceEventInstanceParameters"] as ConcurrentDictionary<string, float>);
 
                 Audio.SetAltMusic(saved["currentAltMusicEvent"] as string);
                 Audio.currentAltMusicEvent?.CopyParametersFrom(saved["currentAltMusicEventParameters"] as ConcurrentDictionary<string, float>);
@@ -688,7 +690,7 @@ public sealed class SaveLoadAction {
             }
         );
     }
-    
+
     // fix: 5A黑暗房间读档后灯光问题
     private static void FixVertexLight() {
         SafeAdd(loadState: (_, level) => {
@@ -972,7 +974,7 @@ public sealed class SaveLoadAction {
                 ),
                 (savedValues, _) => LoadStaticMemberValues(savedValues));
         }
-        
+
         if (ModUtils.GetType("CommunalHelper", "Celeste.Mod.CommunalHelper.DashStates.SeekerDash") is { } seekerDashType) {
             SafeAdd(
                 (savedValues, _) => SaveStaticMemberValues(savedValues, seekerDashType,
@@ -983,6 +985,24 @@ public sealed class SaveLoadAction {
                     "launchPossible"
                 ),
                 (savedValues, _) => LoadStaticMemberValues(savedValues));
+        }
+    }
+
+    private static void SupportBrokemiaHelper() {
+        if (ModUtils.GetType("BrokemiaHelper", "BrokemiaHelper.PixelRendered.Vineinator") is { } vineinatorType &&
+            ModUtils.GetType("BrokemiaHelper", "BrokemiaHelper.PixelRendered.RWLizard") is { } lizardType) {
+            SafeAdd(
+                loadState: (_, level) => {
+                    foreach (Entity entity in level.Entities) {
+                        Type type = entity.GetType();
+                        if (type == vineinatorType || type == lizardType) {
+                            object pixelComponent = entity.GetFieldValue("pixelComponent");
+                            pixelComponent.SetFieldValue("textureChunks", null);
+                            pixelComponent.InvokeMethod("ClearChunks");
+                            pixelComponent.InvokeMethod("CommitChunks");
+                        }
+                    }
+                });
         }
     }
 
@@ -1022,6 +1042,6 @@ public sealed class SaveLoadAction {
                 ClonedEventInstancesWhenPreClone.Clear();
             },
             preCloneEntities: () => ClonedEventInstancesWhenPreClone.Clear()
-            );
+        );
     }
 }

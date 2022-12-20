@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -598,8 +598,15 @@ public sealed class SaveLoadAction {
                     IgnoreSaveLoadComponent.RemoveAll(level);
                     ClearBeforeSaveComponent.RemoveAll(level);
 
+                    Type ghostEmoteWheelType = ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.Entities.GhostEmoteWheel");
+
                     foreach (Entity entity in level.Entities.Where(entity =>
                                  entity.GetType().FullName?.StartsWith("Celeste.Mod.CelesteNet.") == true)) {
+                        if (ghostEmoteWheelType != null && entity.GetType() == ghostEmoteWheelType && entity.GetFieldValue<bool>("timeRateSet")) {
+                            // Normally GhostEmoteWheel in CelesteNet does this when it gets closed again
+                            Engine.TimeRate = 1f;
+                        }
+
                         entity.RemoveSelf();
                     }
 
@@ -874,11 +881,13 @@ public sealed class SaveLoadAction {
 
         // 修复玩家死亡后不会重置设置
         SafeAdd((savedValues, _) => {
-            if (Everest.Modules.FirstOrDefault(everestModule => everestModule.Metadata?.Name == "ExtendedVariantMode") is { } module && module.GetFieldValue("TriggerManager") is {} triggerManager) {
-                savedValues[moduleType] = new Dictionary<string, object>{{"TriggerManager", triggerManager.DeepCloneShared()}};
+            if (Everest.Modules.FirstOrDefault(everestModule => everestModule.Metadata?.Name == "ExtendedVariantMode") is { } module &&
+                module.GetFieldValue("TriggerManager") is { } triggerManager) {
+                savedValues[moduleType] = new Dictionary<string, object> {{"TriggerManager", triggerManager.DeepCloneShared()}};
             }
         }, (savedValues, _) => {
-            if (savedValues.TryGetValue(moduleType, out Dictionary<string, object> dictionary) && dictionary.TryGetValue("TriggerManager", out object savedTriggerManager) &&
+            if (savedValues.TryGetValue(moduleType, out Dictionary<string, object> dictionary) &&
+                dictionary.TryGetValue("TriggerManager", out object savedTriggerManager) &&
                 Everest.Modules.FirstOrDefault(everestModule => everestModule.Metadata?.Name == "ExtendedVariantMode") is { } module) {
                 if (module.GetFieldValue("TriggerManager") is { } triggerManager) {
                     savedTriggerManager.DeepCloneToShared(triggerManager);

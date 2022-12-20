@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -600,6 +600,11 @@ public sealed class SaveLoadAction {
 
                     foreach (Entity entity in level.Entities.Where(entity =>
                                  entity.GetType().FullName?.StartsWith("Celeste.Mod.CelesteNet.") == true)) {
+                        if (ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.Entities.GhostEmoteWheel") is { } ghostEmoteWheelType
+                        && entity.GetType() == ghostEmoteWheelType && entity.GetFieldValue<bool>("timeRateSet")) {
+                            // Normally GhostEmoteWheel in CelesteNet does this when it gets closed again
+                            Engine.TimeRate = 1f;
+                        }
                         entity.RemoveSelf();
                     }
 

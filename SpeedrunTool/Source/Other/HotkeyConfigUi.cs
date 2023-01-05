@@ -58,6 +58,13 @@ public class HotkeyConfigUi : TextMenu {
         Keys.RightShift,
     };
 
+    private static readonly HashSet<Keys> DisallowKeys = new() {
+        Keys.F1,
+        Keys.F2,
+        Keys.F3,
+        Keys.F5,
+    };
+
     public static readonly Dictionary<Hotkey, HotkeyConfig> HotkeyConfigs = new List<HotkeyConfig> {
         new(Hotkey.ToggleHotkeys),
         new(Hotkey.SaveState, Keys.F7),
@@ -77,7 +84,7 @@ public class HotkeyConfigUi : TextMenu {
         new(Hotkey.SpawnTowerViewer),
         new(Hotkey.ToggleFullscreen),
     }.ToDictionary(info => info.Hotkey, info => info);
-    
+
     private bool closing;
     private float inputDelay;
     private bool remapping;
@@ -316,9 +323,8 @@ public class HotkeyConfigUi : TextMenu {
                 Focused = true;
             } else if (remappingKeyboard) {
                 Keys[] pressedKeys = MInput.Keyboard.CurrentState.GetPressedKeys();
-                if (pressedKeys != null && pressedKeys.Length != 0 &&
-                    MInput.Keyboard.Pressed(pressedKeys[pressedKeys.Length - 1])) {
-                    SetRemap(pressedKeys[pressedKeys.Length - 1]);
+                if (pressedKeys?.LastOrDefault() is { } pressedKey && MInput.Keyboard.Pressed(pressedKey) && !DisallowKeys.Contains(pressedKey)) {
+                    SetRemap(pressedKey);
                 }
             } else {
                 GamePadState currentState = MInput.GamePads[Input.Gamepad].CurrentState;

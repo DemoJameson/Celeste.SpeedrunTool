@@ -872,6 +872,20 @@ public sealed class SaveLoadAction {
             return;
         }
 
+        // 修复玩家死亡后不会重置设置
+        SafeAdd((savedValues, _) => {
+            if (Everest.Modules.FirstOrDefault(everestModule => everestModule.Metadata?.Name == "ExtendedVariantMode") is { } module && module.GetFieldValue("TriggerManager") is {} triggerManager) {
+                savedValues[moduleType] = new Dictionary<string, object>{{"TriggerManager", triggerManager.DeepCloneShared()}};
+            }
+        }, (savedValues, _) => {
+            if (savedValues.TryGetValue(moduleType, out Dictionary<string, object> dictionary) && dictionary.TryGetValue("TriggerManager", out object savedTriggerManager) &&
+                Everest.Modules.FirstOrDefault(everestModule => everestModule.Metadata?.Name == "ExtendedVariantMode") is { } module) {
+                if (module.GetFieldValue("TriggerManager") is { } triggerManager) {
+                    savedTriggerManager.DeepCloneToShared(triggerManager);
+                }
+            }
+        });
+
         if (ModUtils.GetType("ExtendedVariantMode", "ExtendedVariants.Module.ExtendedVariantsSettings") is not { } settingsType) {
             return;
         }

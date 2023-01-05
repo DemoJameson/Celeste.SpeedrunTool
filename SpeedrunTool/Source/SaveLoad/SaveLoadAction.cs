@@ -998,7 +998,6 @@ public sealed class SaveLoadAction {
                         if (type == vineinatorType || type == lizardType) {
                             object pixelComponent = entity.GetFieldValue("pixelComponent");
                             pixelComponent.SetFieldValue("textureChunks", null);
-                            pixelComponent.InvokeMethod("ClearChunks");
                             pixelComponent.InvokeMethod("CommitChunks");
                         }
                     }

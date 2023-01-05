@@ -574,48 +574,47 @@ public sealed class SaveLoadAction {
 
     private static void ExternalAction() {
         SafeAdd(
-                saveState: (_, level) => {
-                    level.Entities.UpdateLists();
-                    IgnoreSaveLoadComponent.ReAddAll(level);
-                    EndPoint.AllReadyForTime();
-                },
-                loadState: (_, level) => {
-                    RoomTimerManager.ResetTime();
-                    DeathStatisticsManager.Clear();
-                    IgnoreSaveLoadComponent.ReAddAll(level);
-                    EndPoint.AllReadyForTime();
-                },
-                clearState: () => {
-                    RoomTimerManager.ClearPbTimes();
-                    DeepClonerUtils.ClearSharedDeepCloneState();
-                    DynDataUtils.ClearCached();
-                },
-                beforeSaveState: level => {
-                    RoomTimerManager.ClearPbTimes(false);
-                    DeepClonerUtils.ClearSharedDeepCloneState();
-                    DynDataUtils.ClearCached();
+            saveState: (_, level) => {
+                level.Entities.UpdateLists();
+                IgnoreSaveLoadComponent.ReAddAll(level);
+                EndPoint.AllReadyForTime();
+            },
+            loadState: (_, level) => {
+                RoomTimerManager.ResetTime();
+                DeathStatisticsManager.Clear();
+                IgnoreSaveLoadComponent.ReAddAll(level);
+                EndPoint.AllReadyForTime();
+            },
+            clearState: () => {
+                RoomTimerManager.ClearPbTimes();
+                DeepClonerUtils.ClearSharedDeepCloneState();
+                DynDataUtils.ClearCached();
+            },
+            beforeSaveState: level => {
+                RoomTimerManager.ClearPbTimes(false);
+                DeepClonerUtils.ClearSharedDeepCloneState();
+                DynDataUtils.ClearCached();
 
-                    IgnoreSaveLoadComponent.RemoveAll(level);
-                    ClearBeforeSaveComponent.RemoveAll(level);
+                IgnoreSaveLoadComponent.RemoveAll(level);
+                ClearBeforeSaveComponent.RemoveAll(level);
 
-                    Type ghostEmoteWheelType = ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.Entities.GhostEmoteWheel");
+                Type ghostEmoteWheelType = ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.Entities.GhostEmoteWheel");
 
-                    foreach (Entity entity in level.Entities.Where(entity =>
-                                 entity.GetType().FullName?.StartsWith("Celeste.Mod.CelesteNet.") == true)) {
-                        if (ghostEmoteWheelType != null && entity.GetType() == ghostEmoteWheelType && entity.GetFieldValue<bool>("timeRateSet")) {
-                            // Normally GhostEmoteWheel in CelesteNet does this when it gets closed again
-                            Engine.TimeRate = 1f;
-                        }
-
-                        entity.RemoveSelf();
+                foreach (Entity entity in level.Entities.Where(entity =>
+                             entity.GetType().FullName?.StartsWith("Celeste.Mod.CelesteNet.") == true)) {
+                    if (ghostEmoteWheelType != null && entity.GetType() == ghostEmoteWheelType && entity.GetFieldValue<bool>("timeRateSet")) {
+                        // Normally GhostEmoteWheel in CelesteNet does this when it gets closed again
+                        Engine.TimeRate = 1f;
                     }
 
-                    // 冲刺残影方向错误，干脆移除屏幕不显示了
-                    level.Tracker.GetEntities<TrailManager.Snapshot>()
-                        .ForEach(entity => entity.Position = level.Camera.Position - Vector2.One * 100);
+                    entity.RemoveSelf();
                 }
-            )
-            ;
+
+                // 冲刺残影方向错误，干脆移除屏幕不显示了
+                level.Tracker.GetEntities<TrailManager.Snapshot>()
+                    .ForEach(entity => entity.Position = level.Camera.Position - Vector2.One * 100);
+            }
+        );
     }
 
     private static void SupportModSessionAndSaveData() {

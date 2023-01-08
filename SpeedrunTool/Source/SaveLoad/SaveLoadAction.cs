@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -598,21 +598,24 @@ public sealed class SaveLoadAction {
                 IgnoreSaveLoadComponent.RemoveAll(level);
                 ClearBeforeSaveComponent.RemoveAll(level);
 
-                Type ghostEmoteWheelType = ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.Entities.GhostEmoteWheel");
-
-                foreach (Entity entity in level.Entities.Where(entity =>
-                             entity.GetType().FullName?.StartsWith("Celeste.Mod.CelesteNet.") == true)) {
-                    if (ghostEmoteWheelType != null && entity.GetType() == ghostEmoteWheelType && entity.GetFieldValue<bool>("timeRateSet")) {
-                        // Normally GhostEmoteWheel in CelesteNet does this when it gets closed again
-                        Engine.TimeRate = 1f;
-                    }
-
-                    entity.RemoveSelf();
-                }
-
                 // 冲刺残影方向错误，干脆移除屏幕不显示了
                 level.Tracker.GetEntities<TrailManager.Snapshot>()
                     .ForEach(entity => entity.Position = level.Camera.Position - Vector2.One * 100);
+
+                if (ModUtils.IsInstalled("CelesteNet.Client")) {
+                    Type ghostEmoteWheelType = ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.Entities.GhostEmoteWheel");
+                    IEnumerable<Entity> entities =
+                        level.Entities.Where(entity => entity.GetType().FullName?.StartsWith("Celeste.Mod.CelesteNet.") == true);
+                    foreach (Entity entity in entities) {
+                        if (ghostEmoteWheelType != null && entity.GetType() == ghostEmoteWheelType && entity.GetFieldValue<bool>("timeRateSet")) {
+                            // Normally GhostEmoteWheel in CelesteNet does this when it gets closed again
+                            Engine.TimeRate = 1f;
+                            ghostEmoteWheelType = null;
+                        }
+
+                        entity.RemoveSelf();
+                    }
+                }
             }
         );
     }

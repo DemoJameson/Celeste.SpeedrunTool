@@ -118,8 +118,8 @@ public sealed class SaveLoadAction {
             return;
         }
 
-        if (!values.ContainsKey(type)) {
-            values[type] = new Dictionary<string, object>();
+        if (!values.TryGetValue(type, out Dictionary<string, object> dict)) {
+            values[type] = dict = new Dictionary<string, object>();
         }
 
         foreach (string memberName in memberNames) {
@@ -130,9 +130,9 @@ public sealed class SaveLoadAction {
                 }
 
                 if (memberInfos.First().IsField()) {
-                    values[type][memberName] = type.GetFieldValue(memberName).DeepCloneShared();
+                    dict[memberName] = type.GetFieldValue(memberName).DeepCloneShared();
                 } else {
-                    values[type][memberName] = type.GetPropertyValue(memberName).DeepCloneShared();
+                    dict[memberName] = type.GetPropertyValue(memberName).DeepCloneShared();
                 }
             }
         }
@@ -351,8 +351,8 @@ public sealed class SaveLoadAction {
                 foreach (EverestModule module in Everest.Modules) {
                     Dictionary<string, object> dict = new();
                     Type moduleType = module.GetType();
-                    if (modModuleFields.ContainsKey(moduleType)) {
-                        foreach (FieldInfo fieldInfo in modModuleFields[moduleType]) {
+                    if (modModuleFields.TryGetValue(moduleType, out FieldInfo[] moduleFields)) {
+                        foreach (FieldInfo fieldInfo in moduleFields) {
                             dict[fieldInfo.Name] = fieldInfo.GetValue(module);
                         }
 

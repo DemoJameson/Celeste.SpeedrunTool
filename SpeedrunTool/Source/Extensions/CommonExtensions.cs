@@ -12,11 +12,7 @@ internal static class CommonExtensions {
 
     public static TValue GetValueOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key,
         TValue defaultValue) {
-        if (dictionary.ContainsKey(key)) {
-            return dictionary[key];
-        }
-
-        return defaultValue;
+        return dictionary.TryGetValue(key, out TValue result) ? result : defaultValue;
     }
 
     public static void SetRange(this IDictionary dict, IDictionary other) {
@@ -37,7 +33,7 @@ internal static class CommonExtensions {
     public static bool IsNullOrEmpty(this string str) {
         return string.IsNullOrEmpty(str);
     }
-    
+
     public static bool IsNotNullAndEmpty(this string str) {
         return !string.IsNullOrEmpty(str);
     }

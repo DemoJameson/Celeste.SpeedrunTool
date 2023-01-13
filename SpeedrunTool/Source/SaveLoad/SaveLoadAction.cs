@@ -8,7 +8,6 @@ using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.Utils;
 using FMOD;
 using FMOD.Studio;
-using Mono.Cecil.Cil;
 using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
@@ -200,7 +199,7 @@ public sealed class SaveLoadAction {
         SupportExtendedVariants();
         SupportXaphanHelper();
         SupportIsaGrabBag();
-        SupportDeathTracker();
+        DeathTrackerHelper.AddSupport();
         SupportCommunalHelper();
         SupportBrokemiaHelper();
 
@@ -954,23 +953,6 @@ public sealed class SaveLoadAction {
         }
     }
 
-    private static void SupportDeathTracker() {
-        if (ModUtils.GetType("DeathTracker", "CelesteDeathTracker.DeathTrackerModule+<>c__DisplayClass6_0")?.GetMethodInfo("<Load>b__2") is
-                { } modPlayerSpawn &&
-            ModUtils.GetType("DeathTracker", "CelesteDeathTracker.DeathDisplay") is { } deathDisplayType) {
-            modPlayerSpawn.ILHook((ilCursor, _) => {
-                // display => player.Scene.Entities.FindFirst<DeathDisplay>()
-                if (ilCursor.TryGotoNext(MoveType.After, ins => ins.OpCode == OpCodes.Ldarg_0,
-                        ins => ins.OpCode == OpCodes.Ldfld && ins.Operand.ToString().EndsWith("::display"))) {
-                    ilCursor.Emit(OpCodes.Pop)
-                        .Emit(OpCodes.Ldarg_1)
-                        .Emit(OpCodes.Callvirt, typeof(Entity).GetProperty("Scene").GetGetMethod())
-                        .Emit(OpCodes.Callvirt, typeof(Scene).GetProperty("Entities").GetGetMethod())
-                        .Emit(OpCodes.Callvirt, typeof(EntityList).GetMethod("FindFirst").MakeGenericMethod(deathDisplayType));
-                }
-            });
-        }
-    }
 
     private static void SupportCommunalHelper() {
         if (ModUtils.GetType("CommunalHelper", "Celeste.Mod.CommunalHelper.DashStates.DreamTunnelDash") is { } dreamTunnelDashType) {

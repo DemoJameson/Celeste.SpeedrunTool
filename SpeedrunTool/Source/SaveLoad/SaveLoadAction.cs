@@ -124,7 +124,7 @@ public sealed class SaveLoadAction {
         foreach (string memberName in memberNames) {
             if (type.GetMember(memberName, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic) is { } memberInfos) {
                 if (memberInfos.Length == 0) {
-                    $"SaveStaticMemberValues: No member found for type {type.FullName} and member name {memberName}".Log();
+                    $"SaveStaticMemberValues: No member found for type {type.FullName} and member name {memberName}".Log(LogLevel.Verbose);
                     continue;
                 }
 
@@ -144,7 +144,7 @@ public sealed class SaveLoadAction {
                 Type type = pair.Key;
                 if (type.GetMember(memberName, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic) is { } memberInfos) {
                     if (memberInfos.Length == 0) {
-                        $"LoadStaticMemberValues: No member found for type {type.FullName} and member name {memberName}".Log();
+                        $"LoadStaticMemberValues: No member found for type {type.FullName} and member name {memberName}".Log(LogLevel.Verbose);
                         continue;
                     }
 
@@ -796,13 +796,19 @@ public sealed class SaveLoadAction {
     }
 
     private static void SupportCrystallineHelper() {
-        Type vitModuleType = ModUtils.GetType("CrystallineHelper", "vitmod.VitModule");
-        if (vitModuleType == null) {
+        if (ModUtils.GetType("CrystallineHelper", "vitmod.VitModule") is not {} vitModuleType) {
+            return;
+        }
+
+        if (ModUtils.GetType("CrystallineHelper", "vitmod.TriggerTrigger") is not {} triggerType) {
             return;
         }
 
         SafeAdd(
-            (savedValues, _) => SaveStaticMemberValues(savedValues, vitModuleType, "timeStopScaleTimer", "noMoveScaleTimer"),
+            (savedValues, _) => {
+                SaveStaticMemberValues(savedValues, vitModuleType, "timeStopScaleTimer", "timeStopType", "noMoveScaleTimer");
+                SaveStaticMemberValues(savedValues, triggerType, "collidedEntities");
+            },
             (savedValues, _) => LoadStaticMemberValues(savedValues)
         );
     }

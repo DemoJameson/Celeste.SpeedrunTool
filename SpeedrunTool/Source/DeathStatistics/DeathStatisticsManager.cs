@@ -140,8 +140,7 @@ public static class DeathStatisticsManager {
         orig(player);
 
         if (Enabled && died && player.StateMachine.State is Player.StNormal or Player.StSwim) {
-            died = false;
-            LoggingData();
+            LoggingData(false);
         }
     }
 
@@ -183,6 +182,10 @@ public static class DeathStatisticsManager {
                     DeathPosition = self.Position
                 };
                 ExportPlayback(self);
+
+                if (playerDeadBody.HasGolden) {
+                      LoggingData(true);
+                }
             }
         }
 
@@ -206,15 +209,21 @@ public static class DeathStatisticsManager {
                playbackDeathInfo.Room == level.Session.Level;
     }
 
-    private static void LoggingData() {
+    private static void LoggingData(bool golden) {
         // 传送到死亡地点练习时产生的第一次死亡不记录，清除死亡地点
         if (Engine.Scene is not Level level || IsPlayback() || currentDeathInfo == null) {
             Clear();
             return;
         }
 
+        died = false;
         currentDeathInfo.CopyFromSession(level.Session);
-        currentDeathInfo.LostTime = SaveData.Instance.Time - lastTime;
+        if (golden) {
+            currentDeathInfo.LostTime = level.Session.Time;
+        } else {
+            currentDeathInfo.LostTime = SaveData.Instance.Time - lastTime;
+        }
+
         SpeedrunToolModule.SaveData.Add(currentDeathInfo);
         lastTime = SaveData.Instance.Time;
         currentDeathInfo = null;

@@ -9,11 +9,16 @@ using Celeste.Mod.SpeedrunTool.Utils;
 using FMOD;
 using FMOD.Studio;
 using MonoMod.Cil;
+using MonoMod.RuntimeDetour;
+using MonoMod.Utils;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
 public sealed class SaveLoadAction {
     public delegate void SlAction(Dictionary<Type, Dictionary<string, object>> savedValues, Level level);
+
+    // 第一次 SL 时才初始化，避免通过安装依赖功能解除禁用的 Mod 被忽略
+    private static bool initialized;
 
     public static readonly List<VirtualAsset> VirtualAssets = new();
     public static readonly List<EventInstance> ClonedEventInstancesWhenSave = new();
@@ -44,6 +49,8 @@ public sealed class SaveLoadAction {
 
     private readonly Dictionary<Type, Dictionary<string, object>> savedValues = new();
     private readonly SlAction saveState;
+
+    private Action<Level, List<Entity>, Entity> unloadLevel;
 
     public SaveLoadAction(SlAction saveState = null, SlAction loadState = null, Action clearState = null,
         Action<Level> beforeSaveState = null, Action preCloneEntities = null) {
@@ -111,6 +118,12 @@ public sealed class SaveLoadAction {
         }
     }
 
+    internal static void OnUnloadLevel(Level level, List<Entity> entities, Entity entity) {
+        foreach (SaveLoadAction saveLoadAction in All) {
+            saveLoadAction.unloadLevel?.Invoke(level, entities, entity);
+        }
+    }
+
     // ReSharper disable once MemberCanBePrivate.Global
     public static void SaveStaticMemberValues(Dictionary<Type, Dictionary<string, object>> values, Type type, params string[] memberNames) {
         if (type == null) {
@@ -169,9 +182,6 @@ public sealed class SaveLoadAction {
         On.FMOD.Studio.EventDescription.createInstance -= EventDescriptionOnCreateInstance;
     }
 
-    // 第一次 SL 时才初始化，避免通过安装依赖功能解除禁用的 Mod 被忽略
-    private static bool initialized;
-
     public static void InitActions() {
         if (initialized) {
             return;
@@ -199,6 +209,7 @@ public sealed class SaveLoadAction {
         SupportExtendedVariants();
         SupportXaphanHelper();
         SupportIsaGrabBag();
+        SupportSpirialisHelper();
         DeathTrackerHelper.AddSupport();
         SupportCommunalHelper();
         SupportBrokemiaHelper();
@@ -959,6 +970,64 @@ public sealed class SaveLoadAction {
         }
     }
 
+    private static void SupportSpirialisHelper() {
+        if (ModUtils.GetType("SpirialisHelper", "Celeste.Mod.Spirialis.TimePlayerSettings") is { } timePlayerSettings) {
+            SafeAdd(
+                (values, _) => SaveStaticMemberValues(values, timePlayerSettings, "instance"),
+                (values, _) => LoadStaticMemberValues(values)
+            );
+        }
+
+        if (ModUtils.GetType("SpirialisHelper", "Celeste.Mod.Spirialis.TimeController") is { } timeControllerType) {
+            var action = SafeAdd(
+                loadState: (_, level) => {
+                    if (level.Entities.FirstOrDefault(entity => entity.GetType() == timeControllerType) is not { } timeController) {
+                        return;
+                    }
+
+                    if (Delegate.CreateDelegate(typeof(ILContext.Manipulator), timeController, timeControllerType.GetMethodInfo("CustomLevelRender")) is not ILContext.Manipulator manipulator) {
+                        return;
+                    }
+
+                    if (Delegate.CreateDelegate(typeof(On.Monocle.EntityList.hook_Update), timeController, timeControllerType.GetMethodInfo("CustomELUpdate")) is not On.Monocle.EntityList.hook_Update customELUpdate) {
+                        return;
+                    }
+
+                    IL.Celeste.Level.Render += manipulator;
+                    if (timeController.GetFieldValue<bool>("hookAdded")) {
+                        On.Monocle.EntityList.Update += customELUpdate;
+                    }
+                }
+            );
+
+            ((SaveLoadAction)action).unloadLevel = (_, entities, entity) => {
+                if (entity.GetType() == timeControllerType) {
+                    entities.Add(entity);
+                }
+            };
+        }
+
+        if (ModUtils.GetType("SpirialisHelper", "Celeste.Mod.Spirialis.TimeZipMover") is { } timeZipMoverType) {
+            if (typeof(ZipMover).GetMethod("Sequence", BindingFlags.Instance | BindingFlags.NonPublic).GetStateMachineTarget() is not
+                { } sequenceMethodInfo) {
+                return;
+            }
+
+            SafeAdd(
+                loadState: (_, level) => {
+                    if (!level.Tracker.Entities.TryGetValue(timeZipMoverType, out List<Entity> zips)) {
+                        return;
+                    }
+
+                    foreach (Entity entity in zips) {
+                        if (Delegate.CreateDelegate(typeof(ILContext.Manipulator), entity, timeZipMoverType.GetMethodInfo("ZipSequence")) is ILContext.Manipulator manipulator) {
+                            entity.SetFieldValue("TimeStreetlightUpdate", new ILHook(sequenceMethodInfo, manipulator));
+                        }
+                    }
+                }
+            );
+        }
+    }
 
     private static void SupportCommunalHelper() {
         if (ModUtils.GetType("CommunalHelper", "Celeste.Mod.CommunalHelper.DashStates.DreamTunnelDash") is { } dreamTunnelDashType) {

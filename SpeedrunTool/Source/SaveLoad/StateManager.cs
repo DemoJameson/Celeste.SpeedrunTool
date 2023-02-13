@@ -25,6 +25,7 @@ public sealed class StateManager {
     private readonly Dictionary<VirtualInput, bool> lastChecks = new();
 
     private readonly List<VirtualInput> unfreezeInputs = new();
+
     private List<VirtualInput> UnfreezeInputs {
         get {
             unfreezeInputs.Clear();
@@ -340,7 +341,7 @@ public sealed class StateManager {
         entities.AddRange(level.Tracker.GetEntities<Player>());
 
         // 移除当前房间的实体，照抄 level.UnloadLevel() 方法，不直接调用是因为 BingUI 在该方法中将其存储的 level 设置为了 null
-        entities.AddRange(level.GetEntitiesExcludingTagMask((int)Tags.Global));
+       AddNonGlobalEntities(level, entities);
 
         // 恢復主音乐
         if (level.Tracker.GetEntity<CassetteBlockManager>() is { } cassetteBlockManager) {
@@ -357,6 +358,18 @@ public sealed class StateManager {
 
         // 移除剩下声音组件
         level.Tracker.GetComponentsCopy<SoundSource>().ForEach(component => component.RemoveSelf());
+    }
+
+    private void AddNonGlobalEntities(Level level, List<Entity> entities) {
+        int global = (int)Tags.Global;
+        foreach (Entity entity in level.Entities) {
+            if ((entity.tag & global) == 0) {
+                entities.Add(entity);
+                continue;
+            }
+
+            SaveLoadAction.OnUnloadLevel(level, entities, entity);
+        }
     }
 
     private void UpdateTimeAndDeaths(Level level) {

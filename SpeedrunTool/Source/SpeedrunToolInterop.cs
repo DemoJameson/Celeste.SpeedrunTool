@@ -21,7 +21,7 @@ public static class SpeedrunToolInterop {
                 (savedValues, _) => SaveLoadAction.SaveStaticMemberValues(savedValues, type, memberNames),
                 (savedValues, _) => SaveLoadAction.LoadStaticMemberValues(savedValues));
         }
-        
+
         /// <summary>
         /// Unregister the SaveLoadAction return from RegisterStaticTypes()
         /// </summary>

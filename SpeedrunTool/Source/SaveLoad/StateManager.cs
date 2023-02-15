@@ -22,6 +22,10 @@ public sealed class StateManager {
         () => ModUtils.GetType("CollabUtils2", "Celeste.Mod.CollabUtils2.UI.InGameOverworldHelper")?.GetPropertyInfo("IsOpen")
     );
 
+    private static readonly Lazy<FieldInfo> CycleGroupCounter = new(
+        () => ModUtils.GetType("CelesteTAS", "TAS.EverestInterop.Hitboxes.CycleHitboxColor")?.GetFieldInfo("GroupCounter")
+    );
+
     private readonly Dictionary<VirtualInput, bool> lastChecks = new();
 
     private readonly List<VirtualInput> unfreezeInputs = new();
@@ -61,6 +65,7 @@ public sealed class StateManager {
     private Task<DeepCloneState> preCloneTask;
     private FreezeType freezeType;
     private Process celesteProcess;
+    private object savedTasCycleGroupCounter;
 
     private enum FreezeType {
         None,
@@ -260,6 +265,7 @@ public sealed class StateManager {
         SaveLoadAction.OnBeforeSaveState(level);
         level.DeepCloneToShared(savedLevel = (Level)FormatterServices.GetUninitializedObject(typeof(Level)));
         savedSaveData = SaveData.Instance.DeepCloneShared();
+        savedTasCycleGroupCounter = CycleGroupCounter.Value?.GetValue(null);
         SaveLoadAction.OnSaveState(level);
         DeepClonerUtils.ClearSharedDeepCloneState();
         PreCloneSavedEntities();
@@ -311,6 +317,8 @@ public sealed class StateManager {
         if (tas) {
             LoadStateComplete(level);
         } else {
+            // restore cycle hitbox color
+            RestoreLevelTime(level);
             FreezeGame(FreezeType.Load);
             DoScreenWipe(level);
         }
@@ -408,12 +416,17 @@ public sealed class StateManager {
     }
 
     private void LoadStateComplete(Level level) {
-        level.TimeActive = savedLevel.TimeActive;
-        level.RawTimeActive = savedLevel.RawTimeActive;
+        RestoreLevelTime(level);
         RestoreAudio2();
         RestoreCassetteBlockManager2(level);
         DeepClonerUtils.ClearSharedDeepCloneState();
         State = State.None;
+    }
+
+    private void RestoreLevelTime(Level level) {
+        level.TimeActive = savedLevel.TimeActive;
+        level.RawTimeActive = savedLevel.RawTimeActive;
+        CycleGroupCounter.Value?.SetValue(null, savedTasCycleGroupCounter);
     }
 
     // 收集需要继续播放的声音
@@ -513,8 +526,7 @@ public sealed class StateManager {
     private void OutOfFreeze(Level level) {
         if (freezeType == FreezeType.Save || savedLevel == null) {
             if (savedLevel != null) {
-                level.TimeActive = savedLevel.TimeActive;
-                level.RawTimeActive = savedLevel.RawTimeActive;
+                RestoreLevelTime(level);
             }
 
             State = State.None;

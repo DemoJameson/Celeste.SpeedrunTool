@@ -1,7 +1,6 @@
-﻿using Celeste.Mod.Helpers;
-using TAS;
+﻿using TAS;
 
-namespace Celeste.Mod.SpeedrunTool.Utils; 
+namespace Celeste.Mod.SpeedrunTool.Utils;
 
 internal static class TasUtils {
     private static bool installed;
@@ -10,6 +9,6 @@ internal static class TasUtils {
 
     [Initialize]
     private static void Initialize() {
-        installed = FakeAssembly.GetFakeEntryAssembly().GetType("TAS.Manager") != null;
+        installed = ModUtils.GetType("CelesteTAS", "TAS.Manager") != null;
     }
 }

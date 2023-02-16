@@ -738,6 +738,7 @@ public sealed class SaveLoadAction {
 
     private static void SupportMaxHelpingHand() {
         if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.RainbowSpinnerColorController") is { } colorControllerType
+            && colorControllerType.GetFieldInfo("rainbowSpinnerHueHooked") != null
             && Delegate.CreateDelegate(typeof(On.Celeste.CrystalStaticSpinner.hook_GetHue),
                     colorControllerType.GetMethodInfo("getRainbowSpinnerHue")) is
                 On.Celeste.CrystalStaticSpinner.hook_GetHue hookGetHue
@@ -754,8 +755,28 @@ public sealed class SaveLoadAction {
             );
         }
 
+        if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.RainbowSpinnerColorAreaController") is { } colorAreaControllerType
+            && colorAreaControllerType.GetFieldInfo("rainbowSpinnerHueHooked") != null
+            && Delegate.CreateDelegate(typeof(On.Celeste.CrystalStaticSpinner.hook_GetHue),
+                    colorAreaControllerType.GetMethodInfo("getRainbowSpinnerHue")) is
+                On.Celeste.CrystalStaticSpinner.hook_GetHue hookGetHue2
+           ) {
+            SafeAdd(
+                loadState: (_, _) => {
+                    if (colorAreaControllerType.GetFieldValue<bool>("rainbowSpinnerHueHooked")) {
+                        On.Celeste.CrystalStaticSpinner.GetHue -= hookGetHue2;
+                        On.Celeste.CrystalStaticSpinner.GetHue += hookGetHue2;
+                    } else {
+                        On.Celeste.CrystalStaticSpinner.GetHue -= hookGetHue2;
+                    }
+                }
+            );
+        }
+
         if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.SeekerBarrierColorController") is
-            { } seekerBarrierColorControllerType) {
+            { } seekerBarrierColorControllerType
+            && seekerBarrierColorControllerType.GetFieldInfo("seekerBarrierRendererHooked") != null
+            ) {
             SafeAdd(
                 loadState: (_, _) => {
                     if (seekerBarrierColorControllerType.GetFieldValue<bool>("seekerBarrierRendererHooked")) {
@@ -768,7 +789,9 @@ public sealed class SaveLoadAction {
             );
         }
 
-        if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Triggers.GradientDustTrigger") is { } gradientDustTriggerType) {
+        if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Triggers.GradientDustTrigger") is { } gradientDustTriggerType
+            && gradientDustTriggerType.GetFieldInfo("hooked") != null
+            ) {
             SafeAdd(
                 loadState: (_, _) => {
                     if (gradientDustTriggerType.GetFieldValue<bool>("hooked")) {
@@ -784,6 +807,7 @@ public sealed class SaveLoadAction {
         }
 
         if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.ParallaxFadeOutController") is { } parallaxFadeOutControllerType
+            && parallaxFadeOutControllerType.GetFieldInfo("backdropRendererHooked") != null
             && Delegate.CreateDelegate(typeof(ILContext.Manipulator),
                 parallaxFadeOutControllerType.GetMethodInfo("onBackdropRender")) is ILContext.Manipulator onBackdropRender
            ) {
@@ -794,6 +818,23 @@ public sealed class SaveLoadAction {
                         IL.Celeste.BackdropRenderer.Render += onBackdropRender;
                     } else {
                         IL.Celeste.BackdropRenderer.Render -= onBackdropRender;
+                    }
+                }
+            );
+        }
+
+        if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.ParallaxFadeSpeedController") is { } parallaxFadeSpeedControllerType
+            && parallaxFadeSpeedControllerType.GetFieldInfo("backdropHooked") != null
+            && Delegate.CreateDelegate(typeof(ILContext.Manipulator),
+                parallaxFadeSpeedControllerType.GetMethodInfo("modBackdropUpdate")) is ILContext.Manipulator modBackdropUpdate
+           ) {
+            SafeAdd(
+                loadState: (_, _) => {
+                    if (parallaxFadeSpeedControllerType.GetFieldValue<bool>("backdropHooked")) {
+                        IL.Celeste.Parallax.Update -= modBackdropUpdate;
+                        IL.Celeste.Parallax.Update += modBackdropUpdate;
+                    } else {
+                        IL.Celeste.Parallax.Update -= modBackdropUpdate;
                     }
                 }
             );
@@ -826,6 +867,7 @@ public sealed class SaveLoadAction {
 
     private static void SupportSpringCollab2020() {
         if (ModUtils.GetType("SpringCollab2020", "Celeste.Mod.SpringCollab2020.Entities.RainbowSpinnerColorController") is { } colorControllerType
+            && colorControllerType.GetFieldInfo("colorControllerType") != null
             && Delegate.CreateDelegate(typeof(On.Celeste.CrystalStaticSpinner.hook_GetHue),
                     colorControllerType.GetMethodInfo("getRainbowSpinnerHue")) is
                 On.Celeste.CrystalStaticSpinner.hook_GetHue hookGetHue
@@ -844,6 +886,7 @@ public sealed class SaveLoadAction {
 
         if (ModUtils.GetType("SpringCollab2020", "Celeste.Mod.SpringCollab2020.Entities.RainbowSpinnerColorAreaController") is
                 { } colorAreaControllerType
+            && colorAreaControllerType.GetFieldInfo("rainbowSpinnerHueHooked") != null
             && Delegate.CreateDelegate(typeof(On.Celeste.CrystalStaticSpinner.hook_GetHue),
                     colorAreaControllerType.GetMethodInfo("getRainbowSpinnerHue")) is
                 On.Celeste.CrystalStaticSpinner.hook_GetHue hookSpinnerGetHue
@@ -862,6 +905,7 @@ public sealed class SaveLoadAction {
 
         if (ModUtils.GetType("SpringCollab2020", "Celeste.Mod.SpringCollab2020.Entities.SpikeJumpThroughController") is
                 { } spikeJumpThroughControllerType
+            && spikeJumpThroughControllerType.GetFieldInfo("SpikeHooked") != null
             && Delegate.CreateDelegate(typeof(On.Celeste.Spikes.hook_OnCollide),
                 spikeJumpThroughControllerType.GetMethodInfo("OnCollideHook")) is On.Celeste.Spikes.hook_OnCollide onCollideHook
            ) {

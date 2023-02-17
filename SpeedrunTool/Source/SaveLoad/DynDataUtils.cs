@@ -12,11 +12,11 @@ internal static class DynDataUtils {
 
     private static readonly Lazy<int> EmptyTableEntriesLength =
         new(() => new ConditionalWeakTable<object, object>().GetFieldValue<Array>("_entries").Length);
-
     private static readonly Lazy<int> EmptyTableFreeList = new(() => new ConditionalWeakTable<object, object>().GetFieldValue<int>("_freeList"));
-
-    // DynamicData
-    private static readonly bool RunningOnMono = Type.GetType("Mono.Runtime") != null;
+    private static readonly Lazy<int> EmptyContainerEntriesLength =
+        new(() => new ConditionalWeakTable<object, object>().GetFieldValue("_container").GetFieldValue<Array>("_entries").Length);
+    private static readonly Lazy<int> EmptyContainerFirstFreeEntry = new(() => new ConditionalWeakTable<object, object>().GetFieldValue("_container").GetFieldValue<int>("_freeList"));
+    private static Func<object, bool> checkEmpty;
 
     public static void ClearCached() {
         IgnoreObjects = new ConditionalWeakTable<object, object>();
@@ -30,20 +30,31 @@ internal static class DynDataUtils {
         }
 
         dataMap = GetDataMap(type);
-
-        bool isEmpty;
-        if (RunningOnMono) {
-            isEmpty = dataMap.GetFieldValue<int>("size") == 0;
-        } else {
-            isEmpty = dataMap.GetFieldValue<Array>("_entries").Length == EmptyTableEntriesLength.Value &&
-                     dataMap.GetFieldValue<int>("_freeList") == EmptyTableFreeList.Value;
-        }
-
-        if (isEmpty) {
+        if (CheckEmpty(dataMap)) {
             IgnoreTypes.Add(type);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private static bool CheckEmpty(object weakTable) {
+        if (checkEmpty == null) {
+            if (Type.GetType("Mono.Runtime") != null) {
+                // Mono
+                checkEmpty = o => o.GetFieldValue<int>("size") == 0;
+            } else if (weakTable.GetType().GetFieldInfo("_entries") != null) {
+                // .net framework
+                checkEmpty = o => o.GetFieldValue<Array>("_entries").Length == EmptyTableEntriesLength.Value &&
+                             o.GetFieldValue<int>("_freeList") == EmptyTableFreeList.Value;
+            } else {
+                // .net7
+                checkEmpty = o => o.GetFieldValue("_container") is { } container && container.GetFieldValue<Array>("_entries").Length == EmptyContainerEntriesLength.Value &&
+                                  container.GetFieldValue<int>("_firstFreeEntry") == EmptyContainerFirstFreeEntry.Value;
+            }
         }
 
-        return isEmpty;
+        return checkEmpty(weakTable);
     }
 
     private static object GetDataMap(Type type) {

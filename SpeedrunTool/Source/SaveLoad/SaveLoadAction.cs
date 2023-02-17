@@ -1125,7 +1125,7 @@ public sealed class SaveLoadAction {
     }
 
     private static void SupportFrostHelper() {
-        if (ModUtils.GetType("FrostHelper", "FrostHelper.Helpers.AttachedDataHelper").GetMethodInfo("SetAttached") is { } setAttached
+        if (ModUtils.GetType("FrostHelper", "FrostHelper.Helpers.AttachedDataHelper")?.GetMethodInfo("SetAttached") is { } setAttached
             && ModUtils.GetType("FrostHelper", "FrostHelper.Entities.Boosters.GenericCustomBooster") is { } genericCustomBoosterType
             && genericCustomBoosterType.GetMethodInfo("GetBoosterThatIsBoostingPlayer") is { } getBoosterThatIsBoostingPlayer
            ) {

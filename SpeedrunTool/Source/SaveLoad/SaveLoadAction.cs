@@ -213,6 +213,7 @@ public sealed class SaveLoadAction {
         DeathTrackerHelper.AddSupport();
         SupportCommunalHelper();
         SupportBrokemiaHelper();
+        SupportFrostHelper();
 
         // 放最后，确保收集了所有克隆的 VirtualAssets 与 EventInstance
         ReloadVirtualAssets();
@@ -774,9 +775,9 @@ public sealed class SaveLoadAction {
         }
 
         if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.SeekerBarrierColorController") is
-            { } seekerBarrierColorControllerType
+                { } seekerBarrierColorControllerType
             && seekerBarrierColorControllerType.GetFieldInfo("seekerBarrierRendererHooked") != null
-            ) {
+           ) {
             SafeAdd(
                 loadState: (_, _) => {
                     if (seekerBarrierColorControllerType.GetFieldValue<bool>("seekerBarrierRendererHooked")) {
@@ -791,7 +792,7 @@ public sealed class SaveLoadAction {
 
         if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Triggers.GradientDustTrigger") is { } gradientDustTriggerType
             && gradientDustTriggerType.GetFieldInfo("hooked") != null
-            ) {
+           ) {
             SafeAdd(
                 loadState: (_, _) => {
                     if (gradientDustTriggerType.GetFieldValue<bool>("hooked")) {
@@ -823,7 +824,8 @@ public sealed class SaveLoadAction {
             );
         }
 
-        if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.ParallaxFadeSpeedController") is { } parallaxFadeSpeedControllerType
+        if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.ParallaxFadeSpeedController") is
+                { } parallaxFadeSpeedControllerType
             && parallaxFadeSpeedControllerType.GetFieldInfo("backdropHooked") != null
             && Delegate.CreateDelegate(typeof(ILContext.Manipulator),
                 parallaxFadeSpeedControllerType.GetMethodInfo("modBackdropUpdate")) is ILContext.Manipulator modBackdropUpdate
@@ -848,11 +850,11 @@ public sealed class SaveLoadAction {
     }
 
     private static void SupportCrystallineHelper() {
-        if (ModUtils.GetType("CrystallineHelper", "vitmod.VitModule") is not {} vitModuleType) {
+        if (ModUtils.GetType("CrystallineHelper", "vitmod.VitModule") is not { } vitModuleType) {
             return;
         }
 
-        if (ModUtils.GetType("CrystallineHelper", "vitmod.TriggerTrigger") is not {} triggerType) {
+        if (ModUtils.GetType("CrystallineHelper", "vitmod.TriggerTrigger") is not { } triggerType) {
             return;
         }
 
@@ -1029,11 +1031,13 @@ public sealed class SaveLoadAction {
                         return;
                     }
 
-                    if (Delegate.CreateDelegate(typeof(ILContext.Manipulator), timeController, timeControllerType.GetMethodInfo("CustomLevelRender")) is not ILContext.Manipulator manipulator) {
+                    if (Delegate.CreateDelegate(typeof(ILContext.Manipulator), timeController, timeControllerType.GetMethodInfo("CustomLevelRender"))
+                        is not ILContext.Manipulator manipulator) {
                         return;
                     }
 
-                    if (Delegate.CreateDelegate(typeof(On.Monocle.EntityList.hook_Update), timeController, timeControllerType.GetMethodInfo("CustomELUpdate")) is not On.Monocle.EntityList.hook_Update customELUpdate) {
+                    if (Delegate.CreateDelegate(typeof(On.Monocle.EntityList.hook_Update), timeController,
+                            timeControllerType.GetMethodInfo("CustomELUpdate")) is not On.Monocle.EntityList.hook_Update customELUpdate) {
                         return;
                     }
 
@@ -1064,7 +1068,8 @@ public sealed class SaveLoadAction {
                     }
 
                     foreach (Entity entity in zips) {
-                        if (Delegate.CreateDelegate(typeof(ILContext.Manipulator), entity, timeZipMoverType.GetMethodInfo("ZipSequence")) is ILContext.Manipulator manipulator) {
+                        if (Delegate.CreateDelegate(typeof(ILContext.Manipulator), entity, timeZipMoverType.GetMethodInfo("ZipSequence")) is
+                            ILContext.Manipulator manipulator) {
                             entity.SetFieldValue("TimeStreetlightUpdate", new ILHook(sequenceMethodInfo, manipulator));
                         }
                     }
@@ -1113,6 +1118,35 @@ public sealed class SaveLoadAction {
                             object pixelComponent = entity.GetFieldValue("pixelComponent");
                             pixelComponent.SetFieldValue("textureChunks", null);
                             pixelComponent.InvokeMethod("CommitChunks");
+                        }
+                    }
+                });
+        }
+    }
+
+    private static void SupportFrostHelper() {
+        if (ModUtils.GetType("FrostHelper", "FrostHelper.Helpers.AttachedDataHelper").GetMethodInfo("SetAttached") is { } setAttached
+            && ModUtils.GetType("FrostHelper", "FrostHelper.Entities.Boosters.GenericCustomBooster") is { } genericCustomBoosterType
+            && genericCustomBoosterType.GetMethodInfo("GetBoosterThatIsBoostingPlayer") is { } getBoosterThatIsBoostingPlayer
+           ) {
+            setAttached = setAttached.MakeGenericMethod(genericCustomBoosterType);
+
+            SafeAdd(
+                saveState: (values, level) => {
+                    Dictionary<string, object> dict = new();
+                    List<Entity> players = level.Tracker.GetEntities<Player>();
+                    List<object> boosters = players.Select(player => getBoosterThatIsBoostingPlayer.Invoke(null, new object[] {player})).ToList();
+                    dict["players"] = players;
+                    dict["boosters"] = boosters;
+                    values[genericCustomBoosterType] = dict.DeepCloneShared();
+                },
+                loadState: (values, level) => {
+                    Dictionary<string, object> dict = values[genericCustomBoosterType].DeepCloneShared();
+                    if (dict.TryGetValue("players", out object players) && dict.TryGetValue("boosters", out object boosters)) {
+                        if (players is List<Entity> playerList && boosters is List<object> boosterList) {
+                            for (int i = 0; i < playerList.Count; i++) {
+                                setAttached.Invoke(null, new[] {playerList[i], boosterList[i]});
+                            }
                         }
                     }
                 });

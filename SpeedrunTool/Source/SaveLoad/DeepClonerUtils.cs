@@ -127,7 +127,7 @@ public static class DeepClonerUtils {
                     return new WeakReference(sourceWeak.Target.DeepClone(deepCloneState), sourceWeak.TrackResurrection);
                 }
 
-                // 手动克隆 WeakReference<T> 
+                // 手动克隆 WeakReference<T>
                 if (sourceObj.GetType() is { } type && type.IsWeakReference(out Type genericType)) {
                     object[] parameters = {null};
                     sourceObj.InvokeMethod("TryGetTarget", parameters);
@@ -232,6 +232,8 @@ public static class DeepClonerUtils {
                 if (DynamicData._DataMap.TryGetValue(sourceObj, out DynamicData._Data_ value) && value.Data.Count > 0) {
                     DynamicData._DataMap.Add(clonedObj, value.DeepClone(deepCloneState));
                 }
+
+                FrostHelperUtils.CloneDataStore(sourceObj, clonedObj, deepCloneState);
             }
 
             return clonedObj;

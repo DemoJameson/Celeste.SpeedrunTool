@@ -6,7 +6,7 @@ using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
-public static class StateMarkUtils {
+internal static class StateMarkUtils {
     private const string SavedStateFlag = "SpeedrunTool_SavedSate";
     private static SpriteBank mySpriteBank;
 

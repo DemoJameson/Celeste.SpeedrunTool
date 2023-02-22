@@ -5,7 +5,7 @@ using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
-public static class DeathTrackerHelper {
+internal static class DeathTrackerHelper {
     private static object generatedObject;
 
     [Initialize]

@@ -213,7 +213,7 @@ public sealed class SaveLoadAction {
         DeathTrackerHelper.AddSupport();
         SupportCommunalHelper();
         SupportBrokemiaHelper();
-        SupportFrostHelper();
+        FrostHelperUtils.SupportFrostHelper();
 
         // 放最后，确保收集了所有克隆的 VirtualAssets 与 EventInstance
         ReloadVirtualAssets();
@@ -1118,35 +1118,6 @@ public sealed class SaveLoadAction {
                             object pixelComponent = entity.GetFieldValue("pixelComponent");
                             pixelComponent.SetFieldValue("textureChunks", null);
                             pixelComponent.InvokeMethod("CommitChunks");
-                        }
-                    }
-                });
-        }
-    }
-
-    private static void SupportFrostHelper() {
-        if (ModUtils.GetType("FrostHelper", "FrostHelper.Helpers.AttachedDataHelper")?.GetMethodInfo("SetAttached") is { } setAttached
-            && ModUtils.GetType("FrostHelper", "FrostHelper.Entities.Boosters.GenericCustomBooster") is { } genericCustomBoosterType
-            && genericCustomBoosterType.GetMethodInfo("GetBoosterThatIsBoostingPlayer") is { } getBoosterThatIsBoostingPlayer
-           ) {
-            setAttached = setAttached.MakeGenericMethod(genericCustomBoosterType);
-
-            SafeAdd(
-                saveState: (values, level) => {
-                    Dictionary<string, object> dict = new();
-                    List<Entity> players = level.Tracker.GetEntities<Player>();
-                    List<object> boosters = players.Select(player => getBoosterThatIsBoostingPlayer.Invoke(null, new object[] {player})).ToList();
-                    dict["players"] = players;
-                    dict["boosters"] = boosters;
-                    values[genericCustomBoosterType] = dict.DeepCloneShared();
-                },
-                loadState: (values, level) => {
-                    Dictionary<string, object> dict = values[genericCustomBoosterType].DeepCloneShared();
-                    if (dict.TryGetValue("players", out object players) && dict.TryGetValue("boosters", out object boosters)) {
-                        if (players is List<Entity> playerList && boosters is List<object> boosterList) {
-                            for (int i = 0; i < playerList.Count; i++) {
-                                setAttached.Invoke(null, new[] {playerList[i], boosterList[i]});
-                            }
                         }
                     }
                 });

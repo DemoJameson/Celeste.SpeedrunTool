@@ -1,6 +1,6 @@
 ﻿namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
-public static class AutoClearState {
+internal static class AutoClearState {
     [Load]
     private static void Load() {
         On.Celeste.Player.OnTransition += PlayerOnOnTransition;

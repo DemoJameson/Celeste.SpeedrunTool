@@ -25,11 +25,12 @@ SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB_DIALOG=
     [MADELINE left normal]
     清除房间计时记录与终点~
 
-# ================================== State Manager ==================================
+# ================================== State ==================================
 SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE=     加载状态后冻结游戏
 SPEEDRUN_TOOL_IGNORE_HOLDING_KEYS=         忽略按住的键
 SPEEDRUN_TOOL_AUTO_LOAD_STATE_AFTER_DEATH= 死亡后自动加载状态
 SPEEDRUN_TOOL_AUTO_CLEAR_STATE_ON_SCREEN_TRANSITION= 切屏时自动清除状态
+SPEEDRUN_TOOL_NO_GC_AFTER_LOAD_STATE=      加载存档后不要强制回收内存
 SPEEDRUN_TOOL_SAVE_TIME_AND_DEATHS=        保存时间和死亡数
 SPEEDRUN_TOOL_SAVE_EXTENDED_VARIANTS=      保存拓展异变
 SPEEDRUN_TOOL_SAVE_STATE=                  保存状态

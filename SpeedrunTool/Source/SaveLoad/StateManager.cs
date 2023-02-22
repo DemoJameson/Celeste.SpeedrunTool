@@ -328,16 +328,19 @@ public sealed class StateManager {
 
     // 32 位应用且使用内存超过 2GB 才回收垃圾
     private void GcCollect() {
-        if (!Environment.Is64BitProcess && celesteProcess == null) {
-            celesteProcess = Process.GetCurrentProcess();
+        if (ModSettings.NoGcAfterLoadState || Environment.Is64BitProcess) {
+            return;
         }
 
-        if (celesteProcess != null) {
+        if (celesteProcess == null) {
+            celesteProcess = Process.GetCurrentProcess();
+        } else {
             celesteProcess.Refresh();
-            if (celesteProcess.PrivateMemorySize64 > 1024L * 1024L * 1024L * 2) {
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
-            }
+        }
+
+        if (celesteProcess.PrivateMemorySize64 > 1024L * 1024L * 1024L * 2.5) {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
         }
     }
 

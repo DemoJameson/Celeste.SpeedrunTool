@@ -24,11 +24,12 @@ SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB_DIALOG=
     [MADELINE left normal]
     Cleared room timer PB and end point~
 
-# ================================== State Manager ==================================
+# ================================== State ==================================
 SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE=     Pause The Game after Loading State
 SPEEDRUN_TOOL_IGNORE_HOLDING_KEYS=         Ignore Holding Keys
 SPEEDRUN_TOOL_AUTO_LOAD_STATE_AFTER_DEATH= Auto Load State after Death
 SPEEDRUN_TOOL_AUTO_CLEAR_STATE_ON_SCREEN_TRANSITION= Auto Clear State on Screen Transition
+SPEEDRUN_TOOL_NO_GC_AFTER_LOAD_STATE=      No GC after Load State
 SPEEDRUN_TOOL_SAVE_TIME_AND_DEATHS=        Save Time and Deaths
 SPEEDRUN_TOOL_SAVE_EXTENDED_VARIANTS=      Save Extended Variants
 SPEEDRUN_TOOL_SAVE_STATE=                  Save State
@@ -69,7 +70,7 @@ SPEEDRUN_TOOL_RANDOM=     Random
 SPEEDRUN_TOOL_KEYBOARD=                      Keyboard
 SPEEDRUN_TOOL_CONTROLLER=                    Controller
 SPEEDRUN_TOOL_COMBO_HOTKEY_DESCRIPTION=      Binding multiple keys to a control will cause those keys to act as a keycombo
-SPEEDRUN_TOOL_PRESS_DELETE_TO_CLEAR_HOTKEYS= Press Delete/Journal to clear hotkeys 
+SPEEDRUN_TOOL_PRESS_DELETE_TO_CLEAR_HOTKEYS= Press Delete/Journal to clear hotkeys
 SPEEDRUN_TOOL_TOGGLE_HOTKEYS=                Toggle Hotkeys
 SPEEDRUN_TOOL_OPEN_DEBUG_MAP=                Open Debug Map
 SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB=           Clear Room Timer PB and End Point

@@ -68,7 +68,7 @@ public static class SpeedrunToolMenu {
 
                 subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.TimeSummitFlag), ModSettings.TimeSummitFlag).Change(b =>
                     ModSettings.TimeSummitFlag = b));
-                
+
                 subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.TimeHeartCassette), ModSettings.TimeHeartCassette).Change(b =>
                     ModSettings.TimeHeartCassette = b));
 
@@ -86,6 +86,9 @@ public static class SpeedrunToolMenu {
                 subMenu.Add(new TextMenuExt.EnumerableSlider<FreezeAfterLoadStateType>(Dialog.Clean(DialogIds.FreezeAfterLoadState), CreateEnumerableOptions<FreezeAfterLoadStateType>(),
                     ModSettings.FreezeAfterLoadStateType).Change(b =>
                     ModSettings.FreezeAfterLoadStateType = b));
+
+                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.NoGcAfterLoadState), ModSettings.NoGcAfterLoadState).Change(b =>
+                    ModSettings.NoGcAfterLoadState = b));
 
                 subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.SaveTimeAndDeaths), ModSettings.SaveTimeAndDeaths).Change(b =>
                     ModSettings.SaveTimeAndDeaths = b));
@@ -117,7 +120,7 @@ public static class SpeedrunToolMenu {
             new EaseInSubMenu(Dialog.Clean(DialogIds.MoreOptions), false).With(subMenu => {
                 subMenu.Add(new TextMenuExt.EnumerableSlider<TeleportRoomCategory>(Dialog.Clean(DialogIds.TeleportRoomCategory), CreateEnumerableOptions<TeleportRoomCategory>(),
                     ModSettings.TeleportRoomCategory).Change(b => ModSettings.TeleportRoomCategory = b));
-                
+
                 subMenu.Add(new TextMenuExt.IntSlider(Dialog.Clean(DialogIds.RespawnSpeed), 1, 9, ModSettings.RespawnSpeed).Change(i =>
                     ModSettings.RespawnSpeed = i));
 
@@ -126,7 +129,7 @@ public static class SpeedrunToolMenu {
 
                 subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.SkipRestartChapterScreenWipe), ModSettings.SkipRestartChapterScreenWipe).Change(b =>
                     ModSettings.SkipRestartChapterScreenWipe = b));
-                
+
                 subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AllowPauseDuringDeath), ModSettings.AllowPauseDuringDeath).Change(b =>
                     ModSettings.AllowPauseDuringDeath = b));
 

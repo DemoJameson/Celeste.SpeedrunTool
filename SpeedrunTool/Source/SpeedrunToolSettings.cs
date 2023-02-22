@@ -33,6 +33,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public bool AutoLoadStateAfterDeath { get; set; } = true;
     public bool AutoClearStateOnScreenTransition { get; set; } = false;
     public FreezeAfterLoadStateType FreezeAfterLoadStateType { get; set; } = FreezeAfterLoadStateType.On;
+    public bool NoGcAfterLoadState { get; set; } = false;
     public bool SaveTimeAndDeaths { get; set; } = false;
     public bool SaveExtendedVariants { get; set; } = true;
 

@@ -730,6 +730,14 @@ public sealed class SaveLoadAction {
             );
         }
 
+        if (ModUtils.GetType("PandorasBox", "Celeste.Mod.PandorasBox.MarioClearPipeHelper") is { } pipeHelper
+            && pipeHelper.GetFieldInfo("CurrentlyTransportedEntities") is { }) {
+            SafeAdd(
+                (savedValues, _) => SaveStaticMemberValues(savedValues, pipeHelper, "CurrentlyTransportedEntities"),
+                (savedValues, _) => LoadStaticMemberValues(savedValues)
+            );
+        }
+
         // Fixed: Game crashes after save DustSpriteColorController
         SafeAdd(
             (savedValues, _) => SaveStaticMemberValues(savedValues, typeof(DustStyles), "Styles"),

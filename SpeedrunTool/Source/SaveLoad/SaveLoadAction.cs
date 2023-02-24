@@ -730,12 +730,26 @@ public sealed class SaveLoadAction {
             );
         }
 
-        if (ModUtils.GetType("PandorasBox", "Celeste.Mod.PandorasBox.MarioClearPipeHelper") is { } pipeHelper
-            && pipeHelper.GetFieldInfo("CurrentlyTransportedEntities") is { }) {
-            SafeAdd(
-                (savedValues, _) => SaveStaticMemberValues(savedValues, pipeHelper, "CurrentlyTransportedEntities"),
-                (savedValues, _) => LoadStaticMemberValues(savedValues)
-            );
+        if (ModUtils.GetType("PandorasBox", "Celeste.Mod.PandorasBox.MarioClearPipeHelper") is { } pipeHelper) {
+            if (pipeHelper.GetFieldInfo("CurrentlyTransportedEntities") != null) {
+                SafeAdd(
+                    (savedValues, _) => SaveStaticMemberValues(savedValues, pipeHelper, "CurrentlyTransportedEntities"),
+                    (savedValues, _) => {
+                        LoadStaticMemberValues(savedValues);
+                    });
+            }
+
+            if (pipeHelper.GetMethodInfo("AllowComponentsForList") != null && pipeHelper.GetMethodInfo("ShouldAddComponentsForList") != null) {
+                SafeAdd((_, level) => {
+                    if (pipeHelper.InvokeMethod("ShouldAddComponentsForList", level.Entities) as bool? == true) {
+                        pipeHelper.InvokeMethod("AllowComponentsForList", StateManager.Instance.SavedLevel.Entities);
+                    }
+                }, (_, level) => {
+                    if (pipeHelper.InvokeMethod("ShouldAddComponentsForList", StateManager.Instance.SavedLevel.Entities) as bool? == true) {
+                        pipeHelper.InvokeMethod("AllowComponentsForList", level.Entities);
+                    }
+                });
+            }
         }
 
         // Fixed: Game crashes after save DustSpriteColorController

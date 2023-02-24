@@ -60,6 +60,7 @@ public sealed class StateManager {
     public State State { get; private set; } = State.None;
     public bool SavedByTas { get; private set; }
     public bool LoadByTas { get; private set; }
+    public Level SavedLevel => savedLevel;
     private Level savedLevel;
     private SaveData savedSaveData;
     private Task<DeepCloneState> preCloneTask;

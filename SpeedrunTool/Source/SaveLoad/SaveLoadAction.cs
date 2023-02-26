@@ -191,6 +191,7 @@ public sealed class SaveLoadAction {
         DeathTrackerHelper.AddSupport();
         SupportCommunalHelper();
         SupportBrokemiaHelper();
+        StrawberryJamUtils.AddSupport();
         FrostHelperUtils.SupportFrostHelper();
 
         // 放最后，确保收集了所有克隆的 VirtualAssets 与 EventInstance

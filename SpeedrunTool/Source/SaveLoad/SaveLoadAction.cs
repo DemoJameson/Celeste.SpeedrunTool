@@ -6,7 +6,6 @@ using Celeste.Mod.Helpers;
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.Utils;
-using FMOD;
 using FMOD.Studio;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
@@ -29,19 +28,6 @@ public sealed class SaveLoadAction {
     private static Dictionary<Type, FieldInfo[]> simpleStaticFields;
     private static Dictionary<Type, FieldInfo[]> modModuleFields;
 
-    private static readonly HashSet<string> RequireMuteAudioPaths = new() {
-        "event:/game/general/strawberry_get",
-        "event:/game/general/strawberry_laugh",
-        "event:/game/general/strawberry_flyaway",
-        "event:/game/general/seed_complete_main",
-        "event:/game/general/key_get",
-        "event:/game/general/cassette_get",
-        "event:/game/05_mirror_temple/eyewall_destroy",
-        "event:/char/badeline/boss_hug",
-        "event:/char/badeline/boss_laser_fire",
-    };
-
-    private static readonly List<EventInstance> RequireMuteAudios = new();
     private readonly Action clearState;
     private readonly Action<Level> beforeSaveState;
     private readonly Action preCloneEntities;
@@ -102,8 +88,6 @@ public sealed class SaveLoadAction {
             saveLoadAction.savedValues.Clear();
             saveLoadAction.clearState?.Invoke();
         }
-
-        RequireMuteAudios.Clear();
     }
 
     internal static void OnBeforeSaveState(Level level) {
@@ -171,15 +155,9 @@ public sealed class SaveLoadAction {
         }
     }
 
-    [Load]
-    private static void Load() {
-        On.FMOD.Studio.EventDescription.createInstance += EventDescriptionOnCreateInstance;
-    }
-
     [Unload]
     private static void Unload() {
         All.Clear();
-        On.FMOD.Studio.EventDescription.createInstance -= EventDescriptionOnCreateInstance;
     }
 
     public static void InitActions() {
@@ -199,7 +177,7 @@ public sealed class SaveLoadAction {
         SupportInput();
         SupportAudioMusic();
         FixVertexLight();
-        MuteAnnoyingAudios();
+        MuteAudioUtils.AddAction();
         ExternalAction();
         SupportModSessionAndSaveData();
         SupportMaxHelpingHand();
@@ -555,22 +533,6 @@ public sealed class SaveLoadAction {
         );
     }
 
-    private static void MuteAnnoyingAudios() {
-        SafeAdd(loadState: (_, level) => {
-            level.Entities.FindAll<SoundEmitter>().ForEach(emitter => {
-                if (emitter.Source.instance is { } eventInstance) {
-                    eventInstance.setVolume(0f);
-                }
-            });
-
-            foreach (EventInstance sfx in RequireMuteAudios) {
-                sfx.setVolume(0f);
-            }
-
-            RequireMuteAudios.Clear();
-        });
-    }
-
     private static void ExternalAction() {
         SafeAdd(
             saveState: (_, level) => {
@@ -638,18 +600,6 @@ public sealed class SaveLoadAction {
                     }
                 }
             });
-    }
-
-    private static RESULT EventDescriptionOnCreateInstance(On.FMOD.Studio.EventDescription.orig_createInstance orig, EventDescription self,
-        out EventInstance instance) {
-        RESULT result = orig(self, out instance);
-
-        if (StateManager.Instance.IsSaved && instance != null && self.getPath(out string path) == RESULT.OK && path != null &&
-            RequireMuteAudioPaths.Contains(path)) {
-            RequireMuteAudios.Add(instance);
-        }
-
-        return result;
     }
 
     private static void SupportAudioMusic() {

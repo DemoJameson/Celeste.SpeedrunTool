@@ -274,8 +274,11 @@ public sealed class SaveLoadAction {
             List<FieldInfo> instanceFields = new();
 
             FieldInfo[] fieldInfos = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
-            foreach (FieldInfo fieldInfo in fieldInfos.Where(info =>
-                         !info.IsInitOnly && (info.FieldType == typeof(Level) || info.FieldType == typeof(Session)))) {
+            foreach (FieldInfo fieldInfo in fieldInfos.Where(info => {
+                         Type fieldType = info.FieldType;
+                         return !info.IsInitOnly &&
+                                (fieldType == typeof(Level) || fieldType == typeof(Session) || fieldType.IsSameOrSubclassOf(typeof(Entity)) || fieldType == typeof(Vector2));
+                     })) {
                 if (fieldInfo.IsStatic) {
                     staticFields.Add(fieldInfo);
                 } else {

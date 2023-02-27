@@ -193,6 +193,7 @@ public sealed class SaveLoadAction {
         SupportBrokemiaHelper();
         StrawberryJamUtils.AddSupport();
         FrostHelperUtils.SupportFrostHelper();
+        SupportVivHelper();
 
         // 放最后，确保收集了所有克隆的 VirtualAssets 与 EventInstance
         ReloadVirtualAssets();
@@ -277,7 +278,8 @@ public sealed class SaveLoadAction {
             foreach (FieldInfo fieldInfo in fieldInfos.Where(info => {
                          Type fieldType = info.FieldType;
                          return !info.IsInitOnly &&
-                                (fieldType == typeof(Level) || fieldType == typeof(Session) || fieldType.IsSameOrSubclassOf(typeof(Entity)) || fieldType == typeof(Vector2));
+                                (fieldType == typeof(Level) || fieldType == typeof(Session) || fieldType.IsSameOrSubclassOf(typeof(Entity)) ||
+                                 fieldType == typeof(Vector2));
                      })) {
                 if (fieldInfo.IsStatic) {
                     staticFields.Add(fieldInfo);
@@ -688,9 +690,8 @@ public sealed class SaveLoadAction {
             if (pipeHelper.GetFieldInfo("CurrentlyTransportedEntities") != null) {
                 SafeAdd(
                     (savedValues, _) => SaveStaticMemberValues(savedValues, pipeHelper, "CurrentlyTransportedEntities"),
-                    (savedValues, _) => {
-                        LoadStaticMemberValues(savedValues);
-                    });
+                    (savedValues, _) => LoadStaticMemberValues(savedValues)
+                );
             }
 
             if (pipeHelper.GetMethodInfo("AllowComponentsForList") != null && pipeHelper.GetMethodInfo("ShouldAddComponentsForList") != null) {
@@ -1097,6 +1098,86 @@ public sealed class SaveLoadAction {
                         }
                     }
                 });
+        }
+    }
+
+    private static void SupportVivHelper() {
+        if (ModUtils.GetAssembly("VivHelper") is not { } vivHelper) {
+            return;
+        }
+
+        if (vivHelper.GetType("VivHelper.Entities.RefillCancel") is { } refillCancelType) {
+            SafeAdd(
+                (savedValues, _) => SaveStaticMemberValues(savedValues, refillCancelType, "inSpace", "DashRefillRestrict", "DashRestrict",
+                    "StaminaRefillRestrict", "p"),
+                (savedValues, _) => LoadStaticMemberValues(savedValues));
+        }
+
+        if (vivHelper.GetType("VivHelper.Entities.SpeedPowerup") is { } speedPowerupType) {
+            SafeAdd(
+                (savedValues, _) => SaveStaticMemberValues(savedValues, speedPowerupType, "Store", "Launch"),
+                (savedValues, _) => LoadStaticMemberValues(savedValues));
+        }
+
+        if (vivHelper.GetType("VivHelper.Entities.BooMushroom") is { } booMushroomType) {
+            SafeAdd(
+                (savedValues, _) => SaveStaticMemberValues(savedValues, booMushroomType, "color", "mode"),
+                (savedValues, _) => LoadStaticMemberValues(savedValues));
+        }
+
+        if (vivHelper.GetType("VivHelper.Entities.Boosters.BoostFunctions") is { } boostFunctionsType) {
+            SafeAdd(
+                (savedValues, _) => SaveStaticMemberValues(savedValues, boostFunctionsType, "dyn"),
+                (savedValues, _) => LoadStaticMemberValues(savedValues));
+        }
+
+        if (vivHelper.GetType("VivHelper.Entities.Boosters.OrangeBoost") is { } orangeBoost) {
+            SafeAdd(
+                (savedValues, _) => SaveStaticMemberValues(savedValues, orangeBoost, "timer"),
+                (savedValues, _) => LoadStaticMemberValues(savedValues));
+        }
+
+        if (vivHelper.GetType("VivHelper.Entities.Boosters.PinkBoost") is { } pinkBoost) {
+            SafeAdd(
+                (savedValues, _) => SaveStaticMemberValues(savedValues, pinkBoost, "timer"),
+                (savedValues, _) => LoadStaticMemberValues(savedValues));
+        }
+
+        if (vivHelper.GetType("VivHelper.Entities.Boosters.WindBoost") is { } windBoost) {
+            SafeAdd(
+                (savedValues, _) => SaveStaticMemberValues(savedValues, windBoost, "timer"),
+                (savedValues, _) => LoadStaticMemberValues(savedValues));
+        }
+
+        if (vivHelper.GetType("VivHelper.Entities.ExplodeLaunchModifier") is { } explodeLaunchModifierType) {
+            SafeAdd(
+                (savedValues, _) =>
+                    SaveStaticMemberValues(savedValues, explodeLaunchModifierType, "DisableFreeze", "DetectFreeze", "bumperWrapperType"),
+                (savedValues, _) => LoadStaticMemberValues(savedValues));
+        }
+
+        if (vivHelper.GetType("VivHelper.Entities.Blockout") is { } blockoutType) {
+            SafeAdd(
+                (savedValues, _) => SaveStaticMemberValues(savedValues, blockoutType, "alphaFade"),
+                (savedValues, _) => LoadStaticMemberValues(savedValues));
+        }
+
+        if (vivHelper.GetType("VivHelper.MoonHooks") is { } moonHooksType) {
+            SafeAdd(
+                (savedValues, _) => SaveStaticMemberValues(savedValues, moonHooksType, "FloatyFix"),
+                (savedValues, _) => LoadStaticMemberValues(savedValues));
+        }
+
+        if (vivHelper.GetType("VivHelper.HelperEntities") is { } helperEntitiesType) {
+            SafeAdd(
+                (savedValues, _) => SaveStaticMemberValues(savedValues, helperEntitiesType, "AllUpdateHelperEntity"),
+                (savedValues, _) => LoadStaticMemberValues(savedValues));
+        }
+
+        if (vivHelper.GetType("VivHelper.Module__Extensions__Etc.TeleportV2Hooks") is { } teleportV2HooksType) {
+            SafeAdd(
+                (savedValues, _) => SaveStaticMemberValues(savedValues, teleportV2HooksType, "HackedFocusPoint"),
+                (savedValues, _) => LoadStaticMemberValues(savedValues));
         }
     }
 

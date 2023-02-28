@@ -19,9 +19,10 @@ internal static class StrawberryJamUtils {
 
     [Initialize]
     private static void Initialize() {
-        EngineUpdate.Value?.ILHook((cursor, c) => {
+        EngineUpdate.Value?.ILHook((cursor, _) => {
             int localIndex = 0;
-            if (cursor.TryGotoNext(MoveType.Before, i => i.MatchStloc(out localIndex))) {
+            if (cursor.TryGotoNext(MoveType.Before, i => i.MatchLdsfld<Engine>("FreezeTimer"), i => i.MatchStloc(out localIndex))) {
+                cursor.Index++;
                 cursor.Emit(OpCodes.Dup).Emit(OpCodes.Stsfld,
                     typeof(StrawberryJamUtils).GetFieldInfo(nameof(currentOldFreezeTimer)));
 

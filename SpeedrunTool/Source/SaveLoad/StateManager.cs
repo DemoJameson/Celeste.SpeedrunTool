@@ -274,7 +274,11 @@ public sealed class StateManager {
             State = State.None;
         } else {
             FreezeGame(FreezeType.Save);
-            level.Add(new WaitingEntity());
+            if (TasUtils.HideGamePlay) {
+                DoScreenWipe(level);
+            } else {
+                level.Add(new WaitingEntity());
+            }
         }
 
         return true;

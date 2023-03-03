@@ -819,29 +819,12 @@ public sealed class SaveLoadAction {
             );
         }
 
-        if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Effects.BlackholeCustomColors") is { } blackHoleCustomColorsType) {
-            SafeAdd(
-                (savedValues, _) => SaveStaticMemberValues(savedValues, blackHoleCustomColorsType, "colorsMild"),
-                (savedValues, _) => LoadStaticMemberValues(savedValues));
-        }
+        CloneModTypeFields("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Effects.BlackholeCustomColors", "colorsMild");
     }
 
     private static void SupportCrystallineHelper() {
-        if (ModUtils.GetType("CrystallineHelper", "vitmod.VitModule") is not { } vitModuleType) {
-            return;
-        }
-
-        if (ModUtils.GetType("CrystallineHelper", "vitmod.TriggerTrigger") is not { } triggerType) {
-            return;
-        }
-
-        SafeAdd(
-            (savedValues, _) => {
-                SaveStaticMemberValues(savedValues, vitModuleType, "timeStopScaleTimer", "timeStopType", "noMoveScaleTimer");
-                SaveStaticMemberValues(savedValues, triggerType, "collidedEntities");
-            },
-            (savedValues, _) => LoadStaticMemberValues(savedValues)
-        );
+        CloneModTypeFields("CrystallineHelper", "vitmod.VitModule", "timeStopScaleTimer", "timeStopType", "noMoveScaleTimer");
+        CloneModTypeFields("CrystallineHelper", "vitmod.TriggerTrigger", "collidedEntities");
     }
 
     private static void SupportSpringCollab2020() {
@@ -968,11 +951,7 @@ public sealed class SaveLoadAction {
     }
 
     private static void SupportXaphanHelper() {
-        if (ModUtils.GetType("XaphanHelper", "Celeste.Mod.XaphanHelper.Upgrades.SpaceJump") is { } spaceJumpType) {
-            SafeAdd(
-                (savedValues, _) => SaveStaticMemberValues(savedValues, spaceJumpType, "jumpBuffer"),
-                (savedValues, _) => LoadStaticMemberValues(savedValues));
-        }
+        CloneModTypeFields("XaphanHelper", "Celeste.Mod.XaphanHelper.Upgrades.SpaceJump", "jumpBuffer");
     }
 
     private static void SupportIsaGrabBag() {
@@ -985,35 +964,13 @@ public sealed class SaveLoadAction {
         }
 
         // 解决读档后冲进 DreamSpinner 会被刺死
-        if (ModUtils.GetType("IsaGrabBag", "Celeste.Mod.IsaGrabBag.GrabBagModule") is { } grabBagModuleType) {
-            SafeAdd(
-                (savedValues, _) => SaveStaticMemberValues(savedValues, grabBagModuleType, "ZipLineState",
-                    "playerInstance"),
-                (savedValues, _) => LoadStaticMemberValues(savedValues));
-        }
+        CloneModTypeFields("IsaGrabBag", "Celeste.Mod.IsaGrabBag.GrabBagModule", "ZipLineState", "playerInstance");
     }
 
     private static void SupportSpirialisHelper() {
-        if (ModUtils.GetType("SpirialisHelper", "Celeste.Mod.Spirialis.TimePlayerSettings") is { } timePlayerSettings) {
-            SafeAdd(
-                (values, _) => SaveStaticMemberValues(values, timePlayerSettings, "instance", "stoppedX", "stoppedY"),
-                (values, _) => LoadStaticMemberValues(values)
-            );
-        }
-
-        if (ModUtils.GetType("SpirialisHelper", "Celeste.Mod.Spirialis.CustomRainBG") is { } customRainBg) {
-            SafeAdd(
-                (values, _) => SaveStaticMemberValues(values, customRainBg, "timeSinceFreeze"),
-                (values, _) => LoadStaticMemberValues(values)
-            );
-        }
-
-        if (ModUtils.GetType("SpirialisHelper", "Celeste.Mod.Spirialis.BoostCapModifier") is { } boostCapModifier) {
-            SafeAdd(
-                (values, _) => SaveStaticMemberValues(values, boostCapModifier, "xCap", "yCap"),
-                (values, _) => LoadStaticMemberValues(values)
-            );
-        }
+        CloneModTypeFields("SpirialisHelper", "Celeste.Mod.Spirialis.TimePlayerSettings", "instance", "stoppedX", "stoppedY");
+        CloneModTypeFields("SpirialisHelper", "Celeste.Mod.Spirialis.CustomRainBG", "timeSinceFreeze");
+        CloneModTypeFields("SpirialisHelper", "Celeste.Mod.Spirialis.BoostCapModifier", "xCap", "yCap");
 
         if (ModUtils.GetType("SpirialisHelper", "Celeste.Mod.Spirialis.TimeController") is { } timeControllerType) {
             var action = SafeAdd(
@@ -1070,32 +1027,22 @@ public sealed class SaveLoadAction {
     }
 
     private static void SupportCommunalHelper() {
-        if (ModUtils.GetType("CommunalHelper", "Celeste.Mod.CommunalHelper.DashStates.DreamTunnelDash") is { } dreamTunnelDashType) {
-            SafeAdd(
-                (savedValues, _) => SaveStaticMemberValues(savedValues, dreamTunnelDashType,
-                    "StDreamTunnelDash",
-                    "hasDreamTunnelDash",
-                    "dreamTunnelDashAttacking",
-                    "dreamTunnelDashTimer",
-                    "nextDashFeather",
-                    "FeatherMode",
-                    "overrideDreamDashCheck",
-                    "DreamTrailColorIndex"
-                ),
-                (savedValues, _) => LoadStaticMemberValues(savedValues));
-        }
+        CloneModTypeFields("CommunalHelper", "Celeste.Mod.CommunalHelper.DashStates.DreamTunnelDash",
+            "StDreamTunnelDash",
+            "hasDreamTunnelDash",
+            "dreamTunnelDashAttacking",
+            "dreamTunnelDashTimer",
+            "nextDashFeather",
+            "FeatherMode",
+            "overrideDreamDashCheck",
+            "DreamTrailColorIndex");
 
-        if (ModUtils.GetType("CommunalHelper", "Celeste.Mod.CommunalHelper.DashStates.SeekerDash") is { } seekerDashType) {
-            SafeAdd(
-                (savedValues, _) => SaveStaticMemberValues(savedValues, seekerDashType,
-                    "hasSeekerDash",
-                    "seekerDashAttacking",
-                    "seekerDashTimer",
-                    "seekerDashLaunched",
-                    "launchPossible"
-                ),
-                (savedValues, _) => LoadStaticMemberValues(savedValues));
-        }
+        CloneModTypeFields("CommunalHelper", "Celeste.Mod.CommunalHelper.DashStates.SeekerDash",
+            "hasSeekerDash",
+            "seekerDashAttacking",
+            "seekerDashTimer",
+            "seekerDashLaunched",
+            "launchPossible");
     }
 
     private static void SupportBrokemiaHelper() {
@@ -1120,79 +1067,18 @@ public sealed class SaveLoadAction {
             return;
         }
 
-        if (vivHelper.GetType("VivHelper.Entities.RefillCancel") is { } refillCancelType) {
-            SafeAdd(
-                (savedValues, _) => SaveStaticMemberValues(savedValues, refillCancelType, "inSpace", "DashRefillRestrict", "DashRestrict",
-                    "StaminaRefillRestrict", "p"),
-                (savedValues, _) => LoadStaticMemberValues(savedValues));
-        }
-
-        if (vivHelper.GetType("VivHelper.Entities.SpeedPowerup") is { } speedPowerupType) {
-            SafeAdd(
-                (savedValues, _) => SaveStaticMemberValues(savedValues, speedPowerupType, "Store", "Launch"),
-                (savedValues, _) => LoadStaticMemberValues(savedValues));
-        }
-
-        if (vivHelper.GetType("VivHelper.Entities.BooMushroom") is { } booMushroomType) {
-            SafeAdd(
-                (savedValues, _) => SaveStaticMemberValues(savedValues, booMushroomType, "color", "mode"),
-                (savedValues, _) => LoadStaticMemberValues(savedValues));
-        }
-
-        if (vivHelper.GetType("VivHelper.Entities.Boosters.BoostFunctions") is { } boostFunctionsType) {
-            SafeAdd(
-                (savedValues, _) => SaveStaticMemberValues(savedValues, boostFunctionsType, "dyn"),
-                (savedValues, _) => LoadStaticMemberValues(savedValues));
-        }
-
-        if (vivHelper.GetType("VivHelper.Entities.Boosters.OrangeBoost") is { } orangeBoost) {
-            SafeAdd(
-                (savedValues, _) => SaveStaticMemberValues(savedValues, orangeBoost, "timer"),
-                (savedValues, _) => LoadStaticMemberValues(savedValues));
-        }
-
-        if (vivHelper.GetType("VivHelper.Entities.Boosters.PinkBoost") is { } pinkBoost) {
-            SafeAdd(
-                (savedValues, _) => SaveStaticMemberValues(savedValues, pinkBoost, "timer"),
-                (savedValues, _) => LoadStaticMemberValues(savedValues));
-        }
-
-        if (vivHelper.GetType("VivHelper.Entities.Boosters.WindBoost") is { } windBoost) {
-            SafeAdd(
-                (savedValues, _) => SaveStaticMemberValues(savedValues, windBoost, "timer"),
-                (savedValues, _) => LoadStaticMemberValues(savedValues));
-        }
-
-        if (vivHelper.GetType("VivHelper.Entities.ExplodeLaunchModifier") is { } explodeLaunchModifierType) {
-            SafeAdd(
-                (savedValues, _) =>
-                    SaveStaticMemberValues(savedValues, explodeLaunchModifierType, "DisableFreeze", "DetectFreeze", "bumperWrapperType"),
-                (savedValues, _) => LoadStaticMemberValues(savedValues));
-        }
-
-        if (vivHelper.GetType("VivHelper.Entities.Blockout") is { } blockoutType) {
-            SafeAdd(
-                (savedValues, _) => SaveStaticMemberValues(savedValues, blockoutType, "alphaFade"),
-                (savedValues, _) => LoadStaticMemberValues(savedValues));
-        }
-
-        if (vivHelper.GetType("VivHelper.MoonHooks") is { } moonHooksType) {
-            SafeAdd(
-                (savedValues, _) => SaveStaticMemberValues(savedValues, moonHooksType, "FloatyFix"),
-                (savedValues, _) => LoadStaticMemberValues(savedValues));
-        }
-
-        if (vivHelper.GetType("VivHelper.HelperEntities") is { } helperEntitiesType) {
-            SafeAdd(
-                (savedValues, _) => SaveStaticMemberValues(savedValues, helperEntitiesType, "AllUpdateHelperEntity"),
-                (savedValues, _) => LoadStaticMemberValues(savedValues));
-        }
-
-        if (vivHelper.GetType("VivHelper.Module__Extensions__Etc.TeleportV2Hooks") is { } teleportV2HooksType) {
-            SafeAdd(
-                (savedValues, _) => SaveStaticMemberValues(savedValues, teleportV2HooksType, "HackedFocusPoint"),
-                (savedValues, _) => LoadStaticMemberValues(savedValues));
-        }
+        CloneModTypeFields("VivHelper", "VivHelper.Entities.RefillCancel", "inSpace", "DashRefillRestrict", "DashRestrict", "StaminaRefillRestrict", "p");
+        CloneModTypeFields("VivHelper", "VivHelper.Entities.SpeedPowerup", "Store", "Launch");
+        CloneModTypeFields("VivHelper", "VivHelper.Entities.BooMushroom", "color", "mode");
+        CloneModTypeFields("VivHelper", "VivHelper.Entities.Boosters.BoostFunctions", "dyn");
+        CloneModTypeFields("VivHelper", "VivHelper.Entities.Boosters.OrangeBoost", "timer");
+        CloneModTypeFields("VivHelper", "VivHelper.Entities.Boosters.PinkBoost", "timer");
+        CloneModTypeFields("VivHelper", "VivHelper.Entities.Boosters.WindBoost", "timer");
+        CloneModTypeFields("VivHelper", "VivHelper.Entities.ExplodeLaunchModifier", "DisableFreeze", "DetectFreeze", "bumperWrapperType");
+        CloneModTypeFields("VivHelper", "VivHelper.Entities.Blockout", "alphaFade");
+        CloneModTypeFields("VivHelper", "VivHelper.MoonHooks", "FloatyFix");
+        CloneModTypeFields("VivHelper", "VivHelper.HelperEntities", "AllUpdateHelperEntity");
+        CloneModTypeFields("VivHelper", "VivHelper.Module__Extensions__Etc.TeleportV2Hooks", "HackedFocusPoint");
     }
 
     private static void ReloadVirtualAssets() {
@@ -1232,5 +1118,13 @@ public sealed class SaveLoadAction {
             },
             preCloneEntities: () => ClonedEventInstancesWhenPreClone.Clear()
         );
+    }
+
+    private static void CloneModTypeFields(string modName, string typeFullName, params string[] fields) {
+        if (ModUtils.GetType(modName, typeFullName) is { } modType) {
+            SafeAdd(
+                (savedValues, _) => SaveStaticMemberValues(savedValues, modType, fields),
+                (savedValues, _) => LoadStaticMemberValues(savedValues));
+        }
     }
 }

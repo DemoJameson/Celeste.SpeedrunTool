@@ -996,7 +996,21 @@ public sealed class SaveLoadAction {
     private static void SupportSpirialisHelper() {
         if (ModUtils.GetType("SpirialisHelper", "Celeste.Mod.Spirialis.TimePlayerSettings") is { } timePlayerSettings) {
             SafeAdd(
-                (values, _) => SaveStaticMemberValues(values, timePlayerSettings, "instance"),
+                (values, _) => SaveStaticMemberValues(values, timePlayerSettings, "instance", "stoppedX", "stoppedY"),
+                (values, _) => LoadStaticMemberValues(values)
+            );
+        }
+
+        if (ModUtils.GetType("SpirialisHelper", "Celeste.Mod.Spirialis.CustomRainBG") is { } customRainBg) {
+            SafeAdd(
+                (values, _) => SaveStaticMemberValues(values, customRainBg, "timeSinceFreeze"),
+                (values, _) => LoadStaticMemberValues(values)
+            );
+        }
+
+        if (ModUtils.GetType("SpirialisHelper", "Celeste.Mod.Spirialis.BoostCapModifier") is { } boostCapModifier) {
+            SafeAdd(
+                (values, _) => SaveStaticMemberValues(values, boostCapModifier, "xCap", "yCap"),
                 (values, _) => LoadStaticMemberValues(values)
             );
         }

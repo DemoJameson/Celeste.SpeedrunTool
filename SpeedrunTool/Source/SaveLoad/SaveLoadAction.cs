@@ -278,7 +278,9 @@ public sealed class SaveLoadAction {
             foreach (FieldInfo fieldInfo in fieldInfos.Where(info => {
                          Type fieldType = info.FieldType;
                          return !info.IsInitOnly &&
-                                (fieldType == typeof(Level) || fieldType == typeof(Session) || fieldType.IsSameOrSubclassOf(typeof(Entity)) ||
+                                (fieldType == typeof(Level) ||
+                                 fieldType == typeof(Session) ||
+                                 fieldType.IsSameOrSubclassOf(typeof(Entity)) && !fieldType.IsSubclassOf(typeof(Oui)) ||
                                  fieldType == typeof(Vector2));
                      })) {
                 if (fieldInfo.IsStatic) {

@@ -80,6 +80,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public List<Keys> KeyboardSwitchAutoLoadState { get; set; } = Hotkey.SwitchAutoLoadState.GetDefaultKeys();
     public List<Keys> KeyboardSpawnTowerViewer { get; set; } = Hotkey.SpawnTowerViewer.GetDefaultKeys();
     public List<Keys> KeyboardToggleFullscreen { get; set; } = Hotkey.ToggleFullscreen.GetDefaultKeys();
+    public List<Keys> KeyboardDumpRoomTimes { get; set; } = Hotkey.DumpRoomTimes.GetDefaultKeys();
 
     public List<Buttons> ControllerToggleHotkeys { get; set; } = new List<Buttons>();
     public List<Buttons> ControllerSaveState { get; set; } = new List<Buttons>();
@@ -100,6 +101,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public List<Buttons> ControllerSwitchAutoLoadState { get; set; } = new List<Buttons>();
     public List<Buttons> ControllerSpawnTowerViewer { get; set; } = new List<Buttons>();
     public List<Buttons> ControllerToggleFullscreen { get; set; } = new List<Buttons>();
+    public List<Buttons> ControllerDumpRoomTimes { get; set; }  = new List<Buttons>();
 
     #endregion HotkeyConfig
 }

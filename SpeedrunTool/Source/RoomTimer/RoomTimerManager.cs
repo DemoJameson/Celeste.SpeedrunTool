@@ -3,6 +3,8 @@ using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
+using System.IO;
+using System.Text;
 
 namespace Celeste.Mod.SpeedrunTool.RoomTimer;
 
@@ -296,6 +298,48 @@ public static class RoomTimerManager {
     private static void TryTurnOffRoomTimer() {
         if (ModSettings.AutoResetRoomTimer) {
             SwitchRoomTimer(RoomTimerType.Off);
+        }
+    }
+
+    [Command("srt_dumproomtimes", "dump room timer data to a .csv file")]
+    public static void DumpRoomTimes() {
+        if (Engine.Scene is Level) {
+            RoomTimerData roomTimerData = (ModSettings.RoomTimerType is RoomTimerType.NextRoom) ? NextRoomTimerData : CurrentRoomTimerData;
+            string timeKeyPrefix = roomTimerData.GetTimeKeyPrefix;
+            long lastSplitTime = 0;
+
+            StringBuilder sb = new();
+
+            // Header row
+            sb.Append("Room Number,Split,Segment,Best Split");
+
+            for (int roomNumber = 1; roomNumber <= Math.Max(roomTimerData.GetThisRunTimes.Count, roomTimerData.GetPbTimes.Count); roomNumber++) {
+                string timeKey = timeKeyPrefix + roomNumber;
+
+                // Room Number
+                sb.Append($"\n{roomNumber},");
+
+                // Split,Segment
+                if (roomTimerData.GetThisRunTimes.TryGetValue(timeKey, out long splitTime)) {
+                    sb.Append($"{RoomTimerData.FormatTime(splitTime, false)},{RoomTimerData.FormatTime(splitTime - lastSplitTime, false)},");
+                    lastSplitTime = splitTime;
+                } else {
+                    sb.Append(",,");
+                }
+
+                // Best Split
+                if (roomTimerData.GetPbTimes.TryGetValue(timeKey, out long pbTime)) {
+                    sb.Append(RoomTimerData.FormatTime(pbTime, false));
+                }
+            }
+
+            Directory.CreateDirectory(Path.Combine(Everest.PathGame, "SRToolTimeDumps"));
+            using (StreamWriter writer = File.CreateText(Path.Combine(Everest.PathGame, "SRToolTimeDumps", $"{DateTime.Now:yyyyMMdd_HHmmss}.csv"))) {
+                writer.WriteLine(sb.ToString());
+            };
+            Engine.Commands.Log("Times successfully dumped");
+        } else {
+            Engine.Commands.Log("Must be in a level to dump times");
         }
     }
 }

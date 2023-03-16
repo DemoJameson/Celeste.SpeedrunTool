@@ -31,6 +31,9 @@ internal class RoomTimerData {
     private bool IsNextRoomType => roomTimerType == RoomTimerType.NextRoom;
     public bool IsCompleted => timerState == TimerState.Completed;
     public bool BeatBestTime => IsCompleted && (GetSelectedRoomTime < GetSelectedLastPbTime || GetSelectedLastPbTime == 0);
+    public Dictionary<string, long> GetThisRunTimes => thisRunTimes;
+    public Dictionary<string, long> GetPbTimes => pbTimes;
+    public string GetTimeKeyPrefix => timeKeyPrefix;
 
     private void UpdateTimeKeys(Level level) {
         if (timeKeyPrefix == "") {
@@ -171,7 +174,7 @@ internal class RoomTimerData {
         lastPbTimes.Clear();
     }
 
-    private static string FormatTime(long time, bool isPbTime) {
+    public static string FormatTime(long time, bool isPbTime) {
         if (time == 0 && isPbTime) {
             return "";
         }

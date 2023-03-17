@@ -7,12 +7,12 @@ internal class RoomTimerData {
     private long lastPbTime;
     private long time;
 
-    private readonly Dictionary<string, long> thisRunTimes = new();
-    private readonly Dictionary<string, long> pbTimes = new();
+    public Dictionary<string, long> ThisRunTimes { get; private set; } = new();
+    public Dictionary<string, long> PbTimes { get; private set; } = new();
     private readonly Dictionary<string, long> lastPbTimes = new();
     private readonly RoomTimerType roomTimerType;
     private int roomNumber;
-    private string timeKeyPrefix = "";
+    public string TimeKeyPrefix { get; private set; } = "";
     private string thisRunTimeKey = "";
     private string pbTimeKey = "";
     private TimerState timerState;
@@ -23,30 +23,27 @@ internal class RoomTimerData {
         ResetTime();
     }
 
-    public long GetSelectedRoomTime => IsCompleted ? thisRunTimes.GetValueOrDefault(pbTimeKey, 0) : time;
-    public long GetSelectedPbTime => pbTimes.GetValueOrDefault(pbTimeKey, 0);
+    public long GetSelectedRoomTime => IsCompleted ? ThisRunTimes.GetValueOrDefault(pbTimeKey, 0) : time;
+    public long GetSelectedPbTime => PbTimes.GetValueOrDefault(pbTimeKey, 0);
     public long GetSelectedLastPbTime => lastPbTimes.GetValueOrDefault(pbTimeKey, 0);
     public string TimeString => FormatTime(GetSelectedRoomTime, false);
     public string PbTimeString => FormatTime(GetSelectedPbTime, true);
     private bool IsNextRoomType => roomTimerType == RoomTimerType.NextRoom;
     public bool IsCompleted => timerState == TimerState.Completed;
     public bool BeatBestTime => IsCompleted && (GetSelectedRoomTime < GetSelectedLastPbTime || GetSelectedLastPbTime == 0);
-    public Dictionary<string, long> GetThisRunTimes => thisRunTimes;
-    public Dictionary<string, long> GetPbTimes => pbTimes;
-    public string GetTimeKeyPrefix => timeKeyPrefix;
 
     private void UpdateTimeKeys(Level level) {
-        if (timeKeyPrefix == "") {
+        if (TimeKeyPrefix == "") {
             Session session = level.Session;
-            timeKeyPrefix = session.Area + session.Level;
+            TimeKeyPrefix = session.Area + session.Level;
         }
 
         if (!EndPoint.IsExist) {
-            pbTimeKey = timeKeyPrefix + ModSettings.NumberOfRooms;
-            thisRunTimeKey = timeKeyPrefix + roomNumber;
+            pbTimeKey = TimeKeyPrefix + ModSettings.NumberOfRooms;
+            thisRunTimeKey = TimeKeyPrefix + roomNumber;
         } else {
-            pbTimeKey = timeKeyPrefix + "EndPoint";
-            thisRunTimeKey = timeKeyPrefix + "EndPoint";
+            pbTimeKey = TimeKeyPrefix + "EndPoint";
+            thisRunTimeKey = TimeKeyPrefix + "EndPoint";
         }
     }
 
@@ -92,10 +89,10 @@ internal class RoomTimerData {
             case TimerState.Timing:
                 // if not using endpoint/room id, track this run's time and pb times for each room number
                 if (!EndPoint.IsExist) {
-                    thisRunTimes[thisRunTimeKey] = time;
-                    lastPbTime = pbTimes.GetValueOrDefault(thisRunTimeKey, 0);
+                    ThisRunTimes[thisRunTimeKey] = time;
+                    lastPbTime = PbTimes.GetValueOrDefault(thisRunTimeKey, 0);
                     if (time < lastPbTime || lastPbTime == 0) {
-                        pbTimes[thisRunTimeKey] = time;
+                        PbTimes[thisRunTimeKey] = time;
                     }
 
                     // don't overflow room number at level end
@@ -109,18 +106,18 @@ internal class RoomTimerData {
 
                     // preserve behavior of reporting the finish time on level end even if number of rooms is too large
                     if (level is {Completed: true} && roomNumber < ModSettings.NumberOfRooms) {
-                        thisRunTimes[pbTimeKey] = time;
-                        lastPbTime = pbTimes.GetValueOrDefault(pbTimeKey, 0);
+                        ThisRunTimes[pbTimeKey] = time;
+                        lastPbTime = PbTimes.GetValueOrDefault(pbTimeKey, 0);
                         if (time < lastPbTime || lastPbTime == 0) {
-                            pbTimes[pbTimeKey] = time;
+                            PbTimes[pbTimeKey] = time;
                         }
                     }
                 } else if (endPoint || level is {Completed: true} || EndPoint.IsReachedRoomIdEndPoint) {
                     // if using endpoint/room id, ignore room count and only track a single complete time and pb time
-                    thisRunTimes[thisRunTimeKey] = time;
-                    lastPbTime = pbTimes.GetValueOrDefault(thisRunTimeKey, 0);
+                    ThisRunTimes[thisRunTimeKey] = time;
+                    lastPbTime = PbTimes.GetValueOrDefault(thisRunTimeKey, 0);
                     if (time < lastPbTime || lastPbTime == 0) {
-                        pbTimes[thisRunTimeKey] = time;
+                        PbTimes[thisRunTimeKey] = time;
                     }
 
                     timerState = TimerState.Completed;
@@ -134,15 +131,15 @@ internal class RoomTimerData {
             case TimerState.Completed:
                 // if not using endpoint/room id, still track room times in the background
                 if (!EndPoint.IsExist) {
-                    thisRunTimes[thisRunTimeKey] = time;
+                    ThisRunTimes[thisRunTimeKey] = time;
                     // don't overflow room number at level end
                     if (level is {Completed: false}) {
                         roomNumber++;
                     }
 
-                    lastPbTime = pbTimes.GetValueOrDefault(thisRunTimeKey, 0);
+                    lastPbTime = PbTimes.GetValueOrDefault(thisRunTimeKey, 0);
                     if (time < lastPbTime || lastPbTime == 0) {
-                        pbTimes[thisRunTimeKey] = time;
+                        PbTimes[thisRunTimeKey] = time;
                     }
                 }
 
@@ -153,24 +150,24 @@ internal class RoomTimerData {
     }
 
     public void ResetTime() {
-        foreach (KeyValuePair<string, long> timePair in pbTimes) {
+        foreach (KeyValuePair<string, long> timePair in PbTimes) {
             lastPbTimes[timePair.Key] = timePair.Value;
         }
 
-        timeKeyPrefix = "";
+        TimeKeyPrefix = "";
         thisRunTimeKey = "";
         pbTimeKey = "";
         timerState = IsNextRoomType ? TimerState.WaitToStart : TimerState.Timing;
         roomNumber = 1;
         time = 0;
         lastPbTime = 0;
-        thisRunTimes.Clear();
+        ThisRunTimes.Clear();
         hitEndPoint = false;
     }
 
     public void Clear() {
         ResetTime();
-        pbTimes.Clear();
+        PbTimes.Clear();
         lastPbTimes.Clear();
     }
 

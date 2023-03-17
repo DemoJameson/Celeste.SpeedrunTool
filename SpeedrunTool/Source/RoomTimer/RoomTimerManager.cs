@@ -312,7 +312,7 @@ public static class RoomTimerManager {
 
     public static void DumpRoomTimes() {
         RoomTimerData roomTimerData = (ModSettings.RoomTimerType is RoomTimerType.NextRoom) ? NextRoomTimerData : CurrentRoomTimerData;
-        string timeKeyPrefix = roomTimerData.GetTimeKeyPrefix;
+        string timeKeyPrefix = roomTimerData.TimeKeyPrefix;
         long lastSplitTime = 0;
 
         StringBuilder sb = new();
@@ -320,14 +320,14 @@ public static class RoomTimerManager {
         // Header row
         sb.Append("Room Number,Split,Segment,Best Split");
 
-        for (int roomNumber = 1; roomNumber <= Math.Max(roomTimerData.GetThisRunTimes.Count, roomTimerData.GetPbTimes.Count); roomNumber++) {
+        for (int roomNumber = 1; roomNumber <= Math.Max(roomTimerData.ThisRunTimes.Count, roomTimerData.PbTimes.Count); roomNumber++) {
             string timeKey = timeKeyPrefix + roomNumber;
 
             // Room Number
             sb.Append($"\n{roomNumber},");
 
             // Split,Segment
-            if (roomTimerData.GetThisRunTimes.TryGetValue(timeKey, out long splitTime)) {
+            if (roomTimerData.ThisRunTimes.TryGetValue(timeKey, out long splitTime)) {
                 sb.Append($"{RoomTimerData.FormatTime(splitTime, false)},{RoomTimerData.FormatTime(splitTime - lastSplitTime, false)},");
                 lastSplitTime = splitTime;
             } else {
@@ -335,7 +335,7 @@ public static class RoomTimerManager {
             }
 
             // Best Split
-            if (roomTimerData.GetPbTimes.TryGetValue(timeKey, out long pbTime)) {
+            if (roomTimerData.PbTimes.TryGetValue(timeKey, out long pbTime)) {
                 sb.Append(RoomTimerData.FormatTime(pbTime, false));
             }
         }

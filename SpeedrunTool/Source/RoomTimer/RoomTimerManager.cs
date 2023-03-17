@@ -95,12 +95,12 @@ public static class RoomTimerManager {
         Hotkey.SetEndPoint.RegisterPressedAction(scene => EndPoint.SetEndPoint(scene, false));
         Hotkey.SetAdditionalEndPoint.RegisterPressedAction(scene => EndPoint.SetEndPoint(scene, true));
 
-        Hotkey.DumpRoomTimes.RegisterPressedAction(scene => {
+        Hotkey.ExportRoomTimes.RegisterPressedAction(scene => {
             if (scene is Level) {
-                DumpRoomTimes();
-                PopupMessageUtils.Show(DialogIds.DumpRoomTimesSuccessTooltip.DialogClean(), DialogIds.DumpRoomTimesSuccessDialog);
+                ExportRoomTimes();
+                PopupMessageUtils.Show(DialogIds.ExportRoomTimesSuccessTooltip.DialogClean(), DialogIds.ExportRoomTimesSuccessDialog);
             } else {
-                PopupMessageUtils.Show(DialogIds.DumpRoomTimesFailTooltip.DialogClean(), DialogIds.DumpRoomTimesFailDialog);
+                PopupMessageUtils.Show(DialogIds.ExportRoomTimesFailTooltip.DialogClean(), DialogIds.ExportRoomTimesFailDialog);
             }
         });
     }
@@ -310,7 +310,7 @@ public static class RoomTimerManager {
         }
     }
 
-    public static void DumpRoomTimes() {
+    public static void ExportRoomTimes() {
         RoomTimerData roomTimerData = (ModSettings.RoomTimerType is RoomTimerType.NextRoom) ? NextRoomTimerData : CurrentRoomTimerData;
         string timeKeyPrefix = roomTimerData.TimeKeyPrefix;
         long lastSplitTime = 0;
@@ -340,19 +340,19 @@ public static class RoomTimerManager {
             }
         }
 
-        Directory.CreateDirectory(Path.Combine(Everest.PathGame, "SRToolTimeDumps"));
-        using (StreamWriter writer = File.CreateText(Path.Combine(Everest.PathGame, "SRToolTimeDumps", $"{DateTime.Now:yyyyMMdd_HHmmss}.csv"))) {
+        Directory.CreateDirectory(Path.Combine(Everest.PathGame, "SRTool_RoomTimeExports"));
+        using (StreamWriter writer = File.CreateText(Path.Combine(Everest.PathGame, "SRTool_RoomTimeExports", $"{DateTime.Now:yyyyMMdd_HHmmss}.csv"))) {
             writer.WriteLine(sb.ToString());
         };
     }
 
-    [Command("srt_dumproomtimes", "dump room timer data to a .csv file")]
-    public static void CmdDumpRoomTimes() {
+    [Command("srt_exportroomtimes", "export room timer data to a .csv file")]
+    public static void CmdExportRoomTimes() {
         if (Engine.Scene is Level) {
-            DumpRoomTimes();
-            Engine.Commands.Log(DialogIds.DumpRoomTimesSuccessTooltip.DialogClean());
+            ExportRoomTimes();
+            Engine.Commands.Log(DialogIds.ExportRoomTimesSuccessTooltip.DialogClean());
         } else {
-            Engine.Commands.Log(DialogIds.DumpRoomTimesFailTooltip.DialogClean());
+            Engine.Commands.Log(DialogIds.ExportRoomTimesFailTooltip.DialogClean());
         }
     }
 }

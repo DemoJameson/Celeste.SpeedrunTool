@@ -38,6 +38,7 @@ public static class RoomTimerManager {
         On.Celeste.HeartGem.RegisterAsCollected += HeartGemOnRegisterAsCollected;
         On.Celeste.SaveData.RegisterCassette += SaveDataOnRegisterCassette;
         On.Celeste.LevelExit.ctor += LevelExitOnCtor;
+        IL.Celeste.AutoSplitterInfo.Update += OverwriteAutosplitterChapterTime;
         TryTurnOffRoomTimer();
         RegisterHotkeys();
     }
@@ -51,6 +52,7 @@ public static class RoomTimerManager {
         On.Celeste.HeartGem.RegisterAsCollected -= HeartGemOnRegisterAsCollected;
         On.Celeste.SaveData.RegisterCassette += SaveDataOnRegisterCassette;
         On.Celeste.LevelExit.ctor -= LevelExitOnCtor;
+        IL.Celeste.AutoSplitterInfo.Update -= OverwriteAutosplitterChapterTime;
     }
 
     private static void RegisterHotkeys() {
@@ -296,6 +298,19 @@ public static class RoomTimerManager {
     private static void TryTurnOffRoomTimer() {
         if (ModSettings.AutoResetRoomTimer) {
             SwitchRoomTimer(RoomTimerType.Off);
+        }
+    }
+
+    private static void OverwriteAutosplitterChapterTime(ILContext il) {
+        ILCursor cursor = new(il);
+
+        if (cursor.TryGotoNext(MoveType.After, instr => instr.MatchLdfld<Session>("Time"))) {
+            cursor.EmitDelegate<Func<long, long>>((origTime) => {
+                if (ModSettings.Enabled && ModSettings.RoomTimerType is not RoomTimerType.Off) {
+                    return (ModSettings.RoomTimerType is RoomTimerType.NextRoom) ? NextRoomTimerData.Time : CurrentRoomTimerData.Time;
+                }
+                return origTime;
+            });
         }
     }
 }

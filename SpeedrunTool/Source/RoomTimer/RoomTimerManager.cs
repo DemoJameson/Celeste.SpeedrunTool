@@ -318,9 +318,9 @@ public static class RoomTimerManager {
         StringBuilder sb = new();
 
         // Header row
-        sb.Append("Room Number,Split,Segment,Best Split");
+        sb.Append("Room Number,Split,Segment,Best Split,Best Segment");
 
-        for (int roomNumber = 1; roomNumber <= Math.Max(roomTimerData.ThisRunTimes.Count, roomTimerData.PbTimes.Count); roomNumber++) {
+        for (int roomNumber = 1; roomNumber <= Math.Max(roomTimerData.ThisRunTimes.Count, Math.Max(roomTimerData.PbTimes.Count, roomTimerData.BestSegments.Count)); roomNumber++) {
             string timeKey = timeKeyPrefix + roomNumber;
 
             // Room Number
@@ -334,9 +334,16 @@ public static class RoomTimerManager {
                 sb.Append(",,");
             }
 
-            // Best Split
+            // Best Split,
             if (roomTimerData.PbTimes.TryGetValue(timeKey, out long pbTime)) {
-                sb.Append(RoomTimerData.FormatTime(pbTime, false));
+                sb.Append($"{RoomTimerData.FormatTime(pbTime, false)},");
+            } else {
+                sb.Append(",");
+            }
+
+            // Best Segment
+            if (roomTimerData.BestSegments.TryGetValue(timeKey, out long bestSegment)) {
+                sb.Append(RoomTimerData.FormatTime(bestSegment, false));
             }
         }
 

@@ -6,15 +6,19 @@ namespace Celeste.Mod.SpeedrunTool.RoomTimer;
 internal class RoomTimerData {
     private long lastPbTime;
     private long time;
+    private long lastBestSegment;
+    private long prevRoomTime;
 
     public Dictionary<string, long> ThisRunTimes { get; private set; } = new();
     public Dictionary<string, long> PbTimes { get; private set; } = new();
     private readonly Dictionary<string, long> lastPbTimes = new();
+    public Dictionary<string, long> BestSegments { get; private set; } = new();
     private readonly RoomTimerType roomTimerType;
     private int roomNumber;
     public string TimeKeyPrefix { get; private set; } = "";
     private string thisRunTimeKey = "";
     private string pbTimeKey = "";
+    private string thisRunPrevRoomTimeKey = "";
     private TimerState timerState;
     private bool hitEndPoint = false;
 
@@ -41,9 +45,11 @@ internal class RoomTimerData {
         if (!EndPoint.IsExist) {
             pbTimeKey = TimeKeyPrefix + ModSettings.NumberOfRooms;
             thisRunTimeKey = TimeKeyPrefix + roomNumber;
+            thisRunPrevRoomTimeKey = TimeKeyPrefix + (roomNumber - 1);
         } else {
             pbTimeKey = TimeKeyPrefix + "EndPoint";
             thisRunTimeKey = TimeKeyPrefix + "EndPoint";
+            thisRunPrevRoomTimeKey = TimeKeyPrefix + "EndPoint";
         }
     }
 
@@ -87,12 +93,18 @@ internal class RoomTimerData {
 
                 break;
             case TimerState.Timing:
-                // if not using endpoint/room id, track this run's time and pb times for each room number
+                // if not using endpoint/room id, track this run's time, pb times, and best segments for each room number
                 if (!EndPoint.IsExist) {
                     ThisRunTimes[thisRunTimeKey] = time;
                     lastPbTime = PbTimes.GetValueOrDefault(thisRunTimeKey, 0);
                     if (time < lastPbTime || lastPbTime == 0) {
                         PbTimes[thisRunTimeKey] = time;
+                    }
+
+                    lastBestSegment = BestSegments.GetValueOrDefault(thisRunTimeKey, 0);
+                    prevRoomTime = ThisRunTimes.GetValueOrDefault(thisRunPrevRoomTimeKey, 0);
+                    if (time - prevRoomTime < lastBestSegment || lastBestSegment == 0) {
+                        BestSegments[thisRunTimeKey] = time - prevRoomTime;
                     }
 
                     // don't overflow room number at level end
@@ -111,13 +123,25 @@ internal class RoomTimerData {
                         if (time < lastPbTime || lastPbTime == 0) {
                             PbTimes[pbTimeKey] = time;
                         }
+
+                        lastBestSegment = BestSegments.GetValueOrDefault(pbTimeKey, 0);
+                        prevRoomTime = ThisRunTimes.GetValueOrDefault(thisRunPrevRoomTimeKey, 0);
+                        if (time - prevRoomTime < lastBestSegment || lastBestSegment == 0) {
+                            BestSegments[pbTimeKey] = time - prevRoomTime;
+                        }
                     }
                 } else if (endPoint || level is {Completed: true} || EndPoint.IsReachedRoomIdEndPoint) {
-                    // if using endpoint/room id, ignore room count and only track a single complete time and pb time
+                    // if using endpoint/room id, ignore room count and only track a single complete time, pb time and best segment
                     ThisRunTimes[thisRunTimeKey] = time;
                     lastPbTime = PbTimes.GetValueOrDefault(thisRunTimeKey, 0);
                     if (time < lastPbTime || lastPbTime == 0) {
                         PbTimes[thisRunTimeKey] = time;
+                    }
+
+                    lastBestSegment = BestSegments.GetValueOrDefault(thisRunTimeKey, 0);
+                    prevRoomTime = ThisRunTimes.GetValueOrDefault(thisRunPrevRoomTimeKey, 0);
+                    if (time - prevRoomTime < lastBestSegment || lastBestSegment == 0) {
+                        BestSegments[thisRunTimeKey] = time - prevRoomTime;
                     }
 
                     timerState = TimerState.Completed;
@@ -141,6 +165,12 @@ internal class RoomTimerData {
                     if (time < lastPbTime || lastPbTime == 0) {
                         PbTimes[thisRunTimeKey] = time;
                     }
+
+                    lastBestSegment = BestSegments.GetValueOrDefault(thisRunTimeKey, 0);
+                    prevRoomTime = ThisRunTimes.GetValueOrDefault(thisRunPrevRoomTimeKey, 0);
+                    if (time - prevRoomTime < lastBestSegment || lastBestSegment == 0) {
+                        BestSegments[thisRunTimeKey] = time - prevRoomTime;
+                    }
                 }
 
                 break;
@@ -157,10 +187,13 @@ internal class RoomTimerData {
         TimeKeyPrefix = "";
         thisRunTimeKey = "";
         pbTimeKey = "";
+        thisRunPrevRoomTimeKey = "";
         timerState = IsNextRoomType ? TimerState.WaitToStart : TimerState.Timing;
         roomNumber = 1;
         time = 0;
         lastPbTime = 0;
+        lastBestSegment = 0;
+        prevRoomTime = 0;
         ThisRunTimes.Clear();
         hitEndPoint = false;
     }
@@ -169,6 +202,7 @@ internal class RoomTimerData {
         ResetTime();
         PbTimes.Clear();
         lastPbTimes.Clear();
+        BestSegments.Clear();
     }
 
     public static string FormatTime(long time, bool isPbTime) {

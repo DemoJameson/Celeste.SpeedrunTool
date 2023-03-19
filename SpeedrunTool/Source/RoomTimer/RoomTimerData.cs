@@ -21,6 +21,8 @@ internal class RoomTimerData {
     private string thisRunPrevRoomTimeKey = "";
     private TimerState timerState;
     private bool hitEndPoint = false;
+    private float displayGoldRenderTime = 0f;
+    private const float DisplayGoldRenderDelay = 0.68f;
 
     public RoomTimerData(RoomTimerType roomTimerType) {
         this.roomTimerType = roomTimerType;
@@ -34,7 +36,8 @@ internal class RoomTimerData {
     public string PbTimeString => FormatTime(GetSelectedPbTime, true);
     private bool IsNextRoomType => roomTimerType == RoomTimerType.NextRoom;
     public bool IsCompleted => timerState == TimerState.Completed;
-    public bool BeatBestTime => IsCompleted && (GetSelectedRoomTime < GetSelectedLastPbTime || GetSelectedLastPbTime == 0);
+    public bool BeatBestTime => (IsCompleted && (GetSelectedRoomTime < GetSelectedLastPbTime || GetSelectedLastPbTime == 0)) || 
+        (displayGoldRenderTime > 0f && timerState is TimerState.Timing && ModSettings.DisplayRoomGold);
 
     private void UpdateTimeKeys(Level level) {
         if (TimeKeyPrefix == "") {
@@ -76,6 +79,10 @@ internal class RoomTimerData {
             timerState = TimerState.Timing;
         }
 
+        if (displayGoldRenderTime > 0f) {
+            displayGoldRenderTime -= Engine.RawDeltaTime;
+        }
+
         time += TimeSpan.FromSeconds(Engine.RawDeltaTime).Ticks;
     }
 
@@ -105,6 +112,7 @@ internal class RoomTimerData {
                     prevRoomTime = ThisRunTimes.GetValueOrDefault(thisRunPrevRoomTimeKey, 0);
                     if (time - prevRoomTime < lastBestSegment || lastBestSegment == 0) {
                         BestSegments[thisRunTimeKey] = time - prevRoomTime;
+                        displayGoldRenderTime = DisplayGoldRenderDelay;
                     }
 
                     // don't overflow room number at level end
@@ -128,6 +136,7 @@ internal class RoomTimerData {
                         prevRoomTime = ThisRunTimes.GetValueOrDefault(thisRunPrevRoomTimeKey, 0);
                         if (time - prevRoomTime < lastBestSegment || lastBestSegment == 0) {
                             BestSegments[pbTimeKey] = time - prevRoomTime;
+                            displayGoldRenderTime = DisplayGoldRenderDelay;
                         }
                     }
                 } else if (endPoint || level is {Completed: true} || EndPoint.IsReachedRoomIdEndPoint) {
@@ -142,6 +151,7 @@ internal class RoomTimerData {
                     prevRoomTime = ThisRunTimes.GetValueOrDefault(thisRunPrevRoomTimeKey, 0);
                     if (time - prevRoomTime < lastBestSegment || lastBestSegment == 0) {
                         BestSegments[thisRunTimeKey] = time - prevRoomTime;
+                        displayGoldRenderTime = DisplayGoldRenderDelay;
                     }
 
                     timerState = TimerState.Completed;
@@ -170,6 +180,7 @@ internal class RoomTimerData {
                     prevRoomTime = ThisRunTimes.GetValueOrDefault(thisRunPrevRoomTimeKey, 0);
                     if (time - prevRoomTime < lastBestSegment || lastBestSegment == 0) {
                         BestSegments[thisRunTimeKey] = time - prevRoomTime;
+                        displayGoldRenderTime = DisplayGoldRenderDelay;
                     }
                 }
 
@@ -194,6 +205,7 @@ internal class RoomTimerData {
         lastPbTime = 0;
         lastBestSegment = 0;
         prevRoomTime = 0;
+        displayGoldRenderTime = 0f;
         ThisRunTimes.Clear();
         hitEndPoint = false;
     }

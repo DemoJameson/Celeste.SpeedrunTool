@@ -23,6 +23,7 @@ public static class DialogIds {
     public const string TimeHeartCassette = "SPEEDRUN_TOOL_TIME_HEART_CASSETTE";
     public const string AutoTurnOffRoomTimer = "SPEEDRUN_TOOL_AUTO_TURN_OFF_ROOM_TIMER";
     public const string RoomIdEndPoint = "SPEEDRUN_TOOL_ROOM_ID_END_POINT";
+    public const string DisplayRoomGold = "SPEEDRUN_TOOL_DISPLAY_ROOM_GOLD";
 
     // Mod Options
     public const string SpeedrunTool = "SPEEDRUN_TOOL";

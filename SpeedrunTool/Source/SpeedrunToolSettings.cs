@@ -25,6 +25,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public bool TimeSummitFlag { get; set; } = true;
     public bool TimeHeartCassette { get; set; } = true;
     public bool AutoResetRoomTimer { get; set; } = true;
+    public bool DisplayRoomGold { get; set; } = true;
 
     #endregion
 

@@ -23,6 +23,7 @@ SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB_TOOLTIP= Cleared Room Timer PB and End Point
 SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB_DIALOG=
     [MADELINE left normal]
     Cleared room timer PB and end point~
+SPEEDRUN_TOOL_DISPLAY_ROOM_GOLD=           Gold Timer when Best Room Time
 
 # ================================== State ==================================
 SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE=     Pause The Game after Loading State

@@ -375,5 +375,6 @@ public static class RoomTimerManager {
             Engine.Commands.Log(DialogIds.ExportRoomTimesSuccessTooltip.DialogClean());
         } else {
             Engine.Commands.Log(DialogIds.ExportRoomTimesFailTooltip.DialogClean());
+        }
     }
 }

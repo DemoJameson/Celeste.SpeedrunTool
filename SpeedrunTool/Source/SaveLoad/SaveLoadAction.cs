@@ -579,7 +579,7 @@ public sealed class SaveLoadAction {
                 EndPoint.AllReadyForTime();
             },
             clearState: () => {
-                RoomTimerManager.ClearPbTimes();
+                RoomTimerManager.ClearPbTimes(!StateManager.Instance.ClearBeforeSave);
                 DeepClonerUtils.ClearSharedDeepCloneState();
                 DynDataUtils.ClearCached();
             },

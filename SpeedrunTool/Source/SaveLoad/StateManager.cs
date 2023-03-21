@@ -60,6 +60,7 @@ public sealed class StateManager {
     public State State { get; private set; } = State.None;
     public bool SavedByTas { get; private set; }
     public bool LoadByTas { get; private set; }
+    public bool ClearBeforeSave { get; private set; }
     public Level SavedLevel => savedLevel;
     private Level savedLevel;
     private SaveData savedSaveData;
@@ -255,7 +256,9 @@ public sealed class StateManager {
         }
 
         if (IsSaved) {
+            ClearBeforeSave = true;
             ClearState();
+            ClearBeforeSave = false;
         }
 
         SaveLoadAction.InitActions();

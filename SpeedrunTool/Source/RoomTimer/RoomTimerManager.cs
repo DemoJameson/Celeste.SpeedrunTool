@@ -3,6 +3,8 @@ using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
+using System.IO;
+using System.Text;
 
 namespace Celeste.Mod.SpeedrunTool.RoomTimer;
 
@@ -94,6 +96,15 @@ public static class RoomTimerManager {
 
         Hotkey.SetEndPoint.RegisterPressedAction(scene => EndPoint.SetEndPoint(scene, false));
         Hotkey.SetAdditionalEndPoint.RegisterPressedAction(scene => EndPoint.SetEndPoint(scene, true));
+
+        Hotkey.ExportRoomTimes.RegisterPressedAction(scene => {
+            if (scene is Level) {
+                ExportRoomTimes();
+                PopupMessageUtils.Show(DialogIds.ExportRoomTimesSuccessTooltip.DialogClean(), DialogIds.ExportRoomTimesSuccessDialog);
+            } else {
+                PopupMessageUtils.Show(DialogIds.ExportRoomTimesFailTooltip.DialogClean(), DialogIds.ExportRoomTimesFailDialog);
+            }
+        });
     }
 
     private static void SpeedrunTimerDisplayOnUpdate(ILContext il) {
@@ -311,6 +322,59 @@ public static class RoomTimerManager {
                 }
                 return origTime;
             });
+        }
+    }
+    
+    public static void ExportRoomTimes() {
+        RoomTimerData roomTimerData = (ModSettings.RoomTimerType is RoomTimerType.NextRoom) ? NextRoomTimerData : CurrentRoomTimerData;
+        string timeKeyPrefix = roomTimerData.TimeKeyPrefix;
+        long lastSplitTime = 0;
+
+        StringBuilder sb = new();
+
+        // Header row
+        sb.Append("Room Number,Split,Segment,Best Split,Best Segment");
+
+        for (int roomNumber = 1; roomNumber <= Math.Max(roomTimerData.ThisRunTimes.Count, Math.Max(roomTimerData.PbTimes.Count, roomTimerData.BestSegments.Count)); roomNumber++) {
+            string timeKey = timeKeyPrefix + roomNumber;
+
+            // Room Number
+            sb.Append($"\n{roomNumber},");
+
+            // Split,Segment
+            if (roomTimerData.ThisRunTimes.TryGetValue(timeKey, out long splitTime)) {
+                sb.Append($"{RoomTimerData.FormatTime(splitTime, false)},{RoomTimerData.FormatTime(splitTime - lastSplitTime, false)},");
+                lastSplitTime = splitTime;
+            } else {
+                sb.Append(",,");
+            }
+
+            // Best Split,
+            if (roomTimerData.PbTimes.TryGetValue(timeKey, out long pbTime)) {
+                sb.Append($"{RoomTimerData.FormatTime(pbTime, false)},");
+            } else {
+                sb.Append(",");
+            }
+
+            // Best Segment
+            if (roomTimerData.BestSegments.TryGetValue(timeKey, out long bestSegment)) {
+                sb.Append(RoomTimerData.FormatTime(bestSegment, false));
+            }
+        }
+
+        Directory.CreateDirectory(Path.Combine(Everest.PathGame, "SRTool_RoomTimeExports"));
+        using (StreamWriter writer = File.CreateText(Path.Combine(Everest.PathGame, "SRTool_RoomTimeExports", $"{DateTime.Now:yyyyMMdd_HHmmss}.csv"))) {
+            writer.WriteLine(sb.ToString());
+        };
+    }
+
+    [Command("srt_exportroomtimes", "export room timer data to a .csv file")]
+    public static void CmdExportRoomTimes() {
+        if (Engine.Scene is Level) {
+            ExportRoomTimes();
+            Engine.Commands.Log(DialogIds.ExportRoomTimesSuccessTooltip.DialogClean());
+        } else {
+            Engine.Commands.Log(DialogIds.ExportRoomTimesFailTooltip.DialogClean());
         }
     }
 }

@@ -83,6 +83,7 @@ public class HotkeyConfigUi : TextMenu {
         new(Hotkey.SwitchAutoLoadState),
         new(Hotkey.SpawnTowerViewer),
         new(Hotkey.ToggleFullscreen),
+        new(Hotkey.ExportRoomTimes),
     }.ToDictionary(info => info.Hotkey, info => info);
 
     private bool closing;
@@ -481,6 +482,7 @@ public enum Hotkey {
     SwitchAutoLoadState,
     SpawnTowerViewer,
     ToggleFullscreen,
+    ExportRoomTimes,
 }
 
 internal static class HotkeysExtensions {

@@ -25,6 +25,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public bool TimeSummitFlag { get; set; } = true;
     public bool TimeHeartCassette { get; set; } = true;
     public bool AutoResetRoomTimer { get; set; } = true;
+    public bool DisplayRoomGold { get; set; } = true;
 
     #endregion
 
@@ -80,6 +81,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public List<Keys> KeyboardSwitchAutoLoadState { get; set; } = Hotkey.SwitchAutoLoadState.GetDefaultKeys();
     public List<Keys> KeyboardSpawnTowerViewer { get; set; } = Hotkey.SpawnTowerViewer.GetDefaultKeys();
     public List<Keys> KeyboardToggleFullscreen { get; set; } = Hotkey.ToggleFullscreen.GetDefaultKeys();
+    public List<Keys> KeyboardExportRoomTimes { get; set; } = Hotkey.ExportRoomTimes.GetDefaultKeys();
 
     public List<Buttons> ControllerToggleHotkeys { get; set; } = new List<Buttons>();
     public List<Buttons> ControllerSaveState { get; set; } = new List<Buttons>();
@@ -100,6 +102,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public List<Buttons> ControllerSwitchAutoLoadState { get; set; } = new List<Buttons>();
     public List<Buttons> ControllerSpawnTowerViewer { get; set; } = new List<Buttons>();
     public List<Buttons> ControllerToggleFullscreen { get; set; } = new List<Buttons>();
+    public List<Buttons> ControllerExportRoomTimes { get; set; }  = new List<Buttons>();
 
     #endregion HotkeyConfig
 }

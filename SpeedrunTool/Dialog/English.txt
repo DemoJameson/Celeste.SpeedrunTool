@@ -23,6 +23,7 @@ SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB_TOOLTIP= Cleared Room Timer PB and End Point
 SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB_DIALOG=
     [MADELINE left normal]
     Cleared room timer PB and end point~
+SPEEDRUN_TOOL_DISPLAY_ROOM_GOLD=           Gold Timer when Best Room Time
 
 # ================================== State ==================================
 SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE=     Pause The Game after Loading State
@@ -98,6 +99,21 @@ SPEEDRUN_TOOL_ALREADY_LAST_ROOM_DIALOG_BADELINE=
 SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE=        Toggle Auto Load State
 SPEEDRUN_TOOL_SPAWN_TOWER_VIEWER=            Spawn Tower Viewer
 SPEEDRUN_TOOL_TOGGLE_FULLSCREEN=             Toggle Fullscreen
+SPEEDRUN_TOOL_EXPORT_ROOM_TIMES=             Export Room Times
+SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_SUCCESS_TOOLTIP= Times successfully exported
+SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_SUCCESS_DIALOG=
+    [Madeline left normal]
+    Times successfully exported.
+SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_SUCCESS_DIALOG_BADELINE=
+    [Badeline left normal]
+    Times successfully exported.
+SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_FAIL_TOOLTIP= Must be in a level to export room times
+SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_FAIL_DIALOG=
+    [Madeline left upset]
+    Must be in a level to export room times.
+SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_FAIL_DIALOG_BADELINE=
+    [Badeline left yell]
+    Must be in a level to export room times!
 
 # ================================== Death Statistics ==================================
 SPEEDRUN_TOOL_DEATH_STATISTICS=              Death Statistics

@@ -74,6 +74,9 @@ public static class SpeedrunToolMenu {
 
                 subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoTurnOffRoomTimer), ModSettings.AutoResetRoomTimer).Change(b =>
                     ModSettings.AutoResetRoomTimer = b));
+
+                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.DisplayRoomGold), ModSettings.DisplayRoomGold).Change(b =>
+                    ModSettings.DisplayRoomGold = b));
             }),
 
             new EaseInSubMenu(Dialog.Clean(DialogIds.State), false).With(subMenu => {

@@ -305,6 +305,9 @@ public sealed class StateManager {
 
         LoadByTas = tas;
         State = State.Loading;
+
+        SaveLoadAction.OnBeforeLoadState(level);
+
         DeepClonerUtils.SetSharedDeepCloneState(preCloneTask?.Result);
 
         UpdateTimeAndDeaths(level);

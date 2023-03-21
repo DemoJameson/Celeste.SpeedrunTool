@@ -30,6 +30,7 @@ public sealed class SaveLoadAction {
 
     private readonly Action clearState;
     private readonly Action<Level> beforeSaveState;
+    private readonly Action<Level> beforeLoadState;
     private readonly Action preCloneEntities;
     private readonly SlAction loadState;
 
@@ -47,6 +48,16 @@ public sealed class SaveLoadAction {
         this.preCloneEntities = preCloneEntities;
     }
 
+    public SaveLoadAction(SlAction saveState, SlAction loadState, Action clearState,
+        Action<Level> beforeSaveState, Action<Level> beforeLoadState, Action preCloneEntities) {
+        this.saveState = saveState;
+        this.loadState = loadState;
+        this.clearState = clearState;
+        this.beforeSaveState = beforeSaveState;
+        this.beforeLoadState = beforeLoadState;
+        this.preCloneEntities = preCloneEntities;
+    }
+
     // ReSharper disable once UnusedMember.Global
     [Obsolete("crash on macOS if speedrun tool is not installed, use SafeAdd() instead")]
     public static void Add(SaveLoadAction saveLoadAction) {
@@ -59,6 +70,14 @@ public sealed class SaveLoadAction {
         Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState = null, Action clearState = null,
         Action<Level> beforeSaveState = null, Action preCloneEntities = null) {
         SaveLoadAction saveLoadAction = new(CreateSlAction(saveState), CreateSlAction(loadState), clearState, beforeSaveState, preCloneEntities);
+        All.Add(saveLoadAction);
+        return saveLoadAction;
+    }
+
+    public static object SafeAdd(Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState,
+        Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState, Action clearState,
+        Action<Level> beforeSaveState, Action<Level> beforeLoadState, Action preCloneEntities = null) {
+        SaveLoadAction saveLoadAction = new(CreateSlAction(saveState), CreateSlAction(loadState), clearState, beforeSaveState, beforeLoadState, preCloneEntities);
         All.Add(saveLoadAction);
         return saveLoadAction;
     }
@@ -93,6 +112,12 @@ public sealed class SaveLoadAction {
     internal static void OnBeforeSaveState(Level level) {
         foreach (SaveLoadAction saveLoadAction in All) {
             saveLoadAction.beforeSaveState?.Invoke(level);
+        }
+    }
+
+    internal static void OnBeforeLoadState(Level level) {
+        foreach (SaveLoadAction saveLoadAction in All) {
+            saveLoadAction.beforeLoadState?.Invoke(level);
         }
     }
 
@@ -544,7 +569,6 @@ public sealed class SaveLoadAction {
     private static void ExternalAction() {
         SafeAdd(
             saveState: (_, level) => {
-                level.Entities.UpdateLists();
                 IgnoreSaveLoadComponent.ReAddAll(level);
                 EndPoint.AllReadyForTime();
             },
@@ -585,7 +609,8 @@ public sealed class SaveLoadAction {
                         entity.RemoveSelf();
                     }
                 }
-            }
+            },
+            beforeLoadState: IgnoreSaveLoadComponent.RemoveAll
         );
     }
 

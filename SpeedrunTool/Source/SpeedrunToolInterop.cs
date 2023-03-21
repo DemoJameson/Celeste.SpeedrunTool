@@ -29,5 +29,14 @@ public static class SpeedrunToolInterop {
         public static void Unregister(object obj) {
             SaveLoadAction.Remove((SaveLoadAction)obj);
         }
+
+        /// <summary>
+        /// Ignore the entities when saving state
+        /// </summary>
+        /// <param name="entity">Ignored entity</param>
+        /// <param name="based">The Added/Removed method of the entity will not be triggered when based is true</param>
+        public static void IgnoreSaveState(Entity entity, bool based) {
+            entity.Add(new IgnoreSaveLoadComponent());
+        }
     }
 }

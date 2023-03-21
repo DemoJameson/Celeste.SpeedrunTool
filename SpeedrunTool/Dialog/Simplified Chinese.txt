@@ -24,6 +24,7 @@ SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB_TOOLTIP= 清除房间计时记录与终点
 SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB_DIALOG=
     [MADELINE left normal]
     清除房间计时记录与终点~
+SPEEDRUN_TOOL_DISPLAY_ROOM_GOLD=           破纪录时以金色显示
 
 # ================================== State ==================================
 SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE=     加载状态后冻结游戏
@@ -99,6 +100,21 @@ SPEEDRUN_TOOL_ALREADY_LAST_ROOM_DIALOG_BADELINE=
 SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE=        开关死亡自动加载状态
 SPEEDRUN_TOOL_SPAWN_TOWER_VIEWER=            一键望远镜
 SPEEDRUN_TOOL_TOGGLE_FULLSCREEN=             开关全屏
+SPEEDRUN_TOOL_EXPORT_ROOM_TIMES=             导出房间计时数据
+SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_SUCCESS_TOOLTIP= 成功导出计时数据
+SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_SUCCESS_DIALOG=
+    [Madeline left normal]
+    成功导出计时数据。
+SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_SUCCESS_DIALOG_BADELINE=
+    [Badeline left normal]
+    成功导出计时数据。
+SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_FAIL_TOOLTIP= 必须在关卡中才能导出数据
+SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_FAIL_DIALOG=
+    [Madeline left upset]
+    必须在关卡中才能导出数据！
+SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_FAIL_DIALOG_BADELINE=
+    [Badeline left yell]
+    必须在关卡中才能导出数据！
 
 # ================================== Death Statistics ==================================
 SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA=      死亡数据数量

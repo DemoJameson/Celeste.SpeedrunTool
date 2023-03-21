@@ -207,7 +207,7 @@ public static class RoomTimerManager {
             orig(self);
             return;
         }
-        
+
         RoomTimerData roomTimerData = ModSettings.RoomTimerType == RoomTimerType.NextRoom ? NextRoomTimerData : CurrentRoomTimerData;
 
         string roomTimeString = roomTimerData.TimeString;
@@ -324,8 +324,8 @@ public static class RoomTimerManager {
             });
         }
     }
-    
-    public static void ExportRoomTimes() {
+
+    private static void ExportRoomTimes() {
         RoomTimerData roomTimerData = (ModSettings.RoomTimerType is RoomTimerType.NextRoom) ? NextRoomTimerData : CurrentRoomTimerData;
         string timeKeyPrefix = roomTimerData.TimeKeyPrefix;
         long lastSplitTime = 0;
@@ -363,12 +363,11 @@ public static class RoomTimerManager {
         }
 
         Directory.CreateDirectory(Path.Combine(Everest.PathGame, "SRTool_RoomTimeExports"));
-        using (StreamWriter writer = File.CreateText(Path.Combine(Everest.PathGame, "SRTool_RoomTimeExports", $"{DateTime.Now:yyyyMMdd_HHmmss}.csv"))) {
-            writer.WriteLine(sb.ToString());
-        };
+        using StreamWriter writer = File.CreateText(Path.Combine(Everest.PathGame, "SRTool_RoomTimeExports", $"{DateTime.Now:yyyyMMdd_HHmmss}.csv"));
+        writer.WriteLine(sb.ToString());
     }
 
-    [Command("srt_exportroomtimes", "export room timer data to a .csv file")]
+    [Command("srt_exportroomtimes", "export room timer data to a .csv file in gamePath/SRTool_RoomTimeExports folder (SpeedrunTool)")]
     public static void CmdExportRoomTimes() {
         if (Engine.Scene is Level) {
             ExportRoomTimes();

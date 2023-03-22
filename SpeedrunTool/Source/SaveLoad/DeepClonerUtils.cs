@@ -45,6 +45,7 @@ public static class DeepClonerUtils {
 
                 // NLua
                 || type == typeof(Lua)
+                || type == typeof(KeraLua.Lua)
                 || type.IsSubclassOf(typeof(LuaBase))
 
                 // CelesteNet

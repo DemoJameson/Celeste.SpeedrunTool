@@ -112,7 +112,9 @@ internal class RoomTimerData {
                     prevRoomTime = ThisRunTimes.GetValueOrDefault(thisRunPrevRoomTimeKey, 0);
                     if (Time - prevRoomTime < lastBestSegment || lastBestSegment == 0) {
                         BestSegments[thisRunTimeKey] = Time - prevRoomTime;
-                        displayGoldRenderTime = DisplayGoldRenderDelay;
+                        if (lastBestSegment != 0) {
+                            displayGoldRenderTime = DisplayGoldRenderDelay;
+                        }
                     }
 
                     // don't overflow room number at level end
@@ -136,7 +138,9 @@ internal class RoomTimerData {
                         prevRoomTime = ThisRunTimes.GetValueOrDefault(thisRunPrevRoomTimeKey, 0);
                         if (Time - prevRoomTime < lastBestSegment || lastBestSegment == 0) {
                             BestSegments[pbTimeKey] = Time - prevRoomTime;
-                            displayGoldRenderTime = DisplayGoldRenderDelay;
+                            if (lastBestSegment != 0) {
+                                displayGoldRenderTime = DisplayGoldRenderDelay;
+                            }
                         }
                     }
                 } else if (endPoint || level is {Completed: true} || EndPoint.IsReachedRoomIdEndPoint) {
@@ -151,7 +155,9 @@ internal class RoomTimerData {
                     prevRoomTime = ThisRunTimes.GetValueOrDefault(thisRunPrevRoomTimeKey, 0);
                     if (Time - prevRoomTime < lastBestSegment || lastBestSegment == 0) {
                         BestSegments[thisRunTimeKey] = Time - prevRoomTime;
-                        displayGoldRenderTime = DisplayGoldRenderDelay;
+                        if (lastBestSegment != 0) {
+                            displayGoldRenderTime = DisplayGoldRenderDelay;
+                        }
                     }
 
                     timerState = TimerState.Completed;
@@ -180,7 +186,9 @@ internal class RoomTimerData {
                     prevRoomTime = ThisRunTimes.GetValueOrDefault(thisRunPrevRoomTimeKey, 0);
                     if (Time - prevRoomTime < lastBestSegment || lastBestSegment == 0) {
                         BestSegments[thisRunTimeKey] = Time - prevRoomTime;
-                        displayGoldRenderTime = DisplayGoldRenderDelay;
+                        if (lastBestSegment != 0) {
+                            displayGoldRenderTime = DisplayGoldRenderDelay;
+                        }
                     }
                 }
 

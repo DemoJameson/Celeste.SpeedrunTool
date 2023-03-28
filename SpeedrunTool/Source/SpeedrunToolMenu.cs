@@ -18,6 +18,10 @@ public static class SpeedrunToolMenu {
             foreach (EaseInSubMenu item in options) {
                 item.FadeVisible = value;
             }
+
+            if (!value) {
+                RoomTimerManager.ClearPbTimes();
+            }
         }));
         CreateOptions(menu, inGame);
         foreach (EaseInSubMenu item in options) {

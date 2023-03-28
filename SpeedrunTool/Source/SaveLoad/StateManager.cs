@@ -507,14 +507,16 @@ public sealed class StateManager {
     }
 
     private void PreCloneSavedEntities() {
-        SaveLoadAction.OnPreCloneEntities();
-        preCloneTask = Task.Run(() => {
-            DeepCloneState deepCloneState = new();
-            savedLevel.Entities.DeepClone(deepCloneState);
-            savedLevel.RendererList.DeepClone(deepCloneState);
-            savedSaveData.DeepClone(deepCloneState);
-            return deepCloneState;
-        });
+        if (IsSaved) {
+            SaveLoadAction.OnPreCloneEntities();
+            preCloneTask = Task.Run(() => {
+                DeepCloneState deepCloneState = new();
+                savedLevel.Entities.DeepClone(deepCloneState);
+                savedLevel.RendererList.DeepClone(deepCloneState);
+                savedSaveData.DeepClone(deepCloneState);
+                return deepCloneState;
+            });
+        }
     }
 
     private bool IsAllowSave(Level level, bool tas) {

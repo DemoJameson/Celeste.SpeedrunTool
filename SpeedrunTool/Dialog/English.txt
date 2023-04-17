@@ -26,7 +26,7 @@ SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB_DIALOG=
 SPEEDRUN_TOOL_DISPLAY_ROOM_GOLD=           Gold Timer when Best Room Time
 
 # ================================== State ==================================
-SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE=     Pause The Game after Loading State
+SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE=     Pause Game after Load State
 SPEEDRUN_TOOL_IGNORE_HOLDING_KEYS=         Ignore Holding Keys
 SPEEDRUN_TOOL_AUTO_LOAD_STATE_AFTER_DEATH= Auto Load State after Death
 SPEEDRUN_TOOL_AUTO_CLEAR_STATE_ON_SCREEN_TRANSITION= Auto Clear State on Screen Transition

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.Message;
@@ -13,7 +14,7 @@ public static class SpeedrunToolMenu {
     private static List<EaseInSubMenu> options;
 
     public static void Create(TextMenu menu, bool inGame, EventInstance snapshot) {
-        menu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.Enabled), ModSettings.Enabled).Change((value) => {
+        menu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.Enabled), ModSettings.Enabled).Change(value => {
             ModSettings.Enabled = value;
             foreach (EaseInSubMenu item in options) {
                 item.FadeVisible = value;
@@ -58,13 +59,13 @@ public static class SpeedrunToolMenu {
     private static void CreateOptions(TextMenu menu, bool inGame) {
         options = new List<EaseInSubMenu> {
             new EaseInSubMenu(Dialog.Clean(DialogIds.RoomTimer), false).With(subMenu => {
-                subMenu.Add(new TextMenuExt.EnumerableSlider<RoomTimerType>(Dialog.Clean(DialogIds.Enabled),
+                subMenu.Add(new EnumerableSliderCompact<RoomTimerType>(Dialog.Clean(DialogIds.Enabled),
                     CreateEnumerableOptions<RoomTimerType>(), ModSettings.RoomTimerType).Change(RoomTimerManager.SwitchRoomTimer));
 
                 subMenu.Add(new TextMenuExt.IntSlider(Dialog.Clean(DialogIds.NumberOfRooms), 1, 99, ModSettings.NumberOfRooms).Change(i =>
                     ModSettings.NumberOfRooms = i));
 
-                subMenu.Add(new TextMenuExt.EnumerableSlider<EndPoint.SpriteStyle>(Dialog.Clean(DialogIds.EndPointStyle),
+                subMenu.Add(new EnumerableSliderCompact<EndPoint.SpriteStyle>(Dialog.Clean(DialogIds.EndPointStyle),
                     CreateEnumerableOptions<EndPoint.SpriteStyle>(), ModSettings.EndPointStyle).Change(value => {
                     ModSettings.EndPointStyle = value;
                     EndPoint.AllResetSprite();
@@ -87,10 +88,12 @@ public static class SpeedrunToolMenu {
                 subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoLoadStateAfterDeath), ModSettings.AutoLoadStateAfterDeath).Change(b =>
                     ModSettings.AutoLoadStateAfterDeath = b));
 
-                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoClearStateOnScreenTransition), ModSettings.AutoClearStateOnScreenTransition).Change(b =>
-                    ModSettings.AutoClearStateOnScreenTransition = b));
+                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoClearStateOnScreenTransition), ModSettings.AutoClearStateOnScreenTransition)
+                    .Change(b =>
+                        ModSettings.AutoClearStateOnScreenTransition = b));
 
-                subMenu.Add(new TextMenuExt.EnumerableSlider<FreezeAfterLoadStateType>(Dialog.Clean(DialogIds.FreezeAfterLoadState), CreateEnumerableOptions<FreezeAfterLoadStateType>(),
+                subMenu.Add(new EnumerableSliderCompact<FreezeAfterLoadStateType>(Dialog.Clean(DialogIds.FreezeAfterLoadState),
+                    CreateEnumerableOptions<FreezeAfterLoadStateType>(),
                     ModSettings.FreezeAfterLoadStateType).Change(b =>
                     ModSettings.FreezeAfterLoadStateType = b));
 
@@ -125,7 +128,8 @@ public static class SpeedrunToolMenu {
             }),
 
             new EaseInSubMenu(Dialog.Clean(DialogIds.MoreOptions), false).With(subMenu => {
-                subMenu.Add(new TextMenuExt.EnumerableSlider<TeleportRoomCategory>(Dialog.Clean(DialogIds.TeleportRoomCategory), CreateEnumerableOptions<TeleportRoomCategory>(),
+                subMenu.Add(new EnumerableSliderCompact<TeleportRoomCategory>(Dialog.Clean(DialogIds.TeleportRoomCategory),
+                    CreateEnumerableOptions<TeleportRoomCategory>(),
                     ModSettings.TeleportRoomCategory).Change(b => ModSettings.TeleportRoomCategory = b));
 
                 subMenu.Add(new TextMenuExt.IntSlider(Dialog.Clean(DialogIds.RespawnSpeed), 1, 9, ModSettings.RespawnSpeed).Change(i =>
@@ -134,8 +138,9 @@ public static class SpeedrunToolMenu {
                 subMenu.Add(new TextMenuExt.IntSlider(Dialog.Clean(DialogIds.RestartChapterSpeed), 1, 9, ModSettings.RestartChapterSpeed).Change(i =>
                     ModSettings.RestartChapterSpeed = i));
 
-                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.SkipRestartChapterScreenWipe), ModSettings.SkipRestartChapterScreenWipe).Change(b =>
-                    ModSettings.SkipRestartChapterScreenWipe = b));
+                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.SkipRestartChapterScreenWipe), ModSettings.SkipRestartChapterScreenWipe).Change(
+                    b =>
+                        ModSettings.SkipRestartChapterScreenWipe = b));
 
                 subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AllowPauseDuringDeath), ModSettings.AllowPauseDuringDeath).Change(b =>
                     ModSettings.AllowPauseDuringDeath = b));
@@ -144,15 +149,16 @@ public static class SpeedrunToolMenu {
                     new TextMenu.OnOff(Dialog.Clean(DialogIds.MuteInBackground), ModSettings.MuteInBackground).Change(b =>
                         ModSettings.MuteInBackground = b));
 
-                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.FixCoreRefillDashAfterTeleport), ModSettings.FixCoreRefillDashAfterTeleport).Change(b =>
-                    ModSettings.FixCoreRefillDashAfterTeleport = b));
+                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.FixCoreRefillDashAfterTeleport), ModSettings.FixCoreRefillDashAfterTeleport)
+                    .Change(b =>
+                        ModSettings.FixCoreRefillDashAfterTeleport = b));
 
-                subMenu.Add(new TextMenuExt.EnumerableSlider<PopupMessageStyle>(Dialog.Clean(DialogIds.PopupMessageStyle),
+                subMenu.Add(new EnumerableSliderCompact<PopupMessageStyle>(Dialog.Clean(DialogIds.PopupMessageStyle),
                     CreateEnumerableOptions<PopupMessageStyle>(), ModSettings.PopupMessageStyle).Change(value => {
                     ModSettings.PopupMessageStyle = value;
                 }));
 
-                subMenu.Add(new TextMenuExt.EnumerableSlider<SpeedrunType>(Dialog.Clean(DialogIds.EnableTimerOnAreaComplete),
+                subMenu.Add(new EnumerableSliderCompact<SpeedrunType>(Dialog.Clean(DialogIds.EnableTimerOnAreaComplete),
                     CreateEnumerableOptions<SpeedrunType>(), ModSettings.AreaCompleteEnableTimerType).Change(value => {
                     ModSettings.AreaCompleteEnableTimerType = value;
                 }));
@@ -246,5 +252,26 @@ internal class EaseInSubMenu : TextMenuExt.SubMenu {
         } else {
             icon.DrawCentered(position + justify, color, scale);
         }
+    }
+}
+
+internal class EnumerableSliderCompact<T> : TextMenuExt.EnumerableSlider<T> where T : Enum {
+    public EnumerableSliderCompact(string label, IEnumerable<KeyValuePair<T, string>> options, T startValue) : base(label, options, startValue) { }
+
+    public override float RightWidth() {
+        List<string> list = Values.Select(val => val.Item1).ToList();
+        if (!cachedRightWidthContent.SequenceEqual(list)) {
+            float width = 0.0f;
+            foreach (Tuple<string, T> tuple in Values) {
+                // scaling 80%, corresponding to the size of the rendered font
+                width = Math.Max(width, ActiveFont.Measure(tuple.Item1).X * 0.8f);
+            }
+
+            width += 142f;
+            cachedRightWidth = width;
+            cachedRightWidthContent = list;
+        }
+
+        return cachedRightWidth;
     }
 }

@@ -267,8 +267,7 @@ internal class EnumerableSliderCompact<T> : TextMenuExt.EnumerableSlider<T> wher
                 width = Math.Max(width, ActiveFont.Measure(tuple.Item1).X * 0.8f);
             }
 
-            width += 142f;
-            cachedRightWidth = width;
+            cachedRightWidth = width + 140;
             cachedRightWidthContent = list;
         }
 

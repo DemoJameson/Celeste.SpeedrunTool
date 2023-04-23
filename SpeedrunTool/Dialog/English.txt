@@ -100,20 +100,8 @@ SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE=        Toggle Auto Load State
 SPEEDRUN_TOOL_SPAWN_TOWER_VIEWER=            Spawn Tower Viewer
 SPEEDRUN_TOOL_TOGGLE_FULLSCREEN=             Toggle Fullscreen
 SPEEDRUN_TOOL_EXPORT_ROOM_TIMES=             Export Room Times
-SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_SUCCESS_TOOLTIP= Times successfully exported
-SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_SUCCESS_DIALOG=
-    [Madeline left normal]
-    Times successfully exported.
-SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_SUCCESS_DIALOG_BADELINE=
-    [Badeline left normal]
-    Times successfully exported.
-SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_FAIL_TOOLTIP= Must be in a level to export room times
-SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_FAIL_DIALOG=
-    [Madeline left upset]
-    Must be in a level to export room times.
-SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_FAIL_DIALOG_BADELINE=
-    [Badeline left yell]
-    Must be in a level to export room times!
+SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_SUCCESS=     Times successfully exported to {0}
+SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_FAIL=        Must be in a level to export room times
 
 # ================================== Death Statistics ==================================
 SPEEDRUN_TOOL_DEATH_STATISTICS=              Death Statistics
@@ -146,5 +134,7 @@ SPEEDRUN_TOOL_DIALOG_BOX=                          Dialog Box
 SPEEDRUN_TOOL_OPTION_STATE=                        {0}: {1}
 SPEEDRUN_TOOL_ENABLE_TIMER_ON_AREA_COMPLETE=       Enable Timer on Area Complete
 SPEEDRUN_TOOL_FILE=                                File
+SPEEDRUN_TOOL_ROOM_TIMER_EXPORT_TYPE=              Room Timer Export Type
+SPEEDRUN_TOOL_CLIPBOARD=                           Clipboard
 SPEEDRUN_TOOL_HOTKEYS=                             Hotkeys
 SPEEDRUN_TOOL_HOTKEYS_CONFIG=                      Hotkeys Config

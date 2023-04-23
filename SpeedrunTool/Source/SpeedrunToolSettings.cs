@@ -58,6 +58,8 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public bool FixCoreRefillDashAfterTeleport { get; set; } = true;
     public PopupMessageStyle PopupMessageStyle { get; set; } = PopupMessageStyle.Tooltip;
     public SpeedrunType AreaCompleteEnableTimerType { get; set; } = SpeedrunType.Off;
+    public RoomTimerExportType RoomTimerExportType { get; set; } = RoomTimerExportType.Clipboard;
+
     public bool Hotkeys { get; set; } = true;
 
     #endregion

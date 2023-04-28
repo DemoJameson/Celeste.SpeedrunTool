@@ -22,6 +22,33 @@ public class SpeedrunToolSaveData : EverestModuleSaveData {
 
     public int GetTotalDeathCount() => DeathInfos.Count;
 
+    [Initialize]
+    private static void Initialize() {
+        if (!Directory.Exists(DeathStatisticsManager.PlaybackDir)) {
+            return;
+        }
+
+        int max = ModSettings.MaxNumberOfDeathData * 10;
+        string[] saveFiles = Directory.GetFiles(DeathStatisticsManager.SavePath);
+        foreach (string directory in Directory.GetDirectories(DeathStatisticsManager.PlaybackDir)) {
+            String directoryName = Path.GetFileName(directory);
+            String saveFileName = new DirectoryInfo(directory).Name + ".celeste";
+            if (saveFileName == "-1.celeste") {
+                saveFileName = "debug.celeste";
+            }
+
+            if (saveFiles.Any(file => file.EndsWith(saveFileName))) {
+                List<string> files = Directory.GetFiles(directory).ToList();
+                files.Sort((a, b) => string.Compare(b, a, StringComparison.Ordinal));
+                foreach (string path in files.Skip(max)) {
+                    File.Delete(path);
+                }
+            } else if (int.TryParse(directoryName, out _)) {
+                Directory.Delete(directory, true);
+            }
+        }
+    }
+
     public void Add(DeathInfo deathInfo) {
         DeathInfos.Insert(0, deathInfo);
         int max = ModSettings.MaxNumberOfDeathData * 10;
@@ -30,13 +57,13 @@ public class SpeedrunToolSaveData : EverestModuleSaveData {
         }
 
         if (DeathInfos.Count > max) {
-            for (int i = max; i < DeathInfos.Count; i++) {
-                if (File.Exists(DeathInfos[i].PlaybackFilePath)) {
-                    File.Delete(DeathInfos[i].PlaybackFilePath);
+            DeathInfos.RemoveRange(max, DeathInfos.Count - max);
+
+            foreach (string filePath in Directory.GetFiles(DeathStatisticsManager.PlaybackSlotDir)) {
+                if (!DeathInfos.Exists(info => info.PlaybackFilePath == filePath)) {
+                    File.Delete(filePath);
                 }
             }
-
-            DeathInfos.RemoveRange(max, DeathInfos.Count - max);
         }
     }
 

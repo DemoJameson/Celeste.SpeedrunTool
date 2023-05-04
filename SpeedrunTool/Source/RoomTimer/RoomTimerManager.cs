@@ -52,7 +52,7 @@ public static class RoomTimerManager {
         On.Celeste.Level.Update -= Timing;
         On.Celeste.SummitCheckpoint.Update -= UpdateTimerStateOnTouchFlag;
         On.Celeste.HeartGem.RegisterAsCollected -= HeartGemOnRegisterAsCollected;
-        On.Celeste.SaveData.RegisterCassette += SaveDataOnRegisterCassette;
+        On.Celeste.SaveData.RegisterCassette -= SaveDataOnRegisterCassette;
         On.Celeste.LevelExit.ctor -= LevelExitOnCtor;
         IL.Celeste.AutoSplitterInfo.Update -= OverwriteAutosplitterChapterTime;
     }

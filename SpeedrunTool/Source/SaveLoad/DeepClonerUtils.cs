@@ -1,10 +1,12 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using FMOD.Studio;
 using Force.DeepCloner;
 using Force.DeepCloner.Helpers;
 using Microsoft.Xna.Framework.Graphics;
+using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
 using NLua;
 
@@ -47,6 +49,10 @@ public static class DeepClonerUtils {
                 || type == typeof(Lua)
                 || type == typeof(KeraLua.Lua)
                 || type.IsSubclassOf(typeof(LuaBase))
+
+                // MonoMod
+                || type.GetInterfaces().Contains(typeof(IDetour))
+                || type.GetInterfaces().Any(t => t.FullName == "MonoMod.RuntimeDetour.IDetourBase")
 
                 // CelesteNet
                 || type.FullName != null && type.FullName.StartsWith("Celeste.Mod.CelesteNet.") && !type.IsSubclassOf(typeof(Entity))

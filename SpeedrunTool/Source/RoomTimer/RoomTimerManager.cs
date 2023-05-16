@@ -105,7 +105,8 @@ public static class RoomTimerManager {
         Hotkey.ExportRoomTimes.RegisterPressedAction(scene => {
             if (scene is Level) {
                 ExportRoomTimes();
-                PopupMessageUtils.Show(string.Format(Dialog.Get(DialogIds.ExportRoomTimesSuccess), ModSettings.RoomTimerExportType.ToString().ToLower()), null);
+                PopupMessageUtils.Show(string.Format(Dialog.Get(DialogIds.ExportRoomTimesSuccess), 
+                    Dialog.Get(DialogIds.Prefix + ModSettings.RoomTimerExportType.ToString().ToUpper())), null);
             } else {
                 PopupMessageUtils.Show(DialogIds.ExportRoomTimesFail.DialogClean(), null);
             }
@@ -380,7 +381,8 @@ public static class RoomTimerManager {
     public static void CmdExportRoomTimes() {
         if (Engine.Scene is Level) {
             ExportRoomTimes();
-            Engine.Commands.Log(string.Format(Dialog.Get(DialogIds.ExportRoomTimesSuccess), ModSettings.RoomTimerExportType.ToString().ToLower()));
+            string msgID = DialogIds.Prefix + ModSettings.RoomTimerExportType.ToString().ToUpper();
+            Engine.Commands.Log(string.Format(Dialog.Get(DialogIds.ExportRoomTimesSuccess), msgID.DialogClean()));
         } else {
             Engine.Commands.Log(DialogIds.ExportRoomTimesFail.DialogClean());
         }

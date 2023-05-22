@@ -23,6 +23,9 @@ internal class RoomTimerData {
     private bool hitEndPoint = false;
     private float displayGoldRenderTime = 0f;
     private const float DisplayGoldRenderDelay = 0.68f;
+    public long AutosplitterTime { get; private set; }
+    private float autosplitterTimeFreezeTime = 0f;
+    private const float AutosplitterTimeFreezeDelay = 0.68f;
 
     public RoomTimerData(RoomTimerType roomTimerType) {
         this.roomTimerType = roomTimerType;
@@ -84,6 +87,12 @@ internal class RoomTimerData {
         }
         
         Time += TimeSpan.FromSeconds(Engine.RawDeltaTime).Ticks;
+
+        if (autosplitterTimeFreezeTime > 0f) {
+            autosplitterTimeFreezeTime -= Engine.RawDeltaTime;
+        } else {
+            AutosplitterTime = Time;
+        }
     }
 
     public void UpdateTimerState(bool endPoint) {
@@ -214,6 +223,8 @@ internal class RoomTimerData {
         lastBestSegment = 0;
         prevRoomTime = 0;
         displayGoldRenderTime = 0f;
+        autosplitterTimeFreezeTime = 0f;
+        AutosplitterTime = Time;
         ThisRunTimes.Clear();
         hitEndPoint = false;
     }
@@ -232,5 +243,9 @@ internal class RoomTimerData {
 
         TimeSpan timeSpan = TimeSpan.FromTicks(time);
         return timeSpan.ToString(timeSpan.TotalSeconds < 60 ? "s\\.fff" : "m\\:ss\\.fff");
+    }
+
+    public void FreezeAutosplitterTime() {
+        autosplitterTimeFreezeTime = AutosplitterTimeFreezeDelay;
     }
 }

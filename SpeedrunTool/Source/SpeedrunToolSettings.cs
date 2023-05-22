@@ -26,6 +26,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public bool TimeHeartCassette { get; set; } = true;
     public bool AutoResetRoomTimer { get; set; } = true;
     public bool DisplayRoomGold { get; set; } = true;
+    public RoomTimerExportType RoomTimerExportType { get; set; } = RoomTimerExportType.Clipboard;
 
     #endregion
 
@@ -58,8 +59,6 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public bool FixCoreRefillDashAfterTeleport { get; set; } = true;
     public PopupMessageStyle PopupMessageStyle { get; set; } = PopupMessageStyle.Tooltip;
     public SpeedrunType AreaCompleteEnableTimerType { get; set; } = SpeedrunType.Off;
-    public RoomTimerExportType RoomTimerExportType { get; set; } = RoomTimerExportType.Clipboard;
-
     public bool Hotkeys { get; set; } = true;
 
     #endregion

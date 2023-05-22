@@ -82,6 +82,11 @@ public static class SpeedrunToolMenu {
 
                 subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.DisplayRoomGold), ModSettings.DisplayRoomGold).Change(b =>
                     ModSettings.DisplayRoomGold = b));
+
+                subMenu.Add(new TextMenuExt.EnumerableSlider<RoomTimerExportType>(Dialog.Clean(DialogIds.RoomTimerExportType),
+                    CreateEnumerableOptions<RoomTimerExportType>(), ModSettings.RoomTimerExportType).Change(value => {
+                    ModSettings.RoomTimerExportType = value;
+                }));
             }),
 
             new EaseInSubMenu(Dialog.Clean(DialogIds.State), false).With(subMenu => {
@@ -161,11 +166,6 @@ public static class SpeedrunToolMenu {
                 subMenu.Add(new EnumerableSliderCompact<SpeedrunType>(Dialog.Clean(DialogIds.EnableTimerOnAreaComplete),
                     CreateEnumerableOptions<SpeedrunType>(), ModSettings.AreaCompleteEnableTimerType).Change(value => {
                     ModSettings.AreaCompleteEnableTimerType = value;
-                }));
-
-                subMenu.Add(new TextMenuExt.EnumerableSlider<RoomTimerExportType>(Dialog.Clean(DialogIds.RoomTimerExportType),
-                    CreateEnumerableOptions<RoomTimerExportType>(), ModSettings.RoomTimerExportType).Change(value => {
-                    ModSettings.RoomTimerExportType = value;
                 }));
 
                 subMenu.Add(

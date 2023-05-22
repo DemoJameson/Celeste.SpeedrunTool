@@ -96,12 +96,8 @@ public static class DialogIds {
     public const string SpawnTowerViewer = "SPEEDRUN_TOOL_SPAWN_TOWER_VIEWER";
     public const string ToggleFullscreen = "SPEEDRUN_TOOL_TOGGLE_FULLSCREEN";
     public const string ExportRoomTimes = "SPEEDRUN_TOOL_EXPORT_ROOM_TIMES";
-    public const string ExportRoomTimesSuccessTooltip = "SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_SUCCESS_TOOLTIP";
-    public const string ExportRoomTimesSuccessDialog = "SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_SUCCESS_DIALOG";
-    public const string ExportRoomTimesSuccessDialogBadeline = "SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_SUCCESS_DIALOG_BADELINE";
-    public const string ExportRoomTimesFailTooltip = "SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_FAIL_TOOLTIP";
-    public const string ExportRoomTimesFailDialog = "SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_FAIL_DIALOG";
-    public const string ExportRoomTimesFailDialogBadeline = "SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_FAIL_DIALOG_BADELINE";
+    public const string ExportRoomTimesSuccess = "SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_SUCCESS";
+    public const string ExportRoomTimesFail = "SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_FAIL";
 
     // Death Statistics
     public const string MaxNumberOfDeathData = "SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA";
@@ -131,6 +127,8 @@ public static class DialogIds {
     public const string OptionState = "SPEEDRUN_TOOL_OPTION_STATE";
     public const string EnableTimerOnAreaComplete = "SPEEDRUN_TOOL_ENABLE_TIMER_ON_AREA_COMPLETE";
     public const string File = "SPEEDRUN_TOOL_FILE";
+    public const string RoomTimerExportType = "SPEEDRUN_TOOL_ROOM_TIMER_EXPORT_TYPE";
+    public const string Clipboard = "SPEEDRUN_TOOL_CLIPBOARD";
     public const string Hotkeys = "SPEEDRUN_TOOL_HOTKEYS";
     public const string HotkeysConfig = "SPEEDRUN_TOOL_HOTKEYS_CONFIG";
 }

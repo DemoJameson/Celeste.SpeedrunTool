@@ -163,6 +163,11 @@ public static class SpeedrunToolMenu {
                     ModSettings.AreaCompleteEnableTimerType = value;
                 }));
 
+                subMenu.Add(new TextMenuExt.EnumerableSlider<RoomTimerExportType>(Dialog.Clean(DialogIds.RoomTimerExportType),
+                    CreateEnumerableOptions<RoomTimerExportType>(), ModSettings.RoomTimerExportType).Change(value => {
+                    ModSettings.RoomTimerExportType = value;
+                }));
+
                 subMenu.Add(
                     new TextMenu.OnOff(Dialog.Clean(DialogIds.Hotkeys), ModSettings.Hotkeys).Change(b =>
                         ModSettings.Hotkeys = b));

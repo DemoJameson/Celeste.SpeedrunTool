@@ -20,6 +20,11 @@ public enum RoomTimerType {
     CurrentRoom
 }
 
+public enum RoomTimerExportType {
+    Clipboard,
+    File
+}
+
 public static class RoomTimerManager {
     private static readonly Color BestColor1 = Calc.HexToColor("fad768");
     private static readonly Color BestColor2 = Calc.HexToColor("cfa727");
@@ -100,9 +105,10 @@ public static class RoomTimerManager {
         Hotkey.ExportRoomTimes.RegisterPressedAction(scene => {
             if (scene is Level) {
                 ExportRoomTimes();
-                PopupMessageUtils.Show(DialogIds.ExportRoomTimesSuccessTooltip.DialogClean(), DialogIds.ExportRoomTimesSuccessDialog);
+                PopupMessageUtils.Show(string.Format(Dialog.Get(DialogIds.ExportRoomTimesSuccess), 
+                    Dialog.Get(DialogIds.Prefix + ModSettings.RoomTimerExportType.ToString().ToUpper())), null);
             } else {
-                PopupMessageUtils.Show(DialogIds.ExportRoomTimesFailTooltip.DialogClean(), DialogIds.ExportRoomTimesFailDialog);
+                PopupMessageUtils.Show(DialogIds.ExportRoomTimesFail.DialogClean(), null);
             }
         });
     }
@@ -362,18 +368,23 @@ public static class RoomTimerManager {
             }
         }
 
-        Directory.CreateDirectory(Path.Combine(Everest.PathGame, "SRTool_RoomTimeExports"));
-        using StreamWriter writer = File.CreateText(Path.Combine(Everest.PathGame, "SRTool_RoomTimeExports", $"{DateTime.Now:yyyyMMdd_HHmmss}.csv"));
-        writer.WriteLine(sb.ToString());
+        if (ModSettings.RoomTimerExportType is RoomTimerExportType.File) {
+            Directory.CreateDirectory(Path.Combine(Everest.PathGame, "SRTool_RoomTimeExports"));
+            using StreamWriter writer = File.CreateText(Path.Combine(Everest.PathGame, "SRTool_RoomTimeExports", $"{DateTime.Now:yyyyMMdd_HHmmss}.csv"));
+            writer.WriteLine(sb.ToString());
+        } else {
+            TextInput.SetClipboardText(sb.ToString());
+        }
     }
 
-    [Command("srt_exportroomtimes", "export room timer data to a .csv file in gamePath/SRTool_RoomTimeExports folder (SpeedrunTool)")]
+    [Command("srt_exportroomtimes", "export room timer data in csv format to clipboard or a file in gamePath/SRTool_RoomTimeExports folder (SpeedrunTool)")]
     public static void CmdExportRoomTimes() {
         if (Engine.Scene is Level) {
             ExportRoomTimes();
-            Engine.Commands.Log(DialogIds.ExportRoomTimesSuccessTooltip.DialogClean());
+            string msgID = DialogIds.Prefix + ModSettings.RoomTimerExportType.ToString().ToUpper();
+            Engine.Commands.Log(string.Format(Dialog.Get(DialogIds.ExportRoomTimesSuccess), msgID.DialogClean()));
         } else {
-            Engine.Commands.Log(DialogIds.ExportRoomTimesFailTooltip.DialogClean());
+            Engine.Commands.Log(DialogIds.ExportRoomTimesFail.DialogClean());
         }
     }
 }

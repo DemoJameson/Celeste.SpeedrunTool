@@ -101,7 +101,7 @@ SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE=        开关死亡自动加载状态
 SPEEDRUN_TOOL_SPAWN_TOWER_VIEWER=            一键望远镜
 SPEEDRUN_TOOL_TOGGLE_FULLSCREEN=             开关全屏
 SPEEDRUN_TOOL_EXPORT_ROOM_TIMES=             导出房间计时数据
-SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_SUCCESS=     
+SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_SUCCESS=     成功导出计时数据到{0}
 SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_FAIL=        必须在关卡中才能导出数据
 
 # ================================== Death Statistics ==================================
@@ -134,7 +134,7 @@ SPEEDRUN_TOOL_DIALOG_BOX=                          对话框
 SPEEDRUN_TOOL_OPTION_STATE=                        {0}：{1}
 SPEEDRUN_TOOL_ENABLE_TIMER_ON_AREA_COMPLETE=       完成关卡时打开计时器
 SPEEDRUN_TOOL_FILE=                                文件
-SPEEDRUN_TOOL_ROOM_TIMER_EXPORT_TYPE=              
-SPEEDRUN_TOOL_CLIPBOARD=                           
+SPEEDRUN_TOOL_ROOM_TIMER_EXPORT_TYPE=              计时数据导出类型
+SPEEDRUN_TOOL_CLIPBOARD=                           剪贴板
 SPEEDRUN_TOOL_HOTKEYS=                             快捷键
 SPEEDRUN_TOOL_HOTKEYS_CONFIG=                      快捷键设置

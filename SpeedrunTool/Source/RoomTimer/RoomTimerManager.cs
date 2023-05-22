@@ -200,6 +200,9 @@ public static class RoomTimerManager {
         // always run both timers; they'll just run in the background if not selected
         NextRoomTimerData.UpdateTimerState(endPoint);
         CurrentRoomTimerData.UpdateTimerState(endPoint);
+
+        NextRoomTimerData.FreezeAutosplitterTime();
+        CurrentRoomTimerData.FreezeAutosplitterTime();
     }
 
     public static void ResetTime() {
@@ -324,7 +327,7 @@ public static class RoomTimerManager {
         if (cursor.TryGotoNext(MoveType.After, instr => instr.MatchLdfld<Session>("Time"))) {
             cursor.EmitDelegate<Func<long, long>>((origTime) => {
                 if (ModSettings.Enabled && ModSettings.RoomTimerType is not RoomTimerType.Off) {
-                    return (ModSettings.RoomTimerType is RoomTimerType.NextRoom) ? NextRoomTimerData.Time : CurrentRoomTimerData.Time;
+                    return (ModSettings.RoomTimerType is RoomTimerType.NextRoom) ? NextRoomTimerData.AutosplitterTime : CurrentRoomTimerData.AutosplitterTime;
                 }
                 return origTime;
             });

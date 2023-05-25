@@ -34,7 +34,7 @@ internal static class DeathTrackerHelper {
 
         onPlayerSpawn.ILHook((cursor, il) => {
             while (cursor.TryGotoNext(MoveType.After, i => i.MatchLdfld(generatedType, "display"))) {
-                cursor.EmitDelegate<Func<object, object>>(_ => Engine.Scene.GetLevel().Entities.First(entity => entity.GetType() == deathDisplayType));
+                cursor.EmitDelegate<Func<object, object>>(display => Engine.Scene.GetLevel().Entities.FirstOrDefault(entity => entity.GetType() == deathDisplayType) ?? display);
             }
         });
 

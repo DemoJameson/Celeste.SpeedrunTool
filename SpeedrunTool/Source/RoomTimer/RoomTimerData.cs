@@ -25,7 +25,7 @@ internal class RoomTimerData {
     private const float DisplayGoldRenderDelay = 0.68f;
     public long AutosplitterTime { get; private set; }
     private float autosplitterTimeFreezeTime = 0f;
-    private const float AutosplitterTimeFreezeDelay = 0.68f;
+    private const float AutosplitterTimeFreezeDelay = 0.068f;
 
     public RoomTimerData(RoomTimerType roomTimerType) {
         this.roomTimerType = roomTimerType;

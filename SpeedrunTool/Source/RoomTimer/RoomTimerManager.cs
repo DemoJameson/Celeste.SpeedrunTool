@@ -46,6 +46,7 @@ public static class RoomTimerManager {
         On.Celeste.SaveData.RegisterCassette += SaveDataOnRegisterCassette;
         On.Celeste.LevelExit.ctor += LevelExitOnCtor;
         IL.Celeste.AutoSplitterInfo.Update += OverwriteAutosplitterChapterTime;
+        IL.Celeste.TotalStrawberriesDisplay.Update += MoveStrawberryDisplayDown;
         TryTurnOffRoomTimer();
         RegisterHotkeys();
     }
@@ -60,6 +61,7 @@ public static class RoomTimerManager {
         On.Celeste.SaveData.RegisterCassette -= SaveDataOnRegisterCassette;
         On.Celeste.LevelExit.ctor -= LevelExitOnCtor;
         IL.Celeste.AutoSplitterInfo.Update -= OverwriteAutosplitterChapterTime;
+        IL.Celeste.TotalStrawberriesDisplay.Update -= MoveStrawberryDisplayDown;
     }
 
     private static void RegisterHotkeys() {
@@ -312,6 +314,20 @@ public static class RoomTimerManager {
             font.DrawOutline(fontFaceSize, ch.ToString(), new Vector2(x + num2 / 2f, y), new Vector2(0.5f, 1f),
                 Vector2.One * currentScale, color3, 2f, Color.Black);
             x += num2;
+        }
+    }
+
+    private static void MoveStrawberryDisplayDown(ILContext il) {
+        ILCursor cursor = new(il);
+
+        // If the room timer is visible, push the strawberry display down so that it doesn't overlap the timer
+        if (cursor.TryGotoNext(MoveType.Before, instr => instr.MatchCall<Engine>("get_DeltaTime") && instr.Next.MatchLdcR4(800))) {
+            cursor.EmitDelegate<Func<float, float>>((origTargetPos) => {
+                if (ModSettings.Enabled && ModSettings.RoomTimerType is not RoomTimerType.Off) {
+                    return 174f; // Same as regular file timer
+                }
+                return origTargetPos;
+            });
         }
     }
 

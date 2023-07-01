@@ -107,7 +107,7 @@ public static class RoomTimerManager {
         Hotkey.ExportRoomTimes.RegisterPressedAction(scene => {
             if (scene is Level) {
                 ExportRoomTimes();
-                PopupMessageUtils.Show(string.Format(Dialog.Get(DialogIds.ExportRoomTimesSuccess), 
+                PopupMessageUtils.Show(string.Format(Dialog.Get(DialogIds.ExportRoomTimesSuccess),
                     Dialog.Get(DialogIds.Prefix + ModSettings.RoomTimerExportType.ToString().ToUpper())), null);
             } else {
                 PopupMessageUtils.Show(DialogIds.ExportRoomTimesFail.DialogClean(), null);
@@ -331,7 +331,7 @@ public static class RoomTimerManager {
         }
     }
 
-    private static void TryTurnOffRoomTimer() {
+    public static void TryTurnOffRoomTimer() {
         if (ModSettings.AutoResetRoomTimer) {
             SwitchRoomTimer(RoomTimerType.Off);
         }

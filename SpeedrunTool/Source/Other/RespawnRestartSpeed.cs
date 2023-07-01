@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Celeste.Mod.SpeedrunTool.Utils;
 using Mono.Cecil.Cil;
@@ -86,6 +87,7 @@ public static class RespawnRestartSpeed {
             ilCursor.EmitDelegate<Func<bool>>(() => {
                 if (ModSettings.Enabled && ModSettings.SkipRestartChapterScreenWipe && Engine.Scene is Level level && !TasUtils.Running) {
                     Engine.Scene = new LevelLoader(level.Session.Restart());
+                    RoomTimerManager.TryTurnOffRoomTimer();
                     return true;
                 } else {
                     return false;

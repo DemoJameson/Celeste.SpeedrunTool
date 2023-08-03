@@ -12,6 +12,6 @@ internal static class TasUtils {
 
     [Initialize]
     private static void Initialize() {
-        installed = ModUtils.GetType("CelesteTAS", "TAS.Manager") != null;
+        installed = ModUtils.GetType("CelesteTAS", "TAS.Module.CelesteTasSettings")?.GetPropertyInfo("ShowGameplay") != null;
     }
 }

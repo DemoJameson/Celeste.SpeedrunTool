@@ -1,12 +1,21 @@
-﻿using TAS;
+﻿using System.Runtime.CompilerServices;
+using TAS;
 using TAS.Module;
 
 namespace Celeste.Mod.SpeedrunTool.Utils;
 
 internal static class TasUtils {
     private static bool installed;
-    private static bool running => Manager.Running;
-    private static bool showGamePlay => CelesteTasSettings.Instance?.ShowGameplay ?? true;
+    private static bool running {
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        get => Manager.Running;
+    }
+
+    private static bool showGamePlay {
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        get => CelesteTasSettings.Instance?.ShowGameplay ?? true;
+    }
+
     public static bool Running => installed && running;
     public static bool HideGamePlay => installed && !showGamePlay;
 

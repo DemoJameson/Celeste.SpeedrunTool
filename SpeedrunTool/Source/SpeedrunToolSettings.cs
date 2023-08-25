@@ -60,6 +60,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public PopupMessageStyle PopupMessageStyle { get; set; } = PopupMessageStyle.Tooltip;
     public SpeedrunType AreaCompleteEnableTimerType { get; set; } = SpeedrunType.Off;
     public bool Hotkeys { get; set; } = true;
+    public bool UnlockCamera { get; set; } = true;
 
     #endregion
 

@@ -97,7 +97,7 @@ SPEEDRUN_TOOL_ALREADY_LAST_ROOM_DIALOG_BADELINE=
     [BADELINE left yell]
     Already in the last room!
 SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE=        Toggle Auto Load State
-SPEEDRUN_TOOL_SPAWN_TOWER_VIEWER=            Spawn Tower Viewer
+SPEEDRUN_TOOL_SPAWN_TOWER_VIEWER=            Spawn Binoculars/Toggle Camera Lock
 SPEEDRUN_TOOL_TOGGLE_FULLSCREEN=             Toggle Fullscreen
 SPEEDRUN_TOOL_EXPORT_ROOM_TIMES=             Export Room Times
 SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_SUCCESS=     Times successfully exported to {0}
@@ -138,3 +138,4 @@ SPEEDRUN_TOOL_ROOM_TIMER_EXPORT_TYPE=              Room Timer Export Type
 SPEEDRUN_TOOL_CLIPBOARD=                           Clipboard
 SPEEDRUN_TOOL_HOTKEYS=                             Hotkeys
 SPEEDRUN_TOOL_HOTKEYS_CONFIG=                      Hotkeys Config
+SPEEDRUN_TOOL_UNLOCK_CAMERA=                       Unlock Camera

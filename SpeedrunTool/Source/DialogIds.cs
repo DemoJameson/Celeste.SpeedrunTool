@@ -131,4 +131,5 @@ public static class DialogIds {
     public const string EnableTimerOnAreaComplete = "SPEEDRUN_TOOL_ENABLE_TIMER_ON_AREA_COMPLETE";
     public const string Hotkeys = "SPEEDRUN_TOOL_HOTKEYS";
     public const string HotkeysConfig = "SPEEDRUN_TOOL_HOTKEYS_CONFIG";
+    public const string UnlockCamera = "SPEEDRUN_TOOL_UNLOCK_CAMERA";
 }

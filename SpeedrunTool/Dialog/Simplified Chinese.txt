@@ -98,7 +98,7 @@ SPEEDRUN_TOOL_ALREADY_LAST_ROOM_DIALOG_BADELINE=
     [BADELINE left yell]
     已经在最后一个房间了！
 SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE=        开关死亡自动加载状态
-SPEEDRUN_TOOL_SPAWN_TOWER_VIEWER=            一键望远镜
+SPEEDRUN_TOOL_SPAWN_TOWER_VIEWER=            一键望远镜/开关镜头锁
 SPEEDRUN_TOOL_TOGGLE_FULLSCREEN=             开关全屏
 SPEEDRUN_TOOL_EXPORT_ROOM_TIMES=             导出房间计时数据
 SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_SUCCESS=     成功导出计时数据到{0}
@@ -138,3 +138,4 @@ SPEEDRUN_TOOL_ROOM_TIMER_EXPORT_TYPE=              计时数据导出类型
 SPEEDRUN_TOOL_CLIPBOARD=                           剪贴板
 SPEEDRUN_TOOL_HOTKEYS=                             快捷键
 SPEEDRUN_TOOL_HOTKEYS_CONFIG=                      快捷键设置
+SPEEDRUN_TOOL_UNLOCK_CAMERA=                       解锁镜头

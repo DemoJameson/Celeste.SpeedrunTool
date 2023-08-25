@@ -1,4 +1,7 @@
 using System.Collections;
+using System.Collections.Generic;
+using System.Reflection;
+using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Utils;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
@@ -7,12 +10,18 @@ using MonoMod.Utils;
 namespace Celeste.Mod.SpeedrunTool.Other;
 
 public static class LookoutBuilder {
+    private static bool UnlockCamera => ModSettings.UnlockCamera && PortableLookout.Exists;
+
     [Load]
     private static void Load() {
         On.Celeste.Player.Die += PlayerOnDie;
         IL.Celeste.RisingLava.OnPlayer += EnableInvincible;
         IL.Celeste.SandwichLava.OnPlayer += EnableInvincible;
-        typeof(Lookout).GetMethodInfo("LookRoutine").GetStateMachineTarget().ILHook(ModLookRoutine);
+        IL.Celeste.Lookout.Hud.Update += HudOnUpdate;
+        On.Celeste.Lookout.Interact += LookoutOnInteract;
+        MethodInfo lookRoutineMethod = typeof(Lookout).GetMethodInfo("LookRoutine").GetStateMachineTarget();
+        lookRoutineMethod.ILHook(ModLookRoutine);
+        lookRoutineMethod.ILHook(DisableLookoutBlocker);
         Hotkey.SpawnTowerViewer.RegisterPressedAction(OnHotkeyPressed);
     }
 
@@ -21,9 +30,12 @@ public static class LookoutBuilder {
         On.Celeste.Player.Die -= PlayerOnDie;
         IL.Celeste.RisingLava.OnPlayer -= EnableInvincible;
         IL.Celeste.SandwichLava.OnPlayer -= EnableInvincible;
+        IL.Celeste.Lookout.Hud.Update -= HudOnUpdate;
+        On.Celeste.Lookout.Interact -= LookoutOnInteract;
     }
 
-    private static PlayerDeadBody PlayerOnDie(On.Celeste.Player.orig_Die orig, Player self, Vector2 direction, bool evenIfInvincible, bool registerDeathInStats) {
+    private static PlayerDeadBody PlayerOnDie(On.Celeste.Player.orig_Die orig, Player self, Vector2 direction, bool evenIfInvincible,
+        bool registerDeathInStats) {
         // 后面的条件是避免无法通过菜单重试
         if (PortableLookout.Exists && !(evenIfInvincible && registerDeathInStats)) {
             return null;
@@ -37,6 +49,36 @@ public static class LookoutBuilder {
         if (ilCursor.TryGotoNext(MoveType.After, ins => ins.MatchLdfld<Assists>("Invincible"))) {
             ilCursor.EmitDelegate<Func<bool, bool>>(invincible => PortableLookout.Exists || invincible);
         }
+    }
+
+    private static void HudOnUpdate(ILContext ilContext) {
+        ILCursor ilCursor = new(ilContext);
+        while (ilCursor.TryGotoNext(MoveType.After,
+                   ins => ins.OpCode == OpCodes.Callvirt && ins.Operand.ToString().Contains("CollideCheck<Celeste.LookoutBlocker>"))) {
+            ilCursor.EmitDelegate<Func<bool, bool>>(collide => UnlockCamera ? false : collide);
+        }
+    }
+
+    private static void LookoutOnInteract(On.Celeste.Lookout.orig_Interact orig, Lookout self, Player player) {
+        if (player.SceneAs<Level>() is { } level) {
+            DynamicData dynamicData = new(player);
+            if (dynamicData.Get("SpeedrunTool_SavedCameraLockMode") is Level.CameraLockModes cameraLockMode) {
+                level.CameraLockMode = cameraLockMode;
+                dynamicData.Set("SpeedrunTool_SavedCameraLockMode", null);
+            }
+
+            if (dynamicData.Get("SpeedrunTool_SavedCameraPosition") is Vector2 cameraPosition) {
+                level.Camera.position = cameraPosition;
+                dynamicData.Set("SpeedrunTool_SavedCameraPosition", null);
+            }
+
+            if (dynamicData.Get("SpeedrunTool_RestoreCameraCoroutine") is Coroutine coroutine) {
+                player.Remove(coroutine);
+                dynamicData.Set("SpeedrunTool_RestoreCameraCoroutine", null);
+            }
+        }
+
+        orig(self, player);
     }
 
     private static void ModLookRoutine(ILCursor ilCursor, ILContext il) {
@@ -60,20 +102,31 @@ public static class LookoutBuilder {
         }
     }
 
+    private static void DisableLookoutBlocker(ILCursor ilCursor, ILContext ilContext) {
+        if (ilCursor.TryGotoNext(MoveType.After,
+                ins => ins.OpCode == OpCodes.Callvirt && ins.Operand.ToString().EndsWith("GetEntities<Celeste.LookoutBlocker>()"))) {
+            ilCursor.EmitDelegate<Func<List<Entity>, List<Entity>>>(list => UnlockCamera ? new List<Entity>() : list);
+        }
+    }
+
     private static void OnHotkeyPressed(Scene scene) {
         if (scene is not Level level) {
             return;
         }
 
-        if (level.GetPlayer() is not {} player) {
+        if (level.GetPlayer() is not { } player) {
+            return;
+        }
+
+        if (level.Tracker.GetEntity<PortableLookout>() is { } portableLookout) {
+            if (portableLookout.interacting && !portableLookout.sprite.CurrentAnimationID.EndsWith("idle")) {
+                ToggleUnblockCamera();
+            }
+
             return;
         }
 
         if (level.Paused || level.Transitioning || level.InCutscene || level.SkippingCutscene || player.Dead || !player.InControl) {
-            return;
-        }
-
-        if (PortableLookout.Exists) {
             return;
         }
 
@@ -85,9 +138,14 @@ public static class LookoutBuilder {
         }, Vector2.Zero);
         lookout.Add(new Coroutine(Look(lookout)));
         level.Add(lookout);
+    }
 
-        // 恢复 LookoutBlocker 后用普通望远镜可能会卡住，因为镜头没有完全还原例如 10 j-16，所以干脆不恢复 LookoutBlocker
-        level.Remove(level.Tracker.GetEntitiesCopy<LookoutBlocker>());
+    private static void ToggleUnblockCamera() {
+        ModSettings.UnlockCamera = !ModSettings.UnlockCamera;
+        SpeedrunToolModule.Instance.SaveSettings();
+        string state = (ModSettings.UnlockCamera ? DialogIds.On : DialogIds.Off).DialogClean();
+        string message = string.Format(Dialog.Get(DialogIds.OptionState), DialogIds.UnlockCamera.DialogClean(), state);
+        Tooltip.Show(message);
     }
 
     private static IEnumerator Look(PortableLookout lookout) {
@@ -100,7 +158,7 @@ public static class LookoutBuilder {
 
         Level level = player.SceneAs<Level>();
         Level.CameraLockModes savedCameraLockMode = level.CameraLockMode;
-        Vector2 savedCameraPosition = level.Camera.Position;
+        Vector2 savedCameraPosition = player.CameraTarget;
         level.CameraLockMode = Level.CameraLockModes.None;
 
         Entity underfootPlatform = player.CollideFirstOutside<FloatySpaceBlock>(player.Position + Vector2.UnitY);
@@ -121,18 +179,41 @@ public static class LookoutBuilder {
             player.Position.Y = underfootPlatform.Top;
         }
 
-        player.Add(new Coroutine(RestoreCameraLockMode(level, savedCameraLockMode, savedCameraPosition)));
-
+        Coroutine coroutine = new(RestoreCamera(level, player, savedCameraLockMode, savedCameraPosition));
+        player.Add(coroutine);
         lookout.RemoveSelf();
+
+        DynamicData dynamicData = new(player);
+        dynamicData.Set("SpeedrunTool_SavedCameraLockMode", savedCameraLockMode);
+        dynamicData.Set("SpeedrunTool_SavedCameraPosition", savedCameraPosition);
+        dynamicData.Set("SpeedrunTool_RestoreCameraCoroutine", coroutine);
     }
 
-    private static IEnumerator RestoreCameraLockMode(Level level, Level.CameraLockModes cameraLockMode,
-        Vector2 cameraPosition) {
-        while (Vector2.Distance(level.Camera.Position, cameraPosition) > 1f) {
+    private static IEnumerator RestoreCamera(Level level, Player player, Level.CameraLockModes cameraLockMode, Vector2 cameraPosition) {
+        Camera camera = level.Camera;
+
+        while (Vector2.Distance(camera.Position, cameraPosition) > 5f) {
             yield return null;
         }
 
+        float ease = 0f;
+        while (true) {
+            ease = Math.Min(1f, ease + 1f/20);
+            camera.Approach(cameraPosition, Ease.CubeInOut(ease));
+            if (Vector2.Distance(camera.Position, cameraPosition) < 1f) {
+                break;
+            }
+
+            yield return null;
+        }
+
+        camera.Position = cameraPosition;
         level.CameraLockMode = cameraLockMode;
+
+        DynamicData dynamicData = new(player);
+        dynamicData.Set("SpeedrunTool_SavedCameraLockMode", null);
+        dynamicData.Set("SpeedrunTool_SavedCameraPosition", null);
+        dynamicData.Set("SpeedrunTool_RestoreCameraCoroutine", null);
     }
 
     [Tracked]

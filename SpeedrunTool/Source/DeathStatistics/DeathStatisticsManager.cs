@@ -12,7 +12,12 @@ using MonoMod.RuntimeDetour;
 namespace Celeste.Mod.SpeedrunTool.DeathStatistics;
 
 public static class DeathStatisticsManager {
+    private static readonly Lazy<bool> EverestCore = new(() => Everest.Loader.DependencyLoaded(new() {
+        Name = "EverestCore"
+    }));
+
     public static string SavePath => typeof(UserIO).GetFieldInfo("SavePath").GetValue(null).ToString();
+
     // don't touch it, since the UserIO.SavePath is different between xna and fna
     public static readonly string PlaybackDir = Path.Combine(SavePath, "SpeedrunTool", "DeathPlayback");
     public static string PlaybackSlotDir => Path.Combine(PlaybackDir, SaveData.Instance?.FileSlot.ToString() ?? "-1");
@@ -23,12 +28,15 @@ public static class DeathStatisticsManager {
     private static DeathInfo playbackDeathInfo;
 
     [Load]
-    private static void Load() {
+    private static void Hook() {
         // 尽量晚的 Hook Player.Die 方法，以便可以稳定的从指定的 StackTrace 中找出死亡原因
         using (new DetourContext {After = new List<string> {"*"}}) {
             On.Celeste.Player.Die += PlayerOnDie;
         }
+    }
 
+    [Load]
+    private static void Load() {
         On.Celeste.PlayerDeadBody.End += PlayerDeadBodyOnEnd;
         On.Celeste.Level.NextLevel += LevelOnNextLevel;
         On.Celeste.Player.Update += PlayerOnUpdate;
@@ -184,7 +192,7 @@ public static class DeathStatisticsManager {
                 ExportPlayback(self);
 
                 if (playerDeadBody.HasGolden) {
-                      LoggingData(true);
+                    LoggingData(true);
                 }
             }
         }
@@ -230,7 +238,7 @@ public static class DeathStatisticsManager {
     }
 
     private static string GetCauseOfDeath() {
-        StackTrace stackTrace = new(3);
+        StackTrace stackTrace = new(EverestCore.Value ? 4 : 3);
         MethodBase deathMethod = stackTrace.GetFrame(0).GetMethod();
         string death = deathMethod.ReflectedType?.Name ?? "";
 
@@ -238,7 +246,9 @@ public static class DeathStatisticsManager {
             death = "Fall";
         } else if (death.Contains("DisplayClass")) {
             death = "Retry";
-        } else if (death == "Player") {
+        } else if (death == "SpikeInfo") {
+            death = "Trigger Spike";
+        }  else if (death == "Player") {
             death = deathMethod.Name;
             if (death == "OnSquish") {
                 death = "Crushed";

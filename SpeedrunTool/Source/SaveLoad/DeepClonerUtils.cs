@@ -60,6 +60,10 @@ public static class DeepClonerUtils {
                 return true;
             }
 
+            if (SpeedrunToolInterop.CanReturnSameObject(type)) {
+                return true;
+            }
+
             return null;
         });
 

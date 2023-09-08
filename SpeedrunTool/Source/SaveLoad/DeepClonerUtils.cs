@@ -33,6 +33,7 @@ public static class DeepClonerUtils {
                 // Everest
                 || type.IsSubclassOf(typeof(ModAsset))
                 || type.IsSubclassOf(typeof(EverestModule))
+                || type.IsSubclassOf(typeof(EverestModuleSettings))
                 || type == typeof(EverestModuleMetadata)
 
                 // Monocle

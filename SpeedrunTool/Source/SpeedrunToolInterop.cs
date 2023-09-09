@@ -7,14 +7,25 @@ namespace Celeste.Mod.SpeedrunTool;
 
 public static class SpeedrunToolInterop {
     private static readonly List<Func<Type, bool>> returnSameObjectPredicates = new ();
+    private static readonly List<Func<object, object>> customDeepCloneProcessors = new ();
+
+    internal static bool CanReturnSameObject(Type type) {
+        return returnSameObjectPredicates.Any(predicate => predicate(type));
+    }
+
+    internal static object CustomDeepCloneObject(object sourceObject) {
+        foreach (Func<object,object> processor in customDeepCloneProcessors) {
+            if (processor.Invoke(sourceObject) is { } clonedObject) {
+                return clonedObject;
+            }
+        }
+
+        return null;
+    }
 
     [Load]
     private static void Initialize() {
         typeof(SaveLoadExports).ModInterop();
-    }
-
-    internal static bool CanReturnSameObject(Type type) {
-        return returnSameObjectPredicates.Any(predicate => predicate(type));
     }
 
     // ReSharper disable once MemberCanBePrivate.Global
@@ -77,6 +88,22 @@ public static class SpeedrunToolInterop {
         /// <param name="predicate"></param>
         public static void RemoveReturnSameObjectProcessor(Func<Type, bool> predicate) {
             returnSameObjectPredicates.Remove(predicate);
+        }
+
+        /// <summary>
+        /// Customize the cloning process.
+        /// </summary>
+        /// <param name="processor">Return the original object directly or construct it by yourself, return null for normal cloning</param>
+        public static void AddCustomDeepCloneProcessor(Func<object, object> processor) {
+            customDeepCloneProcessors.Add(processor);
+        }
+
+        /// <summary>
+        /// Remove previously added processor.
+        /// </summary>
+        /// <param name="processor"></param>
+        public static void RemoveCustomDeepCloneProcessor(Func<object, object> processor) {
+            customDeepCloneProcessors.Remove(processor);
         }
     }
 }

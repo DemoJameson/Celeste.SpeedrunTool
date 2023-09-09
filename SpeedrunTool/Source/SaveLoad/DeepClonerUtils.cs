@@ -145,9 +145,9 @@ public static class DeepClonerUtils {
                     sourceObj.InvokeMethod("TryGetTarget", parameters);
                     return type.GetConstructorInfo(genericType).Invoke(parameters.DeepClone(deepCloneState));
                 }
-            }
 
-            return null;
+                return SpeedrunToolInterop.CustomDeepCloneObject(sourceObj);
+            }
         });
 
         // Clone 对象的字段后，进行自定的处理

@@ -6,6 +6,7 @@ using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
+using Celeste.Pico8;
 using Force.DeepCloner;
 using On.Celeste.Editor;
 using LevelTemplate = Celeste.Editor.LevelTemplate;
@@ -46,6 +47,8 @@ public static class TeleportRoomUtils {
                 if (TeleportToPreviousRoom(level) == false) {
                     PopupMessageUtils.Show(DialogIds.AlreadyFirstRoomTooltip.DialogClean(), DialogIds.AlreadyFirstRoomDialog);
                 }
+            } else if (scene is Emulator {gameActive: true, game: { } game}) {
+                PreviousPico8Room(game);
             }
         });
 
@@ -54,8 +57,45 @@ public static class TeleportRoomUtils {
                 if (TeleportToNextRoom(level) == false) {
                     PopupMessageUtils.Show(DialogIds.AlreadyLastRoomTooltip.DialogClean(), DialogIds.AlreadyLastRoomDialog);
                 }
+            } else if (scene is Emulator {gameActive: true, game: { } game}) {
+                NextPico8Room(game);
             }
         });
+    }
+
+    private static void PreviousPico8Room(Classic game) {
+        Point room = LevelIndexToRoom(game.level_index() - 1);
+        game.load_room(room.X, room.Y);
+        CorrectPico8State(game);
+    }
+
+    private static void NextPico8Room(Classic game) {
+        Point room = LevelIndexToRoom(game.level_index() + 1);
+        game.load_room(room.X, room.Y);
+        CorrectPico8State(game);
+    }
+
+    private static Point LevelIndexToRoom(int levelIndex) {
+        levelIndex += 32;
+        levelIndex %= 32;
+        return new Point(levelIndex % 8, levelIndex / 8);
+    }
+
+    private static void CorrectPico8State(Classic game) {
+        int levelIndex = game.level_index();
+        bool doubleJump = levelIndex is > 21 and < 31;
+        game.max_djump = doubleJump ? 2 : 1;
+        game.new_bg = doubleJump;
+
+        int music = levelIndex switch {
+            31 => 40,
+            >= 0 and <= 10 => 0,
+            >= 22 and <= 29 => 10,
+            11 or 21 or 30 => 30,
+            _ => 20
+        };
+
+        game.E.music(music, 0, 0);
     }
 
     private static void SummitCheckpointOnUpdate(On.Celeste.SummitCheckpoint.orig_Update orig, SummitCheckpoint self) {
@@ -123,7 +163,7 @@ public static class TeleportRoomUtils {
         if (!fromHistory) {
             BetterMapEditor.FixTeleportProblems(session, session.RespawnPoint);
         }
-        
+
         bool savedState = StateMarkUtils.GetSavedStateFlag(level);
         long time = Math.Max(session.Time, level.Session.Time);
         int increaseDeath = level.IsPlayerDead() || level.GetPlayer().JustRespawned ? 0 : 1;

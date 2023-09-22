@@ -86,6 +86,7 @@ public static class TeleportRoomUtils {
         bool doubleJump = levelIndex is > 21 and < 31;
         game.max_djump = doubleJump ? 2 : 1;
         game.new_bg = doubleJump;
+        game.start_game = false;
 
         int music = levelIndex switch {
             31 => 40,
@@ -96,6 +97,7 @@ public static class TeleportRoomUtils {
         };
 
         game.E.music(music, 0, 0);
+        game.music_timer = 0;
     }
 
     private static void SummitCheckpointOnUpdate(On.Celeste.SummitCheckpoint.orig_Update orig, SummitCheckpoint self) {

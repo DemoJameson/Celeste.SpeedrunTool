@@ -14,6 +14,7 @@ public static class SpeedrunToolMenu {
     private static List<EaseInSubMenu> options;
 
     public static void Create(TextMenu menu, bool inGame, EventInstance snapshot) {
+        menu.OnClose += () => options = null;
         menu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.Enabled), ModSettings.Enabled).Change(value => {
             ModSettings.Enabled = value;
             foreach (EaseInSubMenu item in options) {

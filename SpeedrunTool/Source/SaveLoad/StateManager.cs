@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -9,6 +10,8 @@ using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.Utils;
 using Force.DeepCloner;
 using Force.DeepCloner.Helpers;
+using Mono.Cecil.Cil;
+using MonoMod.Cil;
 using EventInstance = FMOD.Studio.EventInstance;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
@@ -68,6 +71,8 @@ public sealed class StateManager {
     private FreezeType freezeType;
     private Process celesteProcess;
     private object savedTasCycleGroupCounter;
+    private WeakReference<IEnumerator> transitionRoutine;
+    private IEnumerator savedTransitionRoutine;
 
     private enum FreezeType {
         None,
@@ -84,6 +89,9 @@ public sealed class StateManager {
         On.Celeste.Level.Update += UpdateBackdropWhenWaiting;
         On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
         On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
+        IL.Celeste.Level.TransitionRoutine += LevelOnTransitionRoutine;
+        On.Celeste.Level.TransitionRoutine += LevelOnTransitionRoutine;
+        On.Celeste.Level.End += LevelOnEnd;
         SaveLoadAction.SafeAdd(
             (_, _) => UpdateLastChecks(),
             (_, _) => UpdateLastChecks(),
@@ -97,6 +105,9 @@ public sealed class StateManager {
         On.Celeste.Level.Update -= UpdateBackdropWhenWaiting;
         On.Monocle.Scene.Begin -= ClearStateWhenSwitchScene;
         On.Celeste.PlayerDeadBody.End -= AutoLoadStateWhenDeath;
+        IL.Celeste.Level.TransitionRoutine -= LevelOnTransitionRoutine;
+        On.Celeste.Level.TransitionRoutine -= LevelOnTransitionRoutine;
+        On.Celeste.Level.End -= LevelOnEnd;
     }
 
     private void RegisterHotkeys() {
@@ -232,6 +243,32 @@ public sealed class StateManager {
         }
     }
 
+    private void LevelOnTransitionRoutine(ILContext context) {
+        ILCursor cursor = new (context);
+        if (cursor.TryGotoNext(MoveType.After, ins => ins.OpCode == OpCodes.Newobj && ins.Operand.ToString().Contains("Level/<TransitionRoutine>"))) {
+            cursor.EmitDelegate(SaveTransitionRoutine);
+        }
+    }
+
+    private IEnumerator SaveTransitionRoutine(IEnumerator enumerator) {
+        transitionRoutine = new WeakReference<IEnumerator>(enumerator);
+        return enumerator;
+    }
+
+    private IEnumerator LevelOnTransitionRoutine(On.Celeste.Level.orig_TransitionRoutine orig, Level self, LevelData next, Vector2 direction) {
+        IEnumerator enumerator = orig(self, next, direction);
+        while (enumerator.MoveNext()) {
+            yield return enumerator.Current;
+        }
+
+        transitionRoutine = null;
+    }
+
+    private void LevelOnEnd(On.Celeste.Level.orig_End orig, Level self) {
+        orig(self);
+        transitionRoutine = null;
+    }
+
     #endregion Hook
 
     // public for TAS Mod
@@ -270,6 +307,9 @@ public sealed class StateManager {
         level.DeepCloneToShared(savedLevel = (Level)FormatterServices.GetUninitializedObject(typeof(Level)));
         savedSaveData = SaveData.Instance.DeepCloneShared();
         savedTasCycleGroupCounter = CycleGroupCounter.Value?.GetValue(null);
+        if (transitionRoutine?.TryGetTarget(out IEnumerator enumerator) == true) {
+            savedTransitionRoutine = enumerator.DeepCloneShared();
+        }
         SaveLoadAction.OnSaveState(level);
         DeepClonerUtils.ClearSharedDeepCloneState();
         PreCloneSavedEntities();
@@ -411,12 +451,10 @@ public sealed class StateManager {
             SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].TimePlayed;
 
         // 修复：切屏时存档，若干秒后读档游戏会误以为卡死自动重生
-        if (savedLevel.transition is { } coroutine && coroutine.Current() is { } enumerator
-                                                   && enumerator.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
-                                                       .FirstOrDefault(info => info.Name.StartsWith("<playerStuck>")) is { } playerStuck
-           ) {
-            playerStuck.SetValue(enumerator, TimeSpan.FromTicks(session.Time));
-            playerStuck.SetValue(enumerator.DeepCloneShared(), TimeSpan.FromTicks(session.Time));
+        if (savedTransitionRoutine?.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
+                .FirstOrDefault(info => info.Name.StartsWith("<playerStuck>")) is { } playerStuck) {
+            playerStuck.SetValue(savedTransitionRoutine, TimeSpan.FromTicks(session.Time));
+            playerStuck.SetValue(savedTransitionRoutine.DeepCloneShared(), TimeSpan.FromTicks(session.Time));
         }
 
         int increaseDeath = level.IsPlayerDead() ? 0 : 1;
@@ -495,6 +533,8 @@ public sealed class StateManager {
         savedLevel = null;
         savedSaveData = null;
         preCloneTask = null;
+        savedTasCycleGroupCounter = null;
+        savedTransitionRoutine = null;
         celesteProcess?.Dispose();
         celesteProcess = null;
         SaveLoadAction.OnClearState();

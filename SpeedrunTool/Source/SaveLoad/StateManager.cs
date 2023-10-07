@@ -307,9 +307,7 @@ public sealed class StateManager {
         level.DeepCloneToShared(savedLevel = (Level)FormatterServices.GetUninitializedObject(typeof(Level)));
         savedSaveData = SaveData.Instance.DeepCloneShared();
         savedTasCycleGroupCounter = CycleGroupCounter.Value?.GetValue(null);
-        if (transitionRoutine?.TryGetTarget(out IEnumerator enumerator) == true) {
-            savedTransitionRoutine = enumerator.DeepCloneShared();
-        }
+        savedTransitionRoutine = transitionRoutine?.TryGetTarget(out IEnumerator enumerator) == true ? enumerator.DeepCloneShared() : null;
         SaveLoadAction.OnSaveState(level);
         DeepClonerUtils.ClearSharedDeepCloneState();
         PreCloneSavedEntities();
@@ -358,6 +356,9 @@ public sealed class StateManager {
 
         savedLevel.DeepCloneToShared(level);
         SaveData.Instance = savedSaveData.DeepCloneShared();
+        if (savedTransitionRoutine != null) {
+            transitionRoutine = new WeakReference<IEnumerator>(savedTransitionRoutine.DeepCloneShared());
+        }
 
         RestoreAudio1(level);
         RestoreCassetteBlockManager1(level);

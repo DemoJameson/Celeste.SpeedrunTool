@@ -216,7 +216,6 @@ public sealed class SaveLoadAction {
         DeathTrackerHelper.AddSupport();
         SupportCommunalHelper();
         SupportBrokemiaHelper();
-        StrawberryJamUtils.AddSupport();
         FrostHelperUtils.SupportFrostHelper();
         SupportVivHelper();
 

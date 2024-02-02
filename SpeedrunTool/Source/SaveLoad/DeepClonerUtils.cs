@@ -160,11 +160,11 @@ public static class DeepClonerUtils {
             lock (sourceObj) {
                 Type type = clonedObj.GetType();
 
-                // 修复：DeepClone 的 hashSet.Containes(里面存在的引用对象) 总是返回 False
+                // 修复：DeepClone 后的 HashSet.Containes/Dictonary.ContainsKey(未重新 GetHashCode 的对象) 总是返回 False
                 // 原因：没有重写 GetHashCode 方法 https://github.com/force-net/DeepCloner/issues/17#issuecomment-678650032
-                // Fix: DeepClone's hashSet.Contains (ReferenceType) always returns false, Dictionary has no such problem
+                // Fix: DeepClone's hashSet.Contains (ReferenceType) always returns false
 
-                // 手动处理最常见的 HashSet<Component>/Dictionary<string, object> 类型，避免使用发射以及判断类型
+                // 手动处理最常见的 HashSet<Component> 类型，避免使用反射以及判断类型
                 if (clonedObj is HashSet<Component> hashSet) {
                     backupComponents ??= new Stack<Component>();
                     foreach (Component component in hashSet) {
@@ -177,12 +177,6 @@ public static class DeepClonerUtils {
                     while (backupComponents.Count > 0) {
                         hashSet.Add(backupComponents.Pop());
                     }
-                } else if (clonedObj is Dictionary<string, object> dictionary) {
-                    backupDict ??= new Dictionary<object, object>();
-                    backupDict.SetRange(dictionary);
-                    dictionary.Clear();
-                    dictionary.SetRange(backupDict);
-                    backupDict.Clear();
                 } else if (clonedObj is VirtualAsset virtualAsset
                            && (StateManager.Instance.State == State.Loading || !Thread.CurrentThread.IsMainThread())) {
                     // 预克隆的资源需要等待 LoadState 中移除实体之后才能判断是否需要 Reload，必须等待主线程中再操作

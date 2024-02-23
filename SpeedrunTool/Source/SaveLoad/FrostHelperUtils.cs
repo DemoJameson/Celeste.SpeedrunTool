@@ -54,5 +54,17 @@ internal static class FrostHelperUtils {
                     }
                 });
         }
+
+        if (ModUtils.GetType("FrostHelper", "FrostHelper.ChangeDashSpeedOnce") is { } changeDashSpeedOnceType) {
+            SaveLoadAction.SafeAdd(
+                (savedValues, _) => SaveLoadAction.SaveStaticMemberValues(savedValues, changeDashSpeedOnceType, "NextDashSpeed", "NextSuperJumpSpeed"),
+                (savedValues, _) => SaveLoadAction.LoadStaticMemberValues(savedValues));
+        }
+        
+        if (ModUtils.GetType("FrostHelper", "FrostHelper.TimeBasedClimbBlocker ") is { } timeBasedClimbBlockerType) {
+            SaveLoadAction.SafeAdd(
+                (savedValues, _) => SaveLoadAction.SaveStaticMemberValues(savedValues, timeBasedClimbBlockerType, "_NoClimbTimer"),
+                (savedValues, _) => SaveLoadAction.LoadStaticMemberValues(savedValues));
+        }
     }
 }

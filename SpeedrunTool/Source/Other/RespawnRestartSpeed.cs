@@ -83,20 +83,16 @@ public static class RespawnRestartSpeed {
     private static void ModRestartMenu(ILCursor ilCursor, ILContext il) {
         if (ilCursor.TryGotoNext(
                 MoveType.After,
-                ins => ins.OpCode == OpCodes.Ldfld && ins.Operand.ToString().EndsWith("::restartArea"),
-                ins => ins.OpCode == OpCodes.Brfalse_S
+                ins => ins.OpCode == OpCodes.Ldfld && ins.Operand.ToString().EndsWith("::restartArea")
             )) {
-            object skipScreenWipe = ilCursor.Prev.Operand;
-            ilCursor.EmitDelegate<Func<bool>>(() => {
-                if (ModSettings.Enabled && ModSettings.SkipRestartChapterScreenWipe && Engine.Scene is Level level && !TasUtils.Running) {
-                    Engine.Scene = new LevelLoader(level.Session.Restart());
-                    RoomTimerManager.TryTurnOffRoomTimer();
-                    return true;
-                } else {
-                    return false;
+            ilCursor.Emit(OpCodes.Dup).EmitDelegate<Action<bool>>((restartArea) => {
+                if (restartArea && ModSettings.Enabled && ModSettings.SkipRestartChapterScreenWipe && Engine.Scene is Level level && !TasUtils.Running) {
+                    level.OnEndOfFrame += () => {
+                        Engine.Scene = new LevelLoader(level.Session.Restart());
+                        RoomTimerManager.TryTurnOffRoomTimer(); 
+                    };
                 }
             });
-            ilCursor.Emit(OpCodes.Brtrue_S, skipScreenWipe);
         }
     }
 }

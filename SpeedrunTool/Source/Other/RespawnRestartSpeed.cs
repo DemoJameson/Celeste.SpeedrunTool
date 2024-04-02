@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Celeste.Mod.SpeedrunTool.Utils;
@@ -90,6 +91,7 @@ public static class RespawnRestartSpeed {
                     level.OnEndOfFrame += () => {
                         Engine.Scene = new LevelLoader(level.Session.Restart());
                         RoomTimerManager.TryTurnOffRoomTimer(); 
+                        DeathStatisticsManager.Clear();
                     };
                 }
             });

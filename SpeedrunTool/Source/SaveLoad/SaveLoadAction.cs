@@ -591,8 +591,9 @@ public sealed class SaveLoadAction {
                 ClearBeforeSaveComponent.RemoveAll(level);
 
                 // 冲刺残影方向错误，干脆移除屏幕不显示了
+                // FIXME: 正确 SL 残影
                 level.Tracker.GetEntities<TrailManager.Snapshot>()
-                    .ForEach(entity => entity.Position = level.Camera.Position - Vector2.One * 100);
+                    .ForEach(entity => entity.Position = level.Camera.Position - Vector2.One * 1000);
 
                 if (ModUtils.IsInstalled("CelesteNet.Client")) {
                     Type ghostEmoteWheelType = ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.Entities.GhostEmoteWheel");

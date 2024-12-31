@@ -332,3 +332,9 @@ ASALocalRun/
 
 SpeedrunTool/lib-stripped/*
 /SpeedrunTool.sln.DotSettings
+
+SpeedrunTool.dll
+Dialog
+Graphics
+everest.yaml
+toZip.cmd

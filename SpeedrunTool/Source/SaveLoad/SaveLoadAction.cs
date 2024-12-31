@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -198,6 +198,7 @@ public sealed class SaveLoadAction {
         BetterCasualPlay();
         SupportExternalMember();
         SupportCalcRandom();
+        SupportSettings();
         SupportMInput();
         SupportInput();
         SupportAudioMusic();
@@ -222,6 +223,15 @@ public sealed class SaveLoadAction {
         // 放最后，确保收集了所有克隆的 VirtualAssets 与 EventInstance
         ReloadVirtualAssets();
         ReleaseEventInstances();
+    }
+
+    internal static void LogSavedValues() {
+        foreach (SaveLoadAction slAction in All) {
+            Logger.Log("SRT", "=================");
+            foreach (KeyValuePair<Type, Dictionary<string, object>> pair in slAction.savedValues) {
+                Logger.Log("SRT", pair.Key.FullName);
+            }
+        }
     }
 
     private static void InitFields() {
@@ -456,6 +466,24 @@ public sealed class SaveLoadAction {
             (savedValues, _) => LoadStaticMemberValues(savedValues));
     }
 
+    private static void SupportSettings() {
+        SafeAdd(
+            (savedValues, _) => {
+                if (Settings.Instance is { } settings) {
+                    Dictionary<string, object> dict = new();
+                    dict["GrabMode"] = settings.GrabMode;
+                    savedValues[typeof(Settings)] = dict;
+                }
+            },
+            (savedValues, _) => {
+                if (Settings.Instance is { } settings && savedValues.TryGetValue(typeof(Settings), out Dictionary<string, object> dict)) {
+                    settings.GrabMode = (GrabModes)dict["GrabMode"];
+                    
+                }
+            }
+        );
+    }
+
     private static void SupportMInput() {
         SafeAdd(
             (savedValues, _) => SaveStaticMemberValues(savedValues, typeof(MInput),
@@ -480,6 +508,9 @@ public sealed class SaveLoadAction {
                              info.FieldType.IsSameOrSubclassOf(typeof(VirtualInput)))) {
                     inputDict[fieldInfo.Name] = fieldInfo.GetValue(null);
                 }
+
+                inputDict["grabToggle"] = Input.grabToggle;
+                inputDict["LastAim"] = Input.LastAim;
 
                 savedValues[inputType] = inputDict.DeepCloneShared();
 
@@ -525,15 +556,22 @@ public sealed class SaveLoadAction {
                     if (StateManager.Instance.LoadByTas) {
                         inputType.SetFieldValue(fieldName, virtualInput);
                     } else {
-                        object fieldValue = inputType.GetFieldValue(fieldName);
-
-                        if (fieldValue is VirtualJoystick virtualJoystick &&
-                            virtualInput is VirtualJoystick savedVirtualJoystick) {
-                            virtualJoystick.InvertedX = savedVirtualJoystick.InvertedX;
-                            virtualJoystick.InvertedY = savedVirtualJoystick.InvertedY;
-                        } else if (fieldValue is VirtualIntegerAxis virtualIntegerAxis &&
-                                   virtualInput is VirtualIntegerAxis savedVirtualIntegerAxis) {
-                            virtualIntegerAxis.Inverted = savedVirtualIntegerAxis.Inverted;
+                        if (fieldName == "grabToggle") {
+                            Input.grabToggle = (bool)virtualInput;
+                        }
+                        else if (fieldName == "LastAim") {
+                            Input.LastAim = (Vector2)virtualInput;
+                        }
+                        else {
+                            object fieldValue = inputType.GetFieldValue(fieldName);
+                            if (fieldValue is VirtualJoystick virtualJoystick &&
+                                virtualInput is VirtualJoystick savedVirtualJoystick) {
+                                virtualJoystick.InvertedX = savedVirtualJoystick.InvertedX;
+                                virtualJoystick.InvertedY = savedVirtualJoystick.InvertedY;
+                            } else if (fieldValue is VirtualIntegerAxis virtualIntegerAxis &&
+                                       virtualInput is VirtualIntegerAxis savedVirtualIntegerAxis) {
+                                virtualIntegerAxis.Inverted = savedVirtualIntegerAxis.Inverted;
+                            }
                         }
                     }
                 }

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <ProjectGuid>{C7DFDD37-907C-4A75-96DA-1C5828C97F96}</ProjectGuid>
         <RootNamespace>Celeste.Mod.SpeedrunTool</RootNamespace>
@@ -83,5 +83,22 @@
     </ItemGroup>
     <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Release'">
         <Delete Files="$(TargetDir)JetBrains.Profiler.Api.dll" />
+    </Target>
+
+    <Target Name="CopyAssemblies" AfterTargets="Build">
+        <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder=".." />
+        <Copy SourceFiles="$(OutputPath)$(AssemblyName).pdb" DestinationFolder=".." />
+    </Target>
+    
+    <Target Name="CopyAssets" AfterTargets="Build" Condition="'$(Configuration)' != 'Debug' or '$(OS)' != 'Unix' or $(UseSymlinks) == false">
+        <ItemGroup>
+            <CelesteAssets Include="everest.yaml" />
+            <CelesteAssets Include="Dialog\**\*" />
+            <CelesteAssets Include="Graphics\**\*" />
+        </ItemGroup>
+
+        <!-- Clean-up potential symlinks -->
+        <RemoveDir Directories="..\Dialog;..\Graphics"/>
+        <Copy SourceFiles="@(CelesteAssets)" DestinationFiles="..\%(Identity)"/>
     </Target>
 </Project>

@@ -322,6 +322,8 @@ public sealed class StateManager {
             }
         }
 
+        // SaveLoadAction.LogSavedValues();
+
         return true;
     }
 

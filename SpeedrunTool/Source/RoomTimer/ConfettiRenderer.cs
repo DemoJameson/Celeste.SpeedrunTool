@@ -1,4 +1,4 @@
-namespace Celeste.Mod.SpeedrunTool.RoomTimer; 
+namespace Celeste.Mod.SpeedrunTool.RoomTimer;
 
 [Tracked]
 internal class ConfettiRenderer : Entity {

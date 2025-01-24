@@ -1,9 +1,9 @@
-﻿using System.Reflection;
-using Celeste.Mod.SpeedrunTool.SaveLoad;
+﻿using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Celeste.Mod.SpeedrunTool.Utils;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using MonoMod.Utils;
+using System.Reflection;
 
 namespace Celeste.Mod.SpeedrunTool.Message;
 

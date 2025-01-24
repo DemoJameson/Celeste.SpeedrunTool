@@ -10,5 +10,5 @@ using System.Runtime.InteropServices;
 [assembly: Guid("c7dfdd37-907c-4a75-96da-1c5828c97f96")]
 
 // 配合 NStrip -p 处理的 dll，直接调用 private 的类/字段/属性/方法
-[assembly: IgnoresAccessChecksTo("Celeste")] 
-[assembly: IgnoresAccessChecksTo("MonoMod.Utils")] 
+[assembly: IgnoresAccessChecksTo("Celeste")]
+[assembly: IgnoresAccessChecksTo("MonoMod.Utils")]

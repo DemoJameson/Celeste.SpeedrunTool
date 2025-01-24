@@ -1,6 +1,6 @@
-﻿using System.Linq;
+﻿using Celeste.Mod.Helpers;
+using System.Linq;
 using System.Reflection;
-using Celeste.Mod.Helpers;
 
 namespace Celeste.Mod.SpeedrunTool.Utils;
 

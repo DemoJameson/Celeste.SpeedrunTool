@@ -33,7 +33,7 @@ internal static class CelesteExtensions {
     }
 
     public static IEnumerator Current(this Coroutine coroutine) {
-        if (coroutine.enumerators is {Count: > 0} enumerators) {
+        if (coroutine.enumerators is { Count: > 0 } enumerators) {
             return enumerators.Peek();
         } else {
             return null;

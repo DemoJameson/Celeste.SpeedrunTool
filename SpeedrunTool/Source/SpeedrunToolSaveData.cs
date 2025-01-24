@@ -1,7 +1,7 @@
+using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Celeste.Mod.SpeedrunTool.DeathStatistics;
 
 namespace Celeste.Mod.SpeedrunTool;
 

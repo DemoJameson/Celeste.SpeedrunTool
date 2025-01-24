@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Celeste.Mod.SpeedrunTool.Utils;
+﻿using Celeste.Mod.SpeedrunTool.Utils;
 using Force.DeepCloner;
 using Force.DeepCloner.Helpers;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
@@ -38,7 +38,7 @@ internal static class FrostHelperUtils {
                 saveState: (values, level) => {
                     Dictionary<string, object> dict = new();
                     List<Entity> players = level.Tracker.GetEntities<Player>();
-                    List<object> boosters = players.Select(player => getBoosterThatIsBoostingPlayer.Invoke(null, new object[] {player})).ToList();
+                    List<object> boosters = players.Select(player => getBoosterThatIsBoostingPlayer.Invoke(null, new object[] { player })).ToList();
                     dict["players"] = players;
                     dict["boosters"] = boosters;
                     values[genericCustomBoosterType] = dict.DeepCloneShared();
@@ -48,7 +48,7 @@ internal static class FrostHelperUtils {
                     if (dict.TryGetValue("players", out object players) && dict.TryGetValue("boosters", out object boosters)) {
                         if (players is List<Entity> playerList && boosters is List<object> boosterList) {
                             for (int i = 0; i < playerList.Count; i++) {
-                                setAttached.Invoke(null, new[] {playerList[i], boosterList[i]});
+                                setAttached.Invoke(null, new[] { playerList[i], boosterList[i] });
                             }
                         }
                     }
@@ -60,7 +60,7 @@ internal static class FrostHelperUtils {
                 (savedValues, _) => SaveLoadAction.SaveStaticMemberValues(savedValues, changeDashSpeedOnceType, "NextDashSpeed", "NextSuperJumpSpeed"),
                 (savedValues, _) => SaveLoadAction.LoadStaticMemberValues(savedValues));
         }
-        
+
         if (ModUtils.GetType("FrostHelper", "FrostHelper.TimeBasedClimbBlocker") is { } timeBasedClimbBlockerType) {
             SaveLoadAction.SafeAdd(
                 (savedValues, _) => SaveLoadAction.SaveStaticMemberValues(savedValues, timeBasedClimbBlockerType, "_NoClimbTimer"),

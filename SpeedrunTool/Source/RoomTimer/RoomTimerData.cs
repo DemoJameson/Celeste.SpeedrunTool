@@ -1,5 +1,5 @@
-using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
+using System.Collections.Generic;
 
 namespace Celeste.Mod.SpeedrunTool.RoomTimer;
 
@@ -39,7 +39,7 @@ internal class RoomTimerData {
     public string PbTimeString => FormatTime(GetSelectedPbTime, true);
     private bool IsNextRoomType => roomTimerType == RoomTimerType.NextRoom;
     public bool IsCompleted => timerState == TimerState.Completed;
-    public bool BeatBestTime => (IsCompleted && (GetSelectedRoomTime < GetSelectedLastPbTime || GetSelectedLastPbTime == 0)) || 
+    public bool BeatBestTime => (IsCompleted && (GetSelectedRoomTime < GetSelectedLastPbTime || GetSelectedLastPbTime == 0)) ||
         (displayGoldRenderTime > 0f && timerState is TimerState.Timing && ModSettings.DisplayRoomGold);
 
     private void UpdateTimeKeys(Level level) {
@@ -76,7 +76,7 @@ internal class RoomTimerData {
 
         // need to continually poll this condition because you can now
         // change number of timed rooms to reactivate the timer
-        if (roomNumber > ModSettings.NumberOfRooms && !EndPoint.IsExist || hitEndPoint || level is {Completed: true}) {
+        if (roomNumber > ModSettings.NumberOfRooms && !EndPoint.IsExist || hitEndPoint || level is { Completed: true }) {
             timerState = TimerState.Completed;
         } else {
             timerState = TimerState.Timing;
@@ -85,7 +85,7 @@ internal class RoomTimerData {
         if (displayGoldRenderTime > 0f) {
             displayGoldRenderTime -= Engine.RawDeltaTime;
         }
-        
+
         Time += TimeSpan.FromSeconds(Engine.RawDeltaTime).Ticks;
 
         if (autosplitterTimeFreezeTime > 0f) {
@@ -127,16 +127,16 @@ internal class RoomTimerData {
                     }
 
                     // don't overflow room number at level end
-                    if (level is {Completed: false}) {
+                    if (level is { Completed: false }) {
                         roomNumber++;
                     }
 
-                    if (roomNumber >= ModSettings.NumberOfRooms || level is {Completed: true}) {
+                    if (roomNumber >= ModSettings.NumberOfRooms || level is { Completed: true }) {
                         timerState = TimerState.Completed;
                     }
 
                     // preserve behavior of reporting the finish time on level end even if number of rooms is too large
-                    if (level is {Completed: true} && roomNumber < ModSettings.NumberOfRooms) {
+                    if (level is { Completed: true } && roomNumber < ModSettings.NumberOfRooms) {
                         ThisRunTimes[pbTimeKey] = Time;
                         lastPbTime = PbTimes.GetValueOrDefault(pbTimeKey, 0);
                         if (Time < lastPbTime || lastPbTime == 0) {
@@ -152,7 +152,7 @@ internal class RoomTimerData {
                             }
                         }
                     }
-                } else if (endPoint || level is {Completed: true} || EndPoint.IsReachedRoomIdEndPoint) {
+                } else if (endPoint || level is { Completed: true } || EndPoint.IsReachedRoomIdEndPoint) {
                     // if using endpoint/room id, ignore room count and only track a single complete time, pb time and best segment
                     ThisRunTimes[thisRunTimeKey] = Time;
                     lastPbTime = PbTimes.GetValueOrDefault(thisRunTimeKey, 0);
@@ -171,7 +171,7 @@ internal class RoomTimerData {
 
                     timerState = TimerState.Completed;
                     hitEndPoint = true;
-                    if (level is {Completed: false} && ModSettings.RoomTimerType == roomTimerType) {
+                    if (level is { Completed: false } && ModSettings.RoomTimerType == roomTimerType) {
                         EndPoint.AllStopTime();
                     }
                 }
@@ -182,7 +182,7 @@ internal class RoomTimerData {
                 if (!EndPoint.IsExist) {
                     ThisRunTimes[thisRunTimeKey] = Time;
                     // don't overflow room number at level end
-                    if (level is {Completed: false}) {
+                    if (level is { Completed: false }) {
                         roomNumber++;
                     }
 

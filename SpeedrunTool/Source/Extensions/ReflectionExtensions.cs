@@ -1,9 +1,9 @@
+using Mono.Cecil.Cil;
+using MonoMod.Utils;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Mono.Cecil.Cil;
-using MonoMod.Utils;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions;
 
@@ -48,7 +48,7 @@ internal static class ReflectionExtensions {
     private static readonly ConcurrentDictionary<DelegateKey, Delegate> CachedFieldSetDelegates = new();
 
     private static readonly object[] NoArg = { };
-    private static readonly object[] NullArg = {null};
+    private static readonly object[] NullArg = { null };
     private static readonly Type[] EmptyTypes = { };
 
     public static FieldInfo GetFieldInfo(this Type type, string name) {
@@ -100,7 +100,7 @@ internal static class ReflectionExtensions {
 
         return CachedMethodDelegates[key] = type.GetMethodInfo(name, types)?.CreateFastDelegate();
     }
-    
+
     public static ConstructorInfo GetConstructorInfo(this Type type, params Type[] types) {
         var key = new ConstructorKey(type, types.GetCustomHashCode());
         if (CachedConstructorInfos.TryGetValue(key, out ConstructorInfo result)) {
@@ -111,7 +111,7 @@ internal static class ReflectionExtensions {
         result = constructors.FirstOrDefault(info => types.SequenceEqual(info.GetParameters().Select(i => i.ParameterType)));
         return CachedConstructorInfos[key] = result;
     }
-    
+
     public static object GetFieldValue(this object obj, string name) {
         return GetFieldValueImpl<object>(obj, obj.GetType(), name);
     }
@@ -174,7 +174,7 @@ internal static class ReflectionExtensions {
             return (GetDelegate<TReturn>)func.Method.CreateDelegate(typeof(GetDelegate<TReturn>), func.Target);
         }
 
-        using var method = new DynamicMethodDefinition($"{field} Getter", returnType, new[] {typeof(object)});
+        using var method = new DynamicMethodDefinition($"{field} Getter", returnType, new[] { typeof(object) });
         var il = method.GetILProcessor();
 
         if (field.IsStatic) {
@@ -212,7 +212,7 @@ internal static class ReflectionExtensions {
             throw new FieldAccessException($"Unable to set constant field {field.Name} of type {field.DeclaringType.FullName}.");
         }
 
-        using var method = new DynamicMethodDefinition($"{field} Setter", typeof(void), new[] {typeof(object), parameterType});
+        using var method = new DynamicMethodDefinition($"{field} Setter", typeof(void), new[] { typeof(object), parameterType });
         var il = method.GetILProcessor();
 
         if (!field.IsStatic) {

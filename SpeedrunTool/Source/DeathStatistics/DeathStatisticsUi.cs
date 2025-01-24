@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Celeste.Mod.SpeedrunTool.DeathStatistics; 
+namespace Celeste.Mod.SpeedrunTool.DeathStatistics;
 
 [Tracked]
 public class DeathStatisticsUi : TextMenu {

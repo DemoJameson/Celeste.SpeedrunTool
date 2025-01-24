@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
@@ -6,6 +5,7 @@ using Celeste.Mod.SpeedrunTool.Utils;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
+using System.Collections.Generic;
 
 namespace Celeste.Mod.SpeedrunTool.Other;
 
@@ -14,7 +14,7 @@ public static class RespawnRestartSpeed {
 
     [Load]
     private static void Hook() {
-        using (new DetourContext {After = new List<string> {"*"}}) {
+        using (new DetourContext { After = new List<string> { "*" } }) {
             On.Monocle.Engine.Update += RespawnSpeed;
         }
     }
@@ -90,7 +90,7 @@ public static class RespawnRestartSpeed {
                 if (restartArea && ModSettings.Enabled && ModSettings.SkipRestartChapterScreenWipe && Engine.Scene is Level level && !TasUtils.Running) {
                     level.OnEndOfFrame += () => {
                         Engine.Scene = new LevelLoader(level.Session.Restart());
-                        RoomTimerManager.TryTurnOffRoomTimer(); 
+                        RoomTimerManager.TryTurnOffRoomTimer();
                         DeathStatisticsManager.Clear();
                     };
                 }

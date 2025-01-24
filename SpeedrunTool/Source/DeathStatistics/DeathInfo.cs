@@ -1,8 +1,8 @@
-using System.Collections.Generic;
 using Force.DeepCloner;
+using System.Collections.Generic;
 using YamlDotNet.Serialization;
 
-namespace Celeste.Mod.SpeedrunTool.DeathStatistics; 
+namespace Celeste.Mod.SpeedrunTool.DeathStatistics;
 
 public class DeathInfo {
     public string Chapter { get; set; }
@@ -121,7 +121,7 @@ public class DeathInfo {
 
     private string GetChapterName(Session session) {
         string levelName = Dialog.Get(AreaData.Get(session).Name, Dialog.Languages["english"]);
-        string levelMode = ((char) (session.Area.Mode + 'A')).ToString();
+        string levelMode = ((char)(session.Area.Mode + 'A')).ToString();
 
         switch (levelName) {
             case "Forsaken City":

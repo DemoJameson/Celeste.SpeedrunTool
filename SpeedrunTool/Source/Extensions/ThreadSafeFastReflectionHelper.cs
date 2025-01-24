@@ -1,13 +1,13 @@
-﻿using System.Collections.Concurrent;
-using System.Reflection;
-using Mono.Cecil;
+﻿using Mono.Cecil;
 using Mono.Cecil.Cil;
 using MonoMod.Utils;
+using System.Collections.Concurrent;
+using System.Reflection;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions;
 
 internal static class ThreadSafeFastReflectionHelper {
-    private static readonly Type[] _DynamicMethodDelegateArgs = {typeof(object), typeof(object[])};
+    private static readonly Type[] _DynamicMethodDelegateArgs = { typeof(object), typeof(object[]) };
     private static readonly ConcurrentDictionary<MethodBase, FastReflectionDelegate> _MethodCache = new();
 
     private static FastReflectionDelegate _CreateFastDelegate(MethodBase method, bool directBoxValueAccess = true) {

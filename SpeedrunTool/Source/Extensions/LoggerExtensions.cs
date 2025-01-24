@@ -13,7 +13,7 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
             string frames = "";
             if (Engine.Scene != null) {
-                frames = "[" + (int) Math.Round(Engine.Scene.RawTimeActive / 0.0166667) + "] ";
+                frames = "[" + (int)Math.Round(Engine.Scene.RawTimeActive / 0.0166667) + "] ";
             }
 
             Logger.Log(logLevel, Tag, $"{levelInfo}{frames}{message}");

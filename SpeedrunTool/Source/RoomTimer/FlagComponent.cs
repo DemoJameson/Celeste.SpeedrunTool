@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Celeste.Mod.SpeedrunTool.RoomTimer; 
+namespace Celeste.Mod.SpeedrunTool.RoomTimer;
 
 public class FlagComponent : Component {
     private readonly bool flagStyle;
@@ -14,7 +14,7 @@ public class FlagComponent : Component {
 
     public FlagComponent(bool flagStyle) : base(false, true) {
         this.flagStyle = flagStyle;
-            
+
         baseEmpty = GFX.Game["scenery/speedrun_tool_summitcheckpoints/base00"];
         baseToggle = GFX.Game["scenery/speedrun_tool_summitcheckpoints/base01"];
         baseActive = GFX.Game["scenery/speedrun_tool_summitcheckpoints/base02"];

@@ -27,7 +27,7 @@ public static class AreaCompleteEnableTimer {
     private static void RestoreTimer(On.Celeste.Celeste.orig_OnSceneTransition orig, Celeste self, Scene last, Scene next) {
         orig(self, last, next);
 
-        if (shouldRestoreTimer && !(next is LevelExit or AreaComplete)) { 
+        if (shouldRestoreTimer && !(next is LevelExit or AreaComplete)) {
             Settings.Instance.SpeedrunClock = SpeedrunType.Off;
             shouldRestoreTimer = false;
         }

@@ -42,8 +42,8 @@
         <Reference Include="Celeste, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
             <HintPath>..\libs\Celeste-nstrip.exe</HintPath>
         </Reference>
-        <Reference Include="CelesteTAS-EverestInterop, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\libs\CelesteTAS-EverestInterop.dll</HintPath>
+        <Reference Include="CelesteTAS-EverestInterop">
+            <HintPath>..\..\CelesteTAS-EverestInterop\bin\CelesteTAS-EverestInterop.dll</HintPath>
         </Reference>
         <Reference Include="FNA">
             <HintPath>..\libs\FNA.dll</HintPath>

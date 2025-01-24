@@ -1,13 +1,13 @@
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Reflection;
-using System.Text.RegularExpressions;
 using Celeste.Mod.Helpers;
 using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Force.DeepCloner;
 using MonoMod.RuntimeDetour;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace Celeste.Mod.SpeedrunTool.DeathStatistics;
 
@@ -30,7 +30,7 @@ public static class DeathStatisticsManager {
     [Load]
     private static void Hook() {
         // 尽量晚的 Hook Player.Die 方法，以便可以稳定的从指定的 StackTrace 中找出死亡原因
-        using (new DetourContext {After = new List<string> {"*"}}) {
+        using (new DetourContext { After = new List<string> { "*" } }) {
             On.Celeste.Player.Die += PlayerOnDie;
         }
     }
@@ -50,7 +50,7 @@ public static class DeathStatisticsManager {
         Hotkey.CheckDeathStatistics.RegisterPressedAction(scene => {
             if (scene.Tracker.GetEntity<DeathStatisticsUi>() is { } deathStatisticsUi) {
                 deathStatisticsUi.OnESC?.Invoke();
-            } else if (scene is Level {Paused: false} level && !level.IsPlayerDead()) {
+            } else if (scene is Level { Paused: false } level && !level.IsPlayerDead()) {
                 level.Paused = true;
                 DeathStatisticsUi buttonConfigUi = new() {
                     OnClose = () => level.Paused = false
@@ -248,7 +248,7 @@ public static class DeathStatisticsManager {
             death = "Retry";
         } else if (death == "SpikeInfo") {
             death = "Trigger Spike";
-        }  else if (death == "Player") {
+        } else if (death == "Player") {
             death = deathMethod.Name;
             if (death == "OnSquish") {
                 death = "Crushed";

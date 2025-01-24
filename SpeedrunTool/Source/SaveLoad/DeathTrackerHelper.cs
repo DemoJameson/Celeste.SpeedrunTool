@@ -1,7 +1,7 @@
-﻿using System.Linq;
-using Celeste.Mod.SpeedrunTool.Utils;
+﻿using Celeste.Mod.SpeedrunTool.Utils;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
+using System.Linq;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
@@ -39,8 +39,8 @@ internal static class DeathTrackerHelper {
         });
 
         SaveLoadAction.SafeAdd(loadState: (_, level) => {
-            if (!ModSettings.SaveTimeAndDeaths && generatedObject != null && level.GetPlayer() is {} player) {
-                onPlayerSpawn.Invoke(generatedObject, new object[] {player});
+            if (!ModSettings.SaveTimeAndDeaths && generatedObject != null && level.GetPlayer() is { } player) {
+                onPlayerSpawn.Invoke(generatedObject, new object[] { player });
             }
         });
     }

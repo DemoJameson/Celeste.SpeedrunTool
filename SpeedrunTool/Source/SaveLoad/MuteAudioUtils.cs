@@ -1,6 +1,6 @@
-using System.Collections.Generic;
 using FMOD;
 using FMOD.Studio;
+using System.Collections.Generic;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 

@@ -1,10 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.Serialization;
-using System.Threading.Tasks;
 using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.Utils;
@@ -12,6 +5,13 @@ using Force.DeepCloner;
 using Force.DeepCloner.Helpers;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.Serialization;
+using System.Threading.Tasks;
 using EventInstance = FMOD.Studio.EventInstance;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
@@ -124,7 +124,7 @@ public sealed class StateManager {
         });
 
         Hotkey.LoadState.RegisterPressedAction(scene => {
-            if (scene is Level {Paused: false} && State == State.None) {
+            if (scene is Level { Paused: false } && State == State.None) {
                 if (IsSaved) {
                     LoadState(false);
                 } else {
@@ -134,13 +134,13 @@ public sealed class StateManager {
         });
 
         Hotkey.ClearState.RegisterPressedAction(scene => {
-            if (scene is Level {Paused: false} && State == State.None) {
+            if (scene is Level { Paused: false } && State == State.None) {
                 ClearStateAndShowMessage();
             }
         });
 
         Hotkey.SwitchAutoLoadState.RegisterPressedAction(scene => {
-            if (scene is Level {Paused: false}) {
+            if (scene is Level { Paused: false }) {
                 ModSettings.AutoLoadStateAfterDeath = !ModSettings.AutoLoadStateAfterDeath;
                 SpeedrunToolModule.Instance.SaveSettings();
                 string state = (ModSettings.AutoLoadStateAfterDeath ? DialogIds.On : DialogIds.Off).DialogClean();
@@ -244,7 +244,7 @@ public sealed class StateManager {
     }
 
     private void LevelOnTransitionRoutine(ILContext context) {
-        ILCursor cursor = new (context);
+        ILCursor cursor = new(context);
         if (cursor.TryGotoNext(MoveType.After, ins => ins.OpCode == OpCodes.Newobj && ins.Operand.ToString().Contains("Level/<TransitionRoutine>"))) {
             cursor.EmitDelegate(SaveTransitionRoutine);
         }
@@ -406,7 +406,7 @@ public sealed class StateManager {
         entities.AddRange(level.Tracker.GetEntities<Player>());
 
         // 移除当前房间的实体，照抄 level.UnloadLevel() 方法，不直接调用是因为 BingUI 在该方法中将其存储的 level 设置为了 null
-       AddNonGlobalEntities(level, entities);
+        AddNonGlobalEntities(level, entities);
 
         // 恢復主音乐
         if (level.Tracker.GetEntity<CassetteBlockManager>() is { } cassetteBlockManager) {
@@ -489,7 +489,7 @@ public sealed class StateManager {
         playingEventInstances.Clear();
 
         foreach (Component component in level.Entities.SelectMany(entity => entity.Components.ToArray())) {
-            if (component is SoundSource {Playing: true, instance: { } eventInstance}) {
+            if (component is SoundSource { Playing: true, instance: { } eventInstance }) {
                 playingEventInstances.Add(eventInstance);
             }
         }

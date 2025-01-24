@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Reflection;
-using MonoMod.Cil;
+﻿using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace Celeste.Mod.SpeedrunTool.Utils;
 

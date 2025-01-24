@@ -1,14 +1,14 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using FMOD.Studio;
+﻿using FMOD.Studio;
 using Force.DeepCloner;
 using Force.DeepCloner.Helpers;
 using Microsoft.Xna.Framework.Graphics;
 using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
 using NLua;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
@@ -89,7 +89,7 @@ public static class DeepClonerUtils {
                 }
 
                 // 稍后重新创建正在播放的 SoundSource 里的 EventInstance 实例
-                if (sourceObj is SoundSource {Playing: true, instance: { } instance} source) {
+                if (sourceObj is SoundSource { Playing: true, instance: { } instance } source) {
                     if (source.EventName.IsNullOrEmpty()) {
                         return null;
                     }
@@ -141,7 +141,7 @@ public static class DeepClonerUtils {
 
                 // 手动克隆 WeakReference<T>
                 if (sourceObj.GetType() is { } type && type.IsWeakReference(out Type genericType)) {
-                    object[] parameters = {null};
+                    object[] parameters = { null };
                     sourceObj.InvokeMethod("TryGetTarget", parameters);
                     return type.GetConstructorInfo(genericType).Invoke(parameters.DeepClone(deepCloneState));
                 }
@@ -198,7 +198,7 @@ public static class DeepClonerUtils {
                         }
                     }
                 } else if (type.IsIDictionary(out Type dictKeyType, out Type _) && !dictKeyType.IsSimple() &&
-                           clonedObj is IDictionary {Count: > 0} clonedDict) {
+                           clonedObj is IDictionary { Count: > 0 } clonedDict) {
                     backupDict ??= new Dictionary<object, object>();
                     backupDict.SetRange(clonedDict);
                     clonedDict.Clear();
@@ -207,7 +207,7 @@ public static class DeepClonerUtils {
                 }
 
                 // Clone dynData.Data
-                if (type is {IsClass: true} objType && !DynDataUtils.IgnoreObjects.ContainsKey(sourceObj)) {
+                if (type is { IsClass: true } objType && !DynDataUtils.IgnoreObjects.ContainsKey(sourceObj)) {
                     bool cloned = false;
 
                     do {
@@ -215,7 +215,7 @@ public static class DeepClonerUtils {
                             continue;
                         }
 
-                        object[] parameters = {sourceObj, null};
+                        object[] parameters = { sourceObj, null };
                         if (false == (bool)dataMap.InvokeMethod("TryGetValue", parameters)) {
                             continue;
                         }

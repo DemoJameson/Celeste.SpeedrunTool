@@ -1,9 +1,8 @@
-using System.Collections.Generic;
 using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Microsoft.Xna.Framework.Input;
-using HotkeyEnum = Celeste.Mod.SpeedrunTool.Other.Hotkey;
+using System.Collections.Generic;
 
 namespace Celeste.Mod.SpeedrunTool;
 
@@ -104,7 +103,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public List<Buttons> ControllerSwitchAutoLoadState { get; set; } = new List<Buttons>();
     public List<Buttons> ControllerSpawnTowerViewer { get; set; } = new List<Buttons>();
     public List<Buttons> ControllerToggleFullscreen { get; set; } = new List<Buttons>();
-    public List<Buttons> ControllerExportRoomTimes { get; set; }  = new List<Buttons>();
+    public List<Buttons> ControllerExportRoomTimes { get; set; } = new List<Buttons>();
 
     #endregion HotkeyConfig
 }

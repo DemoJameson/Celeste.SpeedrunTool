@@ -1,20 +1,20 @@
-using System.Collections.Generic;
-using System.Linq;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 using MonoMod.ModInterop;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Celeste.Mod.SpeedrunTool;
 
 public static class SpeedrunToolInterop {
-    private static readonly List<Func<Type, bool>> returnSameObjectPredicates = new ();
-    private static readonly List<Func<object, object>> customDeepCloneProcessors = new ();
+    private static readonly List<Func<Type, bool>> returnSameObjectPredicates = new();
+    private static readonly List<Func<object, object>> customDeepCloneProcessors = new();
 
     internal static bool CanReturnSameObject(Type type) {
         return returnSameObjectPredicates.Any(predicate => predicate(type));
     }
 
     internal static object CustomDeepCloneObject(object sourceObject) {
-        foreach (Func<object,object> processor in customDeepCloneProcessors) {
+        foreach (Func<object, object> processor in customDeepCloneProcessors) {
             if (processor.Invoke(sourceObject) is { } clonedObject) {
                 return clonedObject;
             }

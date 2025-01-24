@@ -1,11 +1,11 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Reflection;
 using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Utils;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using MonoMod.Utils;
+using System.Collections;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace Celeste.Mod.SpeedrunTool.Other;
 
@@ -198,7 +198,7 @@ public static class LookoutBuilder {
 
         float ease = 0f;
         while (true) {
-            ease = Math.Min(1f, ease + 1f/20);
+            ease = Math.Min(1f, ease + 1f / 20);
             camera.Approach(cameraPosition, Ease.CubeInOut(ease));
             if (Vector2.Distance(camera.Position, cameraPosition) < 1f) {
                 break;

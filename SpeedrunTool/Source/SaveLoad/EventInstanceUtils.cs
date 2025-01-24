@@ -1,8 +1,8 @@
-﻿using System.Collections.Concurrent;
+﻿using FMOD;
+using FMOD.Studio;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using FMOD;
-using FMOD.Studio;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 

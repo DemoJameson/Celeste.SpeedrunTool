@@ -1,6 +1,6 @@
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 
-namespace Celeste.Mod.SpeedrunTool.DeathStatistics; 
+namespace Celeste.Mod.SpeedrunTool.DeathStatistics;
 
 public class DeathMark : Entity {
     private const string Id = "youdied";

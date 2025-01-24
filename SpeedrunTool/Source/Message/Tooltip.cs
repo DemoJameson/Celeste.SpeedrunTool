@@ -1,8 +1,8 @@
-﻿using System.Collections;
+﻿using Celeste.Mod.SpeedrunTool.SaveLoad;
+using System.Collections;
 using System.Linq;
-using Celeste.Mod.SpeedrunTool.SaveLoad;
 
-namespace Celeste.Mod.SpeedrunTool.Message; 
+namespace Celeste.Mod.SpeedrunTool.Message;
 
 [Tracked]
 public class Tooltip : Entity {
@@ -17,7 +17,7 @@ public class Tooltip : Entity {
         this.duration = duration;
         Vector2 messageSize = ActiveFont.Measure(message);
         Position = new(Padding, Engine.Height - messageSize.Y - Padding / 2f);
-        Tag = Tags.HUD | Tags.Global | Tags.FrozenUpdate | Tags.PauseUpdate| Tags.TransitionUpdate;
+        Tag = Tags.HUD | Tags.Global | Tags.FrozenUpdate | Tags.PauseUpdate | Tags.TransitionUpdate;
         Add(new Coroutine(Show()));
         Add(new IgnoreSaveLoadComponent());
     }
@@ -50,7 +50,7 @@ public class Tooltip : Entity {
     }
 
     public static void Show(string message, float duration = 1f) {
-        if (Engine.Scene is {} scene) {
+        if (Engine.Scene is { } scene) {
             if (!scene.Tracker.Entities.TryGetValue(typeof(Tooltip), out var tooltips)) {
                 tooltips = scene.Entities.FindAll<Tooltip>().Cast<Entity>().ToList();
             }

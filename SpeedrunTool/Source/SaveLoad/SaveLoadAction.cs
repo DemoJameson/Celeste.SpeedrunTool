@@ -1,7 +1,3 @@
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using Celeste.Mod.Helpers;
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
@@ -10,6 +6,10 @@ using FMOD.Studio;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
@@ -310,13 +310,13 @@ public sealed class SaveLoadAction {
 
             FieldInfo[] fieldInfos = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
             foreach (FieldInfo fieldInfo in fieldInfos.Where(info => {
-                         Type fieldType = info.FieldType;
-                         return !info.IsInitOnly &&
-                                (fieldType == typeof(Level) ||
-                                 fieldType == typeof(Session) ||
-                                 fieldType.IsSameOrSubclassOf(typeof(Entity)) && !fieldType.IsSubclassOf(typeof(Oui)) ||
-                                 fieldType == typeof(Vector2));
-                     })) {
+                Type fieldType = info.FieldType;
+                return !info.IsInitOnly &&
+                       (fieldType == typeof(Level) ||
+                        fieldType == typeof(Session) ||
+                        fieldType.IsSameOrSubclassOf(typeof(Entity)) && !fieldType.IsSubclassOf(typeof(Oui)) ||
+                        fieldType == typeof(Vector2));
+            })) {
                 if (fieldInfo.IsStatic) {
                     staticFields.Add(fieldInfo);
                 } else {
@@ -478,7 +478,7 @@ public sealed class SaveLoadAction {
             (savedValues, _) => {
                 if (Settings.Instance is { } settings && savedValues.TryGetValue(typeof(Settings), out Dictionary<string, object> dict)) {
                     settings.GrabMode = (GrabModes)dict["GrabMode"];
-                    
+
                 }
             }
         );
@@ -558,11 +558,9 @@ public sealed class SaveLoadAction {
                     } else {
                         if (fieldName == "grabToggle") {
                             Input.grabToggle = (bool)virtualInput;
-                        }
-                        else if (fieldName == "LastAim") {
+                        } else if (fieldName == "LastAim") {
                             Input.LastAim = (Vector2)virtualInput;
-                        }
-                        else {
+                        } else {
                             object fieldValue = inputType.GetFieldValue(fieldName);
                             if (fieldValue is VirtualJoystick virtualJoystick &&
                                 virtualInput is VirtualJoystick savedVirtualJoystick) {
@@ -816,8 +814,7 @@ public sealed class SaveLoadAction {
             );
         }
 
-        if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.SeekerBarrierColorController") is
-                { } seekerBarrierColorControllerType
+        if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.SeekerBarrierColorController") is { } seekerBarrierColorControllerType
             && seekerBarrierColorControllerType.GetFieldInfo("seekerBarrierRendererHooked") != null
            ) {
             SafeAdd(
@@ -866,8 +863,7 @@ public sealed class SaveLoadAction {
             );
         }
 
-        if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.ParallaxFadeSpeedController") is
-                { } parallaxFadeSpeedControllerType
+        if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.ParallaxFadeSpeedController") is { } parallaxFadeSpeedControllerType
             && parallaxFadeSpeedControllerType.GetFieldInfo("backdropHooked") != null
             && Delegate.CreateDelegate(typeof(ILContext.Manipulator),
                 parallaxFadeSpeedControllerType.GetMethodInfo("modBackdropUpdate")) is ILContext.Manipulator modBackdropUpdate
@@ -911,8 +907,7 @@ public sealed class SaveLoadAction {
             );
         }
 
-        if (ModUtils.GetType("SpringCollab2020", "Celeste.Mod.SpringCollab2020.Entities.RainbowSpinnerColorAreaController") is
-                { } colorAreaControllerType
+        if (ModUtils.GetType("SpringCollab2020", "Celeste.Mod.SpringCollab2020.Entities.RainbowSpinnerColorAreaController") is { } colorAreaControllerType
             && colorAreaControllerType.GetFieldInfo("rainbowSpinnerHueHooked") != null
             && Delegate.CreateDelegate(typeof(On.Celeste.CrystalStaticSpinner.hook_GetHue),
                     colorAreaControllerType.GetMethodInfo("getRainbowSpinnerHue")) is
@@ -930,8 +925,7 @@ public sealed class SaveLoadAction {
             );
         }
 
-        if (ModUtils.GetType("SpringCollab2020", "Celeste.Mod.SpringCollab2020.Entities.SpikeJumpThroughController") is
-                { } spikeJumpThroughControllerType
+        if (ModUtils.GetType("SpringCollab2020", "Celeste.Mod.SpringCollab2020.Entities.SpikeJumpThroughController") is { } spikeJumpThroughControllerType
             && spikeJumpThroughControllerType.GetFieldInfo("SpikeHooked") != null
             && Delegate.CreateDelegate(typeof(On.Celeste.Spikes.hook_OnCollide),
                 spikeJumpThroughControllerType.GetMethodInfo("OnCollideHook")) is On.Celeste.Spikes.hook_OnCollide onCollideHook
@@ -960,7 +954,7 @@ public sealed class SaveLoadAction {
         SafeAdd((savedValues, _) => {
             if (Everest.Modules.FirstOrDefault(everestModule => everestModule.Metadata?.Name == "ExtendedVariantMode") is { } module &&
                 module.GetFieldValue("TriggerManager") is { } triggerManager) {
-                savedValues[moduleType] = new Dictionary<string, object> {{"TriggerManager", triggerManager.DeepCloneShared()}};
+                savedValues[moduleType] = new Dictionary<string, object> { { "TriggerManager", triggerManager.DeepCloneShared() } };
             }
         }, (savedValues, _) => {
             if (savedValues.TryGetValue(moduleType, out Dictionary<string, object> dictionary) &&
@@ -1152,14 +1146,14 @@ public sealed class SaveLoadAction {
             loadState: (_, _) => {
                 foreach (VirtualAsset virtualAsset in VirtualAssets) {
                     switch (virtualAsset) {
-                        case VirtualTexture {IsDisposed: true} virtualTexture:
+                        case VirtualTexture { IsDisposed: true } virtualTexture:
                             // Fix: 全屏切换然后读档煤球红边消失
                             if (!virtualTexture.Name.StartsWith("dust-noise-")) {
                                 virtualTexture.Reload();
                             }
 
                             break;
-                        case VirtualRenderTarget {IsDisposed: true} virtualRenderTarget:
+                        case VirtualRenderTarget { IsDisposed: true } virtualRenderTarget:
                             virtualRenderTarget.Reload();
                             break;
                     }

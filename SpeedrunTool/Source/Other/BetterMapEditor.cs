@@ -1,9 +1,9 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using Celeste.Editor;
+﻿using Celeste.Editor;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Celeste.Mod.SpeedrunTool.Other;
 
@@ -78,7 +78,7 @@ public static class BetterMapEditor {
         "j-10", "j-11", "j-12", "j-13", "j-14", "j-14b", "j-15", "j-16", "j-17", "j-18", "j-19",
         "end-golden", "end-cinematic", "end-granny"
     };
-    
+
     private static bool delayedOpenDebugMap;
 
     [Load]

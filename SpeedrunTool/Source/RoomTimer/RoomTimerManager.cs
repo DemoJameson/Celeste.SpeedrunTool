@@ -66,21 +66,21 @@ public static class RoomTimerManager {
 
     private static void RegisterHotkeys() {
         Hotkey.ResetRoomTimerPb.RegisterPressedAction(scene => {
-            if (scene is Level {Paused: false} or MapEditor) {
+            if (scene is Level { Paused: false } or MapEditor) {
                 ClearPbTimes();
                 PopupMessageUtils.Show(DialogIds.ResetRoomTimerPbTooltip.DialogClean(), DialogIds.ResetRoomTimerPbDialog);
             }
         });
 
         Hotkey.SwitchRoomTimer.RegisterPressedAction(scene => {
-            if (scene is Level {Paused: false}) {
+            if (scene is Level { Paused: false }) {
                 SwitchRoomTimer((RoomTimerType)(((int)ModSettings.RoomTimerType + 1) % Enum.GetNames(typeof(RoomTimerType)).Length));
                 PopupMessageUtils.ShowOptionState(DialogIds.RoomTimer.DialogClean(), ModSettings.RoomTimerType.DialogClean());
             }
         });
 
         Hotkey.IncreaseTimedRooms.RegisterPressedAction(scene => {
-            if (scene is Level {Paused: false}) {
+            if (scene is Level { Paused: false }) {
                 if (ModSettings.NumberOfRooms < 99) {
                     ModSettings.NumberOfRooms++;
                     SpeedrunToolModule.Instance.SaveSettings();

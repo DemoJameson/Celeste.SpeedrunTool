@@ -21,7 +21,7 @@ public static class AllowPauseDuringDeath {
         if (!ModSettings.Enabled || !ModSettings.AllowPauseDuringDeath) {
             return;
         }
-        
+
         if (TasUtils.Running) {
             return;
         }
@@ -57,6 +57,6 @@ public static class AllowPauseDuringDeath {
 
                 return !Engine.Scene.IsPlayerDead() && canRetry;
             });
-        } 
+        }
     }
 }

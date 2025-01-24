@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
@@ -9,6 +6,9 @@ using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Celeste.Pico8;
 using Force.DeepCloner;
 using On.Celeste.Editor;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using LevelTemplate = Celeste.Editor.LevelTemplate;
 
 namespace Celeste.Mod.SpeedrunTool.TeleportRoom;
@@ -43,21 +43,21 @@ public static class TeleportRoomUtils {
 
     private static void RegisterHotkeys() {
         Hotkey.TeleportToPreviousRoom.RegisterPressedAction(scene => {
-            if (scene is Level {Paused: false} level && StateManager.Instance.State == State.None) {
+            if (scene is Level { Paused: false } level && StateManager.Instance.State == State.None) {
                 if (TeleportToPreviousRoom(level) == false) {
                     PopupMessageUtils.Show(DialogIds.AlreadyFirstRoomTooltip.DialogClean(), DialogIds.AlreadyFirstRoomDialog);
                 }
-            } else if (scene is Emulator {gameActive: true, game: { } game}) {
+            } else if (scene is Emulator { gameActive: true, game: { } game }) {
                 PreviousPico8Room(game);
             }
         });
 
         Hotkey.TeleportToNextRoom.RegisterPressedAction(scene => {
-            if (scene is Level {Paused: false} level && StateManager.Instance.State == State.None) {
+            if (scene is Level { Paused: false } level && StateManager.Instance.State == State.None) {
                 if (TeleportToNextRoom(level) == false) {
                     PopupMessageUtils.Show(DialogIds.AlreadyLastRoomTooltip.DialogClean(), DialogIds.AlreadyLastRoomDialog);
                 }
-            } else if (scene is Emulator {gameActive: true, game: { } game}) {
+            } else if (scene is Emulator { gameActive: true, game: { } game }) {
                 NextPico8Room(game);
             }
         });

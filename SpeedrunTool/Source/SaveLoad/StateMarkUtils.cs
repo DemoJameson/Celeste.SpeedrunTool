@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Celeste.Mod.SpeedrunTool.RoomTimer;
+﻿using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
@@ -91,13 +91,13 @@ internal static class StateMarkUtils {
         cursor.Emit(OpCodes.Brfalse, beforeInstr);
 
         cursor.Emit(OpCodes.Ldstr, "afdded");
-        cursor.Emit(OpCodes.Call, typeof(Calc).GetMethod("HexToColor", new[] {typeof(string)}));
+        cursor.Emit(OpCodes.Call, typeof(Calc).GetMethod("HexToColor", new[] { typeof(string) }));
         cursor.Emit(OpCodes.Ldarg, 6);
         cursor.Emit(OpCodes.Call, typeof(Color).GetMethod("op_Multiply"));
         cursor.Emit(OpCodes.Stloc, 5);
 
         cursor.Emit(OpCodes.Ldstr, "8fc7db");
-        cursor.Emit(OpCodes.Call, typeof(Calc).GetMethod("HexToColor", new[] {typeof(string)}));
+        cursor.Emit(OpCodes.Call, typeof(Calc).GetMethod("HexToColor", new[] { typeof(string) }));
         cursor.Emit(OpCodes.Ldarg, 6);
         cursor.Emit(OpCodes.Call, typeof(Color).GetMethod("op_Multiply"));
         cursor.Emit(OpCodes.Stloc, 6);
@@ -107,7 +107,7 @@ internal static class StateMarkUtils {
     }
 
     private static bool IsChangeTimerColor() {
-        return ModSettings.RoomTimerType == RoomTimerType.Off && Engine.Scene is Level {Completed: false} level && GetSavedStateFlag(level) && !StateManager.Instance.SavedByTas;
+        return ModSettings.RoomTimerType == RoomTimerType.Off && Engine.Scene is Level { Completed: false } level && GetSavedStateFlag(level) && !StateManager.Instance.SavedByTas;
     }
 
     private static void LevelOnReload(ILContext il) {

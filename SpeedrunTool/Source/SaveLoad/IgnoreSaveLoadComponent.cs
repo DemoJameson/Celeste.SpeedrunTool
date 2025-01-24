@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using Celeste.Mod.SpeedrunTool.RoomTimer;
+﻿using Celeste.Mod.SpeedrunTool.RoomTimer;
+using System.Collections.Generic;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 

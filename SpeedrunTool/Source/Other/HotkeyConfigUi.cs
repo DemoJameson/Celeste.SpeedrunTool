@@ -1,10 +1,10 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Utils;
 using Celeste.Mod.UI;
 using Microsoft.Xna.Framework.Input;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using CelesteSettings = Celeste.Settings;
 
 namespace Celeste.Mod.SpeedrunTool.Other;
@@ -202,8 +202,8 @@ public class HotkeyConfigUi : TextMenu {
         // 反射兼容 v1312
         // 避免输入文字时触发快捷键
         if (!typeof(MInput).GetFieldValue<bool>("ControllerHasFocus") && scene is Overworld {
-                Current: OuiFileNaming {UseKeyboardInput: true} or OuiModOptionString {UseKeyboardInput: true}
-            }) {
+            Current: OuiFileNaming { UseKeyboardInput: true } or OuiModOptionString { UseKeyboardInput: true }
+        }) {
             return false;
         }
 

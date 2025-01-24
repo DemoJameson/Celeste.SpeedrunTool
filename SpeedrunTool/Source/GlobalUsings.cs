@@ -1,7 +1,7 @@
-﻿global using System;
-global using Monocle;
+﻿global using Celeste.Mod.SpeedrunTool.Extensions;
 global using Microsoft.Xna.Framework;
-global using Celeste.Mod.SpeedrunTool.Extensions;
+global using Monocle;
+global using System;
 global using static Celeste.Mod.SpeedrunTool.GlobalVariables;
 
 namespace Celeste.Mod.SpeedrunTool;

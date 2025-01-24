@@ -1,12 +1,12 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using Celeste.Editor;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Celeste.Mod.SpeedrunTool.RoomTimer;
 
@@ -231,7 +231,7 @@ public class EndPoint : Entity {
     }
 
     private static void OnCollidePlayer(Player player) {
-        if (player.Scene is Level {TimerStarted: true}) {
+        if (player.Scene is Level { TimerStarted: true }) {
             RoomTimerManager.UpdateTimerState(true);
         }
     }
@@ -396,7 +396,7 @@ public class EndPoint : Entity {
     }
 
     public static void SetEndPoint(Scene scene, bool additional) {
-        if (scene is Level {Paused: false} level) {
+        if (scene is Level { Paused: false } level) {
             if (!additional || All.Count == 0) {
                 RoomTimerManager.ClearPbTimes();
             }
@@ -415,7 +415,7 @@ public class EndPoint : Entity {
     }
 
     private static void CreateEndPoint(Level level, bool additional) {
-        if (level.GetPlayer() is {Dead: false} player) {
+        if (level.GetPlayer() is { Dead: false } player) {
             if (!additional) {
                 All.ForEach(point => point.RemoveSelf());
             }

@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using MonoMod.Utils;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using MonoMod.Utils;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 

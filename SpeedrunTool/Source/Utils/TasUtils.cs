@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using TAS;
 using TAS.Module;
@@ -5,24 +6,35 @@ using TAS.Module;
 namespace Celeste.Mod.SpeedrunTool.Utils;
 
 internal static class TasUtils {
-    private static bool installed;
-    private static bool running {
+    private static bool hasGameplay;
+
+    private static bool hasRunning_Latest; // CelesteTAS >= v3.42.0
+
+    private static bool hasRunning_Legacy; // CelesteTAS < v3.42.0
+    private static bool running_Latest {
         [MethodImpl(MethodImplOptions.NoInlining)]
-        get => (bool)(ModUtils.GetType("CelesteTAS", "TAS.Manager")?.GetPropertyValue("Running") ?? false);
-
-
+        get => Manager.Running; // it's a property instead of a field now
     }
+
+    private static bool running_Legacy {
+        get => (bool)running_LegacyFieldInfo.GetValue(null);
+    }
+
+    private static FieldInfo running_LegacyFieldInfo;
 
     private static bool showGamePlay {
         [MethodImpl(MethodImplOptions.NoInlining)]
         get => CelesteTasSettings.Instance?.ShowGameplay ?? true;
     }
 
-    public static bool Running => installed && running;
-    public static bool HideGamePlay => installed && !showGamePlay;
+    public static bool Running => hasRunning_Latest ? running_Latest : (hasRunning_Legacy && running_Legacy);
+    public static bool HideGamePlay => hasGameplay && !showGamePlay;
 
     [Initialize]
     private static void Initialize() {
-        installed = ModUtils.GetType("CelesteTAS", "TAS.Module.CelesteTasSettings")?.GetPropertyInfo("ShowGameplay") != null;
+        hasGameplay = ModUtils.GetType("CelesteTAS", "TAS.Module.CelesteTasSettings")?.GetPropertyInfo("ShowGameplay") != null;
+        hasRunning_Latest = ModUtils.GetType("CelesteTAS", "TAS.Manager")?.GetPropertyInfo("Running") != null;
+        running_LegacyFieldInfo = ModUtils.GetType("CelesteTAS", "TAS.Manager")?.GetFieldInfo("Running");
+        hasRunning_Legacy = running_LegacyFieldInfo != null;
     }
 }

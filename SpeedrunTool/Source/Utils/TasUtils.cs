@@ -8,7 +8,9 @@ internal static class TasUtils {
     private static bool installed;
     private static bool running {
         [MethodImpl(MethodImplOptions.NoInlining)]
-        get => Manager.Running;
+        get => (bool)(ModUtils.GetType("CelesteTAS", "TAS.Manager")?.GetPropertyValue("Running") ?? false);
+
+
     }
 
     private static bool showGamePlay {

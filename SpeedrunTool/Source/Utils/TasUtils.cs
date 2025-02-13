@@ -16,6 +16,7 @@ internal static class TasUtils {
         get => Manager.Running; // it's a property instead of a field now
     }
 
+    // some people are still using CelesteTAS 3.39
     private static bool running_Legacy {
         get => (bool)running_LegacyFieldInfo.GetValue(null);
     }

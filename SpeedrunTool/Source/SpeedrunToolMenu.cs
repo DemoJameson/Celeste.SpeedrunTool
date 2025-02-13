@@ -106,8 +106,11 @@ public static class SpeedrunToolMenu {
                 subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.NoGcAfterLoadState), ModSettings.NoGcAfterLoadState).Change(b =>
                     ModSettings.NoGcAfterLoadState = b));
 
-                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.SaveTimeAndDeaths), ModSettings.SaveTimeAndDeaths).Change(b =>
+                TextMenu.Item saveTimeAndDeaths;
+                subMenu.Add(saveTimeAndDeaths = new TextMenu.OnOff(Dialog.Clean(DialogIds.SaveTimeAndDeaths), ModSettings.SaveTimeAndDeaths).Change(b =>
                     ModSettings.SaveTimeAndDeaths = b));
+                AddDescription(saveTimeAndDeaths, subMenu, menu, Dialog.Clean(DialogIds.SaveTimeAndDeathsDescription));
+
 
                 subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.SaveExtendedVariants), ModSettings.SaveExtendedVariants).Change(b =>
                     ModSettings.SaveExtendedVariants = b));

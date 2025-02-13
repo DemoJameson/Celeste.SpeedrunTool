@@ -32,6 +32,7 @@ SPEEDRUN_TOOL_AUTO_LOAD_STATE_AFTER_DEATH= Auto Load State after Death
 SPEEDRUN_TOOL_AUTO_CLEAR_STATE_ON_SCREEN_TRANSITION= Auto Clear State on Screen Transition
 SPEEDRUN_TOOL_NO_GC_AFTER_LOAD_STATE=      No GC after Load State
 SPEEDRUN_TOOL_SAVE_TIME_AND_DEATHS=        Save Time and Deaths
+SPEEDRUN_TOOL_SAVE_TIME_AND_DEATHS_DESCRIPTION=Turning this on will include time and deaths as part of savestate
 SPEEDRUN_TOOL_SAVE_EXTENDED_VARIANTS=      Save Extended Variants
 SPEEDRUN_TOOL_SAVE_STATE=                  Save State
 SPEEDRUN_TOOL_LOAD_STATE=                  Load State

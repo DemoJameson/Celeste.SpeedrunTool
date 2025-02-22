@@ -103,6 +103,15 @@ public static class DialogIds {
     public const string ExportRoomTimes = "SPEEDRUN_TOOL_EXPORT_ROOM_TIMES";
     public const string ExportRoomTimesSuccess = "SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_SUCCESS";
     public const string ExportRoomTimesFail = "SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_FAIL";
+    public const string SaveSlot1 = "SPEEDRUN_TOOL_SAVESLOT1";
+    public const string SaveSlot2 = "SPEEDRUN_TOOL_SAVESLOT2";
+    public const string SaveSlot3 = "SPEEDRUN_TOOL_SAVESLOT3";
+    public const string SaveSlot4 = "SPEEDRUN_TOOL_SAVESLOT4";
+    public const string SaveSlot5 = "SPEEDRUN_TOOL_SAVESLOT5";
+    public const string SaveSlot6 = "SPEEDRUN_TOOL_SAVESLOT6";
+    public const string SaveSlot7 = "SPEEDRUN_TOOL_SAVESLOT7";
+    public const string SaveSlot8 = "SPEEDRUN_TOOL_SAVESLOT8";
+    public const string SaveSlot9 = "SPEEDRUN_TOOL_SAVESLOT9";
 
     // Death Statistics
     public const string MaxNumberOfDeathData = "SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA";

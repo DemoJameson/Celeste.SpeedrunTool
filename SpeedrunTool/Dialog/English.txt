@@ -103,6 +103,15 @@ SPEEDRUN_TOOL_TOGGLE_FULLSCREEN=             Toggle Fullscreen
 SPEEDRUN_TOOL_EXPORT_ROOM_TIMES=             Export Room Times
 SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_SUCCESS=     Times successfully exported to {0}
 SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_FAIL=        Must be in a level to export room times
+SPEEDRUN_TOOL_SAVESLOT1=                     Save Slot 1
+SPEEDRUN_TOOL_SAVESLOT2=                     Save Slot 2
+SPEEDRUN_TOOL_SAVESLOT3=                     Save Slot 3
+SPEEDRUN_TOOL_SAVESLOT4=                     Save Slot 4
+SPEEDRUN_TOOL_SAVESLOT5=                     Save Slot 5
+SPEEDRUN_TOOL_SAVESLOT6=                     Save Slot 6
+SPEEDRUN_TOOL_SAVESLOT7=                     Save Slot 7
+SPEEDRUN_TOOL_SAVESLOT8=                     Save Slot 8
+SPEEDRUN_TOOL_SAVESLOT9=                     Save Slot 9
 
 # ================================== Death Statistics ==================================
 SPEEDRUN_TOOL_DEATH_STATISTICS=              Death Statistics

@@ -84,6 +84,15 @@ public class HotkeyConfigUi : TextMenu {
         new(Hotkey.SpawnTowerViewer),
         new(Hotkey.ToggleFullscreen),
         new(Hotkey.ExportRoomTimes),
+        new(Hotkey.SaveSlot1, Keys.LeftControl, Keys.D1), // not numpad numbers
+        new(Hotkey.SaveSlot2, Keys.LeftControl, Keys.D2),
+        new(Hotkey.SaveSlot3, Keys.LeftControl, Keys.D3),
+        new(Hotkey.SaveSlot4, Keys.LeftControl, Keys.D4),
+        new(Hotkey.SaveSlot5, Keys.LeftControl, Keys.D5),
+        new(Hotkey.SaveSlot6, Keys.LeftControl, Keys.D6),
+        new(Hotkey.SaveSlot7, Keys.LeftControl, Keys.D7),
+        new(Hotkey.SaveSlot8, Keys.LeftControl, Keys.D8),
+        new(Hotkey.SaveSlot9, Keys.LeftControl, Keys.D9),
     }.ToDictionary(info => info.Hotkey, info => info);
 
     private static readonly Hotkey[] Hotkeys = (Hotkey[])Enum.GetValues(typeof(Hotkey));
@@ -484,6 +493,15 @@ public enum Hotkey {
     SpawnTowerViewer,
     ToggleFullscreen,
     ExportRoomTimes,
+    SaveSlot1,
+    SaveSlot2,
+    SaveSlot3,
+    SaveSlot4,
+    SaveSlot5,
+    SaveSlot6,
+    SaveSlot7,
+    SaveSlot8,
+    SaveSlot9,
 }
 
 internal static class HotkeysExtensions {

@@ -34,12 +34,13 @@ public class SpeedrunToolModule : EverestModule {
     public override Type SaveDataType => typeof(SpeedrunToolSaveData);
 
     public override void Load() {
-        StateManager.Instance.Load();
+        SaveSlotsManager.SwitchSlot(1); // i don't want to do a bunch of nullity checks
+        StateManager.Load();
         AttributeUtils.Invoke<LoadAttribute>();
     }
 
     public override void Unload() {
-        StateManager.Instance.Unload();
+        StateManager.Unload();
         AttributeUtils.Invoke<UnloadAttribute>();
     }
 

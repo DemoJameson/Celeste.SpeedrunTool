@@ -50,7 +50,7 @@ public static class SpeedrunToolInterop {
         /// <summary>
         /// Specify the static members to be cloned
         /// </summary>
-        /// <returns>SaveLoadAction instance, used for unregister</returns>
+        /// <returns>SaveLoadAction instance, used for unregister (Please save your values into the dictionary, otherwise multi saveslots will not be supported.)</returns>
         public static object RegisterStaticTypes(Type type, params string[] memberNames) {
             return SaveLoadAction.SafeAdd(
                 (savedValues, _) => SaveLoadAction.SaveStaticMemberValues(savedValues, type, memberNames),

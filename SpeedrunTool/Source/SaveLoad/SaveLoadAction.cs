@@ -17,13 +17,18 @@ public sealed class SaveLoadAction {
     public delegate void SlAction(Dictionary<Type, Dictionary<string, object>> savedValues, Level level);
 
     // 第一次 SL 时才初始化，避免通过安装依赖功能解除禁用的 Mod 被忽略
-    private static bool initialized;
+    private static bool initialized {
+        get => SaveSlotsManager.Slot.SaveLoadActionInitialized;
+        set {
+            SaveSlotsManager.Slot.SaveLoadActionInitialized = value;
+        }
+    }
 
     public static readonly List<VirtualAsset> VirtualAssets = new();
     public static readonly List<EventInstance> ClonedEventInstancesWhenSave = new();
     public static readonly List<EventInstance> ClonedEventInstancesWhenPreClone = new();
 
-    private static readonly List<SaveLoadAction> All = new();
+    internal static List<SaveLoadAction> All => SaveSlotsManager.Slot.All;
 
     private static Dictionary<Type, FieldInfo[]> simpleStaticFields;
     private static Dictionary<Type, FieldInfo[]> modModuleFields;
@@ -74,6 +79,9 @@ public sealed class SaveLoadAction {
         return saveLoadAction;
     }
 
+    /// <summary>
+    /// For third party mods
+    /// </summary>
     public static object SafeAdd(Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState,
         Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState, Action clearState,
         Action<Level> beforeSaveState, Action<Level> beforeLoadState, Action preCloneEntities = null) {
@@ -626,10 +634,9 @@ public sealed class SaveLoadAction {
                 IgnoreSaveLoadComponent.RemoveAll(level);
                 ClearBeforeSaveComponent.RemoveAll(level);
 
-                // 冲刺残影方向错误，干脆移除屏幕不显示了
+                // 冲刺残影方向错误，干脆移除
                 // FIXME: 正确 SL 残影
-                level.Tracker.GetEntities<TrailManager.Snapshot>()
-                    .ForEach(entity => entity.Position = level.Camera.Position - Vector2.One * 1000);
+                TrailManager.Clear();
 
                 if (ModUtils.IsInstalled("CelesteNet.Client")) {
                     Type ghostEmoteWheelType = ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.Entities.GhostEmoteWheel");

@@ -104,6 +104,15 @@ SPEEDRUN_TOOL_TOGGLE_FULLSCREEN=             开关全屏
 SPEEDRUN_TOOL_EXPORT_ROOM_TIMES=             导出房间计时数据
 SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_SUCCESS=     成功导出计时数据到{0}
 SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_FAIL=        必须在关卡中才能导出数据
+SPEEDRUN_TOOL_SAVESLOT1=                     存档 1
+SPEEDRUN_TOOL_SAVESLOT2=                     存档 2
+SPEEDRUN_TOOL_SAVESLOT3=                     存档 3
+SPEEDRUN_TOOL_SAVESLOT4=                     存档 4
+SPEEDRUN_TOOL_SAVESLOT5=                     存档 5
+SPEEDRUN_TOOL_SAVESLOT6=                     存档 6
+SPEEDRUN_TOOL_SAVESLOT7=                     存档 7
+SPEEDRUN_TOOL_SAVESLOT8=                     存档 8
+SPEEDRUN_TOOL_SAVESLOT9=                     存档 9
 
 # ================================== Death Statistics ==================================
 SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA=      死亡数据数量

@@ -1,9 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
+        <CelestePrefix Condition="'$(CelestePrefix)' == '' And Exists('../../../Celeste.dll')">../../..</CelestePrefix>
+    </PropertyGroup>
+    
+    <PropertyGroup>
         <ProjectGuid>{C7DFDD37-907C-4A75-96DA-1C5828C97F96}</ProjectGuid>
         <RootNamespace>Celeste.Mod.SpeedrunTool</RootNamespace>
-        <TargetFramework>net452</TargetFramework>
-        <LangVersion>10</LangVersion>
         <AssemblyTitle>SpeedrunTool</AssemblyTitle>
         <Product>SpeedrunTool</Product>
         <Copyright>Copyright © 2019</Copyright>
@@ -13,6 +17,7 @@
         <MSBuildWarningsAsMessages>$(MSBuildWarningsAsMessages);MSB3270</MSBuildWarningsAsMessages>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
+    
     <ItemDefinitionGroup>
         <PackageReference IncludeAssets="compile" />
         <Reference>
@@ -30,26 +35,25 @@
         <PlatformTarget>AnyCPU</PlatformTarget>
         <Prefer32bit>false</Prefer32bit>
     </PropertyGroup>
+    
+    <!-- Dependency -->
     <ItemGroup>
-        <PackageReference Include="JetBrains.Profiler.Api" Version="1.1.8">
-            <IncludeAssets Condition="'$(Configuration)' == 'Debug'">all</IncludeAssets>
+        <PackageReference Include="Krafs.Publicizer" Version="2.3.0">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="KeraLua" Version="1.0.22" />
         <PackageReference Include="NLua" Version="1.4.25" />
         <PackageReference Include="YamlDotNet" Version="8.1.2" />
     </ItemGroup>
+
     <ItemGroup>
-        <Reference Include="Celeste, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\libs\Celeste-nstrip.exe</HintPath>
-        </Reference>
+        <Reference Include="$(CelestePrefix)\Celeste.dll" />
+        <Reference Include="$(CelestePrefix)\FNA.dll" />
+        <Reference Include="$(CelestePrefix)\MMHOOK_Celeste.dll" />
+        
         <Reference Include="CelesteTAS-EverestInterop">
             <HintPath>..\..\CelesteTAS-EverestInterop\bin\CelesteTAS-EverestInterop.dll</HintPath>
-        </Reference>
-        <Reference Include="FNA">
-            <HintPath>..\libs\FNA.dll</HintPath>
-        </Reference>
-        <Reference Include="MMHOOK_Celeste, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\libs\MMHOOK_Celeste.dll</HintPath>
         </Reference>
         <Reference Include="MonoMod.Utils">
             <HintPath>..\libs\MonoMod.Utils-nstrip.dll</HintPath>
@@ -61,44 +65,35 @@
             <HintPath>..\libs\Mono.Cecil.dll</HintPath>
         </Reference>
     </ItemGroup>
+
+    <!-- Publicizer -->
+    <PropertyGroup>
+        <PublicizerRuntimeStrategies>Unsafe;IgnoresAccessChecksTo</PublicizerRuntimeStrategies>
+    </PropertyGroup>
     <ItemGroup>
-        <None Include="everest.yaml">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Remove="SpeedrunTool.csproj.DotSettings" />
+        <Publicize Include="Celeste" IncludeCompilerGeneratedMembers="false" />
+        <Publicize Include="MonoMod.Utils" />
     </ItemGroup>
-    <ItemGroup>
-        <Content Include="Dialog\**">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-        <Content Include="Graphics\**">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-    </ItemGroup>
+
+    <!-- DeepCloner -->
     <ItemGroup>
         <Compile Include="..\DeepCloner\DeepCloner\**\*.cs">
             <Link>Source\DeepCloner\%(RecursiveDir)%(FileName)%(Extension)</Link>
         </Compile>
         <Compile Remove="..\DeepCloner\DeepCloner\Properties\**" />
     </ItemGroup>
-    <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Release'">
-        <Delete Files="$(TargetDir)JetBrains.Profiler.Api.dll" />
-    </Target>
 
-    <Target Name="CopyAssemblies" AfterTargets="Build">
+    <!-- OutputAsModStructure -->
+    <ItemGroup>
+        <DialogResources Include="$(MSBuildProjectDirectory)\Dialog\**\*" />
+        <GraphicResources Include="$(MSBuildProjectDirectory)\Graphics\**\*" />
+    </ItemGroup>
+
+    <Target Name="OutputAsModStructure" AfterTargets="Build">
         <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder=".." />
         <Copy SourceFiles="$(OutputPath)$(AssemblyName).pdb" DestinationFolder=".." />
-    </Target>
-    
-    <Target Name="CopyAssets" AfterTargets="Build" Condition="'$(Configuration)' != 'Debug' or '$(OS)' != 'Unix' or $(UseSymlinks) == false">
-        <ItemGroup>
-            <CelesteAssets Include="everest.yaml" />
-            <CelesteAssets Include="Dialog\**\*" />
-            <CelesteAssets Include="Graphics\**\*" />
-        </ItemGroup>
-
-        <!-- Clean-up potential symlinks -->
-        <RemoveDir Directories="..\Dialog;..\Graphics"/>
-        <Copy SourceFiles="@(CelesteAssets)" DestinationFiles="..\%(Identity)"/>
+        <Copy SourceFiles="$(MSBuildProjectDirectory)\everest.yaml" DestinationFolder=".." />
+        <Copy SourceFiles="@(DialogResources)" DestinationFolder="..\Dialog\%(RecursiveDir)" SkipUnchangedFiles="true" />
+        <Copy SourceFiles="@(GraphicResources)" DestinationFolder="..\Graphics\%(RecursiveDir)" SkipUnchangedFiles="true" />
     </Target>
 </Project>

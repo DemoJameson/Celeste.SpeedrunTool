@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
@@ -10,10 +10,6 @@ internal static class CommonExtensions {
         return item;
     }
 
-    public static TValue GetValueOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key,
-        TValue defaultValue) {
-        return dictionary.TryGetValue(key, out TValue result) ? result : defaultValue;
-    }
 
     public static void SetRange(this IDictionary dict, IDictionary other) {
         foreach (DictionaryEntry dictionaryEntry in other) {

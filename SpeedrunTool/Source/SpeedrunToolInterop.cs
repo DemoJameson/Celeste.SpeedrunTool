@@ -109,6 +109,7 @@ public static class SpeedrunToolInterop {
         /// <summary>
         /// Performs deep (full) copy of object and related graph
         /// </summary>
+        /// <param name="from"></param>
         public static object DeepClone(object from) {
             return from.DeepCloneShared();
         }

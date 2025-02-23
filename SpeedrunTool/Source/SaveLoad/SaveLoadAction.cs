@@ -76,6 +76,12 @@ public sealed class SaveLoadAction {
         this.preCloneEntities = preCloneEntities;
     }
 
+    // used by CelesteTAS
+    [Obsolete("crash on macOS if speedrun tool is not installed, use SafeAdd() instead")]
+    public static void Add(SaveLoadAction saveLoadAction) {
+        SharedActions.Add(saveLoadAction);
+    }
+
     // ReSharper disable once MemberCanBePrivate.Global
     // ReSharper disable once UnusedMethodReturnValue.Global
     public static object SafeAdd(Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState = null,

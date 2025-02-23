@@ -105,5 +105,12 @@ public static class SpeedrunToolInterop {
         public static void RemoveCustomDeepCloneProcessor(Func<object, object> processor) {
             customDeepCloneProcessors.Remove(processor);
         }
+
+        /// <summary>
+        /// Performs deep (full) copy of object and related graph
+        /// </summary>
+        public static object DeepClone(object from) {
+            return from.DeepCloneShared();
+        }
     }
 }

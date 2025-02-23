@@ -1,14 +1,14 @@
+using Celeste.Mod.SpeedrunTool.Message;
+using Celeste.Mod.SpeedrunTool.Other;
+using Celeste.Mod.SpeedrunTool.Utils;
+using Force.DeepCloner;
+using Force.DeepCloner.Helpers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
-using Celeste.Mod.SpeedrunTool.Message;
-using Celeste.Mod.SpeedrunTool.Other;
-using Celeste.Mod.SpeedrunTool.Utils;
-using Force.DeepCloner;
-using Force.DeepCloner.Helpers;
 using EventInstance = FMOD.Studio.EventInstance;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
@@ -266,7 +266,7 @@ public sealed class StateManager {
             ClearBeforeSave = false;
         }
 
-        SaveLoadAction.InitActions();
+        SaveLoadAction.InitSlots();
 
         State = State.Saving;
         SavedByTas = tas;

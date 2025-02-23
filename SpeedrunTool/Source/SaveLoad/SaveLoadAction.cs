@@ -17,7 +17,11 @@ public sealed class SaveLoadAction {
     public delegate void SlAction(Dictionary<Type, Dictionary<string, object>> savedValues, Level level);
 
     // 第一次 SL 时才初始化，避免通过安装依赖功能解除禁用的 Mod 被忽略
-    private static bool initialized {
+
+    private static bool internalActionInitialized = false;
+
+    private static bool modActionChanged = false;
+    private static bool slotInitialized {
         get => SaveSlotsManager.Slot.SaveLoadActionInitialized;
         set {
             SaveSlotsManager.Slot.SaveLoadActionInitialized = value;
@@ -28,7 +32,16 @@ public sealed class SaveLoadAction {
     public static readonly List<EventInstance> ClonedEventInstancesWhenSave = new();
     public static readonly List<EventInstance> ClonedEventInstancesWhenPreClone = new();
 
-    internal static List<SaveLoadAction> All => SaveSlotsManager.Slot.All;
+    // only actions, no values stored. Share among all save slots
+    private static readonly List<SaveLoadAction> SharedActions = new();
+
+    // actions and values, belong to each save slot
+    internal static List<SaveLoadAction> AllActionsAndValues {
+        get => SaveSlotsManager.Slot.All;
+        set {
+            SaveSlotsManager.Slot.All = value;
+        }
+    }
 
     private static Dictionary<Type, FieldInfo[]> simpleStaticFields;
     private static Dictionary<Type, FieldInfo[]> modModuleFields;
@@ -63,20 +76,26 @@ public sealed class SaveLoadAction {
         this.preCloneEntities = preCloneEntities;
     }
 
-    // ReSharper disable once UnusedMember.Global
-    [Obsolete("crash on macOS if speedrun tool is not installed, use SafeAdd() instead")]
-    public static void Add(SaveLoadAction saveLoadAction) {
-        All.Add(saveLoadAction);
-    }
-
     // ReSharper disable once MemberCanBePrivate.Global
     // ReSharper disable once UnusedMethodReturnValue.Global
     public static object SafeAdd(Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState = null,
         Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState = null, Action clearState = null,
         Action<Level> beforeSaveState = null, Action preCloneEntities = null) {
         SaveLoadAction saveLoadAction = new(CreateSlAction(saveState), CreateSlAction(loadState), clearState, beforeSaveState, preCloneEntities);
-        All.Add(saveLoadAction);
+        SharedActions.Add(saveLoadAction);
         return saveLoadAction;
+    }
+
+    internal static object InternalSafeAdd(Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState,
+        Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState, Action clearState,
+        Action<Level> beforeSaveState, Action<Level> beforeLoadState, Action preCloneEntities = null) {
+        SaveLoadAction saveLoadAction = new(CreateSlAction(saveState), CreateSlAction(loadState), clearState, beforeSaveState, beforeLoadState, preCloneEntities);
+        SharedActions.Add(saveLoadAction);
+        return saveLoadAction;
+    }
+
+    private static SlAction CreateSlAction(Action<Dictionary<Type, Dictionary<string, object>>, Level> action) {
+        return (SlAction)action?.Method.CreateDelegate(typeof(SlAction), action.Target);
     }
 
     /// <summary>
@@ -86,57 +105,58 @@ public sealed class SaveLoadAction {
         Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState, Action clearState,
         Action<Level> beforeSaveState, Action<Level> beforeLoadState, Action preCloneEntities = null) {
         SaveLoadAction saveLoadAction = new(CreateSlAction(saveState), CreateSlAction(loadState), clearState, beforeSaveState, beforeLoadState, preCloneEntities);
-        All.Add(saveLoadAction);
+        SharedActions.Add(saveLoadAction);
+        modActionChanged = true;
         return saveLoadAction;
     }
 
-    private static SlAction CreateSlAction(Action<Dictionary<Type, Dictionary<string, object>>, Level> action) {
-        return (SlAction)action?.Method.CreateDelegate(typeof(SlAction), action.Target);
-    }
-
+    /// <summary>
+    /// For third party mods
+    /// </summary>
     public static bool Remove(SaveLoadAction saveLoadAction) {
-        return All.Remove(saveLoadAction);
+        modActionChanged = true;
+        return SharedActions.Remove(saveLoadAction);
     }
 
     internal static void OnSaveState(Level level) {
-        foreach (SaveLoadAction saveLoadAction in All) {
+        foreach (SaveLoadAction saveLoadAction in AllActionsAndValues) {
             saveLoadAction.saveState?.Invoke(saveLoadAction.savedValues, level);
         }
     }
 
     internal static void OnLoadState(Level level) {
-        foreach (SaveLoadAction saveLoadAction in All) {
+        foreach (SaveLoadAction saveLoadAction in AllActionsAndValues) {
             saveLoadAction.loadState?.Invoke(saveLoadAction.savedValues, level);
         }
     }
 
     internal static void OnClearState() {
-        foreach (SaveLoadAction saveLoadAction in All) {
+        foreach (SaveLoadAction saveLoadAction in AllActionsAndValues) {
             saveLoadAction.savedValues.Clear();
             saveLoadAction.clearState?.Invoke();
         }
     }
 
     internal static void OnBeforeSaveState(Level level) {
-        foreach (SaveLoadAction saveLoadAction in All) {
+        foreach (SaveLoadAction saveLoadAction in AllActionsAndValues) {
             saveLoadAction.beforeSaveState?.Invoke(level);
         }
     }
 
     internal static void OnBeforeLoadState(Level level) {
-        foreach (SaveLoadAction saveLoadAction in All) {
+        foreach (SaveLoadAction saveLoadAction in AllActionsAndValues) {
             saveLoadAction.beforeLoadState?.Invoke(level);
         }
     }
 
     internal static void OnPreCloneEntities() {
-        foreach (SaveLoadAction saveLoadAction in All) {
+        foreach (SaveLoadAction saveLoadAction in AllActionsAndValues) {
             saveLoadAction.preCloneEntities?.Invoke();
         }
     }
 
     internal static void OnUnloadLevel(Level level, List<Entity> entities, Entity entity) {
-        foreach (SaveLoadAction saveLoadAction in All) {
+        foreach (SaveLoadAction saveLoadAction in AllActionsAndValues) {
             saveLoadAction.unloadLevel?.Invoke(level, entities, entity);
         }
     }
@@ -190,15 +210,15 @@ public sealed class SaveLoadAction {
 
     [Unload]
     private static void Unload() {
-        All.Clear();
+        SharedActions.Clear();
     }
 
-    public static void InitActions() {
-        if (initialized) {
+    private static void InitActions() {
+        if (internalActionInitialized) {
             return;
         }
 
-        initialized = true;
+        internalActionInitialized = true;
         InitFields();
         SupportSimpleStaticFields();
         SupportModModuleFields();
@@ -233,8 +253,25 @@ public sealed class SaveLoadAction {
         ReleaseEventInstances();
     }
 
+    public static void InitSlots() {
+        InitActions();
+
+        if (modActionChanged) {
+            SaveSlotsManager.ModRequireReInit();
+            modActionChanged = false;
+        }
+
+        if (slotInitialized) {
+            return;
+        }
+
+        AllActionsAndValues = SharedActions.DeepCloneShared();
+        slotInitialized = true;
+    }
+
+
     internal static void LogSavedValues() {
-        foreach (SaveLoadAction slAction in All) {
+        foreach (SaveLoadAction slAction in AllActionsAndValues) {
             Logger.Log("SRT", "=================");
             foreach (KeyValuePair<Type, Dictionary<string, object>> pair in slAction.savedValues) {
                 Logger.Log("SRT", pair.Key.FullName);
@@ -610,7 +647,7 @@ public sealed class SaveLoadAction {
     }
 
     private static void ExternalAction() {
-        SafeAdd(
+        InternalSafeAdd(
             saveState: (_, level) => {
                 IgnoreSaveLoadComponent.ReAddAll(level);
                 EndPoint.AllReadyForTime();
@@ -635,7 +672,7 @@ public sealed class SaveLoadAction {
                 ClearBeforeSaveComponent.RemoveAll(level);
 
                 // 冲刺残影方向错误，干脆移除
-                // FIXME: 正确 SL 残影
+                // TODO: 正确 SL 残影
                 TrailManager.Clear();
 
                 if (ModUtils.IsInstalled("CelesteNet.Client")) {

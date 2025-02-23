@@ -1,9 +1,6 @@
-using Celeste.Mod.SpeedrunTool.SaveLoad;
-using System.Collections.Generic;
-using Monocle;
-using Celeste;
-using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.Message;
+using Celeste.Mod.SpeedrunTool.Other;
+using System.Collections.Generic;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 public static class SaveSlotsManager {
@@ -112,6 +109,13 @@ public static class SaveSlotsManager {
             }
         }
         return true;
+    }
+
+    internal static void ModRequireReInit() {
+        foreach (SaveSlot slot in SaveSlots) {
+            slot.SaveLoadActionInitialized = false;
+            slot.All.Clear();
+        }
     }
 
     internal static void RegisterHotkeys() {

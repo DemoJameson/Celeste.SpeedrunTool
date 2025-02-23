@@ -1,4 +1,4 @@
-﻿using Celeste.Mod.SpeedrunTool.Utils;
+using Celeste.Mod.SpeedrunTool.Utils;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using System.Linq;

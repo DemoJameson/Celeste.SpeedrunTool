@@ -38,7 +38,7 @@ internal static class DeathTrackerHelper {
             }
         });
 
-        SaveLoadAction.SafeAdd(loadState: (_, level) => {
+        SaveLoadAction.InternalSafeAdd(loadState: (_, level) => {
             if (!ModSettings.SaveTimeAndDeaths && generatedObject != null && level.GetPlayer() is { } player) {
                 onPlayerSpawn.Invoke(generatedObject, new object[] { player });
             }

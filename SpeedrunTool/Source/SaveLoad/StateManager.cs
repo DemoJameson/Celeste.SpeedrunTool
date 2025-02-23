@@ -83,7 +83,7 @@ public sealed class StateManager {
         On.Celeste.Level.Update += UpdateBackdropWhenWaiting;
         On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
         On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
-        SaveLoadAction.SafeAdd(
+        SaveLoadAction.InternalSafeAdd(
             (_, _) => Instance.UpdateLastChecks(),
             (_, _) => Instance.UpdateLastChecks(),
             () => Instance.lastChecks.Clear()
@@ -239,13 +239,6 @@ public sealed class StateManager {
 
     #endregion Hook
 
-    // public for TAS Mod
-    // ReSharper disable once UnusedMember.Global
-    // ReSharper disable once MemberCanBePrivate.Global
-    public bool SaveState() {
-        return SaveSlotsManager.SaveState(true);
-    }
-
     internal bool SaveStateImpl(bool tas) {
         if (Engine.Scene is not Level level) {
             return false;
@@ -292,12 +285,6 @@ public sealed class StateManager {
         // SaveLoadAction.LogSavedValues();
 
         return true;
-    }
-
-    // public for TAS Mod
-    // ReSharper disable once UnusedMember.Global
-    public bool LoadState() {
-        return SaveSlotsManager.LoadState(true);
     }
 
     internal bool LoadStateImpl(bool tas) {

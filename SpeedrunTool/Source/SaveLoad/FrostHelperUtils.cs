@@ -1,4 +1,4 @@
-﻿using Celeste.Mod.SpeedrunTool.Utils;
+using Celeste.Mod.SpeedrunTool.Utils;
 using Force.DeepCloner;
 using Force.DeepCloner.Helpers;
 using System.Collections.Generic;
@@ -34,7 +34,7 @@ internal static class FrostHelperUtils {
            ) {
             setAttached = setAttached.MakeGenericMethod(genericCustomBoosterType);
 
-            SaveLoadAction.SafeAdd(
+            SaveLoadAction.InternalSafeAdd(
                 saveState: (values, level) => {
                     Dictionary<string, object> dict = new();
                     List<Entity> players = level.Tracker.GetEntities<Player>();
@@ -56,13 +56,13 @@ internal static class FrostHelperUtils {
         }
 
         if (ModUtils.GetType("FrostHelper", "FrostHelper.ChangeDashSpeedOnce") is { } changeDashSpeedOnceType) {
-            SaveLoadAction.SafeAdd(
+            SaveLoadAction.InternalSafeAdd(
                 (savedValues, _) => SaveLoadAction.SaveStaticMemberValues(savedValues, changeDashSpeedOnceType, "NextDashSpeed", "NextSuperJumpSpeed"),
                 (savedValues, _) => SaveLoadAction.LoadStaticMemberValues(savedValues));
         }
 
         if (ModUtils.GetType("FrostHelper", "FrostHelper.TimeBasedClimbBlocker") is { } timeBasedClimbBlockerType) {
-            SaveLoadAction.SafeAdd(
+            SaveLoadAction.InternalSafeAdd(
                 (savedValues, _) => SaveLoadAction.SaveStaticMemberValues(savedValues, timeBasedClimbBlockerType, "_NoClimbTimer"),
                 (savedValues, _) => SaveLoadAction.LoadStaticMemberValues(savedValues));
         }

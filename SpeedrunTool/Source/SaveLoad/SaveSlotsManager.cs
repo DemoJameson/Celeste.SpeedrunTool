@@ -3,19 +3,25 @@ using Celeste.Mod.SpeedrunTool.Other;
 using System.Collections.Generic;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
-public static class SaveSlotsManager {
+internal static class SaveSlotsManager {
     public static IEnumerable<SaveSlot> SaveSlots => Dictionary.Values;
 
     public static Dictionary<string, SaveSlot> Dictionary = new Dictionary<string, SaveSlot>();
 
-    public static SaveSlot Slot;
+    internal static SaveSlot Slot;
 
-    public static string SlotName = GetSlotName(1);
+    internal static string SlotName = GetSlotName(1);
 
     public static StateManager StateManagerInstance => Slot.StateManager;
 
     public const string TasSlot = "tas";
 
+    public static bool IsSaved(string name) {
+        if (Dictionary.TryGetValue(name, out SaveSlot slot)) {
+            return slot.StateManager.IsSaved;
+        }
+        return false;
+    }
     public static bool IsSaved() {
         return Slot.StateManager.IsSaved;
     }
@@ -24,7 +30,6 @@ public static class SaveSlotsManager {
         return SwitchSlot(GetSlotName(index));
     }
 
-    [Command("switch_slot", "Switch to another SRT save slot")]
     public static bool SwitchSlot(string name) {
         if (name != SlotName && !IsAllFree()) {
             return false;
@@ -98,10 +103,15 @@ public static class SaveSlotsManager {
         StateManagerInstance.ClearStateAndShowMessage();
     }
 
+    /// <summary>
+    /// When StateManager is busy (saving/loading/waiting), we shouldn't do anything
+    /// </summary>
     public static bool IsFree(this StateManager manager) {
         return manager.State == State.None;
     }
-
+    /// <summary>
+    /// When any StateManager is busy (saving/loading/waiting), we shouldn't do anything
+    /// </summary>
     public static bool IsAllFree() {
         foreach (SaveSlot slot in SaveSlots) {
             if (!IsFree(slot.StateManager)) {

@@ -3,7 +3,7 @@ using MonoMod.ModInterop;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Celeste.Mod.SpeedrunTool;
+namespace Celeste.Mod.SpeedrunTool.ModInterop;
 
 public static class SpeedrunToolInterop {
     private static readonly List<Func<Type, bool>> returnSameObjectPredicates = new();
@@ -54,7 +54,9 @@ public static class SpeedrunToolInterop {
         public static object RegisterStaticTypes(Type type, params string[] memberNames) {
             return SaveLoadAction.SafeAdd(
                 (savedValues, _) => SaveLoadAction.SaveStaticMemberValues(savedValues, type, memberNames),
-                (savedValues, _) => SaveLoadAction.LoadStaticMemberValues(savedValues));
+                (savedValues, _) => SaveLoadAction.LoadStaticMemberValues(savedValues),
+                null, null, null, null
+            );
         }
 
         /// <summary>
@@ -110,8 +112,16 @@ public static class SpeedrunToolInterop {
         /// Performs deep (full) copy of object and related graph
         /// </summary>
         /// <param name="from"></param>
+        /// appear in the MoreSaveSlots update, which is after v3.25.0
         public static object DeepClone(object from) {
             return from.DeepCloneShared();
+        }
+
+        /// <summary>
+        /// Name of the currently using save slot
+        /// </summary>
+        public static string GetSlotName() {
+            return SaveSlotsManager.SlotName;
         }
     }
 }

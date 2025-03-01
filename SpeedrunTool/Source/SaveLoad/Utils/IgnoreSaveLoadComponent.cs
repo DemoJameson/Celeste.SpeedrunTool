@@ -1,7 +1,7 @@
-﻿using Celeste.Mod.SpeedrunTool.RoomTimer;
+using Celeste.Mod.SpeedrunTool.RoomTimer;
 using System.Collections.Generic;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad;
+namespace Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
 
 [Tracked]
 public class IgnoreSaveLoadComponent : Component {

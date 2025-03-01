@@ -32,7 +32,7 @@ public static class SpeedrunToolInterop {
     [ModExportName("SpeedrunTool.SaveLoad")]
     public static class SaveLoadExports {
         /// <summary>
-        /// Register SaveLoadAction
+        /// Register SaveLoadAction. (Please save your values into the dictionary, otherwise multi saveslots will not be supported.)
         /// </summary>
         /// <param name="saveState"></param>
         /// <param name="loadState"></param>
@@ -41,6 +41,7 @@ public static class SpeedrunToolInterop {
         /// <param name="beforeLoadState"></param>
         /// <param name="preCloneEntities"></param>
         /// <returns>SaveLoadAction instance, used for unregister</returns>
+        /// unless you want your values
         public static object RegisterSaveLoadAction(Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState,
             Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState, Action clearState,
             Action<Level> beforeSaveState, Action<Level> beforeLoadState, Action preCloneEntities) {
@@ -50,7 +51,7 @@ public static class SpeedrunToolInterop {
         /// <summary>
         /// Specify the static members to be cloned
         /// </summary>
-        /// <returns>SaveLoadAction instance, used for unregister (Please save your values into the dictionary, otherwise multi saveslots will not be supported.)</returns>
+        /// <returns>SaveLoadAction instance, used for unregister</returns>
         public static object RegisterStaticTypes(Type type, params string[] memberNames) {
             return SaveLoadAction.SafeAdd(
                 (savedValues, _) => SaveLoadAction.SaveStaticMemberValues(savedValues, type, memberNames),
@@ -73,7 +74,7 @@ public static class SpeedrunToolInterop {
         /// <param name="entity">Ignored entity</param>
         /// <param name="based">The Added/Removed method of the entity will not be triggered when based is true</param>
         public static void IgnoreSaveState(Entity entity, bool based) {
-            entity.Add(new IgnoreSaveLoadComponent());
+            entity.Add(new SaveLoad.Utils.IgnoreSaveLoadComponent());
         }
 
         /// <summary>

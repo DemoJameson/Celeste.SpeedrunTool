@@ -3,6 +3,7 @@ using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
+using Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
 using Celeste.Pico8;
 using Force.DeepCloner;
 using On.Celeste.Editor;

@@ -1,6 +1,6 @@
 using Celeste.Mod.Helpers;
 using Celeste.Mod.SpeedrunTool.Other;
-using Celeste.Mod.SpeedrunTool.SaveLoad;
+using Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
 using Force.DeepCloner;
 using MonoMod.RuntimeDetour;
 using System.Collections.Generic;

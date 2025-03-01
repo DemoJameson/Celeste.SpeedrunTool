@@ -4,7 +4,7 @@ using Force.DeepCloner.Helpers;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad;
+namespace Celeste.Mod.SpeedrunTool.SaveLoad.ThirdPartySupport;
 
 internal static class FrostHelperUtils {
     private static readonly Lazy<Type> AttachedDataHelperType = new(() =>
@@ -26,7 +26,7 @@ internal static class FrostHelperUtils {
         }
     }
 
-    public static void SupportFrostHelper() {
+    public static void Support() {
         if (AttachedDataHelperType.Value != null && GetAllData.Value == null
             && AttachedDataHelperType.Value.GetMethodInfo("SetAttached") is { } setAttached
             && ModUtils.GetType("FrostHelper", "FrostHelper.Entities.Boosters.GenericCustomBooster") is { } genericCustomBoosterType

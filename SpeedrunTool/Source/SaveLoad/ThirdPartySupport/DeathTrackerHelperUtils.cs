@@ -3,9 +3,9 @@ using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using System.Linq;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad;
+namespace Celeste.Mod.SpeedrunTool.SaveLoad.ThirdPartySupport;
 
-internal static class DeathTrackerHelper {
+internal static class DeathTrackerHelperUtils {
     private static object generatedObject;
 
     [Initialize]
@@ -19,7 +19,7 @@ internal static class DeathTrackerHelper {
         });
     }
 
-    public static void AddSupport() {
+    internal static void Support() {
         if (ModUtils.GetType("DeathTracker", "CelesteDeathTracker.DeathTrackerModule+<>c__DisplayClass6_0") is not { } generatedType) {
             return;
         }

@@ -4,7 +4,6 @@ using Celeste.Mod.SpeedrunTool.Utils;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.ThirdPartySupport;
 internal static class PandorasBoxUtils {
 
-
     internal static void Support() {
         // TimeField.targetPlayer 和 TimeField.lingeringTarget 等
         // WeakReference<T> 类型的实例在 SL 多次并且内存回收之后 target 可能会指向错误的对象，原因未知

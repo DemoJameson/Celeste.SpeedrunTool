@@ -21,10 +21,6 @@ public sealed class StateManager {
         () => ModUtils.GetType("CollabUtils2", "Celeste.Mod.CollabUtils2.UI.InGameOverworldHelper")?.GetPropertyInfo("IsOpen")
     );
 
-    private static readonly Lazy<FieldInfo> CycleGroupCounter = new(
-        () => ModUtils.GetType("CelesteTAS", "TAS.EverestInterop.Hitboxes.CycleHitboxColor")?.GetFieldInfo("GroupCounter")
-    );
-
     private readonly Dictionary<VirtualInput, bool> lastChecks = new();
 
     private readonly List<VirtualInput> unfreezeInputs = new();
@@ -66,7 +62,6 @@ public sealed class StateManager {
     private Task<DeepCloneState> preCloneTask;
     private FreezeType freezeType;
     private Process celesteProcess;
-    private object savedTasCycleGroupCounter;
 
     private enum FreezeType {
         None,
@@ -267,7 +262,6 @@ public sealed class StateManager {
         SaveLoadAction.OnBeforeSaveState(level);
         level.DeepCloneToShared(savedLevel = (Level)FormatterServices.GetUninitializedObject(typeof(Level)));
         savedSaveData = SaveData.Instance.DeepCloneShared();
-        savedTasCycleGroupCounter = CycleGroupCounter.Value?.GetValue(null);
         SaveLoadAction.OnSaveState(level);
         DeepClonerUtils.ClearSharedDeepCloneState();
         PreCloneSavedEntities();
@@ -283,6 +277,8 @@ public sealed class StateManager {
         }
 
         // SaveLoadAction.LogSavedValues();
+
+        Logger.Log("SpeedrunTool", $"Save to [{SaveSlotsManager.SlotName}]");
 
         return true;
     }
@@ -328,6 +324,7 @@ public sealed class StateManager {
             DoScreenWipe(level);
         }
 
+        Logger.Log("SpeedrunTool", $"Load from [{SaveSlotsManager.SlotName}]");
         return true;
     }
 
@@ -434,7 +431,6 @@ public sealed class StateManager {
     private void RestoreLevelTime(Level level) {
         level.TimeActive = savedLevel.TimeActive;
         level.RawTimeActive = savedLevel.RawTimeActive;
-        CycleGroupCounter.Value?.SetValue(null, savedTasCycleGroupCounter);
     }
 
     // 收集需要继续播放的声音
@@ -474,11 +470,6 @@ public sealed class StateManager {
         }
     }
 
-    // public for tas
-    public void ClearState() {
-        SaveSlotsManager.ClearState(true);
-    }
-
     // ReSharper disable once MemberCanBePrivate.Global
     // 为了照顾使用体验，不主动触发内存回收（会卡顿，增加 SaveState 时间）
     public void ClearStateImpl() {
@@ -497,6 +488,7 @@ public sealed class StateManager {
         celesteProcess = null;
         SaveLoadAction.OnClearState();
         State = State.None;
+        Logger.Log("SpeedrunTool", $"Clear [{SaveSlotsManager.SlotName}]");
     }
 
     public void ClearStateAndShowMessage() {

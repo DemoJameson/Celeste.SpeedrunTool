@@ -278,9 +278,9 @@ public sealed class SaveLoadAction {
 
     internal static void LogSavedValues() {
         foreach (SaveLoadAction slAction in AllActionsAndValues) {
-            Logger.Log("SRT", "=================");
+            Logger.Log(LogLevel.Info, "SpeedrunTool", "=================");
             foreach (KeyValuePair<Type, Dictionary<string, object>> pair in slAction.savedValues) {
-                Logger.Log("SRT", pair.Key.FullName);
+                Logger.Log(LogLevel.Info, "SpeedrunTool", pair.Key.FullName);
             }
         }
     }

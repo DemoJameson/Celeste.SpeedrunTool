@@ -14,8 +14,6 @@ internal static class SaveSlotsManager {
 
     public static StateManager StateManagerInstance => Slot.StateManager;
 
-    public const string TasSlot = "tas";
-
     public static bool IsSaved(string name) {
         if (Dictionary.TryGetValue(name, out SaveSlot slot)) {
             return slot.StateManager.IsSaved;
@@ -34,6 +32,9 @@ internal static class SaveSlotsManager {
         if (name != SlotName && !IsAllFree()) {
             return false;
         }
+        if (name != SlotName) {
+            Logger.Log("SpeedrunTool", $"Switch to [{name}]");
+        }
         SlotName = name;
         if (Dictionary.TryGetValue(name, out SaveSlot slot)) {
             Slot = slot;
@@ -46,58 +47,38 @@ internal static class SaveSlotsManager {
     public static string GetSlotName(int index) {
         return index == 1 ? "Default Slot" : $"SaveSlot@{index}";
     }
-    public static bool SaveState(bool tas = false) {
+
+    public static bool CannotSaveLoad() {
         if (Engine.Scene is not Level) {
-            return false;
+            return true;
         }
 
         if (!IsAllFree()) {
+            return true;
+        }
+        return false;
+    }
+    public static bool SaveState() {
+        if (CannotSaveLoad()) {
             return false;
         }
 
-        if (tas) {
-            string orig = SlotName;
-            SwitchSlot(TasSlot);
-            bool result = StateManagerInstance.SaveStateImpl(true);
-            SwitchSlot(orig);
-            return result;
-        } else {
-            return StateManagerInstance.SaveStateImpl(false);
-        }
-
+        return StateManagerInstance.SaveStateImpl(false);
     }
 
-    public static bool LoadState(bool tas = false) {
-        if (Engine.Scene is not Level) {
+
+    public static bool LoadState() {
+        if (CannotSaveLoad()) {
             return false;
         }
 
-        if (!IsAllFree()) {
-            return false;
-        }
-
-        if (tas) {
-            string orig = SlotName;
-            SwitchSlot(TasSlot);
-            bool result = StateManagerInstance.LoadStateImpl(true);
-            SwitchSlot(orig);
-            return result;
-        } else {
-            return StateManagerInstance.LoadStateImpl(false);
-        }
+        return StateManagerInstance.LoadStateImpl(false);
     }
 
-    public static void ClearState(bool tas = false) {
-        if (tas) {
-            string orig = SlotName;
-            if (SwitchSlot(TasSlot)) {
-                StateManagerInstance.ClearStateImpl();
-                SwitchSlot(orig);
-            }
-        } else {
-            StateManagerInstance.ClearStateImpl();
-        }
+    public static void ClearState() {
+        StateManagerInstance.ClearStateImpl();
     }
+
 
     public static void ClearStateAndShowMessage() {
         StateManagerInstance.ClearStateAndShowMessage();
@@ -145,6 +126,38 @@ internal static class SaveSlotsManager {
             PopupMessageUtils.Show($"Switch to {SlotName}", null);
         }
     }
+
+    #region Tas
+    public static bool SaveStateTas(string slot) {
+        if (CannotSaveLoad()) {
+            return false;
+        }
+
+        string orig = SlotName;
+        SwitchSlot(slot);
+        bool result = StateManagerInstance.SaveStateImpl(true);
+        SwitchSlot(orig);
+        return result;
+    }
+    public static bool LoadStateTas(string slot) {
+        if (CannotSaveLoad()) {
+            return false;
+        }
+
+        string orig = SlotName;
+        SwitchSlot(slot);
+        bool result = StateManagerInstance.LoadStateImpl(true);
+        SwitchSlot(orig);
+        return result;
+    }
+    public static void ClearStateTas(string slot) {
+        string orig = SlotName;
+        if (SwitchSlot(slot)) {
+            StateManagerInstance.ClearStateImpl();
+            SwitchSlot(orig);
+        }
+    }
+    #endregion
 }
 
 public class SaveSlot {

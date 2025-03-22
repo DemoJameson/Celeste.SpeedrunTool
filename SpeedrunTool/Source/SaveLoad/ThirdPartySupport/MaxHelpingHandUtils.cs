@@ -1,10 +1,14 @@
-using Celeste.Mod.SpeedrunTool.Utils;
-using MonoMod.Cil;
-
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.ThirdPartySupport;
 internal static class MaxHelpingHandUtils {
 
     internal static void Support() {
+
+        SaveLoadAction.CloneModTypeFields("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Effects.BlackholeCustomColors", "colorsMild");
+
+        /*
+         * no longer (un)hook on room load since
+         * https://github.com/maddie480/MaddieHelpingHand/commit/0b5496a770a30cf797ee95ad99cbc95dd78d8d91
+         * 
         if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.RainbowSpinnerColorController") is { } colorControllerType
             && colorControllerType.GetFieldInfo("rainbowSpinnerHueHooked") != null
             && Delegate.CreateDelegate(typeof(On.Celeste.CrystalStaticSpinner.hook_GetHue),
@@ -106,7 +110,6 @@ internal static class MaxHelpingHandUtils {
                 }
             );
         }
-
-        SaveLoadAction.CloneModTypeFields("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Effects.BlackholeCustomColors", "colorsMild");
+        */
     }
 }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using CMod = Celeste.Mod;
 
-namespace Celeste.Mod.SpeedrunTool;
+namespace Celeste.Mod.SpeedrunTool.Test;
 internal class AutoUpdatePreventer {
 
     [Initialize]
@@ -32,5 +32,5 @@ internal class AutoUpdatePreventer {
         }
     }
 
-    private static List<string> FilteredMods = new List<string>() { "SpeedrunTool", "CelesteTAS", "TASHelper", "GhostModForTas" }; 
+    private static List<string> FilteredMods = new List<string>() { "SpeedrunTool", "CelesteTAS", "TASHelper", "GhostModForTas" };
 }

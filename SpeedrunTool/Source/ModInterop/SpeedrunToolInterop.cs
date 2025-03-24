@@ -73,8 +73,8 @@ public static class SpeedrunToolInterop {
         /// </summary>
         /// <param name="entity">Ignored entity</param>
         /// <param name="based">The Added/Removed method of the entity will not be triggered when based is true</param>
-        public static void IgnoreSaveState(Entity entity, bool based) {
-            entity.Add(new SaveLoad.Utils.IgnoreSaveLoadComponent());
+        public static void IgnoreSaveState(Entity entity, bool based = false) {
+            entity.Add(new SaveLoad.Utils.IgnoreSaveLoadComponent(based));
         }
 
         /// <summary>
@@ -113,13 +113,13 @@ public static class SpeedrunToolInterop {
         /// Performs deep (full) copy of object and related graph
         /// </summary>
         /// <param name="from"></param>
-        /// appear in the MoreSaveSlots update, which is after v3.25.0
+        /// appear in the MultipleSaveSlots update, which is after v3.25.0
         public static object DeepClone(object from) {
             return from.DeepCloneShared();
         }
 
         /// <summary>
-        /// Name of the currently using save slot
+        /// Name of the currently using save slot, appear after v3.25.0
         /// </summary>
         public static string GetSlotName() {
             return SaveSlotsManager.SlotName;

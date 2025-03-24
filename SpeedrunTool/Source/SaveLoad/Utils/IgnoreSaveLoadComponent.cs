@@ -10,7 +10,7 @@ public class IgnoreSaveLoadComponent : Component {
     private bool based;
 
     // backward compatibility
-    public IgnoreSaveLoadComponent() : base(false, false) { }
+    public IgnoreSaveLoadComponent() : base(false, false) { this.based = false; }
 
     public IgnoreSaveLoadComponent(bool based) : base(false, false) {
         this.based = based;

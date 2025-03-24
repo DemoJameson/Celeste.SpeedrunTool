@@ -1,7 +1,6 @@
 using Celeste.Mod.SpeedrunTool.Utils;
 using System.Collections.Generic;
 using System.Linq;
-using CMod = Celeste.Mod;
 
 namespace Celeste.Mod.SpeedrunTool.Test;
 internal class AutoUpdatePreventer {
@@ -13,23 +12,26 @@ internal class AutoUpdatePreventer {
             cursor.Goto(-1);
             cursor.EmitDelegate(Handler);
         });
+    }
 
-        static SortedDictionary<CMod.Helpers.ModUpdateInfo, EverestModuleMetadata> Handler(SortedDictionary<CMod.Helpers.ModUpdateInfo, EverestModuleMetadata> updateList) {
-            bool found = false;
-            foreach (Helpers.ModUpdateInfo info in updateList.Keys) {
-                if (info.Name == "SpeedrunTool" && Version.Parse(info.Version) < new Version(3, 25)) {
-                    found = true;
-                    break;
-                }
-            }
-            if (found) {
-                var list = updateList.Select(x => x.Key).Where(x => FilteredMods.Contains(x.Name)).ToList();
-                foreach (var info in list) {
-                    updateList.Remove(info);
-                }
-            }
-            return updateList;
+    private static SortedDictionary<Helpers.ModUpdateInfo, EverestModuleMetadata> Handler(SortedDictionary<Helpers.ModUpdateInfo, EverestModuleMetadata> updateList) {
+        if (updateList is null) {
+            return null;
         }
+        bool found = false;
+        foreach (Helpers.ModUpdateInfo info in updateList.Keys) {
+            if (info.Name == "SpeedrunTool" && Version.Parse(info.Version) < new Version(3, 25)) {
+                found = true;
+                break;
+            }
+        }
+        if (found) {
+            var list = updateList.Select(x => x.Key).Where(x => FilteredMods.Contains(x.Name)).ToList();
+            foreach (var info in list) {
+                updateList.Remove(info);
+            }
+        }
+        return updateList;
     }
 
     private static List<string> FilteredMods = new List<string>() { "SpeedrunTool", "CelesteTAS", "TASHelper", "GhostModForTas" };

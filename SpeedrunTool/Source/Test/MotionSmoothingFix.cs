@@ -1,8 +1,3 @@
-
-
-using Celeste.Mod.SpeedrunTool.Utils;
-using Mono.Cecil.Cil;
-
 namespace Celeste.Mod.SpeedrunTool.Test;
 internal class MotionSmoothingFix {
     /*

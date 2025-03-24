@@ -75,10 +75,13 @@ internal static class SaveSlotsManager {
         return StateManagerInstance.LoadStateImpl(false);
     }
 
+
+    /// <summary>
+    /// Clear current save slot 
+    /// </summary>
     public static void ClearState() {
         StateManagerInstance.ClearStateImpl();
     }
-
 
     public static void ClearStateAndShowMessage() {
         StateManagerInstance.ClearStateAndShowMessage();
@@ -125,6 +128,12 @@ internal static class SaveSlotsManager {
         if (SwitchSlot(index)) {
             PopupMessageUtils.Show($"Switch to {SlotName}", null);
         }
+    }
+
+    internal static void AfterAssetReload() {
+        Dictionary = new Dictionary<string, SaveSlot>();
+        SwitchSlot(1);
+        ClearState();
     }
 
     #region Tas

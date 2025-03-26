@@ -69,6 +69,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public List<Keys> KeyboardSaveState { get; set; } = Hotkey.SaveState.GetDefaultKeys();
     public List<Keys> KeyboardLoadState { get; set; } = Hotkey.LoadState.GetDefaultKeys();
     public List<Keys> KeyboardClearState { get; set; } = Hotkey.ClearState.GetDefaultKeys();
+    public List<Keys> KeyboardClearAllState { get; set; } = Hotkey.ClearAllState.GetDefaultKeys();
     public List<Keys> KeyboardOpenDebugMap { get; set; } = Hotkey.OpenDebugMap.GetDefaultKeys();
     public List<Keys> KeyboardResetRoomTimerPb { get; set; } = Hotkey.ResetRoomTimerPb.GetDefaultKeys();
     public List<Keys> KeyboardSwitchRoomTimer { get; set; } = Hotkey.SwitchRoomTimer.GetDefaultKeys();
@@ -98,6 +99,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public List<Buttons> ControllerSaveState { get; set; } = new List<Buttons>();
     public List<Buttons> ControllerLoadState { get; set; } = new List<Buttons>();
     public List<Buttons> ControllerClearState { get; set; } = new List<Buttons>();
+    public List<Buttons> ControllerClearAllState { get; set; } = new List<Buttons>();
     public List<Buttons> ControllerOpenDebugMap { get; set; } = new List<Buttons>();
     public List<Buttons> ControllerResetRoomTimerPb { get; set; } = new List<Buttons>();
     public List<Buttons> ControllerSwitchRoomTimer { get; set; } = new List<Buttons>();

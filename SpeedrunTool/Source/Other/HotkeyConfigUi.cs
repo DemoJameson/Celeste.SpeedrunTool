@@ -70,6 +70,7 @@ public class HotkeyConfigUi : TextMenu {
         new(Hotkey.SaveState, Keys.F7),
         new(Hotkey.LoadState, Keys.F8),
         new(Hotkey.ClearState, Keys.F4),
+        new(Hotkey.ClearAllState),
         new(Hotkey.OpenDebugMap),
         new(Hotkey.ResetRoomTimerPb, Keys.F9),
         new(Hotkey.SwitchRoomTimer, Keys.F10),
@@ -502,6 +503,7 @@ public enum Hotkey {
     SaveSlot7,
     SaveSlot8,
     SaveSlot9,
+    ClearAllState,
 }
 
 internal static class HotkeysExtensions {

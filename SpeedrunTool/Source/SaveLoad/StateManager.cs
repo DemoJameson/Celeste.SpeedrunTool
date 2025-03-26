@@ -120,6 +120,12 @@ public sealed class StateManager {
             }
         });
 
+        Hotkey.ClearAllState.RegisterPressedAction(scene => {
+            if (scene is Level { Paused: false } && SaveSlotsManager.IsAllFree()) {
+                SaveSlotsManager.ClearAll();
+            }
+        });
+
         Hotkey.SwitchAutoLoadState.RegisterPressedAction(scene => {
             if (scene is Level { Paused: false }) {
                 ModSettings.AutoLoadStateAfterDeath = !ModSettings.AutoLoadStateAfterDeath;

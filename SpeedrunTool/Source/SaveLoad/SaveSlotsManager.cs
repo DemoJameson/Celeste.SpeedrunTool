@@ -87,6 +87,13 @@ internal static class SaveSlotsManager {
         StateManagerInstance.ClearStateAndShowMessage();
     }
 
+    public static void ClearAll() {
+        foreach (SaveSlot slot in Dictionary.Values) {
+            slot.StateManager.ClearStateImpl();
+        }
+        PopupMessageUtils.Show(DialogIds.ClearAllToolTip.DialogClean(), DialogIds.ClearAllDialog);
+    }
+
     /// <summary>
     /// When StateManager is busy (saving/loading/waiting), we shouldn't do anything
     /// </summary>

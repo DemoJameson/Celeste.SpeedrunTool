@@ -49,9 +49,12 @@ public static class DialogIds {
     public const string SaveState = "SPEEDRUN_TOOL_SAVE_STATE";
     public const string LoadState = "SPEEDRUN_TOOL_LOAD_STATE";
     public const string ClearState = "SPEEDRUN_TOOL_CLEAR_STATE";
+    public const string ClearAllState = "SPEEDRUN_TOOL_CLEAR_ALL";
     public const string ClearStateToolTip = "SPEEDRUN_TOOL_CLEAR_STATE_TOOLTIP";
+    public const string ClearAllToolTip = "SPEEDRUN_TOOL_CLEAR_ALL_TOOLTIP";
     public const string NotSavedStateTooltip = "SPEEDRUN_TOOL_NOT_SAVED_STATE_TOOLTIP";
     public const string ClearStateDialog = "SPEEDRUN_TOOL_CLEAR_STATE_DIALOG";
+    public const string ClearAllDialog = "SPEEDRUN_TOOL_CLEAR_ALL_DIALOG";
     public const string NotSavedStateYetDialog = "SPEEDRUN_TOOL_NOT_SAVED_STATE_YET_DIALOG";
     public const string ClearStateDialogBadeline = "SPEEDRUN_TOOL_CLEAR_STATE_DIALOG_BADELINE";
     public const string NotSavedStateYetDialogBadeline = "SPEEDRUN_TOOL_NOT_SAVED_STATE_YET_DIALOG_BADELINE";

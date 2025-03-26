@@ -37,11 +37,16 @@ SPEEDRUN_TOOL_SAVE_EXTENDED_VARIANTS=      Save Extended Variants
 SPEEDRUN_TOOL_SAVE_STATE=                  Save State
 SPEEDRUN_TOOL_LOAD_STATE=                  Load State
 SPEEDRUN_TOOL_CLEAR_STATE=                 Clear State
+SPEEDRUN_TOOL_CLEAR_ALL=                   Clear All States
 SPEEDRUN_TOOL_CLEAR_STATE_TOOLTIP=         Cleared the state
+SPEEDRUN_TOOL_CLEAR_ALL_TOOLTIP=           Cleared all states
 SPEEDRUN_TOOL_NOT_SAVED_STATE_TOOLTIP=     Not saved state yet
 SPEEDRUN_TOOL_CLEAR_STATE_DIALOG=
     [MADELINE left normal]
     Cleared the state~
+SPEEDRUN_TOOL_CLEAR_ALL_DIALOG=
+    [MADELINE left normal]
+    Cleared all states~
 SPEEDRUN_TOOL_NOT_SAVED_STATE_YET_DIALOG=
     [MADELINE left upset]
     Not saved state yet.

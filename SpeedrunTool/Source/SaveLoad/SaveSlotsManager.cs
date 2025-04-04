@@ -1,4 +1,5 @@
 using Celeste.Mod.SpeedrunTool.Message;
+using Celeste.Mod.SpeedrunTool.MoreSaveSlotsUI;
 using Celeste.Mod.SpeedrunTool.Other;
 using System.Collections.Generic;
 
@@ -10,9 +11,13 @@ internal static class SaveSlotsManager {
 
     internal static SaveSlot Slot;
 
-    internal static string SlotName = GetSlotName(1);
+    internal static string SlotName { get; private set; } = GetSlotName(1);
 
     public static StateManager StateManagerInstance => Slot.StateManager;
+
+    public static bool IsSaved(int index) {
+        return IsSaved(GetSlotName(index));
+    }
 
     public static bool IsSaved(string name) {
         if (Dictionary.TryGetValue(name, out SaveSlot slot)) {
@@ -28,6 +33,10 @@ internal static class SaveSlotsManager {
         return SwitchSlot(GetSlotName(index));
     }
 
+    /// <summary>
+    /// Switch to the slot with the specified name. Will be automatically created if the slot does not exist.
+    /// </summary>
+    /// <returns> Success or not </returns>
     public static bool SwitchSlot(string name) {
         if (name != SlotName && !IsAllFree()) {
             return false;
@@ -35,6 +44,8 @@ internal static class SaveSlotsManager {
         if (name != SlotName) {
             Logger.Log("SpeedrunTool", $"Switch to [{name}]");
         }
+
+        // execute even if name == SlotName, so the resulting slot will always be right (it's not necessarily created yet!)
         SlotName = name;
         if (Dictionary.TryGetValue(name, out SaveSlot slot)) {
             Slot = slot;
@@ -95,13 +106,13 @@ internal static class SaveSlotsManager {
     }
 
     /// <summary>
-    /// When StateManager is busy (saving/loading/waiting), we shouldn't do anything
+    /// When StateManager is busy (saving/loading), we shouldn't do anything
     /// </summary>
     public static bool IsFree(this StateManager manager) {
-        return manager.State == State.None;
+        return manager.State == State.None || manager.State == State.Waiting;
     }
     /// <summary>
-    /// When any StateManager is busy (saving/loading/waiting), we shouldn't do anything
+    /// When any StateManager is busy (saving/loading), we shouldn't do anything
     /// </summary>
     public static bool IsAllFree() {
         foreach (SaveSlot slot in SaveSlots) {
@@ -119,7 +130,8 @@ internal static class SaveSlotsManager {
         }
     }
 
-    internal static void RegisterHotkeys() {
+    [Load]
+    private static void RegisterHotkeys() {
         Hotkey.SaveSlot1.RegisterPressedAction(_ => SwitchSlotAndShowMessage(1));
         Hotkey.SaveSlot2.RegisterPressedAction(_ => SwitchSlotAndShowMessage(2));
         Hotkey.SaveSlot3.RegisterPressedAction(_ => SwitchSlotAndShowMessage(3));
@@ -190,5 +202,6 @@ public class SaveSlot {
         SaveLoadActionInitialized = false;
         All = new();
         StateManager = new();
+        StateManager.SlotName = Name;
     }
 }

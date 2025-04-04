@@ -118,6 +118,8 @@ SPEEDRUN_TOOL_SAVESLOT6=                     存档 6
 SPEEDRUN_TOOL_SAVESLOT7=                     存档 7
 SPEEDRUN_TOOL_SAVESLOT8=                     存档 8
 SPEEDRUN_TOOL_SAVESLOT9=                     存档 9
+SPEEDRUN_TOOL_SAVE_TO_NEXT_SLOT=             存至下一存档槽
+SPEEDRUN_TOOL_LOAD_FROM_LAST_SLOT=           读取上一存档槽
 
 # ================================== Death Statistics ==================================
 SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA=      死亡数据数量

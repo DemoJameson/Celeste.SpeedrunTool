@@ -50,6 +50,8 @@ public sealed class StateManager {
         }
     }
 
+    internal static bool AllowSaveLoadWhenWaiting = false;
+
     // public for tas
     public bool IsSaved => savedLevel != null;
     public State State { get; private set; } = State.None;
@@ -62,6 +64,7 @@ public sealed class StateManager {
     private Task<DeepCloneState> preCloneTask;
     private FreezeType freezeType;
     private Process celesteProcess;
+    public string SlotName;
 
     private enum FreezeType {
         None,
@@ -73,7 +76,7 @@ public sealed class StateManager {
 
     #region Hook
 
-    public static void Load() {
+    internal static void Load() {
         On.Monocle.Scene.BeforeUpdate += SceneOnBeforeUpdate;
         On.Celeste.Level.Update += UpdateBackdropWhenWaiting;
         On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
@@ -86,7 +89,7 @@ public sealed class StateManager {
         RegisterHotkeys();
     }
 
-    public static void Unload() {
+    internal static void Unload() {
         On.Monocle.Scene.BeforeUpdate -= SceneOnBeforeUpdate;
         On.Celeste.Level.Update -= UpdateBackdropWhenWaiting;
         On.Monocle.Scene.Begin -= ClearStateWhenSwitchScene;
@@ -134,8 +137,6 @@ public sealed class StateManager {
                 PopupMessageUtils.ShowOptionState(DialogIds.AutoLoadStateAfterDeath.DialogClean(), state);
             }
         });
-
-        SaveSlotsManager.RegisterHotkeys();
     }
 
     private void UpdateLastChecks() {
@@ -284,7 +285,7 @@ public sealed class StateManager {
 
         // SaveLoadAction.LogSavedValues();
 
-        Logger.Log("SpeedrunTool", $"Save to [{SaveSlotsManager.SlotName}]");
+        Logger.Log("SpeedrunTool", $"Save to [{SlotName}]");
 
         return true;
     }
@@ -294,7 +295,7 @@ public sealed class StateManager {
             return false;
         }
 
-        if (!tas && level.Paused || State is State.Loading or State.Waiting || !IsSaved) {
+        if (!tas && level.Paused || State == State.Loading || State == State.Waiting && !AllowSaveLoadWhenWaiting || !IsSaved) {
             return false;
         }
 
@@ -330,7 +331,7 @@ public sealed class StateManager {
             DoScreenWipe(level);
         }
 
-        Logger.Log("SpeedrunTool", $"Load from [{SaveSlotsManager.SlotName}]");
+        Logger.Log("SpeedrunTool", $"Load from [{SlotName}]");
         return true;
     }
 
@@ -494,7 +495,7 @@ public sealed class StateManager {
         celesteProcess = null;
         SaveLoadAction.OnClearState();
         State = State.None;
-        Logger.Log("SpeedrunTool", $"Clear [{SaveSlotsManager.SlotName}]");
+        Logger.Log("SpeedrunTool", $"Clear [{SlotName}]");
     }
 
     public void ClearStateAndShowMessage() {
@@ -518,7 +519,8 @@ public sealed class StateManager {
     private bool IsAllowSave(Level level, bool tas) {
         // 正常游玩时禁止死亡或者跳过过场时存档，TAS 则无以上限制
         // 跳过过场时的黑屏与读档后加的黑屏冲突，会导致一直卡在跳过过场的过程中
-        return State == State.None && !level.Paused && (!level.IsPlayerDead() && !level.SkippingCutscene || tas);
+        return (State == State.None || State == State.Waiting && AllowSaveLoadWhenWaiting) && !level.Paused 
+            && (!level.IsPlayerDead() && !level.SkippingCutscene || tas);
     }
 
     private void FreezeGame(FreezeType freeze) {

@@ -42,7 +42,7 @@ public static class SpeedrunToolInterop {
         /// <param name="beforeSaveState"></param>
         /// <param name="beforeLoadState"></param>
         /// <param name="preCloneEntities"></param>
-        /// <returns>SaveLoadAction instance, used for unregister</returns>
+        /// <returns>SaveLoadAction instance, used for unregister when your mod unloads </returns>
 
         // note save load actions are DeepCloned to each save slot, so should never pass in method calls of a singleton
         public static object RegisterSaveLoadAction(Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState,
@@ -54,7 +54,7 @@ public static class SpeedrunToolInterop {
         /// <summary>
         /// Specify the static members to be cloned
         /// </summary>
-        /// <returns>SaveLoadAction instance, used for unregister</returns>
+        /// <returns>SaveLoadAction instance, used for unregister when your mod unloads </returns>
         public static object RegisterStaticTypes(Type type, params string[] memberNames) {
             return SaveLoadAction.SafeAdd(
                 (savedValues, _) => SaveLoadAction.SaveStaticMemberValues(savedValues, type, memberNames),

@@ -1,7 +1,7 @@
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Celeste.Mod.SpeedrunTool.Utils;
-using System.Reflection;
 using Mono.Cecil.Cil;
+using System.Reflection;
 
 namespace Celeste.Mod.SpeedrunTool.Test;
 internal static class MotionSmoothingFix {
@@ -39,6 +39,6 @@ internal static class MotionSmoothingFix {
     }
 
     private static void SmoothAllObjects() {
-        method.Invoke(handler, new object[] { });
+        method.Invoke(handler, Array.Empty<object>());
     }
 }

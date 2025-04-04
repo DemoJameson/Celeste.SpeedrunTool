@@ -115,6 +115,8 @@ public static class DialogIds {
     public const string SaveSlot7 = "SPEEDRUN_TOOL_SAVESLOT7";
     public const string SaveSlot8 = "SPEEDRUN_TOOL_SAVESLOT8";
     public const string SaveSlot9 = "SPEEDRUN_TOOL_SAVESLOT9";
+    public const string SaveToNextSlot = "SPEEDRUN_TOOL_SAVE_TO_NEXT_SLOT";
+    public const string LoadFromLastSlot = "SPEEDRUN_TOOL_LOAD_FROM_LAST_SLOT";
 
     // Death Statistics
     public const string MaxNumberOfDeathData = "SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA";

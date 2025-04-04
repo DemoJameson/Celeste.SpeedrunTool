@@ -94,6 +94,8 @@ public class HotkeyConfigUi : TextMenu {
         new(Hotkey.SaveSlot7, Keys.LeftControl, Keys.D7),
         new(Hotkey.SaveSlot8, Keys.LeftControl, Keys.D8),
         new(Hotkey.SaveSlot9, Keys.LeftControl, Keys.D9),
+        new(Hotkey.SaveToNextSlot),
+        new(Hotkey.LoadFromLastSlot),
     }.ToDictionary(info => info.Hotkey, info => info);
 
     private static readonly Hotkey[] Hotkeys = (Hotkey[])Enum.GetValues(typeof(Hotkey));
@@ -172,19 +174,16 @@ public class HotkeyConfigUi : TextMenu {
     [Unload]
     private static void Unload() {
         On.Monocle.MInput.Update -= MInputOnUpdate;
-        foreach (HotkeyConfig hotkeyConfig in HotkeyConfigs.Values) {
-            hotkeyConfig.VirtualButton.Value.Deregister();
-        }
     }
 
     private static void MInputOnUpdate(On.Monocle.MInput.orig_Update orig) {
         orig();
 
         if (Engine.Scene is { } scene && ModSettings.Enabled && !TasUtils.Running) {
+            Hotkeys_Rebase.UpdateMeta();
             foreach (Hotkey hotkey in Hotkeys) {
                 HotkeyConfig hotkeyConfig = hotkey.GetHotkeyConfig();
                 if (Pressed(hotkey, scene)) {
-                    hotkeyConfig.VirtualButton.Value.ConsumePress();
                     hotkeyConfig.OnPressed?.Invoke(scene);
                 }
             }
@@ -421,10 +420,8 @@ public class HotkeyConfigUi : TextMenu {
 public class HotkeyConfig {
     public readonly Keys[] DefaultKeys;
     public readonly Hotkey Hotkey;
-    public readonly Lazy<VirtualButton> VirtualButton = new(() => new VirtualButton(0.08f));
+    internal Hotkeys_Rebase.Hotkey_Rebase Hotkey_Impl; 
     public Action<Scene> OnPressed;
-    public List<VirtualButton.KeyboardKey> KeyboardKeys { get; private set; } = new();
-    public List<VirtualButton.PadButton> PadButtons { get; private set; } = new();
 
     public HotkeyConfig(Hotkey hotkey, params Keys[] defaultKeys) {
         Hotkey = hotkey;
@@ -432,10 +429,7 @@ public class HotkeyConfig {
     }
 
     public void UpdateVirtualButton() {
-        List<VirtualButton.Node> nodes = VirtualButton.Value.Nodes;
-        nodes.Clear();
-        nodes.AddRange(KeyboardKeys = GetKeys().Select(key => new VirtualButton.KeyboardKey(key)).ToList());
-        nodes.AddRange(PadButtons = GetButtons().Select(button => new VirtualButton.PadButton(Input.Gamepad, button)).ToList());
+        Hotkey_Impl = Hotkeys_Rebase.BindingToHotkey(GetKeys(), GetButtons());
     }
 
     public List<Buttons> GetButtons() {
@@ -504,6 +498,8 @@ public enum Hotkey {
     SaveSlot8,
     SaveSlot9,
     ClearAllState,
+    SaveToNextSlot,
+    LoadFromLastSlot
 }
 
 internal static class HotkeysExtensions {
@@ -522,15 +518,6 @@ internal static class HotkeysExtensions {
     // 检查键盘或者手柄全部按键按下
     public static bool Pressed(this Hotkey hotkey) {
         HotkeyConfig hotkeyConfig = hotkey.GetHotkeyConfig();
-
-        List<VirtualButton.KeyboardKey> keyboardKeys = hotkeyConfig.KeyboardKeys;
-        bool keyPressed = keyboardKeys.Count > 0 && keyboardKeys.All(node => node.Check) && keyboardKeys.Any(node => node.Pressed);
-        if (keyPressed) {
-            return true;
-        }
-
-        List<VirtualButton.PadButton> padButtons = hotkeyConfig.PadButtons;
-        bool buttonPressed = padButtons.Count > 0 && padButtons.All(node => node.Check) && padButtons.Any(node => node.Pressed);
-        return buttonPressed;
+        return hotkeyConfig.Hotkey_Impl.Pressed;
     }
 }

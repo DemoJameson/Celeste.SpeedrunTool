@@ -32,7 +32,9 @@ public static class SpeedrunToolInterop {
     [ModExportName("SpeedrunTool.SaveLoad")]
     public static class SaveLoadExports {
         /// <summary>
-        /// Register SaveLoadAction. (Please save your values into the dictionary, otherwise multi saveslots will not be supported.)
+        /// <para> Register SaveLoadAction. </para>
+        /// <para> Please save your values into the dictionary, otherwise multi saveslots will not be supported. </para>
+        /// <para> DON'T pass in method calls of a singleton, use static methods instead. </para>
         /// </summary>
         /// <param name="saveState"></param>
         /// <param name="loadState"></param>
@@ -41,7 +43,8 @@ public static class SpeedrunToolInterop {
         /// <param name="beforeLoadState"></param>
         /// <param name="preCloneEntities"></param>
         /// <returns>SaveLoadAction instance, used for unregister</returns>
-        /// unless you want your values
+
+        // note save load actions are DeepCloned to each save slot, so should never pass in method calls of a singleton
         public static object RegisterSaveLoadAction(Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState,
             Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState, Action clearState,
             Action<Level> beforeSaveState, Action<Level> beforeLoadState, Action preCloneEntities) {

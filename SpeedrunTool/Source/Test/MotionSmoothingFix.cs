@@ -1,34 +1,31 @@
+using Celeste.Mod.SpeedrunTool.Utils;
+using Celeste.Mod.SpeedrunTool.SaveLoad;
+using System.Reflection;
 namespace Celeste.Mod.SpeedrunTool.Test;
-internal class MotionSmoothingFix {
-    /*
-     * don't know why, something becomes null (not level.camera)
+internal static class MotionSmoothingFix {
+
+    public static object handler;
+
+    public static MethodInfo method;
+
     [Initialize]
 
     public static void Initialize() {
-        if (ModUtils.GetType("MotionSmoothing", "Celeste.Mod.MotionSmoothing.Smoothing.Targets.UnlockedCameraSmoother")?.GetMethodInfo("GetCameraOffset") is { } method) {
-            method.ILHook((cursor, _) => {
-                if (cursor.TryGotoNext(ins => ins.OpCode == OpCodes.Stloc_1)) {
-                    Instruction target = cursor.Next;
-                    cursor.Emit(OpCodes.Dup);
-                    cursor.EmitDelegate(Checker);
-                    cursor.Emit(OpCodes.Brtrue, target);
-                    cursor.Emit(OpCodes.Pop);
-                    cursor.EmitDelegate(GetZero);
-                    cursor.Emit(OpCodes.Ret);
-                }
-            });
-        }
+        if (ModUtils.GetType("MotionSmoothing", "Celeste.Mod.MotionSmoothing.MotionSmoothingModule")?.GetPropertyValue("Instance")?.GetPropertyValue("MotionSmoothing") is { } motionSmoothHandler &&            
+            ModUtils.GetType("MotionSmoothing", "Celeste.Mod.MotionSmoothing.Smoothing.MotionSmoothingHandler")?.GetMethodInfo("SmoothAllObjects") is { } smoothAll){
 
-        static bool Checker(object ob) {
-            if (ob is null) {
-                Logger.Log("srt", $"{(Engine.Scene as Level).Camera is null}");
-            }
-            return ob is not null;
-        }
+            handler = motionSmoothHandler;
+            method = smoothAll;
 
-        static Vector2 GetZero() {
-            return Vector2.Zero;
+            // the original one is a method call of a singleton, which may be wrong after deepclone?
+            // (note save load actions are deepcloned to each save slot)
+            SaveLoadAction.SafeAdd(null, ((_, _) => {
+                SmoothAllObjects();
+            }), null, null, null);
         }
     }
-    */
+
+    public static void SmoothAllObjects() {
+        method.Invoke(handler, new object[] {});
+    }
 }

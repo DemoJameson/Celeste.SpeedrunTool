@@ -5,9 +5,11 @@ using System.Linq;
 namespace Celeste.Mod.SpeedrunTool.Test;
 internal class AutoUpdatePreventer {
 
+    public static Version NextReleaseVersion = new Version(3, 25, 0);
+
     [Initialize]
     public static void Initialize() {
-        Logger.Log(LogLevel.Info, "SpeedrunTool", "You are in dev build, related mods won't be auto-updated unless SpeedrunTool v3.25.0 is released.");
+        Logger.Log(LogLevel.Info, "SpeedrunTool", $"You are in dev build, related mods won't be auto-updated unless SpeedrunTool v{NextReleaseVersion} is released.");
         typeof(Helpers.ModUpdaterHelper).GetMethodInfo("GetAsyncLoadedModUpdates").ILHook((cursor, _) => {
             cursor.Goto(-1);
             cursor.EmitDelegate(Handler);
@@ -20,7 +22,7 @@ internal class AutoUpdatePreventer {
         }
         bool found = false;
         foreach (Helpers.ModUpdateInfo info in updateList.Keys) {
-            if (info.Name == "SpeedrunTool" && Version.Parse(info.Version) < new Version(3, 25)) {
+            if (info.Name == "SpeedrunTool" && Version.Parse(info.Version) < NextReleaseVersion) {
                 found = true;
                 break;
             }

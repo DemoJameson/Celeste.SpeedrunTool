@@ -1,6 +1,8 @@
-using Celeste.Mod.SpeedrunTool.Utils;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
+using Celeste.Mod.SpeedrunTool.Utils;
 using System.Reflection;
+using Mono.Cecil.Cil;
+
 namespace Celeste.Mod.SpeedrunTool.Test;
 internal static class MotionSmoothingFix {
 
@@ -11,8 +13,13 @@ internal static class MotionSmoothingFix {
     [Initialize]
 
     private static void Initialize() {
-        if (ModUtils.GetType("MotionSmoothing", "Celeste.Mod.MotionSmoothing.MotionSmoothingModule")?.GetPropertyValue("Instance")?.GetPropertyValue("MotionSmoothing") is { } motionSmoothHandler &&            
-            ModUtils.GetType("MotionSmoothing", "Celeste.Mod.MotionSmoothing.Smoothing.MotionSmoothingHandler")?.GetMethodInfo("SmoothAllObjects") is { } smoothAll){
+        if (ModUtils.GetType("MotionSmoothing", "Celeste.Mod.MotionSmoothing.MotionSmoothingModule")
+                ?.GetPropertyValue("Instance")?.GetPropertyValue("MotionSmoothing") is { } motionSmoothHandler
+            && ModUtils.GetType("MotionSmoothing", "Celeste.Mod.MotionSmoothing.Smoothing.MotionSmoothingHandler")
+                ?.GetMethodInfo("SmoothAllObjects") is { } smoothAll
+            && ModUtils.GetType("MotionSmoothing", "Celeste.Mod.MotionSmoothing.Smoothing.MotionSmoothingHandler")
+                ?.GetMethodInfo("Load") is { } load
+            ) {
 
             handler = motionSmoothHandler;
             method = smoothAll;
@@ -22,10 +29,16 @@ internal static class MotionSmoothingFix {
             SaveLoadAction.SafeAdd(null, ((_, _) => {
                 SmoothAllObjects();
             }), null, null, null);
+
+            // skip the original RegisterSaveLoadAction
+            load.ILHook((cursor, _) => {
+                cursor.Index += 2;
+                cursor.Emit(OpCodes.Ret);
+            });
         }
     }
 
     private static void SmoothAllObjects() {
-        method.Invoke(handler, new object[] {});
+        method.Invoke(handler, new object[] { });
     }
 }

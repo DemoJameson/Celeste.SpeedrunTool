@@ -34,7 +34,7 @@ public static class SpeedrunToolInterop {
         /// <summary>
         /// <para> Register SaveLoadAction. </para>
         /// <para> Please save your values into the dictionary, otherwise multi saveslots will not be supported. </para>
-        /// <para> DON'T pass in method calls of a singleton, use static methods instead. </para>
+        /// <para> DON'T pass in method calls of a singleton instance, use static methods instead. </para>
         /// </summary>
         /// <param name="saveState"></param>
         /// <param name="loadState"></param>

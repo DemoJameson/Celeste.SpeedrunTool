@@ -1,5 +1,4 @@
 using Celeste.Mod.SpeedrunTool.Message;
-using Celeste.Mod.SpeedrunTool.MoreSaveSlotsUI;
 using Celeste.Mod.SpeedrunTool.Other;
 using System.Collections.Generic;
 

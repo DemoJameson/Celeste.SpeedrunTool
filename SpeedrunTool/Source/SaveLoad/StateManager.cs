@@ -519,7 +519,7 @@ public sealed class StateManager {
     private bool IsAllowSave(Level level, bool tas) {
         // 正常游玩时禁止死亡或者跳过过场时存档，TAS 则无以上限制
         // 跳过过场时的黑屏与读档后加的黑屏冲突，会导致一直卡在跳过过场的过程中
-        return (State == State.None || State == State.Waiting && AllowSaveLoadWhenWaiting) && !level.Paused 
+        return (State == State.None || State == State.Waiting && AllowSaveLoadWhenWaiting) && !level.Paused
             && (!level.IsPlayerDead() && !level.SkippingCutscene || tas);
     }
 

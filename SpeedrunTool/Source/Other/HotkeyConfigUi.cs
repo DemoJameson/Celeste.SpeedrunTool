@@ -179,13 +179,19 @@ public class HotkeyConfigUi : TextMenu {
     private static void MInputOnUpdate(On.Monocle.MInput.orig_Update orig) {
         orig();
 
-        if (Engine.Scene is { } scene && ModSettings.Enabled && !TasUtils.Running) {
-            Hotkeys_Rebase.UpdateMeta();
-            foreach (Hotkey hotkey in Hotkeys) {
-                HotkeyConfig hotkeyConfig = hotkey.GetHotkeyConfig();
-                if (Pressed(hotkey, scene)) {
-                    hotkeyConfig.OnPressed?.Invoke(scene);
-                }
+        if (Engine.Scene is not { } scene || !ModSettings.Enabled) {
+            return;
+        }
+
+        Hotkeys_Rebase.Update();
+
+        if (TasUtils.Running) {
+            return;
+        }
+
+        foreach (Hotkey hotkey in Hotkeys) {
+            if (Pressed(hotkey, scene)) {
+                hotkey.GetHotkeyConfig().OnPressed?.Invoke(scene);
             }
         }
     }
@@ -197,10 +203,6 @@ public class HotkeyConfigUi : TextMenu {
 
         bool pressed = hotkey.Pressed();
         if (!pressed) {
-            return false;
-        }
-
-        if (CelesteNetChatting) {
             return false;
         }
 
@@ -420,7 +422,7 @@ public class HotkeyConfigUi : TextMenu {
 public class HotkeyConfig {
     public readonly Keys[] DefaultKeys;
     public readonly Hotkey Hotkey;
-    internal Hotkeys_Rebase.Hotkey_Rebase Hotkey_Impl; 
+    internal Hotkeys_Rebase.Hotkey_Rebase Hotkey_Impl;
     public Action<Scene> OnPressed;
 
     public HotkeyConfig(Hotkey hotkey, params Keys[] defaultKeys) {

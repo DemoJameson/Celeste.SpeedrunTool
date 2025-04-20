@@ -2,7 +2,7 @@ using Celeste.Mod.SpeedrunTool.Utils;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Celeste.Mod.SpeedrunTool.Test;
+namespace Celeste.Mod.SpeedrunTool.TestTool;
 internal class AutoUpdatePreventer {
 
     public static Version NextReleaseVersion = new Version(3, 25, 0);

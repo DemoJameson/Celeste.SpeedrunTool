@@ -3,8 +3,8 @@ using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using InputKeys = Microsoft.Xna.Framework.Input.Keys;
 using InputButtons = Microsoft.Xna.Framework.Input.Buttons;
+using InputKeys = Microsoft.Xna.Framework.Input.Keys;
 
 namespace Celeste.Mod.SpeedrunTool.Other;
 
@@ -53,7 +53,7 @@ internal static class Hotkeys_Rebase {
         // No controller connected
         return default;
     }
-    internal static void UpdateMeta() {
+    internal static void Update() {
         // Only update if the keys aren't already used for something else
         bool updateKey = true, updateButton = true;
 
@@ -79,6 +79,8 @@ internal static class Hotkeys_Rebase {
                     updateButton = false;
                 }
             }
+        } else {
+            updateKey = updateButton = false;
         }
         foreach (var hotkey in HotkeyConfigUi.HotkeyConfigs.Values) {
             hotkey.Hotkey_Impl.Update(updateKey, updateButton);

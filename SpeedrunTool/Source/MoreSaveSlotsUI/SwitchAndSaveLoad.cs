@@ -99,7 +99,8 @@ internal static class SwitchAndSaveLoad {
                     return Results.Busy;
                 }
             }
-            default: return Results.Busy;
+            default:
+                return Results.Busy;
         }
     }
 
@@ -130,8 +131,7 @@ internal static class SwitchAndSaveLoad {
         if (result == Results.Success && SaveSlotsManager.SaveState()) {
             PopupMessageUtils.Show($"Save to {SaveSlotsManager.SlotName}", null);
             return;
-        }
-        else {
+        } else {
             currentSlot = orig;
             PopupMessageUtils.Show("Failed to Save: SpeedrunTool is Busy!", null);
         }
@@ -148,16 +148,14 @@ internal static class SwitchAndSaveLoad {
         if (result == Results.Success) {
             if (SaveSlotsManager.LoadState()) {
                 PopupMessageUtils.Show($"Load from {SaveSlotsManager.SlotName}", null);
-            }
-            else {
+            } else {
                 result = Results.Busy;
             }
         }
         if (result == Results.Busy) {
             PopupMessageUtils.Show("Failed to Load: SpeedrunTool is Busy!", null);
             currentSlot = orig;
-        }
-        else if (result == Results.Fail){
+        } else if (result == Results.Fail) {
             PopupMessageUtils.Show("No saved states yet!", null);
             currentSlot = orig;
         }

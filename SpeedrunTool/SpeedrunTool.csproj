@@ -1,10 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net7.0</TargetFramework>
         <LangVersion>latest</LangVersion>
         <CelestePrefix Condition="'$(CelestePrefix)' == '' And Exists('../../../Celeste.dll')">../../..</CelestePrefix>
     </PropertyGroup>
-    
+
     <PropertyGroup>
         <ProjectGuid>{C7DFDD37-907C-4A75-96DA-1C5828C97F96}</ProjectGuid>
         <RootNamespace>Celeste.Mod.SpeedrunTool</RootNamespace>
@@ -17,7 +17,7 @@
         <MSBuildWarningsAsMessages>$(MSBuildWarningsAsMessages);MSB3270</MSBuildWarningsAsMessages>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
-    
+
     <ItemDefinitionGroup>
         <PackageReference IncludeAssets="compile" />
         <Reference>
@@ -35,12 +35,12 @@
         <PlatformTarget>AnyCPU</PlatformTarget>
         <Prefer32bit>false</Prefer32bit>
     </PropertyGroup>
-    
+
     <!-- Dependency -->
     <ItemGroup>
         <PackageReference Include="Krafs.Publicizer" Version="2.3.0">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="KeraLua" Version="1.0.22" />
         <PackageReference Include="NLua" Version="1.4.25" />
@@ -48,21 +48,12 @@
     </ItemGroup>
 
     <ItemGroup>
-        
-        <Reference Include="Celeste">
-          <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Celeste\Celeste.dll</HintPath>
-        </Reference>
-        
+        <Reference Include="$(CelestePrefix)\Celeste.dll" />
+        <Reference Include="$(CelestePrefix)\FNA.dll" />
+        <Reference Include="$(CelestePrefix)\MMHOOK_Celeste.dll" />
+
         <Reference Include="CelesteTAS-EverestInterop">
-          <HintPath>..\libs\CelesteTAS-EverestInterop.dll</HintPath>
-        </Reference>
-        
-        <Reference Include="FNA">
-          <HintPath>..\libs\FNA.dll</HintPath>
-        </Reference>
-        
-        <Reference Include="MMHOOK_Celeste">
-          <HintPath>..\libs\MMHOOK_Celeste.dll</HintPath>
+            <HintPath>..\..\CelesteTAS-EverestInterop\bin\CelesteTAS-EverestInterop.dll</HintPath>
         </Reference>
         <Reference Include="MonoMod.Utils">
             <HintPath>..\libs\MonoMod.Utils-nstrip.dll</HintPath>

@@ -88,6 +88,7 @@ public sealed class StateManager {
         On.Monocle.Scene.BeforeUpdate += SceneOnBeforeUpdate;
         On.Celeste.Level.Update += UpdateBackdropWhenWaiting;
         On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
+        On.Celeste.Player.IntroRespawnEnd += FreezeAfterRespawn;
         On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
         IL.Celeste.Level.TransitionRoutine += LevelOnTransitionRoutine;
         On.Celeste.Level.TransitionRoutine += LevelOnTransitionRoutine;
@@ -98,6 +99,19 @@ public sealed class StateManager {
             () => lastChecks.Clear()
         );
         RegisterHotkeys();
+    }
+
+    private void FreezeAfterRespawn(On.Celeste.Player.orig_IntroRespawnEnd orig, Player self) {
+        if (ModSettings.Enabled
+            && ModSettings.FreezeAfterRespawn
+            && Engine.Scene is Level level
+            && level.Entities.FindFirst<PlayerSeeker>() == null
+           ) {
+            level.OnEndOfFrame += () => {
+                State = State.Waiting;
+            };
+        }
+        orig(self);
     }
 
     public void Unload() {
@@ -114,9 +128,9 @@ public sealed class StateManager {
         Hotkey.SaveState.RegisterPressedAction(scene => {
             if (scene is Level) {
 #if DEBUG
-                JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();
+                //JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();
                 SaveState(false);
-                JetBrains.Profiler.Api.MeasureProfiler.SaveData();
+                //JetBrains.Profiler.Api.MeasureProfiler.SaveData();
 #else
                 SaveState(false);
 #endif
@@ -222,6 +236,7 @@ public sealed class StateManager {
     }
 
     private void AutoLoadStateWhenDeath(On.Celeste.PlayerDeadBody.orig_End orig, PlayerDeadBody self) {
+        Logger.Warn("a", "world");
         if (ModSettings.Enabled
             && ModSettings.AutoLoadStateAfterDeath
             && IsSaved
@@ -232,6 +247,7 @@ public sealed class StateManager {
            ) {
             level.OnEndOfFrame += () => {
                 if (IsSaved) {
+                    Logger.Warn("b", "world");
                     LoadState(false);
                 } else {
                     level.DoScreenWipe(wipeIn: false, self.DeathAction ?? level.Reload);
@@ -239,6 +255,7 @@ public sealed class StateManager {
             };
             self.RemoveSelf();
         } else {
+            Logger.Warn("e", "world");
             orig(self);
         }
     }

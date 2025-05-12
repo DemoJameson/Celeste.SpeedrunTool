@@ -37,6 +37,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public bool NoGcAfterLoadState { get; set; } = false;
     public bool SaveTimeAndDeaths { get; set; } = false;
     public bool SaveExtendedVariants { get; set; } = true;
+    public bool FreezeAfterRespawn { get; set; } = false;
 
     #endregion
 

@@ -93,6 +93,8 @@ public static class SpeedrunToolMenu {
             new EaseInSubMenu(Dialog.Clean(DialogIds.State), false).With(subMenu => {
                 subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoLoadStateAfterDeath), ModSettings.AutoLoadStateAfterDeath).Change(b =>
                     ModSettings.AutoLoadStateAfterDeath = b));
+                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.FreezeAfterRespawn), ModSettings.FreezeAfterRespawn).Change(b =>
+                    ModSettings.FreezeAfterRespawn = b));
 
                 subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoClearStateOnScreenTransition), ModSettings.AutoClearStateOnScreenTransition)
                     .Change(b =>

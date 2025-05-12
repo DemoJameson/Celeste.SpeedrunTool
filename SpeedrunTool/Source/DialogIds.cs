@@ -41,6 +41,7 @@ public static class DialogIds {
     public const string FreezeAfterLoadState = "SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE";
     public const string IgnoreHoldingKeys = "SPEEDRUN_TOOL_IGNORE_HOLDING_KEYS";
     public const string AutoLoadStateAfterDeath = "SPEEDRUN_TOOL_AUTO_LOAD_STATE_AFTER_DEATH";
+    public const string FreezeAfterRespawn = "SPEEDRUN_TOOL_FREEZE_AFTER_RESPAWN";
     public const string AutoClearStateOnScreenTransition = "SPEEDRUN_TOOL_AUTO_CLEAR_STATE_ON_SCREEN_TRANSITION";
     public const string NoGcAfterLoadState = "SPEEDRUN_TOOL_NO_GC_AFTER_LOAD_STATE";
     public const string SaveTimeAndDeaths = "SPEEDRUN_TOOL_SAVE_TIME_AND_DEATHS";

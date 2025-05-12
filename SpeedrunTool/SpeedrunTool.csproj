@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <LangVersion>latest</LangVersion>
         <CelestePrefix Condition="'$(CelestePrefix)' == '' And Exists('../../../Celeste.dll')">../../..</CelestePrefix>
     </PropertyGroup>
@@ -48,12 +48,21 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Reference Include="$(CelestePrefix)\Celeste.dll" />
-        <Reference Include="$(CelestePrefix)\FNA.dll" />
-        <Reference Include="$(CelestePrefix)\MMHOOK_Celeste.dll" />
+        
+        <Reference Include="Celeste">
+          <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Celeste\Celeste.dll</HintPath>
+        </Reference>
         
         <Reference Include="CelesteTAS-EverestInterop">
-            <HintPath>..\..\CelesteTAS-EverestInterop\bin\CelesteTAS-EverestInterop.dll</HintPath>
+          <HintPath>..\libs\CelesteTAS-EverestInterop.dll</HintPath>
+        </Reference>
+        
+        <Reference Include="FNA">
+          <HintPath>..\libs\FNA.dll</HintPath>
+        </Reference>
+        
+        <Reference Include="MMHOOK_Celeste">
+          <HintPath>..\libs\MMHOOK_Celeste.dll</HintPath>
         </Reference>
         <Reference Include="MonoMod.Utils">
             <HintPath>..\libs\MonoMod.Utils-nstrip.dll</HintPath>

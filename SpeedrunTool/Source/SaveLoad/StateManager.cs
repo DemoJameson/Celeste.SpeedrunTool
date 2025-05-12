@@ -101,19 +101,6 @@ public sealed class StateManager {
         RegisterHotkeys();
     }
 
-    private void FreezeAfterRespawn(On.Celeste.Player.orig_IntroRespawnEnd orig, Player self) {
-        if (ModSettings.Enabled
-            && ModSettings.FreezeAfterRespawn
-            && Engine.Scene is Level level
-            && level.Entities.FindFirst<PlayerSeeker>() == null
-           ) {
-            level.OnEndOfFrame += () => {
-                State = State.Waiting;
-            };
-        }
-        orig(self);
-    }
-
     public void Unload() {
         On.Monocle.Scene.BeforeUpdate -= SceneOnBeforeUpdate;
         On.Celeste.Level.Update -= UpdateBackdropWhenWaiting;
@@ -128,9 +115,9 @@ public sealed class StateManager {
         Hotkey.SaveState.RegisterPressedAction(scene => {
             if (scene is Level) {
 #if DEBUG
-                //JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();
+                JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();
                 SaveState(false);
-                //JetBrains.Profiler.Api.MeasureProfiler.SaveData();
+                JetBrains.Profiler.Api.MeasureProfiler.SaveData();
 #else
                 SaveState(false);
 #endif
@@ -236,7 +223,6 @@ public sealed class StateManager {
     }
 
     private void AutoLoadStateWhenDeath(On.Celeste.PlayerDeadBody.orig_End orig, PlayerDeadBody self) {
-        Logger.Warn("a", "world");
         if (ModSettings.Enabled
             && ModSettings.AutoLoadStateAfterDeath
             && IsSaved
@@ -247,7 +233,6 @@ public sealed class StateManager {
            ) {
             level.OnEndOfFrame += () => {
                 if (IsSaved) {
-                    Logger.Warn("b", "world");
                     LoadState(false);
                 } else {
                     level.DoScreenWipe(wipeIn: false, self.DeathAction ?? level.Reload);
@@ -255,9 +240,21 @@ public sealed class StateManager {
             };
             self.RemoveSelf();
         } else {
-            Logger.Warn("e", "world");
             orig(self);
         }
+    }
+
+    private void FreezeAfterRespawn(On.Celeste.Player.orig_IntroRespawnEnd orig, Player self) {
+        if (ModSettings.Enabled
+            && ModSettings.FreezeAfterRespawn
+            && Engine.Scene is Level level
+            && level.Entities.FindFirst<PlayerSeeker>() == null
+           ) {
+            level.OnEndOfFrame += () => {
+                State = State.Waiting;
+            };
+        }
+        orig(self);
     }
 
     private void LevelOnTransitionRoutine(ILContext context) {

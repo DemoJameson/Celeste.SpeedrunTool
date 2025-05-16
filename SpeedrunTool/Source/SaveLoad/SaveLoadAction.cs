@@ -1,3 +1,4 @@
+//#define LOG
 using Celeste.Mod.Helpers;
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
@@ -45,7 +46,9 @@ public sealed class SaveLoadAction {
     private static Dictionary<Type, FieldInfo[]> simpleStaticFields;
     private static Dictionary<Type, FieldInfo[]> modModuleFields;
 
-
+#if LOG
+    public string ActionDescription = "";
+#endif
     private readonly Dictionary<Type, Dictionary<string, object>> savedValues = new();
     private readonly Action clearState;
     private readonly Action<Level> beforeSaveState;
@@ -86,6 +89,11 @@ public sealed class SaveLoadAction {
         Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState = null, Action clearState = null,
         Action<Level> beforeSaveState = null, Action preCloneEntities = null) {
         SaveLoadAction saveLoadAction = new(CreateSlAction(saveState), CreateSlAction(loadState), clearState, beforeSaveState, preCloneEntities);
+#if LOG
+        StackTrace stackTrace = new StackTrace();
+        StackFrame stackFrame = stackTrace.GetFrame(1);
+        saveLoadAction.ActionDescription = stackFrame?.GetMethod()?.Name ?? "N/A";
+#endif
         SharedActions.Add(saveLoadAction);
         return saveLoadAction;
     }
@@ -94,6 +102,11 @@ public sealed class SaveLoadAction {
         Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState, Action clearState,
         Action<Level> beforeSaveState, Action<Level> beforeLoadState, Action preCloneEntities = null) {
         SaveLoadAction saveLoadAction = new(CreateSlAction(saveState), CreateSlAction(loadState), clearState, beforeSaveState, beforeLoadState, preCloneEntities);
+#if LOG
+        StackTrace stackTrace = new StackTrace();
+        StackFrame stackFrame = stackTrace.GetFrame(1);
+        saveLoadAction.ActionDescription = stackFrame?.GetMethod()?.Name ?? "N/A";
+#endif
         SharedActions.Add(saveLoadAction);
         return saveLoadAction;
     }
@@ -277,12 +290,14 @@ public sealed class SaveLoadAction {
 
 
     internal static void LogSavedValues() {
+#if LOG
         foreach (SaveLoadAction slAction in AllActionsAndValues) {
-            Logger.Log(LogLevel.Info, "SpeedrunTool", "=================");
+            Logger.Log(LogLevel.Info, "SpeedrunTool", $"========={slAction.ActionDescription}=========");
             foreach (KeyValuePair<Type, Dictionary<string, object>> pair in slAction.savedValues) {
                 Logger.Log(LogLevel.Info, "SpeedrunTool", pair.Key.FullName);
             }
         }
+#endif
     }
 
     private static void InitFields() {
@@ -334,7 +349,8 @@ public sealed class SaveLoadAction {
     }
 
     private static void InitModuleFields() {
-        foreach (Type type in Everest.Modules.Select(module => module.GetType())) {
+        foreach (EverestModule everestModule in Everest.Modules) {
+            Type type = everestModule.GetType();
             List<FieldInfo> staticFields = new();
             List<FieldInfo> instanceFields = new();
 

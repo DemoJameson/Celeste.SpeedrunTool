@@ -26,9 +26,13 @@ internal static class MotionSmoothingFix {
 
             // the original one is a method call of a singleton, which may be wrong after deepclone?
             // (note save load actions are deepcloned to each save slot)
-            SaveLoadAction.SafeAdd(null, (_, _) => {
-                SmoothAllObjects();
-            }, null, null, null);
+            SaveLoadAction.SafeAdd(
+                null,
+                loadState: (_, _) => {
+                    SmoothAllObjects();
+                },
+                null, null, null
+            );
 
             // skip the original RegisterSaveLoadAction
             load.ILHook((cursor, _) => {

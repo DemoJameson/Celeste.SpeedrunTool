@@ -58,7 +58,7 @@ public class EndPoint : Entity {
     private static void MapEditorOnRender(On.Celeste.Editor.MapEditor.orig_Render orig, MapEditor self) {
         orig(self);
 
-        if (roomIdEndPoint.IsNotNullAndEmpty()) {
+        if (roomIdEndPoint.IsNotNullOrEmpty()) {
             string text = string.Format(Dialog.Get(DialogIds.RoomIdEndPoint), EndPoint.roomIdEndPoint);
             Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearClamp, DepthStencilState.None,
                 RasterizerState.CullNone, null, Engine.ScreenMatrix);

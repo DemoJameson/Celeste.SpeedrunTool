@@ -283,7 +283,7 @@ public sealed class StateManager {
             }
         }
 
-        // SaveLoadAction.LogSavedValues();
+        SaveLoadAction.LogSavedValues();
 
         Logger.Log("SpeedrunTool", $"Save to [{SlotName}]");
 

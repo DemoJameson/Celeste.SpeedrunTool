@@ -1,5 +1,7 @@
 # Possible Issues
 
+- Motion Smoothing: EntryPointNotFoundException
+
 - Check other mods that optionally depends on SRT.
 
 - Some features of SRT not working properly - currently i only focus on multi-saveslot save/load, and i'm not familiar with some other speedrun part of SRT. So tell me if you find some issues!

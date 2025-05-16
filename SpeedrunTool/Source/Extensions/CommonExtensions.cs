@@ -31,7 +31,7 @@ internal static class CommonExtensions {
         return string.IsNullOrEmpty(str);
     }
 
-    public static bool IsNotNullAndEmpty(this string str) {
+    public static bool IsNotNullOrEmpty(this string str) {
         return !string.IsNullOrEmpty(str);
     }
 
@@ -41,5 +41,13 @@ internal static class CommonExtensions {
 
     public static bool IsNotEmpty<T>(this IEnumerable<T> enumerable) {
         return !enumerable.IsEmpty();
+    }
+
+    public static bool IsNullOrEmpty<T>(this IEnumerable<T> enumerable) {
+        return enumerable == null || !enumerable.Any();
+    }
+
+    public static bool IsNotNullOrEmpty<T>(this IEnumerable<T> enumerable) {
+        return !enumerable.IsNullOrEmpty();
     }
 }

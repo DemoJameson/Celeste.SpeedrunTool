@@ -5,6 +5,7 @@ using System.Linq;
 namespace Celeste.Mod.SpeedrunTool.TestTool;
 internal class AutoUpdatePreventer {
 
+    /*
     public static Version NextReleaseVersion = new Version(3, 25, 0);
 
     [Initialize]
@@ -37,4 +38,5 @@ internal class AutoUpdatePreventer {
     }
 
     private static List<string> FilteredMods = new List<string>() { "SpeedrunTool", "CelesteTAS", "TASHelper", "GhostModForTas" };
+    */
 }

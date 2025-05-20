@@ -1,3 +1,4 @@
+using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 using MonoMod.ModInterop;
 
@@ -28,6 +29,12 @@ internal static class TasSpeedrunToolInterop {
         }
 
         public static bool TasIsSaved(string _) => StateManager.Instance.IsSaved && StateManager.Instance.SavedByTas;
+
+        public static void InputDeregister() {
+            foreach (HotkeyConfig hotkeyConfig in HotkeyConfigUi.HotkeyConfigs.Values) {
+                hotkeyConfig.VirtualButton.Value.Deregister();
+            }
+        }
     }
 }
 

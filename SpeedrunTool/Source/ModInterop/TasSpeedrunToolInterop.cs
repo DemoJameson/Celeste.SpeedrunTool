@@ -1,3 +1,4 @@
+using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 using MonoMod.ModInterop;
 
@@ -37,6 +38,10 @@ internal static class TasSpeedrunToolInterop {
         /// If the tas save slot is saved
         /// </summary>
         public static bool TasIsSaved(string slot) => SaveSlotsManager.IsSaved(slot);
+
+        public static void InputDeregister() {
+            // do nothing
+        }
     }
 }
 

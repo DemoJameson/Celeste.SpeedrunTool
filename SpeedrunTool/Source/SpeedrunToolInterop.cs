@@ -105,5 +105,15 @@ public static class SpeedrunToolInterop {
         public static void RemoveCustomDeepCloneProcessor(Func<object, object> processor) {
             customDeepCloneProcessors.Remove(processor);
         }
+
+
+        /// <summary>
+        /// Performs deep (full) copy of object and related graph
+        /// </summary>
+        /// <param name="from"></param>
+        /// appear in the MultipleSaveSlots update, which is after v3.24.4
+        public static object DeepClone(object from) {
+            return from.DeepCloneShared();
+        }
     }
 }

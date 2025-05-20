@@ -116,7 +116,7 @@ public static class SpeedrunToolInterop {
         /// Performs deep (full) copy of object and related graph
         /// </summary>
         /// <param name="from"></param>
-        /// appear in the MultipleSaveSlots update, which is after v3.25.0
+        /// appear in the MultipleSaveSlots update, which is after v3.24.4
         public static object DeepClone(object from) {
             return from.DeepCloneShared();
         }

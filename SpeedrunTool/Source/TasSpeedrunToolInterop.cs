@@ -18,11 +18,11 @@ internal static class TasSpeedrunToolInterop {
         public static bool SaveState(string _) {
             return StateManager.Instance.SaveState();
         }
-        
+
         public static bool LoadState(string _) {
             return StateManager.Instance.LoadState();
         }
-        
+
         public static void ClearState(string _) {
             StateManager.Instance.ClearState();
         }

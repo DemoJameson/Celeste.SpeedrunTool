@@ -39,8 +39,19 @@ internal static class TasSpeedrunToolInterop {
         /// </summary>
         public static bool TasIsSaved(string slot) => SaveSlotsManager.IsSaved(slot);
 
+        /// <summary>
+        /// Obsolete, only for compatibility
+        /// </summary>
         public static void InputDeregister() {
             // do nothing
+        }
+
+        /// <summary>
+        /// Return slot to normal one
+        /// </summary>
+
+        public static void OnTasDisableRun() {
+            SaveSlotsManager.OnTasDisableRun();
         }
     }
 }

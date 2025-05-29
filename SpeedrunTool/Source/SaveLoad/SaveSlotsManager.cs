@@ -155,15 +155,16 @@ internal static class SaveSlotsManager {
     }
 
     #region Tas
+    public static void OnTasDisableRun() {
+        SwitchSlot(1);
+    }
     public static bool SaveStateTas(string slot) {
         if (CannotSaveLoad()) {
             return false;
         }
 
-        string orig = SlotName;
         SwitchSlot(slot);
         bool result = StateManagerInstance.SaveStateImpl(true);
-        SwitchSlot(orig);
         return result;
     }
     public static bool LoadStateTas(string slot) {
@@ -171,17 +172,13 @@ internal static class SaveSlotsManager {
             return false;
         }
 
-        string orig = SlotName;
         SwitchSlot(slot);
         bool result = StateManagerInstance.LoadStateImpl(true);
-        SwitchSlot(orig);
         return result;
     }
     public static void ClearStateTas(string slot) {
-        string orig = SlotName;
         if (SwitchSlot(slot)) {
             StateManagerInstance.ClearStateImpl();
-            SwitchSlot(orig);
         }
     }
     #endregion

@@ -86,7 +86,7 @@ internal class RoomTimerData {
             displayGoldRenderTime -= Engine.RawDeltaTime;
         }
 
-        Time += TimeSpan.FromSeconds(Engine.RawDeltaTime).Ticks;
+        Time += TimeSpanFix.SecondsToTicks(Engine.RawDeltaTime);
 
         if (autosplitterTimeFreezeTime > 0f) {
             autosplitterTimeFreezeTime -= Engine.RawDeltaTime;

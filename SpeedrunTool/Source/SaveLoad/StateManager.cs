@@ -1,4 +1,5 @@
 using Celeste.Mod.SpeedrunTool.Message;
+using Celeste.Mod.SpeedrunTool.ModInterop;
 using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.Utils;
 using Force.DeepCloner;
@@ -20,11 +21,6 @@ public sealed class StateManager {
     private static readonly Lazy<PropertyInfo> InGameOverworldHelperIsOpen = new(
         () => ModUtils.GetType("CollabUtils2", "Celeste.Mod.CollabUtils2.UI.InGameOverworldHelper")?.GetPropertyInfo("IsOpen")
     );
-
-    private static readonly Lazy<FieldInfo> CycleGroupCounter = new(
-        () => ModUtils.GetType("CelesteTAS", "TAS.EverestInterop.Hitboxes.CycleHitboxColor")?.GetFieldInfo("GroupCounter")
-    );
-
 
     private readonly Dictionary<VirtualInput, bool> lastChecks = new();
 
@@ -69,7 +65,7 @@ public sealed class StateManager {
     private Task<DeepCloneState> preCloneTask;
     private FreezeType freezeType;
     private Process celesteProcess;
-    private object savedTasCycleGroupCounter;
+    private int savedTasCycleGroupCounter;
     public string SlotName;
 
     private enum FreezeType {
@@ -275,7 +271,7 @@ public sealed class StateManager {
         SaveLoadAction.OnBeforeSaveState(level);
         level.DeepCloneToShared(savedLevel = (Level)FormatterServices.GetUninitializedObject(typeof(Level)));
         savedSaveData = SaveData.Instance.DeepCloneShared();
-        savedTasCycleGroupCounter = CycleGroupCounter.Value?.GetValue(null);
+        savedTasCycleGroupCounter = TasImports.GroupCounter;
         SaveLoadAction.OnSaveState(level);
         DeepClonerUtils.ClearSharedDeepCloneState();
         PreCloneSavedEntities();
@@ -448,7 +444,7 @@ public sealed class StateManager {
     }
 
     private void RestoreCycleGroupCounter() {
-        CycleGroupCounter.Value?.SetValue(null, savedTasCycleGroupCounter);
+        TasImports.GroupCounter = savedTasCycleGroupCounter;
     }
 
     // 收集需要继续播放的声音

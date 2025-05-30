@@ -14,6 +14,13 @@ internal static class TasImports {
     }
 
     public static bool ManagerIsRunning => Installed && CelesteTasImports.IsTasActive();
+
+    public static int GroupCounter {
+        get => CelesteTasImports.GetGroupCounter?.Invoke() ?? 0;
+        set {
+            CelesteTasImports.SetGroupCounter?.Invoke(value);
+        }
+    }
 }
 
 
@@ -38,4 +45,12 @@ internal static class CelesteTasImports {
 
     /// De-registers a previously registered handler for the module
     public static RemoveSettingsRestoreHandlerDelegate RemoveSettingsRestoreHandler = null!;
+
+    #region GroupCounter
+
+    public static Func<int> GetGroupCounter = null!;
+
+    public static Action<int> SetGroupCounter = null!;
+
+    #endregion
 }

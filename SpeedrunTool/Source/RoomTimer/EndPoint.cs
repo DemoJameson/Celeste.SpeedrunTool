@@ -1,5 +1,4 @@
 using Celeste.Editor;
-using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Mono.Cecil.Cil;
@@ -59,7 +58,7 @@ public class EndPoint : Entity {
     private static void MapEditorOnRender(On.Celeste.Editor.MapEditor.orig_Render orig, MapEditor self) {
         orig(self);
 
-        if (roomIdEndPoint.IsNotNullAndEmpty()) {
+        if (roomIdEndPoint.IsNotNullOrEmpty()) {
             string text = string.Format(Dialog.Get(DialogIds.RoomIdEndPoint), EndPoint.roomIdEndPoint);
             Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.LinearClamp, DepthStencilState.None,
                 RasterizerState.CullNone, null, Engine.ScreenMatrix);
@@ -164,7 +163,7 @@ public class EndPoint : Entity {
         Add(new PlayerCollider(OnCollidePlayer));
         Add(new BloomPoint(Vector2.UnitY * -8, 0.5f, 18f));
         Add(new VertexLight(Vector2.UnitY * -8, Color.White, 1f, 24, 48));
-        Add(new IgnoreSaveLoadComponent());
+        Add(new SaveLoad.Utils.IgnoreSaveLoadComponent());
 
         // saved madeline sprite
         CreateMadelineSprite(player);

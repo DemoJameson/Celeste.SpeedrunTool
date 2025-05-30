@@ -1,11 +1,11 @@
+//#define LOG
 using Celeste.Mod.Helpers;
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
+using Celeste.Mod.SpeedrunTool.SaveLoad.ThirdPartySupport;
+using Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
 using Celeste.Mod.SpeedrunTool.Utils;
 using FMOD.Studio;
-using MonoMod.Cil;
-using MonoMod.RuntimeDetour;
-using MonoMod.Utils;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,27 +17,46 @@ public sealed class SaveLoadAction {
     public delegate void SlAction(Dictionary<Type, Dictionary<string, object>> savedValues, Level level);
 
     // 第一次 SL 时才初始化，避免通过安装依赖功能解除禁用的 Mod 被忽略
-    private static bool initialized;
+
+    private static bool internalActionInitialized = false;
+
+    private static bool modActionChanged = false;
+    private static bool slotInitialized {
+        get => SaveSlotsManager.Slot.SaveLoadActionInitialized;
+        set {
+            SaveSlotsManager.Slot.SaveLoadActionInitialized = value;
+        }
+    }
 
     public static readonly List<VirtualAsset> VirtualAssets = new();
     public static readonly List<EventInstance> ClonedEventInstancesWhenSave = new();
     public static readonly List<EventInstance> ClonedEventInstancesWhenPreClone = new();
 
-    private static readonly List<SaveLoadAction> All = new();
+    // only actions, no values stored. Share among all save slots
+    private static readonly List<SaveLoadAction> SharedActions = new();
+
+    // actions and values, belong to each save slot
+    internal static List<SaveLoadAction> AllActionsAndValues {
+        get => SaveSlotsManager.Slot.All;
+        set {
+            SaveSlotsManager.Slot.All = value;
+        }
+    }
 
     private static Dictionary<Type, FieldInfo[]> simpleStaticFields;
     private static Dictionary<Type, FieldInfo[]> modModuleFields;
 
+#if LOG
+    public string ActionDescription = "";
+#endif
+    private readonly Dictionary<Type, Dictionary<string, object>> savedValues = new();
     private readonly Action clearState;
     private readonly Action<Level> beforeSaveState;
     private readonly Action<Level> beforeLoadState;
     private readonly Action preCloneEntities;
     private readonly SlAction loadState;
-
-    private readonly Dictionary<Type, Dictionary<string, object>> savedValues = new();
     private readonly SlAction saveState;
-
-    private Action<Level, List<Entity>, Entity> unloadLevel;
+    internal Action<Level, List<Entity>, Entity> unloadLevel;
 
     public SaveLoadAction(SlAction saveState = null, SlAction loadState = null, Action clearState = null,
         Action<Level> beforeSaveState = null, Action preCloneEntities = null) {
@@ -58,27 +77,37 @@ public sealed class SaveLoadAction {
         this.preCloneEntities = preCloneEntities;
     }
 
-    // ReSharper disable once UnusedMember.Global
+    // used by CelesteTAS
     [Obsolete("crash on macOS if speedrun tool is not installed, use SafeAdd() instead")]
     public static void Add(SaveLoadAction saveLoadAction) {
-        All.Add(saveLoadAction);
+        SharedActions.Add(saveLoadAction);
     }
 
     // ReSharper disable once MemberCanBePrivate.Global
     // ReSharper disable once UnusedMethodReturnValue.Global
-    public static object SafeAdd(Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState = null,
+    internal static SaveLoadAction InternalSafeAdd(Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState = null,
         Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState = null, Action clearState = null,
         Action<Level> beforeSaveState = null, Action preCloneEntities = null) {
         SaveLoadAction saveLoadAction = new(CreateSlAction(saveState), CreateSlAction(loadState), clearState, beforeSaveState, preCloneEntities);
-        All.Add(saveLoadAction);
+#if LOG
+        StackTrace stackTrace = new StackTrace();
+        StackFrame stackFrame = stackTrace.GetFrame(1);
+        saveLoadAction.ActionDescription = stackFrame?.GetMethod()?.Name ?? "N/A";
+#endif
+        SharedActions.Add(saveLoadAction);
         return saveLoadAction;
     }
 
-    public static object SafeAdd(Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState,
+    internal static SaveLoadAction InternalSafeAdd(Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState,
         Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState, Action clearState,
         Action<Level> beforeSaveState, Action<Level> beforeLoadState, Action preCloneEntities = null) {
         SaveLoadAction saveLoadAction = new(CreateSlAction(saveState), CreateSlAction(loadState), clearState, beforeSaveState, beforeLoadState, preCloneEntities);
-        All.Add(saveLoadAction);
+#if LOG
+        StackTrace stackTrace = new StackTrace();
+        StackFrame stackFrame = stackTrace.GetFrame(1);
+        saveLoadAction.ActionDescription = stackFrame?.GetMethod()?.Name ?? "N/A";
+#endif
+        SharedActions.Add(saveLoadAction);
         return saveLoadAction;
     }
 
@@ -86,49 +115,65 @@ public sealed class SaveLoadAction {
         return (SlAction)action?.Method.CreateDelegate(typeof(SlAction), action.Target);
     }
 
+    /// <summary>
+    /// For third party mods
+    /// </summary>
+    public static object SafeAdd(Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState,
+        Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState, Action clearState,
+        Action<Level> beforeSaveState, Action<Level> beforeLoadState, Action preCloneEntities = null) {
+        SaveLoadAction saveLoadAction = new(CreateSlAction(saveState), CreateSlAction(loadState), clearState, beforeSaveState, beforeLoadState, preCloneEntities);
+        SharedActions.Add(saveLoadAction);
+        modActionChanged = true;
+        return saveLoadAction;
+    }
+
+    /// <summary>
+    /// For third party mods
+    /// </summary>
     public static bool Remove(SaveLoadAction saveLoadAction) {
-        return All.Remove(saveLoadAction);
+        modActionChanged = true;
+        return SharedActions.Remove(saveLoadAction);
     }
 
     internal static void OnSaveState(Level level) {
-        foreach (SaveLoadAction saveLoadAction in All) {
+        foreach (SaveLoadAction saveLoadAction in AllActionsAndValues) {
             saveLoadAction.saveState?.Invoke(saveLoadAction.savedValues, level);
         }
     }
 
     internal static void OnLoadState(Level level) {
-        foreach (SaveLoadAction saveLoadAction in All) {
+        foreach (SaveLoadAction saveLoadAction in AllActionsAndValues) {
             saveLoadAction.loadState?.Invoke(saveLoadAction.savedValues, level);
         }
     }
 
     internal static void OnClearState() {
-        foreach (SaveLoadAction saveLoadAction in All) {
+        foreach (SaveLoadAction saveLoadAction in AllActionsAndValues) {
             saveLoadAction.savedValues.Clear();
             saveLoadAction.clearState?.Invoke();
         }
     }
 
     internal static void OnBeforeSaveState(Level level) {
-        foreach (SaveLoadAction saveLoadAction in All) {
+        foreach (SaveLoadAction saveLoadAction in AllActionsAndValues) {
             saveLoadAction.beforeSaveState?.Invoke(level);
         }
     }
 
     internal static void OnBeforeLoadState(Level level) {
-        foreach (SaveLoadAction saveLoadAction in All) {
+        foreach (SaveLoadAction saveLoadAction in AllActionsAndValues) {
             saveLoadAction.beforeLoadState?.Invoke(level);
         }
     }
 
     internal static void OnPreCloneEntities() {
-        foreach (SaveLoadAction saveLoadAction in All) {
+        foreach (SaveLoadAction saveLoadAction in AllActionsAndValues) {
             saveLoadAction.preCloneEntities?.Invoke();
         }
     }
 
     internal static void OnUnloadLevel(Level level, List<Entity> entities, Entity entity) {
-        foreach (SaveLoadAction saveLoadAction in All) {
+        foreach (SaveLoadAction saveLoadAction in AllActionsAndValues) {
             saveLoadAction.unloadLevel?.Invoke(level, entities, entity);
         }
     }
@@ -182,15 +227,15 @@ public sealed class SaveLoadAction {
 
     [Unload]
     private static void Unload() {
-        All.Clear();
+        SharedActions.Clear();
     }
 
-    public static void InitActions() {
-        if (initialized) {
+    private static void InitActions() {
+        if (internalActionInitialized) {
             return;
         }
 
-        initialized = true;
+        internalActionInitialized = true;
         InitFields();
         SupportSimpleStaticFields();
         SupportModModuleFields();
@@ -205,33 +250,54 @@ public sealed class SaveLoadAction {
         FixVertexLight();
         MuteAudioUtils.AddAction();
         ExternalAction();
+
+        // mod support
         SupportModSessionAndSaveData();
-        SupportMaxHelpingHand();
-        SupportPandorasBox();
-        SupportCrystallineHelper();
-        SupportSpringCollab2020();
-        SupportExtendedVariants();
-        SupportXaphanHelper();
-        SupportIsaGrabBag();
-        SupportSpirialisHelper();
-        DeathTrackerHelper.AddSupport();
-        SupportCommunalHelper();
-        SupportBrokemiaHelper();
-        FrostHelperUtils.SupportFrostHelper();
-        SupportVivHelper();
+        MaxHelpingHandUtils.Support();
+        PandorasBoxUtils.Support();
+        CrystallineHelperUtils.Support();
+        SpringCollab2020Utils.Support();
+        ExtendedVariantsUtils.Support();
+        XaphanHelperUtils.Support();
+        IsaGrabBagUtils.Support();
+        SpirialisHelperUtils.Support();
+        DeathTrackerHelperUtils.Support();
+        CommunalHelperUtils.Support();
+        BrokemiaHelperUtils.Support();
+        FrostHelperUtils.Support();
+        VivHelperUtils.Support();
 
         // 放最后，确保收集了所有克隆的 VirtualAssets 与 EventInstance
         ReloadVirtualAssets();
         ReleaseEventInstances();
     }
 
+    public static void InitSlots() {
+        InitActions();
+
+        if (modActionChanged) {
+            SaveSlotsManager.ModRequireReInit();
+            modActionChanged = false;
+        }
+
+        if (slotInitialized) {
+            return;
+        }
+
+        AllActionsAndValues = SharedActions.DeepCloneShared();
+        slotInitialized = true;
+    }
+
+
     internal static void LogSavedValues() {
-        foreach (SaveLoadAction slAction in All) {
-            Logger.Log("SRT", "=================");
+#if LOG
+        foreach (SaveLoadAction slAction in AllActionsAndValues) {
+            Logger.Log(LogLevel.Info, "SpeedrunTool", $"========={slAction.ActionDescription}=========");
             foreach (KeyValuePair<Type, Dictionary<string, object>> pair in slAction.savedValues) {
-                Logger.Log("SRT", pair.Key.FullName);
+                Logger.Log(LogLevel.Info, "SpeedrunTool", pair.Key.FullName);
             }
         }
+#endif
     }
 
     private static void InitFields() {
@@ -282,29 +348,9 @@ public sealed class SaveLoadAction {
         FilterStaticFields();
     }
 
-    private static void FilterStaticFields() {
-        // 过滤掉非法的字段
-        // 例如未安装 DJMapHelper 时 ExtendedVariantsMode 的 AutoDestroyingReverseOshiroModder.stateMachine
-        foreach (Type type in simpleStaticFields.Keys.ToArray()) {
-            FieldInfo[] fieldInfos = simpleStaticFields[type].Where(info => {
-                try {
-                    info.GetValue(null);
-                    return true;
-                } catch (TargetInvocationException) {
-                    return false;
-                }
-            }).ToArray();
-
-            if (fieldInfos.Length > 0) {
-                simpleStaticFields[type] = fieldInfos;
-            } else {
-                simpleStaticFields.Remove(type);
-            }
-        }
-    }
-
     private static void InitModuleFields() {
-        foreach (Type type in Everest.Modules.Select(module => module.GetType())) {
+        foreach (EverestModule everestModule in Everest.Modules) {
+            Type type = everestModule.GetType();
             List<FieldInfo> staticFields = new();
             List<FieldInfo> instanceFields = new();
 
@@ -349,8 +395,30 @@ public sealed class SaveLoadAction {
         }
     }
 
+
+    private static void FilterStaticFields() {
+        // 过滤掉非法的字段
+        // 例如未安装 DJMapHelper 时 ExtendedVariantsMode 的 AutoDestroyingReverseOshiroModder.stateMachine
+        foreach (Type type in simpleStaticFields.Keys.ToArray()) {
+            FieldInfo[] fieldInfos = simpleStaticFields[type].Where(info => {
+                try {
+                    info.GetValue(null);
+                    return true;
+                } catch (TargetInvocationException) {
+                    return false;
+                }
+            }).ToArray();
+
+            if (fieldInfos.Length > 0) {
+                simpleStaticFields[type] = fieldInfos;
+            } else {
+                simpleStaticFields.Remove(type);
+            }
+        }
+    }
+
     private static void SupportSimpleStaticFields() {
-        SafeAdd(
+        InternalSafeAdd(
             (dictionary, _) => {
                 foreach (Type type in simpleStaticFields.Keys) {
                     FieldInfo[] fieldInfos = simpleStaticFields[type];
@@ -377,7 +445,7 @@ public sealed class SaveLoadAction {
     }
 
     private static void SupportModModuleFields() {
-        SafeAdd(
+        InternalSafeAdd(
             (savedValues, _) => {
                 foreach (EverestModule module in Everest.Modules) {
                     Dictionary<string, object> dict = new();
@@ -404,7 +472,7 @@ public sealed class SaveLoadAction {
     }
 
     private static void FixSaveLoadIcon() {
-        SafeAdd(loadState: (_, _) => {
+        InternalSafeAdd(loadState: (_, _) => {
             // 修复右下角存档图标残留
             if (!UserIO.savingInternal) {
                 SaveLoadIcon.Hide();
@@ -413,7 +481,7 @@ public sealed class SaveLoadAction {
     }
 
     private static void BetterCasualPlay() {
-        SafeAdd(beforeSaveState: level => {
+        InternalSafeAdd(beforeSaveState: level => {
             level.Session.SetFlag("SpeedrunTool_Reset_unpauseTimer", false);
             if (StateManager.Instance.SavedByTas) {
                 return;
@@ -438,7 +506,7 @@ public sealed class SaveLoadAction {
     }
 
     private static void SupportExternalMember() {
-        SafeAdd(
+        InternalSafeAdd(
             (savedValues, _) => {
                 SaveStaticMemberValues(savedValues, typeof(Engine),
                     nameof(Engine.DashAssistFreeze),
@@ -460,14 +528,14 @@ public sealed class SaveLoadAction {
     }
 
     private static void SupportCalcRandom() {
-        SafeAdd(
+        InternalSafeAdd(
             (savedValues, _) => SaveStaticMemberValues(savedValues, typeof(Calc),
                 nameof(Calc.Random), nameof(Calc.randomStack)),
             (savedValues, _) => LoadStaticMemberValues(savedValues));
     }
 
     private static void SupportSettings() {
-        SafeAdd(
+        InternalSafeAdd(
             (savedValues, _) => {
                 if (Settings.Instance is { } settings) {
                     Dictionary<string, object> dict = new();
@@ -485,7 +553,7 @@ public sealed class SaveLoadAction {
     }
 
     private static void SupportMInput() {
-        SafeAdd(
+        InternalSafeAdd(
             (savedValues, _) => SaveStaticMemberValues(savedValues, typeof(MInput),
                 nameof(MInput.Active), nameof(MInput.Disabled), nameof(MInput.Keyboard), nameof(MInput.Mouse), nameof(MInput.GamePads)),
             (savedValues, _) => {
@@ -499,7 +567,7 @@ public sealed class SaveLoadAction {
     // Fix https://github.com/DemoJameson/CelesteSpeedrunTool/issues/19
     private static void SupportInput() {
         Type inputType = typeof(Input);
-        SafeAdd(
+        InternalSafeAdd(
             (savedValues, _) => {
                 SaveStaticMemberValues(savedValues, typeof(MInput), nameof(MInput.VirtualInputs));
 
@@ -602,7 +670,7 @@ public sealed class SaveLoadAction {
     }
 
     private static void ExternalAction() {
-        SafeAdd(
+        InternalSafeAdd(
             saveState: (_, level) => {
                 IgnoreSaveLoadComponent.ReAddAll(level);
                 EndPoint.AllReadyForTime();
@@ -626,10 +694,9 @@ public sealed class SaveLoadAction {
                 IgnoreSaveLoadComponent.RemoveAll(level);
                 ClearBeforeSaveComponent.RemoveAll(level);
 
-                // 冲刺残影方向错误，干脆移除屏幕不显示了
-                // FIXME: 正确 SL 残影
-                level.Tracker.GetEntities<TrailManager.Snapshot>()
-                    .ForEach(entity => entity.Position = level.Camera.Position - Vector2.One * 1000);
+                // 冲刺残影方向错误，干脆移除
+                // TODO: 正确 SL 残影
+                TrailManager.Clear();
 
                 if (ModUtils.IsInstalled("CelesteNet.Client")) {
                     Type ghostEmoteWheelType = ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.Entities.GhostEmoteWheel");
@@ -651,7 +718,7 @@ public sealed class SaveLoadAction {
     }
 
     private static void SupportModSessionAndSaveData() {
-        SafeAdd(
+        InternalSafeAdd(
             (savedValues, _) => {
                 foreach (EverestModule module in Everest.Modules.Where(module => module.GetType().Name != "NullModule")) {
                     savedValues[module.GetType()] = new Dictionary<string, object> {
@@ -672,7 +739,7 @@ public sealed class SaveLoadAction {
     }
 
     private static void SupportAudioMusic() {
-        SafeAdd(
+        InternalSafeAdd(
             (savedValues, level) => {
                 Dictionary<string, object> saved = new() {
                     {"currentMusicEvent", Audio.GetEventName(Audio.CurrentMusicEventInstance)},
@@ -720,7 +787,7 @@ public sealed class SaveLoadAction {
 
     // fix: 5A黑暗房间读档后灯光问题
     private static void FixVertexLight() {
-        SafeAdd(loadState: (_, level) => {
+        InternalSafeAdd(loadState: (_, level) => {
             VertexLight[] lights = level.Lighting.lights;
             for (int i = 0; i < lights.Length; i++) {
                 if (lights[i] is { } light) {
@@ -731,418 +798,9 @@ public sealed class SaveLoadAction {
         });
     }
 
-    private static void SupportPandorasBox() {
-        // TimeField.targetPlayer 和 TimeField.lingeringTarget 等
-        // WeakReference<T> 类型的实例在 SL 多次并且内存回收之后 target 可能会指向错误的对象，原因未知
-        if (ModUtils.GetType("PandorasBox", "Celeste.Mod.PandorasBox.TimeField") is { } timeFieldType
-            && Delegate.CreateDelegate(typeof(On.Celeste.Player.hook_Update), timeFieldType.GetMethodInfo("PlayerUpdateHook")) is
-                On.Celeste.Player.hook_Update hookUpdate) {
-            SafeAdd(
-                loadState: (_, _) => {
-                    if (timeFieldType.GetFieldValue<bool>("hookAdded")) {
-                        On.Celeste.Player.Update -= hookUpdate;
-                        On.Celeste.Player.Update += hookUpdate;
-                    } else {
-                        On.Celeste.Player.Update -= hookUpdate;
-                    }
-                }
-            );
-        }
-
-        if (ModUtils.GetType("PandorasBox", "Celeste.Mod.PandorasBox.MarioClearPipeHelper") is { } pipeHelper) {
-            if (pipeHelper.GetFieldInfo("CurrentlyTransportedEntities") != null) {
-                SafeAdd(
-                    (savedValues, _) => SaveStaticMemberValues(savedValues, pipeHelper, "CurrentlyTransportedEntities"),
-                    (savedValues, _) => LoadStaticMemberValues(savedValues)
-                );
-            }
-
-            if (pipeHelper.GetMethodInfo("AllowComponentsForList") != null && pipeHelper.GetMethodInfo("ShouldAddComponentsForList") != null) {
-                SafeAdd((_, level) => {
-                    if (pipeHelper.InvokeMethod("ShouldAddComponentsForList", level.Entities) as bool? == true) {
-                        pipeHelper.InvokeMethod("AllowComponentsForList", StateManager.Instance.SavedLevel.Entities);
-                    }
-                }, (_, level) => {
-                    if (pipeHelper.InvokeMethod("ShouldAddComponentsForList", StateManager.Instance.SavedLevel.Entities) as bool? == true) {
-                        pipeHelper.InvokeMethod("AllowComponentsForList", level.Entities);
-                    }
-                });
-            }
-        }
-
-        // Fixed: Game crashes after save DustSpriteColorController
-        SafeAdd(
-            (savedValues, _) => SaveStaticMemberValues(savedValues, typeof(DustStyles), "Styles"),
-            (savedValues, _) => LoadStaticMemberValues(savedValues)
-        );
-    }
-
-    private static void SupportMaxHelpingHand() {
-        if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.RainbowSpinnerColorController") is { } colorControllerType
-            && colorControllerType.GetFieldInfo("rainbowSpinnerHueHooked") != null
-            && Delegate.CreateDelegate(typeof(On.Celeste.CrystalStaticSpinner.hook_GetHue),
-                    colorControllerType.GetMethodInfo("getRainbowSpinnerHue")) is
-                On.Celeste.CrystalStaticSpinner.hook_GetHue hookGetHue
-           ) {
-            SafeAdd(
-                loadState: (_, _) => {
-                    if (colorControllerType.GetFieldValue<bool>("rainbowSpinnerHueHooked")) {
-                        On.Celeste.CrystalStaticSpinner.GetHue -= hookGetHue;
-                        On.Celeste.CrystalStaticSpinner.GetHue += hookGetHue;
-                    } else {
-                        On.Celeste.CrystalStaticSpinner.GetHue -= hookGetHue;
-                    }
-                }
-            );
-        }
-
-        if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.RainbowSpinnerColorAreaController") is { } colorAreaControllerType
-            && colorAreaControllerType.GetFieldInfo("rainbowSpinnerHueHooked") != null
-            && Delegate.CreateDelegate(typeof(On.Celeste.CrystalStaticSpinner.hook_GetHue),
-                    colorAreaControllerType.GetMethodInfo("getRainbowSpinnerHue")) is
-                On.Celeste.CrystalStaticSpinner.hook_GetHue hookGetHue2
-           ) {
-            SafeAdd(
-                loadState: (_, _) => {
-                    if (colorAreaControllerType.GetFieldValue<bool>("rainbowSpinnerHueHooked")) {
-                        On.Celeste.CrystalStaticSpinner.GetHue -= hookGetHue2;
-                        On.Celeste.CrystalStaticSpinner.GetHue += hookGetHue2;
-                    } else {
-                        On.Celeste.CrystalStaticSpinner.GetHue -= hookGetHue2;
-                    }
-                }
-            );
-        }
-
-        if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.SeekerBarrierColorController") is { } seekerBarrierColorControllerType
-            && seekerBarrierColorControllerType.GetFieldInfo("seekerBarrierRendererHooked") != null
-           ) {
-            SafeAdd(
-                loadState: (_, _) => {
-                    if (seekerBarrierColorControllerType.GetFieldValue<bool>("seekerBarrierRendererHooked")) {
-                        seekerBarrierColorControllerType.InvokeMethod("unhookSeekerBarrierRenderer");
-                        seekerBarrierColorControllerType.InvokeMethod("hookSeekerBarrierRenderer");
-                    } else {
-                        seekerBarrierColorControllerType.InvokeMethod("unhookSeekerBarrierRenderer");
-                    }
-                }
-            );
-        }
-
-        if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Triggers.GradientDustTrigger") is { } gradientDustTriggerType
-            && gradientDustTriggerType.GetFieldInfo("hooked") != null
-           ) {
-            SafeAdd(
-                loadState: (_, _) => {
-                    if (gradientDustTriggerType.GetFieldValue<bool>("hooked")) {
-                        gradientDustTriggerType.InvokeMethod("unhook");
-                        gradientDustTriggerType.InvokeMethod("hook");
-                    } else {
-                        // hooked 为 true 时，unhook 方法才能够正常执行
-                        gradientDustTriggerType.SetFieldValue("hooked", true);
-                        gradientDustTriggerType.InvokeMethod("unhook");
-                    }
-                }
-            );
-        }
-
-        if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.ParallaxFadeOutController") is { } parallaxFadeOutControllerType
-            && parallaxFadeOutControllerType.GetFieldInfo("backdropRendererHooked") != null
-            && Delegate.CreateDelegate(typeof(ILContext.Manipulator),
-                parallaxFadeOutControllerType.GetMethodInfo("onBackdropRender")) is ILContext.Manipulator onBackdropRender
-           ) {
-            SafeAdd(
-                loadState: (_, _) => {
-                    if (parallaxFadeOutControllerType.GetFieldValue<bool>("backdropRendererHooked")) {
-                        IL.Celeste.BackdropRenderer.Render -= onBackdropRender;
-                        IL.Celeste.BackdropRenderer.Render += onBackdropRender;
-                    } else {
-                        IL.Celeste.BackdropRenderer.Render -= onBackdropRender;
-                    }
-                }
-            );
-        }
-
-        if (ModUtils.GetType("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.ParallaxFadeSpeedController") is { } parallaxFadeSpeedControllerType
-            && parallaxFadeSpeedControllerType.GetFieldInfo("backdropHooked") != null
-            && Delegate.CreateDelegate(typeof(ILContext.Manipulator),
-                parallaxFadeSpeedControllerType.GetMethodInfo("modBackdropUpdate")) is ILContext.Manipulator modBackdropUpdate
-           ) {
-            SafeAdd(
-                loadState: (_, _) => {
-                    if (parallaxFadeSpeedControllerType.GetFieldValue<bool>("backdropHooked")) {
-                        IL.Celeste.Parallax.Update -= modBackdropUpdate;
-                        IL.Celeste.Parallax.Update += modBackdropUpdate;
-                    } else {
-                        IL.Celeste.Parallax.Update -= modBackdropUpdate;
-                    }
-                }
-            );
-        }
-
-        CloneModTypeFields("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Effects.BlackholeCustomColors", "colorsMild");
-    }
-
-    private static void SupportCrystallineHelper() {
-        CloneModTypeFields("CrystallineHelper", "vitmod.VitModule", "timeStopScaleTimer", "timeStopType", "noMoveScaleTimer");
-        CloneModTypeFields("CrystallineHelper", "vitmod.TriggerTrigger", "collidedEntities");
-    }
-
-    private static void SupportSpringCollab2020() {
-        if (ModUtils.GetType("SpringCollab2020", "Celeste.Mod.SpringCollab2020.Entities.RainbowSpinnerColorController") is { } colorControllerType
-            && colorControllerType.GetFieldInfo("colorControllerType") != null
-            && Delegate.CreateDelegate(typeof(On.Celeste.CrystalStaticSpinner.hook_GetHue),
-                    colorControllerType.GetMethodInfo("getRainbowSpinnerHue")) is
-                On.Celeste.CrystalStaticSpinner.hook_GetHue hookGetHue
-           ) {
-            SafeAdd(
-                loadState: (_, _) => {
-                    if (colorControllerType.GetFieldValue<bool>("rainbowSpinnerHueHooked")) {
-                        On.Celeste.CrystalStaticSpinner.GetHue -= hookGetHue;
-                        On.Celeste.CrystalStaticSpinner.GetHue += hookGetHue;
-                    } else {
-                        On.Celeste.CrystalStaticSpinner.GetHue -= hookGetHue;
-                    }
-                }
-            );
-        }
-
-        if (ModUtils.GetType("SpringCollab2020", "Celeste.Mod.SpringCollab2020.Entities.RainbowSpinnerColorAreaController") is { } colorAreaControllerType
-            && colorAreaControllerType.GetFieldInfo("rainbowSpinnerHueHooked") != null
-            && Delegate.CreateDelegate(typeof(On.Celeste.CrystalStaticSpinner.hook_GetHue),
-                    colorAreaControllerType.GetMethodInfo("getRainbowSpinnerHue")) is
-                On.Celeste.CrystalStaticSpinner.hook_GetHue hookSpinnerGetHue
-           ) {
-            SafeAdd(
-                loadState: (_, _) => {
-                    if (colorAreaControllerType.GetFieldValue<bool>("rainbowSpinnerHueHooked")) {
-                        On.Celeste.CrystalStaticSpinner.GetHue -= hookSpinnerGetHue;
-                        On.Celeste.CrystalStaticSpinner.GetHue += hookSpinnerGetHue;
-                    } else {
-                        On.Celeste.CrystalStaticSpinner.GetHue -= hookSpinnerGetHue;
-                    }
-                }
-            );
-        }
-
-        if (ModUtils.GetType("SpringCollab2020", "Celeste.Mod.SpringCollab2020.Entities.SpikeJumpThroughController") is { } spikeJumpThroughControllerType
-            && spikeJumpThroughControllerType.GetFieldInfo("SpikeHooked") != null
-            && Delegate.CreateDelegate(typeof(On.Celeste.Spikes.hook_OnCollide),
-                spikeJumpThroughControllerType.GetMethodInfo("OnCollideHook")) is On.Celeste.Spikes.hook_OnCollide onCollideHook
-           ) {
-            SafeAdd(
-                loadState: (_, _) => {
-                    if (spikeJumpThroughControllerType.GetFieldValue<bool>("SpikeHooked")) {
-                        On.Celeste.Spikes.OnCollide -= onCollideHook;
-                        On.Celeste.Spikes.OnCollide += onCollideHook;
-                    } else {
-                        On.Celeste.Spikes.OnCollide -= onCollideHook;
-                    }
-                }
-            );
-        }
-    }
-
-    private static void SupportExtendedVariants() {
-        // 静态字段在 InitExtendedVariantsFields() 中处理了
-
-        if (ModUtils.GetType("ExtendedVariantMode", "ExtendedVariants.Module.ExtendedVariantsModule") is not { } moduleType) {
-            return;
-        }
-
-        // 修复玩家死亡后不会重置设置
-        SafeAdd((savedValues, _) => {
-            if (Everest.Modules.FirstOrDefault(everestModule => everestModule.Metadata?.Name == "ExtendedVariantMode") is { } module &&
-                module.GetFieldValue("TriggerManager") is { } triggerManager) {
-                savedValues[moduleType] = new Dictionary<string, object> { { "TriggerManager", triggerManager.DeepCloneShared() } };
-            }
-        }, (savedValues, _) => {
-            if (savedValues.TryGetValue(moduleType, out Dictionary<string, object> dictionary) &&
-                dictionary.TryGetValue("TriggerManager", out object savedTriggerManager) &&
-                Everest.Modules.FirstOrDefault(everestModule => everestModule.Metadata?.Name == "ExtendedVariantMode") is { } module) {
-                if (module.GetFieldValue("TriggerManager") is { } triggerManager) {
-                    savedTriggerManager.DeepCloneToShared(triggerManager);
-                }
-            }
-        });
-
-        if (ModUtils.GetType("ExtendedVariantMode", "ExtendedVariants.Module.ExtendedVariantsSettings") is not { } settingsType) {
-            return;
-        }
-
-        List<PropertyInfo> settingProperties = settingsType.GetProperties(BindingFlags.Instance | BindingFlags.Public)
-            .Where(property => property.CanRead
-                               && property.CanWrite
-                               && property.GetCustomAttribute<SettingIgnoreAttribute>() != null
-                               && !property.Name.StartsWith("Display")
-            ).ToList();
-
-        SafeAdd(
-            (savedValues, _) => {
-                if (moduleType.GetPropertyValue("Settings") is not { } settingsInstance) {
-                    return;
-                }
-
-                Dictionary<string, object> dict = new();
-                foreach (PropertyInfo property in settingProperties) {
-                    dict[property.Name] = property.GetValue(settingsInstance);
-                }
-
-                savedValues[settingsType] = dict.DeepCloneShared();
-            },
-            (savedValues, _) => {
-                // 本来打算将关卡中 ExtendedVariantsTrigger 涉及相关的值强制 SL，想想还是算了
-                if (!ModSettings.SaveExtendedVariants && !StateManager.Instance.SavedByTas) {
-                    return;
-                }
-
-                if (moduleType.GetPropertyValue("Settings") is not { } settingsInstance) {
-                    return;
-                }
-
-                if (savedValues.TryGetValue(settingsType, out Dictionary<string, object> dict)) {
-                    dict = dict.DeepCloneShared();
-                    foreach (string propertyName in dict.Keys) {
-                        settingsInstance.SetPropertyValue(propertyName, dict[propertyName]);
-                    }
-                }
-            });
-    }
-
-    private static void SupportXaphanHelper() {
-        CloneModTypeFields("XaphanHelper", "Celeste.Mod.XaphanHelper.Upgrades.SpaceJump", "jumpBuffer");
-    }
-
-    private static void SupportIsaGrabBag() {
-        // 解决 v1.6.0 之前的版本读档后影像残留在屏幕中
-        if (ModUtils.GetModule("IsaGrabBag") is { } module && module.Metadata.Version < new Version(1, 6, 0) &&
-            ModUtils.GetType("IsaGrabBag", "Celeste.Mod.IsaGrabBag.DreamSpinnerBorder") is { } borderType) {
-            SafeAdd(
-                loadState: (_, level) => level.Entities.FirstOrDefault(entity => entity.GetType() == borderType)?.Update()
-            );
-        }
-
-        // 解决读档后冲进 DreamSpinner 会被刺死
-        CloneModTypeFields("IsaGrabBag", "Celeste.Mod.IsaGrabBag.GrabBagModule", "ZipLineState", "playerInstance");
-        CloneModTypeFields("IsaGrabBag", "Celeste.Mod.IsaGrabBag.BadelineFollower", "booster", "LookForBubble");
-    }
-
-    private static void SupportSpirialisHelper() {
-        CloneModTypeFields("SpirialisHelper", "Celeste.Mod.Spirialis.TimePlayerSettings", "instance", "stoppedX", "stoppedY");
-        CloneModTypeFields("SpirialisHelper", "Celeste.Mod.Spirialis.CustomRainBG", "timeSinceFreeze");
-        CloneModTypeFields("SpirialisHelper", "Celeste.Mod.Spirialis.BoostCapModifier", "xCap", "yCap");
-
-        if (ModUtils.GetType("SpirialisHelper", "Celeste.Mod.Spirialis.TimeController") is { } timeControllerType) {
-            var action = SafeAdd(
-                loadState: (_, level) => {
-                    if (level.Entities.FirstOrDefault(entity => entity.GetType() == timeControllerType) is not { } timeController) {
-                        return;
-                    }
-
-                    if (Delegate.CreateDelegate(typeof(ILContext.Manipulator), timeController, timeControllerType.GetMethodInfo("CustomLevelRender"))
-                        is not ILContext.Manipulator manipulator) {
-                        return;
-                    }
-
-                    if (Delegate.CreateDelegate(typeof(On.Monocle.EntityList.hook_Update), timeController,
-                            timeControllerType.GetMethodInfo("CustomELUpdate")) is not On.Monocle.EntityList.hook_Update customELUpdate) {
-                        return;
-                    }
-
-                    IL.Celeste.Level.Render += manipulator;
-                    if (timeController.GetFieldValue<bool>("hookAdded")) {
-                        On.Monocle.EntityList.Update += customELUpdate;
-                    }
-                }
-            );
-
-            ((SaveLoadAction)action).unloadLevel = (_, entities, entity) => {
-                if (entity.GetType() == timeControllerType) {
-                    entities.Add(entity);
-                }
-            };
-        }
-
-        if (ModUtils.GetType("SpirialisHelper", "Celeste.Mod.Spirialis.TimeZipMover") is { } timeZipMoverType) {
-            if (typeof(ZipMover).GetMethod("Sequence", BindingFlags.Instance | BindingFlags.NonPublic).GetStateMachineTarget() is not
-                { } sequenceMethodInfo) {
-                return;
-            }
-
-            SafeAdd(
-                loadState: (_, level) => {
-                    if (!level.Tracker.Entities.TryGetValue(timeZipMoverType, out List<Entity> zips)) {
-                        return;
-                    }
-
-                    foreach (Entity entity in zips) {
-                        if (Delegate.CreateDelegate(typeof(ILContext.Manipulator), entity, timeZipMoverType.GetMethodInfo("ZipSequence")) is
-                            ILContext.Manipulator manipulator) {
-                            entity.SetFieldValue("TimeStreetlightUpdate", new ILHook(sequenceMethodInfo, manipulator));
-                        }
-                    }
-                }
-            );
-        }
-    }
-
-    private static void SupportCommunalHelper() {
-        CloneModTypeFields("CommunalHelper", "Celeste.Mod.CommunalHelper.DashStates.DreamTunnelDash",
-            "StDreamTunnelDash",
-            "hasDreamTunnelDash",
-            "dreamTunnelDashAttacking",
-            "dreamTunnelDashTimer",
-            "nextDashFeather",
-            "FeatherMode",
-            "overrideDreamDashCheck",
-            "DreamTrailColorIndex");
-
-        CloneModTypeFields("CommunalHelper", "Celeste.Mod.CommunalHelper.DashStates.SeekerDash",
-            "hasSeekerDash",
-            "seekerDashAttacking",
-            "seekerDashTimer",
-            "seekerDashLaunched",
-            "launchPossible");
-    }
-
-    private static void SupportBrokemiaHelper() {
-        if (ModUtils.GetType("BrokemiaHelper", "BrokemiaHelper.PixelRendered.Vineinator") is { } vineinatorType &&
-            ModUtils.GetType("BrokemiaHelper", "BrokemiaHelper.PixelRendered.RWLizard") is { } lizardType) {
-            SafeAdd(
-                loadState: (_, level) => {
-                    foreach (Entity entity in level.Entities) {
-                        Type type = entity.GetType();
-                        if (type == vineinatorType || type == lizardType) {
-                            object pixelComponent = entity.GetFieldValue("pixelComponent");
-                            pixelComponent.SetFieldValue("textureChunks", null);
-                            pixelComponent.InvokeMethod("CommitChunks");
-                        }
-                    }
-                });
-        }
-    }
-
-    private static void SupportVivHelper() {
-        if (ModUtils.GetAssembly("VivHelper") is not { } vivHelper) {
-            return;
-        }
-
-        CloneModTypeFields("VivHelper", "VivHelper.Entities.RefillCancel", "inSpace", "DashRefillRestrict", "DashRestrict", "StaminaRefillRestrict", "p");
-        CloneModTypeFields("VivHelper", "VivHelper.Entities.SpeedPowerup", "Store", "Launch");
-        CloneModTypeFields("VivHelper", "VivHelper.Entities.BooMushroom", "color", "mode");
-        CloneModTypeFields("VivHelper", "VivHelper.Entities.Boosters.BoostFunctions", "dyn");
-        CloneModTypeFields("VivHelper", "VivHelper.Entities.Boosters.OrangeBoost", "timer");
-        CloneModTypeFields("VivHelper", "VivHelper.Entities.Boosters.PinkBoost", "timer");
-        CloneModTypeFields("VivHelper", "VivHelper.Entities.Boosters.WindBoost", "timer");
-        CloneModTypeFields("VivHelper", "VivHelper.Entities.ExplodeLaunchModifier", "DisableFreeze", "DetectFreeze", "bumperWrapperType");
-        CloneModTypeFields("VivHelper", "VivHelper.Entities.Blockout", "alphaFade");
-        CloneModTypeFields("VivHelper", "VivHelper.MoonHooks", "FloatyFix");
-        CloneModTypeFields("VivHelper", "VivHelper.HelperEntities", "AllUpdateHelperEntity");
-        CloneModTypeFields("VivHelper", "VivHelper.Module__Extensions__Etc.TeleportV2Hooks", "HackedFocusPoint");
-    }
 
     private static void ReloadVirtualAssets() {
-        SafeAdd(
+        InternalSafeAdd(
             loadState: (_, _) => {
                 foreach (VirtualAsset virtualAsset in VirtualAssets) {
                     switch (virtualAsset) {
@@ -1167,7 +825,7 @@ public sealed class SaveLoadAction {
     }
 
     private static void ReleaseEventInstances() {
-        SafeAdd(
+        InternalSafeAdd(
             clearState: () => {
                 foreach (EventInstance eventInstance in ClonedEventInstancesWhenSave.Union(ClonedEventInstancesWhenPreClone)) {
                     Audio.ReleaseSnapshot(eventInstance);
@@ -1180,9 +838,9 @@ public sealed class SaveLoadAction {
         );
     }
 
-    private static void CloneModTypeFields(string modName, string typeFullName, params string[] fields) {
+    internal static void CloneModTypeFields(string modName, string typeFullName, params string[] fields) {
         if (ModUtils.GetType(modName, typeFullName) is { } modType) {
-            SafeAdd(
+            InternalSafeAdd(
                 (savedValues, _) => SaveStaticMemberValues(savedValues, modType, fields),
                 (savedValues, _) => LoadStaticMemberValues(savedValues));
         }

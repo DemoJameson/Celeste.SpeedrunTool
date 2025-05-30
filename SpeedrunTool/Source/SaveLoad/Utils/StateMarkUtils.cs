@@ -1,10 +1,10 @@
-﻿using Celeste.Mod.SpeedrunTool.RoomTimer;
+using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad;
+namespace Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
 
 internal static class StateMarkUtils {
     private const string SavedStateFlag = "SpeedrunTool_SavedSate";
@@ -15,7 +15,7 @@ internal static class StateMarkUtils {
         On.Celeste.Strawberry.Added += StrawberryOnAdded;
         IL.Celeste.SpeedrunTimerDisplay.DrawTime += SetSaveStateColor;
         IL.Celeste.Level.Reload += LevelOnReload;
-        SaveLoadAction.SafeAdd(ReColor, ReColor);
+        SaveLoadAction.InternalSafeAdd(ReColor, ReColor);
     }
 
     [Unload]
@@ -85,7 +85,7 @@ internal static class StateMarkUtils {
             return;
         }
 
-        cursor.EmitDelegate<Func<bool>>(IsChangeTimerColor);
+        cursor.EmitDelegate(IsChangeTimerColor);
 
         ILLabel beforeInstr = cursor.DefineLabel();
         cursor.Emit(OpCodes.Brfalse, beforeInstr);

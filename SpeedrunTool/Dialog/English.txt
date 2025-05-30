@@ -37,11 +37,16 @@ SPEEDRUN_TOOL_SAVE_EXTENDED_VARIANTS=      Save Extended Variants
 SPEEDRUN_TOOL_SAVE_STATE=                  Save State
 SPEEDRUN_TOOL_LOAD_STATE=                  Load State
 SPEEDRUN_TOOL_CLEAR_STATE=                 Clear State
+SPEEDRUN_TOOL_CLEAR_ALL=                   Clear All States
 SPEEDRUN_TOOL_CLEAR_STATE_TOOLTIP=         Cleared the state
+SPEEDRUN_TOOL_CLEAR_ALL_TOOLTIP=           Cleared all states
 SPEEDRUN_TOOL_NOT_SAVED_STATE_TOOLTIP=     Not saved state yet
 SPEEDRUN_TOOL_CLEAR_STATE_DIALOG=
     [MADELINE left normal]
     Cleared the state~
+SPEEDRUN_TOOL_CLEAR_ALL_DIALOG=
+    [MADELINE left normal]
+    Cleared all states~
 SPEEDRUN_TOOL_NOT_SAVED_STATE_YET_DIALOG=
     [MADELINE left upset]
     Not saved state yet.
@@ -103,6 +108,17 @@ SPEEDRUN_TOOL_TOGGLE_FULLSCREEN=             Toggle Fullscreen
 SPEEDRUN_TOOL_EXPORT_ROOM_TIMES=             Export Room Times
 SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_SUCCESS=     Times successfully exported to {0}
 SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_FAIL=        Must be in a level to export room times
+SPEEDRUN_TOOL_SAVESLOT1=                     Save Slot 1
+SPEEDRUN_TOOL_SAVESLOT2=                     Save Slot 2
+SPEEDRUN_TOOL_SAVESLOT3=                     Save Slot 3
+SPEEDRUN_TOOL_SAVESLOT4=                     Save Slot 4
+SPEEDRUN_TOOL_SAVESLOT5=                     Save Slot 5
+SPEEDRUN_TOOL_SAVESLOT6=                     Save Slot 6
+SPEEDRUN_TOOL_SAVESLOT7=                     Save Slot 7
+SPEEDRUN_TOOL_SAVESLOT8=                     Save Slot 8
+SPEEDRUN_TOOL_SAVESLOT9=                     Save Slot 9
+SPEEDRUN_TOOL_SAVE_TO_NEXT_SLOT=             Save to Next Available Slot
+SPEEDRUN_TOOL_LOAD_FROM_LAST_SLOT=           Load from Last Available Slot
 
 # ================================== Death Statistics ==================================
 SPEEDRUN_TOOL_DEATH_STATISTICS=              Death Statistics

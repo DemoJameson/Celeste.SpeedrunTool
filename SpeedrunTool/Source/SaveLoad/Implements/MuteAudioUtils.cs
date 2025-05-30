@@ -42,7 +42,7 @@ internal static class MuteAudioUtils {
     }
 
     public static void AddAction() {
-        SaveLoadAction.SafeAdd(
+        SaveLoadAction.InternalSafeAdd(
             loadState: (_, level) => {
                 level.Entities.FindAll<SoundEmitter>().ForEach(emitter => {
                     if (emitter.Source.instance is { } eventInstance) {

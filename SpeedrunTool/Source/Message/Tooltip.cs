@@ -1,4 +1,3 @@
-﻿using Celeste.Mod.SpeedrunTool.SaveLoad;
 using System.Collections;
 using System.Linq;
 
@@ -19,7 +18,7 @@ public class Tooltip : Entity {
         Position = new(Padding, Engine.Height - messageSize.Y - Padding / 2f);
         Tag = Tags.HUD | Tags.Global | Tags.FrozenUpdate | Tags.PauseUpdate | Tags.TransitionUpdate;
         Add(new Coroutine(Show()));
-        Add(new IgnoreSaveLoadComponent());
+        Add(new SaveLoad.Utils.IgnoreSaveLoadComponent());
     }
 
     private IEnumerator Show() {

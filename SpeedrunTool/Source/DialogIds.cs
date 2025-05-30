@@ -49,9 +49,12 @@ public static class DialogIds {
     public const string SaveState = "SPEEDRUN_TOOL_SAVE_STATE";
     public const string LoadState = "SPEEDRUN_TOOL_LOAD_STATE";
     public const string ClearState = "SPEEDRUN_TOOL_CLEAR_STATE";
+    public const string ClearAllState = "SPEEDRUN_TOOL_CLEAR_ALL";
     public const string ClearStateToolTip = "SPEEDRUN_TOOL_CLEAR_STATE_TOOLTIP";
+    public const string ClearAllToolTip = "SPEEDRUN_TOOL_CLEAR_ALL_TOOLTIP";
     public const string NotSavedStateTooltip = "SPEEDRUN_TOOL_NOT_SAVED_STATE_TOOLTIP";
     public const string ClearStateDialog = "SPEEDRUN_TOOL_CLEAR_STATE_DIALOG";
+    public const string ClearAllDialog = "SPEEDRUN_TOOL_CLEAR_ALL_DIALOG";
     public const string NotSavedStateYetDialog = "SPEEDRUN_TOOL_NOT_SAVED_STATE_YET_DIALOG";
     public const string ClearStateDialogBadeline = "SPEEDRUN_TOOL_CLEAR_STATE_DIALOG_BADELINE";
     public const string NotSavedStateYetDialogBadeline = "SPEEDRUN_TOOL_NOT_SAVED_STATE_YET_DIALOG_BADELINE";
@@ -103,6 +106,17 @@ public static class DialogIds {
     public const string ExportRoomTimes = "SPEEDRUN_TOOL_EXPORT_ROOM_TIMES";
     public const string ExportRoomTimesSuccess = "SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_SUCCESS";
     public const string ExportRoomTimesFail = "SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_FAIL";
+    public const string SaveSlot1 = "SPEEDRUN_TOOL_SAVESLOT1";
+    public const string SaveSlot2 = "SPEEDRUN_TOOL_SAVESLOT2";
+    public const string SaveSlot3 = "SPEEDRUN_TOOL_SAVESLOT3";
+    public const string SaveSlot4 = "SPEEDRUN_TOOL_SAVESLOT4";
+    public const string SaveSlot5 = "SPEEDRUN_TOOL_SAVESLOT5";
+    public const string SaveSlot6 = "SPEEDRUN_TOOL_SAVESLOT6";
+    public const string SaveSlot7 = "SPEEDRUN_TOOL_SAVESLOT7";
+    public const string SaveSlot8 = "SPEEDRUN_TOOL_SAVESLOT8";
+    public const string SaveSlot9 = "SPEEDRUN_TOOL_SAVESLOT9";
+    public const string SaveToNextSlot = "SPEEDRUN_TOOL_SAVE_TO_NEXT_SLOT";
+    public const string LoadFromLastSlot = "SPEEDRUN_TOOL_LOAD_FROM_LAST_SLOT";
 
     // Death Statistics
     public const string MaxNumberOfDeathData = "SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA";

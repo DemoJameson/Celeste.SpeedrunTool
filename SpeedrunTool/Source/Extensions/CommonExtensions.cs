@@ -1,4 +1,6 @@
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions;
@@ -29,7 +31,23 @@ internal static class CommonExtensions {
         return string.IsNullOrEmpty(str);
     }
 
-    public static bool IsNotNullAndEmpty(this string str) {
+    public static bool IsNotNullOrEmpty(this string str) {
         return !string.IsNullOrEmpty(str);
+    }
+
+    public static bool IsEmpty<T>(this IEnumerable<T> enumerable) {
+        return !enumerable.Any();
+    }
+
+    public static bool IsNotEmpty<T>(this IEnumerable<T> enumerable) {
+        return !enumerable.IsEmpty();
+    }
+
+    public static bool IsNullOrEmpty<T>(this IEnumerable<T> enumerable) {
+        return enumerable == null || !enumerable.Any();
+    }
+
+    public static bool IsNotNullOrEmpty<T>(this IEnumerable<T> enumerable) {
+        return !enumerable.IsNullOrEmpty();
     }
 }

@@ -1,7 +1,7 @@
-﻿using Celeste.Mod.SpeedrunTool.RoomTimer;
+using Celeste.Mod.SpeedrunTool.RoomTimer;
 using System.Collections.Generic;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad;
+namespace Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
 
 [Tracked]
 public class IgnoreSaveLoadComponent : Component {
@@ -10,7 +10,7 @@ public class IgnoreSaveLoadComponent : Component {
     private bool based;
 
     // backward compatibility
-    public IgnoreSaveLoadComponent() : base(false, false) { }
+    public IgnoreSaveLoadComponent() : base(false, false) { this.based = false; }
 
     public IgnoreSaveLoadComponent(bool based) : base(false, false) {
         this.based = based;

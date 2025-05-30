@@ -38,11 +38,16 @@ SPEEDRUN_TOOL_SAVE_EXTENDED_VARIANTS=      保存拓展异变
 SPEEDRUN_TOOL_SAVE_STATE=                  保存状态
 SPEEDRUN_TOOL_LOAD_STATE=                  加载状态
 SPEEDRUN_TOOL_CLEAR_STATE=                 清除状态
+SPEEDRUN_TOOL_CLEAR_ALL=                   清除所有状态
 SPEEDRUN_TOOL_CLEAR_STATE_TOOLTIP=         清除状态
+SPEEDRUN_TOOL_CLEAR_ALL_TOOLTIP=           清除所有状态
 SPEEDRUN_TOOL_NOT_SAVED_STATE_TOOLTIP=     请先保存状态
 SPEEDRUN_TOOL_CLEAR_STATE_DIALOG=
     [MADELINE left normal]
     清除状态~
+SPEEDRUN_TOOL_CLEAR_ALL_DIALOG=
+    [MADELINE left normal]
+    清除所有状态~
 SPEEDRUN_TOOL_NOT_SAVED_STATE_YET_DIALOG=
     [MADELINE left upset]
     请先保存状态。
@@ -104,6 +109,17 @@ SPEEDRUN_TOOL_TOGGLE_FULLSCREEN=             开关全屏
 SPEEDRUN_TOOL_EXPORT_ROOM_TIMES=             导出房间计时数据
 SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_SUCCESS=     成功导出计时数据到{0}
 SPEEDRUN_TOOL_EXPORT_ROOM_TIMES_FAIL=        必须在关卡中才能导出数据
+SPEEDRUN_TOOL_SAVESLOT1=                     存档 1
+SPEEDRUN_TOOL_SAVESLOT2=                     存档 2
+SPEEDRUN_TOOL_SAVESLOT3=                     存档 3
+SPEEDRUN_TOOL_SAVESLOT4=                     存档 4
+SPEEDRUN_TOOL_SAVESLOT5=                     存档 5
+SPEEDRUN_TOOL_SAVESLOT6=                     存档 6
+SPEEDRUN_TOOL_SAVESLOT7=                     存档 7
+SPEEDRUN_TOOL_SAVESLOT8=                     存档 8
+SPEEDRUN_TOOL_SAVESLOT9=                     存档 9
+SPEEDRUN_TOOL_SAVE_TO_NEXT_SLOT=             存至下一存档槽
+SPEEDRUN_TOOL_LOAD_FROM_LAST_SLOT=           读取上一存档槽
 
 # ================================== Death Statistics ==================================
 SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA=      死亡数据数量

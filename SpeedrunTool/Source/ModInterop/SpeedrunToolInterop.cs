@@ -3,7 +3,7 @@ using MonoMod.ModInterop;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Celeste.Mod.SpeedrunTool;
+namespace Celeste.Mod.SpeedrunTool.ModInterop;
 
 public static class SpeedrunToolInterop {
     private static readonly List<Func<Type, bool>> returnSameObjectPredicates = new();
@@ -32,7 +32,9 @@ public static class SpeedrunToolInterop {
     [ModExportName("SpeedrunTool.SaveLoad")]
     public static class SaveLoadExports {
         /// <summary>
-        /// Register SaveLoadAction
+        /// <para> Register SaveLoadAction. </para>
+        /// <para> Please save your values into the dictionary, otherwise multi saveslots will not be supported. </para>
+        /// <para> DON'T pass in method calls of a singleton instance, use static methods instead. </para>
         /// </summary>
         /// <param name="saveState"></param>
         /// <param name="loadState"></param>
@@ -40,7 +42,9 @@ public static class SpeedrunToolInterop {
         /// <param name="beforeSaveState"></param>
         /// <param name="beforeLoadState"></param>
         /// <param name="preCloneEntities"></param>
-        /// <returns>SaveLoadAction instance, used for unregister</returns>
+        /// <returns>SaveLoadAction instance, used for unregister when your mod unloads </returns>
+
+        // note save load actions are DeepCloned to each save slot, so should never pass in method calls of a singleton
         public static object RegisterSaveLoadAction(Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState,
             Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState, Action clearState,
             Action<Level> beforeSaveState, Action<Level> beforeLoadState, Action preCloneEntities) {
@@ -50,11 +54,13 @@ public static class SpeedrunToolInterop {
         /// <summary>
         /// Specify the static members to be cloned
         /// </summary>
-        /// <returns>SaveLoadAction instance, used for unregister</returns>
+        /// <returns>SaveLoadAction instance, used for unregister when your mod unloads </returns>
         public static object RegisterStaticTypes(Type type, params string[] memberNames) {
             return SaveLoadAction.SafeAdd(
                 (savedValues, _) => SaveLoadAction.SaveStaticMemberValues(savedValues, type, memberNames),
-                (savedValues, _) => SaveLoadAction.LoadStaticMemberValues(savedValues));
+                (savedValues, _) => SaveLoadAction.LoadStaticMemberValues(savedValues),
+                null, null, null, null
+            );
         }
 
         /// <summary>
@@ -70,8 +76,8 @@ public static class SpeedrunToolInterop {
         /// </summary>
         /// <param name="entity">Ignored entity</param>
         /// <param name="based">The Added/Removed method of the entity will not be triggered when based is true</param>
-        public static void IgnoreSaveState(Entity entity, bool based) {
-            entity.Add(new IgnoreSaveLoadComponent());
+        public static void IgnoreSaveState(Entity entity, bool based = false) {
+            entity.Add(new SaveLoad.Utils.IgnoreSaveLoadComponent(based));
         }
 
         /// <summary>
@@ -106,7 +112,6 @@ public static class SpeedrunToolInterop {
             customDeepCloneProcessors.Remove(processor);
         }
 
-
         /// <summary>
         /// Performs deep (full) copy of object and related graph
         /// </summary>
@@ -114,6 +119,13 @@ public static class SpeedrunToolInterop {
         /// appear in the MultipleSaveSlots update, which is after v3.24.4
         public static object DeepClone(object from) {
             return from.DeepCloneShared();
+        }
+
+        /// <summary>
+        /// Name of the currently using save slot, appear after v3.25.0
+        /// </summary>
+        public static string GetSlotName() {
+            return SaveSlotsManager.SlotName;
         }
     }
 }

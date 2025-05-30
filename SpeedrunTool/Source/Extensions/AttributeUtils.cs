@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
@@ -11,7 +11,7 @@ internal static class AttributeUtils {
     public static void CollectMethods<T>() where T : Attribute {
         MethodInfos[typeof(T)] = typeof(AttributeUtils).Assembly.GetTypesSafe().SelectMany(type => type
             .GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-            .Where(info => info.GetParameters().Length == 0 && info.GetCustomAttribute<T>() != null));
+            .Where(info => info.GetCustomAttribute<T>() != null && info.GetParameters().Length == 0));
     }
 
     public static void Invoke<T>() where T : Attribute {

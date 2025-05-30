@@ -70,6 +70,7 @@ public class HotkeyConfigUi : TextMenu {
         new(Hotkey.SaveState, Keys.F7),
         new(Hotkey.LoadState, Keys.F8),
         new(Hotkey.ClearState, Keys.F4),
+        new(Hotkey.ClearAllState),
         new(Hotkey.OpenDebugMap),
         new(Hotkey.ResetRoomTimerPb, Keys.F9),
         new(Hotkey.SwitchRoomTimer, Keys.F10),
@@ -84,6 +85,17 @@ public class HotkeyConfigUi : TextMenu {
         new(Hotkey.SpawnTowerViewer),
         new(Hotkey.ToggleFullscreen),
         new(Hotkey.ExportRoomTimes),
+        new(Hotkey.SaveSlot1, Keys.LeftControl, Keys.D1), // not numpad numbers
+        new(Hotkey.SaveSlot2, Keys.LeftControl, Keys.D2),
+        new(Hotkey.SaveSlot3, Keys.LeftControl, Keys.D3),
+        new(Hotkey.SaveSlot4, Keys.LeftControl, Keys.D4),
+        new(Hotkey.SaveSlot5, Keys.LeftControl, Keys.D5),
+        new(Hotkey.SaveSlot6, Keys.LeftControl, Keys.D6),
+        new(Hotkey.SaveSlot7, Keys.LeftControl, Keys.D7),
+        new(Hotkey.SaveSlot8, Keys.LeftControl, Keys.D8),
+        new(Hotkey.SaveSlot9, Keys.LeftControl, Keys.D9),
+        new(Hotkey.SaveToNextSlot),
+        new(Hotkey.LoadFromLastSlot),
     }.ToDictionary(info => info.Hotkey, info => info);
 
     private static readonly Hotkey[] Hotkeys = (Hotkey[])Enum.GetValues(typeof(Hotkey));
@@ -162,21 +174,24 @@ public class HotkeyConfigUi : TextMenu {
     [Unload]
     private static void Unload() {
         On.Monocle.MInput.Update -= MInputOnUpdate;
-        foreach (HotkeyConfig hotkeyConfig in HotkeyConfigs.Values) {
-            hotkeyConfig.VirtualButton.Value.Deregister();
-        }
     }
 
     private static void MInputOnUpdate(On.Monocle.MInput.orig_Update orig) {
         orig();
 
-        if (Engine.Scene is { } scene && ModSettings.Enabled && !TasUtils.Running) {
-            foreach (Hotkey hotkey in Hotkeys) {
-                HotkeyConfig hotkeyConfig = hotkey.GetHotkeyConfig();
-                if (Pressed(hotkey, scene)) {
-                    hotkeyConfig.VirtualButton.Value.ConsumePress();
-                    hotkeyConfig.OnPressed?.Invoke(scene);
-                }
+        if (Engine.Scene is not { } scene || !ModSettings.Enabled) {
+            return;
+        }
+
+        Hotkeys_Rebase.Update();
+
+        if (TasUtils.Running) {
+            return;
+        }
+
+        foreach (Hotkey hotkey in Hotkeys) {
+            if (Pressed(hotkey, scene)) {
+                hotkey.GetHotkeyConfig().OnPressed?.Invoke(scene);
             }
         }
     }
@@ -188,10 +203,6 @@ public class HotkeyConfigUi : TextMenu {
 
         bool pressed = hotkey.Pressed();
         if (!pressed) {
-            return false;
-        }
-
-        if (CelesteNetChatting) {
             return false;
         }
 
@@ -411,10 +422,8 @@ public class HotkeyConfigUi : TextMenu {
 public class HotkeyConfig {
     public readonly Keys[] DefaultKeys;
     public readonly Hotkey Hotkey;
-    public readonly Lazy<VirtualButton> VirtualButton = new(() => new VirtualButton(0.08f));
+    internal Hotkeys_Rebase.Hotkey_Rebase Hotkey_Impl;
     public Action<Scene> OnPressed;
-    public List<VirtualButton.KeyboardKey> KeyboardKeys { get; private set; } = new();
-    public List<VirtualButton.PadButton> PadButtons { get; private set; } = new();
 
     public HotkeyConfig(Hotkey hotkey, params Keys[] defaultKeys) {
         Hotkey = hotkey;
@@ -422,10 +431,7 @@ public class HotkeyConfig {
     }
 
     public void UpdateVirtualButton() {
-        List<VirtualButton.Node> nodes = VirtualButton.Value.Nodes;
-        nodes.Clear();
-        nodes.AddRange(KeyboardKeys = GetKeys().Select(key => new VirtualButton.KeyboardKey(key)).ToList());
-        nodes.AddRange(PadButtons = GetButtons().Select(button => new VirtualButton.PadButton(Input.Gamepad, button)).ToList());
+        Hotkey_Impl = Hotkeys_Rebase.BindingToHotkey(GetKeys(), GetButtons());
     }
 
     public List<Buttons> GetButtons() {
@@ -484,6 +490,18 @@ public enum Hotkey {
     SpawnTowerViewer,
     ToggleFullscreen,
     ExportRoomTimes,
+    SaveSlot1,
+    SaveSlot2,
+    SaveSlot3,
+    SaveSlot4,
+    SaveSlot5,
+    SaveSlot6,
+    SaveSlot7,
+    SaveSlot8,
+    SaveSlot9,
+    ClearAllState,
+    SaveToNextSlot,
+    LoadFromLastSlot
 }
 
 internal static class HotkeysExtensions {
@@ -502,15 +520,6 @@ internal static class HotkeysExtensions {
     // 检查键盘或者手柄全部按键按下
     public static bool Pressed(this Hotkey hotkey) {
         HotkeyConfig hotkeyConfig = hotkey.GetHotkeyConfig();
-
-        List<VirtualButton.KeyboardKey> keyboardKeys = hotkeyConfig.KeyboardKeys;
-        bool keyPressed = keyboardKeys.Count > 0 && keyboardKeys.All(node => node.Check) && keyboardKeys.Any(node => node.Pressed);
-        if (keyPressed) {
-            return true;
-        }
-
-        List<VirtualButton.PadButton> padButtons = hotkeyConfig.PadButtons;
-        bool buttonPressed = padButtons.Count > 0 && padButtons.All(node => node.Check) && padButtons.Any(node => node.Pressed);
-        return buttonPressed;
+        return hotkeyConfig.Hotkey_Impl.Pressed;
     }
 }

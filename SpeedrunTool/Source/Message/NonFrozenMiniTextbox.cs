@@ -1,4 +1,3 @@
-﻿using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Celeste.Mod.SpeedrunTool.Utils;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
@@ -13,7 +12,7 @@ public class NonFrozenMiniTextbox : MiniTextbox {
 
     private NonFrozenMiniTextbox(string dialogId, string message = null) : base(dialogId) {
         AddTag(Tags.Global | Tags.HUD | Tags.FrozenUpdate | Tags.PauseUpdate | Tags.TransitionUpdate);
-        Add(new IgnoreSaveLoadComponent());
+        Add(new SaveLoad.Utils.IgnoreSaveLoadComponent());
         if (message != null) {
             text = FancyText.Parse($"{{portrait {(IsPlayAsBadeline() ? "BADELINE" : "MADELINE")} left normal}}{message}", 1544, 2);
         }

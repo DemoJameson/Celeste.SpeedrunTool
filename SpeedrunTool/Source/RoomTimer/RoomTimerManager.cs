@@ -396,7 +396,6 @@ public static class RoomTimerManager {
         }
     }
 
-    [Command("srt_exportroomtimes", "export room timer data in csv format to clipboard or a file in gamePath/SRTool_RoomTimeExports folder (SpeedrunTool)")]
     public static void CmdExportRoomTimes() {
         if (Engine.Scene is Level) {
             ExportRoomTimes();

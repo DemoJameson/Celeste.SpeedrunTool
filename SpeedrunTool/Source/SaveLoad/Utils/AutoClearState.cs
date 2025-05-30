@@ -1,4 +1,4 @@
-﻿namespace Celeste.Mod.SpeedrunTool.SaveLoad;
+namespace Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
 
 internal static class AutoClearState {
     [Load]

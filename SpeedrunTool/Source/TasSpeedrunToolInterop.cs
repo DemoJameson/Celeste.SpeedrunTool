@@ -10,7 +10,7 @@ namespace Celeste.Mod.SpeedrunTool.ModInterop;
 internal static class TasSpeedrunToolInterop {
     [Load]
     private static void Initialize() {
-        typeof(Exports).ModInterop();
+        typeof(Exports).ModInterop(); 
     }
 
 

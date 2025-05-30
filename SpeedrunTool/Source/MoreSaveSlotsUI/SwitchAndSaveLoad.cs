@@ -129,7 +129,7 @@ internal static class SwitchAndSaveLoad {
 
         Results result = SwitchToNextAvailableSlot(1, SlotState.NotSaved);
         if (result == Results.Success && SaveSlotsManager.SaveState()) {
-            PopupMessageUtils.Show($"Save to {SaveSlotsManager.SlotName}", null);
+            PopupMessageUtils.Show($"Save to [{SlotName}]", null);
             return;
         } else {
             currentSlot = orig;
@@ -147,7 +147,7 @@ internal static class SwitchAndSaveLoad {
         Results result = SwitchToNextAvailableSlot(-1, SlotState.Saved);
         if (result == Results.Success) {
             if (SaveSlotsManager.LoadState()) {
-                PopupMessageUtils.Show($"Load from {SaveSlotsManager.SlotName}", null);
+                PopupMessageUtils.Show($"Load from [{SlotName}]", null);
             } else {
                 result = Results.Busy;
             }
@@ -156,10 +156,12 @@ internal static class SwitchAndSaveLoad {
             PopupMessageUtils.Show("Failed to Load: SpeedrunTool is Busy!", null);
             currentSlot = orig;
         } else if (result == Results.Fail) {
-            PopupMessageUtils.Show("No saved states yet!", null);
+            PopupMessageUtils.Show(DialogIds.NotSavedStateTooltip.DialogClean() + $" [{SlotName}]", null);
             currentSlot = orig;
         }
 
         StateManager.AllowSaveLoadWhenWaiting = allow;
     }
+
+    private static string SlotName => SaveSlotsManager.SlotName;
 }

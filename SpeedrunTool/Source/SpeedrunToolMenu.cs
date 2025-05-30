@@ -58,140 +58,159 @@ public static class SpeedrunToolMenu {
     }
 
     private static void CreateOptions(TextMenu menu, bool inGame) {
-        options = new List<EaseInSubMenu> {
-            new EaseInSubMenu(Dialog.Clean(DialogIds.RoomTimer), false).With(subMenu => {
-                subMenu.Add(new EnumerableSliderCompact<RoomTimerType>(Dialog.Clean(DialogIds.Enabled),
-                    CreateEnumerableOptions<RoomTimerType>(), ModSettings.RoomTimerType).Change(RoomTimerManager.SwitchRoomTimer));
+        options = new List<EaseInSubMenu> { };
+        if (SaveLoad.ThirdPartySupport.MotionSmoothingFix.MotionSmoothingInstalled) {
+            options.Add(CreateMotionSmoothing());
+        }
+        options.Add(CreateRoomTimer());
+        options.Add(CreateState(menu));
+        options.Add(CreateDeathStatistics());
+        options.Add(CreateMoreOptions());
+}
 
-                subMenu.Add(new TextMenuExt.IntSlider(Dialog.Clean(DialogIds.NumberOfRooms), 1, 99, ModSettings.NumberOfRooms).Change(i =>
-                    ModSettings.NumberOfRooms = i));
+    private static EaseInSubMenu CreateMotionSmoothing() {
+        return new EaseInSubMenu(Dialog.Clean(DialogIds.ConflictWithMotionSmoothing), false);
+    }
 
-                subMenu.Add(new EnumerableSliderCompact<EndPoint.SpriteStyle>(Dialog.Clean(DialogIds.EndPointStyle),
-                    CreateEnumerableOptions<EndPoint.SpriteStyle>(), ModSettings.EndPointStyle).Change(value => {
+    private static EaseInSubMenu CreateRoomTimer() {
+        return new EaseInSubMenu(Dialog.Clean(DialogIds.RoomTimer), false).With(subMenu => {
+            subMenu.Add(new EnumerableSliderCompact<RoomTimerType>(Dialog.Clean(DialogIds.Enabled),
+                CreateEnumerableOptions<RoomTimerType>(), ModSettings.RoomTimerType).Change(RoomTimerManager.SwitchRoomTimer));
+
+            subMenu.Add(new TextMenuExt.IntSlider(Dialog.Clean(DialogIds.NumberOfRooms), 1, 99, ModSettings.NumberOfRooms).Change(i =>
+                ModSettings.NumberOfRooms = i));
+
+            subMenu.Add(new EnumerableSliderCompact<EndPoint.SpriteStyle>(Dialog.Clean(DialogIds.EndPointStyle),
+                CreateEnumerableOptions<EndPoint.SpriteStyle>(), ModSettings.EndPointStyle).Change(value => {
                     ModSettings.EndPointStyle = value;
                     EndPoint.AllResetSprite();
                 }));
 
-                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.TimeSummitFlag), ModSettings.TimeSummitFlag).Change(b =>
-                    ModSettings.TimeSummitFlag = b));
+            subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.TimeSummitFlag), ModSettings.TimeSummitFlag).Change(b =>
+                ModSettings.TimeSummitFlag = b));
 
-                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.TimeHeartCassette), ModSettings.TimeHeartCassette).Change(b =>
-                    ModSettings.TimeHeartCassette = b));
+            subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.TimeHeartCassette), ModSettings.TimeHeartCassette).Change(b =>
+                ModSettings.TimeHeartCassette = b));
 
-                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoTurnOffRoomTimer), ModSettings.AutoResetRoomTimer).Change(b =>
-                    ModSettings.AutoResetRoomTimer = b));
+            subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoTurnOffRoomTimer), ModSettings.AutoResetRoomTimer).Change(b =>
+                ModSettings.AutoResetRoomTimer = b));
 
-                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.DisplayRoomGold), ModSettings.DisplayRoomGold).Change(b =>
-                    ModSettings.DisplayRoomGold = b));
+            subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.DisplayRoomGold), ModSettings.DisplayRoomGold).Change(b =>
+                ModSettings.DisplayRoomGold = b));
 
-                subMenu.Add(new TextMenuExt.EnumerableSlider<RoomTimerExportType>(Dialog.Clean(DialogIds.RoomTimerExportType),
-                    CreateEnumerableOptions<RoomTimerExportType>(), ModSettings.RoomTimerExportType).Change(value => {
+            subMenu.Add(new TextMenuExt.EnumerableSlider<RoomTimerExportType>(Dialog.Clean(DialogIds.RoomTimerExportType),
+                CreateEnumerableOptions<RoomTimerExportType>(), ModSettings.RoomTimerExportType).Change(value => {
                     ModSettings.RoomTimerExportType = value;
                 }));
-            }),
+        });
+    }
 
-            new EaseInSubMenu(Dialog.Clean(DialogIds.State), false).With(subMenu => {
-                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoLoadStateAfterDeath), ModSettings.AutoLoadStateAfterDeath).Change(b =>
-                    ModSettings.AutoLoadStateAfterDeath = b));
+    private static EaseInSubMenu CreateState(TextMenu menu) {
+        return new EaseInSubMenu(Dialog.Clean(DialogIds.State), false).With(subMenu => {
+            subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoLoadStateAfterDeath), ModSettings.AutoLoadStateAfterDeath).Change(b =>
+                ModSettings.AutoLoadStateAfterDeath = b));
 
-                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoClearStateOnScreenTransition), ModSettings.AutoClearStateOnScreenTransition)
-                    .Change(b =>
-                        ModSettings.AutoClearStateOnScreenTransition = b));
+            subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoClearStateOnScreenTransition), ModSettings.AutoClearStateOnScreenTransition)
+                .Change(b =>
+                    ModSettings.AutoClearStateOnScreenTransition = b));
 
-                subMenu.Add(new EnumerableSliderCompact<FreezeAfterLoadStateType>(Dialog.Clean(DialogIds.FreezeAfterLoadState),
-                    CreateEnumerableOptions<FreezeAfterLoadStateType>(),
-                    ModSettings.FreezeAfterLoadStateType).Change(b =>
-                    ModSettings.FreezeAfterLoadStateType = b));
+            subMenu.Add(new EnumerableSliderCompact<FreezeAfterLoadStateType>(Dialog.Clean(DialogIds.FreezeAfterLoadState),
+                CreateEnumerableOptions<FreezeAfterLoadStateType>(),
+                ModSettings.FreezeAfterLoadStateType).Change(b =>
+                ModSettings.FreezeAfterLoadStateType = b));
 
-                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.NoGcAfterLoadState), ModSettings.NoGcAfterLoadState).Change(b =>
-                    ModSettings.NoGcAfterLoadState = b));
+            subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.NoGcAfterLoadState), ModSettings.NoGcAfterLoadState).Change(b =>
+                ModSettings.NoGcAfterLoadState = b));
 
-                TextMenu.Item saveTimeAndDeaths;
-                subMenu.Add(saveTimeAndDeaths = new TextMenu.OnOff(Dialog.Clean(DialogIds.SaveTimeAndDeaths), ModSettings.SaveTimeAndDeaths).Change(b =>
-                    ModSettings.SaveTimeAndDeaths = b));
-                AddDescription(saveTimeAndDeaths, subMenu, menu, Dialog.Clean(DialogIds.SaveTimeAndDeathsDescription));
+            TextMenu.Item saveTimeAndDeaths;
+            subMenu.Add(saveTimeAndDeaths = new TextMenu.OnOff(Dialog.Clean(DialogIds.SaveTimeAndDeaths), ModSettings.SaveTimeAndDeaths).Change(b =>
+                ModSettings.SaveTimeAndDeaths = b));
+            AddDescription(saveTimeAndDeaths, subMenu, menu, Dialog.Clean(DialogIds.SaveTimeAndDeathsDescription));
 
 
-                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.SaveExtendedVariants), ModSettings.SaveExtendedVariants).Change(b =>
-                    ModSettings.SaveExtendedVariants = b));
-            }),
+            subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.SaveExtendedVariants), ModSettings.SaveExtendedVariants).Change(b =>
+                ModSettings.SaveExtendedVariants = b));
+        });
+    }
 
-            new EaseInSubMenu(Dialog.Clean(DialogIds.DeathStatistics), false).With(subMenu => {
-                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.Enabled), ModSettings.DeathStatistics).Change(b =>
-                    ModSettings.DeathStatistics = b));
+    private static EaseInSubMenu CreateDeathStatistics() {
+        return new EaseInSubMenu(Dialog.Clean(DialogIds.DeathStatistics), false).With(subMenu => {
+            subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.Enabled), ModSettings.DeathStatistics).Change(b =>
+                ModSettings.DeathStatistics = b));
 
-                subMenu.Add(new TextMenu.Slider(
-                    DialogIds.MaxNumberOfDeathData.DialogClean(),
-                    value => (value * 10).ToString(),
-                    1,
-                    9,
-                    ModSettings.MaxNumberOfDeathData
-                ).Change(i => ModSettings.MaxNumberOfDeathData = i));
+            subMenu.Add(new TextMenu.Slider(
+                DialogIds.MaxNumberOfDeathData.DialogClean(),
+                value => (value * 10).ToString(),
+                1,
+                9,
+                ModSettings.MaxNumberOfDeathData
+            ).Change(i => ModSettings.MaxNumberOfDeathData = i));
 
-                subMenu.Add(new TextMenu.Button(Dialog.Clean(DialogIds.CheckDeathStatistics)).Pressed(() => {
-                    subMenu.Focused = false;
-                    DeathStatisticsUi buttonConfigUi = new() {OnClose = () => subMenu.Focused = true};
-                    Engine.Scene.Add(buttonConfigUi);
-                    Engine.Scene.OnEndOfFrame += () => Engine.Scene.Entities.UpdateLists();
-                }));
-            }),
+            subMenu.Add(new TextMenu.Button(Dialog.Clean(DialogIds.CheckDeathStatistics)).Pressed(() => {
+                subMenu.Focused = false;
+                DeathStatisticsUi buttonConfigUi = new() { OnClose = () => subMenu.Focused = true };
+                Engine.Scene.Add(buttonConfigUi);
+                Engine.Scene.OnEndOfFrame += () => Engine.Scene.Entities.UpdateLists();
+            }));
+        });
+    }
 
-            new EaseInSubMenu(Dialog.Clean(DialogIds.MoreOptions), false).With(subMenu => {
-                subMenu.Add(new EnumerableSliderCompact<TeleportRoomCategory>(Dialog.Clean(DialogIds.TeleportRoomCategory),
-                    CreateEnumerableOptions<TeleportRoomCategory>(),
-                    ModSettings.TeleportRoomCategory).Change(b => ModSettings.TeleportRoomCategory = b));
+    private static EaseInSubMenu CreateMoreOptions() {
+        return new EaseInSubMenu(Dialog.Clean(DialogIds.MoreOptions), false).With(subMenu => {
+            subMenu.Add(new EnumerableSliderCompact<TeleportRoomCategory>(Dialog.Clean(DialogIds.TeleportRoomCategory),
+                CreateEnumerableOptions<TeleportRoomCategory>(),
+                ModSettings.TeleportRoomCategory).Change(b => ModSettings.TeleportRoomCategory = b));
 
-                subMenu.Add(new TextMenuExt.IntSlider(Dialog.Clean(DialogIds.RespawnSpeed), 1, 9, ModSettings.RespawnSpeed).Change(i =>
-                    ModSettings.RespawnSpeed = i));
+            subMenu.Add(new TextMenuExt.IntSlider(Dialog.Clean(DialogIds.RespawnSpeed), 1, 9, ModSettings.RespawnSpeed).Change(i =>
+                ModSettings.RespawnSpeed = i));
 
-                subMenu.Add(new TextMenuExt.IntSlider(Dialog.Clean(DialogIds.RestartChapterSpeed), 1, 9, ModSettings.RestartChapterSpeed).Change(i =>
-                    ModSettings.RestartChapterSpeed = i));
+            subMenu.Add(new TextMenuExt.IntSlider(Dialog.Clean(DialogIds.RestartChapterSpeed), 1, 9, ModSettings.RestartChapterSpeed).Change(i =>
+                ModSettings.RestartChapterSpeed = i));
 
-                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.SkipRestartChapterScreenWipe), ModSettings.SkipRestartChapterScreenWipe).Change(
-                    b =>
-                        ModSettings.SkipRestartChapterScreenWipe = b));
+            subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.SkipRestartChapterScreenWipe), ModSettings.SkipRestartChapterScreenWipe).Change(
+                b =>
+                    ModSettings.SkipRestartChapterScreenWipe = b));
 
-                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AllowPauseDuringDeath), ModSettings.AllowPauseDuringDeath).Change(b =>
-                    ModSettings.AllowPauseDuringDeath = b));
+            subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AllowPauseDuringDeath), ModSettings.AllowPauseDuringDeath).Change(b =>
+                ModSettings.AllowPauseDuringDeath = b));
 
-                subMenu.Add(
-                    new TextMenu.OnOff(Dialog.Clean(DialogIds.MuteInBackground), ModSettings.MuteInBackground).Change(b =>
-                        ModSettings.MuteInBackground = b));
+            subMenu.Add(
+                new TextMenu.OnOff(Dialog.Clean(DialogIds.MuteInBackground), ModSettings.MuteInBackground).Change(b =>
+                    ModSettings.MuteInBackground = b));
 
-                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.FixCoreRefillDashAfterTeleport), ModSettings.FixCoreRefillDashAfterTeleport)
-                    .Change(b =>
-                        ModSettings.FixCoreRefillDashAfterTeleport = b));
+            subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.FixCoreRefillDashAfterTeleport), ModSettings.FixCoreRefillDashAfterTeleport)
+                .Change(b =>
+                    ModSettings.FixCoreRefillDashAfterTeleport = b));
 
-                subMenu.Add(new EnumerableSliderCompact<PopupMessageStyle>(Dialog.Clean(DialogIds.PopupMessageStyle),
-                    CreateEnumerableOptions<PopupMessageStyle>(), ModSettings.PopupMessageStyle).Change(value => {
+            subMenu.Add(new EnumerableSliderCompact<PopupMessageStyle>(Dialog.Clean(DialogIds.PopupMessageStyle),
+                CreateEnumerableOptions<PopupMessageStyle>(), ModSettings.PopupMessageStyle).Change(value => {
                     ModSettings.PopupMessageStyle = value;
                 }));
 
-                subMenu.Add(new EnumerableSliderCompact<SpeedrunType>(Dialog.Clean(DialogIds.EnableTimerOnAreaComplete),
-                    CreateEnumerableOptions<SpeedrunType>(), ModSettings.AreaCompleteEnableTimerType).Change(value => {
+            subMenu.Add(new EnumerableSliderCompact<SpeedrunType>(Dialog.Clean(DialogIds.EnableTimerOnAreaComplete),
+                CreateEnumerableOptions<SpeedrunType>(), ModSettings.AreaCompleteEnableTimerType).Change(value => {
                     ModSettings.AreaCompleteEnableTimerType = value;
                 }));
 
-                subMenu.Add(
-                    new TextMenu.OnOff(Dialog.Clean(DialogIds.Hotkeys), ModSettings.Hotkeys).Change(b =>
-                        ModSettings.Hotkeys = b));
+            subMenu.Add(
+                new TextMenu.OnOff(Dialog.Clean(DialogIds.Hotkeys), ModSettings.Hotkeys).Change(b =>
+                    ModSettings.Hotkeys = b));
 
-                subMenu.Add(new TextMenu.Button(Dialog.Clean(DialogIds.HotkeysConfig)).Pressed(() => {
-                    // 修复：在 overworld 界面 hot reload 之后打开按键设置菜单游戏崩溃
-                    if (Engine.Scene.Tracker.Entities is { } entities) {
-                        Type type = typeof(HotkeyConfigUi);
-                        if (!entities.ContainsKey(type)) {
-                            entities[type] = new List<Entity>();
-                        }
+            subMenu.Add(new TextMenu.Button(Dialog.Clean(DialogIds.HotkeysConfig)).Pressed(() => {
+                // 修复：在 overworld 界面 hot reload 之后打开按键设置菜单游戏崩溃
+                if (Engine.Scene.Tracker.Entities is { } entities) {
+                    Type type = typeof(HotkeyConfigUi);
+                    if (!entities.ContainsKey(type)) {
+                        entities[type] = new List<Entity>();
                     }
+                }
 
-                    subMenu.Focused = false;
-                    HotkeyConfigUi hotkeyConfigUi = new() {OnClose = () => subMenu.Focused = true};
-                    Engine.Scene.Add(hotkeyConfigUi);
-                    Engine.Scene.OnEndOfFrame += () => Engine.Scene.Entities.UpdateLists();
-                }));
-            }),
-        };
+                subMenu.Focused = false;
+                HotkeyConfigUi hotkeyConfigUi = new() { OnClose = () => subMenu.Focused = true };
+                Engine.Scene.Add(hotkeyConfigUi);
+                Engine.Scene.OnEndOfFrame += () => Engine.Scene.Entities.UpdateLists();
+            }));
+        });
     }
 }
 

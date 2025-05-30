@@ -183,6 +183,10 @@ public class HotkeyConfigUi : TextMenu {
             return;
         }
 
+        if (MainThreadHelper.IsMainThread && AssetReloadHelper.IsReloading) {
+            return;
+        }
+
         Hotkeys_Rebase.Update();
 
         if (TasUtils.Running) {

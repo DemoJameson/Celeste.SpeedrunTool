@@ -1,6 +1,6 @@
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
-internal class AssetReloadHelper {
-
+internal static class OnAssetReload {
+    
     [Initialize]
     private static void Initialize() {
         Everest.Events.AssetReload.OnBeforeReload += _ => {

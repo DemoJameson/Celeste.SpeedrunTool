@@ -93,15 +93,10 @@ internal static class SaveSlotsManager {
         StateManagerInstance.ClearStateImpl();
     }
 
-    public static void ClearStateAndShowMessage() {
-        StateManagerInstance.ClearStateAndShowMessage();
-    }
-
     public static void ClearAll() {
         foreach (SaveSlot slot in Dictionary.Values) {
             slot.StateManager.ClearStateImpl();
         }
-        PopupMessageUtils.Show(DialogIds.ClearAllToolTip.DialogClean(), DialogIds.ClearAllDialog);
     }
 
     /// <summary>
@@ -128,26 +123,6 @@ internal static class SaveSlotsManager {
             slot.All.Clear();
         }
     }
-
-    [Load]
-    private static void RegisterHotkeys() {
-        Hotkey.SaveSlot1.RegisterPressedAction(_ => SwitchSlotAndShowMessage(1));
-        Hotkey.SaveSlot2.RegisterPressedAction(_ => SwitchSlotAndShowMessage(2));
-        Hotkey.SaveSlot3.RegisterPressedAction(_ => SwitchSlotAndShowMessage(3));
-        Hotkey.SaveSlot4.RegisterPressedAction(_ => SwitchSlotAndShowMessage(4));
-        Hotkey.SaveSlot5.RegisterPressedAction(_ => SwitchSlotAndShowMessage(5));
-        Hotkey.SaveSlot6.RegisterPressedAction(_ => SwitchSlotAndShowMessage(6));
-        Hotkey.SaveSlot7.RegisterPressedAction(_ => SwitchSlotAndShowMessage(7));
-        Hotkey.SaveSlot8.RegisterPressedAction(_ => SwitchSlotAndShowMessage(8));
-        Hotkey.SaveSlot9.RegisterPressedAction(_ => SwitchSlotAndShowMessage(9));
-    }
-
-    private static void SwitchSlotAndShowMessage(int index) {
-        if (SwitchSlot(index)) {
-            PopupMessageUtils.Show($"Switch to {SlotName}", null);
-        }
-    }
-
     internal static void AfterAssetReload() {
         Dictionary = new Dictionary<string, SaveSlot>();
         SwitchSlot(1);

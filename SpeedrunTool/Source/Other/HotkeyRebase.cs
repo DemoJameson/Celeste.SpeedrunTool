@@ -82,7 +82,7 @@ internal static class Hotkeys_Rebase {
         } else {
             updateKey = updateButton = false;
         }
-        foreach (var hotkey in HotkeyConfigUi.HotkeyConfigs.Values) {
+        foreach (HotkeyConfig hotkey in HotkeyConfigUi.HotkeyConfigs.Values) {
             hotkey.Hotkey_Impl.Update(updateKey, updateButton);
         }
 

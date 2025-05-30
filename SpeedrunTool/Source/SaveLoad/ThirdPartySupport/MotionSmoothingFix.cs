@@ -3,8 +3,10 @@ using Celeste.Mod.SpeedrunTool.Utils;
 using Mono.Cecil.Cil;
 using System.Reflection;
 
-namespace Celeste.Mod.SpeedrunTool.TestTool;
+namespace Celeste.Mod.SpeedrunTool.SaveLoad.ThirdPartySupport;
 internal static class MotionSmoothingFix {
+
+    internal static bool MotionSmoothingInstalled = false;
 
     private static object handler;
 
@@ -21,9 +23,10 @@ internal static class MotionSmoothingFix {
                 ?.GetMethodInfo("Load") is { } load
             ) {
 
+            MotionSmoothingInstalled = true;
             handler = motionSmoothHandler;
             method = smoothAll;
-             
+
             // the original one is a method call of a singleton, which may be wrong after deepclone?
             // (note save load actions are deepcloned to each save slot)
             SaveLoadAction.SafeAdd(

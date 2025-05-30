@@ -78,6 +78,7 @@ public sealed class StateManager {
 
     #region Hook
 
+    // manually call this to ensure it's 
     internal static void Load() {
         On.Monocle.Scene.BeforeUpdate += SceneOnBeforeUpdate;
         On.Celeste.Level.Update += UpdateBackdropWhenWaiting;
@@ -88,7 +89,6 @@ public sealed class StateManager {
             (_, _) => Instance.UpdateLastChecks(),
             () => Instance.lastChecks.Clear()
         );
-        RegisterHotkeys();
     }
 
     internal static void Unload() {
@@ -98,48 +98,6 @@ public sealed class StateManager {
         On.Celeste.PlayerDeadBody.End -= AutoLoadStateWhenDeath;
     }
 
-    private static void RegisterHotkeys() {
-        Hotkey.SaveState.RegisterPressedAction(scene => {
-            if (scene is Level) {
-#if DEBUG
-                JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();
-                SaveSlotsManager.SaveState();
-                JetBrains.Profiler.Api.MeasureProfiler.SaveData();
-#else
-                SaveSlotsManager.SaveState();
-#endif
-            }
-        });
-        Hotkey.LoadState.RegisterPressedAction(scene => {
-            if (scene is Level { Paused: false } && SaveSlotsManager.IsAllFree()) {
-                if (SaveSlotsManager.IsSaved()) {
-                    SaveSlotsManager.LoadState();
-                } else {
-                    PopupMessageUtils.Show(DialogIds.NotSavedStateTooltip.DialogClean(), DialogIds.NotSavedStateYetDialog);
-                }
-            }
-        });
-        Hotkey.ClearState.RegisterPressedAction(scene => {
-            if (scene is Level { Paused: false } && SaveSlotsManager.IsAllFree()) {
-                SaveSlotsManager.ClearStateAndShowMessage();
-            }
-        });
-
-        Hotkey.ClearAllState.RegisterPressedAction(scene => {
-            if (scene is Level { Paused: false } && SaveSlotsManager.IsAllFree()) {
-                SaveSlotsManager.ClearAll();
-            }
-        });
-
-        Hotkey.SwitchAutoLoadState.RegisterPressedAction(scene => {
-            if (scene is Level { Paused: false }) {
-                ModSettings.AutoLoadStateAfterDeath = !ModSettings.AutoLoadStateAfterDeath;
-                SpeedrunToolModule.Instance.SaveSettings();
-                string state = (ModSettings.AutoLoadStateAfterDeath ? DialogIds.On : DialogIds.Off).DialogClean();
-                PopupMessageUtils.ShowOptionState(DialogIds.AutoLoadStateAfterDeath.DialogClean(), state);
-            }
-        });
-    }
 
     private void UpdateLastChecks() {
         if (ModSettings.FreezeAfterLoadStateType != FreezeAfterLoadStateType.IgnoreHoldingKeys) {
@@ -180,6 +138,7 @@ public sealed class StateManager {
         orig(self);
     }
 
+    // this makes game freeze after save / load
     private static void UpdateBackdropWhenWaiting(On.Celeste.Level.orig_Update orig, Level level) {
         if (Instance.State != State.None) {
             level.Wipe?.Update(level);
@@ -507,7 +466,6 @@ public sealed class StateManager {
 
     public void ClearStateAndShowMessage() {
         ClearStateImpl();
-        PopupMessageUtils.Show(DialogIds.ClearStateToolTip.DialogClean(), DialogIds.ClearStateDialog);
     }
 
     private void PreCloneSavedEntities() {

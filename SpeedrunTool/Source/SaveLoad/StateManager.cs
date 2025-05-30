@@ -21,6 +21,11 @@ public sealed class StateManager {
         () => ModUtils.GetType("CollabUtils2", "Celeste.Mod.CollabUtils2.UI.InGameOverworldHelper")?.GetPropertyInfo("IsOpen")
     );
 
+    private static readonly Lazy<FieldInfo> CycleGroupCounter = new(
+        () => ModUtils.GetType("CelesteTAS", "TAS.EverestInterop.Hitboxes.CycleHitboxColor")?.GetFieldInfo("GroupCounter")
+    );
+
+
     private readonly Dictionary<VirtualInput, bool> lastChecks = new();
 
     private readonly List<VirtualInput> unfreezeInputs = new();
@@ -64,6 +69,7 @@ public sealed class StateManager {
     private Task<DeepCloneState> preCloneTask;
     private FreezeType freezeType;
     private Process celesteProcess;
+    private object savedTasCycleGroupCounter;
     public string SlotName;
 
     private enum FreezeType {
@@ -269,6 +275,7 @@ public sealed class StateManager {
         SaveLoadAction.OnBeforeSaveState(level);
         level.DeepCloneToShared(savedLevel = (Level)FormatterServices.GetUninitializedObject(typeof(Level)));
         savedSaveData = SaveData.Instance.DeepCloneShared();
+        savedTasCycleGroupCounter = CycleGroupCounter.Value?.GetValue(null);
         SaveLoadAction.OnSaveState(level);
         DeepClonerUtils.ClearSharedDeepCloneState();
         PreCloneSavedEntities();
@@ -438,6 +445,7 @@ public sealed class StateManager {
     private void RestoreLevelTime(Level level) {
         level.TimeActive = savedLevel.TimeActive;
         level.RawTimeActive = savedLevel.RawTimeActive;
+        CycleGroupCounter.Value?.SetValue(null, savedTasCycleGroupCounter);
     }
 
     // 收集需要继续播放的声音

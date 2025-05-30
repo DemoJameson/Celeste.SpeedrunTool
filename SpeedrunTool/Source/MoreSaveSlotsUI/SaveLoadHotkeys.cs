@@ -1,7 +1,8 @@
 using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
+using Celeste.Mod.SpeedrunTool.SaveLoad;
 
-namespace Celeste.Mod.SpeedrunTool.SaveLoad;
+namespace Celeste.Mod.SpeedrunTool.MoreSaveSlotsUI;
 internal static class SaveLoadHotkeys {
 
     public static string SlotName => SaveSlotsManager.SlotName;
@@ -15,7 +16,7 @@ internal static class SaveLoadHotkeys {
                 SaveSlotsManager.SaveState();
                 JetBrains.Profiler.Api.MeasureProfiler.SaveData();
 #else
-                if (SaveSlotsManager.SaveState()){
+                if (SaveSlotsManager.SaveState()) {
                     PopupMessageUtils.Show($"Save to [{SlotName}]", null);
                 } else {
                     PopupMessageUtils.Show("Failed to Save: SpeedrunTool is Busy!", null);
@@ -24,7 +25,7 @@ internal static class SaveLoadHotkeys {
             }
         });
         Hotkey.LoadState.RegisterPressedAction(scene => {
-            if (scene is Level { Paused: false } && SaveSlotsManager.IsAllFree()) {
+            if (scene is Level { Paused: false }) {
                 if (SaveSlotsManager.IsSaved()) {
                     if (SaveSlotsManager.LoadState()) {
                         PopupMessageUtils.Show($"Load from [{SlotName}]", null);

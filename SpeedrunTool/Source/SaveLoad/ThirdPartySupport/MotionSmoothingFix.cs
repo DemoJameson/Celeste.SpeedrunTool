@@ -1,4 +1,3 @@
-using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Celeste.Mod.SpeedrunTool.Utils;
 using Mono.Cecil.Cil;
 using System.Reflection;

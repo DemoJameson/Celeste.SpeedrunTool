@@ -66,7 +66,7 @@ public static class SpeedrunToolMenu {
         options.Add(CreateState(menu));
         options.Add(CreateDeathStatistics());
         options.Add(CreateMoreOptions());
-}
+    }
 
     private static EaseInSubMenu CreateMotionSmoothing() {
         return new EaseInSubMenu(Dialog.Clean(DialogIds.ConflictWithMotionSmoothing), false);

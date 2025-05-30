@@ -445,6 +445,9 @@ public sealed class StateManager {
     private void RestoreLevelTime(Level level) {
         level.TimeActive = savedLevel.TimeActive;
         level.RawTimeActive = savedLevel.RawTimeActive;
+    }
+
+    private void RestoreCycleGroupCounter() {
         CycleGroupCounter.Value?.SetValue(null, savedTasCycleGroupCounter);
     }
 
@@ -555,6 +558,9 @@ public sealed class StateManager {
         } else {
             LoadStateComplete(level);
         }
+
+        // when freeze by SRT, the CycleGroupCounter still updates, so we restore it when out of freeze
+        RestoreCycleGroupCounter();
 
         freezeType = FreezeType.None;
     }

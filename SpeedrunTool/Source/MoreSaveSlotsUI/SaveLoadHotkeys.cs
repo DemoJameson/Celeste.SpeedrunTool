@@ -4,7 +4,7 @@ using Celeste.Mod.SpeedrunTool.SaveLoad;
 
 namespace Celeste.Mod.SpeedrunTool.MoreSaveSlotsUI;
 internal static class SaveLoadHotkeys {
-
+    
     public static string SlotName => SaveSlotsManager.SlotName;
 
     [Load]

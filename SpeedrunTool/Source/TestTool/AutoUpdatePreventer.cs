@@ -1,7 +1,3 @@
-using Celeste.Mod.SpeedrunTool.Utils;
-using System.Collections.Generic;
-using System.Linq;
-
 namespace Celeste.Mod.SpeedrunTool.TestTool;
 internal class AutoUpdatePreventer {
 

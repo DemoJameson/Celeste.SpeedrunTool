@@ -1,3 +1,4 @@
+
 namespace Celeste.Mod.SpeedrunTool.RoomTimer;
 
 internal static class TimeSpanFix {

@@ -23,7 +23,7 @@ internal static class MotionSmoothingFix {
 
             handler = motionSmoothHandler;
             method = smoothAll;
-
+             
             // the original one is a method call of a singleton, which may be wrong after deepclone?
             // (note save load actions are deepcloned to each save slot)
             SaveLoadAction.SafeAdd(

@@ -105,6 +105,9 @@ internal static class SwitchAndSaveLoad {
         if (result == Results.Busy) {
             PopupMessageUtils.Show("Failed to Load: SpeedrunTool is Busy!", null);
         } else if (result == Results.Fail) {
+            if (PeriodicTableOfSlots.CurrentSlotIndex < 0) {
+                SaveSlotsManager.SwitchSlot(1);
+            }
             PopupMessageUtils.Show(DialogIds.NotSavedStateTooltip.DialogClean() + $" [{SlotName}]", null);
         }
 

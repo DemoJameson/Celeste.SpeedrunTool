@@ -95,6 +95,10 @@ public class SpeedrunToolSettings : EverestModuleSettings {
 
     public List<Keys> KeyboardSaveSlot9 { get; set; } = Hotkey.SaveSlot9.GetDefaultKeys();
 
+    public List<Keys> KeyboardSwitchToNextSlot { get; set; } = Hotkey.SwitchToNextSlot.GetDefaultKeys();
+
+    public List<Keys> KeyboardSwitchToPreviousSlot { get; set; } = Hotkey.SwitchToPreviousSlot.GetDefaultKeys();
+
     public List<Keys> KeyboardSaveToNextSlot { get; set; } = Hotkey.SaveToNextSlot.GetDefaultKeys();
 
     public List<Keys> KeyboardLoadFromLastSlot { get; set; } = Hotkey.LoadFromLastSlot.GetDefaultKeys();
@@ -138,10 +142,14 @@ public class SpeedrunToolSettings : EverestModuleSettings {
 
     public List<Buttons> ControllerSaveSlot9 { get; set; } = new List<Buttons>();
 
+    public List<Buttons> ControllerSwitchToNextSlot { get; set; } = new List<Buttons>();
+
+    public List<Buttons> ControllerSwitchToPreviousSlot { get; set; } = new List<Buttons>();
 
     public List<Buttons> ControllerSaveToNextSlot { get; set; } = new List<Buttons>();
 
     public List<Buttons> ControllerLoadFromLastSlot { get; set; } = new List<Buttons>();
+
 
     #endregion HotkeyConfig
 }

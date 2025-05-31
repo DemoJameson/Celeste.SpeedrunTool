@@ -1,16 +1,11 @@
 using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
-using System.Collections.Generic;
 
 namespace Celeste.Mod.SpeedrunTool.MoreSaveSlotsUI;
 internal static class SwitchAndSaveLoad {
 
-    private static int currentSlot = 1;
-
-    private static readonly Dictionary<string, int> ReverseDictionary = new Dictionary<string, int>();
-
-    public static int SlotsCount = 10;
+    private static int SlotsCount => PeriodicTableOfSlots.RegularSlotsCount;
 
     private enum SlotState { Any, Saved, NotSaved };
 
@@ -29,9 +24,6 @@ internal static class SwitchAndSaveLoad {
                 LoadFromLastAvailableSlot();
             }
         });
-        for (int i = 1; i <= SlotsCount; i++) {
-            ReverseDictionary.Add(SaveSlotsManager.GetSlotName(i), i);
-        }
     }
 
     // if state = any, then naive move left / right by 1 unit
@@ -42,36 +34,23 @@ internal static class SwitchAndSaveLoad {
             return Results.Busy;
         }
 
-        // slot may have been changed by other hotkeys
-        if (ReverseDictionary.TryGetValue(SaveSlotsManager.SlotName, out int num)) {
-            currentSlot = num;
-        } else {
-            // stick to last value, which should be a legal one
+        int currentSlot = PeriodicTableOfSlots.CurrentSlotIndex;
+        if (currentSlot < 0) {
+            currentSlot = state == SlotState.Saved ? ModuloAdd(1, -dir) : 1;
         }
 
         int stepCount = 0;
-        int orig = currentSlot;
 
         switch (state) {
             case SlotState.Any: {
                 currentSlot = ModuloAdd(currentSlot, dir);
-                if (SaveSlotsManager.SwitchSlot(currentSlot)) {
-                    return Results.Success;
-                } else {
-                    currentSlot = orig;
-                    return Results.Busy;
-                }
+                return SaveSlotsManager.SwitchSlot(currentSlot) ? Results.Success : Results.Busy;
             }
             case SlotState.Saved: {
                 do {
                     currentSlot = ModuloAdd(currentSlot, dir);
                     if (SaveSlotsManager.IsSaved(currentSlot)) {
-                        if (SaveSlotsManager.SwitchSlot(currentSlot)) {
-                            return Results.Success;
-                        } else {
-                            currentSlot = orig;
-                            return Results.Busy;
-                        }
+                        return SaveSlotsManager.SwitchSlot(currentSlot) ? Results.Success : Results.Busy;
                     }
                     stepCount++;
                 } while (stepCount < SlotsCount);
@@ -80,59 +59,31 @@ internal static class SwitchAndSaveLoad {
             case SlotState.NotSaved: {
                 do {
                     if (!SaveSlotsManager.IsSaved(currentSlot)) {
-                        if (SaveSlotsManager.SwitchSlot(currentSlot)) {
-                            return Results.Success; // find an empty slot
-                        } else {
-                            currentSlot = orig;
-                            return Results.Busy;
-                        }
+                        // find an empty slot
+                        return SaveSlotsManager.SwitchSlot(currentSlot) ? Results.Success : Results.Busy;
                     }
                     currentSlot = ModuloAdd(currentSlot, dir);
                     stepCount++;
                 } while (stepCount < SlotsCount);
 
                 currentSlot = ModuloAdd(currentSlot, dir);
-                if (SaveSlotsManager.SwitchSlot(currentSlot)) {
-                    return Results.Success; // overwrite it
-                } else {
-                    currentSlot = orig;
-                    return Results.Busy;
-                }
+                // overwrite it
+                return SaveSlotsManager.SwitchSlot(currentSlot) ? Results.Success : Results.Busy;
             }
             default:
                 return Results.Busy;
         }
     }
-
-    private static int ModuloAdd(int num, int dir) {
-        // assume 1 <= a <= SlotsCount, and dir = plus minus 1
-        if (dir == 1) {
-            if (num < SlotsCount) {
-                num++;
-            } else {
-                num = 1;
-            }
-        } else {
-            if (num > 1) {
-                num--;
-            } else {
-                num = SlotsCount;
-            }
-        }
-        return num;
-    }
+    private static int ModuloAdd(int num, int dir) => PeriodicTableOfSlots.ModuloAdd(num, dir);
 
     private static void SaveToNextAvailableSlot() {
-        int orig = currentSlot;
         bool allow = StateManager.AllowSaveLoadWhenWaiting;
         StateManager.AllowSaveLoadWhenWaiting = true;
 
         Results result = SwitchToNextAvailableSlot(1, SlotState.NotSaved);
         if (result == Results.Success && SaveSlotsManager.SaveState()) {
             PopupMessageUtils.Show($"Save to [{SlotName}]", null);
-            return;
         } else {
-            currentSlot = orig;
             PopupMessageUtils.Show("Failed to Save: SpeedrunTool is Busy!", null);
         }
 
@@ -140,7 +91,6 @@ internal static class SwitchAndSaveLoad {
     }
 
     private static void LoadFromLastAvailableSlot() {
-        int orig = currentSlot;
         bool allow = StateManager.AllowSaveLoadWhenWaiting;
         StateManager.AllowSaveLoadWhenWaiting = true;
 
@@ -154,10 +104,8 @@ internal static class SwitchAndSaveLoad {
         }
         if (result == Results.Busy) {
             PopupMessageUtils.Show("Failed to Load: SpeedrunTool is Busy!", null);
-            currentSlot = orig;
         } else if (result == Results.Fail) {
             PopupMessageUtils.Show(DialogIds.NotSavedStateTooltip.DialogClean() + $" [{SlotName}]", null);
-            currentSlot = orig;
         }
 
         StateManager.AllowSaveLoadWhenWaiting = allow;

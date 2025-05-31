@@ -65,6 +65,8 @@ public class HotkeyConfigUi : TextMenu {
         Keys.F5,
     };
 
+    // this determines hotkey's order in settings
+
     public static readonly Dictionary<Hotkey, HotkeyConfig> HotkeyConfigs = new List<HotkeyConfig> {
         new(Hotkey.ToggleHotkeys),
         new(Hotkey.SaveState, Keys.F7),
@@ -94,6 +96,8 @@ public class HotkeyConfigUi : TextMenu {
         new(Hotkey.SaveSlot7, Keys.LeftControl, Keys.D7),
         new(Hotkey.SaveSlot8, Keys.LeftControl, Keys.D8),
         new(Hotkey.SaveSlot9, Keys.LeftControl, Keys.D9),
+        new(Hotkey.SwitchToNextSlot),
+        new(Hotkey.SwitchToPreviousSlot),
         new(Hotkey.SaveToNextSlot),
         new(Hotkey.LoadFromLastSlot),
     }.ToDictionary(info => info.Hotkey, info => info);
@@ -505,7 +509,9 @@ public enum Hotkey {
     SaveSlot9,
     ClearAllState,
     SaveToNextSlot,
-    LoadFromLastSlot
+    LoadFromLastSlot,
+    SwitchToNextSlot,
+    SwitchToPreviousSlot,
 }
 
 internal static class HotkeysExtensions {

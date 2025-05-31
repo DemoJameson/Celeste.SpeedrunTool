@@ -119,6 +119,8 @@ SPEEDRUN_TOOL_SAVESLOT8=                     Save Slot 8
 SPEEDRUN_TOOL_SAVESLOT9=                     Save Slot 9
 SPEEDRUN_TOOL_SAVE_TO_NEXT_SLOT=             Save to Next Available Slot
 SPEEDRUN_TOOL_LOAD_FROM_LAST_SLOT=           Load from Last Available Slot
+SPEEDRUN_TOOL_SWItCH_TO_NEXT_SLOT=           Switch to Next Slot
+SPEEDRUN_TOOL_SWITCH_TO_PREVIOUS_SLOT=       Switch to Previous Slot
 
 # ================================== Death Statistics ==================================
 SPEEDRUN_TOOL_DEATH_STATISTICS=              Death Statistics

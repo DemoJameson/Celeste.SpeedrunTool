@@ -69,6 +69,8 @@ internal static class SaveLoadHotkeys {
         Hotkey.SaveSlot7.RegisterPressedAction(_ => SwitchSlotAndShowMessage(7));
         Hotkey.SaveSlot8.RegisterPressedAction(_ => SwitchSlotAndShowMessage(8));
         Hotkey.SaveSlot9.RegisterPressedAction(_ => SwitchSlotAndShowMessage(9));
+        Hotkey.SwitchToNextSlot.RegisterPressedAction(_ => SwitchSlotTowards(1));
+        Hotkey.SwitchToPreviousSlot.RegisterPressedAction(_ => SwitchSlotTowards(-1));
     }
 
     private static void SwitchSlotAndShowMessage(int index) {
@@ -77,5 +79,16 @@ internal static class SaveLoadHotkeys {
         } else {
             PopupMessageUtils.Show($"Failed to switch to [{SlotName}]: SpeedrunTool is Busy!", null);
         }
+    }
+
+    private static void SwitchSlotTowards(int dir) {
+        int index = PeriodicTableOfSlots.CurrentSlotIndex;
+        if (index < 0) {
+            index = 1;
+        }
+        else {
+            index = PeriodicTableOfSlots.ModuloAdd(index, dir);
+        }
+        SwitchSlotAndShowMessage(index);
     }
 }

@@ -4,7 +4,7 @@ using Celeste.Mod.SpeedrunTool.SaveLoad;
 
 namespace Celeste.Mod.SpeedrunTool.MoreSaveSlotsUI;
 internal static class SaveLoadHotkeys {
-    
+
     public static string SlotName => SaveSlotsManager.SlotName;
 
     public static bool SaveLoadStateShowMessage => !ModSettings.NoMessageAfterSaveLoad;
@@ -22,14 +22,15 @@ internal static class SaveLoadHotkeys {
                 if (SaveLoadStateShowMessage) {
                     if (SaveSlotsManager.SaveState()) {
                         PopupMessageUtils.Show($"Save to [{SlotName}]", null);
-                    } else {
+                    }
+                    else {
                         PopupMessageUtils.Show("Failed to Save: SpeedrunTool is Busy!", null);
                     }
                 }
                 else {
                     SaveSlotsManager.SaveState();
                 }
-                
+
 #endif
             }
         });
@@ -39,14 +40,16 @@ internal static class SaveLoadHotkeys {
                     if (SaveLoadStateShowMessage) {
                         if (SaveSlotsManager.LoadState()) {
                             PopupMessageUtils.Show($"Load from [{SlotName}]", null);
-                        } else {
+                        }
+                        else {
                             PopupMessageUtils.Show("Failed to Load: SpeedrunTool is Busy!", null);
                         }
                     }
                     else {
                         SaveSlotsManager.LoadState();
                     }
-                } else {
+                }
+                else {
                     PopupMessageUtils.Show(DialogIds.NotSavedStateTooltip.DialogClean() + $" [{SlotName}]", DialogIds.NotSavedStateYetDialog);
                 }
             }
@@ -90,7 +93,8 @@ internal static class SaveLoadHotkeys {
     private static void SwitchSlotAndShowMessage(int index) {
         if (SaveSlotsManager.SwitchSlot(index)) {
             PopupMessageUtils.Show($"Switch to [{SlotName}]", null);
-        } else {
+        }
+        else {
             PopupMessageUtils.Show($"Failed to switch to [{SlotName}]: SpeedrunTool is Busy!", null);
         }
     }

@@ -38,6 +38,8 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public bool SaveTimeAndDeaths { get; set; } = false;
     public bool SaveExtendedVariants { get; set; } = true;
 
+    public bool NoMessageAfterSaveLoad { get; set; } = false;
+
     #endregion
 
     #region DeathStatistics

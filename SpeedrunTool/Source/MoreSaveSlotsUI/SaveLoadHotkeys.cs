@@ -7,6 +7,9 @@ internal static class SaveLoadHotkeys {
     
     public static string SlotName => SaveSlotsManager.SlotName;
 
+    public static bool SaveLoadStateShowMessage => !ModSettings.NoMessageAfterSaveLoad;
+    // if false, make it behave like v3.24.5
+
     [Load]
     private static void RegisterHotkeys() {
         Hotkey.SaveState.RegisterPressedAction(scene => {
@@ -16,21 +19,32 @@ internal static class SaveLoadHotkeys {
                 SaveSlotsManager.SaveState();
                 JetBrains.Profiler.Api.MeasureProfiler.SaveData();
 #else
-                if (SaveSlotsManager.SaveState()) {
-                    PopupMessageUtils.Show($"Save to [{SlotName}]", null);
-                } else {
-                    PopupMessageUtils.Show("Failed to Save: SpeedrunTool is Busy!", null);
+                if (SaveLoadStateShowMessage) {
+                    if (SaveSlotsManager.SaveState()) {
+                        PopupMessageUtils.Show($"Save to [{SlotName}]", null);
+                    } else {
+                        PopupMessageUtils.Show("Failed to Save: SpeedrunTool is Busy!", null);
+                    }
                 }
+                else {
+                    SaveSlotsManager.SaveState();
+                }
+                
 #endif
             }
         });
         Hotkey.LoadState.RegisterPressedAction(scene => {
             if (scene is Level { Paused: false }) {
                 if (SaveSlotsManager.IsSaved()) {
-                    if (SaveSlotsManager.LoadState()) {
-                        PopupMessageUtils.Show($"Load from [{SlotName}]", null);
-                    } else {
-                        PopupMessageUtils.Show("Failed to Load: SpeedrunTool is Busy!", null);
+                    if (SaveLoadStateShowMessage) {
+                        if (SaveSlotsManager.LoadState()) {
+                            PopupMessageUtils.Show($"Load from [{SlotName}]", null);
+                        } else {
+                            PopupMessageUtils.Show("Failed to Load: SpeedrunTool is Busy!", null);
+                        }
+                    }
+                    else {
+                        SaveSlotsManager.LoadState();
                     }
                 } else {
                     PopupMessageUtils.Show(DialogIds.NotSavedStateTooltip.DialogClean() + $" [{SlotName}]", DialogIds.NotSavedStateYetDialog);

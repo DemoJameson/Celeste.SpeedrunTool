@@ -161,6 +161,3 @@ SPEEDRUN_TOOL_CLIPBOARD=                           剪贴板
 SPEEDRUN_TOOL_HOTKEYS=                             快捷键
 SPEEDRUN_TOOL_HOTKEYS_CONFIG=                      快捷键设置
 SPEEDRUN_TOOL_UNLOCK_CAMERA=                       解锁镜头
-
-# ================================== Other ==================================
-SPEEDRUN_TOOL_NO_MOTION_SMOOTHING=                 警告: 与 MotionSmoothing 不兼容!

@@ -58,18 +58,12 @@ public static class SpeedrunToolMenu {
     }
 
     private static void CreateOptions(TextMenu menu, bool inGame) {
-        options = new List<EaseInSubMenu> { };
-        if (SaveLoad.ThirdPartySupport.MotionSmoothingFix.MotionSmoothingInstalled) {
-            options.Add(CreateMotionSmoothing());
-        }
-        options.Add(CreateRoomTimer());
-        options.Add(CreateState(menu));
-        options.Add(CreateDeathStatistics());
-        options.Add(CreateMoreOptions());
-    }
-
-    private static EaseInSubMenu CreateMotionSmoothing() {
-        return new EaseInSubMenu(Dialog.Clean(DialogIds.ConflictWithMotionSmoothing), false);
+        options = [
+            CreateRoomTimer(),
+            CreateState(menu),
+            CreateDeathStatistics(),
+            CreateMoreOptions(),
+        ];
     }
 
     private static EaseInSubMenu CreateRoomTimer() {

@@ -151,7 +151,4 @@ public static class DialogIds {
     public const string Hotkeys = "SPEEDRUN_TOOL_HOTKEYS";
     public const string HotkeysConfig = "SPEEDRUN_TOOL_HOTKEYS_CONFIG";
     public const string UnlockCamera = "SPEEDRUN_TOOL_UNLOCK_CAMERA";
-
-    // Other
-    public const string ConflictWithMotionSmoothing = "SPEEDRUN_TOOL_NO_MOTION_SMOOTHING";
 }

@@ -1,5 +1,4 @@
 using Celeste.Mod.SpeedrunTool.Utils;
-using System.Collections.Generic;
 using System.Reflection;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.ThirdPartySupport;

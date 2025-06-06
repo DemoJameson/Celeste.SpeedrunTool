@@ -48,7 +48,8 @@ public static class TeleportRoomUtils {
                 if (TeleportToPreviousRoom(level) == false) {
                     PopupMessageUtils.Show(DialogIds.AlreadyFirstRoomTooltip.DialogClean(), DialogIds.AlreadyFirstRoomDialog);
                 }
-            } else if (scene is Emulator { gameActive: true, game: { } game }) {
+            }
+            else if (scene is Emulator { gameActive: true, game: { } game }) {
                 PreviousPico8Room(game);
             }
         });
@@ -58,7 +59,8 @@ public static class TeleportRoomUtils {
                 if (TeleportToNextRoom(level) == false) {
                     PopupMessageUtils.Show(DialogIds.AlreadyLastRoomTooltip.DialogClean(), DialogIds.AlreadyLastRoomDialog);
                 }
-            } else if (scene is Emulator { gameActive: true, game: { } game }) {
+            }
+            else if (scene is Emulator { gameActive: true, game: { } game }) {
                 NextPico8Room(game);
             }
         });
@@ -251,18 +253,22 @@ public static class TeleportRoomUtils {
 
         if (index == 0) {
             return false;
-        } else if (index == -1) {
+        }
+        else if (index == -1) {
             if (ModSettings.TeleportRoomCategory != TeleportRoomCategory.Default) {
                 var defaultLevelDataList = LevelDataReorderUtils.GetReorderedLevelDataList(level, TeleportRoomCategory.Default);
                 index = IndexOf(defaultLevelDataList, level);
                 if (index == 0) {
                     return false;
-                } else if (index > 0) {
+                }
+                else if (index > 0) {
                     levelDataList = defaultLevelDataList;
-                } else {
+                }
+                else {
                     index = 1;
                 }
-            } else {
+            }
+            else {
                 index = 1;
             }
         }
@@ -304,12 +310,14 @@ public static class TeleportRoomUtils {
 
         if (index == levelDataList.Count - 1) {
             return false;
-        } else if (index == -1 && ModSettings.TeleportRoomCategory != TeleportRoomCategory.Default) {
+        }
+        else if (index == -1 && ModSettings.TeleportRoomCategory != TeleportRoomCategory.Default) {
             var defaultLevelDataList = LevelDataReorderUtils.GetReorderedLevelDataList(level, TeleportRoomCategory.Default);
             index = IndexOf(defaultLevelDataList, level);
             if (index == defaultLevelDataList.Count - 1) {
                 return false;
-            } else if (index > 0) {
+            }
+            else if (index > 0) {
                 levelDataList = defaultLevelDataList;
             }
         }
@@ -365,7 +373,8 @@ public static class TeleportRoomUtils {
             SummitCheckpoint summitCheckpoint = null;
             if (next && flagList.LastOrDefault(checkpoint => checkpoint.Number < currentFlagNumber) is { } biggest) {
                 summitCheckpoint = biggest;
-            } else if (!next && flagList.FirstOrDefault(checkpoint => checkpoint.Number > currentFlagNumber) is { } smallest) {
+            }
+            else if (!next && flagList.FirstOrDefault(checkpoint => checkpoint.Number > currentFlagNumber) is { } smallest) {
                 summitCheckpoint = smallest;
             }
 

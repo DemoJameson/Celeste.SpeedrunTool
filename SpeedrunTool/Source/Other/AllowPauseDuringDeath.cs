@@ -41,7 +41,8 @@ public static class AllowPauseDuringDeath {
         if (Input.QuickRestart.Pressed) {
             Input.QuickRestart.ConsumeBuffer();
             level.Pause(0, minimal: false, quickReset: true);
-        } else if (Input.Pause.Pressed || Input.ESC.Pressed) {
+        }
+        else if (Input.Pause.Pressed || Input.ESC.Pressed) {
             Input.Pause.ConsumeBuffer();
             Input.ESC.ConsumeBuffer();
             level.Pause();

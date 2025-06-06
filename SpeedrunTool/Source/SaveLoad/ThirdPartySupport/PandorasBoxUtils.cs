@@ -15,7 +15,8 @@ internal static class PandorasBoxUtils {
                     if (timeFieldType.GetFieldValue<bool>("hookAdded")) {
                         On.Celeste.Player.Update -= hookUpdate;
                         On.Celeste.Player.Update += hookUpdate;
-                    } else {
+                    }
+                    else {
                         On.Celeste.Player.Update -= hookUpdate;
                     }
                 }

@@ -43,7 +43,8 @@ public class SpeedrunToolSaveData : EverestModuleSaveData {
                 foreach (string path in files.Skip(max)) {
                     File.Delete(path);
                 }
-            } else if (int.TryParse(directoryName, out _)) {
+            }
+            else if (int.TryParse(directoryName, out _)) {
                 Directory.Delete(directory, true);
             }
         }

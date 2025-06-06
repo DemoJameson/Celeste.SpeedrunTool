@@ -55,7 +55,8 @@ public class NonFrozenMiniTextbox : MiniTextbox {
     private static bool IsPlayAsBadeline() {
         if (Engine.Scene.GetPlayer() is { } player) {
             return player.Sprite.Mode == PlayerSpriteMode.MadelineAsBadeline;
-        } else {
+        }
+        else {
             return SaveData.Instance.Assists.PlayAsBadeline;
         }
     }
@@ -66,7 +67,8 @@ public class NonFrozenMiniTextbox : MiniTextbox {
         if (madelineDialog == null) {
             // 仅用于 NonFrozenMiniTextbox 父类构造函数中确定头像，具体显示内容以 message 为准
             return isBadeline ? DialogIds.ClearStateDialogBadeline : DialogIds.ClearStateDialog;
-        } else {
+        }
+        else {
             return isBadeline ? $"{madelineDialog}_BADELINE" : madelineDialog;
         }
     }

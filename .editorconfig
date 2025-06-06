@@ -158,9 +158,9 @@ resharper_xmldoc_max_line_length = 160
 resharper_xml_max_line_length = 160
 
 # Microsoft .NET properties
-csharp_new_line_before_catch = false
-csharp_new_line_before_else = false
-csharp_new_line_before_finally = false
+csharp_new_line_before_catch = true
+csharp_new_line_before_else = true
+csharp_new_line_before_finally = true
 csharp_new_line_before_members_in_object_initializers = false
 csharp_new_line_before_open_brace = none
 csharp_preferred_modifier_order = public, private, protected, internal, new, abstract, virtual, sealed, override, static, readonly, extern, unsafe, volatile, async:suggestion
@@ -336,3 +336,13 @@ indent_size = 2
 indent_style = space
 indent_size = 4
 tab_width = 4
+csharp_using_directive_placement = outside_namespace:silent
+csharp_style_expression_bodied_methods = false:silent
+csharp_style_expression_bodied_constructors = false:silent
+csharp_style_expression_bodied_properties = true:silent
+csharp_style_expression_bodied_accessors = true:silent
+csharp_style_expression_bodied_lambdas = true:silent
+csharp_style_expression_bodied_local_functions = false:silent
+csharp_prefer_simple_using_statement = true:suggestion
+csharp_space_around_binary_operators = before_and_after
+dotnet_style_operator_placement_when_wrapping = beginning_of_line

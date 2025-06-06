@@ -46,7 +46,8 @@ internal static class SaveSlotsManager {
         SlotName = name;
         if (Dictionary.TryGetValue(name, out SaveSlot slot)) {
             Slot = slot;
-        } else {
+        }
+        else {
             Slot = new SaveSlot(name);
             Dictionary.Add(name, Slot);
         }

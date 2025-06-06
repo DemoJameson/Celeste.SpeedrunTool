@@ -50,7 +50,8 @@ public static class DeathStatisticsManager {
         Hotkey.CheckDeathStatistics.RegisterPressedAction(scene => {
             if (scene.Tracker.GetEntity<DeathStatisticsUi>() is { } deathStatisticsUi) {
                 deathStatisticsUi.OnESC?.Invoke();
-            } else if (scene is Level { Paused: false } level && !level.IsPlayerDead()) {
+            }
+            else if (scene is Level { Paused: false } level && !level.IsPlayerDead()) {
                 level.Paused = true;
                 DeathStatisticsUi buttonConfigUi = new() {
                     OnClose = () => level.Paused = false
@@ -162,7 +163,8 @@ public static class DeathStatisticsManager {
             PlaybackData.Export(player.ChaserStates, filePath);
             currentDeathInfo.PlaybackStartPosition = player.ChaserStates[0].Position;
             currentDeathInfo.PlaybackFilePath = filePath;
-        } else {
+        }
+        else {
             currentDeathInfo.PlaybackStartPosition = default;
             currentDeathInfo.PlaybackFilePath = string.Empty;
         }
@@ -184,7 +186,8 @@ public static class DeathStatisticsManager {
             if (IsPlayback()) {
                 currentDeathInfo = null;
                 playbackDeathInfo = null;
-            } else {
+            }
+            else {
                 currentDeathInfo = new DeathInfo {
                     CauseOfDeath = GetCauseOfDeath(),
                     DeathPosition = self.Position
@@ -228,7 +231,8 @@ public static class DeathStatisticsManager {
         currentDeathInfo.CopyFromSession(level.Session);
         if (golden) {
             currentDeathInfo.LostTime = level.Session.Time;
-        } else {
+        }
+        else {
             currentDeathInfo.LostTime = SaveData.Instance.Time - lastTime;
         }
 
@@ -244,20 +248,26 @@ public static class DeathStatisticsManager {
 
         if (death == "Level") {
             death = "Fall";
-        } else if (death.Contains("DisplayClass")) {
+        }
+        else if (death.Contains("DisplayClass")) {
             death = "Retry";
-        } else if (death == "SpikeInfo") {
+        }
+        else if (death == "SpikeInfo") {
             death = "Trigger Spike";
-        } else if (death == "Player") {
+        }
+        else if (death == "Player") {
             death = deathMethod.Name;
             if (death == "OnSquish") {
                 death = "Crushed";
-            } else if (death == "DreamDashUpdate") {
+            }
+            else if (death == "DreamDashUpdate") {
                 death = "Dream Dash";
-            } else if (death == "BirdDashTutorialCoroutine") {
+            }
+            else if (death == "BirdDashTutorialCoroutine") {
                 death = "Bird Dash Tutorial";
             }
-        } else {
+        }
+        else {
             death = Regex.Replace(death, @"([a-z])([A-Z])", "$1 $2");
         }
 

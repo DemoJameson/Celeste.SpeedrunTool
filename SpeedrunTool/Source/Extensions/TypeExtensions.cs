@@ -121,7 +121,8 @@ internal static class TypeExtensions {
 
         if (genericTypeArguments.Length != 2) {
             return false;
-        } else {
+        }
+        else {
             foreach (Type @interface in type.GetInterfaces()) {
                 if (@interface.IsGenericType && @interface.GetGenericTypeDefinition() == typeof(IDictionary<,>)) {
                     keyType = genericTypeArguments[0];

@@ -190,12 +190,14 @@ public sealed class StateManager {
             level.OnEndOfFrame += () => {
                 if (Instance.IsSaved) {
                     Instance.LoadStateImpl(false);
-                } else {
+                }
+                else {
                     level.DoScreenWipe(wipeIn: false, self.DeathAction ?? level.Reload);
                 }
             };
             self.RemoveSelf();
-        } else {
+        }
+        else {
             orig(self);
         }
     }
@@ -236,11 +238,13 @@ public sealed class StateManager {
         PreCloneSavedEntities();
         if (tas) {
             State = State.None;
-        } else {
+        }
+        else {
             FreezeGame(FreezeType.Save);
             if (TasUtils.HideGamePlay) {
                 DoScreenWipe(level);
-            } else {
+            }
+            else {
                 level.Add(new WaitingEntity());
             }
         }
@@ -286,7 +290,8 @@ public sealed class StateManager {
 
         if (tas) {
             LoadStateComplete(level);
-        } else {
+        }
+        else {
             // restore cycle hitbox color
             RestoreLevelTime(level);
             FreezeGame(FreezeType.Load);
@@ -305,7 +310,8 @@ public sealed class StateManager {
 
         if (celesteProcess == null) {
             celesteProcess = Process.GetCurrentProcess();
-        } else {
+        }
+        else {
             celesteProcess.Refresh();
         }
 
@@ -333,7 +339,8 @@ public sealed class StateManager {
         foreach (Entity entity in entities.Distinct()) {
             try {
                 entity.Removed(level);
-            } catch (NullReferenceException) {
+            }
+            catch (NullReferenceException) {
                 // ignore https://discord.com/channels/403698615446536203/954507384183738438/954507384183738438
             }
         }
@@ -496,7 +503,8 @@ public sealed class StateManager {
         level.DoScreenWipe(true, () => {
             if (ModSettings.FreezeAfterLoadStateType != FreezeAfterLoadStateType.Off) {
                 State = State.Waiting;
-            } else {
+            }
+            else {
                 OutOfFreeze(level);
             }
         });
@@ -509,7 +517,8 @@ public sealed class StateManager {
             }
 
             State = State.None;
-        } else {
+        }
+        else {
             LoadStateComplete(level);
         }
 

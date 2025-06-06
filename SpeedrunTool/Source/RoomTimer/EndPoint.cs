@@ -48,7 +48,8 @@ public class EndPoint : Entity {
             foreach (EndPoint endPoint in CachedEndPoints) {
                 self.Add(endPoint);
             }
-        } else {
+        }
+        else {
             CachedEndPoints.Clear();
             cachedAreaKey = default;
             roomIdEndPoint = "";
@@ -250,7 +251,8 @@ public class EndPoint : Entity {
         PlayerSpriteMode mode;
         if (badeline) {
             mode = PlayerSpriteMode.Badeline;
-        } else {
+        }
+        else {
             bool backpack = player.SceneAs<Level>()?.Session.Inventory.Backpack ?? true;
             mode = backpack ? PlayerSpriteMode.Madeline : PlayerSpriteMode.MadelineNoBackpack;
         }
@@ -310,7 +312,8 @@ public class EndPoint : Entity {
                     hairColor = badeline ? Player.TwoDashesBadelineHairColor : Player.TwoDashesHairColor;
                     break;
             }
-        } else {
+        }
+        else {
             hairColor = StarFlyColor;
         }
 
@@ -370,7 +373,8 @@ public class EndPoint : Entity {
         get {
             if (Engine.Scene is Level level && level.Tracker.Entities.ContainsKey(typeof(EndPoint))) {
                 return level.Tracker.GetEntities<EndPoint>().Cast<EndPoint>().ToList();
-            } else {
+            }
+            else {
                 return EmptyList;
             }
         }
@@ -401,7 +405,8 @@ public class EndPoint : Entity {
             }
 
             CreateEndPoint(level, additional);
-        } else if (scene is MapEditor mapEditor) {
+        }
+        else if (scene is MapEditor mapEditor) {
             LevelTemplate levelTemplate = mapEditor.TestCheck(mapEditor.mousePosition);
             if (levelTemplate is not null && levelTemplate.Type is not LevelTemplateType.Filler) {
                 string lastRoomIdEndPoint = roomIdEndPoint;

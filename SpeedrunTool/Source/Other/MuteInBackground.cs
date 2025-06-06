@@ -62,7 +62,8 @@ public static class MuteInBackground {
     private static void WindowOnClientSizeChanged(object sender, EventArgs e) {
         if (Engine.Instance.Window.ClientBounds.Width == 0) {
             MuteAudio();
-        } else {
+        }
+        else {
             RestoreAudio();
         }
     }

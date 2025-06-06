@@ -61,7 +61,8 @@ internal static class Hotkeys_Rebase {
         // Prevent triggering hotkeys while writing text
         if (Engine.Commands.Open) {
             updateKey = false;
-        } else if (TextInput.Initialized && typeof(TextInput).GetFieldValue<Action<char>>("_OnInput") is { } inputEvent) {
+        }
+        else if (TextInput.Initialized && typeof(TextInput).GetFieldValue<Action<char>>("_OnInput") is { } inputEvent) {
             // ImGuiHelper is always subscribed, so ignore it
             updateKey &= inputEvent.GetInvocationList().All(d => d.Target?.GetType().FullName == "Celeste.Mod.ImGuiHelper.ImGuiRenderer+<>c");
         }
@@ -79,7 +80,8 @@ internal static class Hotkeys_Rebase {
                     updateButton = false;
                 }
             }
-        } else {
+        }
+        else {
             updateKey = updateButton = false;
         }
         foreach (HotkeyConfig hotkey in HotkeyConfigUi.HotkeyConfigs.Values) {
@@ -128,7 +130,8 @@ internal static class Hotkeys_Rebase {
                 if (!held) {
                     OverrideCheck = false;
                 }
-            } else {
+            }
+            else {
                 keyCheck = updateKey && IsKeyDown();
                 buttonCheck = updateButton && IsButtonDown();
             }
@@ -142,10 +145,12 @@ internal static class Hotkeys_Rebase {
 
                 Repeated = true;
                 repeatTimeout = now + TimeSpan.FromMilliseconds(RepeatTimeoutMS);
-            } else if (Check) {
+            }
+            else if (Check) {
                 DoublePressed = false;
                 Repeated = now >= repeatTimeout;
-            } else {
+            }
+            else {
                 DoublePressed = false;
                 Repeated = false;
                 repeatTimeout = default;

@@ -122,7 +122,8 @@ public static class DeepClonerUtils {
                     bool isMainThread = Thread.CurrentThread.IsMainThread();
                     if (StateManager.Instance.State == State.Saving && isMainThread) {
                         SaveLoadAction.ClonedEventInstancesWhenSave.Add(clonedEventInstance);
-                    } else if (!isMainThread) {
+                    }
+                    else if (!isMainThread) {
                         SaveLoadAction.ClonedEventInstancesWhenPreClone.Add(clonedEventInstance);
                     }
 
@@ -179,11 +180,13 @@ public static class DeepClonerUtils {
                     while (backupComponents.Count > 0) {
                         hashSet.Add(backupComponents.Pop());
                     }
-                } else if (clonedObj is VirtualAsset virtualAsset
+                }
+                else if (clonedObj is VirtualAsset virtualAsset
                            && (StateManager.Instance.State == State.Loading || !Thread.CurrentThread.IsMainThread())) {
                     // 预克隆的资源需要等待 LoadState 中移除实体之后才能判断是否需要 Reload，必须等待主线程中再操作
                     SaveLoadAction.VirtualAssets.Add(virtualAsset);
-                } else if (type.IsHashSet(out Type hashSetElementType) && !hashSetElementType.IsSimple()) {
+                }
+                else if (type.IsHashSet(out Type hashSetElementType) && !hashSetElementType.IsSimple()) {
                     IEnumerator enumerator = ((IEnumerable)clonedObj).GetEnumerator();
                     backupHashSet ??= new Stack<object>();
                     while (enumerator.MoveNext()) {
@@ -199,7 +202,8 @@ public static class DeepClonerUtils {
                             addDelegate.Invoke(clonedObj, backupHashSet.Pop());
                         }
                     }
-                } else if (type.IsIDictionary(out Type dictKeyType, out Type _) && !dictKeyType.IsSimple() &&
+                }
+                else if (type.IsIDictionary(out Type dictKeyType, out Type _) && !dictKeyType.IsSimple() &&
                            clonedObj is IDictionary { Count: > 0 } clonedDict) {
                     backupDict ??= new Dictionary<object, object>();
                     backupDict.SetRange(clonedDict);

@@ -83,7 +83,8 @@ internal static class SwitchAndSaveLoad {
         Results result = SwitchToNextAvailableSlot(1, SlotState.NotSaved);
         if (result == Results.Success && SaveSlotsManager.SaveState()) {
             PopupMessageUtils.Show($"Save to [{SlotName}]", null);
-        } else {
+        }
+        else {
             PopupMessageUtils.Show("Failed to Save: SpeedrunTool is Busy!", null);
         }
 
@@ -98,13 +99,15 @@ internal static class SwitchAndSaveLoad {
         if (result == Results.Success) {
             if (SaveSlotsManager.LoadState()) {
                 PopupMessageUtils.Show($"Load from [{SlotName}]", null);
-            } else {
+            }
+            else {
                 result = Results.Busy;
             }
         }
         if (result == Results.Busy) {
             PopupMessageUtils.Show("Failed to Load: SpeedrunTool is Busy!", null);
-        } else if (result == Results.Fail) {
+        }
+        else if (result == Results.Fail) {
             if (PeriodicTableOfSlots.CurrentSlotIndex < 0) {
                 SaveSlotsManager.SwitchSlot(1);
             }

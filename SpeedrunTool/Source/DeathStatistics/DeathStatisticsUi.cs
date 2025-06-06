@@ -35,10 +35,12 @@ public class DeathStatisticsUi : TextMenu {
         if (SaveData.Instance is { } saveData) {
             if (saveData.FileSlot == -1) {
                 title = Dialog.Clean(DialogIds.DeathStatisticsHeaderDebug);
-            } else {
+            }
+            else {
                 title = string.Format(Dialog.Get(DialogIds.DeathStatisticsHeader), saveData.FileSlot);
             }
-        } else {
+        }
+        else {
             title = Dialog.Clean(DialogIds.DeathStatistics);
         }
 
@@ -46,7 +48,8 @@ public class DeathStatisticsUi : TextMenu {
 
         if (ModSaveData.DeathInfos.Count == 0) {
             AddEmptyInfo();
-        } else {
+        }
+        else {
             AddTotalInfo();
             AddListHeader();
             AddListItems();

@@ -55,7 +55,8 @@ internal static class EntityExtensions {
             level.Tracker.EntityAdded(entity);
             if (based) {
                 entity.BasedAdded(level);
-            } else {
+            }
+            else {
                 entity.Added(level);
             }
         }
@@ -68,7 +69,8 @@ internal static class EntityExtensions {
             entityList.entities.Remove(entity);
             if (based) {
                 entity.BasedRemoved(level);
-            } else {
+            }
+            else {
                 entity.Removed(level);
             }
 

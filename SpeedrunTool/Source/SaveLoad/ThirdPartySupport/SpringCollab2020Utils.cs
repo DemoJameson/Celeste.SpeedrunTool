@@ -17,7 +17,8 @@ internal static class SpringCollab2020Utils {
                     if (colorControllerType.GetFieldValue<bool>("rainbowSpinnerHueHooked")) {
                         On.Celeste.CrystalStaticSpinner.GetHue -= hookGetHue;
                         On.Celeste.CrystalStaticSpinner.GetHue += hookGetHue;
-                    } else {
+                    }
+                    else {
                         On.Celeste.CrystalStaticSpinner.GetHue -= hookGetHue;
                     }
                 }
@@ -35,7 +36,8 @@ internal static class SpringCollab2020Utils {
                     if (colorAreaControllerType.GetFieldValue<bool>("rainbowSpinnerHueHooked")) {
                         On.Celeste.CrystalStaticSpinner.GetHue -= hookSpinnerGetHue;
                         On.Celeste.CrystalStaticSpinner.GetHue += hookSpinnerGetHue;
-                    } else {
+                    }
+                    else {
                         On.Celeste.CrystalStaticSpinner.GetHue -= hookSpinnerGetHue;
                     }
                 }
@@ -52,7 +54,8 @@ internal static class SpringCollab2020Utils {
                     if (spikeJumpThroughControllerType.GetFieldValue<bool>("SpikeHooked")) {
                         On.Celeste.Spikes.OnCollide -= onCollideHook;
                         On.Celeste.Spikes.OnCollide += onCollideHook;
-                    } else {
+                    }
+                    else {
                         On.Celeste.Spikes.OnCollide -= onCollideHook;
                     }
                 }

@@ -33,7 +33,8 @@ internal static class DynDataUtils {
         if (CheckEmpty(dataMap)) {
             IgnoreTypes.Add(type);
             return true;
-        } else {
+        }
+        else {
             return false;
         }
     }
@@ -43,11 +44,13 @@ internal static class DynDataUtils {
             if (Type.GetType("Mono.Runtime") != null) {
                 // Mono
                 checkEmpty = o => o.GetFieldValue<int>("size") == 0;
-            } else if (weakTable.GetType().GetFieldInfo("_entries") != null) {
+            }
+            else if (weakTable.GetType().GetFieldInfo("_entries") != null) {
                 // .net framework
                 checkEmpty = o => o.GetFieldValue<Array>("_entries").Length == EmptyTableEntriesLength.Value &&
                              o.GetFieldValue<int>("_freeList") == EmptyTableFreeList.Value;
-            } else {
+            }
+            else {
                 // .net7
                 checkEmpty = o => o.GetFieldValue("_container") is { } container && container.GetFieldValue<Array>("_entries").Length == EmptyContainerEntriesLength.Value &&
                                   container.GetFieldValue<int>("_firstFreeEntry") == EmptyContainerFirstFreeEntry.Value;
@@ -60,7 +63,8 @@ internal static class DynDataUtils {
     private static object GetDataMap(Type type) {
         if (CachedDataMaps.TryGetValue(type, out var result)) {
             return result;
-        } else {
+        }
+        else {
             result = typeof(DynData<>).MakeGenericType(type).GetFieldValue("_DataMap");
             return CachedDataMaps[type] = result;
         }

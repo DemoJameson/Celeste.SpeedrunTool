@@ -44,7 +44,8 @@ internal class ConfettiRenderer : Entity {
             float rotation;
             if (particles[index].Speed.Y < 0.0) {
                 rotation = particles[index].Speed.Angle();
-            } else {
+            }
+            else {
                 rotation = (float)Math.Sin(particles[index].Timer * 4.0) * 1f;
                 position += Calc.AngleToVector(1.570796f + rotation, particles[index].Approach);
             }

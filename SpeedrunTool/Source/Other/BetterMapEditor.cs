@@ -268,9 +268,11 @@ public static class BetterMapEditor {
             Vector2 spawnPoint;
             if (session.RespawnPoint.HasValue) {
                 spawnPoint = session.RespawnPoint.Value;
-            } else if (startPosition.HasValue) {
+            }
+            else if (startPosition.HasValue) {
                 spawnPoint = session.GetSpawnPoint(startPosition.Value);
-            } else {
+            }
+            else {
                 Rectangle bounds = session.LevelData.Bounds;
                 spawnPoint = session.GetSpawnPoint(new Vector2(bounds.Left, bounds.Bottom));
             }
@@ -296,9 +298,11 @@ public static class BetterMapEditor {
         if (session.Area.ToString() == "10") {
             if (FarewellCassetteRooms.Contains(session.Level)) {
                 session.ColorGrade = "feelingdown";
-            } else if (session.Level == "end-golden") {
+            }
+            else if (session.Level == "end-golden") {
                 session.ColorGrade = "golden";
-            } else {
+            }
+            else {
                 session.ColorGrade = "none";
             }
         }
@@ -315,7 +319,8 @@ public static class BetterMapEditor {
         if (session.Area.ToString() == "10") {
             if (session.Level == "intro-02-launch") {
                 session.Inventory.Dashes = 2;
-            } else if (FarewellOneDashRooms.Contains(session.Level)) {
+            }
+            else if (FarewellOneDashRooms.Contains(session.Level)) {
                 session.Inventory.Dashes = 1;
             }
         }
@@ -343,7 +348,8 @@ public static class BetterMapEditor {
         if (session.Area.ToString() == "3") {
             if (DarkRooms.Contains(session.Level)) {
                 session.LightingAlphaAdd = 0.15f;
-            } else {
+            }
+            else {
                 session.LightingAlphaAdd = 0;
             }
         }

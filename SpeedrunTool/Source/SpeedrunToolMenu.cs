@@ -277,7 +277,8 @@ internal class EaseInSubMenu : TextMenuExt.SubMenu {
     private void DrawIcon(Vector2 position, Vector2 justify, bool outline, Color color, float scale) {
         if (outline) {
             icon.DrawOutlineCentered(position + justify, color, scale);
-        } else {
+        }
+        else {
             icon.DrawCentered(position + justify, color, scale);
         }
     }

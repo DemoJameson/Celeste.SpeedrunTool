@@ -1707,7 +1707,8 @@ public static class LevelDataReorderUtils {
 
         if (result.Count > 0) {
             return reorderedLevelData[areaKey] = result;
-        } else {
+        }
+        else {
             return reorderedLevelData[areaKey] = origLevelDataList.Select(data => new ReorderedData(data)).ToList();
         }
     }

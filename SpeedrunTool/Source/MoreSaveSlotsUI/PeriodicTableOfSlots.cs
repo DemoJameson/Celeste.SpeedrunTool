@@ -30,13 +30,16 @@ internal class PeriodicTableOfSlots {
         if (dir == 1) {
             if (num < RegularSlotsCount) {
                 num++;
-            } else {
+            }
+            else {
                 num = 1;
             }
-        } else {
+        }
+        else {
             if (num > 1) {
                 num--;
-            } else {
+            }
+            else {
                 num = RegularSlotsCount;
             }
         }

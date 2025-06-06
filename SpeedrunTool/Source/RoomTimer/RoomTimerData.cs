@@ -52,7 +52,8 @@ internal class RoomTimerData {
             pbTimeKey = TimeKeyPrefix + ModSettings.NumberOfRooms;
             thisRunTimeKey = TimeKeyPrefix + roomNumber;
             thisRunPrevRoomTimeKey = TimeKeyPrefix + (roomNumber - 1);
-        } else {
+        }
+        else {
             pbTimeKey = TimeKeyPrefix + "EndPoint";
             thisRunTimeKey = TimeKeyPrefix + "EndPoint";
             thisRunPrevRoomTimeKey = TimeKeyPrefix + "EndPoint";
@@ -78,7 +79,8 @@ internal class RoomTimerData {
         // change number of timed rooms to reactivate the timer
         if (roomNumber > ModSettings.NumberOfRooms && !EndPoint.IsExist || hitEndPoint || level is { Completed: true }) {
             timerState = TimerState.Completed;
-        } else {
+        }
+        else {
             timerState = TimerState.Timing;
         }
 
@@ -90,7 +92,8 @@ internal class RoomTimerData {
 
         if (autosplitterTimeFreezeTime > 0f) {
             autosplitterTimeFreezeTime -= Engine.RawDeltaTime;
-        } else {
+        }
+        else {
             AutosplitterTime = Time;
         }
     }
@@ -152,7 +155,8 @@ internal class RoomTimerData {
                             }
                         }
                     }
-                } else if (endPoint || level is { Completed: true } || EndPoint.IsReachedRoomIdEndPoint) {
+                }
+                else if (endPoint || level is { Completed: true } || EndPoint.IsReachedRoomIdEndPoint) {
                     // if using endpoint/room id, ignore room count and only track a single complete time, pb time and best segment
                     ThisRunTimes[thisRunTimeKey] = Time;
                     lastPbTime = PbTimes.GetValueOrDefault(thisRunTimeKey, 0);

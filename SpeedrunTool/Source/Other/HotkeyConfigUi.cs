@@ -300,7 +300,8 @@ public class HotkeyConfigUi : TextMenu {
         HotkeyConfigs[remappingType].With(info => {
             if (info.GetButtons().Contains(button)) {
                 info.GetButtons().Remove(button);
-            } else {
+            }
+            else {
                 info.GetButtons().Add(button);
             }
 
@@ -315,10 +316,12 @@ public class HotkeyConfigUi : TextMenu {
         HotkeyConfigs[remappingType].With(info => {
             if (info.GetKeys().Contains(key)) {
                 info.GetKeys().Remove(key);
-            } else {
+            }
+            else {
                 if (ModifierKeys.Contains(key)) {
                     info.GetKeys().Insert(0, key);
-                } else {
+                }
+                else {
                     info.GetKeys().Add(key);
                 }
             }
@@ -343,12 +346,14 @@ public class HotkeyConfigUi : TextMenu {
                 Input.ESC.ConsumePress();
                 remapping = false;
                 Focused = true;
-            } else if (remappingKeyboard) {
+            }
+            else if (remappingKeyboard) {
                 Keys[] pressedKeys = MInput.Keyboard.CurrentState.GetPressedKeys();
                 if (pressedKeys?.LastOrDefault() is { } pressedKey && MInput.Keyboard.Pressed(pressedKey) && !DisallowKeys.Contains(pressedKey)) {
                     SetRemap(pressedKey);
                 }
-            } else {
+            }
+            else {
                 GamePadState currentState = MInput.GamePads[Input.Gamepad].CurrentState;
                 GamePadState previousState = MInput.GamePads[Input.Gamepad].PreviousState;
                 foreach (Buttons buttons in AllButtons) {
@@ -362,7 +367,8 @@ public class HotkeyConfigUi : TextMenu {
             }
 
             timeout -= Engine.DeltaTime;
-        } else if ((Input.MenuJournal.Pressed || MInput.Keyboard.Pressed(Keys.Delete) || MInput.Keyboard.Pressed(Keys.Back)) && Selection >= 4 &&
+        }
+        else if ((Input.MenuJournal.Pressed || MInput.Keyboard.Pressed(Keys.Delete) || MInput.Keyboard.Pressed(Keys.Back)) && Selection >= 4 &&
                    Selection < Items.Count - 1) {
             int index = Selection - 3;
             bool keyboard = true;
@@ -375,7 +381,8 @@ public class HotkeyConfigUi : TextMenu {
             HotkeyConfig hotkeyConfig = HotkeyConfigs.Values.ToList()[index];
             if (keyboard) {
                 hotkeyConfig.GetKeys().Clear();
-            } else {
+            }
+            else {
                 hotkeyConfig.GetButtons().Clear();
             }
 
@@ -419,7 +426,8 @@ public class HotkeyConfigUi : TextMenu {
             ActiveFont.Draw(HotkeyConfigs[remappingType].GetLabel(),
                 position + new Vector2(0.0f, 8f), new Vector2(0.5f, 0.0f), Vector2.One * 2f,
                 Color.White * Ease.CubeIn(remappingEase));
-        } else {
+        }
+        else {
             ActiveFont.Draw(Dialog.Clean(DialogIds.BtnConfigNoController), position, new Vector2(0.5f, 0.5f),
                 Vector2.One,
                 Color.White * Ease.CubeIn(remappingEase));
@@ -473,7 +481,8 @@ public class HotkeyConfig {
     public string GetLabel() {
         if (typeof(DialogIds).GetFieldValue(Hotkey.ToString()) is string label) {
             return label.DialogClean();
-        } else {
+        }
+        else {
             return $"DialogIds.{Hotkey} not found";
         }
     }

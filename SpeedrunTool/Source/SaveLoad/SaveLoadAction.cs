@@ -230,7 +230,8 @@ public sealed class SaveLoadAction {
 
                 if (memberInfos.First().IsField()) {
                     dict[memberName] = type.GetFieldValue(memberName).DeepCloneShared();
-                } else {
+                }
+                else {
                     dict[memberName] = type.GetPropertyValue(memberName).DeepCloneShared();
                 }
             }
@@ -250,7 +251,8 @@ public sealed class SaveLoadAction {
 
                     if (memberInfos.First().IsField()) {
                         type.SetFieldValue(memberName, pair.Value[memberName].DeepCloneShared());
-                    } else {
+                    }
+                    else {
                         type.SetPropertyValue(memberName, pair.Value[memberName].DeepCloneShared());
                     }
                 }
@@ -399,7 +401,8 @@ public sealed class SaveLoadAction {
             })) {
                 if (fieldInfo.IsStatic) {
                     staticFields.Add(fieldInfo);
-                } else {
+                }
+                else {
                     instanceFields.Add(fieldInfo);
                 }
             }
@@ -438,14 +441,16 @@ public sealed class SaveLoadAction {
                 try {
                     info.GetValue(null);
                     return true;
-                } catch (TargetInvocationException) {
+                }
+                catch (TargetInvocationException) {
                     return false;
                 }
             }).ToArray();
 
             if (fieldInfos.Length > 0) {
                 simpleStaticFields[type] = fieldInfos;
-            } else {
+            }
+            else {
                 simpleStaticFields.Remove(type);
             }
         }
@@ -657,18 +662,22 @@ public sealed class SaveLoadAction {
 
                     if (StateManager.Instance.LoadByTas) {
                         inputType.SetFieldValue(fieldName, virtualInput);
-                    } else {
+                    }
+                    else {
                         if (fieldName == "grabToggle") {
                             Input.grabToggle = (bool)virtualInput;
-                        } else if (fieldName == "LastAim") {
+                        }
+                        else if (fieldName == "LastAim") {
                             Input.LastAim = (Vector2)virtualInput;
-                        } else {
+                        }
+                        else {
                             object fieldValue = inputType.GetFieldValue(fieldName);
                             if (fieldValue is VirtualJoystick virtualJoystick &&
                                 virtualInput is VirtualJoystick savedVirtualJoystick) {
                                 virtualJoystick.InvertedX = savedVirtualJoystick.InvertedX;
                                 virtualJoystick.InvertedY = savedVirtualJoystick.InvertedY;
-                            } else if (fieldValue is VirtualIntegerAxis virtualIntegerAxis &&
+                            }
+                            else if (fieldValue is VirtualIntegerAxis virtualIntegerAxis &&
                                        virtualInput is VirtualIntegerAxis savedVirtualIntegerAxis) {
                                 virtualIntegerAxis.Inverted = savedVirtualIntegerAxis.Inverted;
                             }

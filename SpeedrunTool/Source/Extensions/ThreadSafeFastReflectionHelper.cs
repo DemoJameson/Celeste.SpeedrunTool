@@ -46,7 +46,8 @@ internal static class ThreadSafeFastReflectionHelper {
 
             if (argIsByRef && !argIsValueType) {
                 il.Emit(OpCodes.Ldelema, typeof(object));
-            } else {
+            }
+            else {
                 il.Emit(OpCodes.Ldelem_Ref);
                 if (argIsValueType) {
                     if (!argIsByRef || !directBoxValueAccess) {
@@ -73,7 +74,8 @@ internal static class ThreadSafeFastReflectionHelper {
                             // load address back to stack
                             il.Emit(OpCodes.Ldloc_0);
                         }
-                    } else {
+                    }
+                    else {
                         // if directBoxValueAccess, emit unbox (get value address)
                         il.Emit(OpCodes.Unbox, argType);
                     }
@@ -83,9 +85,11 @@ internal static class ThreadSafeFastReflectionHelper {
 
         if (method.IsConstructor) {
             il.Emit(OpCodes.Newobj, method as ConstructorInfo);
-        } else if (method.IsFinal || !method.IsVirtual) {
+        }
+        else if (method.IsFinal || !method.IsVirtual) {
             il.Emit(OpCodes.Call, method as MethodInfo);
-        } else {
+        }
+        else {
             il.Emit(OpCodes.Callvirt, method as MethodInfo);
         }
 
@@ -94,7 +98,8 @@ internal static class ThreadSafeFastReflectionHelper {
             if (returnType.IsValueType) {
                 il.Emit(OpCodes.Box, returnType);
             }
-        } else {
+        }
+        else {
             il.Emit(OpCodes.Ldnull);
         }
 

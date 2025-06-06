@@ -132,7 +132,8 @@ internal static class ReflectionExtensions {
         object result = type.GetFieldGetDelegate<object>(name)?.Invoke(obj);
         if (result == null) {
             return default;
-        } else {
+        }
+        else {
             return (T)result;
         }
     }
@@ -179,7 +180,8 @@ internal static class ReflectionExtensions {
 
         if (field.IsStatic) {
             il.Emit(OpCodes.Ldsfld, field);
-        } else {
+        }
+        else {
             il.Emit(OpCodes.Ldarg_0);
             if (field.DeclaringType.IsValueType) {
                 il.Emit(OpCodes.Unbox_Any, field.DeclaringType);
@@ -223,7 +225,8 @@ internal static class ReflectionExtensions {
 
         if (!fieldType.IsValueType && parameterType.IsValueType) {
             il.Emit(OpCodes.Box, parameterType);
-        } else if (fieldType.IsValueType && !parameterType.IsValueType) {
+        }
+        else if (fieldType.IsValueType && !parameterType.IsValueType) {
             il.Emit(OpCodes.Unbox_Any, fieldType);
         }
 

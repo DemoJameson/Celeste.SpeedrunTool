@@ -109,7 +109,8 @@ public static class RoomTimerManager {
                 ExportRoomTimes();
                 PopupMessageUtils.Show(string.Format(Dialog.Get(DialogIds.ExportRoomTimesSuccess),
                     Dialog.Get(DialogIds.Prefix + ModSettings.RoomTimerExportType.ToString().ToUpper())), null);
-            } else {
+            }
+            else {
                 PopupMessageUtils.Show(DialogIds.ExportRoomTimesFail.DialogClean(), null);
             }
         });
@@ -295,7 +296,8 @@ public static class RoomTimerManager {
         if (bestTime) {
             color1 = BestColor1 * alpha;
             color2 = BestColor2 * alpha;
-        } else if (finished) {
+        }
+        else if (finished) {
             color1 = FinishedColor1 * alpha;
             color2 = FinishedColor2 * alpha;
         }
@@ -370,14 +372,16 @@ public static class RoomTimerManager {
             if (roomTimerData.ThisRunTimes.TryGetValue(timeKey, out long splitTime)) {
                 sb.Append($"{RoomTimerData.FormatTime(splitTime, false)},{RoomTimerData.FormatTime(splitTime - lastSplitTime, false)},");
                 lastSplitTime = splitTime;
-            } else {
+            }
+            else {
                 sb.Append(",,");
             }
 
             // Best Split,
             if (roomTimerData.PbTimes.TryGetValue(timeKey, out long pbTime)) {
                 sb.Append($"{RoomTimerData.FormatTime(pbTime, false)},");
-            } else {
+            }
+            else {
                 sb.Append(",");
             }
 
@@ -391,7 +395,8 @@ public static class RoomTimerManager {
             Directory.CreateDirectory(Path.Combine(Everest.PathGame, "SRTool_RoomTimeExports"));
             using StreamWriter writer = File.CreateText(Path.Combine(Everest.PathGame, "SRTool_RoomTimeExports", $"{DateTime.Now:yyyyMMdd_HHmmss}.csv"));
             writer.WriteLine(sb.ToString());
-        } else {
+        }
+        else {
             TextInput.SetClipboardText(sb.ToString());
         }
     }
@@ -401,7 +406,8 @@ public static class RoomTimerManager {
             ExportRoomTimes();
             string msgID = DialogIds.Prefix + ModSettings.RoomTimerExportType.ToString().ToUpper();
             Engine.Commands.Log(string.Format(Dialog.Get(DialogIds.ExportRoomTimesSuccess), msgID.DialogClean()));
-        } else {
+        }
+        else {
             Engine.Commands.Log(DialogIds.ExportRoomTimesFail.DialogClean());
         }
     }

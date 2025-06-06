@@ -94,7 +94,8 @@ public static class LookoutBuilder {
                 ilCursor.EmitDelegate<Func<float, float>>(speed => {
                     if (PortableLookout.Exists) {
                         return speed * 2;
-                    } else {
+                    }
+                    else {
                         return speed;
                     }
                 });

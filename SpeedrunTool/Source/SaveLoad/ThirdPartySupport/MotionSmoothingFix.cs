@@ -28,7 +28,7 @@ internal static class MotionSmoothingFix {
             method = smoothAll;
 
             // Remove MotionSmoothing's action from the SharedActions list
-           FieldInfo sharedActionsField = typeof(SaveLoadAction).GetField("SharedActions", BindingFlags.Static | BindingFlags.NonPublic);
+            FieldInfo sharedActionsField = typeof(SaveLoadAction).GetField("SharedActions", BindingFlags.Static | BindingFlags.NonPublic);
             if (sharedActionsField?.GetValue(null) is List<SaveLoadAction> sharedActions) {
                 foreach (SaveLoadAction action in sharedActions) {
                     if (action.GetType().GetField("loadState", BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(action) is Delegate loadStateDelegate) {

@@ -54,7 +54,7 @@ public sealed class SaveLoadAction {
     private readonly Action<Level> beforeSaveState;
     private readonly Action<Level> beforeLoadState;
     private readonly Action preCloneEntities;
-    private readonly SlAction loadState;
+    internal readonly SlAction loadState;
     private readonly SlAction saveState;
     internal Action<Level, List<Entity>, Entity> unloadLevel;
 
@@ -90,9 +90,7 @@ public sealed class SaveLoadAction {
         Action<Level> beforeSaveState = null, Action preCloneEntities = null) {
         SaveLoadAction saveLoadAction = new(CreateSlAction(saveState), CreateSlAction(loadState), clearState, beforeSaveState, preCloneEntities);
 #if LOG
-        StackTrace stackTrace = new StackTrace();
-        StackFrame stackFrame = stackTrace.GetFrame(1);
-        saveLoadAction.ActionDescription = stackFrame?.GetMethod()?.Name ?? "N/A";
+        AddDebugDescription(saveLoadAction, internalCall: true);
 #endif
         SharedActions.Add(saveLoadAction);
         return saveLoadAction;
@@ -103,9 +101,7 @@ public sealed class SaveLoadAction {
         Action<Level> beforeSaveState, Action<Level> beforeLoadState, Action preCloneEntities = null) {
         SaveLoadAction saveLoadAction = new(CreateSlAction(saveState), CreateSlAction(loadState), clearState, beforeSaveState, beforeLoadState, preCloneEntities);
 #if LOG
-        StackTrace stackTrace = new StackTrace();
-        StackFrame stackFrame = stackTrace.GetFrame(1);
-        saveLoadAction.ActionDescription = stackFrame?.GetMethod()?.Name ?? "N/A";
+        AddDebugDescription(saveLoadAction, internalCall: true);
 #endif
         SharedActions.Add(saveLoadAction);
         return saveLoadAction;
@@ -122,10 +118,32 @@ public sealed class SaveLoadAction {
         Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState, Action clearState,
         Action<Level> beforeSaveState, Action<Level> beforeLoadState, Action preCloneEntities = null) {
         SaveLoadAction saveLoadAction = new(CreateSlAction(saveState), CreateSlAction(loadState), clearState, beforeSaveState, beforeLoadState, preCloneEntities);
+#if LOG
+        AddDebugDescription(saveLoadAction, internalCall: false);
+#endif
         SharedActions.Add(saveLoadAction);
         modActionChanged = true;
         return saveLoadAction;
     }
+
+#if LOG
+    private static void AddDebugDescription(SaveLoadAction action, bool internalCall = true) {
+        int frame = internalCall ? 2 : 3;
+        System.Diagnostics.StackTrace stackTrace = new System.Diagnostics.StackTrace();
+        System.Diagnostics.StackFrame stackFrame = stackTrace.GetFrame(frame);
+        if (stackFrame.GetMethod() is { } method) {
+            if (internalCall) {
+                action.ActionDescription = $"{method.DeclaringType?.FullName ?? "<UnknownType>"} @ {method.Name ?? "<UnknownMethod>"}";
+            } else {
+                action.ActionDescription = $"<<External>> {((Delegate)action.loadState ?? (Delegate)action.saveState ?? (Delegate)action.clearState)
+                ?.Target?.GetType()?.FullName?.Replace("+<>c", "") ?? "<UnknownType>"} @ {method.Name ?? "<UnknownMethod>"}";
+            }
+        } else {
+            action.ActionDescription = "<BadStackFrame>";
+        }
+        Logger.Log(LogLevel.Debug, "SpeedrunTool", $"=== {action.ActionDescription} ===");
+    }
+#endif
 
     /// <summary>
     /// For third party mods
@@ -133,6 +151,21 @@ public sealed class SaveLoadAction {
     public static bool Remove(SaveLoadAction saveLoadAction) {
         modActionChanged = true;
         return SharedActions.Remove(saveLoadAction);
+    }
+
+    internal static void Remove(Func<SaveLoadAction, bool> predicate) {
+        List<SaveLoadAction> toRemove = new List<SaveLoadAction>();
+        foreach (SaveLoadAction action in SharedActions) {
+            if (predicate(action)) {
+                toRemove.Add(action);
+            }
+        }
+        if (toRemove is not null) {
+            modActionChanged = true;
+            foreach (SaveLoadAction action in toRemove) {
+                SharedActions.Remove(action);
+            }
+        }
     }
 
     internal static void OnSaveState(Level level) {
@@ -292,13 +325,14 @@ public sealed class SaveLoadAction {
     internal static void LogSavedValues() {
 #if LOG
         foreach (SaveLoadAction slAction in AllActionsAndValues) {
-            Logger.Log(LogLevel.Info, "SpeedrunTool", $"========={slAction.ActionDescription}=========");
+            Logger.Log(LogLevel.Debug, "SpeedrunTool", $"=== {slAction.ActionDescription} ===");
             foreach (KeyValuePair<Type, Dictionary<string, object>> pair in slAction.savedValues) {
                 Logger.Log(LogLevel.Info, "SpeedrunTool", pair.Key.FullName);
             }
         }
 #endif
     }
+
 
     private static void InitFields() {
         simpleStaticFields = new Dictionary<Type, FieldInfo[]>();

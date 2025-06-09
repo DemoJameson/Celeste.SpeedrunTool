@@ -1,4 +1,5 @@
 using Celeste.Mod.SpeedrunTool.Utils;
+using Celeste.Mod.UI;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,8 +22,6 @@ internal static class Hotkeys_Rebase {
     private static KeyboardState kbState;
     private static GamePadState padState;
     public static float RightThumbSticksX => padState.ThumbSticks.Right.X;
-
-    public static bool Disabled = false;
 
     /// Checks if the CelesteNet chat is open
     private static bool CelesteNetChatting {
@@ -53,44 +52,46 @@ internal static class Hotkeys_Rebase {
         // No controller connected
         return default;
     }
-    internal static void Update() {
-        // Only update if the keys aren't already used for something else
-        bool updateKey = true, updateButton = true;
 
-        Disabled = MInput.Disabled;
-        // Prevent triggering hotkeys while writing text
-        if (Engine.Commands.Open) {
-            updateKey = false;
+    internal static bool Update(Scene scene) {
+        // Update hotkeys anyway, but choose whether their OnPress should be invoked
+        bool canPress = true;
+
+        if (TasUtils.Running) {
+            canPress = false;
         }
-        else if (TextInput.Initialized && typeof(TextInput).GetFieldValue<Action<char>>("_OnInput") is { } inputEvent) {
-            // ImGuiHelper is always subscribed, so ignore it
-            updateKey &= inputEvent.GetInvocationList().All(d => d.Target?.GetType().FullName == "Celeste.Mod.ImGuiHelper.ImGuiRenderer+<>c");
-        }
-
-        if (!TasUtils.Running) {
-            if (CelesteNetChatting) {
-                updateKey = false;
-            }
-
-            if (Engine.Scene?.Tracker is { } tracker) {
-                if (tracker.GetEntity<KeyboardConfigUI>() != null) {
-                    updateKey = false;
-                }
-                if (tracker.GetEntity<ButtonConfigUI>() != null) {
-                    updateButton = false;
-                }
-            }
+        else if (!MInput.ControllerHasFocus &&
+            scene is Overworld {
+                Current: OuiFileNaming      { UseKeyboardInput: true }
+                      or OuiModOptionString { UseKeyboardInput: true }
+            }){
+            // 避免输入文字时触发快捷键
+            canPress = false;
         }
         else {
-            updateKey = updateButton = false;
-        }
-        foreach (HotkeyConfig hotkey in HotkeyConfigUi.HotkeyConfigs.Values) {
-            hotkey.Hotkey_Impl.Update(updateKey, updateButton);
+            if (Engine.Scene?.Tracker is { } tracker && (tracker.GetEntity<KeyboardConfigUI>() != null || tracker.GetEntity<ButtonConfigUI>() != null)) {
+                canPress = false;
+            }
+            else if (Engine.Commands.Open) {
+                // Prevent triggering hotkeys while writing text
+                canPress = false;
+            }
+            else if (CelesteNetChatting) {
+                canPress = false;
+            }
+            else if (TextInput.Initialized && typeof(TextInput).GetFieldValue<Action<char>>("_OnInput") is { } inputEvent) {
+                // ImGuiHelper is always subscribed, so ignore it
+                canPress &= inputEvent.GetInvocationList().All(d => d.Target?.GetType().FullName == "Celeste.Mod.ImGuiHelper.ImGuiRenderer+<>c");
+            }
         }
 
+        foreach (HotkeyConfig hotkey in HotkeyConfigUi.HotkeyConfigs.Values) {
+            hotkey.Hotkey_Impl.Update(true, true);
+        }
 
         kbState = Keyboard.GetState();
         padState = GetGamePadState();
+        return canPress;
     }
 
     public static Hotkey_Rebase BindingToHotkey(List<InputKeys> keys, List<InputButtons> buttons, bool held = false) {

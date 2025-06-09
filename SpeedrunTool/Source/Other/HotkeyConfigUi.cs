@@ -191,42 +191,23 @@ public class HotkeyConfigUi : TextMenu {
             return;
         }
 
-        Hotkeys_Rebase.Update();
+        bool canInvoke = Hotkeys_Rebase.Update(scene);
 
-        if (TasUtils.Running) {
-            return;
-        }
-
-        foreach (Hotkey hotkey in Hotkeys) {
-            if (Pressed(hotkey, scene)) {
-                hotkey.GetHotkeyConfig().OnPressed?.Invoke(scene);
+        if (canInvoke) {
+            if (ModSettings.Hotkeys) {
+                foreach (Hotkey hotkey in Hotkeys) {
+                    if (hotkey.Pressed()) {
+                        hotkey.GetHotkeyConfig().OnPressed?.Invoke(scene);
+                    }
+                }
+            }
+            else {
+                Hotkey hotkey = Hotkey.ToggleHotkeys;
+                if (hotkey.Pressed()) {
+                    hotkey.GetHotkeyConfig().OnPressed?.Invoke(scene);
+                }
             }
         }
-    }
-
-    private static bool Pressed(Hotkey hotkey, Scene scene) {
-        if (!ModSettings.Hotkeys && hotkey != Hotkey.ToggleHotkeys) {
-            return false;
-        }
-
-        bool pressed = hotkey.Pressed();
-        if (!pressed) {
-            return false;
-        }
-
-        if (scene.Tracker.Entities.TryGetValue(typeof(HotkeyConfigUi), out List<Entity> entities) && entities.Count > 0) {
-            return false;
-        }
-
-        // 反射兼容 v1312
-        // 避免输入文字时触发快捷键
-        if (!typeof(MInput).GetFieldValue<bool>("ControllerHasFocus") && scene is Overworld {
-            Current: OuiFileNaming { UseKeyboardInput: true } or OuiModOptionString { UseKeyboardInput: true }
-        }) {
-            return false;
-        }
-
-        return true;
     }
 
     private void Reload(int index = -1) {

@@ -13,7 +13,7 @@ internal static class SaveLoadHotkeys {
     [Load]
     private static void RegisterHotkeys() {
         Hotkey.SaveState.RegisterPressedAction(scene => {
-            if (scene is Level) {
+            if (scene is Level { Paused: false }) {
 #if DEBUG
                 JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();
                 SaveSlotsManager.SaveState();
@@ -24,7 +24,12 @@ internal static class SaveLoadHotkeys {
                         PopupMessageUtils.Show($"Save to [{SlotName}]", null);
                     }
                     else {
-                        PopupMessageUtils.Show("Failed to Save: SpeedrunTool is Busy!", null);
+                        if (!StateManager.AllowSaveLoadWhenWaiting && SaveSlotsManager.StateManagerInstance?.State == State.Waiting) {
+                            PopupMessageUtils.Show($"[{SlotName}] is already Saved!", null);
+                        }
+                        else {
+                            PopupMessageUtils.Show("Failed to Save: SpeedrunTool is Busy!", null);
+                        }
                     }
                 }
                 else {

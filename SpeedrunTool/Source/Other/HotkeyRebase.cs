@@ -14,6 +14,10 @@ namespace Celeste.Mod.SpeedrunTool.Other;
 
 // since SRT v3.25.0
 internal static class Hotkeys_Rebase {
+
+    // todo: maintain this set
+    public static readonly HashSet<string> AlwaysSubscribedTextOnInput = new HashSet<string>() { "Celeste.Mod.ImGuiHelper.ImGuiRenderer+<>c", "Celeste.Mod.BingoClient.BingoChat" };
+
     private static readonly Lazy<FieldInfo?> f_CelesteNetClientModule_Instance = new(() => ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.CelesteNetClientModule")?.GetFieldInfo("Instance"));
     private static readonly Lazy<FieldInfo?> f_CelesteNetClientModule_Context = new(() => ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.CelesteNetClientModule")?.GetFieldInfo("Context"));
     private static readonly Lazy<FieldInfo?> f_CelesteNetClientContext_Chat = new(() => ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.CelesteNetClientContext")?.GetFieldInfo("Chat"));
@@ -77,7 +81,7 @@ internal static class Hotkeys_Rebase {
         }
         else if (TextInput.Initialized && typeof(TextInput).GetFieldValue<Action<char>>("_OnInput") is { } inputEvent) {
             // ImGuiHelper is always subscribed, so ignore it
-            canPress &= inputEvent.GetInvocationList().All(d => d.Target?.GetType().FullName == "Celeste.Mod.ImGuiHelper.ImGuiRenderer+<>c");
+            canPress = inputEvent.GetInvocationList().All(d => AlwaysSubscribedTextOnInput.Contains(d.Target?.GetType().FullName ?? ""));
         }
 
         kbState = Keyboard.GetState();
@@ -89,7 +93,6 @@ internal static class Hotkeys_Rebase {
 
         return canPress;
     }
-
     public static Hotkey_Rebase BindingToHotkey(List<InputKeys> keys, List<InputButtons> buttons, bool held = false) {
         return new(keys, buttons, true, held);
     }

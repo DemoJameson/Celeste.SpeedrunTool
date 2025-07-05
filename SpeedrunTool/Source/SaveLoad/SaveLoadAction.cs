@@ -10,6 +10,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
@@ -20,11 +21,11 @@ public sealed class SaveLoadAction {
 
     private static bool internalActionInitialized = false;
 
-    private static bool modActionChanged = false;
+    private static bool modActionInitialized = false;
     private static bool slotInitialized {
-        get => SaveSlotsManager.Slot.SaveLoadActionInitialized;
+        get => SaveSlotsManager.Slot.ValueDictionaryInitialized;
         set {
-            SaveSlotsManager.Slot.SaveLoadActionInitialized = value;
+            SaveSlotsManager.Slot.ValueDictionaryInitialized = value;
         }
     }
 
@@ -35,12 +36,23 @@ public sealed class SaveLoadAction {
     // only actions, no values stored. Share among all save slots
     private static readonly List<SaveLoadAction> SharedActions = new();
 
-    // actions and values, belong to each save slot
-    internal static List<SaveLoadAction> AllActionsAndValues {
-        get => SaveSlotsManager.Slot.All;
+    // values, belong to each save slot
+
+    internal static Dictionary<int, Dictionary<Type, Dictionary<string, object>>> AllSavedValues {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => SaveSlotsManager.Slot.AllSavedValues;
+
         set {
-            SaveSlotsManager.Slot.All = value;
+            SaveSlotsManager.Slot.AllSavedValues = value;
         }
+    }
+
+    internal static Dictionary<int, Dictionary<Type, Dictionary<string, object>>> InitValueDictionary() {
+        Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict = new();
+        for (int i = 1; i<= createdActions; i++) {
+            dict[i] = new Dictionary<Type, Dictionary<string, object>>();
+        }
+        return dict;
     }
 
     private static Dictionary<Type, FieldInfo[]> simpleStaticFields;
@@ -49,7 +61,10 @@ public sealed class SaveLoadAction {
 #if LOG
     public string ActionDescription = "";
 #endif
-    private readonly Dictionary<Type, Dictionary<string, object>> savedValues = new();
+
+    private static int createdActions = 0;
+    private readonly int id;
+
     private readonly Action clearState;
     private readonly Action<Level> beforeSaveState;
     private readonly Action<Level> beforeLoadState;
@@ -65,6 +80,8 @@ public sealed class SaveLoadAction {
         this.clearState = clearState;
         this.beforeSaveState = beforeSaveState;
         this.preCloneEntities = preCloneEntities;
+        createdActions++;
+        id = createdActions;
     }
 
     public SaveLoadAction(SlAction saveState, SlAction loadState, Action clearState,
@@ -75,6 +92,21 @@ public sealed class SaveLoadAction {
         this.beforeSaveState = beforeSaveState;
         this.beforeLoadState = beforeLoadState;
         this.preCloneEntities = preCloneEntities;
+        createdActions++;
+        id = createdActions;
+    }
+
+    public SaveLoadAction(SlAction saveState, SlAction loadState, Action clearState,
+        Action<Level> beforeSaveState, Action<Level> beforeLoadState, Action preCloneEntities, Action<Level, List<Entity>, Entity> unloadLevel) {
+        this.saveState = saveState;
+        this.loadState = loadState;
+        this.clearState = clearState;
+        this.beforeSaveState = beforeSaveState;
+        this.beforeLoadState = beforeLoadState;
+        this.preCloneEntities = preCloneEntities;
+        this.unloadLevel = unloadLevel;
+        createdActions++;
+        id = createdActions;
     }
 
     // used by CelesteTAS
@@ -122,7 +154,7 @@ public sealed class SaveLoadAction {
         AddDebugDescription(saveLoadAction, internalCall: false);
 #endif
         SharedActions.Add(saveLoadAction);
-        modActionChanged = true;
+        modActionInitialized = true;
         return saveLoadAction;
     }
 
@@ -149,7 +181,6 @@ public sealed class SaveLoadAction {
     /// For third party mods
     /// </summary>
     public static bool Remove(SaveLoadAction saveLoadAction) {
-        modActionChanged = true;
         return SharedActions.Remove(saveLoadAction);
     }
 
@@ -161,7 +192,6 @@ public sealed class SaveLoadAction {
             }
         }
         if (toRemove is not null) {
-            modActionChanged = true;
             foreach (SaveLoadAction action in toRemove) {
                 SharedActions.Remove(action);
             }
@@ -169,44 +199,44 @@ public sealed class SaveLoadAction {
     }
 
     internal static void OnSaveState(Level level) {
-        foreach (SaveLoadAction saveLoadAction in AllActionsAndValues) {
-            saveLoadAction.saveState?.Invoke(saveLoadAction.savedValues, level);
+        foreach (SaveLoadAction saveLoadAction in SharedActions) {
+            saveLoadAction.saveState?.Invoke(AllSavedValues[saveLoadAction.id], level);
         }
     }
 
     internal static void OnLoadState(Level level) {
-        foreach (SaveLoadAction saveLoadAction in AllActionsAndValues) {
-            saveLoadAction.loadState?.Invoke(saveLoadAction.savedValues, level);
+        foreach (SaveLoadAction saveLoadAction in SharedActions) {
+            saveLoadAction.loadState?.Invoke(AllSavedValues[saveLoadAction.id], level);
         }
     }
 
     internal static void OnClearState() {
-        foreach (SaveLoadAction saveLoadAction in AllActionsAndValues) {
-            saveLoadAction.savedValues.Clear();
+        foreach (SaveLoadAction saveLoadAction in SharedActions) {
+            AllSavedValues = InitValueDictionary();
             saveLoadAction.clearState?.Invoke();
         }
     }
 
     internal static void OnBeforeSaveState(Level level) {
-        foreach (SaveLoadAction saveLoadAction in AllActionsAndValues) {
+        foreach (SaveLoadAction saveLoadAction in SharedActions) {
             saveLoadAction.beforeSaveState?.Invoke(level);
         }
     }
 
     internal static void OnBeforeLoadState(Level level) {
-        foreach (SaveLoadAction saveLoadAction in AllActionsAndValues) {
+        foreach (SaveLoadAction saveLoadAction in SharedActions) {
             saveLoadAction.beforeLoadState?.Invoke(level);
         }
     }
 
     internal static void OnPreCloneEntities() {
-        foreach (SaveLoadAction saveLoadAction in AllActionsAndValues) {
+        foreach (SaveLoadAction saveLoadAction in SharedActions) {
             saveLoadAction.preCloneEntities?.Invoke();
         }
     }
 
     internal static void OnUnloadLevel(Level level, List<Entity> entities, Entity entity) {
-        foreach (SaveLoadAction saveLoadAction in AllActionsAndValues) {
+        foreach (SaveLoadAction saveLoadAction in SharedActions) {
             saveLoadAction.unloadLevel?.Invoke(level, entities, entity);
         }
     }
@@ -310,25 +340,25 @@ public sealed class SaveLoadAction {
     public static void InitSlots() {
         InitActions();
 
-        if (modActionChanged) {
+        if (modActionInitialized) {
             SaveSlotsManager.ModRequireReInit();
-            modActionChanged = false;
+            modActionInitialized = false;
         }
 
         if (slotInitialized) {
             return;
         }
 
-        AllActionsAndValues = SharedActions.DeepCloneShared();
+        AllSavedValues = InitValueDictionary();
         slotInitialized = true;
     }
 
 
     internal static void LogSavedValues() {
 #if LOG
-        foreach (SaveLoadAction slAction in AllActionsAndValues) {
+        foreach (SaveLoadAction slAction in SharedActions) {
             Logger.Log(LogLevel.Debug, "SpeedrunTool", $"=== {slAction.ActionDescription} ===");
-            foreach (KeyValuePair<Type, Dictionary<string, object>> pair in slAction.savedValues) {
+            foreach (KeyValuePair<Type, Dictionary<string, object>> pair in AllSavedValues[slAction.id]) {
                 Logger.Log(LogLevel.Info, "SpeedrunTool", pair.Key.FullName);
             }
         }

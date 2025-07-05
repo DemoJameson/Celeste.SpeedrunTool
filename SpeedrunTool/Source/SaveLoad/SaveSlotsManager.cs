@@ -118,8 +118,8 @@ internal static class SaveSlotsManager {
 
     internal static void ModRequireReInit() {
         foreach (SaveSlot slot in SaveSlots) {
-            slot.SaveLoadActionInitialized = false;
-            slot.All.Clear();
+            slot.ValueDictionaryInitialized = false;
+            slot.AllSavedValues.Clear();
         }
     }
     internal static void AfterAssetReload() {
@@ -163,14 +163,14 @@ public class SaveSlot {
 
     public StateManager StateManager;
 
-    public bool SaveLoadActionInitialized = false;
+    public bool ValueDictionaryInitialized = false;
 
-    public List<SaveLoadAction> All = new();
+    public Dictionary<int, Dictionary<Type, Dictionary<string, object>>> AllSavedValues = new();
 
     public SaveSlot(string name) {
         Name = name;
-        SaveLoadActionInitialized = false;
-        All = new();
+        ValueDictionaryInitialized = false;
+        AllSavedValues = new();
         StateManager = new();
         StateManager.SlotName = Name;
     }

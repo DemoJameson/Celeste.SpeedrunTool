@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using EventInstance = FMOD.Studio.EventInstance;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 internal static class SaveSlotsManager {
@@ -35,7 +36,9 @@ internal static class SaveSlotsManager {
     /// </summary>
     /// <returns> Success or not </returns>
     public static bool SwitchSlot(string name) {
-        if (name != SlotName && !IsAllFree()) {
+        if (!IsAllFree()) {
+            // even we are not actually switching slot (i.e name == SlotName), still return false
+            // to ensure safety
             return false;
         }
         if (name != SlotName) {
@@ -167,11 +170,16 @@ public class SaveSlot {
 
     public Dictionary<int, Dictionary<Type, Dictionary<string, object>>> AllSavedValues = new();
 
+    public readonly List<EventInstance> ClonedEventInstancesWhenSave = new();
+    public readonly List<EventInstance> ClonedEventInstancesWhenPreClone = new();
+
     public SaveSlot(string name) {
         Name = name;
         ValueDictionaryInitialized = false;
         AllSavedValues = new();
         StateManager = new();
         StateManager.SlotName = Name;
+        ClonedEventInstancesWhenSave = new();
+        ClonedEventInstancesWhenPreClone = new();
     }
 }

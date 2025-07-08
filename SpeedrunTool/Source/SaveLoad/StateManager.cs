@@ -1,4 +1,4 @@
-#define LAG_TEST
+//#define LAG_TEST
 using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.ModInterop;
 using Celeste.Mod.SpeedrunTool.Other;
@@ -330,6 +330,7 @@ public sealed class StateManager {
         LoadCount++;
         LoadElapsedMs += sw.ElapsedMilliseconds;
         Logger.Log("SpeedrunTool", $"Load Cost / Average: {sw.ElapsedMilliseconds}ms / {LoadElapsedMs / LoadCount}ms");
+        // strawberry jam heartside load time: 90 - 190 ms (now + only 1 saveslot) / 100 - 300 ms (now + multiple saveslots) /  70 - 170 ms (v3.22)
 #endif
 
         Logger.Log("SpeedrunTool", $"Load from [{SlotName}]");

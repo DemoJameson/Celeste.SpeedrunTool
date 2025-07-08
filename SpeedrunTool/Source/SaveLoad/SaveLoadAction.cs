@@ -28,9 +28,9 @@ public sealed class SaveLoadAction {
         }
     }
 
-    public static readonly List<VirtualAsset> VirtualAssets = new();
-    public static readonly List<EventInstance> ClonedEventInstancesWhenSave = new();
-    public static readonly List<EventInstance> ClonedEventInstancesWhenPreClone = new();
+    public static readonly List<VirtualAsset> VirtualAssets = new(); // added and cleared when loading, so no need to be individual
+    public static List<EventInstance> ClonedEventInstancesWhenSave => SaveSlotsManager.Slot.ClonedEventInstancesWhenSave;
+    public static List<EventInstance> ClonedEventInstancesWhenPreClone => SaveSlotsManager.Slot.ClonedEventInstancesWhenPreClone;
 
     // only actions, no values stored. Share among all save slots
     private static readonly List<SaveLoadAction> SharedActions = new();
@@ -889,7 +889,11 @@ public sealed class SaveLoadAction {
     private static void ReloadVirtualAssets() {
         InternalSafeAdd(
             loadState: (_, _) => {
-                foreach (VirtualAsset virtualAsset in VirtualAssets) {
+                List<VirtualAsset> list = new List<VirtualAsset>(VirtualAssets);
+                // if load too frequently and switching between different slots, then collection might be modified
+                // so we avoid the crash in this way
+
+                foreach (VirtualAsset virtualAsset in list) {
                     switch (virtualAsset) {
                         case VirtualTexture { IsDisposed: true } virtualTexture:
                             // Fix: 全屏切换然后读档煤球红边消失

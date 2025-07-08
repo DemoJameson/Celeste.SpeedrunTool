@@ -354,14 +354,28 @@ public sealed class SaveLoadAction {
     }
 
 
-    internal static void LogSavedValues() {
+    internal static void LogSavedValues(bool saving) {
 #if LOG
+        bool logWhenSaving = true;
+        bool logWhenLoading = false;
+        if (!(saving && logWhenSaving || !saving && logWhenLoading)) {
+            return;
+        }
+
+        System.Text.StringBuilder sb = new();
         foreach (SaveLoadAction slAction in SharedActions) {
-            Logger.Log(LogLevel.Debug, "SpeedrunTool", $"=== {slAction.ActionDescription} ===");
+            sb.Append($"\n======  {slAction.ActionDescription}  ======\n");
+            int count = 1;
             foreach (KeyValuePair<Type, Dictionary<string, object>> pair in AllSavedValues[slAction.id]) {
-                Logger.Log(LogLevel.Info, "SpeedrunTool", pair.Key.FullName);
+                sb.Append($"---  Type {count.ToString().PadRight(3)} =   {pair.Key.FullName}  ---\n");
+                foreach (KeyValuePair<string, object> pair2 in pair.Value) {
+                    sb.Append($"{pair2.Key} -> {pair2.Value}\n");
+                }
+                sb.Append('\n');
+                count++;
             }
         }
+        Logger.Log(LogLevel.Debug, "SpeedrunTool", sb.ToString());
 #endif
     }
 

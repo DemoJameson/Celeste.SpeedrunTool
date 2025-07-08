@@ -119,10 +119,10 @@ public class EndPoint : Entity {
                     ModSettings.KeyboardSetEndPoint,
                     ModSettings.KeyboardSetAdditionalEndPoint,
                     ModSettings.ControllerSetEndPoint,
-                    ModSettings.ControllerSetEndPoint
+                    ModSettings.ControllerSetAdditionalEndPoint
                 );
 
-                return keyText == null ? manualText : $"{keyText,-14}Set room as timer endpoint\n\n{manualText}";
+                return keyText == null ? manualText : $"{keyText,-14}Set room as timer endpoint (SpeedrunTool)\n\n{manualText}";
             });
         }
     }

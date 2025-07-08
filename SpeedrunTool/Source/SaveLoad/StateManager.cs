@@ -1,3 +1,4 @@
+#define LAG_TEST
 using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.ModInterop;
 using Celeste.Mod.SpeedrunTool.Other;
@@ -204,6 +205,13 @@ public sealed class StateManager {
 
     #endregion Hook
 
+#if LAG_TEST
+    private static int SaveCount = 0;
+    private static int LoadCount = 0;
+    private static long SaveElapsedMs = 0;
+    private static long LoadElapsedMs = 0;
+#endif
+
     internal bool SaveStateImpl(bool tas) {
         if (Engine.Scene is not Level level) {
             return false;
@@ -217,6 +225,11 @@ public sealed class StateManager {
         if (InGameOverworldHelperIsOpen.Value?.GetValue(null) as bool? == true) {
             return false;
         }
+
+#if LAG_TEST
+        Stopwatch sw = new Stopwatch();
+        sw.Start();
+#endif
 
         if (IsSaved) {
             ClearBeforeSave = true;
@@ -249,12 +262,19 @@ public sealed class StateManager {
             }
         }
 
-        SaveLoadAction.LogSavedValues();
+        SaveLoadAction.LogSavedValues(saving: true);
+#if LAG_TEST
+        sw.Stop();
+        SaveCount++;
+        SaveElapsedMs += sw.ElapsedMilliseconds;
+        Logger.Log("SpeedrunTool", $"Save Cost / Average: {sw.ElapsedMilliseconds}ms / {SaveElapsedMs/SaveCount}ms");
+#endif
 
         Logger.Log("SpeedrunTool", $"Save to [{SlotName}]");
 
         return true;
     }
+
 
     internal bool LoadStateImpl(bool tas) {
         if (Engine.Scene is not Level level) {
@@ -269,8 +289,15 @@ public sealed class StateManager {
             return false;
         }
 
+#if LAG_TEST
+        Stopwatch sw = new Stopwatch();
+        sw.Start();
+#endif
+
         LoadByTas = tas;
         State = State.Loading;
+
+        SaveLoadAction.LogSavedValues(saving: false);
 
         SaveLoadAction.OnBeforeLoadState(level);
 
@@ -297,6 +324,13 @@ public sealed class StateManager {
             FreezeGame(FreezeType.Load);
             DoScreenWipe(level);
         }
+
+#if LAG_TEST
+        sw.Stop();
+        LoadCount++;
+        LoadElapsedMs += sw.ElapsedMilliseconds;
+        Logger.Log("SpeedrunTool", $"Load Cost / Average: {sw.ElapsedMilliseconds}ms / {LoadElapsedMs / LoadCount}ms");
+#endif
 
         Logger.Log("SpeedrunTool", $"Load from [{SlotName}]");
         return true;

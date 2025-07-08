@@ -10,7 +10,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
@@ -39,7 +38,6 @@ public sealed class SaveLoadAction {
     // values, belong to each save slot
 
     internal static Dictionary<int, Dictionary<Type, Dictionary<string, object>>> AllSavedValues {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => SaveSlotsManager.Slot.AllSavedValues;
 
         set {
@@ -199,20 +197,22 @@ public sealed class SaveLoadAction {
     }
 
     internal static void OnSaveState(Level level) {
+        Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict = AllSavedValues;
         foreach (SaveLoadAction saveLoadAction in SharedActions) {
-            saveLoadAction.saveState?.Invoke(AllSavedValues[saveLoadAction.id], level);
+            saveLoadAction.saveState?.Invoke(dict[saveLoadAction.id], level);
         }
     }
 
     internal static void OnLoadState(Level level) {
+        Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict = AllSavedValues;
         foreach (SaveLoadAction saveLoadAction in SharedActions) {
-            saveLoadAction.loadState?.Invoke(AllSavedValues[saveLoadAction.id], level);
+            saveLoadAction.loadState?.Invoke(dict[saveLoadAction.id], level);
         }
     }
 
     internal static void OnClearState() {
+        AllSavedValues = InitValueDictionary();
         foreach (SaveLoadAction saveLoadAction in SharedActions) {
-            AllSavedValues = InitValueDictionary();
             saveLoadAction.clearState?.Invoke();
         }
     }

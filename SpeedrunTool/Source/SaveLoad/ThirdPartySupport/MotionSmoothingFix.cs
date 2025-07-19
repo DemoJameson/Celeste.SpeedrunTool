@@ -27,9 +27,9 @@ internal static class MotionSmoothingFix {
             // MotionSmoothing handles mod interop when loading (it shouldn't), so the action may have been added
             SaveLoadAction.Remove(action => action.loadState?.Target?.GetType().Assembly.GetName().Name == "MotionSmoothing");
 
-            // the original one is a method call of a singleton, which may be wrong after deepclone?
+            // the original one is a method call of a singleton, which technically would work since SRT v3.26.0
+            // but it's not recommended anyway
             // we replace it by a static one
-            // (note save load actions are deepcloned to each save slot)
             SaveLoadAction.InternalSafeAdd(
                 null,
                 loadState: (_, _) => {

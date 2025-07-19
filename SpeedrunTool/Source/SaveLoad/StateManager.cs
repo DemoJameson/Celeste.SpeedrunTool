@@ -312,6 +312,7 @@ public sealed class StateManager {
         RestoreAudio1(level);
         RestoreCassetteBlockManager1(level);
         SaveLoadAction.OnLoadState(level);
+
         PreCloneSavedEntities();
         GcCollect();
 
@@ -488,6 +489,8 @@ public sealed class StateManager {
     // ReSharper disable once MemberCanBePrivate.Global
     // 为了照顾使用体验，不主动触发内存回收（会卡顿，增加 SaveState 时间）
     public void ClearStateImpl() {
+        // FIX ME: clear 之后读档更加卡顿
+
         preCloneTask?.Wait();
 
         // fix: 读档冻结时被TAS清除状态后无法解除冻结

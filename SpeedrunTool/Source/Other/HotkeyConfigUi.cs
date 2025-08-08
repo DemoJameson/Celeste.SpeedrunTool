@@ -1,6 +1,5 @@
 using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Utils;
-using Celeste.Mod.UI;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 using System.Linq;

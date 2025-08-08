@@ -104,6 +104,8 @@ internal static class SaveSlotsManager {
             GC.Collect();
             GC.WaitForPendingFinalizers();
         }
+
+        SwitchSlot(1);
     }
 
     /// <summary>

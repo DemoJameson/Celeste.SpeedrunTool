@@ -47,7 +47,7 @@ public sealed class SaveLoadAction {
 
     internal static Dictionary<int, Dictionary<Type, Dictionary<string, object>>> InitValueDictionary() {
         Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict = new();
-        for (int i = 1; i<= createdActions; i++) {
+        for (int i = 1; i <= createdActions; i++) {
             dict[i] = new Dictionary<Type, Dictionary<string, object>>();
         }
         return dict;
@@ -115,20 +115,10 @@ public sealed class SaveLoadAction {
 
     // ReSharper disable once MemberCanBePrivate.Global
     // ReSharper disable once UnusedMethodReturnValue.Global
+
     internal static SaveLoadAction InternalSafeAdd(Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState = null,
         Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState = null, Action clearState = null,
-        Action<Level> beforeSaveState = null, Action preCloneEntities = null) {
-        SaveLoadAction saveLoadAction = new(CreateSlAction(saveState), CreateSlAction(loadState), clearState, beforeSaveState, preCloneEntities);
-#if LOG
-        AddDebugDescription(saveLoadAction, internalCall: true);
-#endif
-        SharedActions.Add(saveLoadAction);
-        return saveLoadAction;
-    }
-
-    internal static SaveLoadAction InternalSafeAdd(Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState,
-        Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState, Action clearState,
-        Action<Level> beforeSaveState, Action<Level> beforeLoadState, Action preCloneEntities = null) {
+        Action<Level> beforeSaveState = null, Action<Level> beforeLoadState = null, Action preCloneEntities = null) {
         SaveLoadAction saveLoadAction = new(CreateSlAction(saveState), CreateSlAction(loadState), clearState, beforeSaveState, beforeLoadState, preCloneEntities);
 #if LOG
         AddDebugDescription(saveLoadAction, internalCall: true);
@@ -289,11 +279,13 @@ public sealed class SaveLoadAction {
             }
         }
     }
-
+    
+    
     [Unload]
     private static void Unload() {
         SharedActions.Clear();
     }
+    
 
     private static void InitActions() {
         if (internalActionInitialized) {
@@ -301,6 +293,7 @@ public sealed class SaveLoadAction {
         }
 
         internalActionInitialized = true;
+        SupportTracker();
         InitFields();
         SupportSimpleStaticFields();
         SupportModModuleFields();
@@ -883,6 +876,15 @@ public sealed class SaveLoadAction {
                 }
             }
         });
+    }
+
+    private static void SupportTracker() {
+        InternalSafeAdd(
+            loadState: (_, level) => {
+                Tracker.Refresh(level);
+
+            }
+        );
     }
 
 

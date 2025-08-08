@@ -66,9 +66,9 @@ internal static class Hotkeys_Rebase {
         }
         else if (!MInput.ControllerHasFocus &&
             scene is Overworld {
-                Current: OuiFileNaming      { UseKeyboardInput: true }
+                Current: OuiFileNaming { UseKeyboardInput: true }
                       or OuiModOptionString { UseKeyboardInput: true }
-            }){
+            }) {
             // 避免输入文字时触发快捷键
             canPress = false;
         }

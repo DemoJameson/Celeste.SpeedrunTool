@@ -99,12 +99,13 @@ internal static class SaveSlotsManager {
         foreach (SaveSlot slot in Dictionary.Values) {
             slot.StateManager.ClearStateImpl();
         }
-
+        Dictionary = new Dictionary<string, SaveSlot>();
+        /*
         if (System.Diagnostics.Process.GetCurrentProcess().PrivateMemorySize64 > 1024L * 1024L * 1024L * 2.5) {
             GC.Collect();
             GC.WaitForPendingFinalizers();
         }
-
+        */
         SwitchSlot(1);
     }
 

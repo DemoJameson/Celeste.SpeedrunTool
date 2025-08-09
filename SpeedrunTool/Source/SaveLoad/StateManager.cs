@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Serialization;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using EventInstance = FMOD.Studio.EventInstance;
 
@@ -243,7 +243,7 @@ public sealed class StateManager {
         SavedByTas = tas;
 
         SaveLoadAction.OnBeforeSaveState(level);
-        level.DeepCloneToShared(savedLevel = (Level)FormatterServices.GetUninitializedObject(typeof(Level)));
+        level.DeepCloneToShared(savedLevel = (Level)RuntimeHelpers.GetUninitializedObject(typeof(Level)));
         savedSaveData = SaveData.Instance.DeepCloneShared();
         savedTasCycleGroupCounter = TasImports.GroupCounter;
         SaveLoadAction.OnSaveState(level);
@@ -267,7 +267,8 @@ public sealed class StateManager {
         sw.Stop();
         SaveCount++;
         SaveElapsedMs += sw.ElapsedMilliseconds;
-        Logger.Log("SpeedrunTool", $"Save Cost / Average: {sw.ElapsedMilliseconds}ms / {SaveElapsedMs/SaveCount}ms");
+        Logger.Log(LogLevel.Info, "SpeedrunTool", $"Save Cost / Average: {sw.ElapsedMilliseconds}ms / {SaveElapsedMs/SaveCount}ms");
+        // strawberry jam heartside save time: 650 ms (now) / - ms (v3.22)
 #endif
 
         Logger.Log("SpeedrunTool", $"Save to [{SlotName}]");
@@ -330,7 +331,7 @@ public sealed class StateManager {
         sw.Stop();
         LoadCount++;
         LoadElapsedMs += sw.ElapsedMilliseconds;
-        Logger.Log("SpeedrunTool", $"Load Cost / Average: {sw.ElapsedMilliseconds}ms / {LoadElapsedMs / LoadCount}ms");
+        Logger.Log(LogLevel.Info, "SpeedrunTool", $"Load Cost / Average: {sw.ElapsedMilliseconds}ms / {LoadElapsedMs / LoadCount}ms");
         // strawberry jam heartside load time: 90 - 190 ms (now + only 1 saveslot) / 100 - 300 ms (now + multiple saveslots) /  70 - 170 ms (v3.22)
 #endif
 
@@ -529,8 +530,8 @@ public sealed class StateManager {
     private bool IsAllowSave(Level level, bool tas) {
         // 正常游玩时禁止死亡或者跳过过场时存档，TAS 则无以上限制
         // 跳过过场时的黑屏与读档后加的黑屏冲突，会导致一直卡在跳过过场的过程中
-        return (State == State.None || State == State.Waiting && AllowSaveLoadWhenWaiting) && !level.Paused
-            && (!level.IsPlayerDead() && !level.SkippingCutscene || tas);
+        return (State == State.None || State == State.Waiting && AllowSaveLoadWhenWaiting) && (tas || !level.Paused
+            && !level.IsPlayerDead() && !level.SkippingCutscene);
     }
 
     private void FreezeGame(FreezeType freeze) {

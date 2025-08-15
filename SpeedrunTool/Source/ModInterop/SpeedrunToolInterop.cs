@@ -24,7 +24,7 @@ public static class SpeedrunToolInterop {
     }
 
     [Load]
-    private static void Initialize() {
+    private static void Load() {
         typeof(SaveLoadExports).ModInterop();
     }
 

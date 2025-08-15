@@ -79,7 +79,7 @@ public sealed class StateManager {
 
     #region Hook
 
-    // manually call this to ensure it's 
+    // manually call this to ensure it's first called
     internal static void Load() {
         On.Monocle.Scene.BeforeUpdate += SceneOnBeforeUpdate;
         On.Celeste.Level.Update += UpdateBackdropWhenWaiting;

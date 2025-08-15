@@ -20,7 +20,7 @@ public sealed class SaveLoadAction {
 
     private static bool internalActionInitialized = false;
 
-    private static bool modActionInitialized = false;
+    private static bool needInitializeDictionaryId = false;
     private static bool slotInitialized {
         get => SaveSlotsManager.Slot.ValueDictionaryInitialized;
         set {
@@ -35,6 +35,10 @@ public sealed class SaveLoadAction {
     // only actions, no values stored. Share among all save slots
     private static readonly List<SaveLoadAction> SharedActions = new();
 
+    private static readonly List<SaveLoadAction> ToBeAddedModSharedActions = new();
+    // external actions will be first added to here, then this list merge into SharedActions
+    // so we can ensure all mod actions are executed after internal actions
+
     // values, belong to each save slot
 
     internal static Dictionary<int, Dictionary<Type, Dictionary<string, object>>> AllSavedValues {
@@ -47,8 +51,8 @@ public sealed class SaveLoadAction {
 
     internal static Dictionary<int, Dictionary<Type, Dictionary<string, object>>> InitValueDictionary() {
         Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict = new();
-        for (int i = 1; i <= createdActions; i++) {
-            dict[i] = new Dictionary<Type, Dictionary<string, object>>();
+        foreach (SaveLoadAction saveLoadAction in SharedActions) {
+            dict[saveLoadAction.dictionaryId] = new Dictionary<Type, Dictionary<string, object>>();
         }
         return dict;
     }
@@ -60,8 +64,7 @@ public sealed class SaveLoadAction {
     public string ActionDescription = "";
 #endif
 
-    private static int createdActions = 0;
-    private readonly int id;
+    private int dictionaryId;
 
     private readonly Action clearState;
     private readonly Action<Level> beforeSaveState;
@@ -78,8 +81,7 @@ public sealed class SaveLoadAction {
         this.clearState = clearState;
         this.beforeSaveState = beforeSaveState;
         this.preCloneEntities = preCloneEntities;
-        createdActions++;
-        id = createdActions;
+        needInitializeDictionaryId = true;
     }
 
     public SaveLoadAction(SlAction saveState, SlAction loadState, Action clearState,
@@ -90,8 +92,7 @@ public sealed class SaveLoadAction {
         this.beforeSaveState = beforeSaveState;
         this.beforeLoadState = beforeLoadState;
         this.preCloneEntities = preCloneEntities;
-        createdActions++;
-        id = createdActions;
+        needInitializeDictionaryId = true;
     }
 
     public SaveLoadAction(SlAction saveState, SlAction loadState, Action clearState,
@@ -103,8 +104,7 @@ public sealed class SaveLoadAction {
         this.beforeLoadState = beforeLoadState;
         this.preCloneEntities = preCloneEntities;
         this.unloadLevel = unloadLevel;
-        createdActions++;
-        id = createdActions;
+        needInitializeDictionaryId = true;
     }
 
     // used by CelesteTAS
@@ -119,6 +119,9 @@ public sealed class SaveLoadAction {
     internal static SaveLoadAction InternalSafeAdd(Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState = null,
         Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState = null, Action clearState = null,
         Action<Level> beforeSaveState = null, Action<Level> beforeLoadState = null, Action preCloneEntities = null) {
+        if (internalActionInitialized) {
+            throw new Exception("Internal SaveLoad actions are added after expected time!");
+        }
         SaveLoadAction saveLoadAction = new(CreateSlAction(saveState), CreateSlAction(loadState), clearState, beforeSaveState, beforeLoadState, preCloneEntities);
 #if LOG
         AddDebugDescription(saveLoadAction, internalCall: true);
@@ -141,8 +144,7 @@ public sealed class SaveLoadAction {
 #if LOG
         AddDebugDescription(saveLoadAction, internalCall: false);
 #endif
-        SharedActions.Add(saveLoadAction);
-        modActionInitialized = true;
+        ToBeAddedModSharedActions.Add(saveLoadAction);
         return saveLoadAction;
     }
 
@@ -161,7 +163,6 @@ public sealed class SaveLoadAction {
         } else {
             action.ActionDescription = "<BadStackFrame>";
         }
-        Logger.Log(LogLevel.Debug, "SpeedrunTool", $"=== {action.ActionDescription} ===");
     }
 #endif
 
@@ -169,7 +170,7 @@ public sealed class SaveLoadAction {
     /// For third party mods
     /// </summary>
     public static bool Remove(SaveLoadAction saveLoadAction) {
-        return SharedActions.Remove(saveLoadAction);
+        return SharedActions.Remove(saveLoadAction) || ToBeAddedModSharedActions.Remove(saveLoadAction);
     }
 
     internal static void Remove(Func<SaveLoadAction, bool> predicate) {
@@ -181,7 +182,7 @@ public sealed class SaveLoadAction {
         }
         if (toRemove is not null) {
             foreach (SaveLoadAction action in toRemove) {
-                SharedActions.Remove(action);
+                Remove(action);
             }
         }
     }
@@ -189,14 +190,14 @@ public sealed class SaveLoadAction {
     internal static void OnSaveState(Level level) {
         Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict = AllSavedValues;
         foreach (SaveLoadAction saveLoadAction in SharedActions) {
-            saveLoadAction.saveState?.Invoke(dict[saveLoadAction.id], level);
+            saveLoadAction.saveState?.Invoke(dict[saveLoadAction.dictionaryId], level);
         }
     }
 
     internal static void OnLoadState(Level level) {
         Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict = AllSavedValues;
         foreach (SaveLoadAction saveLoadAction in SharedActions) {
-            saveLoadAction.loadState?.Invoke(dict[saveLoadAction.id], level);
+            saveLoadAction.loadState?.Invoke(dict[saveLoadAction.dictionaryId], level);
         }
     }
 
@@ -292,7 +293,6 @@ public sealed class SaveLoadAction {
             return;
         }
 
-        internalActionInitialized = true;
         SupportTracker();
         InitFields();
         SupportSimpleStaticFields();
@@ -328,14 +328,38 @@ public sealed class SaveLoadAction {
         // 放最后，确保收集了所有克隆的 VirtualAssets 与 EventInstance
         ReloadVirtualAssets();
         ReleaseEventInstances();
+
+        internalActionInitialized = true;
+        needInitializeDictionaryId = true;
     }
 
     public static void InitSlots() {
+        // most mods might add saveload actions before InitActions is executed
         InitActions();
+        // but some might add during gameplay (why would you do that?)
+        
+        // anyway, we rebuild the dictionary
+        if (needInitializeDictionaryId) {
+            if (ToBeAddedModSharedActions.IsNotNullOrEmpty()) {
+                SharedActions.AddRange(ToBeAddedModSharedActions);
+            }
+            ToBeAddedModSharedActions.Clear();
+            int i = 0;
+            foreach (SaveLoadAction action in SharedActions) {
+                i++;
+                action.dictionaryId = i;
+            }
+#if LOG
+            System.Text.StringBuilder sb = new();
+            sb.Append("\n===== Initializing SharedActions... =====\n");
+            foreach (SaveLoadAction action in SharedActions) {
+                sb.Append($"--- [{action.dictionaryId}] {action.ActionDescription} ---\n");
+            }
+            Logger.Log(LogLevel.Debug, "SpeedrunTool", sb.ToString());
+#endif
 
-        if (modActionInitialized) {
-            SaveSlotsManager.ModRequireReInit();
-            modActionInitialized = false;
+            SaveSlotsManager.RequireReInit();
+            needInitializeDictionaryId = false;
         }
 
         if (slotInitialized) {
@@ -359,7 +383,7 @@ public sealed class SaveLoadAction {
         foreach (SaveLoadAction slAction in SharedActions) {
             sb.Append($"\n======  {slAction.ActionDescription}  ======\n");
             int count = 1;
-            foreach (KeyValuePair<Type, Dictionary<string, object>> pair in AllSavedValues[slAction.id]) {
+            foreach (KeyValuePair<Type, Dictionary<string, object>> pair in AllSavedValues[slAction.dictionaryId]) {
                 sb.Append($"---  Type {count.ToString().PadRight(3)} =   {pair.Key.FullName}  ---\n");
                 foreach (KeyValuePair<string, object> pair2 in pair.Value) {
                     sb.Append($"{pair2.Key} -> {pair2.Value}\n");

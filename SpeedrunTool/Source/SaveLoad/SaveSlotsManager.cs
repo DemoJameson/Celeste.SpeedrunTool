@@ -127,7 +127,7 @@ internal static class SaveSlotsManager {
         return true;
     }
 
-    internal static void ModRequireReInit() {
+    internal static void RequireReInit() {
         foreach (SaveSlot slot in SaveSlots) {
             slot.ValueDictionaryInitialized = false;
             slot.AllSavedValues.Clear();

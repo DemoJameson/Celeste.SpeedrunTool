@@ -38,6 +38,9 @@
     
     <!-- Dependency -->
     <ItemGroup>
+        <PackageReference Include="JetBrains.Profiler.Api" Version="1.4.10" >
+            <IncludeAssets Condition="'$(Configuration)' == 'Debug'">all</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="Krafs.Publicizer" Version="2.3.0">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

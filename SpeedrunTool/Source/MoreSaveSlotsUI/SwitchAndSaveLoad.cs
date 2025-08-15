@@ -15,14 +15,26 @@ internal static class SwitchAndSaveLoad {
 
     internal static void RegisterHotkeys() {
         Hotkey.SaveToNextSlot.RegisterPressedAction(scene => {
+#if DEBUG
+            JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();
+#endif
             if (scene is Level) {
                 SaveToNextAvailableSlot();
             }
+#if DEBUG
+            JetBrains.Profiler.Api.MeasureProfiler.SaveData();
+#endif
         });
         Hotkey.LoadFromLastSlot.RegisterPressedAction(scene => {
+#if DEBUG
+            JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();
+#endif
             if (scene is Level { Paused: false }) {
                 LoadFromLastAvailableSlot();
             }
+#if DEBUG
+            JetBrains.Profiler.Api.MeasureProfiler.SaveData();
+#endif
         });
     }
 

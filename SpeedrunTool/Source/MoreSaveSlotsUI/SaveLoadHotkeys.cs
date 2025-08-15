@@ -16,9 +16,7 @@ internal static class SaveLoadHotkeys {
             if (scene is Level { Paused: false }) {
 #if DEBUG
                 JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();
-                SaveSlotsManager.SaveState();
-                JetBrains.Profiler.Api.MeasureProfiler.SaveData();
-#else
+#endif
                 if (SaveLoadStateShowMessage) {
                     if (SaveSlotsManager.SaveState()) {
                         PopupMessageUtils.Show($"Save to [{SlotName}]", null);
@@ -35,12 +33,16 @@ internal static class SaveLoadHotkeys {
                 else {
                     SaveSlotsManager.SaveState();
                 }
-
+#if DEBUG
+                JetBrains.Profiler.Api.MeasureProfiler.SaveData();
 #endif
             }
         });
         Hotkey.LoadState.RegisterPressedAction(scene => {
             if (scene is Level { Paused: false }) {
+#if DEBUG
+                JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();
+#endif
                 if (SaveSlotsManager.IsSaved()) {
                     if (SaveLoadStateShowMessage) {
                         if (SaveSlotsManager.LoadState()) {
@@ -57,6 +59,9 @@ internal static class SaveLoadHotkeys {
                 else {
                     PopupMessageUtils.Show(DialogIds.NotSavedStateTooltip.DialogClean() + $" [{SlotName}]", DialogIds.NotSavedStateYetDialog);
                 }
+#if DEBUG
+                JetBrains.Profiler.Api.MeasureProfiler.SaveData();
+#endif
             }
         });
         Hotkey.ClearState.RegisterPressedAction(scene => {

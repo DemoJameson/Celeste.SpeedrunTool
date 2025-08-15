@@ -1,4 +1,3 @@
-//#define LAG_TEST
 using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.ModInterop;
 using Celeste.Mod.SpeedrunTool.Other;
@@ -204,14 +203,6 @@ public sealed class StateManager {
     }
 
     #endregion Hook
-
-#if LAG_TEST
-    private static int SaveCount = 0;
-    private static int LoadCount = 0;
-    private static long SaveElapsedMs = 0;
-    private static long LoadElapsedMs = 0;
-#endif
-
     internal bool SaveStateImpl(bool tas) {
         if (Engine.Scene is not Level level) {
             return false;
@@ -225,11 +216,6 @@ public sealed class StateManager {
         if (InGameOverworldHelperIsOpen.Value?.GetValue(null) as bool? == true) {
             return false;
         }
-
-#if LAG_TEST
-        Stopwatch sw = new Stopwatch();
-        sw.Start();
-#endif
 
         if (IsSaved) {
             ClearBeforeSave = true;
@@ -263,13 +249,6 @@ public sealed class StateManager {
         }
 
         SaveLoadAction.LogSavedValues(saving: true);
-#if LAG_TEST
-        sw.Stop();
-        SaveCount++;
-        SaveElapsedMs += sw.ElapsedMilliseconds;
-        Logger.Log(LogLevel.Info, "SpeedrunTool", $"Save Cost / Average: {sw.ElapsedMilliseconds}ms / {SaveElapsedMs/SaveCount}ms");
-        // strawberry jam heartside save time: 650 ms (now) / - ms (v3.22)
-#endif
 
         Logger.Log("SpeedrunTool", $"Save to [{SlotName}]");
 
@@ -289,11 +268,6 @@ public sealed class StateManager {
         if (tas && !SavedByTas) {
             return false;
         }
-
-#if LAG_TEST
-        Stopwatch sw = new Stopwatch();
-        sw.Start();
-#endif
 
         LoadByTas = tas;
         State = State.Loading;
@@ -326,14 +300,6 @@ public sealed class StateManager {
             FreezeGame(FreezeType.Load);
             DoScreenWipe(level);
         }
-
-#if LAG_TEST
-        sw.Stop();
-        LoadCount++;
-        LoadElapsedMs += sw.ElapsedMilliseconds;
-        Logger.Log(LogLevel.Info, "SpeedrunTool", $"Load Cost / Average: {sw.ElapsedMilliseconds}ms / {LoadElapsedMs / LoadCount}ms");
-        // strawberry jam heartside load time: 90 - 190 ms (now + only 1 saveslot) / 100 - 300 ms (now + multiple saveslots) /  70 - 170 ms (v3.22)
-#endif
 
         Logger.Log("SpeedrunTool", $"Load from [{SlotName}]");
         return true;
@@ -487,10 +453,12 @@ public sealed class StateManager {
         }
     }
 
+
     // ReSharper disable once MemberCanBePrivate.Global
     // 为了照顾使用体验，不主动触发内存回收（会卡顿，增加 SaveState 时间）
     public void ClearStateImpl() {
-        // FIX ME: clear 之后读档更加卡顿
+        // TODO: clear 之后读档更加卡顿 (这个问题在老版本好像也有)
+        // TODO: 这里 Task.Wait() 可能可以试着让它更快结束?
 
         preCloneTask?.Wait();
 

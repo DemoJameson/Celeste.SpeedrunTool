@@ -280,13 +280,13 @@ public sealed class SaveLoadAction {
             }
         }
     }
-    
-    
+
+
     [Unload]
     private static void Unload() {
         SharedActions.Clear();
     }
-    
+
 
     private static void InitActions() {
         if (internalActionInitialized) {
@@ -337,7 +337,7 @@ public sealed class SaveLoadAction {
         // most mods might add saveload actions before InitActions is executed
         InitActions();
         // but some might add during gameplay (why would you do that?)
-        
+
         // anyway, we rebuild the dictionary
         if (needInitializeDictionaryId) {
             if (ToBeAddedModSharedActions.IsNotNullOrEmpty()) {

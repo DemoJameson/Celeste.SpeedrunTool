@@ -522,7 +522,7 @@ public sealed class SaveLoadAction {
             (dictionary, _) => {
                 foreach (Type type in simpleStaticFields.Keys) {
                     FieldInfo[] fieldInfos = simpleStaticFields[type];
-                    // ("\n\n" + string.Join("\n", fieldInfos.Select(info => type.FullName + " " + info.Name + " " + info.FieldType))).DebugLog();
+                    // Logger.Debug("SpeedrunTool", "\n\n" + string.Join("\n", fieldInfos.Select(info => type.FullName + " " + info.Name + " " + info.FieldType)));
                     Dictionary<string, object> values = new();
 
                     foreach (FieldInfo fieldInfo in fieldInfos) {
@@ -535,7 +535,7 @@ public sealed class SaveLoadAction {
                 Dictionary<Type, Dictionary<string, object>> clonedDict = dictionary.DeepCloneShared();
                 foreach (Type type in clonedDict.Keys) {
                     Dictionary<string, object> values = clonedDict[type];
-                    // ("\n\n" + string.Join("\n", values.Select(pair => type.FullName + " " + pair.Key + " " + pair.Value))).DebugLog();
+                    // Logger.Debug("SpeedrunTool", "\n\n" + string.Join("\n", values.Select(pair => type.FullName + " " + pair.Key + " " + pair.Value)));
                     foreach (KeyValuePair<string, object> pair in values) {
                         type.SetFieldValue(pair.Key, pair.Value);
                     }

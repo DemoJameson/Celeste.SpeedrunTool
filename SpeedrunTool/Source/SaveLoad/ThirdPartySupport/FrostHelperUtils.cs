@@ -6,7 +6,9 @@ using System.Linq;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.ThirdPartySupport;
 
+[Obsolete("FrostHelper v1.73.0 no longer uses AttachedDataHelper")]
 internal static class FrostHelperUtils {
+
     private static readonly Lazy<Type> AttachedDataHelperType = new(() =>
         ModUtils.GetType("FrostHelper", "FrostHelper.Helpers.AttachedDataHelper"));
 

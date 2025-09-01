@@ -44,7 +44,7 @@ public static class SpeedrunToolInterop {
         /// <param name="preCloneEntities"></param>
         /// <returns>SaveLoadAction instance, used for unregister when your mod unloads </returns>
 
-        // note save load actions are DeepCloned to each save slot, so should never pass in method calls of a singleton
+        // not recommended to pass in method calls of a singleton
         public static object RegisterSaveLoadAction(Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState,
             Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState, Action clearState,
             Action<Level> beforeSaveState, Action<Level> beforeLoadState, Action preCloneEntities) {

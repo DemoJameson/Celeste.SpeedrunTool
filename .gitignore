@@ -338,3 +338,6 @@ Dialog
 Graphics
 everest.yaml
 toZip.cmd
+/JetBrains.FormatRipper.dll
+/JetBrains.HabitatDetector.dll
+/JetBrains.Profiler.Api.dll

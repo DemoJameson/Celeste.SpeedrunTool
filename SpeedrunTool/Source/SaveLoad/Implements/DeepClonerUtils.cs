@@ -63,7 +63,7 @@ public static class DeepClonerUtils {
                 return true;
             }
 
-            if (SpeedrunToolInterop.CanReturnSameObject(type)) {
+            if (SaveLoadInterop.CanReturnSameObject(type)) {
                 return true;
             }
 
@@ -149,7 +149,7 @@ public static class DeepClonerUtils {
                     return type.GetConstructorInfo(genericType).Invoke(parameters.DeepClone(deepCloneState));
                 }
 
-                return SpeedrunToolInterop.CustomDeepCloneObject(sourceObj);
+                return SaveLoadInterop.CustomDeepCloneObject(sourceObj);
             }
         });
 

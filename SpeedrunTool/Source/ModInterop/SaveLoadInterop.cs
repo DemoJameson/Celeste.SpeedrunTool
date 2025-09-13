@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Celeste.Mod.SpeedrunTool.ModInterop;
 
-public static class SpeedrunToolInterop {
+public static class SaveLoadInterop {
     private static readonly List<Func<Type, bool>> returnSameObjectPredicates = new();
     private static readonly List<Func<object, object>> customDeepCloneProcessors = new();
 

@@ -33,6 +33,7 @@ public static class RoomTimerManager {
 
     private static readonly RoomTimerData CurrentRoomTimerData = new(RoomTimerType.CurrentRoom);
     private static readonly RoomTimerData NextRoomTimerData = new(RoomTimerType.NextRoom);
+    internal static RoomTimerData Data_Auto => (ModSettings.RoomTimerType is RoomTimerType.NextRoom) ? NextRoomTimerData : CurrentRoomTimerData;
 
     private static string previousRoom;
 
@@ -220,7 +221,7 @@ public static class RoomTimerManager {
             return;
         }
 
-        RoomTimerData roomTimerData = ModSettings.RoomTimerType == RoomTimerType.NextRoom ? NextRoomTimerData : CurrentRoomTimerData;
+        RoomTimerData roomTimerData = Data_Auto;
 
         string roomTimeString = roomTimerData.TimeString;
         string pbTimeString = $"PB {roomTimerData.PbTimeString}";
@@ -345,7 +346,7 @@ public static class RoomTimerManager {
         if (cursor.TryGotoNext(MoveType.After, instr => instr.MatchLdfld<Session>("Time"))) {
             cursor.EmitDelegate<Func<long, long>>((origTime) => {
                 if (ModSettings.Enabled && ModSettings.RoomTimerType is not RoomTimerType.Off) {
-                    return (ModSettings.RoomTimerType is RoomTimerType.NextRoom) ? NextRoomTimerData.AutosplitterTime : CurrentRoomTimerData.AutosplitterTime;
+                    return Data_Auto.AutosplitterTime;
                 }
                 return origTime;
             });
@@ -353,7 +354,7 @@ public static class RoomTimerManager {
     }
 
     private static void ExportRoomTimes() {
-        RoomTimerData roomTimerData = (ModSettings.RoomTimerType is RoomTimerType.NextRoom) ? NextRoomTimerData : CurrentRoomTimerData;
+        RoomTimerData roomTimerData = Data_Auto;
         string timeKeyPrefix = roomTimerData.TimeKeyPrefix;
         long lastSplitTime = 0;
 

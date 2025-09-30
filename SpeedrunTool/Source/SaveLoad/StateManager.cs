@@ -268,7 +268,7 @@ public sealed class StateManager {
         SaveLoadAction.OnBeforeSaveState(level);
         level.DeepCloneToShared(savedLevel = (Level)RuntimeHelpers.GetUninitializedObject(typeof(Level)));
         savedSaveData = SaveData.Instance.DeepCloneShared();
-        savedTasCycleGroupCounter = TasImports.GroupCounter;
+        savedTasCycleGroupCounter = TasUtils.GroupCounter;
         savedTransitionRoutine = transitionRoutine?.TryGetTarget(out IEnumerator enumerator) == true ? enumerator.DeepCloneShared() : null;
         SaveLoadAction.OnSaveState(level);
         DeepClonerUtils.ClearSharedDeepCloneState();
@@ -459,7 +459,7 @@ public sealed class StateManager {
     }
 
     private void RestoreCycleGroupCounter() {
-        TasImports.GroupCounter = savedTasCycleGroupCounter;
+        TasUtils.GroupCounter = savedTasCycleGroupCounter;
     }
 
     // 收集需要继续播放的声音
@@ -491,6 +491,8 @@ public sealed class StateManager {
     }
 
     // 第二步：播放节奏音乐
+    // https://discord.com/channels/403698615446536203/429775260108324865/1422017531098566776
+    // 理论上, 在 Cassette cycle 图中 LoadState 后暂停会引入额外的读图优势, 但这显然不是我们的问题.
     private void RestoreCassetteBlockManager2(Level level) {
         if (level.Tracker.GetEntity<CassetteBlockManager>() is { } manager) {
             if (manager.sfx is { } sfx && !manager.isLevelMusic && manager.leadBeats <= 0) {

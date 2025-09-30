@@ -1,4 +1,4 @@
-using Celeste.Mod.SpeedrunTool.Utils;
+using Celeste.Mod.SpeedrunTool.ModInterop;
 
 namespace Celeste.Mod.SpeedrunTool.Other;
 

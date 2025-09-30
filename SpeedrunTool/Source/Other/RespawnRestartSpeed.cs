@@ -1,4 +1,5 @@
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
+using Celeste.Mod.SpeedrunTool.ModInterop;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Celeste.Mod.SpeedrunTool.Utils;

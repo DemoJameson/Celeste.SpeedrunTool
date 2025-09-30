@@ -1,3 +1,4 @@
+using Celeste.Mod.SpeedrunTool.ModInterop;
 using Celeste.Mod.SpeedrunTool.Utils;
 using Celeste.Mod.UI;
 using Microsoft.Xna.Framework.Input;

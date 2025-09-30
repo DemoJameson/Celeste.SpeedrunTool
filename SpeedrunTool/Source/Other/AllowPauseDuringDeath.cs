@@ -1,4 +1,5 @@
-﻿using Celeste.Mod.SpeedrunTool.Utils;
+using Celeste.Mod.SpeedrunTool.ModInterop;
+using Celeste.Mod.SpeedrunTool.Utils;
 using MonoMod.Cil;
 
 namespace Celeste.Mod.SpeedrunTool.Other;

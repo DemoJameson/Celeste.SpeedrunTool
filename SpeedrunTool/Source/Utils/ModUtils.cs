@@ -1,4 +1,4 @@
-﻿using Celeste.Mod.Helpers;
+using Celeste.Mod.Helpers;
 using System.Linq;
 using System.Reflection;
 
@@ -15,7 +15,7 @@ internal static class ModUtils {
         return FakeAssembly.GetFakeEntryAssembly().GetType(name, throwOnError, ignoreCase);
     }
 
-    public static Type[] GetTypes() {
+    public static Type[] GetAllTypes() {
         return FakeAssembly.GetFakeEntryAssembly().GetTypes();
     }
 

@@ -1,5 +1,4 @@
 //#define LOG
-using Celeste.Mod.Helpers;
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad.ThirdPartySupport;
@@ -401,7 +400,7 @@ public sealed class SaveLoadAction {
         simpleStaticFields = new Dictionary<Type, FieldInfo[]>();
         modModuleFields = new Dictionary<Type, FieldInfo[]>();
 
-        IEnumerable<Type> types = FakeAssembly.GetFakeEntryAssembly().GetTypes().Where(type =>
+        IEnumerable<Type> types = ModUtils.GetAllTypes().Where(type =>
             !type.IsGenericType
             && type.FullName != null
             && !type.FullName.StartsWith("Celeste.Mod.SpeedrunTool")
@@ -410,34 +409,47 @@ public sealed class SaveLoadAction {
             type.IsSameOrSubclassOf(typeof(Renderer)));
 
         foreach (Type type in types) {
-            FieldInfo[] fieldInfos = type.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-                .Where(info => {
-                    Type fieldType = info.FieldType;
-                    return !info.IsConst() && fieldType.IsSimpleClass(genericType =>
-                        fieldType == type
-                        || fieldType == typeof(Level)
-                        || fieldType == typeof(Player)
-                        || fieldType == typeof(MTexture)
-                        || fieldType == typeof(CrystalStaticSpinner)
-                        || fieldType == typeof(Solid)
-                        || fieldType.IsSubclassOf(typeof(Renderer))
-                        || fieldType.IsSubclassOf(typeof(VirtualAsset))
-                        || genericType == type
-                        || genericType == typeof(Level)
-                        || genericType == typeof(Player)
-                        || genericType == typeof(MTexture)
-                        || genericType == typeof(CrystalStaticSpinner)
-                        || genericType == typeof(Solid)
-                        || genericType.IsSubclassOf(typeof(Renderer))
-                        || genericType.IsSubclassOf(typeof(VirtualAsset))
-                    );
-                }).ToArray();
+            try {
+                FieldInfo[] fieldInfos = type.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+                    .Where(info => {
+                        Type fieldType = info.FieldType; // might throw exception
+                        return !info.IsConst() && fieldType.IsSimpleClass(genericType =>
+                            fieldType == type
+                            || fieldType == typeof(Level)
+                            || fieldType == typeof(Player)
+                            || fieldType == typeof(MTexture)
+                            || fieldType == typeof(CrystalStaticSpinner)
+                            || fieldType == typeof(Solid)
+                            || fieldType.IsSubclassOf(typeof(Renderer))
+                            || fieldType.IsSubclassOf(typeof(VirtualAsset))
+                            || genericType == type
+                            || genericType == typeof(Level)
+                            || genericType == typeof(Player)
+                            || genericType == typeof(MTexture)
+                            || genericType == typeof(CrystalStaticSpinner)
+                            || genericType == typeof(Solid)
+                            || genericType.IsSubclassOf(typeof(Renderer))
+                            || genericType.IsSubclassOf(typeof(VirtualAsset))
+                        );
+                    }).ToArray();
 
-            if (fieldInfos.Length == 0) {
+                if (fieldInfos.Length == 0) {
+                    continue;
+                }
+
+                simpleStaticFields[type] = fieldInfos;
+            }
+            catch {
+                /* possibly a FileNotFoundException
+                 * GetTypesSafe() just checks if the type can be loaded, and if the FullyQualifiedName, declaringType, baseType of the type is safe, etc.
+                 * but doesn't check if each memberInfo is "safe"
+                 * only method calls or something which use the "dangerous" memberInfo will immediately lead to an Exception
+                 * 
+                 * e.g: when you enable KyfexHelper, but don't enable auspicioushelper
+                 * then KyfexHelper.KevinFace.tcComponent will give you a surprise
+                 */
                 continue;
             }
-
-            simpleStaticFields[type] = fieldInfos;
         }
 
         InitModuleFields();

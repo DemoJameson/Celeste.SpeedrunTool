@@ -113,8 +113,22 @@ public static class SpeedrunToolMenu {
                 ModSettings.FreezeAfterLoadStateType).Change(b =>
                 ModSettings.FreezeAfterLoadStateType = b));
 
-            subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.NoGcAfterLoadState), ModSettings.NoGcAfterLoadState).Change(b =>
-                ModSettings.NoGcAfterLoadState = b));
+            subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.GcAfterLoadState), ModSettings.GcAfterLoadState).Change(b =>
+                ModSettings.GcAfterLoadState = b));
+
+            subMenu.Add(new EnumerableSliderCompact<int>(
+                Dialog.Clean(DialogIds.GcMemoryThreshold),
+                new Dictionary<int, string>() {
+                    [1] = Dialog.Clean(DialogIds.Always),
+                    [2] = "1.0 GB", [3] = "1.5 GB", [4] = "2.0 GB", [5] = "2.5 GB", [6] = "3.0 GB", [7] = "3.5 GB", [8] = "4.0 GB", [9] = "4.5 GB",
+                    [10] = "5.0 GB", [11] = "5.5 GB", [12] = "6.0 GB", [13] = "6.5 GB", [14] = "7.0 GB", [15] = "7.5 GB", [16] = "8.0 GB"
+                },
+                ModSettings.Doubled_GcMemoryThreshold)
+                .Change(b => {
+                    ModSettings.Doubled_GcMemoryThreshold = b;
+                    SpeedrunToolSettings.SetGcMemoryThreshold(b);
+                })
+            );
 
             TextMenu.Item saveTimeAndDeaths;
             subMenu.Add(saveTimeAndDeaths = new TextMenu.OnOff(Dialog.Clean(DialogIds.SaveTimeAndDeaths), ModSettings.SaveTimeAndDeaths).Change(b =>
@@ -284,7 +298,7 @@ internal class EaseInSubMenu : TextMenuExt.SubMenu {
     }
 }
 
-internal class EnumerableSliderCompact<T> : TextMenuExt.EnumerableSlider<T> where T : Enum {
+internal class EnumerableSliderCompact<T> : TextMenuExt.EnumerableSlider<T> {
     public EnumerableSliderCompact(string label, IEnumerable<KeyValuePair<T, string>> options, T startValue) : base(label, options, startValue) { }
 
     public override float RightWidth() {

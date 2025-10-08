@@ -200,7 +200,7 @@ public sealed class StateManager {
     private void ClearStateWhenSwitchSceneImpl(Scene self) {
         if (IsSaved) {
             if (self is Overworld && !SavedByTas && InGameOverworldHelperIsOpen.Value?.GetValue(null) as bool? != true) {
-                ClearStateImpl();
+                ClearStateImpl(hasGc: true);
             }
 
             // 重启章节 Level 实例变更，所以之前预克隆的实体作废，需要重新克隆
@@ -210,7 +210,7 @@ public sealed class StateManager {
             }
 
             if (self.GetSession() is { } session && session.Area != savedLevel.Session.Area) {
-                ClearStateImpl();
+                ClearStateImpl(hasGc: true);
             }
         }
     }
@@ -256,7 +256,7 @@ public sealed class StateManager {
 
         if (IsSaved) {
             ClearBeforeSave = true;
-            ClearStateImpl();
+            ClearStateImpl(hasGc: false);
             ClearBeforeSave = false;
         }
 
@@ -331,7 +331,9 @@ public sealed class StateManager {
         SaveLoadAction.OnLoadState(level);
 
         PreCloneSavedEntities();
-        GcCollect();
+        if (ModSettings.GcAfterLoadState) {
+            GcCollect(force: false);
+        }
 
         if (tas) {
             LoadStateComplete(level);
@@ -347,22 +349,32 @@ public sealed class StateManager {
         return true;
     }
 
-    // 32 位应用且使用内存超过 2GB 才回收垃圾
-    private void GcCollect() {
-        if (ModSettings.NoGcAfterLoadState || Environment.Is64BitProcess) {
-            return;
-        }
 
-        if (celesteProcess == null) {
-            celesteProcess = Process.GetCurrentProcess();
-        }
-        else {
-            celesteProcess.Refresh();
-        }
+    internal static long MemoryThreshold = (long)(1024L * 1024L * 1024L * 2.5);
 
-        if (celesteProcess.PrivateMemorySize64 > 1024L * 1024L * 1024L * 2.5) {
+    internal void GcCollect(bool force = false) {
+        // 使用内存很难低于这个值, 干脆此时强制执行. ModSettings 里也同样这般设置
+        force = force || MemoryThreshold < 1024L * 1024L * 1024L;
+        if (force) {
+            Logger.Log("SpeedrunTool", "Force GC Collecting...");
+            celesteProcess ??= Process.GetCurrentProcess();
             GC.Collect();
             GC.WaitForPendingFinalizers();
+        }
+        else {
+            if (celesteProcess == null) {
+                celesteProcess = Process.GetCurrentProcess();
+            }
+            else {
+                celesteProcess.Refresh();
+            }
+
+            // 使用内存超过阈值才回收垃圾
+            if (celesteProcess.PrivateMemorySize64 > MemoryThreshold) {
+                Logger.Log("SpeedrunTool", $"MemoryUsage: {((float)celesteProcess.PrivateMemorySize64) / (1024L * 1024L * 1024L):0.00} GB. Waiting for GC Collecting...");
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+            }
         }
     }
 
@@ -501,11 +513,7 @@ public sealed class StateManager {
         }
     }
 
-
-    // ReSharper disable once MemberCanBePrivate.Global
-    // 为了照顾使用体验，不主动触发内存回收（会卡顿，增加 SaveState 时间）
-    public void ClearStateImpl() {
-        // TODO: clear 之后读档更加卡顿 (这个问题在老版本好像也有)
+    public void ClearStateImpl(bool hasGc = true) {
         // TODO: 这里 Task.Wait() 可能可以试着让它更快结束?
 
         preCloneTask?.Wait();
@@ -516,19 +524,26 @@ public sealed class StateManager {
         }
 
         playingEventInstances.Clear();
+        if (savedLevel is null) {
+            hasGc = false;
+        }
         savedLevel = null;
         savedSaveData = null;
         preCloneTask = null;
         savedTransitionRoutine = null;
         celesteProcess?.Dispose();
         celesteProcess = null;
-        SaveLoadAction.OnClearState();
+        SaveLoadAction.OnClearState(ClearBeforeSave);
         State = State.None;
+        // 2025.10.08 fix: clear 之后读档更加卡顿 (这个问题在老版本好像也有, 之前在这里压根不 Gc)
+        if (hasGc) {
+            GcCollect(force: true);
+        }
         Logger.Log("SpeedrunTool", $"Clear [{SlotName}]");
     }
 
     public void ClearStateAndShowMessage() {
-        ClearStateImpl();
+        ClearStateImpl(hasGc: true);
     }
 
     private void PreCloneSavedEntities() {

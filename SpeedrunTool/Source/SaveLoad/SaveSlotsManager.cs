@@ -92,21 +92,21 @@ internal static class SaveSlotsManager {
     /// Clear current save slot 
     /// </summary>
     public static void ClearState() {
-        StateManagerInstance.ClearStateImpl();
+        StateManagerInstance.ClearStateImpl(hasGc: true);
     }
 
     public static void ClearAll() {
+        bool anySaved = false;
         foreach (SaveSlot slot in Dictionary.Values) {
-            slot.StateManager.ClearStateImpl();
+            anySaved = anySaved || slot.StateManager.IsSaved;
+            slot.StateManager.ClearStateImpl(hasGc: false);
         }
         Dictionary = new Dictionary<string, SaveSlot>();
-        /*
-        if (System.Diagnostics.Process.GetCurrentProcess().PrivateMemorySize64 > 1024L * 1024L * 1024L * 2.5) {
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-        }
-        */
+
         SwitchSlot(1);
+        if (anySaved) {
+            StateManagerInstance.GcCollect(force: true);
+        }
     }
 
     /// <summary>
@@ -163,7 +163,7 @@ internal static class SaveSlotsManager {
     }
     public static void ClearStateTas(string slot) {
         if (SwitchSlot(slot)) {
-            StateManagerInstance.ClearStateImpl();
+            StateManagerInstance.ClearStateImpl(hasGc: true);
         }
     }
     #endregion

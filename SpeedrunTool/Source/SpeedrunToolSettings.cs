@@ -1,6 +1,7 @@
 using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
+using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 
@@ -12,6 +13,10 @@ public class SpeedrunToolSettings : EverestModuleSettings {
 
     public SpeedrunToolSettings() {
         Instance = this;
+    }
+
+    public void OnLoadSettings() {
+        SetGcMemoryThreshold(Doubled_GcMemoryThreshold);
     }
 
     public bool Enabled { get; set; } = true;
@@ -34,7 +39,13 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public bool AutoLoadStateAfterDeath { get; set; } = false;
     public bool AutoClearStateOnScreenTransition { get; set; } = false;
     public FreezeAfterLoadStateType FreezeAfterLoadStateType { get; set; } = FreezeAfterLoadStateType.On;
-    public bool NoGcAfterLoadState { get; set; } = false;
+    public bool GcAfterLoadState { get; set; } = false;
+
+    public int Doubled_GcMemoryThreshold = 5;
+
+    public static void SetGcMemoryThreshold(int doubleNum) {
+        StateManager.MemoryThreshold = 1024L * 1024L * 1024L * doubleNum / 2;
+    }
     public bool SaveTimeAndDeaths { get; set; } = false;
     public bool SaveExtendedVariants { get; set; } = true;
 

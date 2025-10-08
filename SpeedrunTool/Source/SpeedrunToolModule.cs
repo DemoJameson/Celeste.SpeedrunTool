@@ -54,6 +54,11 @@ public class SpeedrunToolModule : EverestModule {
         }
     }
 
+    public override void LoadSettings() {
+        base.LoadSettings();
+        ModSettings.OnLoadSettings();
+    }
+
     public override void CreateModMenuSection(TextMenu menu, bool inGame, EventInstance snapshot) {
         CreateModMenuSectionHeader(menu, inGame, snapshot);
         SpeedrunToolMenu.Create(menu, inGame, snapshot);

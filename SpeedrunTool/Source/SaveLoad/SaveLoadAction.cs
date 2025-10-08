@@ -49,9 +49,9 @@ public sealed class SaveLoadAction {
     }
 
     internal static Dictionary<int, Dictionary<Type, Dictionary<string, object>>> InitValueDictionary() {
-        Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict = new();
+        Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict = [];
         foreach (SaveLoadAction saveLoadAction in SharedActions) {
-            dict[saveLoadAction.dictionaryId] = new Dictionary<Type, Dictionary<string, object>>();
+            dict[saveLoadAction.dictionaryId] = [];
         }
         return dict;
     }
@@ -200,8 +200,21 @@ public sealed class SaveLoadAction {
         }
     }
 
-    internal static void OnClearState() {
-        AllSavedValues = InitValueDictionary();
+    internal static void OnClearState(bool clearBeforeSave = false) {
+        if (clearBeforeSave) {
+            Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict = AllSavedValues;
+            foreach (SaveLoadAction saveLoadAction in SharedActions) {
+                foreach (KeyValuePair<Type, Dictionary<string, object>> pair in dict[saveLoadAction.dictionaryId]) {
+                    pair.Value.Clear();
+                    // avoid creating new Dictionary instances
+                }
+            }
+            slotInitialized = true;
+        }
+        else {
+            AllSavedValues.Clear();
+            slotInitialized = false;
+        }
         foreach (SaveLoadAction saveLoadAction in SharedActions) {
             saveLoadAction.clearState?.Invoke();
         }

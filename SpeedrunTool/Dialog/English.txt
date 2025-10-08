@@ -2,6 +2,8 @@
 SPEEDRUN_TOOL_ON=  ON
 SPEEDRUN_TOOL_OFF= OFF
 SPEEDRUN_TOOL_ALL= ALL
+SPEEDRUN_TOOL_ALWAYS=Always
+SPEEDRUN_TOOL_NEVER=Never
 
 # ================================== Mod Options Menu ==================================
 SPEEDRUN_TOOL=              Speedrun Tool
@@ -30,7 +32,8 @@ SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE=     Pause Game after Load State
 SPEEDRUN_TOOL_IGNORE_HOLDING_KEYS=         Ignore Holding Keys
 SPEEDRUN_TOOL_AUTO_LOAD_STATE_AFTER_DEATH= Auto Load State after Death
 SPEEDRUN_TOOL_AUTO_CLEAR_STATE_ON_SCREEN_TRANSITION= Auto Clear State on Screen Transition
-SPEEDRUN_TOOL_NO_GC_AFTER_LOAD_STATE=      No GC after Load State
+SPEEDRUN_TOOL_GC_AFTER_LOAD_STATE=         GC after Load State
+SPEEDRUN_TOOL_GC_MEMORY_THRESHOLD=         GC Memory Threshold
 SPEEDRUN_TOOL_SAVE_TIME_AND_DEATHS=        Save Time and Deaths
 SPEEDRUN_TOOL_SAVE_TIME_AND_DEATHS_DESCRIPTION=Turning this on will include time and deaths as part of savestate
 SPEEDRUN_TOOL_SAVE_EXTENDED_VARIANTS=      Save Extended Variants

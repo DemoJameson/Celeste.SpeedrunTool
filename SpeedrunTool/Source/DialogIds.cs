@@ -14,6 +14,8 @@ public static class DialogIds {
     public const string On = "SPEEDRUN_TOOL_ON";
     public const string Off = "SPEEDRUN_TOOL_OFF";
     public const string All = "SPEEDRUN_TOOL_ALL";
+    public const string Always = "SPEEDRUN_TOOL_ALWAYS";
+    public const string Never = "SPEEDRUN_TOOL_NEVER";
     public const string Chapter = "SPEEDRUN_TOOL_CHAPTER";
     public const string File = "SPEEDRUN_TOOL_FILE";
     // ReSharper restore UnusedMember.Global
@@ -42,7 +44,8 @@ public static class DialogIds {
     public const string IgnoreHoldingKeys = "SPEEDRUN_TOOL_IGNORE_HOLDING_KEYS";
     public const string AutoLoadStateAfterDeath = "SPEEDRUN_TOOL_AUTO_LOAD_STATE_AFTER_DEATH";
     public const string AutoClearStateOnScreenTransition = "SPEEDRUN_TOOL_AUTO_CLEAR_STATE_ON_SCREEN_TRANSITION";
-    public const string NoGcAfterLoadState = "SPEEDRUN_TOOL_NO_GC_AFTER_LOAD_STATE";
+    public const string GcAfterLoadState = "SPEEDRUN_TOOL_GC_AFTER_LOAD_STATE";
+    public const string GcMemoryThreshold = "SPEEDRUN_TOOL_GC_MEMORY_THRESHOLD";
     public const string SaveTimeAndDeaths = "SPEEDRUN_TOOL_SAVE_TIME_AND_DEATHS";
     public const string SaveTimeAndDeathsDescription = "SPEEDRUN_TOOL_SAVE_TIME_AND_DEATHS_DESCRIPTION";
     public const string SaveExtendedVariants = "SPEEDRUN_TOOL_SAVE_EXTENDED_VARIANTS";

@@ -73,6 +73,7 @@ public class HotkeyConfigUi : TextMenu {
         new(Hotkey.ClearState, Keys.F4),
         new(Hotkey.ClearAllState),
         new(Hotkey.OpenDebugMap),
+        new(Hotkey.ToggleSaveLoadUI, Keys.Tab),
         new(Hotkey.ResetRoomTimerPb, Keys.F9),
         new(Hotkey.SwitchRoomTimer, Keys.F10),
         new(Hotkey.IncreaseTimedRooms),
@@ -86,6 +87,10 @@ public class HotkeyConfigUi : TextMenu {
         new(Hotkey.SpawnTowerViewer),
         new(Hotkey.ToggleFullscreen),
         new(Hotkey.ExportRoomTimes),
+        new(Hotkey.SwitchToNextSlot),
+        new(Hotkey.SwitchToPreviousSlot),
+        new(Hotkey.SaveToNextSlot),
+        new(Hotkey.LoadFromLastSlot),
         new(Hotkey.SaveSlot1, Keys.LeftControl, Keys.D1), // not numpad numbers
         new(Hotkey.SaveSlot2, Keys.LeftControl, Keys.D2),
         new(Hotkey.SaveSlot3, Keys.LeftControl, Keys.D3),
@@ -95,11 +100,6 @@ public class HotkeyConfigUi : TextMenu {
         new(Hotkey.SaveSlot7, Keys.LeftControl, Keys.D7),
         new(Hotkey.SaveSlot8, Keys.LeftControl, Keys.D8),
         new(Hotkey.SaveSlot9, Keys.LeftControl, Keys.D9),
-        new(Hotkey.SwitchToNextSlot),
-        new(Hotkey.SwitchToPreviousSlot),
-        new(Hotkey.SaveToNextSlot),
-        new(Hotkey.LoadFromLastSlot),
-        new(Hotkey.CallMoreSaveSlotsUI, Keys.Tab)
     }.ToDictionary(info => info.Hotkey, info => info);
 
     private static readonly Hotkey[] Hotkeys = (Hotkey[])Enum.GetValues(typeof(Hotkey));
@@ -503,7 +503,7 @@ public enum Hotkey {
     LoadFromLastSlot,
     SwitchToNextSlot,
     SwitchToPreviousSlot,
-    CallMoreSaveSlotsUI
+    ToggleSaveLoadUI
 }
 
 internal static class HotkeysExtensions {

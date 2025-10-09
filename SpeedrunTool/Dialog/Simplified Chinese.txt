@@ -128,6 +128,7 @@ SPEEDRUN_TOOL_SAVE_TO_NEXT_SLOT=             存至下一存档槽
 SPEEDRUN_TOOL_LOAD_FROM_LAST_SLOT=           读取上一存档槽
 SPEEDRUN_TOOL_SWITCH_TO_NEXT_SLOT=           切换至下一存档槽
 SPEEDRUN_TOOL_SWITCH_TO_PREVIOUS_SLOT=       切换至上一存档槽
+SPEEDRUN_TOOL_TOGGLE_SAVE_LOAD_UI=           开关存读档用户界面
 
 # ================================== Death Statistics ==================================
 SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA=      死亡数据数量

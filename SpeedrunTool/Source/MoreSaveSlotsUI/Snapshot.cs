@@ -183,7 +183,7 @@ internal static class SnapshotUI {
     private static void Load() {
         IL.Monocle.Engine.Update += IL_Engine_Update;
         On.Celeste.Level.Render += RenderSnapshots;
-        Hotkey.CallMoreSaveSlotsUI.RegisterPressedAction(_ => {
+        Hotkey.ToggleSaveLoadUI.RegisterPressedAction(_ => {
             if (Engine.Scene is Level) {
                 ToggleTab();
             }
@@ -218,7 +218,7 @@ internal static class SnapshotUI {
     private static float yAnim = 1f;
 
     private const float WidthPercent = 0.97f / 3f;
-    
+
     private const float HeightPercent = 0.93f / 3f;
 
     private const float WidthPaddingPercent = (1f - 3f * WidthPercent) / 4f;
@@ -272,7 +272,7 @@ internal static class SnapshotUI {
 
     private static void IL_Engine_Update(ILContext il) {
         ILCursor cursor = new(il);
-        if (cursor.TryGotoNext(MoveType.After, ins => ins.MatchCall(typeof(MInput), nameof(MInput.Update)))){
+        if (cursor.TryGotoNext(MoveType.After, ins => ins.MatchCall(typeof(MInput), nameof(MInput.Update)))) {
             // Prevent further execution
             ILLabel label = cursor.DefineLabel();
             cursor.EmitDelegate(Update);
@@ -405,9 +405,9 @@ internal static class SnapshotUI {
             itemOptionIndex = (itemOptionIndex + 3) % 3;
             Audio.Play(ArrowKeySfx);
         }
-        
+
     }
-    
+
     private static void UpdateY() {
         alpha = Math.Clamp(easeY, 0f, 1f);
         yAnim = MathHelper.Lerp(1f, 0f, Ease.QuadInOut(alpha));
@@ -473,11 +473,11 @@ internal static class SnapshotUI {
             float height = OptionHeight * (maxY - minY);
             float x = MathHelper.Lerp(minX, maxX, xPercent);
             float y = MathHelper.Lerp(minY, maxY, yPercent);
-            for (int i = 0; i<= 2; i++) {
+            for (int i = 0; i <= 2; i++) {
                 float x1 = x + i * (width + padding);
                 bool highlight = i == itemOptionIndex;
                 Draw.Rect(x1, y, width, height, highlight ? HighlightRectColor : RectColor);
-                string text = i switch { 0 => "Save" , 1 => "Load", 2 => "Clear", _ => "?"};
+                string text = i switch { 0 => "Save", 1 => "Load", 2 => "Clear", _ => "?" };
                 ActiveFont.Draw(text, new Vector2(x1 + width / 2f, y + height / 2f), new Vector2(0.5f, 0.5f), new Vector2(height / ActiveFont.Measure(text).Y), TextColor);
 
             }

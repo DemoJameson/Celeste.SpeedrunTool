@@ -75,7 +75,11 @@ internal static class SaveSlotsManager {
             return false;
         }
 
-        return StateManagerInstance.SaveStateImpl(false);
+        bool b = StateManagerInstance.SaveStateImpl(false);
+        if (b) {
+            MoreSaveSlotsUI.Snapshot.RequireCaptureSnapshot(SlotName);
+        }
+        return b;
     }
 
 
@@ -102,6 +106,8 @@ internal static class SaveSlotsManager {
             slot.StateManager.ClearStateImpl(hasGc: false);
         }
         Dictionary = new Dictionary<string, SaveSlot>();
+
+        MoreSaveSlotsUI.Snapshot.ClearAll();
 
         SwitchSlot(1);
         if (anySaved) {

@@ -539,6 +539,7 @@ public sealed class StateManager {
         if (hasGc) {
             GcCollect(force: true);
         }
+        MoreSaveSlotsUI.Snapshot.RemoveSnapshot(SlotName);
         Logger.Log("SpeedrunTool", $"Clear [{SlotName}]");
     }
 

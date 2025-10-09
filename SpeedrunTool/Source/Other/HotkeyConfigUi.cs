@@ -99,6 +99,7 @@ public class HotkeyConfigUi : TextMenu {
         new(Hotkey.SwitchToPreviousSlot),
         new(Hotkey.SaveToNextSlot),
         new(Hotkey.LoadFromLastSlot),
+        new(Hotkey.CallMoreSaveSlotsUI, Keys.Tab)
     }.ToDictionary(info => info.Hotkey, info => info);
 
     private static readonly Hotkey[] Hotkeys = (Hotkey[])Enum.GetValues(typeof(Hotkey));
@@ -197,6 +198,7 @@ public class HotkeyConfigUi : TextMenu {
                 foreach (Hotkey hotkey in Hotkeys) {
                     if (hotkey.Pressed()) {
                         hotkey.GetHotkeyConfig().OnPressed?.Invoke(scene);
+                        // Logger.Log("SpeedrunTool", $"{hotkey} get pressed");
                     }
                 }
             }
@@ -501,6 +503,7 @@ public enum Hotkey {
     LoadFromLastSlot,
     SwitchToNextSlot,
     SwitchToPreviousSlot,
+    CallMoreSaveSlotsUI
 }
 
 internal static class HotkeysExtensions {

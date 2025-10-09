@@ -10,6 +10,50 @@ internal static class SaveLoadHotkeys {
     public static bool SaveLoadStateShowMessage => !ModSettings.NoMessageAfterSaveLoad;
     // if false, make it behave like v3.24.5
 
+    internal static bool SaveStateAndMessage() {
+        if (SaveLoadStateShowMessage) {
+            if (SaveSlotsManager.SaveState()) {
+                PopupMessageUtils.Show($"Save to [{SlotName}]", null);
+                return true;
+            }
+            else {
+                if (!StateManager.AllowSaveLoadWhenWaiting && SaveSlotsManager.StateManagerInstance?.State == State.Waiting) {
+                    PopupMessageUtils.Show($"[{SlotName}] is already Saved!", null);
+                    return false;
+                }
+                else {
+                    PopupMessageUtils.Show("Failed to Save: SpeedrunTool is Busy!", null);
+                    return false;
+                }
+            }
+        }
+        else {
+            return SaveSlotsManager.SaveState();
+        }
+    }
+
+    internal static bool LoadStateAndMessage() {
+        if (SaveSlotsManager.IsSaved()) {
+            if (SaveLoadStateShowMessage) {
+                if (SaveSlotsManager.LoadState()) {
+                    PopupMessageUtils.Show($"Load from [{SlotName}]", null);
+                    return true;
+                }
+                else {
+                    PopupMessageUtils.Show("Failed to Load: SpeedrunTool is Busy!", null);
+                    return false;
+                }
+            }
+            else {
+                return SaveSlotsManager.LoadState();
+            }
+        }
+        else {
+            PopupMessageUtils.Show(DialogIds.NotSavedStateTooltip.DialogClean() + $" [{SlotName}]", DialogIds.NotSavedStateYetDialog);
+            return false;
+        }
+    }
+
     [Load]
     private static void RegisterHotkeys() {
         Hotkey.SaveState.RegisterPressedAction(scene => {
@@ -17,22 +61,7 @@ internal static class SaveLoadHotkeys {
 #if DEBUG
                 JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();
 #endif
-                if (SaveLoadStateShowMessage) {
-                    if (SaveSlotsManager.SaveState()) {
-                        PopupMessageUtils.Show($"Save to [{SlotName}]", null);
-                    }
-                    else {
-                        if (!StateManager.AllowSaveLoadWhenWaiting && SaveSlotsManager.StateManagerInstance?.State == State.Waiting) {
-                            PopupMessageUtils.Show($"[{SlotName}] is already Saved!", null);
-                        }
-                        else {
-                            PopupMessageUtils.Show("Failed to Save: SpeedrunTool is Busy!", null);
-                        }
-                    }
-                }
-                else {
-                    SaveSlotsManager.SaveState();
-                }
+                SaveStateAndMessage();
 #if DEBUG
                 JetBrains.Profiler.Api.MeasureProfiler.SaveData();
 #endif
@@ -43,22 +72,7 @@ internal static class SaveLoadHotkeys {
 #if DEBUG
                 JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();
 #endif
-                if (SaveSlotsManager.IsSaved()) {
-                    if (SaveLoadStateShowMessage) {
-                        if (SaveSlotsManager.LoadState()) {
-                            PopupMessageUtils.Show($"Load from [{SlotName}]", null);
-                        }
-                        else {
-                            PopupMessageUtils.Show("Failed to Load: SpeedrunTool is Busy!", null);
-                        }
-                    }
-                    else {
-                        SaveSlotsManager.LoadState();
-                    }
-                }
-                else {
-                    PopupMessageUtils.Show(DialogIds.NotSavedStateTooltip.DialogClean() + $" [{SlotName}]", DialogIds.NotSavedStateYetDialog);
-                }
+                LoadStateAndMessage();
 #if DEBUG
                 JetBrains.Profiler.Api.MeasureProfiler.SaveData();
 #endif

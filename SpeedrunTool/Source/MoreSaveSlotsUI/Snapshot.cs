@@ -1,14 +1,17 @@
 
+using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework.Graphics;
+using Mono.Cecil.Cil;
+using MonoMod.Cil;
 using System.Collections.Generic;
 using System.Linq;
-using Celeste.Mod.SpeedrunTool.Other;
 
 namespace Celeste.Mod.SpeedrunTool.MoreSaveSlotsUI;
 internal class Snapshot {
+
     internal static void RequireCaptureSnapshot(string slot) {
-        if (!SnapshotUI.Slots.Contains(slot)) {
+        if (!LegalNames.Contains(slot)) {
             return;
         }
         DemandingSlot = slot;
@@ -16,16 +19,24 @@ internal class Snapshot {
     }
 
     internal static void RemoveSnapshot(string slot) {
-        SnapshotsDict.Remove(slot);
+        if (SnapshotsDict.TryGetValue(slot, out Snapshot snap)) {
+            snap.IsSaved = false;
+            snap.snapshotTex?.Dispose();
+            snap.snapshotTex = null;
+        }
         ScheduledCaptureSnapshots = false; // avoid this field still somehow being true
     }
 
     internal static void ClearAll() {
         SnapshotsDict.Clear();
+        SnapshotUI.Close();
     }
 
     internal static Dictionary<string, Snapshot> SnapshotsDict = [];
-    public Snapshot(string name) { snapshotTex = null; Name = name; }
+
+    internal static string[] LegalNames = new string[10];
+
+    public Snapshot(string name) { snapshotTex = null; Name = name; IsSaved = true; }
 
     private Texture2D snapshotTex;
 
@@ -33,7 +44,9 @@ internal class Snapshot {
 
     internal float xPercent;
 
-    internal int Index;
+    internal float yPercent;
+
+    internal bool IsSaved;
 
     internal static bool ScheduledCaptureSnapshots = false;
 
@@ -71,6 +84,7 @@ internal class Snapshot {
             catch {
             }
         }
+
         instance.snapshotTex?.Dispose();
         if (!success) {
             instance.snapshotTex = null;
@@ -90,6 +104,13 @@ internal class Snapshot {
     private static void Unload() {
         On.Monocle.Scene.BeforeRender -= CaptureSnapshotsBeforeRender;
     }
+
+    [Initialize]
+    private static void Initialize() {
+        for (int i = 1; i <= 9; i++) {
+            LegalNames[i] = SaveSlotsManager.GetSlotName(i);
+        }
+    }
     private static void CaptureSnapshotsBeforeRender(On.Monocle.Scene.orig_BeforeRender orig, Scene self) {
         if (ScheduledCaptureSnapshots) {
             ScheduledCaptureSnapshots = false;
@@ -100,7 +121,7 @@ internal class Snapshot {
         }
         orig(self);
     }
-    internal void RenderContent(float x1, float y1, float x2, float y2, float alpha) {
+    internal void RenderContent(float x1, float y1, float x2, float y2, float alpha, bool highlight) {
         bool hasSnapshot = true;
         Vector2 scale = Vector2.One;
         if (snapshotTex is null) {
@@ -117,38 +138,50 @@ internal class Snapshot {
             }
         }
 
-        if (!hasSnapshot) {
+        if (!IsSaved) {
+            Draw.Rect(new Rectangle((int)x1, (int)y1, (int)(x2 - x1), (int)(y2 - y1)), NoSaveColor * alpha);
+            DrawText("Not   Saved   Yet", 0.4f);
+        }
+        else if (!hasSnapshot) {
             Draw.Rect(new Rectangle((int)x1, (int)y1, (int)(x2 - x1), (int)(y2 - y1)), RectColor * alpha);
             DrawText("Snapshot   Not   Found", 0.4f);
         }
         else {
             Draw.SpriteBatch.Draw(snapshotTex, new Vector2(x1, y1), null, SnapshotColor * alpha, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-            Draw.HollowRect(new Rectangle((int)x1, (int)y1, (int)(x2 - x1), (int)(y2 - y1)), HollowRectColor * alpha);
         }
 
-        DrawText(Name, 0.85f);
+        Draw.HollowRect(new Rectangle((int)x1, (int)y1, (int)(x2 - x1), (int)(y2 - y1)), (highlight ? HighlightRectColor : HollowRectColor) * alpha);
+        DrawText(Name, 0.95f);
 
         void DrawText(string text, float yLerp) {
-            ActiveFont.DrawOutline(text, new Vector2((x1 + x2) / 2f, MathHelper.Lerp(y1, y2, yLerp)), new Vector2(0.5f, 0f), new Vector2(0.1f * (y2 - y1) / ActiveFont.Measure(text).Y), TextColor * alpha, 2f, StrokeColor * alpha);
+            ActiveFont.DrawOutline(text, new Vector2((x1 + x2) / 2f, MathHelper.Lerp(y1, y2, yLerp)), new Vector2(0.5f, 1f), new Vector2(0.2f * (y2 - y1) / ActiveFont.Measure(text).Y), (highlight ? HighlightTextColor : TextColor) * alpha, Stroke, StrokeColor * alpha);
         }
     }
+
+    private const float Stroke = 1f;
 
     private static readonly Color SnapshotColor = new Color(1f, 1f, 0.8f);
 
     private static readonly Color TextColor = Color.White;
 
+    private static readonly Color HighlightTextColor = Color.Goldenrod;
+
     private static readonly Color StrokeColor = Color.Black;
+
+    private static readonly Color NoSaveColor = new Color(0.3f, 0.3f, 0.3f) * 0.9f;
 
     private static readonly Color RectColor = new Color(0.5f, 0.5f, 0.5f) * 0.9f;
 
     private static readonly Color HollowRectColor = Color.White * 0.9f;
+
+    private static readonly Color HighlightRectColor = Color.Gold;
 }
 
 internal static class SnapshotUI {
 
     [Load]
     private static void Load() {
-        On.Monocle.Engine.Update += OnEngineUpdate;
+        IL.Monocle.Engine.Update += IL_Engine_Update;
         On.Celeste.Level.Render += RenderSnapshots;
         Hotkey.CallMoreSaveSlotsUI.RegisterPressedAction(_ => {
             if (Engine.Scene is Level) {
@@ -160,79 +193,108 @@ internal static class SnapshotUI {
 
     [Unload]
     private static void Unload() {
-        On.Monocle.Engine.Update -= OnEngineUpdate;
+        IL.Monocle.Engine.Update -= IL_Engine_Update;
         On.Celeste.Level.Render -= RenderSnapshots;
     }
 
     [Initialize]
     private static void Initialize() {
-        for (int i = 1; i <= 9; i++) {
-            Slots[i] = SaveSlotsManager.GetSlotName(i);
-        }
-
-        SaveLoadAction.InternalSafeAdd(saveState: (_, _) => OnSaveLoadClear(), loadState: (_, _) => OnSaveLoadClear(), clearState: OnSaveLoadClear);
+        SaveLoadAction.InternalSafeAdd(saveState: (_, _) => Close(), loadState: (_, _) => Close());
     }
 
     internal static Dictionary<string, Snapshot> Dict => Snapshot.SnapshotsDict;
 
-    internal static string[] Slots = new string[10];
+    internal static string[] Slots => Snapshot.LegalNames;
 
-    #region Timer
+    #region AnimConfig
     private static bool tabIn = false;
 
     private static float easeY = 0f;
 
     private static readonly float DeltaY = Engine.RawDeltaTime * 2f;
 
-    private static float easeX = 0f;
-
-    private static readonly float DeltaX = Engine.RawDeltaTime * 2f;
-
-    private static int sgnX = 0;
-
-    private static float bufferedXTimer = 1f;
-
-    private static int bufferedSgnX = 0;
-
-    #endregion
-
-    #region Position
     private static float alpha = 1f;
 
-    private static float yPercent = 1f;
+    private static float yAnim = 1f;
 
-    private static int itemCount = 0;
-
-    private const float PaddingPercent = 0.2f;
-
-    private const float InitialX = (1f - WidthPercent) / 2f;
-
-    private const float WidthPercent = 0.8f;
+    private const float WidthPercent = 0.97f / 3f;
     
-    private const float HeightPercent = 0.8f;
+    private const float HeightPercent = 0.93f / 3f;
+
+    private const float WidthPaddingPercent = (1f - 3f * WidthPercent) / 4f;
+
+    private const float HeightPaddingPercent = (1f - 3f * HeightPercent) / 4f;
+
     #endregion
-    private static void OnSaveLoadClear() {
-        easeX = 0f;
+
+    private static int selectionX;
+
+    private static int selectionY;
+
+    private static int selectionIndex => 1 + selectionX + selectionY * 3;
+
+    private static string highlight;
+
+    private static float yWiggleTimer;
+
+    private static bool focusOnItem;
+
+    private static int itemOptionIndex;
+    internal static void Close() {
         easeY = 0f;
-        sgnX = 0;
-        bufferedXTimer = 0;
         tabIn = false;
         UpdateY();
+        // force close UI
     }
-    private static void OnEngineUpdate(On.Monocle.Engine.orig_Update orig, Engine self, GameTime gameTime) {
-        orig(self, gameTime);
 
-        // todo: tab in 的时候阻止正常的按键
-        // todo: 使得这玩意可以交互
-
-        if (self.scene is not Level) {
-            return;
+    private static void ConfigAllSnapshots() {
+        for (int i = 1; i <= 9; i++) {
+            string name = Slots[i];
+            Snapshot snap;
+            if (Dict.TryGetValue(name, out Snapshot s)) {
+                snap = s;
+            }
+            else {
+                snap = new Snapshot(name);
+                snap.IsSaved = SaveSlotsManager.IsSaved(name);
+                Dict[name] = snap;
+            }
+            snap.xPercent = ((i - 1) % 3) * (WidthPercent + WidthPaddingPercent) + WidthPaddingPercent;
+            snap.yPercent = ((i - 1) / 3) * (HeightPercent + HeightPaddingPercent) + HeightPaddingPercent;
         }
+        int num = Math.Clamp(PeriodicTableOfSlots.CurrentSlotIndex, 1, 9);
+        highlight = Slots[num];
+        selectionX = (num - 1) % 3;
+        selectionY = (num - 1) / 3;
+        yWiggleTimer = 0f;
+        focusOnItem = false;
+    }
 
-        if (Input.MoveX != 0) {
-            WhenArrowKeyHeld(left: Input.MoveX > 0);
+    private static void IL_Engine_Update(ILContext il) {
+        ILCursor cursor = new(il);
+        if (cursor.TryGotoNext(MoveType.After, ins => ins.MatchCall(typeof(MInput), nameof(MInput.Update)))){
+            // Prevent further execution
+            ILLabel label = cursor.DefineLabel();
+            cursor.EmitDelegate(Update);
+            cursor.EmitDelegate(IsPaused);
+            cursor.Emit(OpCodes.Brfalse, label);
+            cursor.Emit(OpCodes.Ret);
+            cursor.MarkLabel(label);
         }
+    }
 
+    private static bool IsPaused() {
+        if (Engine.Scene is Level && easeY > 0f) {
+            if (ModInterop.TasUtils.Running) {
+                Close();
+                return false;
+            }
+            return true;
+        }
+        return false;
+    }
+    private static void Update() {
+        // 懒得找合适的现成工具了, 干脆手搓动画效果
         if (tabIn && easeY < 1f) {
             easeY += DeltaY;
             UpdateY();
@@ -242,129 +304,136 @@ internal static class SnapshotUI {
             UpdateY();
         }
 
-        if (itemCount > 1) {
-            if (bufferedXTimer > 0f) {
-                bufferedXTimer -= Engine.RawDeltaTime;
-            }
-            if (sgnX != 0) {
-                easeX += DeltaX;
-                UpdateX();
-                if (easeX >= 1f) {
-                    foreach (Snapshot snapshot in Dict.Values) {
-                        snapshot.Index += sgnX > 0 ? 1 : -1;
-                    }
-                    easeX = 0f;
-                    sgnX = bufferedXTimer > 0f ? bufferedSgnX : 0;
-                    bufferedXTimer = 0f;
-                }
-            }
-        }
-    }
-    private static void UpdateX() {
-        foreach (Snapshot snapshot in Dict.Values) {
-            snapshot.xPercent = InitialX + (WidthPercent + PaddingPercent) * snapshot.Index + (WidthPercent + PaddingPercent) * sgnX * Ease.SineInOut(easeX);
-            if (sgnX > 0 && snapshot.xPercent > 1f) {
-                snapshot.xPercent -= itemCount * (WidthPercent + PaddingPercent);
-                snapshot.Index -= itemCount;
-            }
-            else if (sgnX < 0 && snapshot.xPercent < -WidthPercent) {
-                snapshot.xPercent += itemCount * (WidthPercent + PaddingPercent);
-                snapshot.Index += itemCount;
-            }
+        if (easeY >= 1f) {
+            UpdateFullOpen();
         }
     }
 
+    private const string ConfirmSfx = "event:/ui/main/button_select";
+
+    private const string CancelSfx = "event:/ui/game/hotspot_note_out";
+
+    private const string FailureSfx = "event:/ui/game/lookout_off";
+
+    private const string ArrowKeySfx = "event:/ui/main/rollover_down";
+
+    private const string DeleteSfx = "event:/ui/main/savefile_delete";
+
+    private static void UpdateFullOpen() {
+        if (!focusOnItem) {
+            yWiggleTimer += Engine.RawDeltaTime * 10;
+            if (Input.MenuCancel.Pressed || Input.ESC.Pressed) {
+                ToggleTab();
+                Audio.Play(CancelSfx);
+                return;
+            }
+            if (Input.MenuConfirm.Pressed) {
+                focusOnItem = true;
+                yWiggleTimer = 0f;
+                Audio.Play(ConfirmSfx);
+                return;
+            }
+
+            bool hasArrowKey = true;
+            if (Input.MenuDown.Pressed) {
+                selectionY++;
+            }
+            else if (Input.MenuUp.Pressed) {
+                selectionY--;
+            }
+            else if (Input.MenuLeft.Pressed) {
+                selectionX--;
+            }
+            else if (Input.MenuRight.Pressed) {
+                selectionX++;
+            }
+            else {
+                hasArrowKey = false;
+            }
+            if (!hasArrowKey) {
+                return;
+            }
+            yWiggleTimer = 0f;
+            selectionX = (selectionX + 3) % 3;
+            selectionY = (selectionY + 3) % 3;
+            highlight = Slots[selectionIndex];
+            Audio.Play(ArrowKeySfx);
+        }
+        else {
+            if (Input.MenuCancel.Pressed || Input.ESC.Pressed) {
+                focusOnItem = false;
+                Audio.Play(CancelSfx);
+                return;
+            }
+
+            if (Input.MenuConfirm.Pressed) {
+                bool success = false;
+                bool allow = StateManager.AllowSaveLoadWhenWaiting;
+                StateManager.AllowSaveLoadWhenWaiting = true;
+                if (itemOptionIndex == 0) {
+                    success = SaveSlotsManager.SwitchSlot(selectionIndex) && SaveLoadHotkeys.SaveStateAndMessage();
+                }
+                else if (itemOptionIndex == 1) {
+                    success = SaveSlotsManager.IsSaved(selectionIndex) && SaveSlotsManager.SwitchSlot(selectionIndex) && SaveLoadHotkeys.LoadStateAndMessage();
+                }
+                else {
+                    success = SaveSlotsManager.IsSaved(selectionIndex) && SaveSlotsManager.SwitchSlot(selectionIndex);
+                    if (success) {
+                        SaveSlotsManager.ClearState();
+                    }
+                }
+                StateManager.AllowSaveLoadWhenWaiting = allow;
+                if (success) {
+                    focusOnItem = false;
+                    Audio.Play(itemOptionIndex > 1 ? DeleteSfx : ConfirmSfx);
+                }
+                else {
+                    Audio.Play(FailureSfx);
+                }
+                return;
+            }
+
+            if (Input.MenuRight.Pressed) {
+                itemOptionIndex++;
+            }
+            else if (Input.MenuLeft.Pressed) {
+                itemOptionIndex--;
+            }
+            else {
+                return;
+            }
+            itemOptionIndex = (itemOptionIndex + 3) % 3;
+            Audio.Play(ArrowKeySfx);
+        }
+        
+    }
+    
     private static void UpdateY() {
         alpha = Math.Clamp(easeY, 0f, 1f);
-        yPercent = MathHelper.Lerp(1.1f, 0.1f, Ease.QuadInOut(alpha));
+        yAnim = MathHelper.Lerp(1f, 0f, Ease.QuadInOut(alpha));
     }
 
-    internal static void ToggleTab() {
+    private static void ToggleTab() {
+        if (tabIn) {
+            focusOnItem = false;
+        }
         tabIn = !tabIn;
         if (tabIn && easeY <= 0.05f) {
             easeY = 0f;
-            bool b = InitializeSnapshotX();
-            if (!b) {
-                tabIn = false;
-                UpdateY();
-            }
+            ConfigAllSnapshots();
         }
         else if (!tabIn && easeY > 1f) {
             easeY = 1f;
         }
     }
 
-    internal static void WhenArrowKeyHeld(bool left) {
-        if (sgnX == 0) {
-            easeX = 0f;
-            sgnX = left ? -1 : 1;
-            bufferedXTimer = 0f;
-        }
-        else {
-            bufferedXTimer = 0.1f;
-            bufferedSgnX = left ? -1 : 1;
-        }
-    }
-
-    internal static bool InitializeSnapshotX() {
-        // return false if fail to init
-        for (int i = 1; i <= 9; i++) {
-            string name = SaveSlotsManager.GetSlotName(i);
-            if (!Dict.ContainsKey(name) && SaveSlotsManager.IsSaved(name)) {
-                Dict[name] = new Snapshot(name);
-                // for some reason Snapshot is not created, but save slot is saved
-                // so we create an empty snapshot for emergency use
-            }
-        }
-
-        itemCount = Dict.Count;
-        if (itemCount == 0) {
-            return false;
-        }
-        if (itemCount == 1) {
-            Dict.Values.First().xPercent = InitialX;
-            return true;
-        }
-        string currentSlot = SaveSlotsManager.SlotName;
-        if (!Slots.Contains(currentSlot)) {
-            currentSlot = Dict.Values.First().Name;
-        }
-        int validCount = 0;
-        for (int i = 1; i <= 9; i++) {
-            if (Slots[i] == currentSlot && Dict.TryGetValue(currentSlot, out Snapshot firstSnapshot) && firstSnapshot is not null) {
-                firstSnapshot.xPercent = InitialX;
-                firstSnapshot.Index = 0;
-                validCount++;
-                for (int j = i+1; j <= 9; j++) {
-                    if (Dict.TryGetValue(Slots[j], out Snapshot shot) && shot is not null) {
-                        shot.xPercent = InitialX + validCount * (WidthPercent + PaddingPercent);
-                        shot.Index = validCount;
-                        validCount++;
-                    }
-                }
-                for (int k = 1; k<= i-1; k++) {
-                    if (Dict.TryGetValue(Slots[k], out Snapshot shot2) && shot2 is not null) {
-                        shot2.xPercent = InitialX + validCount * (WidthPercent + PaddingPercent);
-                        shot2.Index = validCount;
-                        validCount++;
-                    }
-                }
-            }
-        }
-        itemCount = validCount;
-        return itemCount > 0;
-    }
 
     private static void RenderSnapshots(On.Celeste.Level.orig_Render orig, Level self) {
         orig(self);
-        if (alpha < 0.1f) {
+        if (alpha < 0.1f || Dict.IsNullOrEmpty()) {
             return;
         }
 
-        if (Dict.IsNullOrEmpty()) {
-            RenderTellingNotSavedYet();
-            return;
-        }
         Draw.SpriteBatch.Begin();
 
         int viewWidth = Engine.ViewWidth;
@@ -376,10 +445,15 @@ internal static class SnapshotUI {
         maxY = viewHeight;
 
         foreach (Snapshot snap in Dict.Values) {
-            PercentRender(snap, snap.xPercent, yPercent);
+            if (snap.Name == highlight) {
+                PercentRender(snap, snap.xPercent, snap.yPercent + yAnim + MathF.Sin(yWiggleTimer) * 0.003f, true);
+            }
+            else {
+                PercentRender(snap, snap.xPercent, snap.yPercent + yAnim, false);
+            }
         }
 
-        void PercentRender(Snapshot snapshot, float xPercent, float yPercent) {
+        void PercentRender(Snapshot snapshot, float xPercent, float yPercent, bool highlight) {
             if (xPercent >= 1f || xPercent <= -WidthPercent || yPercent >= 1f || yPercent <= -HeightPercent) {
                 return;
             }
@@ -388,20 +462,43 @@ internal static class SnapshotUI {
                 MathHelper.Lerp(minY, maxY, yPercent),
                 MathHelper.Lerp(minX, maxX, xPercent + WidthPercent),
                 MathHelper.Lerp(minY, maxY, yPercent + HeightPercent),
-                alpha);
+                alpha, highlight);
         }
 
-        ShowButtonBinding();
+        if (focusOnItem) {
+            float xPercent = WidthPaddingPercent * (selectionX + 1) + WidthPercent * selectionX + OptionMarginX;
+            float yPercent = HeightPaddingPercent * (selectionY + 1) + HeightPercent * selectionY + OptionMarginY;
+            float width = OptionWidth * (maxX - minX);
+            float padding = OptionPadding * (maxX - minX);
+            float height = OptionHeight * (maxY - minY);
+            float x = MathHelper.Lerp(minX, maxX, xPercent);
+            float y = MathHelper.Lerp(minY, maxY, yPercent);
+            for (int i = 0; i<= 2; i++) {
+                float x1 = x + i * (width + padding);
+                bool highlight = i == itemOptionIndex;
+                Draw.Rect(x1, y, width, height, highlight ? HighlightRectColor : RectColor);
+                string text = i switch { 0 => "Save" , 1 => "Load", 2 => "Clear", _ => "?"};
+                ActiveFont.Draw(text, new Vector2(x1 + width / 2f, y + height / 2f), new Vector2(0.5f, 0.5f), new Vector2(height / ActiveFont.Measure(text).Y), TextColor);
+
+            }
+        }
 
         Draw.SpriteBatch.End();
     }
 
-    private static void RenderTellingNotSavedYet() {
-        // todo
-    }
+    private const float OptionMarginX = 0.03f;
 
-    private static void ShowButtonBinding() {
-        // todo
-        // include: bottom right buttons, left-right arrows on both sides (don't show if only one item)
-    }
+    private const float OptionMarginY = 0.15f;
+
+    private const float OptionWidth = (WidthPercent - 2 * (OptionMarginX + OptionPadding)) / 3f;
+
+    private const float OptionHeight = 0.06f;
+
+    private const float OptionPadding = 0.01f;
+
+    private static readonly Color RectColor = new Color(0.5f, 0.5f, 0.5f);
+
+    private static readonly Color HighlightRectColor = new Color(0.8f, 0.7f, 0.2f);
+
+    private static readonly Color TextColor = new Color(0.9f, 1f, 0.9f);
 }

@@ -1,3 +1,6 @@
+using Celeste.Mod.SpeedrunTool.Utils;
+using System.Threading.Tasks;
+
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
 internal static class OnAssetReload {
 
@@ -9,5 +12,11 @@ internal static class OnAssetReload {
         Everest.Events.AssetReload.OnAfterReload += _ => {
             SaveSlotsManager.AfterAssetReload();
         };
+
+        typeof(AssetReloadHelper)
+            .GetMethodInfo(nameof(AssetReloadHelper.Do), [typeof(string), typeof(Func<bool, Task>), typeof(bool), typeof(bool)])!
+            .ILHook((cursor, _) => {
+                cursor.EmitDelegate(MoreSaveSlotsUI.SnapshotUI.Close);
+            });
     }
 }

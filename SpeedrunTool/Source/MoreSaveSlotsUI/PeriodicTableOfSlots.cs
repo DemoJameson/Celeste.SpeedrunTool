@@ -2,7 +2,7 @@ using Celeste.Mod.SpeedrunTool.SaveLoad;
 using System.Collections.Generic;
 
 namespace Celeste.Mod.SpeedrunTool.MoreSaveSlotsUI;
-internal class PeriodicTableOfSlots {
+internal static class PeriodicTableOfSlots {
 
     private static readonly Dictionary<string, int> ReverseDictionary = new Dictionary<string, int>();
 

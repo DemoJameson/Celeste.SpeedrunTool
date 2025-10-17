@@ -169,7 +169,11 @@ public sealed class SaveLoadAction {
     /// For third party mods
     /// </summary>
     public static bool Remove(SaveLoadAction saveLoadAction) {
-        return SharedActions.Remove(saveLoadAction) || ToBeAddedModSharedActions.Remove(saveLoadAction);
+        bool b = SharedActions.Remove(saveLoadAction) || ToBeAddedModSharedActions.Remove(saveLoadAction);
+        if (b) {
+            needInitializeDictionaryId = true;
+        }
+        return b;
     }
 
     internal static void Remove(Func<SaveLoadAction, bool> predicate) {

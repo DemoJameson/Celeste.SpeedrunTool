@@ -331,7 +331,7 @@ public sealed class StateManager {
         SaveLoadAction.OnLoadState(level);
 
         PreCloneSavedEntities();
-        if (ModSettings.GcAfterLoadState) {
+        if (!tas && ModSettings.GcAfterLoadState) {
             GcCollect(force: false);
         }
 
@@ -350,16 +350,15 @@ public sealed class StateManager {
     }
 
 
-    internal static long MemoryThreshold = (long)(1024L * 1024L * 1024L * 2.5);
+    internal static float MemoryThreshold = 2.5f; // GB
 
     internal void GcCollect(bool force = false) {
         // 使用内存很难低于这个值, 干脆此时强制执行. ModSettings 里也同样这般设置
-        force = force || MemoryThreshold < 1024L * 1024L * 1024L;
+        force = force || MemoryThreshold < 1f;
         if (force) {
             Logger.Log("SpeedrunTool", "Force GC Collecting...");
             celesteProcess ??= Process.GetCurrentProcess();
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
+            GcCollectCore();
         }
         else {
             if (celesteProcess == null) {
@@ -370,11 +369,21 @@ public sealed class StateManager {
             }
 
             // 使用内存超过阈值才回收垃圾
-            if (celesteProcess.PrivateMemorySize64 > MemoryThreshold) {
-                Logger.Log("SpeedrunTool", $"MemoryUsage: {((float)celesteProcess.PrivateMemorySize64) / (1024L * 1024L * 1024L):0.00} GB. Waiting for GC Collecting...");
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
+            float memorySize = ((float)celesteProcess.PrivateMemorySize64) / (1024L * 1024L * 1024L);
+            if (memorySize > MemoryThreshold) {
+                Logger.Log("SpeedrunTool", $"MemoryUsage: {memorySize:0.00} GB > Threshold: {MemoryThreshold:0.00} GB. Waiting for GC Collecting...");
+                GcCollectCore();
             }
+        }
+
+        static void GcCollectCore() {
+            // 以现在卡顿一些为代价, 保证之后游戏流程中尽量不卡顿 (后者更致命)
+            // 作为推论, 我们不应该放在其他线程执行此事
+            Stopwatch sw = Stopwatch.StartNew();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            sw.Stop();
+            Logger.Log("SpeedrunTool", $"GC latency: {sw.ElapsedMilliseconds}ms.");
         }
     }
 

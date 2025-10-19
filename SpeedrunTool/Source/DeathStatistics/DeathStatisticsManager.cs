@@ -30,7 +30,7 @@ public static class DeathStatisticsManager {
     [Load]
     private static void Hook() {
         // 尽量晚的 Hook Player.Die 方法，以便可以稳定的从指定的 StackTrace 中找出死亡原因
-        using (new DetourContext { After = new List<string> { "*" } }) {
+        using (new DetourConfigContext(new DetourConfig(id: "SpeedrunTool", after: ["*"])).Use()) {
             On.Celeste.Player.Die += PlayerOnDie;
         }
     }

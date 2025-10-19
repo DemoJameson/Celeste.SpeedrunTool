@@ -118,7 +118,7 @@ public static class SpeedrunToolMenu {
             TextMenu.Item gcAfterClear;
             subMenu.Add(gcAfterLoad = new TextMenu.OnOff(Dialog.Clean(DialogIds.GcAfterLoadState), ModSettings.GcAfterLoadState).Change(b =>
                 ModSettings.GcAfterLoadState = b));
-            AddDescription(gcAfterLoad, subMenu, menu, Dialog.Clean(DialogIds.GcDescription));
+            AddDescription(gcAfterLoad, subMenu, menu, Dialog.Clean(DialogIds.GcLoadDescription));
 
             subMenu.Add(gcThreshold_WhenLoad = new EnumerableSliderCompact<int>(
                 Dialog.Clean(DialogIds.GcMemoryThreshold),
@@ -137,7 +137,7 @@ public static class SpeedrunToolMenu {
 
             subMenu.Add(gcAfterClear = new TextMenu.OnOff(Dialog.Clean(DialogIds.GcAfterClearState), ModSettings.GcAfterClearState).Change(b =>
                 ModSettings.GcAfterClearState = b));
-            AddDescription(gcAfterClear, subMenu, menu, Dialog.Clean(DialogIds.GcDescription));
+            AddDescription(gcAfterClear, subMenu, menu, Dialog.Clean(DialogIds.GcClearDescription));
 
             TextMenu.Item saveTimeAndDeaths;
             subMenu.Add(saveTimeAndDeaths = new TextMenu.OnOff(Dialog.Clean(DialogIds.SaveTimeAndDeaths), ModSettings.SaveTimeAndDeaths).Change(b =>

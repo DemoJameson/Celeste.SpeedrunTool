@@ -4,6 +4,7 @@ using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Celeste.Mod.SpeedrunTool;
 
@@ -17,6 +18,20 @@ public class SpeedrunToolSettings : EverestModuleSettings {
 
     public void OnLoadSettings() {
         SetGcMemoryThreshold(Doubled_GcMemoryThreshold);
+
+        LogForDiagnostics();
+    }
+
+    private void LogForDiagnostics() {
+        StringBuilder sb = new();
+        sb.Append("GC Settings:");
+        sb.Append($"\n - {nameof(GcAfterLoadState)}: {GcAfterLoadState}");
+        if (GcAfterLoadState) {
+            sb.Append($" | {nameof(StateManager.MemoryThreshold)}: {StateManager.MemoryThreshold} GB");
+        }
+        sb.Append($"\n - {nameof(GcAfterClearState)}: {GcAfterClearState}");
+        Logger.Info("SpeedrunTool", sb.ToString());
+        // log it in LogLevel.Info, so we know more to diagnose when user gives us a log.txt
     }
 
     public bool Enabled { get; set; } = true;

@@ -1,4 +1,4 @@
-﻿using MonoMod.Cil;
+using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
 using System.Collections.Generic;
@@ -7,11 +7,11 @@ using System.Reflection;
 namespace Celeste.Mod.SpeedrunTool.Utils;
 
 internal static class HookHelper {
-    private static readonly List<IDetour> Hooks = new();
+    private static readonly List<ILHook> Hooks = new();
 
     [Unload]
     private static void Unload() {
-        foreach (IDetour detour in Hooks) {
+        foreach (ILHook detour in Hooks) {
             detour.Dispose();
         }
 
@@ -21,7 +21,7 @@ internal static class HookHelper {
     // ReSharper disable once InconsistentNaming
     public static void ILHook(this MethodBase from, Action<ILCursor, ILContext> manipulator) {
         if (from == null) {
-            new ArgumentNullException(nameof(from)).LogDetailed("SpeedrunTool");
+            Logger.LogDetailed(new ArgumentNullException(nameof(from)), "SpeedrunTool");
             return;
         }
 

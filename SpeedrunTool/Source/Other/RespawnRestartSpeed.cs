@@ -15,7 +15,7 @@ public static class RespawnRestartSpeed {
 
     [Load]
     private static void Hook() {
-        using (new DetourContext { After = new List<string> { "*" } }) {
+        using (new DetourConfigContext(new DetourConfig(id: "SpeedrunTool", after: ["*"])).Use()) {
             On.Monocle.Engine.Update += RespawnSpeed;
         }
     }

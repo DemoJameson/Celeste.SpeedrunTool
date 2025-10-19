@@ -42,7 +42,7 @@ internal static class ReflectionExtensions {
     private static readonly ConcurrentDictionary<MemberKey, FieldInfo> CachedFieldInfos = new();
     private static readonly ConcurrentDictionary<MemberKey, PropertyInfo> CachedPropertyInfos = new();
     private static readonly ConcurrentDictionary<MethodKey, MethodInfo> CachedMethodInfos = new();
-    private static readonly ConcurrentDictionary<MethodKey, FastReflectionDelegate> CachedMethodDelegates = new();
+    private static readonly ConcurrentDictionary<MethodKey, FastReflectionHelper.FastInvoker> CachedMethodDelegates = new();
     private static readonly ConcurrentDictionary<ConstructorKey, ConstructorInfo> CachedConstructorInfos = new();
     private static readonly ConcurrentDictionary<DelegateKey, Delegate> CachedFieldGetDelegates = new();
     private static readonly ConcurrentDictionary<DelegateKey, Delegate> CachedFieldSetDelegates = new();
@@ -92,7 +92,7 @@ internal static class ReflectionExtensions {
         return CachedMethodInfos[key] = result;
     }
 
-    public static FastReflectionDelegate GetMethodDelegate(this Type type, string name, Type[] types = null) {
+    public static FastReflectionHelper.FastInvoker GetMethodDelegate(this Type type, string name, Type[] types = null) {
         var key = new MethodKey(type, name, types.GetCustomHashCode());
         if (CachedMethodDelegates.TryGetValue(key, out var result)) {
             return result;

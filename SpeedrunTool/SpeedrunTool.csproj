@@ -54,18 +54,11 @@
         <Reference Include="$(CelestePrefix)\Celeste.dll" />
         <Reference Include="$(CelestePrefix)\FNA.dll" />
         <Reference Include="$(CelestePrefix)\MMHOOK_Celeste.dll" />
-        
+        <Reference Include="$(CelestePrefix)\Mono.Cecil.dll" />
+        <Reference Include="$(CelestePrefix)\MonoMod.Utils.dll" />
+        <Reference Include="$(CelestePrefix)\MonoMod.RuntimeDetour.dll" />
         <Reference Include="CelesteTAS-EverestInterop">
             <HintPath>..\..\CelesteTAS-EverestInterop\bin\CelesteTAS-EverestInterop.dll</HintPath>
-        </Reference>
-        <Reference Include="MonoMod.Utils">
-            <HintPath>..\libs\MonoMod.Utils-nstrip.dll</HintPath>
-        </Reference>
-        <Reference Include="MonoMod.RuntimeDetour">
-            <HintPath>..\libs\MonoMod.RuntimeDetour.dll</HintPath>
-        </Reference>
-        <Reference Include="Mono.Cecil">
-            <HintPath>..\libs\Mono.Cecil.dll</HintPath>
         </Reference>
     </ItemGroup>
 
@@ -76,6 +69,7 @@
     <ItemGroup>
         <Publicize Include="Celeste" IncludeCompilerGeneratedMembers="false" />
         <Publicize Include="MonoMod.Utils" />
+        <Publicize Include="MonoMod.RuntimeDetour" />
     </ItemGroup>
 
     <!-- DeepCloner -->

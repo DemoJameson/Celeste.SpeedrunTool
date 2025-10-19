@@ -1,3 +1,4 @@
+using Celeste.Mod.Helpers.LegacyMonoMod;
 using Celeste.Mod.SpeedrunTool.ModInterop;
 using Celeste.Mod.SpeedrunTool.SaveLoad.ThirdPartySupport;
 using FMOD.Studio;
@@ -54,8 +55,10 @@ public static class DeepClonerUtils {
                 || type.IsSubclassOf(typeof(LuaBase))
 
                 // MonoMod
-                || type.GetInterfaces().Contains(typeof(IDetour))
-                || type.GetInterfaces().Any(t => t.FullName == "MonoMod.RuntimeDetour.IDetourBase")
+                || type == typeof(ILHook)
+                || type == typeof(LegacyILHook)
+                || type.GetInterfaces().Contains(typeof(IDetourBase))
+                || type.GetInterfaces().Any(t => t.FullName is "Celeste.Mod.Helpers.LegacyMonoMod.ILegacyDetour")
 
                 // CelesteNet
                 || type.FullName != null && type.FullName.StartsWith("Celeste.Mod.CelesteNet.") && !type.IsSubclassOf(typeof(Entity))
@@ -197,7 +200,7 @@ public static class DeepClonerUtils {
 
                     if (backupHashSet.Count >= 0) {
                         clonedObj.InvokeMethod("Clear");
-                        FastReflectionDelegate addDelegate = type.GetMethodDelegate("Add");
+                        FastReflectionHelper.FastInvoker addDelegate = type.GetMethodDelegate("Add");
                         while (backupHashSet.Count > 0) {
                             addDelegate.Invoke(clonedObj, backupHashSet.Pop());
                         }

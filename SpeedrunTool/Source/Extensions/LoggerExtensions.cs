@@ -8,15 +8,15 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
         public static void Log(this object message, LogLevel logLevel = LogLevel.Warn) {
             string levelInfo = "";
             if (Engine.Scene.GetSession() is { } session) {
-                levelInfo += $"[{session.Area.SID} {session.Level}] ";
+                levelInfo += $"'{session.Area.SID}[{session.Level}]'";
             }
 
             string frames = "";
             if (Engine.Scene != null) {
-                frames = "[" + (int)Math.Round(Engine.Scene.RawTimeActive / 0.0166667) + "] ";
+                frames = "(frame: " + (int)Math.Round(Engine.Scene.RawTimeActive / 0.0166667) + ")";
             }
 
-            Logger.Log(logLevel, Tag, $"{levelInfo}{frames}{message}");
+            Logger.Log(logLevel, Tag, $"{levelInfo}{frames} {message}");
         }
 
 #if DEBUG

@@ -46,6 +46,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public static void SetGcMemoryThreshold(int doubleNum) {
         StateManager.MemoryThreshold = doubleNum / 2f;
     }
+    public bool GcAfterClearState { get; set; } = true;
     public bool SaveTimeAndDeaths { get; set; } = false;
     public bool SaveExtendedVariants { get; set; } = true;
 

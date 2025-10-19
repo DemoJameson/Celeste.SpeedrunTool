@@ -113,10 +113,14 @@ public static class SpeedrunToolMenu {
                 ModSettings.FreezeAfterLoadStateType).Change(b =>
                 ModSettings.FreezeAfterLoadStateType = b));
 
-            subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.GcAfterLoadState), ModSettings.GcAfterLoadState).Change(b =>
+            TextMenu.Item gcAfterLoad;
+            TextMenu.Item gcThreshold_WhenLoad;
+            TextMenu.Item gcAfterClear;
+            subMenu.Add(gcAfterLoad = new TextMenu.OnOff(Dialog.Clean(DialogIds.GcAfterLoadState), ModSettings.GcAfterLoadState).Change(b =>
                 ModSettings.GcAfterLoadState = b));
+            AddDescription(gcAfterLoad, subMenu, menu, Dialog.Clean(DialogIds.GcDescription));
 
-            subMenu.Add(new EnumerableSliderCompact<int>(
+            subMenu.Add(gcThreshold_WhenLoad = new EnumerableSliderCompact<int>(
                 Dialog.Clean(DialogIds.GcMemoryThreshold),
                 new Dictionary<int, string>() {
                     [1] = Dialog.Clean(DialogIds.Always),
@@ -129,6 +133,11 @@ public static class SpeedrunToolMenu {
                     SpeedrunToolSettings.SetGcMemoryThreshold(b);
                 })
             );
+            AddDescription(gcThreshold_WhenLoad, subMenu, menu, Dialog.Clean(DialogIds.GcThresholdDescription));
+
+            subMenu.Add(gcAfterClear = new TextMenu.OnOff(Dialog.Clean(DialogIds.GcAfterClearState), ModSettings.GcAfterClearState).Change(b =>
+                ModSettings.GcAfterClearState = b));
+            AddDescription(gcAfterClear, subMenu, menu, Dialog.Clean(DialogIds.GcDescription));
 
             TextMenu.Item saveTimeAndDeaths;
             subMenu.Add(saveTimeAndDeaths = new TextMenu.OnOff(Dialog.Clean(DialogIds.SaveTimeAndDeaths), ModSettings.SaveTimeAndDeaths).Change(b =>

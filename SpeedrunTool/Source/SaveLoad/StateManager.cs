@@ -73,6 +73,8 @@ public sealed class StateManager {
     private IEnumerator savedTransitionRoutine;
 
     public string SlotName;
+    public string SlotDescription = "";
+    public string FullSlotDescription => string.IsNullOrWhiteSpace(SlotDescription) ? $"[{SlotName}]" : $"[{SlotName}],  {SlotDescription}";
 
     private enum FreezeType {
         None,
@@ -288,10 +290,17 @@ public sealed class StateManager {
         }
 
         SaveLoadAction.LogSavedValues(saving: true);
+        SetSlotDescription();
 
-        Logger.Info("SpeedrunTool", $"Save to [{SlotName}]");
+        Logger.Info("SpeedrunTool", $"Save to {FullSlotDescription}");
 
         return true;
+    }
+
+    private void SetSlotDescription() {
+        string levelInfo = Engine.Scene.GetSession() is { } session ? $"'{session.Area.SID} [{session.Level}]'" : "";
+        string frames = Engine.Scene is not null ? "(frame: " + (int)Math.Round(Engine.Scene.RawTimeActive / 0.0166667) + ")" : "";
+        SlotDescription = levelInfo + frames;
     }
 
 
@@ -345,7 +354,7 @@ public sealed class StateManager {
             DoScreenWipe(level);
         }
 
-        Logger.Info("SpeedrunTool", $"Load from [{SlotName}]");
+        Logger.Info("SpeedrunTool", $"Load from {FullSlotDescription}");
         return true;
     }
 
@@ -545,11 +554,13 @@ public sealed class StateManager {
         SaveLoadAction.OnClearState(ClearBeforeSave);
         State = State.None;
         // 2025.10.08 fix: clear 之后读档更加卡顿 (这个问题在老版本好像也有, 之前在这里压根不 Gc)
-        if (hasGc) {
+        // 2025.10.19: 不过似乎不是每个人都喜欢卡顿一下, 姑且先做成可选项, 使得用户可以保留之前的体验
+        if (hasGc && ModSettings.GcAfterClearState) {
             GcCollect(force: true);
         }
         MoreSaveSlotsUI.Snapshot.RemoveSnapshot(SlotName);
-        Logger.Info("SpeedrunTool", $"Clear [{SlotName}]");
+        Logger.Info("SpeedrunTool", $"Clear {FullSlotDescription}");
+        SlotDescription = "";
     }
 
     public void ClearStateAndShowMessage() {

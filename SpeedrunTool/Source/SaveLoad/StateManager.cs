@@ -289,7 +289,7 @@ public sealed class StateManager {
 
         SaveLoadAction.LogSavedValues(saving: true);
 
-        Logger.Log("SpeedrunTool", $"Save to [{SlotName}]");
+        Logger.Info("SpeedrunTool", $"Save to [{SlotName}]");
 
         return true;
     }
@@ -345,7 +345,7 @@ public sealed class StateManager {
             DoScreenWipe(level);
         }
 
-        Logger.Log("SpeedrunTool", $"Load from [{SlotName}]");
+        Logger.Info("SpeedrunTool", $"Load from [{SlotName}]");
         return true;
     }
 
@@ -371,7 +371,7 @@ public sealed class StateManager {
             // 使用内存超过阈值才回收垃圾
             float memorySize = ((float)celesteProcess.PrivateMemorySize64) / (1024L * 1024L * 1024L);
             if (memorySize > MemoryThreshold) {
-                Logger.Log("SpeedrunTool", $"MemoryUsage: {memorySize:0.00} GB > Threshold: {MemoryThreshold:0.00} GB. Waiting for GC Collecting...");
+                Logger.Info("SpeedrunTool", $"MemoryUsage: {memorySize:0.00} GB > Threshold: {MemoryThreshold:0.00} GB. Waiting for GC Collecting...");
                 GcCollectCore();
             }
         }
@@ -383,7 +383,7 @@ public sealed class StateManager {
             GC.Collect();
             GC.WaitForPendingFinalizers();
             sw.Stop();
-            Logger.Log("SpeedrunTool", $"GC latency: {sw.ElapsedMilliseconds}ms.");
+            Logger.Info("SpeedrunTool", $"GC latency: {sw.ElapsedMilliseconds}ms.");
         }
     }
 
@@ -549,7 +549,7 @@ public sealed class StateManager {
             GcCollect(force: true);
         }
         MoreSaveSlotsUI.Snapshot.RemoveSnapshot(SlotName);
-        Logger.Log("SpeedrunTool", $"Clear [{SlotName}]");
+        Logger.Info("SpeedrunTool", $"Clear [{SlotName}]");
     }
 
     public void ClearStateAndShowMessage() {

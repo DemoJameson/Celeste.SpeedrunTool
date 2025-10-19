@@ -42,7 +42,7 @@ internal static class SaveSlotsManager {
             return false;
         }
         if (name != SlotName) {
-            Logger.Log("SpeedrunTool", $"Switch to [{name}]");
+            Logger.Info("SpeedrunTool", $"Switch to [{name}]");
         }
 
         // execute even if name == SlotName, so the resulting slot will always be right (it's not necessarily created yet!)

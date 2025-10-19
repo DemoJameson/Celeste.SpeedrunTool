@@ -1,6 +1,5 @@
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
-using MonoMod.Utils;
 using System.Collections.Generic;
 using System.Reflection;
 

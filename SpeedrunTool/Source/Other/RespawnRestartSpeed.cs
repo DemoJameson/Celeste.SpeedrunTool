@@ -6,7 +6,6 @@ using Celeste.Mod.SpeedrunTool.Utils;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
-using System.Collections.Generic;
 
 namespace Celeste.Mod.SpeedrunTool.Other;
 

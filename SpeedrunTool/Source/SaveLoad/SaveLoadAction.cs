@@ -156,12 +156,8 @@ public sealed class SaveLoadAction {
 
 #if LOG
     private static void AddDebugDescription(SaveLoadAction action, bool internalCall = true) {
-        int frame = 2;
+        int frame = internalCall ? 2 : 3;
         System.Diagnostics.StackTrace stackTrace = new System.Diagnostics.StackTrace();
-        if (!internalCall && (stackTrace.GetFrame(2)?.GetMethod()?.Name?.Contains("RegisterStaticTypes") ?? false)) {
-            // RegisterSaveLoadAction got inlined. So only RegisterStaticTypes need frame = 3
-            frame = 3;
-        }
         System.Diagnostics.StackFrame stackFrame = stackTrace.GetFrame(frame);
         if (stackFrame.GetMethod() is { } method) {
             if (internalCall) {

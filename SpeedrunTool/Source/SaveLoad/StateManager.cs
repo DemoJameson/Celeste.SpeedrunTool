@@ -371,6 +371,8 @@ public sealed class StateManager {
 #if DEBUG
         sw.Stop();
         Logger.Debug("SpeedrunTool", $"Load in {sw.ElapsedMilliseconds} ms");
+        float memorySize = ((float)Process.GetCurrentProcess().PrivateMemorySize64) / (1024L * 1024L * 1024L);
+        Logger.Debug("SpeedrunTool", $"MemoryUsage: {memorySize:0.00} GB");
 #endif
         return true;
     }

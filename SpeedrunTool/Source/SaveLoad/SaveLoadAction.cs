@@ -13,9 +13,16 @@ using System.Reflection;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
 public sealed class SaveLoadAction {
+
+#if LOG
+    private const bool Log_WhenSaving = true;
+    private const bool Log_WhenLoading = false;
+#endif
+
+
     public delegate void SlAction(Dictionary<Type, Dictionary<string, object>> savedValues, Level level);
 
-    // 第一次 SL 时才初始化，避免通过安装依赖功能解除禁用的 Mod 被忽略
+    // 核心的一些 SaveLoadAction 在第一次 SL 时才初始化，避免通过安装依赖功能解除禁用的 Mod 被忽略. 而一些其他辅助类的 SaveLoadAction 则可能更早被加入
 
     private static bool internalActionInitialized = false;
 
@@ -162,6 +169,9 @@ public sealed class SaveLoadAction {
         } else {
             action.ActionDescription = "<BadStackFrame>";
         }
+
+        Logger.Debug("SpeedrunTool_Log", action.ActionDescription);
+        Logger.Debug("SpeedrunTool_Log", stackTrace.ToString());
     }
 #endif
 
@@ -248,7 +258,6 @@ public sealed class SaveLoadAction {
         }
     }
 
-    // ReSharper disable once MemberCanBePrivate.Global
     public static void SaveStaticMemberValues(Dictionary<Type, Dictionary<string, object>> values, Type type, params string[] memberNames) {
         if (type == null) {
             return;
@@ -274,9 +283,9 @@ public sealed class SaveLoadAction {
             }
         }
     }
-
-    // ReSharper disable once MemberCanBePrivate.Global
     public static void LoadStaticMemberValues(Dictionary<Type, Dictionary<string, object>> values) {
+        // 使用时总是和 SaveStaticMemberValues 捆绑成一个 SaveLoadAction 使用
+        // 由于每个 SaveLoadAction 都有自己独立的字典, 因此这边的读取实际上并不会多读什么. type 和 memberNames 也不用作为参数 (不像 SaveStaticMemberValues 时)
         foreach (KeyValuePair<Type, Dictionary<string, object>> pair in values) {
             foreach (string memberName in pair.Value.Keys) {
                 Type type = pair.Key;
@@ -389,9 +398,7 @@ public sealed class SaveLoadAction {
 
     internal static void LogSavedValues(bool saving) {
 #if LOG
-        bool logWhenSaving = true;
-        bool logWhenLoading = false;
-        if (!(saving && logWhenSaving || !saving && logWhenLoading)) {
+        if (!(saving && Log_WhenSaving || !saving && Log_WhenLoading)) {
             return;
         }
 
@@ -945,7 +952,7 @@ public sealed class SaveLoadAction {
         InternalSafeAdd(
             loadState: (_, _) => {
                 List<VirtualAsset> list = new List<VirtualAsset>(VirtualAssets);
-                // if load too frequently and switching between different slots, then collection might be modified
+                // if load too frequently and switching between different slots, then collection might be modified? idk
                 // so we avoid the crash in this way
 
                 foreach (VirtualAsset virtualAsset in list) {

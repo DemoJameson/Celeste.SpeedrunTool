@@ -65,7 +65,7 @@ public sealed class StateManager {
     public Level SavedLevel => savedLevel;
     private Level savedLevel;
     private SaveData savedSaveData;
-    private Task<DeepCloneState> preCloneTask;
+    internal Task<DeepCloneState> preCloneTask;
     private FreezeType freezeType;
     private Process celesteProcess;
     private int savedTasCycleGroupCounter;
@@ -261,6 +261,10 @@ public sealed class StateManager {
             ClearStateImpl(hasGc: false);
             ClearBeforeSave = false;
         }
+#if DEBUG
+        Stopwatch sw = new Stopwatch();
+        sw.Start();
+#endif
 
         SaveLoadAction.InitSlots();
 
@@ -293,6 +297,10 @@ public sealed class StateManager {
         SetSlotDescription();
 
         Logger.Info("SpeedrunTool", $"Save to {FullSlotDescription}");
+#if DEBUG
+        sw.Stop();
+        Logger.Debug("SpeedrunTool", $"Save in {sw.ElapsedMilliseconds} ms");
+#endif
 
         return true;
     }
@@ -316,6 +324,10 @@ public sealed class StateManager {
         if (tas && !SavedByTas) {
             return false;
         }
+#if DEBUG
+        Stopwatch sw = new Stopwatch();
+        sw.Start();
+#endif
 
         LoadByTas = tas;
         State = State.Loading;
@@ -355,6 +367,11 @@ public sealed class StateManager {
         }
 
         Logger.Info("SpeedrunTool", $"Load from {FullSlotDescription}");
+
+#if DEBUG
+        sw.Stop();
+        Logger.Debug("SpeedrunTool", $"Load in {sw.ElapsedMilliseconds} ms");
+#endif
         return true;
     }
 
@@ -531,7 +548,7 @@ public sealed class StateManager {
         }
     }
 
-    public void ClearStateImpl(bool hasGc = true) {
+    internal void ClearStateImpl(bool hasGc = true) {
         // TODO: 这里 Task.Wait() 可能可以试着让它更快结束?
 
         preCloneTask?.Wait();

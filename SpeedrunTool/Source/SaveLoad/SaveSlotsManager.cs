@@ -41,6 +41,10 @@ internal static class SaveSlotsManager {
             // to ensure safety
             return false;
         }
+        foreach (SaveSlot s in SaveSlots) {
+            s.StateManager.preCloneTask?.Wait();
+            // 不然感觉会有一些多线程上的问题
+        }
         if (name != SlotName) {
             Logger.Info("SpeedrunTool", $"Switch to [{name}]");
         }

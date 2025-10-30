@@ -43,11 +43,5 @@ internal static class PandorasBoxUtils {
                 });
             }
         }
-
-        // Fixed: Game crashes after save DustSpriteColorController
-        SaveLoadAction.InternalSafeAdd(
-            (savedValues, _) => SaveLoadAction.SaveStaticMemberValues(savedValues, typeof(DustStyles), "Styles"),
-            (savedValues, _) => SaveLoadAction.LoadStaticMemberValues(savedValues)
-        );
     }
 }

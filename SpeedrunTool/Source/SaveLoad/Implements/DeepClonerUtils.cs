@@ -247,8 +247,6 @@ public static class DeepClonerUtils {
                 if (DynamicData._DataMap.TryGetValue(sourceObj, out DynamicData._Data_ value) && value.Data.Count > 0) {
                     DynamicData._DataMap.Add(clonedObj, value.DeepClone(deepCloneState));
                 }
-
-                FrostHelperUtils.CloneDataStore(sourceObj, clonedObj, deepCloneState);
             }
 
             return clonedObj;

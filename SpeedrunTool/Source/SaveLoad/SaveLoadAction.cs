@@ -15,7 +15,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 public sealed class SaveLoadAction {
 
 #if LOG
-    private const bool Log_WhenSaving = true;
+    private const bool Log_WhenSaving = false;
     private const bool Log_WhenLoading = false;
 #endif
 
@@ -156,22 +156,26 @@ public sealed class SaveLoadAction {
 
 #if LOG
     private static void AddDebugDescription(SaveLoadAction action, bool internalCall = true) {
-        int frame = internalCall ? 2 : 3;
+        int frame = 2;
         System.Diagnostics.StackTrace stackTrace = new System.Diagnostics.StackTrace();
+        if (!internalCall && (stackTrace.GetFrame(2)?.GetMethod()?.Name?.Contains("RegisterStaticTypes") ?? false)) {
+            // RegisterSaveLoadAction got inlined. So only RegisterStaticTypes need frame = 3
+            frame = 3;
+        }
         System.Diagnostics.StackFrame stackFrame = stackTrace.GetFrame(frame);
         if (stackFrame.GetMethod() is { } method) {
             if (internalCall) {
-                action.ActionDescription = $"{method.DeclaringType?.FullName ?? "<UnknownType>"} @ {method.Name ?? "<UnknownMethod>"}";
-            } else {
-                action.ActionDescription = $"<<External>> {((Delegate)action.loadState ?? (Delegate)action.saveState ?? (Delegate)action.clearState)
-                ?.Target?.GetType()?.FullName?.Replace("+<>c", "") ?? "<UnknownType>"} @ {method.Name ?? "<UnknownMethod>"}";
+                action.ActionDescription = $"{method.DeclaringType?.FullName?.
+                    Replace("Celeste.Mod.SpeedrunTool.SaveLoad.", "")?.
+                    Replace("Celeste.Mod.SpeedrunTool.", "") ?? "<UnknownType>"} @ {method.Name ?? "<UnknownMethod>"}";
             }
-        } else {
+            else {
+                action.ActionDescription = $"<<External>> {method.DeclaringType?.FullName ?? "<UnknownType>"} @ {method.Name ?? "<UnknownMethod>"}";
+            }
+        }
+        else {
             action.ActionDescription = "<BadStackFrame>";
         }
-
-        Logger.Debug("SpeedrunTool_Log", action.ActionDescription);
-        Logger.Debug("SpeedrunTool_Log", stackTrace.ToString());
     }
 #endif
 
@@ -347,7 +351,6 @@ public sealed class SaveLoadAction {
         DeathTrackerHelperUtils.Support();
         CommunalHelperUtils.Support();
         BrokemiaHelperUtils.Support();
-        FrostHelperUtils.Support();
         VivHelperUtils.Support();
 
         // 放最后，确保收集了所有克隆的 VirtualAssets 与 EventInstance
@@ -659,6 +662,8 @@ public sealed class SaveLoadAction {
                 SaveStaticMemberValues(savedValues, typeof(Distort), nameof(Distort.Anxiety), nameof(Distort.GameRate));
                 SaveStaticMemberValues(savedValues, typeof(ScreenWipe), nameof(ScreenWipe.WipeColor));
                 SaveStaticMemberValues(savedValues, typeof(Audio), nameof(Audio.currentCamera));
+                // Fixed: Game crashes after save PandorasBoxUtils.DustSpriteColorController
+                SaveStaticMemberValues(savedValues, typeof(DustStyles), nameof(DustStyles.Styles));
             },
             (savedValues, _) => LoadStaticMemberValues(savedValues));
     }

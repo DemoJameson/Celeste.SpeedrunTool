@@ -165,7 +165,7 @@ internal class Snapshot {
     private static readonly Color TextColor = Color.White;
 
     private static readonly Color HighlightTextColor = Color.Goldenrod;
-    
+
     private static readonly Color StrokeColor = Color.Black;
 
     private static readonly Color NoSaveColor = new Color(0.3f, 0.3f, 0.3f) * 0.9f;
@@ -517,7 +517,7 @@ internal static class SnapshotUI {
     private const float TitleY2 = 1.01f;
 
     private const float TitleHeight = 0.2f;
-    
+
     private const float Stroke = 1f;
 
     private static readonly Color StrokeColor = Color.Black;

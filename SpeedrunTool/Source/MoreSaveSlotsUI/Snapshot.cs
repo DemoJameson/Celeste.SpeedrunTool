@@ -165,7 +165,7 @@ internal class Snapshot {
     private static readonly Color TextColor = Color.White;
 
     private static readonly Color HighlightTextColor = Color.Goldenrod;
-
+    
     private static readonly Color StrokeColor = Color.Black;
 
     private static readonly Color NoSaveColor = new Color(0.3f, 0.3f, 0.3f) * 0.9f;
@@ -184,7 +184,7 @@ internal static class SnapshotUI {
         IL.Monocle.Engine.Update += IL_Engine_Update;
         On.Celeste.Level.Render += RenderSnapshots;
         Hotkey.ToggleSaveLoadUI.RegisterPressedAction(_ => {
-            if (Engine.Scene is Level) {
+            if (Engine.Scene is Level { Paused: false }) {
                 ToggleTab();
             }
         });
@@ -309,6 +309,10 @@ internal static class SnapshotUI {
         }
     }
 
+    private const string PauseSfx = "event:/ui/game/pause";
+
+    private const string UnpauseSfx = "event:/ui/game/unpause";
+
     private const string ConfirmSfx = "event:/ui/main/button_select";
 
     private const string CancelSfx = "event:/ui/game/hotspot_note_out";
@@ -324,7 +328,6 @@ internal static class SnapshotUI {
             yWiggleTimer += Engine.RawDeltaTime * 10;
             if (Input.MenuCancel.Pressed || Input.ESC.Pressed) {
                 ToggleTab();
-                Audio.Play(CancelSfx);
                 return;
             }
             if (Input.MenuConfirm.Pressed) {
@@ -418,11 +421,12 @@ internal static class SnapshotUI {
             focusOnItem = false;
         }
         tabIn = !tabIn;
-        if (tabIn && easeY <= 0.05f) {
+        Audio.Play(tabIn ? PauseSfx : UnpauseSfx);
+        if (tabIn && easeY < 0.05f) {
             easeY = 0f;
             ConfigAllSnapshots();
         }
-        else if (!tabIn && easeY > 1f) {
+        else if (!tabIn && easeY > 0.95f) {
             easeY = 1f;
         }
     }
@@ -444,6 +448,8 @@ internal static class SnapshotUI {
         maxX = viewWidth;
         maxY = viewHeight;
 
+        TitleRender("SPEEDRUN TOOL", MathHelper.Lerp(TitleY1, TitleY2, yAnim));
+
         foreach (Snapshot snap in Dict.Values) {
             if (snap.Name == highlight) {
                 PercentRender(snap, snap.xPercent, snap.yPercent + yAnim + MathF.Sin(yWiggleTimer) * 0.003f, true);
@@ -451,6 +457,17 @@ internal static class SnapshotUI {
             else {
                 PercentRender(snap, snap.xPercent, snap.yPercent + yAnim, false);
             }
+        }
+
+        void TitleRender(string text, float yPercent) {
+            if (yPercent >= 1f) {
+                return;
+            }
+            float x = (minX + maxX) / 2f;
+            float y = MathHelper.Lerp(minY, maxY, yPercent);
+            float height = TitleHeight * (maxY - minY);
+            float titleAlpha = MathHelper.Lerp(0.5f, 1f, alpha);
+            ActiveFont.DrawOutline(text, new Vector2(x, y), new Vector2(0.5f, 0f), new Vector2(height / ActiveFont.Measure(text).Y), TextColor * titleAlpha, Stroke, StrokeColor * titleAlpha);
         }
 
         void PercentRender(Snapshot snapshot, float xPercent, float yPercent, bool highlight) {
@@ -479,7 +496,6 @@ internal static class SnapshotUI {
                 Draw.Rect(x1, y, width, height, highlight ? HighlightRectColor : RectColor);
                 string text = i switch { 0 => "Save", 1 => "Load", 2 => "Clear", _ => "?" };
                 ActiveFont.Draw(text, new Vector2(x1 + width / 2f, y + height / 2f), new Vector2(0.5f, 0.5f), new Vector2(height / ActiveFont.Measure(text).Y), TextColor);
-
             }
         }
 
@@ -495,6 +511,16 @@ internal static class SnapshotUI {
     private const float OptionHeight = 0.06f;
 
     private const float OptionPadding = 0.01f;
+
+    private const float TitleY1 = 0.425f;
+
+    private const float TitleY2 = 1.01f;
+
+    private const float TitleHeight = 0.2f;
+    
+    private const float Stroke = 1f;
+
+    private static readonly Color StrokeColor = Color.Black;
 
     private static readonly Color RectColor = new Color(0.5f, 0.5f, 0.5f);
 

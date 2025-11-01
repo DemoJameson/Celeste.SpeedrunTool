@@ -6,6 +6,8 @@ internal static class OnAssetReload {
 
     [Initialize]
     private static void Initialize() {
+        // after several reloads, multiple same actions are added... yeah but it doesn't matter
+
         Everest.Events.AssetReload.OnBeforeReload += _ => {
             SaveSlotsManager.ClearAll();
         };

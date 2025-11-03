@@ -11,7 +11,6 @@ internal static class SpirialisHelperUtils {
     internal static void Support() {
         SaveLoadAction.CloneModTypeFields("SpirialisHelper", "Celeste.Mod.Spirialis.TimePlayerSettings", "instance", "stoppedX", "stoppedY");
         SaveLoadAction.CloneModTypeFields("SpirialisHelper", "Celeste.Mod.Spirialis.CustomRainBG", "timeSinceFreeze");
-        SaveLoadAction.CloneModTypeFields("SpirialisHelper", "Celeste.Mod.Spirialis.BoostCapModifier", "xCap", "yCap");
 
         if (ModUtils.GetType("SpirialisHelper", "Celeste.Mod.Spirialis.TimeController") is { } timeControllerType) {
             SaveLoadAction action = SaveLoadAction.InternalSafeAdd(
@@ -45,6 +44,13 @@ internal static class SpirialisHelperUtils {
         }
 
         if (ModUtils.GetType("SpirialisHelper", "Celeste.Mod.Spirialis.TimeZipMover") is { } timeZipMoverType) {
+            // SpirialisHelper targets old MonoMod.Utils ILHooks (which is a different thing with MonoMod.Utils v25 ILHook)
+            // which has been retargeted to LegacyILHook.
+            // So we should use LegacyILHook instead of ILHook
+            if (timeZipMoverType.GetFieldInfo("TimeStreetlightUpdate") is not { } fieldInfo || fieldInfo.FieldType != typeof(Helpers.LegacyMonoMod.LegacyILHook)) {
+                throw new Exception("SpirialisHelper has been updated? SpeedrunTool doesn't support it.");
+            }
+
             if (typeof(ZipMover).GetMethod("Sequence", BindingFlags.Instance | BindingFlags.NonPublic).GetStateMachineTarget() is not
                 { } sequenceMethodInfo) {
                 return;

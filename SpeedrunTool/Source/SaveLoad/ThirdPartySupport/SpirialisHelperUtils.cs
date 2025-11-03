@@ -1,6 +1,5 @@
 using Celeste.Mod.SpeedrunTool.Utils;
 using MonoMod.Cil;
-using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
 using System.Collections.Generic;
 using System.Linq;
@@ -58,9 +57,13 @@ internal static class SpirialisHelperUtils {
                         }
 
                         foreach (Entity entity in zips) {
+                            if (entity.GetFieldValue<Helpers.LegacyMonoMod.LegacyILHook>("TimeStreetlightUpdate") is { } ilhook) {
+                                ilhook?.Dispose();
+                            }
+
                             if (Delegate.CreateDelegate(typeof(ILContext.Manipulator), entity, timeZipMoverType.GetMethodInfo("ZipSequence")) is
                                 ILContext.Manipulator manipulator) {
-                                entity.SetFieldValue("TimeStreetlightUpdate", new ILHook(sequenceMethodInfo, manipulator));
+                                entity.SetFieldValue("TimeStreetlightUpdate", new Helpers.LegacyMonoMod.LegacyILHook(sequenceMethodInfo, manipulator));
                             }
                         }
                     }

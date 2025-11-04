@@ -22,6 +22,9 @@ internal static class SwitchAndSaveLoad {
                     SaveToNextAvailableSlot();
                     JetBrains.Profiler.Api.MeasureProfiler.SaveData();
                 }
+                else {
+                    SaveToNextAvailableSlot();
+                }
 #else
                 SaveToNextAvailableSlot();
 #endif
@@ -34,6 +37,9 @@ internal static class SwitchAndSaveLoad {
                     JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();
                     LoadFromLastAvailableSlot();
                     JetBrains.Profiler.Api.MeasureProfiler.SaveData();
+                }
+                else {
+                    LoadFromLastAvailableSlot();
                 }
 #else
                 LoadFromLastAvailableSlot();

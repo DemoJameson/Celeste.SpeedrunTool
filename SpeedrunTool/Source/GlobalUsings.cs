@@ -1,4 +1,4 @@
-﻿global using Celeste.Mod.SpeedrunTool.Extensions;
+global using Celeste.Mod.SpeedrunTool.Extensions;
 global using Microsoft.Xna.Framework;
 global using Monocle;
 global using System;

@@ -1,4 +1,3 @@
-//#define LOG
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad.ThirdPartySupport;
@@ -13,12 +12,6 @@ using System.Reflection;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
 public sealed class SaveLoadAction {
-
-#if LOG
-    private const bool Log_WhenSaving = false;
-    private const bool Log_WhenLoading = false;
-#endif
-
 
     public delegate void SlAction(Dictionary<Type, Dictionary<string, object>> savedValues, Level level);
 
@@ -66,7 +59,7 @@ public sealed class SaveLoadAction {
     private static Dictionary<Type, FieldInfo[]> simpleStaticFields;
     private static Dictionary<Type, FieldInfo[]> modModuleFields;
 
-#if LOG
+#if DEBUG
     public string ActionDescription = "";
 #endif
 
@@ -129,7 +122,7 @@ public sealed class SaveLoadAction {
             throw new Exception("Internal SaveLoad actions are added after expected time!");
         }
         SaveLoadAction saveLoadAction = new(CreateSlAction(saveState), CreateSlAction(loadState), clearState, beforeSaveState, beforeLoadState, preCloneEntities);
-#if LOG
+#if DEBUG
         AddDebugDescription(saveLoadAction, internalCall: true);
 #endif
         SharedActions.Add(saveLoadAction);
@@ -147,14 +140,14 @@ public sealed class SaveLoadAction {
         Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState, Action clearState,
         Action<Level> beforeSaveState, Action<Level> beforeLoadState, Action preCloneEntities = null) {
         SaveLoadAction saveLoadAction = new(CreateSlAction(saveState), CreateSlAction(loadState), clearState, beforeSaveState, beforeLoadState, preCloneEntities);
-#if LOG
+#if DEBUG
         AddDebugDescription(saveLoadAction, internalCall: false);
 #endif
         ToBeAddedModSharedActions.Add(saveLoadAction);
         return saveLoadAction;
     }
 
-#if LOG
+#if DEBUG
     private static void AddDebugDescription(SaveLoadAction action, bool internalCall = true) {
         int frame = internalCall ? 2 : 3;
         System.Diagnostics.StackTrace stackTrace = new System.Diagnostics.StackTrace();
@@ -373,13 +366,15 @@ public sealed class SaveLoadAction {
                 i++;
                 action.dictionaryId = i;
             }
-#if LOG
-            System.Text.StringBuilder sb = new();
-            sb.Append("\n===== Initializing SharedActions... =====\n");
-            foreach (SaveLoadAction action in SharedActions) {
-                sb.Append($"--- [{action.dictionaryId}] {action.ActionDescription} ---\n");
+#if DEBUG
+            if (Log_AllActions) {
+                System.Text.StringBuilder sb = new();
+                sb.Append("\n===== Initializing SharedActions... =====\n");
+                foreach (SaveLoadAction action in SharedActions) {
+                    sb.Append($"--- [{action.dictionaryId}] {action.ActionDescription} ---\n");
+                }
+                Logger.Debug("SpeedrunTool", sb.ToString());
             }
-            Logger.Log(LogLevel.Debug, "SpeedrunTool", sb.ToString());
 #endif
 
             SaveSlotsManager.RequireReInit();
@@ -394,30 +389,66 @@ public sealed class SaveLoadAction {
         slotInitialized = true;
     }
 
-
-    internal static void LogSavedValues(bool saving) {
-#if LOG
-        if (!(saving && Log_WhenSaving || !saving && Log_WhenLoading)) {
-            return;
-        }
-
+#if DEBUG
+    internal static void LogSavedValues(Level level) {
         System.Text.StringBuilder sb = new();
+        
         foreach (SaveLoadAction slAction in SharedActions) {
             sb.Append($"\n======  {slAction.ActionDescription}  ======\n");
             int count = 1;
             foreach (KeyValuePair<Type, Dictionary<string, object>> pair in AllSavedValues[slAction.dictionaryId]) {
                 sb.Append($"---  Type {count.ToString().PadRight(3)} =   {pair.Key.FullName}  ---\n");
                 foreach (KeyValuePair<string, object> pair2 in pair.Value) {
-                    sb.Append($"{pair2.Key} -> {pair2.Value}\n");
+                    sb.Append($" ├  {PadToMultiple(pair2.Key, 32)} | {pair2.Value}\n");
                 }
                 sb.Append('\n');
                 count++;
             }
         }
-        Logger.Log(LogLevel.Debug, "SpeedrunTool", sb.ToString());
-#endif
-    }
 
+        if (Log_SavedLevel) {
+            sb.Append("\n======  Saved Level (Part) ======");
+            sb.Append("\n[0] Level\n");
+            AppendInstanceField(typeof(Level), level);
+            int index = 0;
+            foreach (KeyValuePair<Type, List<Entity>> entity in level.Tracker.Entities) {
+                if (entity.Value.Count == 0) {
+                    continue;
+                }
+                index++;
+                sb.Append($"\n[{index}] {entity.Key}    x {entity.Value.Count}\n");
+                AppendInstanceField(entity.Key, entity.Value.First());
+            }
+        }
+
+        Logger.Log(LogLevel.Debug, "SpeedrunTool", sb.ToString());
+
+        void AppendInstanceField(Type type, object obj) {
+            // modified from DeepClonerMsilGenerator.GenerateClonerInternal
+            List<FieldInfo> list = new List<FieldInfo>();
+            Type tp = type;
+            do {
+                // don't do anything with this dark magic!
+                if (tp == typeof(ContextBoundObject)) {
+                    break;
+                }
+
+                list.AddRange(tp.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.DeclaredOnly));
+                tp = tp.BaseType;
+            } while (tp != null);
+            foreach (FieldInfo fi in list) {
+                sb.Append($" ├  {PadToMultiple(fi.Name, 32)} | {fi.GetValue(obj)}\n");
+            }
+        }
+
+        string PadToMultiple(object obj, int b) {
+            string str = obj?.ToString() ?? " ";
+            int length = str.Length;
+            int targetLength = ((length - 1) / b + 1) * b;
+            return str.PadRight(targetLength);
+        }
+    }
+#endif
 
     private static void InitFields() {
         simpleStaticFields = new Dictionary<Type, FieldInfo[]>();
@@ -676,13 +707,15 @@ public sealed class SaveLoadAction {
             (savedValues, _) => {
                 if (Settings.Instance is { } settings) {
                     Dictionary<string, object> dict = new();
-                    dict["GrabMode"] = settings.GrabMode;
+                    dict[nameof(Settings.GrabMode)] = settings.GrabMode;
+                    dict[nameof(Settings.CrouchDashMode)] = settings.CrouchDashMode;
                     savedValues[typeof(Settings)] = dict;
                 }
             },
             (savedValues, _) => {
                 if (Settings.Instance is { } settings && savedValues.TryGetValue(typeof(Settings), out Dictionary<string, object> dict)) {
-                    settings.GrabMode = (GrabModes)dict["GrabMode"];
+                    settings.GrabMode = (GrabModes)dict[nameof(Settings.GrabMode)];
+                    settings.CrouchDashMode = (CrouchDashModes)dict[nameof(Settings.CrouchDashMode)];
 
                 }
             }

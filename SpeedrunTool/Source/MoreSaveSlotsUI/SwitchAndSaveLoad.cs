@@ -15,26 +15,30 @@ internal static class SwitchAndSaveLoad {
 
     internal static void RegisterHotkeys() {
         Hotkey.SaveToNextSlot.RegisterPressedAction(scene => {
-#if DEBUG
-            JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();
-#endif
             if (scene is Level) {
-                SaveToNextAvailableSlot();
-            }
 #if DEBUG
-            JetBrains.Profiler.Api.MeasureProfiler.SaveData();
+                if (JetBrains_Profiling) {
+                    JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();
+                    SaveToNextAvailableSlot();
+                    JetBrains.Profiler.Api.MeasureProfiler.SaveData();
+                }
+#else
+                SaveToNextAvailableSlot();
 #endif
+            }
         });
         Hotkey.LoadFromLastSlot.RegisterPressedAction(scene => {
-#if DEBUG
-            JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();
-#endif
             if (scene is Level { Paused: false }) {
-                LoadFromLastAvailableSlot();
-            }
 #if DEBUG
-            JetBrains.Profiler.Api.MeasureProfiler.SaveData();
+                if (JetBrains_Profiling) {
+                    JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();
+                    LoadFromLastAvailableSlot();
+                    JetBrains.Profiler.Api.MeasureProfiler.SaveData();
+                }
+#else
+                LoadFromLastAvailableSlot();
 #endif
+            }
         });
     }
 

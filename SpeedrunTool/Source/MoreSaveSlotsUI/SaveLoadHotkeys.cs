@@ -59,22 +59,27 @@ internal static class SaveLoadHotkeys {
         Hotkey.SaveState.RegisterPressedAction(scene => {
             if (scene is Level { Paused: false }) {
 #if DEBUG
-                JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();
-#endif
-                SaveStateAndMessage();
-#if DEBUG
-                JetBrains.Profiler.Api.MeasureProfiler.SaveData();
+                if (JetBrains_Profiling) {
+                    JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();
+                    SaveStateAndMessage();
+                    JetBrains.Profiler.Api.MeasureProfiler.SaveData();
+                }
+#else
+                SaveStateAndMessage();           
 #endif
             }
         });
         Hotkey.LoadState.RegisterPressedAction(scene => {
             if (scene is Level { Paused: false }) {
 #if DEBUG
+                if (JetBrains_Profiling) {
+                    JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();
+                    LoadStateAndMessage();
+                    JetBrains.Profiler.Api.MeasureProfiler.SaveData();
+                }
                 JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();
-#endif
+#else
                 LoadStateAndMessage();
-#if DEBUG
-                JetBrains.Profiler.Api.MeasureProfiler.SaveData();
 #endif
             }
         });

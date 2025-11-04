@@ -27,31 +27,12 @@ public sealed class StateManager {
 
     private readonly Dictionary<VirtualInput, bool> lastChecks = new();
 
-    private readonly List<VirtualInput> unfreezeInputs = new();
+    private static List<VirtualInput> unfreezeInputs = new();
 
-    private List<VirtualInput> UnfreezeInputs {
-        get {
-            unfreezeInputs.Clear();
-            unfreezeInputs.Add(Input.Dash);
-            unfreezeInputs.Add(Input.Jump);
-            unfreezeInputs.Add(Input.Grab);
-            unfreezeInputs.Add(Input.MoveX);
-            unfreezeInputs.Add(Input.MoveY);
-            unfreezeInputs.Add(Input.Dash);
-            unfreezeInputs.Add(Input.Aim);
-            unfreezeInputs.Add(Input.Pause);
-
-            // 反射兼容 v1312
-            if (typeof(Input).GetFieldValue("DemoDash") is VirtualInput demoDash) {
-                unfreezeInputs.Add(demoDash);
-            }
-
-            if (typeof(Input).GetFieldValue("CrouchDash") is VirtualInput crouchDash) {
-                unfreezeInputs.Add(crouchDash);
-            }
-
-            return unfreezeInputs;
-        }
+    private static void Input_OnInitialize() {
+        // 每次重置游戏键位后, 这些 VirtualInput 都是新的对象, 因此必须重新获取
+        unfreezeInputs = new List<VirtualInput>() { Input.Dash, Input.Jump, Input.Grab, Input.MoveX, Input.MoveY, Input.Dash, Input.Aim, Input.Pause, Input.CrouchDash };
+        Instance?.lastChecks?.Clear();
     }
 
     internal static bool AllowSaveLoadWhenWaiting = false;
@@ -100,6 +81,7 @@ public sealed class StateManager {
             (_, _) => Instance.UpdateLastChecks(),
             () => Instance.lastChecks.Clear()
         );
+        Everest.Events.Input.OnInitialize += Input_OnInitialize;
     }
 
     internal static void Unload() {
@@ -110,6 +92,7 @@ public sealed class StateManager {
         IL.Celeste.Level.TransitionRoutine -= LevelOnTransitionRoutine;
         On.Celeste.Level.TransitionRoutine -= LevelOnTransitionRoutine;
         On.Celeste.Level.End -= LevelOnEnd;
+        Everest.Events.Input.OnInitialize -= Input_OnInitialize;
     }
     private static void LevelOnTransitionRoutine(ILContext context) {
         ILCursor cursor = new(context);
@@ -143,7 +126,7 @@ public sealed class StateManager {
             return;
         }
 
-        foreach (VirtualInput virtualInput in UnfreezeInputs) {
+        foreach (VirtualInput virtualInput in unfreezeInputs) {
             lastChecks[virtualInput] = virtualInput.IsCheck();
         }
     }
@@ -164,7 +147,7 @@ public sealed class StateManager {
 
     private static void SceneOnBeforeUpdate(On.Monocle.Scene.orig_BeforeUpdate orig, Scene self) {
         if (ModSettings.Enabled && self is Level level && Instance.State == State.Waiting) {
-            if (Instance.UnfreezeInputs.Any(Instance.IsUnfreeze) || Hotkey.CheckDeathStatistics.Pressed() || Hotkey.LoadState.Pressed()) {
+            if (unfreezeInputs.Any(Instance.IsUnfreeze) || Hotkey.CheckDeathStatistics.Pressed() || Hotkey.LoadState.Pressed()) {
                 Instance.lastChecks.Clear();
                 Instance.OutOfFreeze(level);
             }
@@ -293,13 +276,17 @@ public sealed class StateManager {
             }
         }
 
-        SaveLoadAction.LogSavedValues(saving: true);
         SetSlotDescription();
-
         Logger.Info("SpeedrunTool", $"Save to {FullSlotDescription}");
+
 #if DEBUG
         sw.Stop();
-        Logger.Debug("SpeedrunTool", $"Save in {sw.ElapsedMilliseconds} ms");
+        if (InGame_Profiling) {
+            Logger.Debug("SpeedrunTool", $"Save in {sw.ElapsedMilliseconds} ms");
+        }
+        if (Log_WhenSaving) {
+            SaveLoadAction.LogSavedValues(level: savedLevel);
+        }
 #endif
 
         return true;
@@ -324,15 +311,17 @@ public sealed class StateManager {
         if (tas && !SavedByTas) {
             return false;
         }
+
 #if DEBUG
+        if (Log_WhenLoading) {
+            SaveLoadAction.LogSavedValues(level: savedLevel);
+        }
         Stopwatch sw = new Stopwatch();
         sw.Start();
 #endif
 
         LoadByTas = tas;
         State = State.Loading;
-
-        SaveLoadAction.LogSavedValues(saving: false);
 
         SaveLoadAction.OnBeforeLoadState(level);
 
@@ -370,9 +359,11 @@ public sealed class StateManager {
 
 #if DEBUG
         sw.Stop();
-        Logger.Debug("SpeedrunTool", $"Load in {sw.ElapsedMilliseconds} ms");
-        float memorySize = ((float)Process.GetCurrentProcess().PrivateMemorySize64) / (1024L * 1024L * 1024L);
-        Logger.Debug("SpeedrunTool", $"MemoryUsage: {memorySize:0.00} GB");
+        if (InGame_Profiling) {
+            Logger.Debug("SpeedrunTool", $"Load in {sw.ElapsedMilliseconds} ms");
+            float memorySize = ((float)Process.GetCurrentProcess().PrivateMemorySize64) / (1024L * 1024L * 1024L);
+            Logger.Debug("SpeedrunTool", $"MemoryUsage: {memorySize:0.00} GB");
+        }
 #endif
         return true;
     }

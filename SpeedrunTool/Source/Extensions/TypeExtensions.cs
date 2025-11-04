@@ -1,6 +1,7 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions;
 
@@ -140,6 +141,16 @@ internal static class TypeExtensions {
                                          && type.GenericTypeArguments.Length == 1;
 
         genericType = result ? type.GenericTypeArguments[0] : null;
+
+        return result;
+    }
+
+    public static bool IsConditionalWeakTable(this Type type, out Type genericKeyType, out Type genericValueType) {
+        bool result = type.IsGenericType && type.GetGenericTypeDefinition().IsAssignableFrom(typeof(ConditionalWeakTable<,>))
+                                         && type.GenericTypeArguments.Length == 2;
+
+        genericKeyType = result ? type.GenericTypeArguments[0] : null;
+        genericValueType = result ? type.GenericTypeArguments[1] : null;
 
         return result;
     }

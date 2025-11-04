@@ -64,6 +64,9 @@ internal static class SaveLoadHotkeys {
                     SaveStateAndMessage();
                     JetBrains.Profiler.Api.MeasureProfiler.SaveData();
                 }
+                else {
+                    SaveStateAndMessage();
+                }
 #else
                 SaveStateAndMessage();           
 #endif
@@ -77,7 +80,9 @@ internal static class SaveLoadHotkeys {
                     LoadStateAndMessage();
                     JetBrains.Profiler.Api.MeasureProfiler.SaveData();
                 }
-                JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();
+                else {
+                    LoadStateAndMessage();
+                }
 #else
                 LoadStateAndMessage();
 #endif

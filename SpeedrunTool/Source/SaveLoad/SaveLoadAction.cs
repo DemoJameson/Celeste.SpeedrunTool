@@ -27,6 +27,7 @@ public sealed class SaveLoadAction {
         }
     }
 
+
     public static readonly List<VirtualAsset> VirtualAssets = new(); // added and cleared when loading, so no need to be individual
     public static List<EventInstance> ClonedEventInstancesWhenSave => SaveSlotsManager.Slot.ClonedEventInstancesWhenSave;
     public static List<EventInstance> ClonedEventInstancesWhenPreClone => SaveSlotsManager.Slot.ClonedEventInstancesWhenPreClone;

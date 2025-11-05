@@ -90,7 +90,6 @@ public static class DeepClonerUtils {
                 }
 
                 if (sourceObj is VirtualAsset virtualAsset) {
-                    GraphicResourcesHandler.ExternalLog("pre add");
                     if (StateManager.Instance.State == State.Loading || !Thread.CurrentThread.IsMainThread()) {
                         // 预克隆的资源需要等待 LoadState 中移除实体之后才能判断是否需要 Reload，必须等待主线程中再操作
                         GraphicResourcesHandler.Add(virtualAsset);

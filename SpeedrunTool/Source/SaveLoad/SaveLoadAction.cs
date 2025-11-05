@@ -26,8 +26,6 @@ public sealed class SaveLoadAction {
             SaveSlotsManager.Slot.ValueDictionaryInitialized = value;
         }
     }
-
-    public static readonly List<VirtualAsset> VirtualAssets = new(); // added and cleared when loading, so no need to be individual
     public static List<EventInstance> ClonedEventInstancesWhenSave => SaveSlotsManager.Slot.ClonedEventInstancesWhenSave;
     public static List<EventInstance> ClonedEventInstancesWhenPreClone => SaveSlotsManager.Slot.ClonedEventInstancesWhenPreClone;
 
@@ -343,7 +341,7 @@ public sealed class SaveLoadAction {
         VivHelperUtils.Support();
 
         // 放最后，确保收集了所有克隆的 VirtualAssets 与 EventInstance
-        ReloadVirtualAssets();
+        GraphicResourcesHandler.ReloadVirtualAssets();
         ReleaseEventInstances();
 
         internalActionInitialized = true;
@@ -436,8 +434,15 @@ public sealed class SaveLoadAction {
                 list.AddRange(tp.GetFields(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.DeclaredOnly));
                 tp = tp.BaseType;
             } while (tp != null);
-            foreach (FieldInfo fi in list) {
-                sb.Append($" ├  {PadToMultiple(fi.Name, 32)} | {fi.GetValue(obj)}\n");
+            if (obj is not null) {
+                foreach (FieldInfo fi in list) {
+                    sb.Append($" ├  {PadToMultiple(fi.Name, 32)} | {PadToMultiple(fi.GetValue(obj), 32)} | {(Force.DeepCloner.Helpers.DeepClonerSafeTypes.CanReturnSameObject(fi.FieldType) ? "" : "Complex")}\n");
+                }
+            }
+            else {
+                foreach (FieldInfo fi in list) {
+                    sb.Append($" ├  {PadToMultiple(fi.Name, 32)} | {PadToMultiple(fi.FieldType.Name, 32)} | {(Force.DeepCloner.Helpers.DeepClonerSafeTypes.CanReturnSameObject(fi.FieldType) ? "" : "Complex")}\n");
+                }
             }
         }
 
@@ -982,34 +987,6 @@ public sealed class SaveLoadAction {
     }
 
 
-    private static void ReloadVirtualAssets() {
-        InternalSafeAdd(
-            loadState: (_, _) => {
-                List<VirtualAsset> list = new List<VirtualAsset>(VirtualAssets);
-                // if load too frequently and switching between different slots, then collection might be modified? idk
-                // so we avoid the crash in this way
-
-                foreach (VirtualAsset virtualAsset in list) {
-                    switch (virtualAsset) {
-                        case VirtualTexture { IsDisposed: true } virtualTexture:
-                            // Fix: 全屏切换然后读档煤球红边消失
-                            if (!virtualTexture.Name.StartsWith("dust-noise-")) {
-                                virtualTexture.Reload();
-                            }
-
-                            break;
-                        case VirtualRenderTarget { IsDisposed: true } virtualRenderTarget:
-                            virtualRenderTarget.Reload();
-                            break;
-                    }
-                }
-
-                VirtualAssets.Clear();
-            },
-            clearState: () => VirtualAssets.Clear(),
-            preCloneEntities: () => VirtualAssets.Clear()
-        );
-    }
 
     private static void ReleaseEventInstances() {
         InternalSafeAdd(

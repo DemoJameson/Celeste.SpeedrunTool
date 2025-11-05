@@ -1,5 +1,5 @@
-using Celeste.Mod.Helpers.LegacyMonoMod;
 using Celeste.Mod.SpeedrunTool.ModInterop;
+using Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
 using FMOD.Studio;
 using Force.DeepCloner;
 using Force.DeepCloner.Helpers;
@@ -10,6 +10,7 @@ using NLua;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
@@ -43,7 +44,6 @@ public static class DeepClonerUtils {
                 || type == typeof(GraphicsDeviceManager)
                 || type == typeof(Monocle.Commands)
                 || type == typeof(BitTag)
-                || type == typeof(Atlas)
 
                 // XNA GraphicsResource
                 || type.IsSubclassOf(typeof(GraphicsResource))
@@ -55,7 +55,7 @@ public static class DeepClonerUtils {
 
                 // MonoMod
                 || type == typeof(ILHook)
-                || type == typeof(LegacyILHook)
+                || type == typeof(Helpers.LegacyMonoMod.LegacyILHook)
                 || type.GetInterfaces().Contains(typeof(IDetourBase))
                 || type.GetInterfaces().Any(t => t.FullName is "Celeste.Mod.Helpers.LegacyMonoMod.ILegacyDetour")
 
@@ -80,6 +80,24 @@ public static class DeepClonerUtils {
             }
 
             lock (sourceObj) {
+                
+
+                if (sourceObj is Atlas atlas) {
+                    if (StateManager.Instance.State == State.Saving && Thread.CurrentThread.IsMainThread()) {
+                        GraphicResourcesHandler.Add(atlas);
+                    }
+                    return atlas;
+                }
+
+                if (sourceObj is VirtualAsset virtualAsset) {
+                    GraphicResourcesHandler.ExternalLog("pre add");
+                    if (StateManager.Instance.State == State.Loading || !Thread.CurrentThread.IsMainThread()) {
+                        // 预克隆的资源需要等待 LoadState 中移除实体之后才能判断是否需要 Reload，必须等待主线程中再操作
+                        GraphicResourcesHandler.Add(virtualAsset);
+                    }
+                    return virtualAsset;
+                }
+
                 if (sourceObj is Scene) {
                     if (sourceObj is Level) {
                         // 金草莓死亡或者 PageDown/Up 切换房间后等等改变 Level 实例的情况
@@ -151,6 +169,22 @@ public static class DeepClonerUtils {
                     return type.GetConstructorInfo(genericType).Invoke(parameters.DeepClone(deepCloneState));
                 }
 
+                // 手动克隆 ConditionalWeakTable
+                // 之前好像不能正确支持 SMH+ v1.7.2 (尽管 SMH+ 自己内部写的也有问题)
+                if (sourceObj.GetType() is { } conditionalWeakTableType && conditionalWeakTableType.IsConditionalWeakTable(out _, out _)) {
+                    object weakTable = Activator.CreateInstance(conditionalWeakTableType);
+                    MethodInfo addMethod = conditionalWeakTableType.GetMethodInfo("Add");
+
+                    foreach (object kvp in (IEnumerable)sourceObj) {
+                        object clonedKey = kvp.GetPropertyValue("Key").DeepClone(deepCloneState);
+                        object clonedValue = kvp.GetPropertyValue("Value").DeepClone(deepCloneState);
+                        if (clonedKey != null && clonedValue != null) {
+                            addMethod.Invoke(weakTable, [clonedKey, clonedValue]);
+                        }
+                    }
+                    return weakTable;
+                }
+
                 return SaveLoadInterop.CustomDeepCloneObject(sourceObj);
             }
         });
@@ -182,11 +216,6 @@ public static class DeepClonerUtils {
                     while (backupComponents.Count > 0) {
                         hashSet.Add(backupComponents.Pop());
                     }
-                }
-                else if (clonedObj is VirtualAsset virtualAsset
-                           && (StateManager.Instance.State == State.Loading || !Thread.CurrentThread.IsMainThread())) {
-                    // 预克隆的资源需要等待 LoadState 中移除实体之后才能判断是否需要 Reload，必须等待主线程中再操作
-                    SaveLoadAction.VirtualAssets.Add(virtualAsset);
                 }
                 else if (type.IsHashSet(out Type hashSetElementType) && !hashSetElementType.IsSimple()) {
                     IEnumerator enumerator = ((IEnumerable)clonedObj).GetEnumerator();

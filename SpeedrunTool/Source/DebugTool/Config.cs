@@ -10,7 +10,7 @@ internal static class Config {
     public const bool Log_AllActions = false;
 
     // Assets
-    public const bool Log_Assets = true;
+    public const bool Log_Assets = false;
 
     // Profile
     public const bool JetBrains_Profiling = false;

@@ -61,10 +61,20 @@ internal static class GraphicResourcesHandler {
 
     private static class AtlasHandler {
 
+        /* bug reproduce:
+         * enable SpringCollab2020
+         * enter SpringCollab2020/3-Advanced/Lobby
+         * save and load
+         * enter SpringCollab2020/3-Advanced/BeefyUncle
+         * save and load
+         * open pause menu and return to lobby
+         * crash
+         */
         private static AtlasHolder CurrentSlot => new AtlasHolder(SaveSlotsManager.SlotName, isSlot: true);
 
         private static readonly AtlasHolder CurrentGame = new AtlasHolder($"SpeedrunTool/{nameof(AtlasHandler)}/CurrentGame", isSlot: false);
 
+        /*
         [Load]
         private static void Load() {
             On.Monocle.Atlas.Dispose += Atlas_Dispose;
@@ -75,20 +85,26 @@ internal static class GraphicResourcesHandler {
             On.Monocle.Atlas.Dispose -= Atlas_Dispose;
         }
 
-
         private static void Atlas_Dispose(On.Monocle.Atlas.orig_Dispose orig, Atlas self) {
             BipartiteGraph.RemoveEdge(self, CurrentGame);
+            DebugLog();
             if (BipartiteGraph.HasDisposeBarrier(self)) {
-                Logger.Debug($"SpeedrunTool/{nameof(AtlasHandler)}", $"{self.DataPath} was to be disposed but stopped by us.");
+                Logger.Info($"SpeedrunTool/{nameof(AtlasHandler)}", $"{self.DataPath} was to be disposed but stopped by us.");
             }
             else {
-                Logger.Debug($"SpeedrunTool/{nameof(AtlasHandler)}", $"Dispose {self.DataPath}");
+                Logger.Info($"SpeedrunTool/{nameof(AtlasHandler)}", $"Dispose {self.DataPath}");
                 orig(self);
             }
+        }
+        */
+
+        internal static void SafeDispose(Atlas atlas) {
+            // atlas?.Dispose();
         }
 
         internal static void Add(Atlas atlas) {
             BipartiteGraph.AddEdge(atlas, CurrentSlot);
+            DebugLog();
         }
 
         internal static void AddAction() {
@@ -101,6 +117,7 @@ internal static class GraphicResourcesHandler {
                 },
                 clearState: () => {
                     BipartiteGraph.Remove(CurrentSlot);
+                    DebugLog();
                 }
             );
         }
@@ -108,6 +125,13 @@ internal static class GraphicResourcesHandler {
         private static void SyncSlotToGame() {
             BipartiteGraph.Remove(CurrentGame);
             BipartiteGraph.CloneVertex(CurrentSlot, CurrentGame);
+            DebugLog();
+        }
+
+        private static void DebugLog() {
+#if DEBUG
+            BipartiteGraph.Log();
+#endif
         }
 
         internal static class BipartiteGraph {
@@ -186,7 +210,10 @@ internal static class GraphicResourcesHandler {
             internal static void OnLosingAllNeighbour(Atlas atlas) {
                 AdjacencyList_1.Remove(atlas);
                 Atlases.Remove(atlas);
-                atlas?.Dispose();
+                if (atlas is not null) {
+                    Logger.Info($"SpeedrunTool/{nameof(AtlasHandler)}", $"No longer hold {atlas.DataPath}, want to dispose it...");
+                    SafeDispose(atlas);
+                }
             }
 
             internal static bool HasDisposeBarrier(Atlas atlas) {

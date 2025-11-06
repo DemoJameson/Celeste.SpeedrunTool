@@ -15,7 +15,7 @@ public sealed class SaveLoadAction {
 
     public delegate void SlAction(Dictionary<Type, Dictionary<string, object>> savedValues, Level level);
 
-    // 核心的一些 SaveLoadAction 在第一次 SL 时才初始化，避免通过安装依赖功能解除禁用的 Mod 被忽略. 而一些其他辅助类的 SaveLoadAction 则可能更早被加入
+    // 核心的一些 SaveLoadAction 在第一次 SL 时才初始化，避免通过安装依赖功能解除禁用的 Mod 被忽略.
 
     private static bool internalActionInitialized = false;
 
@@ -31,10 +31,6 @@ public sealed class SaveLoadAction {
 
     // only actions, no values stored. Share among all save slots
     private static List<SaveLoadAction> SharedActions = new();
-
-    private static readonly List<SaveLoadAction> ToBeAddedModSharedActions = new();
-    // external actions will be first added to here, then this list merge into SharedActions
-    // so we can ensure all mod actions are executed after internal actions
 
     // values, belong to each save slot
 
@@ -150,7 +146,7 @@ public sealed class SaveLoadAction {
 #if DEBUG
         AddDebugDescription(saveLoadAction, internalCall: false);
 #endif
-        ToBeAddedModSharedActions.Add(saveLoadAction);
+        SharedActions.Add(saveLoadAction);
         return saveLoadAction;
     }
 
@@ -179,7 +175,7 @@ public sealed class SaveLoadAction {
     /// For third party mods
     /// </summary>
     public static bool Remove(SaveLoadAction saveLoadAction) {
-        bool b = SharedActions.Remove(saveLoadAction) || ToBeAddedModSharedActions.Remove(saveLoadAction);
+        bool b = SharedActions.Remove(saveLoadAction);
         if (b) {
             needInitializeDictionaryId = true;
         }
@@ -367,10 +363,6 @@ public sealed class SaveLoadAction {
 
         // anyway, we rebuild the dictionary
         if (needInitializeDictionaryId) {
-            if (ToBeAddedModSharedActions.IsNotNullOrEmpty()) {
-                SharedActions.AddRange(ToBeAddedModSharedActions);
-            }
-            ToBeAddedModSharedActions.Clear();
             SharedActions = SharedActions.OrderBy(x => x.executeOrder).ToList(); // it's a stable sort
             int i = 0;
             foreach (SaveLoadAction action in SharedActions) {

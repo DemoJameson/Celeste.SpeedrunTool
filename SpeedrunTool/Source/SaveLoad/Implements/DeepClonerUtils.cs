@@ -166,7 +166,7 @@ public static class DeepClonerUtils {
                     return type.GetConstructorInfo(genericType).Invoke(parameters.DeepClone(deepCloneState));
                 }
 
-                // 手动克隆 ConditionalWeakTable
+                // 手动克隆 ConditionalWeakTable<TKey, TValue>
                 // 之前好像不能正确支持 SMH+ v1.7.2 (尽管 SMH+ 自己内部写的也有问题)
                 if (sourceObj.GetType() is { } conditionalWeakTableType && conditionalWeakTableType.IsConditionalWeakTable(out _, out _)) {
                     object weakTable = Activator.CreateInstance(conditionalWeakTableType);

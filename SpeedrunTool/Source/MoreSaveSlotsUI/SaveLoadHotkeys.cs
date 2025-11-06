@@ -68,7 +68,7 @@ internal static class SaveLoadHotkeys {
                     SaveStateAndMessage();
                 }
 #else
-                SaveStateAndMessage();           
+                SaveStateAndMessage();
 #endif
             }
         });

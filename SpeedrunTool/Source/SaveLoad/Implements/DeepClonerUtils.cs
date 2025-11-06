@@ -80,8 +80,6 @@ public static class DeepClonerUtils {
             }
 
             lock (sourceObj) {
-                
-
                 if (sourceObj is Atlas atlas) {
                     if (StateManager.Instance.State == State.Saving && Thread.CurrentThread.IsMainThread()) {
                         GraphicResourcesHandler.Add(atlas);

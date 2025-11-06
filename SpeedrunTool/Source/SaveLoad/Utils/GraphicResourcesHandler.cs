@@ -1,3 +1,4 @@
+#define ROLLBACK
 using System.Collections.Generic;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
@@ -58,7 +59,14 @@ internal static class GraphicResourcesHandler {
         }
     }
 
+#if ROLLBACK
+    private static class AtlasHandler {
+        internal static void Add(Atlas atlas) { }
 
+        internal static void AddAction() { }
+    }
+
+#else
     private static class AtlasHandler {
 
         /* bug reproduce:
@@ -99,7 +107,7 @@ internal static class GraphicResourcesHandler {
         */
 
         internal static void SafeDispose(Atlas atlas) {
-            // atlas?.Dispose();
+            atlas?.Dispose();
         }
 
         internal static void Add(Atlas atlas) {
@@ -245,4 +253,5 @@ internal static class GraphicResourcesHandler {
             }
         }
     }
-}
+#endif
+    }

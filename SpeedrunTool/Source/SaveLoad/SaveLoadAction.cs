@@ -30,7 +30,7 @@ public sealed class SaveLoadAction {
     public static List<EventInstance> ClonedEventInstancesWhenPreClone => SaveSlotsManager.Slot.ClonedEventInstancesWhenPreClone;
 
     // only actions, no values stored. Share among all save slots
-    private static readonly List<SaveLoadAction> SharedActions = new();
+    private static List<SaveLoadAction> SharedActions = new();
 
     private static readonly List<SaveLoadAction> ToBeAddedModSharedActions = new();
     // external actions will be first added to here, then this list merge into SharedActions
@@ -70,6 +70,13 @@ public sealed class SaveLoadAction {
     internal readonly SlAction loadState;
     private readonly SlAction saveState;
     internal Action<Level, List<Entity>, Entity> unloadLevel;
+    private int executeOrder;
+
+    private static int? contextOrder = null;
+    private const int Order_InternalCoreAction = 0;
+    private const int Order_InternalOtherAction = 100;
+    private const int Order_ExternalAction = 10000;
+    private const int Order_ExecuteAtLast = 1000000;
 
     public SaveLoadAction(SlAction saveState = null, SlAction loadState = null, Action clearState = null,
         Action<Level> beforeSaveState = null, Action preCloneEntities = null) {
@@ -120,6 +127,7 @@ public sealed class SaveLoadAction {
             throw new Exception("Internal SaveLoad actions are added after expected time!");
         }
         SaveLoadAction saveLoadAction = new(CreateSlAction(saveState), CreateSlAction(loadState), clearState, beforeSaveState, beforeLoadState, preCloneEntities);
+        saveLoadAction.executeOrder = contextOrder.GetValueOrDefault(Order_InternalOtherAction);
 #if DEBUG
         AddDebugDescription(saveLoadAction, internalCall: true);
 #endif
@@ -138,6 +146,7 @@ public sealed class SaveLoadAction {
         Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState, Action clearState,
         Action<Level> beforeSaveState, Action<Level> beforeLoadState, Action preCloneEntities = null) {
         SaveLoadAction saveLoadAction = new(CreateSlAction(saveState), CreateSlAction(loadState), clearState, beforeSaveState, beforeLoadState, preCloneEntities);
+        saveLoadAction.executeOrder = Order_ExternalAction;
 #if DEBUG
         AddDebugDescription(saveLoadAction, internalCall: false);
 #endif
@@ -309,6 +318,7 @@ public sealed class SaveLoadAction {
             return;
         }
 
+        contextOrder = Order_InternalCoreAction;
         SupportTracker();
         InitFields();
         SupportSimpleStaticFields();
@@ -341,8 +351,10 @@ public sealed class SaveLoadAction {
         VivHelperUtils.Support();
 
         // 放最后，确保收集了所有克隆的 VirtualAssets 与 EventInstance
+        contextOrder = Order_ExecuteAtLast;
         GraphicResourcesHandler.AddSaveLoadAction();
         ReleaseEventInstances();
+        contextOrder = null;
 
         internalActionInitialized = true;
         needInitializeDictionaryId = true;
@@ -359,6 +371,7 @@ public sealed class SaveLoadAction {
                 SharedActions.AddRange(ToBeAddedModSharedActions);
             }
             ToBeAddedModSharedActions.Clear();
+            SharedActions = SharedActions.OrderBy(x => x.executeOrder).ToList(); // it's a stable sort
             int i = 0;
             foreach (SaveLoadAction action in SharedActions) {
                 i++;

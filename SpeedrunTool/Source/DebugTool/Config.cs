@@ -7,7 +7,7 @@ internal static class Config {
     public const bool Log_WhenSaving = false;
     public const bool Log_WhenLoading = false;
     public const bool Log_SavedLevel = false;
-    public const bool Log_AllActions = false;
+    public const bool Log_AllActions = true;
 
     // Assets
     public const bool Log_Assets = false;

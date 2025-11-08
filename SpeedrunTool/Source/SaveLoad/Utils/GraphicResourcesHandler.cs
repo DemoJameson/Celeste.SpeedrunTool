@@ -1,5 +1,5 @@
-#define ROLLBACK
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
 internal static class GraphicResourcesHandler {
@@ -17,6 +17,22 @@ internal static class GraphicResourcesHandler {
         VirtualAssetsHandler.ReloadVirtualAssets();
     }
 
+    private static class MemoryLeakHandler {
+        /* 
+         * 如果某个 mod 加载了某个 Disposable 的资源, 并且它还没有 Finalizer
+         * 并且这个资源在某个实例上
+         * 并且这个资源并不是 (在某个实体上的, 会随着实体 Removed 而 Dispose) 的
+         * 那么在加载此资源前存档
+         * 加载资源后, 读档回到加载前, 再加载, 再读档...
+         * 就会造成内存泄漏
+         * 
+         * GraphicResource 类当然是实现了 Finalizer 的... 那么 Celeste 里的情况应该不会很严重吧...
+         */
+
+        private static void Handle() {
+            throw new NotImplementedException("Don't know if there is memory leak");
+        }
+    }
 
     private static class VirtualAssetsHandler {
 
@@ -59,30 +75,23 @@ internal static class GraphicResourcesHandler {
         }
     }
 
-#if ROLLBACK
     private static class AtlasHandler {
-        internal static void Add(Atlas atlas) { }
+        
+        // This Fixes: WaveDashPresentation 中存档, 结束, 再读档, 会崩溃
 
-        internal static void AddAction() { }
-    }
-
-#else
-    private static class AtlasHandler {
-
-        /* bug reproduce:
-         * enable SpringCollab2020
-         * enter SpringCollab2020/3-Advanced/Lobby
-         * save and load
-         * enter SpringCollab2020/3-Advanced/BeefyUncle
-         * save and load
-         * open pause menu and return to lobby
-         * crash
+        /* 每个存档带有信息: 它存档时持有的 atlas, 以及截止到存档时所有在它的历史上本应释放但没释放的 atlas
+         * 外加 CurrentGame 带有: 读取的档上应释放的, 再加上读档后直到当前时刻为止, 所有本应释放的资源. 它不持有 atlas
+         *
+         * 每次清除存档时, 尝试释放这个存档持有的且在其他某个存档/CurrentGame 上本应释放的 atlas
+         * 每次读档时, 将 CurrentGame 的历史回退到读取的档上
+         * 每次存档时, 将 CurrentGame 的历史存入, 持有 atlas
+         * 每次 Dispose 但被阻碍时, 存入 CurrentGame
          */
-        private static AtlasHolder CurrentSlot => new AtlasHolder(SaveSlotsManager.SlotName, isSlot: true);
 
-        private static readonly AtlasHolder CurrentGame = new AtlasHolder($"SpeedrunTool/{nameof(AtlasHandler)}/CurrentGame", isSlot: false);
+        private static Holder CurrentSlot => new Holder(SaveSlotsManager.SlotName, isSlot: true);
 
-        /*
+        private static readonly Holder CurrentGame = new Holder($"SpeedrunTool/{nameof(AtlasHandler)}/CurrentGame", isSlot: false);
+
         [Load]
         private static void Load() {
             On.Monocle.Atlas.Dispose += Atlas_Dispose;
@@ -94,9 +103,8 @@ internal static class GraphicResourcesHandler {
         }
 
         private static void Atlas_Dispose(On.Monocle.Atlas.orig_Dispose orig, Atlas self) {
-            BipartiteGraph.RemoveEdge(self, CurrentGame);
-            DebugLog();
             if (BipartiteGraph.HasDisposeBarrier(self)) {
+                BipartiteGraph.AddDisposeEdge(self, CurrentGame);
                 Logger.Info($"SpeedrunTool/{nameof(AtlasHandler)}", $"{self.DataPath} was to be disposed but stopped by us.");
             }
             else {
@@ -104,144 +112,167 @@ internal static class GraphicResourcesHandler {
                 orig(self);
             }
         }
-        */
 
         internal static void SafeDispose(Atlas atlas) {
             atlas?.Dispose();
         }
 
         internal static void Add(Atlas atlas) {
-            BipartiteGraph.AddEdge(atlas, CurrentSlot);
-            DebugLog();
+            BipartiteGraph.AddHoldEdge(atlas, CurrentSlot);
         }
 
         internal static void AddAction() {
             SaveLoadAction.InternalSafeAdd(
                 saveState: (_, _) => {
-                    SyncSlotToGame();
+                    BipartiteGraph.CloneDisposeEdge(CurrentGame, CurrentSlot);
                 },
                 loadState: (_, _) => {
-                    SyncSlotToGame();
+                    BipartiteGraph.CloneDisposeEdge(CurrentSlot, CurrentGame);
                 },
                 clearState: () => {
-                    BipartiteGraph.Remove(CurrentSlot);
-                    DebugLog();
+                    BipartiteGraph.ClearAndDispose(CurrentSlot);
                 }
             );
         }
 
-        private static void SyncSlotToGame() {
-            BipartiteGraph.Remove(CurrentGame);
-            BipartiteGraph.CloneVertex(CurrentSlot, CurrentGame);
-            DebugLog();
-        }
-
-        private static void DebugLog() {
-#if DEBUG
-            BipartiteGraph.Log();
-#endif
-        }
 
         internal static class BipartiteGraph {
-            private static readonly HashSet<Atlas> Atlases = new();
+            internal enum State { Hold, Dispose } // Hold: don't dispose; Dispose: wanna dispose but failed to
 
-            private static readonly HashSet<AtlasHolder> Holders = new();
+            private static readonly Dictionary<Atlas, HashSet<Holder>> Atlas2Hold = new(); // only contains Hold edges
 
-            private static readonly HashSet<(Atlas, AtlasHolder)> Edges = new();
+            private static readonly Dictionary<Atlas, HashSet<Holder>> Atlas2Dispose = new(); // only contains Dispose edges
 
-            private static readonly Dictionary<Atlas, List<AtlasHolder>> AdjacencyList_1 = new();
+            private static readonly Dictionary<Holder, HashSet<Atlas>> Hold2Atlas = new(); // only contains Hold edges
 
-            private static readonly Dictionary<AtlasHolder, List<Atlas>> AdjacencyList_2 = new();
+            private static readonly Dictionary<Holder, HashSet<Atlas>> Dispose2Atlas = new(); // only contains Dispose edges
 
-            internal static bool TryAdd(Atlas atlas) {
-                if (Atlases.Add(atlas)) {
-                    AdjacencyList_1[atlas] = [];
-                    return true;
+            private static void SafeAdd<TKey, TValue>(Dictionary<TKey, HashSet<TValue>> dict, TKey key, TValue value) {
+                if (dict.TryGetValue(key, out HashSet<TValue> list)) {
+                    list.Add(value);
                 }
-                return false;
-            }
-
-            internal static bool TryAdd(AtlasHolder holder) {
-                if (Holders.Add(holder)) {
-                    AdjacencyList_2[holder] = [];
-                    return true;
-                }
-                return false;
-            }
-
-            internal static void AddEdge(Atlas atlas, AtlasHolder holder) {
-                TryAdd(atlas);
-                TryAdd(holder);
-                if (Edges.Add((atlas, holder))) {
-                    AdjacencyList_1[atlas].Add(holder);
-                    AdjacencyList_2[holder].Add(atlas);
+                else {
+                    dict[key] = [value];
                 }
             }
 
-            internal static void CloneVertex(AtlasHolder from, AtlasHolder to) {
-                TryAdd(from);
-                if (!TryAdd(to)) {
-                    throw new Exception($"{to} is already in this graph.");
-                }
-                foreach (Atlas atlas in AdjacencyList_2[from]) {
-                    AddEdge(atlas, to);
-                }
-            }
-
-            internal static void RemoveEdge(Atlas atlas, AtlasHolder holder) {
-                if (Edges.Remove((atlas, holder))) {
-                    AdjacencyList_2[holder].Remove(atlas);
-                    if (AdjacencyList_1[atlas].Remove(holder)) {
-                        if (AdjacencyList_1[atlas].IsNullOrEmpty()) {
-                            OnLosingAllNeighbour(atlas);
-                        }
+            private static void SafeRemove<TKey, TValue>(Dictionary<TKey, HashSet<TValue>> dict, TKey key, TValue value) {
+                if (dict.TryGetValue(key, out HashSet<TValue> list)) {
+                    list.Remove(value);
+                    if (list.IsNullOrEmpty()) {
+                        dict.Remove(key);
                     }
                 }
             }
 
-            internal static void Remove(AtlasHolder holder) {
-                if (!AdjacencyList_2.TryGetValue(holder, out List<Atlas> list)) {
+            private static void SafeAdd<TKey, TValue>(Dictionary<TKey, HashSet<TValue>> dict1, Dictionary<TValue, HashSet<TKey>> dict2, TKey key, TValue value) {
+                SafeAdd(dict1, key, value);
+                SafeAdd(dict2, value, key);
+            }
+
+            private static void SafeRemove<TKey, TValue>(Dictionary<TKey, HashSet<TValue>> dict1, Dictionary<TValue, HashSet<TKey>> dict2, TKey key, TValue value) {
+                SafeRemove(dict1, key, value);
+                SafeRemove(dict2, value, key);
+            }
+
+            private static void SafeRemove<TKey, TValue>(Dictionary<TKey, HashSet<TValue>> dict1, Dictionary<TValue, HashSet<TKey>> dict2, TKey key) {
+                if (dict1.TryGetValue(key, out HashSet<TValue> list)) {
+                    foreach (TValue value in list) {
+                        SafeRemove(dict2, value, key);
+                    }
+                    dict1.Remove(key);
+                }
+            }
+
+            internal static void AddHoldEdge(Atlas atlas, Holder holder) {
+                SafeAdd(Atlas2Hold, Hold2Atlas, atlas, holder);
+                SafeRemove(Atlas2Dispose, Dispose2Atlas, atlas, holder);
+            }
+
+            internal static void AddDisposeEdge(Atlas atlas, Holder holder) {
+                SafeRemove(Atlas2Hold, Hold2Atlas, atlas, holder);
+                SafeAdd(Atlas2Dispose, Dispose2Atlas, atlas, holder);
+            }
+
+            internal static void Clear(Atlas atlas) {
+                SafeRemove(Atlas2Hold, Hold2Atlas, atlas);
+                SafeRemove(Atlas2Dispose, Dispose2Atlas, atlas);
+            }
+
+            internal static void Clear(Holder holder) {
+                SafeRemove(Hold2Atlas, Atlas2Hold, holder);
+                SafeRemove(Dispose2Atlas, Atlas2Dispose, holder);
+            }
+
+            internal static void ClearAndDispose(Holder holder) {
+                if (!Hold2Atlas.TryGetValue(holder, out HashSet<Atlas> list)) {
                     return;
                 }
-                foreach (Atlas atlas in list) {
-                    Edges.Remove((atlas, holder));
-                    if (AdjacencyList_1[atlas].Remove(holder)) {
-                        if (AdjacencyList_1[atlas].IsNullOrEmpty()) {
-                            OnLosingAllNeighbour(atlas);
-                        }
-                    }
-                }
-                AdjacencyList_2.Remove(holder);
-                Holders.Remove(holder);
-            }
-
-            internal static void OnLosingAllNeighbour(Atlas atlas) {
-                AdjacencyList_1.Remove(atlas);
-                Atlases.Remove(atlas);
-                if (atlas is not null) {
-                    Logger.Info($"SpeedrunTool/{nameof(AtlasHandler)}", $"No longer hold {atlas.DataPath}, want to dispose it...");
+                HashSet<Atlas> maybeUnholding = [.. list];
+                Clear(holder);
+                HashSet<Atlas> unholding = [.. maybeUnholding.Where(x => !Atlas2Hold.ContainsKey(x))];
+                foreach (Atlas atlas in unholding.Where(Atlas2Dispose.ContainsKey)) {
                     SafeDispose(atlas);
                 }
+                foreach (Atlas atlas2 in unholding) {
+                    Clear(atlas2);
+                }
             }
 
+            internal static void CloneDisposeEdge(Holder from, Holder to) {
+                if (Dispose2Atlas.TryGetValue(from, out HashSet<Atlas> list)) {
+                    foreach (Atlas atlas in list) {
+                        AddDisposeEdge(atlas, to);
+                    }
+                }
+            }
+
+
             internal static bool HasDisposeBarrier(Atlas atlas) {
-                return Atlases.Contains(atlas);
+                return Atlas2Hold.ContainsKey(atlas);
             }
 
             internal static void Log() {
+#if DEBUG
                 System.Text.StringBuilder sb = new();
                 sb.Append("BipartiteGraph Structure:");
-                foreach (Atlas atlas in Atlases) {
-                    sb.Append($"\n{atlas.DataPath} -> ");
-                    foreach (AtlasHolder holder in AdjacencyList_1[atlas]) {
-                        sb.Append($" {holder.Name}, ");
+                foreach (Atlas atlas in Atlas2Hold.Keys.Union(Atlas2Dispose.Keys)) {
+                    sb.Append($"\n{atlas.DataPath}");
+                    if (Atlas2Hold.TryGetValue(atlas, out HashSet<Holder> list1)) {
+                        sb.Append($" | hold by -> ");
+                        foreach (Holder holder in list1) {
+                            sb.Append($" {holder.Name}, ");
+                        }
+                    }
+                    if (Atlas2Dispose.TryGetValue(atlas, out HashSet<Holder> list2)) {
+                        sb.Append($" | dispose by -> ");
+                        foreach (Holder holder in list2) {
+                            sb.Append($" {holder.Name}, ");
+                        }
                     }
                 }
-                Logger.Debug($"SpeedrunTool/{nameof(AtlasHolder)}", sb.ToString());
+                sb.Append('\n');
+                foreach (Holder holder in Hold2Atlas.Keys.Union(Dispose2Atlas.Keys)) {
+                    sb.Append($"\n{holder.Name}");
+                    if (Hold2Atlas.TryGetValue(holder, out HashSet<Atlas> list1)) {
+                        sb.Append($" | hold -> ");
+                        foreach (Atlas atlas in list1) {
+                            sb.Append($" {atlas.DataPath}, ");
+                        }
+                    }
+                    if (Dispose2Atlas.TryGetValue(holder, out HashSet<Atlas> list2)) {
+                        sb.Append($" | dispose -> ");
+                        foreach (Atlas atlas in list2) {
+                            sb.Append($" {atlas.DataPath}, ");
+                        }
+                    }
+                }
+                Logger.Debug($"SpeedrunTool/{nameof(Holder)}", sb.ToString());
+#endif
             }
         }
 
-        internal struct AtlasHolder(string name, bool isSlot) {
+        internal struct Holder(string name, bool isSlot) {
             public enum HolderType { Slot, CurrentRunningGame }
 
             public string Name = name;
@@ -249,9 +280,8 @@ internal static class GraphicResourcesHandler {
             public HolderType Type = isSlot ? HolderType.Slot : HolderType.CurrentRunningGame;
 
             public override readonly string ToString() {
-                return $"{nameof(AtlasHolder)}[{(Type == HolderType.Slot ? Name : "CurrentGame")}]";
+                return $"{nameof(Holder)}[{(Type == HolderType.Slot ? Name : "CurrentGame")}]";
             }
         }
     }
-#endif
-    }
+}

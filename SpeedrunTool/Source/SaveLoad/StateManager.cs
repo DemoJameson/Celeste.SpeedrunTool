@@ -69,9 +69,8 @@ public sealed class StateManager {
 
     // manually call this to ensure it's first called
     internal static void Load() {
-        On.Monocle.Scene.BeforeUpdate += SceneOnBeforeUpdate;
+        On.Monocle.Scene.BeforeUpdate += MakeGameFreezeAfterSaveLoad;
         On.Celeste.Level.Update += UpdateBackdropWhenWaiting;
-        On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
         On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
         IL.Celeste.Level.TransitionRoutine += LevelOnTransitionRoutine;
         On.Celeste.Level.TransitionRoutine += LevelOnTransitionRoutine;
@@ -85,9 +84,8 @@ public sealed class StateManager {
     }
 
     internal static void Unload() {
-        On.Monocle.Scene.BeforeUpdate -= SceneOnBeforeUpdate;
+        On.Monocle.Scene.BeforeUpdate -= MakeGameFreezeAfterSaveLoad;
         On.Celeste.Level.Update -= UpdateBackdropWhenWaiting;
-        On.Monocle.Scene.Begin -= ClearStateWhenSwitchScene;
         On.Celeste.PlayerDeadBody.End -= AutoLoadStateWhenDeath;
         IL.Celeste.Level.TransitionRoutine -= LevelOnTransitionRoutine;
         On.Celeste.Level.TransitionRoutine -= LevelOnTransitionRoutine;
@@ -145,7 +143,7 @@ public sealed class StateManager {
         return !lastCheck;
     }
 
-    private static void SceneOnBeforeUpdate(On.Monocle.Scene.orig_BeforeUpdate orig, Scene self) {
+    private static void MakeGameFreezeAfterSaveLoad(On.Monocle.Scene.orig_BeforeUpdate orig, Scene self) {
         if (ModSettings.Enabled && self is Level level && Instance.State == State.Waiting) {
             if (unfreezeInputs.Any(Instance.IsUnfreeze) || Hotkey.CheckDeathStatistics.Pressed() || Hotkey.LoadState.Pressed()) {
                 Instance.lastChecks.Clear();
@@ -160,7 +158,6 @@ public sealed class StateManager {
         orig(self);
     }
 
-    // this makes game freeze after save / load
     private static void UpdateBackdropWhenWaiting(On.Celeste.Level.orig_Update orig, Level level) {
         if (Instance.State != State.None) {
             level.Wipe?.Update(level);
@@ -175,14 +172,7 @@ public sealed class StateManager {
         orig(level);
     }
 
-    private static void ClearStateWhenSwitchScene(On.Monocle.Scene.orig_Begin orig, Scene self) {
-        orig(self);
-        foreach (SaveSlot slot in SaveSlotsManager.SaveSlots) {
-            slot.StateManager.ClearStateWhenSwitchSceneImpl(self);
-        }
-    }
-
-    private void ClearStateWhenSwitchSceneImpl(Scene self) {
+    internal void ClearStateWhenSwitchSceneImpl(Scene self) {
         if (IsSaved) {
             if (self is Overworld && !SavedByTas && InGameOverworldHelperIsOpen.Value?.GetValue(null) as bool? != true) {
                 ClearStateImpl(hasGc: true);

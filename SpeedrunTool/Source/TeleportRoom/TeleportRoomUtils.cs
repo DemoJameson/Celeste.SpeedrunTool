@@ -402,6 +402,10 @@ public static class TeleportRoomUtils {
         }
     }
 
+    private static void SearchCollabCheckpoint() {
+        throw new NotImplementedException();
+    }
+
     private static void LevelOnLoadLevel(On.Celeste.Level.orig_LoadLevel orig, Level self,
         Player.IntroTypes playerIntro, bool isFromLoader) {
         orig(self, playerIntro, isFromLoader);

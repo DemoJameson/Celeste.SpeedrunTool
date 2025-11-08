@@ -41,10 +41,7 @@ internal static class SaveSlotsManager {
             // to ensure safety
             return false;
         }
-        foreach (SaveSlot s in SaveSlots) {
-            s.StateManager.preCloneTask?.Wait();
-            // 不然感觉会有一些多线程上的问题
-        }
+        WaitUntilThreadSafe();
         if (name != SlotName) {
             Logger.Info("SpeedrunTool", $"Switch to [{name}]");
         }
@@ -104,10 +101,13 @@ internal static class SaveSlotsManager {
     }
 
     public static void ClearAll() {
+        WaitUntilThreadSafe();
         bool anySaved = false;
         foreach (SaveSlot slot in Dictionary.Values) {
             anySaved = anySaved || slot.StateManager.IsSaved;
-            slot.StateManager.ClearStateImpl(hasGc: false);
+            Slot = slot; // 由于 clearState action 可能依赖于 slot, 所以这是必要的
+            SlotName = Slot.Name; // Name 当然也要同步修改
+            ClearState();
         }
         Dictionary = new Dictionary<string, SaveSlot>();
 
@@ -117,6 +117,19 @@ internal static class SaveSlotsManager {
         if (anySaved) {
             StateManagerInstance.GcCollect(force: true);
         }
+    }
+
+    private static void ClearStateWhenSwitchScene(On.Monocle.Scene.orig_Begin orig, Scene self) {
+        orig(self);
+        SaveSlot current = Slot;
+        WaitUntilThreadSafe();
+        foreach (SaveSlot slot in SaveSlots) {
+            Slot = slot;
+            SlotName = Slot.Name;
+            slot.StateManager.ClearStateWhenSwitchSceneImpl(self);
+        }
+        Slot = current;
+        SlotName = current.Name;
     }
 
     /// <summary>
@@ -137,6 +150,15 @@ internal static class SaveSlotsManager {
         return true;
     }
 
+    private static void WaitUntilThreadSafe() {
+        // preCloneTask 涉及到多线程, 而 DeepClonerUtils 会多次用到 StateManager.Instance, 这玩意线程不安全
+        // 所以我们一定要等它结束了再说
+        foreach (SaveSlot s in SaveSlots) {
+            s.StateManager.preCloneTask?.Wait();
+        }
+        // 此外 clearState 等也有可能访问 StateManager.Instance
+    }
+
     internal static void RequireReInit() {
         foreach (SaveSlot slot in SaveSlots) {
             slot.ValueDictionaryInitialized = false;
@@ -147,6 +169,16 @@ internal static class SaveSlotsManager {
         Dictionary = new Dictionary<string, SaveSlot>();
         SwitchSlot(1);
         ClearState();
+    }
+
+    [Load]
+    private static void Load() {
+        On.Monocle.Scene.Begin += ClearStateWhenSwitchScene;
+    }
+
+    [Unload]
+    private static void Unload() {
+        On.Monocle.Scene.Begin -= ClearStateWhenSwitchScene;
     }
 
     #region Tas

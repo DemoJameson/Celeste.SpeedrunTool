@@ -76,11 +76,11 @@ internal static class GraphicResourcesHandler {
     }
 
     private static class AtlasHandler {
-        
+
         // This Fixes: WaveDashPresentation 中存档, 结束, 再读档, 会崩溃
 
         /* 每个存档带有信息: 它存档时持有的 atlas, 以及截止到存档时所有在它的历史上本应释放但没释放的 atlas
-         * 外加 CurrentGame 带有: 读取的档上应释放的, 再加上读档后直到当前时刻为止, 所有本应释放的资源. 它不持有 atlas
+         * 外加 CurrentGame 带有: 它所对应的那个存档的全部信息, 外加读档后新增加的本应释放的 atlas
          *
          * 每次清除存档时, 尝试释放这个存档持有的且在其他某个存档/CurrentGame 上本应释放的 atlas
          * 每次读档时, 将 CurrentGame 的历史回退到读取的档上
@@ -103,8 +103,12 @@ internal static class GraphicResourcesHandler {
         }
 
         private static void Atlas_Dispose(On.Monocle.Atlas.orig_Dispose orig, Atlas self) {
+            bool b = false;
             if (BipartiteGraph.HasDisposeBarrier(self)) {
                 BipartiteGraph.AddDisposeEdge(self, CurrentGame);
+                b = BipartiteGraph.HasDisposeBarrier(self); // check again. since CurrentGame can be the only barrier
+            }
+            if (b) {
                 Logger.Info($"SpeedrunTool/{nameof(AtlasHandler)}", $"{self.DataPath} was to be disposed but stopped by us.");
             }
             else {
@@ -114,6 +118,7 @@ internal static class GraphicResourcesHandler {
         }
 
         internal static void SafeDispose(Atlas atlas) {
+            // not safe. Just make it easier to debug
             atlas?.Dispose();
         }
 
@@ -124,10 +129,10 @@ internal static class GraphicResourcesHandler {
         internal static void AddAction() {
             SaveLoadAction.InternalSafeAdd(
                 saveState: (_, _) => {
-                    BipartiteGraph.CloneDisposeEdge(CurrentGame, CurrentSlot);
+                    BipartiteGraph.AddTo(CurrentGame, CurrentSlot);
                 },
                 loadState: (_, _) => {
-                    BipartiteGraph.CloneDisposeEdge(CurrentSlot, CurrentGame);
+                    BipartiteGraph.Clone(CurrentSlot, CurrentGame);
                 },
                 clearState: () => {
                     BipartiteGraph.ClearAndDispose(CurrentSlot);
@@ -135,9 +140,17 @@ internal static class GraphicResourcesHandler {
             );
         }
 
+        private static void DebugLog() {
+            BipartiteGraph.Log();
+        }
+
 
         internal static class BipartiteGraph {
             internal enum State { Hold, Dispose } // Hold: don't dispose; Dispose: wanna dispose but failed to
+
+            private static readonly HashSet<Atlas> VerticesAtlas = new HashSet<Atlas>();
+
+            private static readonly HashSet<Holder> VerticesHolder = new HashSet<Holder>();
 
             private static readonly Dictionary<Atlas, HashSet<Holder>> Atlas2Hold = new(); // only contains Hold edges
 
@@ -156,13 +169,15 @@ internal static class GraphicResourcesHandler {
                 }
             }
 
-            private static void SafeRemove<TKey, TValue>(Dictionary<TKey, HashSet<TValue>> dict, TKey key, TValue value) {
+            private static bool SafeRemove<TKey, TValue>(Dictionary<TKey, HashSet<TValue>> dict, TKey key, TValue value) {
+                bool b = false;
                 if (dict.TryGetValue(key, out HashSet<TValue> list)) {
-                    list.Remove(value);
+                    b = list.Remove(value);
                     if (list.IsNullOrEmpty()) {
                         dict.Remove(key);
                     }
                 }
+                return b;
             }
 
             private static void SafeAdd<TKey, TValue>(Dictionary<TKey, HashSet<TValue>> dict1, Dictionary<TValue, HashSet<TKey>> dict2, TKey key, TValue value) {
@@ -170,59 +185,89 @@ internal static class GraphicResourcesHandler {
                 SafeAdd(dict2, value, key);
             }
 
-            private static void SafeRemove<TKey, TValue>(Dictionary<TKey, HashSet<TValue>> dict1, Dictionary<TValue, HashSet<TKey>> dict2, TKey key, TValue value) {
-                SafeRemove(dict1, key, value);
-                SafeRemove(dict2, value, key);
+            private static bool SafeRemove<TKey, TValue>(Dictionary<TKey, HashSet<TValue>> dict1, Dictionary<TValue, HashSet<TKey>> dict2, TKey key, TValue value) {
+                bool b1 = SafeRemove(dict1, key, value);
+                bool b2 = SafeRemove(dict2, value, key);
+                return b1 || b2;
             }
 
-            private static void SafeRemove<TKey, TValue>(Dictionary<TKey, HashSet<TValue>> dict1, Dictionary<TValue, HashSet<TKey>> dict2, TKey key) {
+            private static bool SafeRemove<TKey, TValue>(Dictionary<TKey, HashSet<TValue>> dict1, Dictionary<TValue, HashSet<TKey>> dict2, TKey key) {
                 if (dict1.TryGetValue(key, out HashSet<TValue> list)) {
                     foreach (TValue value in list) {
                         SafeRemove(dict2, value, key);
                     }
                     dict1.Remove(key);
+                    return true;
                 }
+                return false;
             }
 
             internal static void AddHoldEdge(Atlas atlas, Holder holder) {
+                VerticesAtlas.Add(atlas);
+                VerticesHolder.Add(holder);
                 SafeAdd(Atlas2Hold, Hold2Atlas, atlas, holder);
                 SafeRemove(Atlas2Dispose, Dispose2Atlas, atlas, holder);
             }
 
             internal static void AddDisposeEdge(Atlas atlas, Holder holder) {
+                VerticesAtlas.Add(atlas);
+                VerticesHolder.Add(holder);
                 SafeRemove(Atlas2Hold, Hold2Atlas, atlas, holder);
                 SafeAdd(Atlas2Dispose, Dispose2Atlas, atlas, holder);
             }
 
             internal static void Clear(Atlas atlas) {
+                VerticesAtlas.Remove(atlas);
                 SafeRemove(Atlas2Hold, Hold2Atlas, atlas);
                 SafeRemove(Atlas2Dispose, Dispose2Atlas, atlas);
             }
 
             internal static void Clear(Holder holder) {
+                VerticesHolder.Remove(holder);
                 SafeRemove(Hold2Atlas, Atlas2Hold, holder);
                 SafeRemove(Dispose2Atlas, Atlas2Dispose, holder);
             }
 
             internal static void ClearAndDispose(Holder holder) {
-                if (!Hold2Atlas.TryGetValue(holder, out HashSet<Atlas> list)) {
-                    return;
-                }
-                HashSet<Atlas> maybeUnholding = [.. list];
-                Clear(holder);
-                HashSet<Atlas> unholding = [.. maybeUnholding.Where(x => !Atlas2Hold.ContainsKey(x))];
+                VerticesHolder.Remove(holder);
+                SafeRemove(Hold2Atlas, Atlas2Hold, holder);
+                HashSet<Atlas> unholding = [.. VerticesAtlas.Where(x => !Atlas2Hold.ContainsKey(x))];
                 foreach (Atlas atlas in unholding.Where(Atlas2Dispose.ContainsKey)) {
                     SafeDispose(atlas);
                 }
                 foreach (Atlas atlas2 in unholding) {
                     Clear(atlas2);
                 }
+                SafeRemove(Dispose2Atlas, Atlas2Dispose, holder);
+                HashSet<Holder> holders = [.. VerticesHolder.Where(x => !Hold2Atlas.ContainsKey(x) && !Dispose2Atlas.ContainsKey(x))];
+                foreach (Holder holder2 in holders) {
+                    Clear(holder2);
+                }
             }
 
-            internal static void CloneDisposeEdge(Holder from, Holder to) {
-                if (Dispose2Atlas.TryGetValue(from, out HashSet<Atlas> list)) {
-                    foreach (Atlas atlas in list) {
+            internal static void Clone(Holder from, Holder to) {
+                ClearAndDispose(to);
+                if (Dispose2Atlas.TryGetValue(from, out HashSet<Atlas> list2)) {
+                    foreach (Atlas atlas in list2) {
                         AddDisposeEdge(atlas, to);
+                    }
+                }
+                if (Hold2Atlas.TryGetValue(from, out HashSet<Atlas> list1)) {
+                    foreach (Atlas atlas in list1) {
+                        AddHoldEdge(atlas, to);
+                    }
+                }
+            }
+
+            internal static void AddTo(Holder from, Holder to) {
+                if (Dispose2Atlas.TryGetValue(from, out HashSet<Atlas> list2)) {
+                    foreach (Atlas atlas in list2) {
+                        AddDisposeEdge(atlas, to);
+                    }
+                }
+                if (Hold2Atlas.TryGetValue(from, out HashSet<Atlas> list1)) {
+                    foreach (Atlas atlas in list1) {
+                        AddHoldEdge(atlas, to);
                     }
                 }
             }
@@ -236,7 +281,7 @@ internal static class GraphicResourcesHandler {
 #if DEBUG
                 System.Text.StringBuilder sb = new();
                 sb.Append("BipartiteGraph Structure:");
-                foreach (Atlas atlas in Atlas2Hold.Keys.Union(Atlas2Dispose.Keys)) {
+                foreach (Atlas atlas in VerticesAtlas) {
                     sb.Append($"\n{atlas.DataPath}");
                     if (Atlas2Hold.TryGetValue(atlas, out HashSet<Holder> list1)) {
                         sb.Append($" | hold by -> ");
@@ -252,7 +297,7 @@ internal static class GraphicResourcesHandler {
                     }
                 }
                 sb.Append('\n');
-                foreach (Holder holder in Hold2Atlas.Keys.Union(Dispose2Atlas.Keys)) {
+                foreach (Holder holder in VerticesHolder) {
                     sb.Append($"\n{holder.Name}");
                     if (Hold2Atlas.TryGetValue(holder, out HashSet<Atlas> list1)) {
                         sb.Append($" | hold -> ");

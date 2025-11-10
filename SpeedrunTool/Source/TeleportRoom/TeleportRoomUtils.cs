@@ -1,11 +1,14 @@
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.Message;
+using Celeste.Mod.SpeedrunTool.ModInterop;
 using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
+using Celeste.Mod.SpeedrunTool.Utils;
 using Celeste.Pico8;
 using Force.DeepCloner;
+using Mono.Cecil.Cil;
 using On.Celeste.Editor;
 using System.Collections;
 using System.Collections.Generic;
@@ -233,6 +236,13 @@ public static class TeleportRoomUtils {
     }
 
     private static bool? TeleportToPreviousRoom(Level level) {
+        if (CollabUtils2Import.IsCollabLobby(level.Session.Area.GetSID())) {
+            if (SearchCollabChapterPanel(false, level)) {
+                TeleportTo(level.Session);
+                return true;
+            }
+        }
+
         if (historyIndex > 0 && historyIndex < RoomHistory.Count) {
             // Glyph 这种传送到其他房间是不做记录的，所以只回到当前记录的房间
             if (level.Session.Level == RoomHistory[historyIndex].Level) {
@@ -294,6 +304,13 @@ public static class TeleportRoomUtils {
     }
 
     private static bool? TeleportToNextRoom(Level level) {
+        if (CollabUtils2Import.IsCollabLobby(level.Session.Area.GetSID())) {
+            if (SearchCollabChapterPanel(true, level)) {
+                TeleportTo(level.Session);
+                return true;
+            }
+        }
+
         if (historyIndex >= 0 && historyIndex < RoomHistory.Count - 1) {
             historyIndex++;
             TeleportTo(RoomHistory[historyIndex], true);
@@ -402,10 +419,6 @@ public static class TeleportRoomUtils {
         }
     }
 
-    private static void SearchCollabCheckpoint() {
-        throw new NotImplementedException();
-    }
-
     private static void LevelOnLoadLevel(On.Celeste.Level.orig_LoadLevel orig, Level self,
         Player.IntroTypes playerIntro, bool isFromLoader) {
         orig(self, playerIntro, isFromLoader);
@@ -464,5 +477,86 @@ public static class TeleportRoomUtils {
 
         RoomHistory.Add(session.DeepClone());
         historyIndex = RoomHistory.Count - 1;
+    }
+
+    private static readonly Lazy<Type> ChapterPanelTriggerType = new(() => ModUtils.GetType("CollabUtils2", "Celeste.Mod.CollabUtils2.Triggers.ChapterPanelTrigger"));
+
+    [Initialize]
+    private static void Initialize() {
+        ChapterPanelTriggerType.Value?.GetConstructor([typeof(EntityData), typeof(Vector2)])?.ILHook((cursor, _) => {
+            cursor.Emit(OpCodes.Ldarg_0);
+            cursor.Emit(OpCodes.Ldarg_1);
+            cursor.EmitDelegate(SetSourceData);
+        });
+        // WarpPedestal 或者 StrawberryJamJar 都是在 added 期间创建 ChapterPanelTrigger 的
+        // 这绕过了 LoadCustomEntity 期间添加 SourceData 的流程, 因此我们自行添加 SourceData
+
+        static void SetSourceData(Entity e, EntityData data) {
+            data.Name ??= "CollabUtils2/ChapterPanelTrigger";
+            e.SourceData = data;
+        }
+    }
+
+    private static bool SearchCollabChapterPanel(bool next, Level level) {
+        if (!(level.GetPlayer() is { } player
+            && ChapterPanelTriggerType.Value is { } type
+            && level.Tracker.GetEntitiesTrackIfNeeded(type) is { } list
+            && list.IsNotNullOrEmpty())) {
+            return false;
+        }
+
+        List<Vector2> positions = [.. list
+            .OrderBy(x => x.SourceData?.Attr("map") ?? "")
+            .Select(x => x.BottomCenter)
+            .Where(v => !player.CollideCheck<Solid>(v))
+            .Distinct()];
+        if (positions is null || positions.Count < 2) {
+            // 如果只有一个 chapterPanel (例如 Secret Santa Collab 2024 给每个 panel 有单独的小房间), 那就别点对点快传了
+            return false;
+        }
+        if (!next) {
+            positions.Reverse();
+            // 我们不能写 OrderByDescending
+            // 因为有可能被比较的值一样, 导致无法排序. (SourceData 为空导致. 不过我们加完 hook 之后应该就没这个问题了) 
+            // 这样的话正着排和反着排就一样了. 导致向前和向后传送的结果不能互逆 (假设一直没传到其他房间)
+        }
+
+        // 如果玩家本身离某个 panel 足够近, 那么认为我们就在这里, 并且寻找下一个
+        // 否则, 直接寻找距离玩家最近的一个 panel
+        // 不用复活点的原因是, panel 上可能有 ChangeRespawnTrigger 把我们的复活点改到其他地方
+
+        const float nearEnough = 5000f;
+
+        Vector2 playerPos = player.Position;
+        Vector2? nearest = null;
+        float minDist = 0f;
+        bool foundNearEnough = false;
+        foreach (Vector2 position in positions) {
+            float num = Vector2.DistanceSquared(playerPos, position);
+            if (num < nearEnough) {
+                foundNearEnough = true;
+                // 它本身有可能是最近的同时也是最后一个, 因此别 continue;
+                // 有可能有多个足够近的对象
+            }
+            else if (foundNearEnough) {
+                // 这个点本身不够近, 于是传送过去
+                level.Session.RespawnPoint = position;
+                return true;
+            }
+            if (nearest is null || num < minDist) {
+                nearest = position;
+                minDist = num;
+            }
+        }
+        if (foundNearEnough) {
+            // 我们本身就离最后的那个 panel 很近, 没有下一个了
+            return false;
+        }
+        if (nearest is not null) {
+            level.Session.RespawnPoint = nearest;
+            return true;
+        }
+        // 这里应该是不可达的
+        return false;
     }
 }

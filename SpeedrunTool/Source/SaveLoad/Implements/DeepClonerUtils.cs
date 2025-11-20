@@ -44,6 +44,7 @@ public static class DeepClonerUtils {
                 || type == typeof(GraphicsDeviceManager)
                 || type == typeof(Monocle.Commands)
                 || type == typeof(BitTag)
+                || type == typeof(Atlas)
 
                 // XNA GraphicsResource
                 || type.IsSubclassOf(typeof(GraphicsResource))
@@ -80,13 +81,6 @@ public static class DeepClonerUtils {
             }
 
             lock (sourceObj) {
-                if (sourceObj is Atlas atlas) {
-                    if (StateManager.Instance.State == State.Saving && Thread.CurrentThread.IsMainThread()) {
-                        GraphicResourcesHandler.Add(atlas);
-                    }
-                    return atlas;
-                }
-
                 if (sourceObj is VirtualAsset virtualAsset) {
                     if (StateManager.Instance.State == State.Loading || !Thread.CurrentThread.IsMainThread()) {
                         // 预克隆的资源需要等待 LoadState 中移除实体之后才能判断是否需要 Reload，必须等待主线程中再操作

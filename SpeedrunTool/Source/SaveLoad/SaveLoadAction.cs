@@ -260,7 +260,7 @@ public sealed class SaveLoadAction {
         }
 
         if (!values.TryGetValue(type, out Dictionary<string, object> dict)) {
-            values[type] = dict = new Dictionary<string, object>();
+            values[type] = dict = [];
         }
 
         foreach (string memberName in memberNames) {

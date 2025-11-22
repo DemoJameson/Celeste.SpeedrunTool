@@ -211,7 +211,7 @@ internal static class SnapshotUI {
 
     private static float easeY = 0f;
 
-    private static readonly float DeltaY = Engine.RawDeltaTime * 2f;
+    private static float DeltaY => Engine.RawDeltaTime * 2f;
 
     private static float alpha = 1f;
 
@@ -236,6 +236,8 @@ internal static class SnapshotUI {
     private static string highlight;
 
     private static float yWiggleTimer;
+
+    private static float WiggleSpeed => Engine.RawDeltaTime * 10f;
 
     private static bool focusOnItem;
 
@@ -325,7 +327,7 @@ internal static class SnapshotUI {
 
     private static void UpdateFullOpen() {
         if (!focusOnItem) {
-            yWiggleTimer += Engine.RawDeltaTime * 10;
+            yWiggleTimer += WiggleSpeed;
             if (Input.MenuCancel.Pressed || Input.ESC.Pressed) {
                 ToggleTab();
                 return;

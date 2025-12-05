@@ -37,7 +37,8 @@ namespace Celeste.Mod.SpeedrunTool.Extensions {
 
             try {
                 Engine.Commands?.Log($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] [{Tag}] {logLevel}: {message}", color);
-            } catch (Exception) {
+            }
+            catch (Exception) {
                 // ignored
             }
         }

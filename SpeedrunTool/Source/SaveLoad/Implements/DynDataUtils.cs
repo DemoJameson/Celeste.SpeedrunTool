@@ -6,9 +6,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
 internal static class DynDataUtils {
     // DynData
-    private static readonly Dictionary<Type, object> CachedDataMaps = new();
-    public static ConditionalWeakTable<object, object> IgnoreObjects = new();
-    private static readonly HashSet<Type> IgnoreTypes = new();
+    private static readonly Dictionary<Type, object> CachedDataMaps = [];
+    public static ConditionalWeakTable<object, object> IgnoreObjects = [];
+    private static readonly HashSet<Type> IgnoreTypes = [];
 
     private static readonly Lazy<int> EmptyTableEntriesLength =
         new(() => new ConditionalWeakTable<object, object>().GetFieldValue<Array>("_entries").Length);
@@ -19,7 +19,7 @@ internal static class DynDataUtils {
     private static Func<object, bool> checkEmpty;
 
     public static void ClearCached() {
-        IgnoreObjects = new ConditionalWeakTable<object, object>();
+        IgnoreObjects = [];
         IgnoreTypes.Clear();
     }
 
@@ -43,16 +43,16 @@ internal static class DynDataUtils {
         if (checkEmpty == null) {
             if (Type.GetType("Mono.Runtime") != null) {
                 // Mono
-                checkEmpty = o => o.GetFieldValue<int>("size") == 0;
+                checkEmpty = static o => o.GetFieldValue<int>("size") == 0;
             }
             else if (weakTable.GetType().GetFieldInfo("_entries") != null) {
                 // .net framework
-                checkEmpty = o => o.GetFieldValue<Array>("_entries").Length == EmptyTableEntriesLength.Value &&
+                checkEmpty = static o => o.GetFieldValue<Array>("_entries").Length == EmptyTableEntriesLength.Value &&
                              o.GetFieldValue<int>("_freeList") == EmptyTableFreeList.Value;
             }
             else {
                 // .net7
-                checkEmpty = o => o.GetFieldValue("_container") is { } container && container.GetFieldValue<Array>("_entries").Length == EmptyContainerEntriesLength.Value &&
+                checkEmpty = static o => o.GetFieldValue("_container") is { } container && container.GetFieldValue<Array>("_entries").Length == EmptyContainerEntriesLength.Value &&
                                   container.GetFieldValue<int>("_firstFreeEntry") == EmptyContainerFirstFreeEntry.Value;
             }
         }

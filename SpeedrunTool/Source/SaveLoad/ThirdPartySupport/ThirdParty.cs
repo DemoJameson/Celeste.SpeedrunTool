@@ -20,7 +20,7 @@ internal static class ThirdParty {
     }
 
 
-   private static class EasyMods {
+    private static class EasyMods {
 
         internal static void Support() {
             CommunalHelperSupport();
@@ -46,9 +46,8 @@ internal static class ThirdParty {
             SaveLoadAction.CloneModTypeFields("CrystallineHelper", "vitmod.TriggerTrigger", "collidedEntities");
         }
         private static void MaxHelpingHandSupport() {
-
-            SaveLoadAction.CloneModTypeFields("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Effects.BlackholeCustomColors", "colorsMild");
-
+            SaveLoadAction.CloneModTypeFields("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Effects.BlackholeCustomColors", "colorsMildOverride");
+            SaveLoadAction.CloneModTypeFields("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.MovingFlagTouchSwitch", "flagMapping");
         }
         private static void VivHelperSupport() {
             if (ModUtils.GetAssembly("VivHelper") is not { }) {

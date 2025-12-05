@@ -238,12 +238,13 @@ public static class DeepClonerUtils {
                 if (type is { IsClass: true } objType && !DynDataUtils.IgnoreObjects.ContainsKey(sourceObj)) {
                     bool cloned = false;
 
+                    // 对其类型及其逐层展开的根类型 T 检验 DynData<T> 里是否涉及到这个对象
                     do {
                         if (DynDataUtils.NotExistDynData(objType, out object dataMap)) {
                             continue;
                         }
 
-                        object[] parameters = { sourceObj, null };
+                        object[] parameters = [sourceObj, null];
                         if (false == (bool)dataMap.InvokeMethod("TryGetValue", parameters)) {
                             continue;
                         }
@@ -263,6 +264,7 @@ public static class DeepClonerUtils {
                 }
 
                 // Clone DynamicData
+                // 注意这个和 DynData 不是同一个东西
                 if (DynamicData._DataMap.TryGetValue(sourceObj, out DynamicData._Data_ value) && value.Data.Count > 0) {
                     DynamicData._DataMap.Add(clonedObj, value.DeepClone(deepCloneState));
                 }

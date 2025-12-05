@@ -384,7 +384,7 @@ public sealed class SaveLoadAction {
 #if DEBUG
     internal static void LogSavedValues(Level level) {
         System.Text.StringBuilder sb = new();
-        
+
         foreach (SaveLoadAction slAction in SharedActions) {
             sb.Append($"\n======  {slAction.ActionDescription}  ======\n");
             int count = 1;

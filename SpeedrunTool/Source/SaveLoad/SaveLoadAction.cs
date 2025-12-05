@@ -333,14 +333,7 @@ public sealed class SaveLoadAction {
 
         // mod support
         SupportModSessionAndSaveData();
-        EasyMods.Support();
-        PandorasBoxUtils.Support();
-        SpringCollab2020Utils.Support();
-        ExtendedVariantsUtils.Support();
-        IsaGrabBagUtils.Support();
-        SpirialisHelperUtils.Support();
-        DeathTrackerHelperUtils.Support();
-        BrokemiaHelperUtils.Support();
+        ThirdParty.Support();
 
         // 放最后，确保收集了所有克隆的 VirtualAssets 与 EventInstance
         contextOrder = Order_ExecuteAtLast;

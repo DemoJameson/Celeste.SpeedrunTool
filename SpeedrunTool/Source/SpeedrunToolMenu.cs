@@ -14,8 +14,11 @@ public static class SpeedrunToolMenu {
     private static List<EaseInSubMenu> options;
 
     public static void Create(TextMenu menu, bool inGame, EventInstance snapshot) {
+        // basically same as EverestModule.CreateModMenuSectionHeader
+        menu.Add(new TextMenu.SubHeader(DialogIds.SpeedrunTool.DialogCleanOrNull() + " | v." + SpeedrunToolModule.Instance.Metadata.VersionString));
+
         menu.OnClose += () => options = null;
-        menu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.Enabled), ModSettings.Enabled).Change(value => {
+        menu.Add(new OnOffSearchExt(Dialog.Clean(DialogIds.Enabled), ModSettings.Enabled, "speedrun tool").Change(value => {
             ModSettings.Enabled = value;
             foreach (EaseInSubMenu item in options) {
                 item.FadeVisible = value;
@@ -29,6 +32,14 @@ public static class SpeedrunToolMenu {
         foreach (EaseInSubMenu item in options) {
             menu.Add(item);
         }
+    }
+
+    private class OnOffSearchExt(string label, bool on, string searchLabel) : TextMenu.OnOff(label, on) {
+
+        public string SearchRawLabel = searchLabel;
+
+        // 使得 OuiModOptions.AddSearchBox 哪怕在中文环境下也能用 speedrun tool 搜到 SRT
+        public override string SearchLabel() => SearchRawLabel;
     }
 
     private static IEnumerable<KeyValuePair<TEnum, string>> CreateEnumerableOptions<TEnum>()

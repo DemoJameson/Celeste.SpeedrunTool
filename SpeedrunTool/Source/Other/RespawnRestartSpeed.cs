@@ -13,14 +13,11 @@ public static class RespawnRestartSpeed {
     private const string StopFastRestartFlag = nameof(StopFastRestartFlag);
 
     [Load]
-    private static void Hook() {
+    private static void Load() {
         using (new DetourConfigContext(new DetourConfig(id: "SpeedrunTool", after: ["*"])).Use()) {
             On.Monocle.Engine.Update += RespawnSpeed;
         }
-    }
 
-    [Load]
-    private static void Load() {
         if (ModUtils.VanillaAssembly.GetType("Celeste.Level+<>c__DisplayClass150_0")?.GetMethodInfo("<GiveUp>b__0") is { } methodInfo) {
             methodInfo.ILHook(ModRestartMenu);
         }

@@ -25,7 +25,6 @@ internal static class ThirdParty {
         internal static void Support() {
             CommunalHelperSupport();
             CrystallineHelperSupport();
-            MaxHelpingHandSupport();
             VivHelperSupport();
             XaphanHelperSupport();
             LocksmithHelperSupport();
@@ -45,10 +44,7 @@ internal static class ThirdParty {
             SaveLoadAction.CloneModTypeFields("CrystallineHelper", "vitmod.VitModule", "timeStopScaleTimer", "timeStopType", "noMoveScaleTimer");
             SaveLoadAction.CloneModTypeFields("CrystallineHelper", "vitmod.TriggerTrigger", "collidedEntities");
         }
-        private static void MaxHelpingHandSupport() {
-            SaveLoadAction.CloneModTypeFields("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Effects.BlackholeCustomColors", "colorsMildOverride");
-            SaveLoadAction.CloneModTypeFields("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.MovingFlagTouchSwitch", "flagMapping");
-        }
+
         private static void VivHelperSupport() {
             if (ModUtils.GetAssembly("VivHelper") is not { }) {
                 return;

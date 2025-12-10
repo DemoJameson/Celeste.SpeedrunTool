@@ -1,6 +1,7 @@
 using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.ModInterop;
 using Celeste.Mod.SpeedrunTool.Other;
+using Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
 using Celeste.Mod.SpeedrunTool.Utils;
 using Force.DeepCloner;
 using Force.DeepCloner.Helpers;
@@ -116,6 +117,7 @@ public sealed class StateManager {
     private static void LevelOnEnd(On.Celeste.Level.orig_End orig, Level self) {
         orig(self);
         Instance.transitionRoutine = null;
+        DesyncRiskAnalyzer.CheckAll = true;
     }
 
 
@@ -145,7 +147,7 @@ public sealed class StateManager {
 
     private static void MakeGameFreezeAfterSaveLoad(On.Monocle.Scene.orig_BeforeUpdate orig, Scene self) {
         if (ModSettings.Enabled && self is Level level && Instance.State == State.Waiting) {
-            if (unfreezeInputs.Any(Instance.IsUnfreeze) || Hotkey.CheckDeathStatistics.Pressed() || Hotkey.LoadState.Pressed()) {
+            if (unfreezeInputs.Any(Instance.IsUnfreeze) || Hotkey.CheckDeathStatistics.Pressed()) {
                 Instance.lastChecks.Clear();
                 Instance.OutOfFreeze(level);
             }
@@ -201,7 +203,7 @@ public sealed class StateManager {
            ) {
             level.OnEndOfFrame += () => {
                 if (Instance.IsSaved) {
-                    Instance.LoadStateImpl(false);
+                    Instance.LoadStateImpl(false, out _);
                 }
                 else {
                     level.DoScreenWipe(wipeIn: false, self.DeathAction ?? level.Reload);
@@ -215,19 +217,28 @@ public sealed class StateManager {
     }
 
     #endregion Hook
-    internal bool SaveStateImpl(bool tas) {
+    internal bool SaveStateImpl(bool tas, out string popup) {
         if (Engine.Scene is not Level level) {
+            popup = "Cannot Save: Scene is not Level!";
             return false;
         }
 
-        if (!IsAllowSave(level, tas)) {
+        if (!IsAllowSave(level, tas, out string reason)) {
+            popup = reason;
             return false;
         }
 
         // 不允许在春游图打开章节面板时存档
         if (InGameOverworldHelperIsOpen.Value?.GetValue(null) as bool? == true) {
+            popup = "Cannot Save while ChapterPanel is Open!";
             return false;
         }
+
+        if (DesyncRiskAnalyzer.EarlyCheckDesyncRisk(level, out string reason2)) {
+            popup = reason2;
+            return false;
+        }
+        DesyncRiskAnalyzer.OnBeforeSaveState();
 
         if (IsSaved) {
             ClearBeforeSave = true;
@@ -251,6 +262,14 @@ public sealed class StateManager {
         savedTransitionRoutine = transitionRoutine?.TryGetTarget(out IEnumerator enumerator) == true ? enumerator.DeepCloneShared() : null;
         SaveLoadAction.OnSaveState(level);
         DeepClonerUtils.ClearSharedDeepCloneState();
+
+        DesyncRiskAnalyzer.OnAfterSaveState();
+        if (DesyncRiskAnalyzer.LateCheckDesyncRisk(out string reason3)) {
+            popup = reason3;
+            ClearStateImpl(hasGc: false);
+            return false;
+        }
+
         PreCloneSavedEntities();
 
         if (tas) {
@@ -266,8 +285,9 @@ public sealed class StateManager {
             }
         }
 
+        popup = $"Save to [{SlotName}]";
         SetSlotDescription();
-        Logger.Info("SpeedrunTool", $"Save to {FullSlotDescription}");
+        Logger.Info("SpeedrunTool/SaveState", $"Save to {FullSlotDescription}");
 
 #if DEBUG
         sw.Stop();
@@ -289,16 +309,20 @@ public sealed class StateManager {
     }
 
 
-    internal bool LoadStateImpl(bool tas) {
+    internal bool LoadStateImpl(bool tas, out string popup) {
+        popup = "";
         if (Engine.Scene is not Level level) {
+            popup = "Cannot Load: Scene is not Level!";
             return false;
         }
 
-        if (!tas && level.Paused || State == State.Loading || State == State.Waiting && !AllowSaveLoadWhenWaiting || !IsSaved) {
+        if (!IsAllowLoad(level, tas, out string reason)) {
+            popup = reason;
             return false;
         }
 
         if (tas && !SavedByTas) {
+            popup = "Cannot Load a state saved by TAS!";
             return false;
         }
 
@@ -345,7 +369,8 @@ public sealed class StateManager {
             DoScreenWipe(level);
         }
 
-        Logger.Info("SpeedrunTool", $"Load from {FullSlotDescription}");
+        popup = $"Load from [{SlotName}]";
+        Logger.Info("SpeedrunTool/LoadState", $"Load from {FullSlotDescription}");
 
 #if DEBUG
         sw.Stop();
@@ -542,7 +567,8 @@ public sealed class StateManager {
         }
 
         playingEventInstances.Clear();
-        if (savedLevel is null) {
+        bool doSomething = savedLevel is not null;
+        if (!doSomething) {
             hasGc = false;
         }
         savedLevel = null;
@@ -559,7 +585,9 @@ public sealed class StateManager {
             GcCollect(force: true);
         }
         MoreSaveSlotsUI.Snapshot.RemoveSnapshot(SlotName);
-        Logger.Info("SpeedrunTool", $"Clear {FullSlotDescription}");
+        if (doSomething) {
+            Logger.Info("SpeedrunTool/ClearState", $"Clear {FullSlotDescription}");
+        }
         SlotDescription = "";
     }
 
@@ -580,11 +608,54 @@ public sealed class StateManager {
         }
     }
 
-    private bool IsAllowSave(Level level, bool tas) {
+    private bool IsAllowSave(Level level, bool tas, out string failReason) {
         // 正常游玩时禁止死亡或者跳过过场时存档，TAS 则无以上限制
         // 跳过过场时的黑屏与读档后加的黑屏冲突，会导致一直卡在跳过过场的过程中
-        return (State == State.None || State == State.Waiting && AllowSaveLoadWhenWaiting) && (tas || !level.Paused
-            && !level.IsPlayerDead() && !level.SkippingCutscene);
+        failReason = "";
+        if (State == State.Saving || State == State.Loading) {
+            failReason = "Failed to Save: SpeedrunTool is Busy!";
+            return false;
+        }
+        if (State == State.Waiting && !AllowSaveLoadWhenWaiting) {
+            failReason = $"Just Saved/Loaded!";
+            return false;
+        }
+        if (tas) {
+            return true;
+        }
+        if (level.Paused) {
+            failReason = "Cannot Save while Level is Paused!";
+            return false;
+        }
+        if (level.IsPlayerDead()) {
+            failReason = "Cannot Save while Player is Dead!";
+            return false;
+        }
+        if (level.SkippingCutscene) {
+            failReason = "Cannot Save while Skipping Cutscene!";
+            return false;
+        }
+        return true;
+    }
+
+    private bool IsAllowLoad(Level level, bool tas, out string failReason) {
+        failReason = "";
+        if (!IsSaved) {
+            failReason = DialogIds.NotSavedStateTooltip.DialogClean() + $" [{SlotName}]";
+            return false;
+        }
+        if (State == State.Loading || State == State.Saving) {
+            failReason = "Failed to Load: SpeedrunTool is Busy!";
+            return false;
+        }
+        if (State == State.Waiting && !AllowSaveLoadWhenWaiting) {
+            failReason = "Just Saved/Loaded!";
+            return false;
+        }
+        if (!tas && level.Paused) {
+            failReason = "Cannot Save while Level is Paused!";
+        }
+        return true;
     }
 
     private void FreezeGame(FreezeType freeze) {

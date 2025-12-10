@@ -9,6 +9,13 @@ internal static class AttributeUtils {
     private static readonly IDictionary<Type, IEnumerable<MethodInfo>> MethodInfos = new Dictionary<Type, IEnumerable<MethodInfo>>();
 
     public static void CollectMethods<T>() where T : Attribute {
+        if (typeof(T) == typeof(InitializeAttribute)) {
+            MethodInfos[typeof(T)] = typeof(AttributeUtils).Assembly.GetTypesSafe().SelectMany(type => type
+                .GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+                .Where(info => info.GetCustomAttribute<InitializeAttribute>() != null && info.GetParameters().Length == 0))
+                .OrderByDescending(info => info.GetCustomAttribute<InitializeAttribute>().Depth);
+            return;
+        }
         MethodInfos[typeof(T)] = typeof(AttributeUtils).Assembly.GetTypesSafe().SelectMany(type => type
             .GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
             .Where(info => info.GetCustomAttribute<T>() != null && info.GetParameters().Length == 0));
@@ -33,4 +40,10 @@ internal class UnloadAttribute : Attribute { }
 internal class LoadContentAttribute : Attribute { }
 
 [AttributeUsage(AttributeTargets.Method)]
-internal class InitializeAttribute : Attribute { }
+internal class InitializeAttribute : Attribute {
+    public int Depth;
+
+    public InitializeAttribute(int depth = 0) {
+        Depth = depth; // depth higher = invoked earlier
+    }
+}

@@ -71,25 +71,46 @@ internal static class SaveSlotsManager {
         }
         return false;
     }
-    public static bool SaveState() {
+    public static bool SaveState(out string popup) {
+        bool b;
         if (CannotSaveLoad()) {
-            return false;
+            b = false;
+            popup = "Failed to Save: SpeedrunTool is Busy!";
         }
+        else {
+            b = StateManagerInstance.SaveStateImpl(false, out string message);
+            popup = message;
+            if (b) {
+                MoreSaveSlotsUI.Snapshot.RequireCaptureSnapshot(SlotName);
+            }
+        }
+#if DEBUG
+        if (!b) {
+            Logger.Verbose("SpeedrunTool/SaveState", popup);
+        }
+#endif
 
-        bool b = StateManagerInstance.SaveStateImpl(false);
-        if (b) {
-            MoreSaveSlotsUI.Snapshot.RequireCaptureSnapshot(SlotName);
-        }
         return b;
     }
 
 
-    public static bool LoadState() {
+    public static bool LoadState(out string popup) {
+        bool b;
         if (CannotSaveLoad()) {
-            return false;
+            b = false;
+            popup = "Failed to Save: SpeedrunTool is Busy!";
         }
+        else {
+            b = StateManagerInstance.LoadStateImpl(false, out string message);
+            popup = message;
+        }
+#if DEBUG
+        if (!b) {
+            Logger.Verbose("SpeedrunTool/LoadState", popup);
+        }
+#endif
 
-        return StateManagerInstance.LoadStateImpl(tas: false);
+        return b;
     }
 
 
@@ -191,7 +212,7 @@ internal static class SaveSlotsManager {
         }
 
         SwitchSlot(slot);
-        bool result = StateManagerInstance.SaveStateImpl(true);
+        bool result = StateManagerInstance.SaveStateImpl(true, out _);
         return result;
     }
     public static bool LoadStateTas(string slot) {
@@ -200,7 +221,7 @@ internal static class SaveSlotsManager {
         }
 
         SwitchSlot(slot);
-        bool result = StateManagerInstance.LoadStateImpl(true);
+        bool result = StateManagerInstance.LoadStateImpl(true, out _);
         return result;
     }
     public static void ClearStateTas(string slot) {

@@ -65,6 +65,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public bool SaveTimeAndDeaths { get; set; } = false;
     public bool SaveExtendedVariants { get; set; } = true;
 
+    public bool SaveInLuaCutscene { get; set; } = false;
     public bool NoMessageAfterSaveLoad { get; set; } = false;
 
     #endregion
@@ -77,7 +78,6 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     #endregion
 
     #region MoreOptions
-
     public TeleportRoomCategory TeleportRoomCategory { get; set; } = TeleportRoomCategory.Any;
     public int RespawnSpeed { get; set; } = 1;
     public int RestartChapterSpeed { get; set; } = 1;

@@ -12,40 +12,24 @@ internal static class SaveLoadHotkeys {
 
     internal static bool SaveStateAndMessage() {
         if (SaveLoadStateShowMessage) {
-            if (SaveSlotsManager.SaveState()) {
-                PopupMessageUtils.Show($"Save to [{SlotName}]", null);
-                return true;
-            }
-            else {
-                if (!StateManager.AllowSaveLoadWhenWaiting && SaveSlotsManager.StateManagerInstance?.State == State.Waiting) {
-                    PopupMessageUtils.Show($"[{SlotName}] is already Saved!", null);
-                    return false;
-                }
-                else {
-                    PopupMessageUtils.Show("Failed to Save: SpeedrunTool is Busy!", null);
-                    return false;
-                }
-            }
+            bool b = SaveSlotsManager.SaveState(out string popup);
+            PopupMessageUtils.Show(popup, null);
+            return b;
         }
         else {
-            return SaveSlotsManager.SaveState();
+            return SaveSlotsManager.SaveState(out _);
         }
     }
 
     internal static bool LoadStateAndMessage() {
         if (SaveSlotsManager.IsSaved()) {
             if (SaveLoadStateShowMessage) {
-                if (SaveSlotsManager.LoadState()) {
-                    PopupMessageUtils.Show($"Load from [{SlotName}]", null);
-                    return true;
-                }
-                else {
-                    PopupMessageUtils.Show("Failed to Load: SpeedrunTool is Busy!", null);
-                    return false;
-                }
+                bool b = SaveSlotsManager.LoadState(out string popup);
+                PopupMessageUtils.Show(popup, null);
+                return b;
             }
             else {
-                return SaveSlotsManager.LoadState();
+                return SaveSlotsManager.LoadState(out _);
             }
         }
         else {

@@ -22,7 +22,7 @@ internal static class TasUtils {
 
         internal static bool Installed = false;
 
-        [Initialize]
+        [Initialize(int.MaxValue)]
         public static void Initialize() {
             typeof(CelesteTasImports).ModInterop();
             Installed = CelesteTasImports.IsTasActive is not null;

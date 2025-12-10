@@ -53,6 +53,8 @@ public static class DialogIds {
     public const string SaveTimeAndDeaths = "SPEEDRUN_TOOL_SAVE_TIME_AND_DEATHS";
     public const string SaveTimeAndDeathsDescription = "SPEEDRUN_TOOL_SAVE_TIME_AND_DEATHS_DESCRIPTION";
     public const string SaveExtendedVariants = "SPEEDRUN_TOOL_SAVE_EXTENDED_VARIANTS";
+    public const string SaveInLuaCutscene = "SPEEDRUN_TOOL_SAVE_IN_LUA_CUTSCENE";
+    public const string SaveInLuaWarn = "SPEEDRUN_TOOL_SAVE_IN_LUA_WARN";
     public const string SaveState = "SPEEDRUN_TOOL_SAVE_STATE";
     public const string LoadState = "SPEEDRUN_TOOL_LOAD_STATE";
     public const string ClearState = "SPEEDRUN_TOOL_CLEAR_STATE";

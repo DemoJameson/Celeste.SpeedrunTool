@@ -176,6 +176,10 @@ public static class DeepClonerUtils {
                     return weakTable;
                 }
 
+                if (sourceObj is Entity e) {
+                    DesyncRiskAnalyzer.Check(e);
+                }
+
                 return SaveLoadInterop.CustomDeepCloneObject(sourceObj);
             }
         });

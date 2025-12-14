@@ -12,11 +12,11 @@ internal static class DesyncRiskAnalyzer {
 
     // similar to Force.DeepCloner DeepClonerSafeTypes
 
-    private static readonly ConcurrentDictionary<Type, bool> KnownTypes = new ConcurrentDictionary<Type, bool>();
+    private static readonly ConcurrentDictionary<Type, bool> KnownTypes = new();
 
     private static readonly HashSet<Type> DesyncEntityTypes = [];
 
-    private static readonly Dictionary<Type, Func<Entity, bool>> SpecialHandlers = new(); // returns if the entity is actively working
+    private static readonly Dictionary<Type, Func<Entity, bool>> SpecialHandlers = []; // returns if the entity is actively working
 
     internal static bool CheckAll = true;
 
@@ -117,6 +117,7 @@ internal static class DesyncRiskAnalyzer {
         if (!Enabled) {
             return;
         }
+        // 在每个 Level 第一次 SL 时, CheckAll = true, 尽可能多地执行检查, 方便后续在 EarlyCheck 阶段就终止.
         if (!CheckAll && desyncReason is not null) {
             return;
         }

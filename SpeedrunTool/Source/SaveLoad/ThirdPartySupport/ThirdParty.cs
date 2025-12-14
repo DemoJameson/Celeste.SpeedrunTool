@@ -13,7 +13,6 @@ internal static class ThirdParty {
         PandorasBoxUtils.Support();
         SpringCollab2020Utils.Support();
         ExtendedVariantsUtils.Support();
-        IsaGrabBagUtils.Support();
         SpirialisHelperUtils.Support();
         DeathTrackerHelperUtils.Support();
         BrokemiaHelperUtils.Support();
@@ -27,6 +26,7 @@ internal static class ThirdParty {
             CrystallineHelperSupport();
             VivHelperSupport();
             XaphanHelperSupport();
+            IsaGrabBagSupport();
             LocksmithHelperSupport();
         }
 
@@ -65,6 +65,12 @@ internal static class ThirdParty {
         }
         private static void XaphanHelperSupport() {
             SaveLoadAction.CloneModTypeFields("XaphanHelper", "Celeste.Mod.XaphanHelper.Upgrades.SpaceJump", "jumpBuffer");
+        }
+
+        internal static void IsaGrabBagSupport() {
+            // 解决读档后冲进 DreamSpinner 会被刺死
+            SaveLoadAction.CloneModTypeFields("IsaGrabBag", "Celeste.Mod.IsaGrabBag.GrabBagModule", "ZipLineState", "playerInstance");
+            SaveLoadAction.CloneModTypeFields("IsaGrabBag", "Celeste.Mod.IsaGrabBag.BadelineFollower", "booster", "LookForBubble");
         }
         private static void LocksmithHelperSupport() {
             SaveLoadAction.CloneModTypeFields("LocksmithHelper", "Celeste.Mod.LocksmithHelper.Entities.Key", "Inventory");

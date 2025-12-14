@@ -562,13 +562,14 @@ public sealed class SaveLoadAction {
     private static void FilterStaticFields() {
         // 过滤掉非法的字段
         // 例如未安装 DJMapHelper 时 ExtendedVariantsMode 的 AutoDestroyingReverseOshiroModder.stateMachine
+        // 不止会有 TargetInvocationException, 此外 LeniencyHelper 还会有未绑定泛型参数造成的异常
         foreach (Type type in simpleStaticFields.Keys.ToArray()) {
             FieldInfo[] fieldInfos = simpleStaticFields[type].Where(info => {
                 try {
                     info.GetValue(null);
                     return true;
                 }
-                catch (TargetInvocationException) {
+                catch {
                     return false;
                 }
             }).ToArray();

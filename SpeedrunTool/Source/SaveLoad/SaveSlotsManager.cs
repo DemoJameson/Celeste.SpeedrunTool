@@ -84,11 +84,9 @@ internal static class SaveSlotsManager {
                 MoreSaveSlotsUI.Snapshot.RequireCaptureSnapshot(SlotName);
             }
         }
-#if DEBUG
         if (!b) {
             Logger.Verbose("SpeedrunTool/SaveState", popup);
         }
-#endif
 
         return b;
     }
@@ -104,11 +102,9 @@ internal static class SaveSlotsManager {
             b = StateManagerInstance.LoadStateImpl(false, out string message);
             popup = message;
         }
-#if DEBUG
         if (!b) {
             Logger.Verbose("SpeedrunTool/LoadState", popup);
         }
-#endif
 
         return b;
     }

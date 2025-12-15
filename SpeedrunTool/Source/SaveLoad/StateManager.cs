@@ -234,11 +234,11 @@ public sealed class StateManager {
             return false;
         }
 
-        if (DesyncRiskAnalyzer.EarlyCheckDesyncRisk(level, out string reason2)) {
+        bool shouldDesyncCheck = DesyncRiskAnalyzer.GetAndRefreshIfDesyncCheck();
+        if (shouldDesyncCheck && DesyncRiskAnalyzer.OnBeforeSaveState(level, out string reason2)) {
             popup = reason2;
             return false;
         }
-        DesyncRiskAnalyzer.OnBeforeSaveState();
 
         if (IsSaved) {
             ClearBeforeSave = true;
@@ -251,10 +251,8 @@ public sealed class StateManager {
 #endif
 
         SaveLoadAction.InitSlots();
-
         State = State.Saving;
         SavedByTas = tas;
-
         SaveLoadAction.OnBeforeSaveState(level);
         level.DeepCloneToShared(savedLevel = (Level)RuntimeHelpers.GetUninitializedObject(typeof(Level)));
         savedSaveData = SaveData.Instance.DeepCloneShared();
@@ -263,8 +261,7 @@ public sealed class StateManager {
         SaveLoadAction.OnSaveState(level);
         DeepClonerUtils.ClearSharedDeepCloneState();
 
-        DesyncRiskAnalyzer.OnAfterSaveState();
-        if (DesyncRiskAnalyzer.LateCheckDesyncRisk(out string reason3)) {
+        if (shouldDesyncCheck && DesyncRiskAnalyzer.OnAfterSaveState(out string reason3)) {
             popup = reason3;
             ClearStateImpl(hasGc: false);
             return false;

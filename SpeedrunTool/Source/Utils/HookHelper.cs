@@ -30,3 +30,9 @@ internal static class HookHelper {
         }));
     }
 }
+
+internal static class DetourContextHelper {
+    public static IDisposable Use(string ID = "SpeedrunTool", int? priority = null, IEnumerable<string>? Before = null, IEnumerable<string>? After = null) {
+        return new DetourConfigContext(new DetourConfig(ID, priority, Before, After)).Use();
+    }
+}

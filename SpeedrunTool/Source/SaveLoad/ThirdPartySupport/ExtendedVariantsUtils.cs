@@ -34,6 +34,10 @@ internal static class ExtendedVariantsUtils {
             return;
         }
 
+        if (ModUtils.GetType("ExtendedVariantMode", "ExtendedVariants.VariantRandomizer")?.GetMethod("RefreshEnabledVariantsDisplayList") is not { } refreshDisplayListMethod) {
+            return;
+        }
+
         List<PropertyInfo> settingProperties = settingsType.GetProperties(BindingFlags.Instance | BindingFlags.Public)
             .Where(property => property.CanRead
                                && property.CanWrite
@@ -70,6 +74,8 @@ internal static class ExtendedVariantsUtils {
                         settingsInstance.SetPropertyValue(propertyName, dict[propertyName]);
                     }
                 }
+
+                refreshDisplayListMethod.Invoke(null, []);
             });
     }
 }

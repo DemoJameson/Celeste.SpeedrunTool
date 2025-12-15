@@ -52,7 +52,7 @@ internal class Snapshot {
 
     internal static string DemandingSlot;
 
-    private static void CaptureSnapshots(Scene scene, Snapshot instance) {
+    private static void CaptureSnapshots(Level level, Snapshot instance) {
         // codes are modified from AssetReloadHelper
         GraphicsDevice graphicsDevice = Engine.Instance.GraphicsDevice;
         Viewport viewport = Engine.Viewport;
@@ -62,12 +62,12 @@ internal class Snapshot {
         Color[] array = new Color[width * height];
         bool success = true;
         try {
-            scene.BeforeRender();
+            level.BeforeRender();
             graphicsDevice.Viewport = viewport;
             graphicsDevice.SetRenderTarget(null);
             graphicsDevice.Clear(Engine.ClearColor);
-            scene.Render();
-            scene.AfterRender();
+            level.Render();
+            level.AfterRender();
             graphicsDevice.GetBackBufferData(viewport.Bounds, array, 0, array.Length);
         }
         catch (Exception e) {
@@ -97,12 +97,13 @@ internal class Snapshot {
 
     [Load]
     private static void Load() {
-        On.Monocle.Scene.BeforeRender += CaptureSnapshotsBeforeRender;
+        
+        On.Celeste.Level.BeforeRender += CaptureSnapshotsBeforeRender;
     }
 
     [Unload]
     private static void Unload() {
-        On.Monocle.Scene.BeforeRender -= CaptureSnapshotsBeforeRender;
+        On.Celeste.Level.BeforeRender -= CaptureSnapshotsBeforeRender;
     }
 
     [Initialize]
@@ -110,8 +111,9 @@ internal class Snapshot {
         for (int i = 1; i <= 9; i++) {
             LegalNames[i] = SaveSlotsManager.GetSlotName(i);
         }
+        LegalNames[0] = "DONT_USE_IT";
     }
-    private static void CaptureSnapshotsBeforeRender(On.Monocle.Scene.orig_BeforeRender orig, Scene self) {
+    private static void CaptureSnapshotsBeforeRender(On.Celeste.Level.orig_BeforeRender orig, Level self) {
         if (ScheduledCaptureSnapshots) {
             ScheduledCaptureSnapshots = false;
             // immediately set it so there won't be infinite loop

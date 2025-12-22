@@ -1,4 +1,4 @@
-using Celeste.Editor;
+﻿using Celeste.Editor;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -122,7 +122,7 @@ public class EndPoint : Entity {
                     ModSettings.ControllerSetEndPoint
                 );
 
-                return keyText == null ? manualText : $"{keyText,-14}Set room as timer endpoint\n\n{manualText}";
+                return keyText == null ? manualText : $"{keyText,-14}Set room as timer endpoint (SpeedrunTool)\n\n{manualText}";
             });
         }
     }

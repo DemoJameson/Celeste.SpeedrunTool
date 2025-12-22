@@ -4,7 +4,7 @@ SPEEDRUN_TOOL_OFF= OFF
 SPEEDRUN_TOOL_ALL= ALL
 
 # ================================== Mod Options Menu ==================================
-SPEEDRUN_TOOL=              Speedrun Tool
+SPEEDRUN_TOOL=              Speedrun Tool - legacy
 SPEEDRUN_TOOL_ENABLED=      Enabled
 SPEEDRUN_TOOL_ROOM_TIMER=   Room Timer
 SPEEDRUN_TOOL_STATE=        State

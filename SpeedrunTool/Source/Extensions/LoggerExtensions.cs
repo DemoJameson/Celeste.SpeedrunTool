@@ -3,7 +3,7 @@
 
 namespace Celeste.Mod.SpeedrunTool.Extensions {
     internal static class LoggerExtensions {
-        private const string Tag = "SpeedrunTool";
+        private const string Tag = "SpeedrunTool - legacy";
 
         public static void Log(this object message, LogLevel logLevel = LogLevel.Warn) {
             string levelInfo = "";

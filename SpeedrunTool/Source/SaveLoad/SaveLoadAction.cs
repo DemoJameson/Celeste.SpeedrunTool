@@ -225,15 +225,6 @@ public sealed class SaveLoadAction {
         ReleaseEventInstances();
     }
 
-    internal static void LogSavedValues() {
-        foreach (SaveLoadAction slAction in All) {
-            Logger.Log("SRT", "=================");
-            foreach (KeyValuePair<Type, Dictionary<string, object>> pair in slAction.savedValues) {
-                Logger.Log("SRT", pair.Key.FullName);
-            }
-        }
-    }
-
     private static void InitFields() {
         simpleStaticFields = new Dictionary<Type, FieldInfo[]>();
         modModuleFields = new Dictionary<Type, FieldInfo[]>();

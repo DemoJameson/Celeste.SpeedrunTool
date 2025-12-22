@@ -5,6 +5,11 @@ namespace Celeste.Mod.SpeedrunTool;
 
 // ReSharper disable once ClassNeverInstantiated.Global
 public class SpeedrunToolModule : EverestModule {
+
+#pragma warning disable
+    public static bool IsLegacy = true;
+#pragma warning restore
+
     public static SpeedrunToolModule Instance { get; private set; }
 
     public static SpeedrunToolSaveData SaveData {

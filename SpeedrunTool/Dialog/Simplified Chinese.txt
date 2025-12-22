@@ -4,7 +4,7 @@ SPEEDRUN_TOOL_OFF= 关
 SPEEDRUN_TOOL_ALL= 全部
 
 # ================================== Mod Options Menu ==================================
-SPEEDRUN_TOOL=                  速通辅助工具
+SPEEDRUN_TOOL=                  速通辅助工具 (旧版)
 SPEEDRUN_TOOL_ENABLED=          开关
 SPEEDRUN_TOOL_ROOM_TIMER=       房间计时器
 SPEEDRUN_TOOL_STATE=            保存状态

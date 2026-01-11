@@ -1,4 +1,4 @@
-using Celeste.Mod.Helpers;
+﻿using Celeste.Mod.Helpers;
 using Celeste.Mod.SpeedrunTool.Utils;
 using System.Collections.Generic;
 
@@ -14,19 +14,22 @@ internal class AutoUpdatePreventer {
             cursor.Goto(-1);
             cursor.EmitDelegate(Handler);
         });
+    }
 
-        static SortedDictionary<ModUpdateInfo, EverestModuleMetadata> Handler(SortedDictionary<ModUpdateInfo, EverestModuleMetadata> updateList) {
-            ModUpdateInfo srt = null;
-            foreach (ModUpdateInfo info in updateList.Keys) {
-                if (info.Name == "SpeedrunTool") {
-                    srt = info;
-                    break;
-                }
-            }
-            if (srt is not null) {
-                updateList.Remove(srt);
-            }
+    private static SortedDictionary<ModUpdateInfo, EverestModuleMetadata> Handler(SortedDictionary<ModUpdateInfo, EverestModuleMetadata> updateList) {
+        if (updateList is null) {
             return updateList;
         }
+        ModUpdateInfo srt = null;
+        foreach (ModUpdateInfo info in updateList.Keys) {
+            if (info.Name == "SpeedrunTool") {
+                srt = info;
+                break;
+            }
+        }
+        if (srt is not null) {
+            updateList.Remove(srt);
+        }
+        return updateList;
     }
 }

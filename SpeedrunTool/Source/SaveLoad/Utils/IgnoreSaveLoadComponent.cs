@@ -5,7 +5,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
 
 [Tracked]
 public class IgnoreSaveLoadComponent : Component {
-    private static readonly Dictionary<Entity, bool> IgnoredEntities = new();
+    private static readonly List<(Entity entity, bool based)> IgnoredEntities = new();
 
     private bool based;
 
@@ -19,15 +19,17 @@ public class IgnoreSaveLoadComponent : Component {
     public static void RemoveAll(Level level) {
         IgnoredEntities.Clear();
         level.Tracker.GetComponentsCopy<IgnoreSaveLoadComponent>().ForEach(component => {
-            IgnoredEntities.Add(component.Entity, ((IgnoreSaveLoadComponent)component).based);
-            level.RemoveImmediately(component.Entity);
+            bool based = ((IgnoreSaveLoadComponent)component).based;
+            Entity entity = component.Entity;
+            IgnoredEntities.Add((entity, based));
+            level.RemoveImmediately(entity, based);
         });
     }
 
     public static void ReAddAll(Level level) {
-        foreach (KeyValuePair<Entity, bool> pair in IgnoredEntities) {
-            level.AddImmediately(pair.Key, pair.Value);
-            if (pair.Key is EndPoint point) {
+        foreach ((Entity entity, bool based) in IgnoredEntities) {
+            level.AddImmediately(entity, based);
+            if (entity is EndPoint point) {
                 point.ReadyForTime();
             }
         }

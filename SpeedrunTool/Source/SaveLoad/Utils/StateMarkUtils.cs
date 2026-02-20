@@ -1,4 +1,4 @@
-using Celeste.Mod.SpeedrunTool.RoomTimer;
+﻿using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using System.Collections.Generic;
@@ -7,6 +7,7 @@ using System.Linq;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
 
 internal static class StateMarkUtils {
+    // it's a typo ("Sate" vs "State"), but unluckily it's already used in many mods, so we have to keep it
     private const string SavedStateFlag = "SpeedrunTool_SavedSate";
     private static SpriteBank mySpriteBank;
 
@@ -91,13 +92,13 @@ internal static class StateMarkUtils {
         cursor.Emit(OpCodes.Brfalse, beforeInstr);
 
         cursor.Emit(OpCodes.Ldstr, "afdded");
-        cursor.Emit(OpCodes.Call, typeof(Calc).GetMethod("HexToColor", new[] { typeof(string) }));
+        cursor.Emit(OpCodes.Call, typeof(Calc).GetMethod("HexToColor", [typeof(string)]));
         cursor.Emit(OpCodes.Ldarg, 6);
         cursor.Emit(OpCodes.Call, typeof(Color).GetMethod("op_Multiply"));
         cursor.Emit(OpCodes.Stloc, 5);
 
         cursor.Emit(OpCodes.Ldstr, "8fc7db");
-        cursor.Emit(OpCodes.Call, typeof(Calc).GetMethod("HexToColor", new[] { typeof(string) }));
+        cursor.Emit(OpCodes.Call, typeof(Calc).GetMethod("HexToColor", [typeof(string)]));
         cursor.Emit(OpCodes.Ldarg, 6);
         cursor.Emit(OpCodes.Call, typeof(Color).GetMethod("op_Multiply"));
         cursor.Emit(OpCodes.Stloc, 6);

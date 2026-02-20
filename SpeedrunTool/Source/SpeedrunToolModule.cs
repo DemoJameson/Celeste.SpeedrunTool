@@ -40,12 +40,12 @@ public class SpeedrunToolModule : EverestModule {
             "/ speedrun tool 计时器升级优化" +
             "/ 增加选项使得 AssetReload 后不要清理存档 (有 mapper 需要)" +
             "/ 此外也测一测 entity removed 到底发挥作用没有, 特别是带 hook 副作用的" +
-            "/ IgnoreSaveLoadComponent 之前的实现应该不支持多存档" +
             "/ ModInterop 加入 IgnoreSaveLoad/ReturnSameObject(type) 的版本" +
             "       这里如果 type 是 entity 就处理完 Scene 之后原样返回 (PreClone 阶段), 否则直接原样返回 (KnownType 阶段)" +
             "/ 引入 Trigger, 使得可以告诉 SRT 哪些关卡是可以安全地存档的 (LuaCutscene 相关). 并在 SRT 发布时告诉 jesss#6307" +
             "       可能此事也加入 ModInterop" +
-            "/ 引入 Trigger 或者某种全局实体, 使得可以告诉 SRT 传送的顺序";
+            "/ 引入 Trigger 或者某种全局实体, 使得可以告诉 SRT 传送的顺序" +
+            "/ SRT 群反馈的问题";
         
         throw new NotImplementedException(todo);
 #endif

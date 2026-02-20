@@ -5,25 +5,31 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
 
 [Tracked]
 public class IgnoreSaveLoadComponent : Component {
-    private static readonly Dictionary<Entity, bool> IgnoredEntities = new();
+    // 一切行为都在单个 Save/LoadStateImpl 中, 因此天然地支持多存档
+    private static readonly Dictionary<Entity, bool> IgnoredEntities = [];
 
     // The Added/Removed method of the entity will not be triggered when based is true
-    private bool based;
+    private readonly bool based;
 
     // backward compatibility
-    public IgnoreSaveLoadComponent() : base(false, false) { this.based = false; }
+    public IgnoreSaveLoadComponent() : base(false, false) { based = false; }
 
     public IgnoreSaveLoadComponent(bool based) : base(false, false) {
         this.based = based;
     }
 
+    // 在 before save/load state 的时候 RemoveAll
+
     public static void RemoveAll(Level level) {
         IgnoredEntities.Clear();
         level.Tracker.GetComponentsCopy<IgnoreSaveLoadComponent>().ForEach(component => {
-            IgnoredEntities.Add(component.Entity, ((IgnoreSaveLoadComponent)component).based);
-            level.RemoveImmediately(component.Entity);
+            bool b = ((IgnoreSaveLoadComponent)component).based;
+            IgnoredEntities.Add(component.Entity, b);
+            level.RemoveImmediately(component.Entity, b);
         });
     }
+
+    // 在 save/load state 的时候 ReAddAll
 
     public static void ReAddAll(Level level) {
         foreach (KeyValuePair<Entity, bool> pair in IgnoredEntities) {

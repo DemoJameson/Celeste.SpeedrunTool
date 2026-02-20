@@ -8,6 +8,7 @@ using NLua;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
@@ -144,6 +145,22 @@ public static class DeepClonerUtils {
                     object[] parameters = { null };
                     sourceObj.InvokeMethod("TryGetTarget", parameters);
                     return type.GetConstructorInfo(genericType).Invoke(parameters.DeepClone(deepCloneState));
+                }
+
+                // 手动克隆 ConditionalWeakTable<TKey, TValue>
+                // 之前好像不能正确支持 SMH+ v1.7.2 (尽管 SMH+ 自己内部写的也有问题)
+                if (sourceObj.GetType() is { } conditionalWeakTableType && conditionalWeakTableType.IsConditionalWeakTable(out _, out _)) {
+                    object weakTable = Activator.CreateInstance(conditionalWeakTableType);
+                    MethodInfo addMethod = conditionalWeakTableType.GetMethodInfo("Add");
+
+                    foreach (object kvp in (IEnumerable)sourceObj) {
+                        object clonedKey = kvp.GetPropertyValue("Key").DeepClone(deepCloneState);
+                        object clonedValue = kvp.GetPropertyValue("Value").DeepClone(deepCloneState);
+                        if (clonedKey != null && clonedValue != null) {
+                            addMethod.Invoke(weakTable, [clonedKey, clonedValue]);
+                        }
+                    }
+                    return weakTable;
                 }
 
                 return SpeedrunToolInterop.CustomDeepCloneObject(sourceObj);

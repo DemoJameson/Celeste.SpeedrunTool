@@ -1,4 +1,4 @@
-﻿using Celeste.Mod.SpeedrunTool.RoomTimer;
+using Celeste.Mod.SpeedrunTool.RoomTimer;
 using System.Collections.Generic;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
@@ -7,6 +7,8 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
 public class IgnoreSaveLoadComponent : Component {
     // 一切行为都在单个 Save/LoadStateImpl 中, 因此天然地支持多存档
     private static readonly List<(Entity entity, bool based)> IgnoredEntities = [];
+
+    private static readonly Dictionary<Type, bool> IgnoredEntityTypes = [];
 
     // The Added/Removed method of the entity will not be triggered when based is true
     private readonly bool based;
@@ -25,8 +27,17 @@ public class IgnoreSaveLoadComponent : Component {
             bool based = ((IgnoreSaveLoadComponent)component).based;
             Entity entity = component.Entity;
             IgnoredEntities.Add((entity, based));
-            level.RemoveImmediately(entity, based);
         });
+        foreach (KeyValuePair<Type, bool> kvp in IgnoredEntityTypes) {
+            bool based = kvp.Value;
+            foreach (Entity entity in level.Tracker.GetEntitiesTrackIfNeeded(kvp.Key)) {
+                IgnoredEntities.Add((entity, based));
+            }
+        }
+
+        foreach ((Entity entity, bool based) in IgnoredEntities) {
+            level.RemoveImmediately(entity, based);
+        }
     }
 
     // 在 save/load state 的时候 ReAddAll
@@ -39,6 +50,23 @@ public class IgnoreSaveLoadComponent : Component {
         }
 
         IgnoredEntities.Clear();
+    }
+
+    public static void Ignore(Entity entity, bool based = false) {
+        entity.Add(new IgnoreSaveLoadComponent(based));
+    }
+
+    public static void Ignore(Type type, bool based = false) {
+        if (type.IsSameOrSubclassOf(typeof(Entity))) {
+            IgnoredEntityTypes[type] = based;
+        }
+        else {
+            throw new Exception($"SpeedrunTool/IgnoreSaveLoadComponent: {type} does not derive from Entity!");
+        }
+    }
+
+    public static void RemoveIgnore(Type type) {
+        IgnoredEntityTypes.Remove(type);
     }
 }
 

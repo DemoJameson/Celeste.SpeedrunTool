@@ -613,7 +613,7 @@ public sealed class StateManager {
             failReason = "Cannot Save while Level is Paused!";
             return false;
         }
-        if (level.IsPlayerDead() && !ModSettings.AllowStateDuringDeath) {
+        if (!ModSettings.AllowStateDuringDeath && level.IsPlayerDead()) {
             failReason = "Cannot Save while Player is Dead!";
             return false;
         }

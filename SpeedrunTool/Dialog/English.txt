@@ -44,6 +44,9 @@ SPEEDRUN_TOOL_SAVE_TIME_AND_DEATHS_DESCRIPTION=Turning this on will include time
 SPEEDRUN_TOOL_SAVE_EXTENDED_VARIANTS=      Save Extended Variants
 SPEEDRUN_TOOL_SAVE_IN_LUA_CUTSCENE=        Enable Save in Lua Cutscene
 SPEEDRUN_TOOL_SAVE_IN_LUA_WARN=            WARNING: Save state in lua cutscene often leads to unexpected behavior.
+SPEEDRUN_TOOL_ALLOW_STATE_DURING_DEATH=    Allow State during Death
+SPEEDRUN_TOOL_CLEAR_STATE_ON_HOT_RELOAD=   Auto Clear State on Hot Reloading
+SPEEDRUN_TOOL_CLEAR_STATE_ON_HOT_RELOAD_TIP=Recommended to turn on.
 SPEEDRUN_TOOL_SAVE_STATE=                  Save State
 SPEEDRUN_TOOL_LOAD_STATE=                  Load State
 SPEEDRUN_TOOL_CLEAR_STATE=                 Clear State
@@ -68,7 +71,6 @@ SPEEDRUN_TOOL_CLEAR_STATE_DIALOG_BADELINE=
 SPEEDRUN_TOOL_NOT_SAVED_STATE_YET_DIALOG_BADELINE=
     [BADELINE left yell]
     Not saved state yet!
-SPEEDRUN_TOOL_ALLOW_STATE_DURING_DEATH=    Allow State during Death
 
 # ================================== End Point Style ==================================
 SPEEDRUN_TOOL_FLAG=       Flag

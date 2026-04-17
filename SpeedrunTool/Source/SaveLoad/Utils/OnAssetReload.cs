@@ -20,10 +20,14 @@ internal static class OnAssetReload {
     }
 
     private static void BeforeReload(bool silent) {
-        SaveSlotsManager.ClearAll();
+        if (ModSettings.ClearStateOnHotReload) {
+            SaveSlotsManager.ClearAll();
+        }
     }
 
     private static void AfterReload(bool silent) {
-        SaveSlotsManager.AfterAssetReload();
+        if (ModSettings.ClearStateOnHotReload) {
+            SaveSlotsManager.AfterAssetReload();
+        }
     }
 }

@@ -2,15 +2,17 @@ using Celeste.Mod.SpeedrunTool.SaveLoad;
 using MonoMod.ModInterop;
 using System.Collections.Generic;
 using System.Linq;
+using Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
 
 namespace Celeste.Mod.SpeedrunTool.ModInterop;
 
 public static class SaveLoadInterop {
     private static readonly List<Func<Type, bool>> returnSameObjectPredicates = new();
     private static readonly List<Func<object, object>> customDeepCloneProcessors = new();
+    private static readonly HashSet<Type> returnSameObjectTypes = new();
 
     internal static bool CanReturnSameObject(Type type) {
-        return returnSameObjectPredicates.Any(predicate => predicate(type));
+        return returnSameObjectTypes.Contains(type) || returnSameObjectPredicates.Any(predicate => predicate(type));
     }
 
     internal static object CustomDeepCloneObject(object sourceObject) {
@@ -77,7 +79,43 @@ public static class SaveLoadInterop {
         /// <param name="entity">Ignored entity</param>
         /// <param name="based">The Added/Removed method of the entity will not be triggered when based is true</param>
         public static void IgnoreSaveState(Entity entity, bool based = false) {
-            entity.Add(new SaveLoad.Utils.IgnoreSaveLoadComponent(based));
+            IgnoreSaveLoadComponent.Ignore(entity, based);
+        }
+
+        /// <summary>
+        /// Ignore the entities when saving state. They will be removed before saving state and then added into level after loading state.
+        /// </summary>
+        /// <param name="entityType">Ignored entity</param>
+        /// <param name="based">The Added/Removed method of the entity will not be triggered when based is true</param>
+        /// appear in v3.28
+        public static void IgnoreSaveState(Type entityType, bool based = false) {
+            IgnoreSaveLoadComponent.Ignore(entityType, based);
+        }
+
+        /// <summary>
+        /// Determine which type needs to return the same object when deep cloning.
+        /// </summary>
+        /// appear in v3.28
+        public static void AddReturnSameObjectType(Type type) {
+            if (type.IsSameOrSubclassOf(typeof(Entity))) {
+                IgnoreSaveLoadComponent.Ignore(type, false);
+            }
+            else {
+                returnSameObjectTypes.Add(type);
+            }
+        }
+
+        /// <summary>
+        /// Remove previously added type.
+        /// </summary>
+        /// appear in v3.28
+        public static void RemoveReturnSameObjectType(Type type) {
+            if (type.IsSameOrSubclassOf(typeof(Entity))) {
+                IgnoreSaveLoadComponent.RemoveIgnore(type);
+            }
+            else {
+                returnSameObjectTypes.Remove(type);
+            }
         }
 
         /// <summary>

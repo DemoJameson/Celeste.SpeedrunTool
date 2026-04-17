@@ -71,6 +71,8 @@ public static class DialogIds {
     public const string NoMessageAfterSaveLoad = "SPEEDRUN_TOOL_NO_MESSAGE_AFTER_SAVE_LOAD";
     public const string NoMessageAfterSaveLoadDescription = "SPEEDRUN_TOOL_NO_MESSAGE_AFTER_SAVE_LOAD_DESCRIPTION";
     public const string AllowStateDuringDeath = "SPEEDRUN_TOOL_ALLOW_STATE_DURING_DEATH";
+    public const string ClearStateOnHotReload = "SPEEDRUN_TOOL_CLEAR_STATE_ON_HOT_RELOAD";
+    public const string ClearStateOnHotReloadTip = "SPEEDRUN_TOOL_CLEAR_STATE_ON_HOT_RELOAD_TIP";
 
     // End Point Style
     public const string Flag = "SPEEDRUN_TOOL_FLAG";

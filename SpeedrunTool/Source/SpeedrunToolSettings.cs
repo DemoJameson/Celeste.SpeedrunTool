@@ -1,4 +1,4 @@
-﻿using Celeste.Mod.SpeedrunTool.Message;
+using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
@@ -69,6 +69,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public bool SaveInLuaCutscene { get; set; } = false;
     public bool NoMessageAfterSaveLoad { get; set; } = false;
     public bool AllowStateDuringDeath { get; set; } = false;
+    public bool ClearStateOnHotReload { get; set; } = true;
 
     #endregion
 

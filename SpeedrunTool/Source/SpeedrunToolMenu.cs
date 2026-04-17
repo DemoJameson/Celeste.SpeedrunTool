@@ -171,6 +171,11 @@ public static class SpeedrunToolMenu {
             subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AllowStateDuringDeath), ModSettings.AllowStateDuringDeath).Change(b =>
                 ModSettings.AllowStateDuringDeath = b));
 
+            TextMenu.Item clearOnHotReload;
+            subMenu.Add(clearOnHotReload = new TextMenu.OnOff(Dialog.Clean(DialogIds.ClearStateOnHotReload), ModSettings.ClearStateOnHotReload).Change(
+                b => ModSettings.ClearStateOnHotReload = b));
+            AddDescription(clearOnHotReload, subMenu, menu, Dialog.Clean(DialogIds.ClearStateOnHotReloadTip));
+
             TextMenu.Item noMessageAfterSaveLoad;
             subMenu.Add(noMessageAfterSaveLoad = new TextMenu.OnOff(Dialog.Clean(DialogIds.NoMessageAfterSaveLoad), ModSettings.NoMessageAfterSaveLoad).Change(b =>
                 ModSettings.NoMessageAfterSaveLoad = b));
@@ -214,19 +219,16 @@ public static class SpeedrunToolMenu {
                 ModSettings.RestartChapterSpeed = i));
 
             subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.SkipRestartChapterScreenWipe), ModSettings.SkipRestartChapterScreenWipe).Change(
-                b =>
-                    ModSettings.SkipRestartChapterScreenWipe = b));
+                b => ModSettings.SkipRestartChapterScreenWipe = b));
 
             subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AllowPauseDuringDeath), ModSettings.AllowPauseDuringDeath).Change(b =>
                 ModSettings.AllowPauseDuringDeath = b));
 
-            subMenu.Add(
-                new TextMenu.OnOff(Dialog.Clean(DialogIds.MuteInBackground), ModSettings.MuteInBackground).Change(b =>
-                    ModSettings.MuteInBackground = b));
+            subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.MuteInBackground), ModSettings.MuteInBackground).Change(b =>
+                ModSettings.MuteInBackground = b));
 
             subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.FixCoreRefillDashAfterTeleport), ModSettings.FixCoreRefillDashAfterTeleport)
-                .Change(b =>
-                    ModSettings.FixCoreRefillDashAfterTeleport = b));
+                .Change(b => ModSettings.FixCoreRefillDashAfterTeleport = b));
 
             subMenu.Add(new EnumerableSliderCompact<PopupMessageStyle>(Dialog.Clean(DialogIds.PopupMessageStyle),
                 CreateEnumerableOptions<PopupMessageStyle>(), ModSettings.PopupMessageStyle).Change(value => {

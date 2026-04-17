@@ -1,4 +1,4 @@
-using Celeste.Mod.SpeedrunTool.RoomTimer;
+﻿using Celeste.Mod.SpeedrunTool.RoomTimer;
 using System.Collections.Generic;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
@@ -6,7 +6,7 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
 [Tracked]
 public class IgnoreSaveLoadComponent : Component {
     // 一切行为都在单个 Save/LoadStateImpl 中, 因此天然地支持多存档
-    private static readonly Dictionary<Entity, bool> IgnoredEntities = [];
+    private static readonly List<(Entity entity, bool based)> IgnoredEntities = [];
 
     // The Added/Removed method of the entity will not be triggered when based is true
     private readonly bool based;
@@ -19,22 +19,21 @@ public class IgnoreSaveLoadComponent : Component {
     }
 
     // 在 before save/load state 的时候 RemoveAll
-
     public static void RemoveAll(Level level) {
         IgnoredEntities.Clear();
         level.Tracker.GetComponentsCopy<IgnoreSaveLoadComponent>().ForEach(component => {
-            bool b = ((IgnoreSaveLoadComponent)component).based;
-            IgnoredEntities.Add(component.Entity, b);
-            level.RemoveImmediately(component.Entity, b);
+            bool based = ((IgnoreSaveLoadComponent)component).based;
+            Entity entity = component.Entity;
+            IgnoredEntities.Add((entity, based));
+            level.RemoveImmediately(entity, based);
         });
     }
 
     // 在 save/load state 的时候 ReAddAll
-
     public static void ReAddAll(Level level) {
-        foreach (KeyValuePair<Entity, bool> pair in IgnoredEntities) {
-            level.AddImmediately(pair.Key, pair.Value);
-            if (pair.Key is EndPoint point) {
+        foreach ((Entity entity, bool based) in IgnoredEntities) {
+            level.AddImmediately(entity, based);
+            if (entity is EndPoint point) {
                 point.ReadyForTime();
             }
         }

@@ -37,7 +37,7 @@ public class SpeedrunToolModule : EverestModule {
 #if RELEASE
         string todo = "Boss Desync (应该好了)" +
             "/ ModSupportNotWell (应该正常了)" +
-            "/ speedrun tool 计时器升级优化" +
+            "/ speedrun tool 计时器升级优化 (dc 私信)" +
             "/ 增加选项使得 AssetReload 后不要清理存档 (有 mapper 需要)" +
             "/ 此外也测一测 entity removed 到底发挥作用没有, 特别是带 hook 副作用的" +
             "/ ModInterop 加入 IgnoreSaveLoad/ReturnSameObject(type) 的版本" +

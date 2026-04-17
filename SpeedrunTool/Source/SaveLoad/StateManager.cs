@@ -180,6 +180,7 @@ public sealed class StateManager {
 
         // v3.28 新功能: 切换 Scene 时不再自动删除 SaveState.
         // 由于我们还保存了 Celeste.SaveData.Instance, 因此我们的多存档甚至可以存储 不同的原版存档文件上的不同章节
+        // todo: 目前这个功能还有问题, 比如资源有时候好像没有正确加载
 
         if (ModSettings.AutoClearStateOnSceneSwitch) {
             if (self is Overworld) {

@@ -1,4 +1,3 @@
-using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.Utils;
 using System.Threading.Tasks;
 

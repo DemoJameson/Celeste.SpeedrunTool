@@ -183,12 +183,8 @@ public sealed class StateManager {
         // todo: 目前这个功能还有问题, 比如资源有时候好像没有正确加载
 
         if (ModSettings.AutoClearStateOnSceneSwitch) {
-            if (self is Overworld) {
-                if (!SavedByTas && InGameOverworldHelperIsOpen.Value?.GetValue(null) as bool? != true) {
-                    ClearStateImpl(hasGc: true);
-                }
-            }
-            else if (self.GetSession() is { } session && session.Area != savedLevel.Session.Area) {
+            if (   self is Overworld && !SavedByTas && InGameOverworldHelperIsOpen.Value?.GetValue(null) as bool? != true
+                || self.GetSession() is { } session && session.Area != savedLevel.Session.Area) {
                 ClearStateImpl(hasGc: true);
             }
         }

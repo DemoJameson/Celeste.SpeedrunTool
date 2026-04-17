@@ -168,6 +168,9 @@ public static class SpeedrunToolMenu {
                 ModSettings.SaveInLuaCutscene = b));
             AddDescription(saveInLua, subMenu, menu, Dialog.Clean(DialogIds.SaveInLuaWarn));
 
+            subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AllowStateDuringDeath), ModSettings.AllowStateDuringDeath).Change(b =>
+                ModSettings.AllowStateDuringDeath = b));
+
             TextMenu.Item noMessageAfterSaveLoad;
             subMenu.Add(noMessageAfterSaveLoad = new TextMenu.OnOff(Dialog.Clean(DialogIds.NoMessageAfterSaveLoad), ModSettings.NoMessageAfterSaveLoad).Change(b =>
                 ModSettings.NoMessageAfterSaveLoad = b));

@@ -70,6 +70,7 @@ public static class DialogIds {
     public const string NotSavedStateYetDialogBadeline = "SPEEDRUN_TOOL_NOT_SAVED_STATE_YET_DIALOG_BADELINE";
     public const string NoMessageAfterSaveLoad = "SPEEDRUN_TOOL_NO_MESSAGE_AFTER_SAVE_LOAD";
     public const string NoMessageAfterSaveLoadDescription = "SPEEDRUN_TOOL_NO_MESSAGE_AFTER_SAVE_LOAD_DESCRIPTION";
+    public const string AllowStateDuringDeath = "SPEEDRUN_TOOL_ALLOW_STATE_DURING_DEATH";
 
     // End Point Style
     public const string Flag = "SPEEDRUN_TOOL_FLAG";

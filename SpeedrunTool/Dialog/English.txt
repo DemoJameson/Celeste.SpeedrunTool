@@ -68,6 +68,7 @@ SPEEDRUN_TOOL_CLEAR_STATE_DIALOG_BADELINE=
 SPEEDRUN_TOOL_NOT_SAVED_STATE_YET_DIALOG_BADELINE=
     [BADELINE left yell]
     Not saved state yet!
+SPEEDRUN_TOOL_ALLOW_STATE_DURING_DEATH=    Allow State during Death
 
 # ================================== End Point Style ==================================
 SPEEDRUN_TOOL_FLAG=       Flag

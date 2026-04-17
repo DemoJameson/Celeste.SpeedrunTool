@@ -355,7 +355,7 @@ public sealed class StateManager {
             transitionRoutine = new WeakReference<IEnumerator>(savedTransitionRoutine.DeepCloneShared());
         }
 
-        RestoreAudio1(level);
+        RestoreAudio_1(level);
         RestoreCassetteBlockManager1(level);
         SaveLoadAction.OnLoadState(level);
 
@@ -494,7 +494,7 @@ public sealed class StateManager {
 
     private void LoadStateComplete(Level level) {
         RestoreLevelTime(level);
-        RestoreAudio2();
+        RestoreAudio_2();
         RestoreCassetteBlockManager2(level);
         DeepClonerUtils.ClearSharedDeepCloneState();
         State = State.None;
@@ -510,7 +510,7 @@ public sealed class StateManager {
     }
 
     // 收集需要继续播放的声音
-    private void RestoreAudio1(Level level) {
+    private void RestoreAudio_1(Level level) {
         playingEventInstances.Clear();
 
         foreach (Component component in level.Entities.SelectMany(entity => entity.Components.ToArray())) {
@@ -521,7 +521,7 @@ public sealed class StateManager {
     }
 
     // 等 ScreenWipe 完毕再开始播放
-    private void RestoreAudio2() {
+    private void RestoreAudio_2() {
         foreach (EventInstance instance in playingEventInstances) {
             instance.start();
         }

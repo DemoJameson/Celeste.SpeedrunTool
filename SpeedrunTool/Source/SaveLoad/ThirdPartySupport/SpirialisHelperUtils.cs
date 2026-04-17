@@ -51,23 +51,23 @@ internal static class SpirialisHelperUtils {
             }
 
             SaveLoadAction.InternalSafeAdd(
-                    loadState: (_, level) => {
-                        if (!level.Tracker.Entities.TryGetValue(timeZipMoverType, out List<Entity> zips)) {
-                            return;
+                loadState: (_, level) => {
+                    if (!level.Tracker.Entities.TryGetValue(timeZipMoverType, out List<Entity> zips)) {
+                        return;
+                    }
+
+                    foreach (Entity entity in zips) {
+                        if (entity.GetFieldValue<Helpers.LegacyMonoMod.LegacyILHook>("TimeStreetlightUpdate") is { } ilhook) {
+                            ilhook?.Dispose();
                         }
 
-                        foreach (Entity entity in zips) {
-                            if (entity.GetFieldValue<Helpers.LegacyMonoMod.LegacyILHook>("TimeStreetlightUpdate") is { } ilhook) {
-                                ilhook?.Dispose();
-                            }
-
-                            if (Delegate.CreateDelegate(typeof(ILContext.Manipulator), entity, timeZipMoverType.GetMethodInfo("ZipSequence")) is
-                                ILContext.Manipulator manipulator) {
-                                entity.SetFieldValue("TimeStreetlightUpdate", new Helpers.LegacyMonoMod.LegacyILHook(sequenceMethodInfo, manipulator));
-                            }
+                        if (Delegate.CreateDelegate(typeof(ILContext.Manipulator), entity, timeZipMoverType.GetMethodInfo("ZipSequence")) is
+                            ILContext.Manipulator manipulator) {
+                            entity.SetFieldValue("TimeStreetlightUpdate", new Helpers.LegacyMonoMod.LegacyILHook(sequenceMethodInfo, manipulator));
                         }
                     }
-                );
+                }
+            );
         }
     }
 }

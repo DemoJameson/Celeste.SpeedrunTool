@@ -32,15 +32,18 @@ internal static class PandorasBoxUtils {
             }
 
             if (pipeHelper.GetMethodInfo("AllowComponentsForList") != null && pipeHelper.GetMethodInfo("ShouldAddComponentsForList") != null) {
-                SaveLoadAction.InternalSafeAdd((_, level) => {
-                    if (pipeHelper.InvokeMethod("ShouldAddComponentsForList", level.Entities) as bool? == true) {
-                        pipeHelper.InvokeMethod("AllowComponentsForList", StateManager.Instance.SavedLevel.Entities);
+                SaveLoadAction.InternalSafeAdd(
+                    saveState: (_, level) => {
+                        if (pipeHelper.InvokeMethod("ShouldAddComponentsForList", level.Entities) as bool? == true) {
+                            pipeHelper.InvokeMethod("AllowComponentsForList", StateManager.Instance.SavedLevel.Entities);
+                        }
+                    },
+                    loadState: (_, level) => {
+                        if (pipeHelper.InvokeMethod("ShouldAddComponentsForList", StateManager.Instance.SavedLevel.Entities) as bool? == true) {
+                            pipeHelper.InvokeMethod("AllowComponentsForList", level.Entities);
+                        }
                     }
-                }, (_, level) => {
-                    if (pipeHelper.InvokeMethod("ShouldAddComponentsForList", StateManager.Instance.SavedLevel.Entities) as bool? == true) {
-                        pipeHelper.InvokeMethod("AllowComponentsForList", level.Entities);
-                    }
-                });
+                );
             }
         }
     }

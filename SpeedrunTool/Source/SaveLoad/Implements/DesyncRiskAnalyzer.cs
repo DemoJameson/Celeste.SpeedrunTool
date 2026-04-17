@@ -64,7 +64,6 @@ internal static class DesyncRiskAnalyzer {
                 KnownTypes.TryAdd(type, false);
             }
         }
-
         KnownTypes.TryAdd(typeof(LuaCoroutine), false);
 
         // almost everything relies on LuaCutsceneEntity so detecting the cutscene entity is enough
@@ -72,39 +71,57 @@ internal static class DesyncRiskAnalyzer {
             foreach (Type type in list) {
                 KnownTypes.TryAdd(type, true);
             }
-        }
-        RegisterEarlyCheck(
-            ModUtils.GetType("LuaCutscenes", "Celeste.Mod.LuaCutscenes.LuaCutsceneEntity"),
-            (level, type) => {
-                if (level.InCutscene && level.onCutsceneSkip?.Target?.GetType() == type) {
-                    return true;
-                }
-                if (level.Tracker.GetEntitiesTrackIfNeeded(type) is { } list && list.IsNotNullOrEmpty()) {
-                    // 如果 cs 是 unskippable, 那么可能 Level 并不 InCutscene (而是在结束 Cutscene 的过程中)
-                    foreach (Entity e in list) {
-                        if (!e.GetFieldValue<bool>("Finished")) {
-                            return true;
+
+            RegisterEarlyCheck(
+                ModUtils.GetType("LuaCutscenes", "Celeste.Mod.LuaCutscenes.LuaCutsceneEntity"),
+                (level, type) => {
+                    if (level.InCutscene && level.onCutsceneSkip?.Target?.GetType() == type) {
+                        return true;
+                    }
+                    if (level.Tracker.GetEntitiesTrackIfNeeded(type) is { } list && list.IsNotNullOrEmpty()) {
+                        // 如果 cs 是 unskippable, 那么可能 Level 并不 InCutscene (而是在结束 Cutscene 的过程中)
+                        foreach (Entity e in list) {
+                            if (!e.GetFieldValue<bool>("Finished")) {
+                                return true;
+                            }
                         }
                     }
+                    return false;
                 }
-                return false;
+            );
+
+            // LuaTalker doesn't uses LuaCutsceneEntity
+            RegisterEarlyCheck(
+                ModUtils.GetType("LuaCutscenes", "Celeste.Mod.LuaCutscenes.LuaTalker"),
+                (level, type) => level.InCutscene && level.onCutsceneSkip?.Target?.GetType() == type
+            );
+        }
+
+        // almost everything relies on BossController
+        if (ModUtils.GetAssembly("BossesHelper")?.GetTypes() is { } list2 && list2.IsNotNullOrEmpty()) {
+            foreach (Type type in list2) {
+                KnownTypes.TryAdd(type, true);
             }
-        );
-
-        // LuaTalker doesn't uses LuaCutsceneEntity
-        RegisterEarlyCheck(
-            ModUtils.GetType("LuaCutscenes", "Celeste.Mod.LuaCutscenes.LuaTalker"),
-            (level, type) => level.InCutscene && level.onCutsceneSkip?.Target?.GetType() == type
-        );
-
-        // TODO: support boss helper here
+            RegisterEarlyCheck(
+                ModUtils.GetType("BossesHelper", "Celeste.Mod.BossesHelper.Code.Entities.BossController"),
+                null
+            );
+        }
 
         static void RegisterEarlyCheck(Type type, Func<Level, Type, bool> func) {
-            if (type is null || func is null) {
+            if (type is null) {
                 return;
             }
             KnownTypes.TryAdd(type, true); // it will be checked in EarlyCheck, so it's always safe in LateCheck
-            EarlyCheckSpecialHandlers[type] = func;
+            if (func is null) {
+                if (!type.IsSubclassOf(typeof(Entity))) {
+                    throw new Exception($"{nameof(DesyncRiskAnalyzer)}: {type} is not a subclass of Entity!");
+                }
+                EarlyCheckEntityTypes.Add(type);
+            }
+            else {
+                EarlyCheckSpecialHandlers[type] = func;
+            }
         }
     }
 

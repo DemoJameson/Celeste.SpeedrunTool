@@ -15,6 +15,12 @@ internal static class SpringCollab2020Utils {
         const string b_hooked2 = "rainbowSpinnerHueHooked";
         const string b_hooked3 = "SpikeHooked";
 
+        // 2026.04.17:
+        // 这个的 hook 添加 / 移除写的比其他 mod 麻烦
+        // 因为 SC2020 的 hook 并不是只要对应实体被 removed 就 unhook
+        // 里面的逻辑有点奇怪. 我怀疑应该确实有情形会导致 removed 但不 unhook. 尤其在有 SL 的情况下这非常有可能
+        // 于是我们这里的写法是, 记录下是否 hooked, 然后读档根据 hooked 去更新 hook 状态
+
         if (   ModUtils.GetType("SpringCollab2020", "Celeste.Mod.SpringCollab2020.Entities.RainbowSpinnerColorController") is { } type1
             && type1.GetFieldInfo(b_hooked1) != null
             && Delegate.CreateDelegate(typeof(On.Celeste.CrystalStaticSpinner.hook_GetHue),

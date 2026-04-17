@@ -20,7 +20,8 @@ internal static class BrokemiaHelperUtils {
                         pixelComponent.SetFieldValue("textureChunks", null);
                         pixelComponent.InvokeMethod("CommitChunks");
                     }
-                });
+                }
+            );
         }
     }
 }

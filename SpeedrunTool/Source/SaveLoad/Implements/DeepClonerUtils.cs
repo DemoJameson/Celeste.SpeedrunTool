@@ -163,7 +163,10 @@ public static class DeepClonerUtils {
                 // 之前好像不能正确支持 SMH+ v1.7.2 (尽管 SMH+ 自己内部写的也有问题)
                 if (sourceObj.GetType() is { } conditionalWeakTableType && conditionalWeakTableType.IsConditionalWeakTable(out _, out _)) {
                     object weakTable = Activator.CreateInstance(conditionalWeakTableType);
-                    MethodInfo addMethod = conditionalWeakTableType.GetMethodInfo("Add");
+                    // 当 key 是 Level 时, 由于 SRT 克隆不同的 Level 对象时都会返回 Engine.Scene, 所以可能会出问题
+                    // 导致只能 TryAdd 而非 Add
+                    // https://discord.com/channels/403698615446536203/1520883580933374124/1521136713005662258
+                    MethodInfo addMethod = conditionalWeakTableType.GetMethodInfo("TryAdd");
 
                     foreach (object kvp in (IEnumerable)sourceObj) {
                         object clonedKey = kvp.GetPropertyValue("Key").DeepClone(deepCloneState);
@@ -269,7 +272,7 @@ public static class DeepClonerUtils {
                 // Clone DynamicData
                 // 注意这个和 DynData 不是同一个东西
                 if (DynamicData._DataMap.TryGetValue(sourceObj, out DynamicData._Data_ value) && value.Data.Count > 0) {
-                    DynamicData._DataMap.Add(clonedObj, value.DeepClone(deepCloneState));
+                    DynamicData._DataMap.TryAdd(clonedObj, value.DeepClone(deepCloneState));
                 }
             }
 

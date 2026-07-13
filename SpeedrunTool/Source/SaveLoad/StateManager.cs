@@ -61,12 +61,15 @@ public sealed class StateManager {
 
     private readonly HashSet<EventInstance> playingEventInstances = [];
 
+    // different with Everest's event, which won't work when game freeze
+    internal static event Action<Level> OnAfterUpdate_EvenIfGameFreeze = null;
+
     #region Hook
 
     // manually call this to ensure it's first called
     internal static void Load() {
-        On.Monocle.Scene.BeforeUpdate += MakeGameFreezeAfterSaveLoad;
-        On.Celeste.Level.Update += UpdateBackdropWhenWaiting;
+        On.Celeste.Level.Update += MakeGameFreezeAfterSaveLoad;
+        On.Monocle.Scene.BeforeUpdate += UnfreezeTheGame;
         On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
         IL.Celeste.Level.TransitionRoutine += IL_LevelTransitionRoutine;
         On.Celeste.Level.TransitionRoutine += On_LevelTransitionRoutine;
@@ -80,8 +83,8 @@ public sealed class StateManager {
     }
 
     internal static void Unload() {
-        On.Monocle.Scene.BeforeUpdate -= MakeGameFreezeAfterSaveLoad;
-        On.Celeste.Level.Update -= UpdateBackdropWhenWaiting;
+        On.Celeste.Level.Update -= MakeGameFreezeAfterSaveLoad;
+        On.Monocle.Scene.BeforeUpdate -= UnfreezeTheGame;
         On.Celeste.PlayerDeadBody.End -= AutoLoadStateWhenDeath;
         IL.Celeste.Level.TransitionRoutine -= IL_LevelTransitionRoutine;
         On.Celeste.Level.TransitionRoutine -= On_LevelTransitionRoutine;
@@ -140,7 +143,7 @@ public sealed class StateManager {
         return !lastCheck;
     }
 
-    private static void MakeGameFreezeAfterSaveLoad(On.Monocle.Scene.orig_BeforeUpdate orig, Scene self) {
+    private static void UnfreezeTheGame(On.Monocle.Scene.orig_BeforeUpdate orig, Scene self) {
         if (ModSettings.Enabled && self is Level level && Instance.State == State.Waiting) {
             if (unfreezeInputs.Any(Instance.IsUnfreeze) || Hotkey.CheckDeathStatistics.Pressed()) {
                 Instance.lastChecks.Clear();
@@ -155,18 +158,23 @@ public sealed class StateManager {
         orig(self);
     }
 
-    private static void UpdateBackdropWhenWaiting(On.Celeste.Level.orig_Update orig, Level level) {
+    private static void MakeGameFreezeAfterSaveLoad(On.Celeste.Level.orig_Update orig, Level level) {
         if (Instance.State != State.None) {
+            UpdateBackdropWhenWaiting(level);
+        }
+        else {
+            orig(level);
+        }
+        OnAfterUpdate_EvenIfGameFreeze?.Invoke(level);
+
+        static void UpdateBackdropWhenWaiting(Level level) {
             level.Wipe?.Update(level);
             level.HiresSnow?.Update(level);
             level.Foreground.Update(level);
             level.Background.Update(level);
             level.Tracker.GetEntity<Tooltip>()?.Update();
             level.Tracker.GetEntity<NonFrozenMiniTextbox>()?.Update();
-            return;
         }
-
-        orig(level);
     }
 
     private static readonly Lazy<PropertyInfo> InGameOverworldHelperIsOpen = new(

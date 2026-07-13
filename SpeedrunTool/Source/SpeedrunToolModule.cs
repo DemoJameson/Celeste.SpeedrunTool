@@ -34,7 +34,7 @@ public class SpeedrunToolModule : EverestModule {
     public override Type SaveDataType => typeof(SpeedrunToolSaveData);
 
     public override void Load() {
-#if RELEASE
+#if TEMP_HIDDEN
         string todo = "Boss Desync (应该好了)" +
             "/ ModSupportNotWell (应该正常了)" +
             "/ 增加选项使得 AssetReload 后不要清理存档 (有 mapper 需要, 做好了)" +

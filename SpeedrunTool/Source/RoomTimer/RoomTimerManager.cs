@@ -56,7 +56,7 @@ public static class RoomTimerManager {
     private static void Unload() {
         IL.Celeste.SpeedrunTimerDisplay.Update -= SpeedrunTimerDisplayOnUpdate;
         On.Celeste.SpeedrunTimerDisplay.Render -= Render;
-        StateManager.OnAfterUpdate_EvenIfGameFreeze -= Timing;
+        SaveLoad.StateManager.OnAfterUpdate_EvenIfGameFreeze -= Timing;
         On.Celeste.SummitCheckpoint.Update -= UpdateTimerStateOnTouchFlag;
         On.Celeste.HeartGem.RegisterAsCollected -= HeartGemOnRegisterAsCollected;
         On.Celeste.SaveData.RegisterCassette -= SaveDataOnRegisterCassette;

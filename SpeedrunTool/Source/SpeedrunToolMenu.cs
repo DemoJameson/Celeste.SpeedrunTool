@@ -119,7 +119,7 @@ public static class SpeedrunToolMenu {
                 .Change(b =>
                     ModSettings.AutoClearStateOnScreenTransition = b));
 
-#if TEMP_HIDDEN
+#if DEBUG
             subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AutoClearStateOnSceneSwitch), ModSettings.AutoClearStateOnSceneSwitch)
                 .Change(b =>
                     ModSettings.AutoClearStateOnSceneSwitch = b));

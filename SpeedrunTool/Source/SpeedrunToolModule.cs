@@ -34,10 +34,9 @@ public class SpeedrunToolModule : EverestModule {
     public override Type SaveDataType => typeof(SpeedrunToolSaveData);
 
     public override void Load() {
-#if TEMP_HIDDEN
+#if RELEASE
         string todo = "Boss Desync (应该好了)" +
             "/ ModSupportNotWell (应该正常了)" +
-            "/ 增加选项使得 AssetReload 后不要清理存档 (有 mapper 需要, 做好了)" +
             "/ 此外也测一测 entity removed 到底发挥作用没有, 特别是带 hook 副作用的 (目测有, 懒得测了)" +
             "/ ModInterop 加入 IgnoreSaveLoad/ReturnSameObject(type) 的版本 (应该好了)" +
             "/ 引入 Trigger, 使得可以告诉 SRT 哪些关卡是可以安全地存档的 (LuaCutscene 相关). 并在 SRT 发布时告诉 jesss#6307" +
@@ -48,11 +47,13 @@ public class SpeedrunToolModule : EverestModule {
             "/ 安全账户反应的吃心 1f 误差问题" +
             "/ 试着在 Busy 的时候多在控制台 log 一点东西" +
             "/ 跨 level 的 sl 还是很危险, 比如月之佛塔里外存档, 读档的时候会发现估计是资源没加载之类的问题" +
-            "/ https://discord.com/channels/403698615446536203/1520883580933374124/1521136713005662258 +
-            "/ https://discord.com/channels/403698615446536203/1523162448675340369 +
-            "/ https://discord.com/channels/403698615446536203/1145455251495845949/1525818371998748783 +
+            "/ (如果还是没做好的话, AutoClearStateOnSceneSwitch 在 Menu 里先隐藏掉. 目前是设置的 DEBUG 作为 flag)" +
+            "/ https://discord.com/channels/403698615446536203/1520883580933374124/1521136713005662258" +
+            "/ https://discord.com/channels/403698615446536203/1523162448675340369" +
+            "/ https://discord.com/channels/403698615446536203/1145455251495845949/1525818371998748783" +
+            "/ SSC4 中 Aqua mod 开启似乎就会导致 SL 很卡, 不过仅限于前几次? 但是不开 Aqua 就没事" +
             "/ EmoteMod 传送, 最好还是以特性形式修一半";
-        
+
         throw new NotImplementedException(todo);
 #endif
 

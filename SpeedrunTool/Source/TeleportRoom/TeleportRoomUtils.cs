@@ -187,6 +187,10 @@ public static class TeleportRoomUtils {
         level.Session.Time = time;
         level.Session.Deaths = deaths;
         level.Session.DeathsInCurrentLevel = deathsInCurrentLevel;
+        // 我们不修改 session.StartedFromBeginning (也就是随便传送仍然可以结算到 areaStat 中去)
+        // 但是得把 GrabbedGolden 设置成 false
+        // 否则在带金死亡后, 再传送到之前到的最远房间的话, 仍然有 GrabbedGolden = true, 会在结算时使得 areaModeStats.BestDeaths = 0
+        level.Session.GrabbedGolden = false;
 
         // 修改自 level.TeleportTo(player, session.Level, Player.IntroTypes.Respawn);
         level.Tracker.GetEntitiesCopy<Player>().ForEach(entity => entity.RemoveSelf());

@@ -21,16 +21,6 @@ public sealed class StateManager {
     public static StateManager Instance => SaveSlotsManager.StateManagerInstance;
     internal StateManager() { }
 
-    private readonly Dictionary<VirtualInput, bool> lastChecks = [];
-
-    private static List<VirtualInput> unfreezeInputs = [];
-
-    private static void Input_OnInitialize() {
-        // 每次重置游戏键位后, 这些 VirtualInput 都是新的对象, 因此必须重新获取
-        unfreezeInputs = [Input.Dash, Input.Jump, Input.Grab, Input.MoveX, Input.MoveY, Input.Dash, Input.Aim, Input.Pause, Input.CrouchDash];
-        Instance?.lastChecks?.Clear();
-    }
-
     internal static bool AllowSaveLoadWhenWaiting = false;
 
     // public for tas
@@ -61,35 +51,22 @@ public sealed class StateManager {
 
     private readonly HashSet<EventInstance> playingEventInstances = [];
 
-    // different with Everest's event, which won't work when game freeze
-    internal static event Action<Level> OnAfterUpdate_EvenIfGameFreeze = null;
 
     #region Hook
 
     // manually call this to ensure it's first called
     internal static void Load() {
-        On.Celeste.Level.Update += MakeGameFreezeAfterSaveLoad;
-        On.Monocle.Scene.BeforeUpdate += UnfreezeTheGame;
         On.Celeste.PlayerDeadBody.End += AutoLoadStateWhenDeath;
         IL.Celeste.Level.TransitionRoutine += IL_LevelTransitionRoutine;
         On.Celeste.Level.TransitionRoutine += On_LevelTransitionRoutine;
         On.Celeste.Level.End += LevelOnEnd;
-        SaveLoadAction.InternalSafeAdd(
-            (_, _) => Instance.UpdateLastChecks(),
-            (_, _) => Instance.UpdateLastChecks(),
-            () => Instance.lastChecks.Clear()
-        );
-        Everest.Events.Input.OnInitialize += Input_OnInitialize;
     }
 
     internal static void Unload() {
-        On.Celeste.Level.Update -= MakeGameFreezeAfterSaveLoad;
-        On.Monocle.Scene.BeforeUpdate -= UnfreezeTheGame;
         On.Celeste.PlayerDeadBody.End -= AutoLoadStateWhenDeath;
         IL.Celeste.Level.TransitionRoutine -= IL_LevelTransitionRoutine;
         On.Celeste.Level.TransitionRoutine -= On_LevelTransitionRoutine;
         On.Celeste.Level.End -= LevelOnEnd;
-        Everest.Events.Input.OnInitialize -= Input_OnInitialize;
     }
     private static void IL_LevelTransitionRoutine(ILContext context) {
         ILCursor cursor = new(context);
@@ -119,63 +96,6 @@ public sealed class StateManager {
     }
 
 
-    private void UpdateLastChecks() {
-        if (ModSettings.FreezeAfterLoadStateType != FreezeAfterLoadStateType.IgnoreHoldingKeys) {
-            return;
-        }
-
-        foreach (VirtualInput virtualInput in unfreezeInputs) {
-            lastChecks[virtualInput] = virtualInput.IsCheck();
-        }
-    }
-
-    private bool IsUnfreeze(VirtualInput input) {
-        if (input.IsPressed()) {
-            return true;
-        }
-
-        if (!input.IsCheck()) {
-            return false;
-        }
-
-        bool lastCheck = ModSettings.FreezeAfterLoadStateType == FreezeAfterLoadStateType.IgnoreHoldingKeys &&
-                         lastChecks.TryGetValue(input, out bool value) && value;
-        return !lastCheck;
-    }
-
-    private static void UnfreezeTheGame(On.Monocle.Scene.orig_BeforeUpdate orig, Scene self) {
-        if (ModSettings.Enabled && self is Level level && Instance.State == State.Waiting) {
-            if (unfreezeInputs.Any(Instance.IsUnfreeze) || Hotkey.CheckDeathStatistics.Pressed()) {
-                Instance.lastChecks.Clear();
-                Instance.OutOfFreeze(level);
-            }
-
-            if (Instance.State == State.Waiting) {
-                Instance.UpdateLastChecks();
-            }
-        }
-
-        orig(self);
-    }
-
-    private static void MakeGameFreezeAfterSaveLoad(On.Celeste.Level.orig_Update orig, Level level) {
-        if (Instance.State != State.None) {
-            UpdateBackdropWhenWaiting(level);
-        }
-        else {
-            orig(level);
-        }
-        OnAfterUpdate_EvenIfGameFreeze?.Invoke(level);
-
-        static void UpdateBackdropWhenWaiting(Level level) {
-            level.Wipe?.Update(level);
-            level.HiresSnow?.Update(level);
-            level.Foreground.Update(level);
-            level.Background.Update(level);
-            level.Tracker.GetEntity<Tooltip>()?.Update();
-            level.Tracker.GetEntity<NonFrozenMiniTextbox>()?.Update();
-        }
-    }
 
     private static readonly Lazy<PropertyInfo> InGameOverworldHelperIsOpen = new(
         () => ModUtils.GetType("CollabUtils2", "Celeste.Mod.CollabUtils2.UI.InGameOverworldHelper")?.GetPropertyInfo("IsOpen")
@@ -667,7 +587,7 @@ public sealed class StateManager {
         });
     }
 
-    private void OutOfFreeze(Level level) {
+    internal void OutOfFreeze(Level level) {
         if (freezeType == FreezeType.Save || savedLevel == null) {
             if (savedLevel != null) {
                 RestoreLevelTime(level);

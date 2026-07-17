@@ -1,9 +1,8 @@
 
+using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework.Graphics;
-using Mono.Cecil.Cil;
-using MonoMod.Cil;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -183,7 +182,6 @@ internal static class SnapshotUI {
 
     [Load]
     private static void Load() {
-        IL.Monocle.Engine.Update += IL_Engine_Update;
         On.Celeste.Level.Render += RenderSnapshots;
         Hotkey.ToggleSaveLoadUI.RegisterPressedAction(_ => {
             if (Engine.Scene is Level { Paused: false }) {
@@ -195,7 +193,6 @@ internal static class SnapshotUI {
 
     [Unload]
     private static void Unload() {
-        IL.Monocle.Engine.Update -= IL_Engine_Update;
         On.Celeste.Level.Render -= RenderSnapshots;
     }
 
@@ -210,6 +207,8 @@ internal static class SnapshotUI {
 
     #region AnimConfig
     private static bool tabIn = false;
+
+    internal static bool OnScreen => tabIn || easeY > 0f;
 
     private static float easeY = 0f;
 
@@ -274,30 +273,7 @@ internal static class SnapshotUI {
         focusOnItem = false;
     }
 
-    private static void IL_Engine_Update(ILContext il) {
-        ILCursor cursor = new(il);
-        if (cursor.TryGotoNext(MoveType.After, ins => ins.MatchCall(typeof(MInput), nameof(MInput.Update)))) {
-            // Prevent further execution
-            ILLabel label = cursor.DefineLabel();
-            cursor.EmitDelegate(Update);
-            cursor.EmitDelegate(IsPaused);
-            cursor.Emit(OpCodes.Brfalse, label);
-            cursor.Emit(OpCodes.Ret);
-            cursor.MarkLabel(label);
-        }
-    }
-
-    private static bool IsPaused() {
-        if (Engine.Scene is Level && easeY > 0f) {
-            if (ModInterop.TasUtils.Running) {
-                Close();
-                return false;
-            }
-            return true;
-        }
-        return false;
-    }
-    private static void Update() {
+    internal static void Update() {
         // 懒得找合适的现成工具了, 干脆手搓动画效果
         if (tabIn && easeY < 1f) {
             easeY += DeltaY;
@@ -450,7 +426,8 @@ internal static class SnapshotUI {
         minX = 0;
         minY = 0;
         maxX = viewWidth;
-        maxY = viewHeight;
+        float spaceForTooltip = (ActiveFont.Measure("T").Y + Tooltip.Padding / 2f) / Engine.Height;
+        maxY = viewHeight * (1f + HeightPaddingPercent - spaceForTooltip);
 
         TitleRender("SPEEDRUN TOOL", MathHelper.Lerp(TitleY1, TitleY2, yAnim));
 

@@ -1,4 +1,5 @@
 using Celeste.Editor;
+using Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Mono.Cecil.Cil;
@@ -17,6 +18,7 @@ public class EndPoint : Entity {
 
     [Load]
     private static void Load() {
+        IgnoreSaveLoadComponent.Ignore(typeof(EndPoint));
         On.Celeste.Level.End += LevelOnEnd;
         On.Celeste.Level.Begin += LevelOnBegin;
         On.Celeste.Editor.MapEditor.Render += MapEditorOnRender;
@@ -164,7 +166,6 @@ public class EndPoint : Entity {
         Add(new PlayerCollider(OnCollidePlayer));
         Add(new BloomPoint(Vector2.UnitY * -8, 0.5f, 18f));
         Add(new VertexLight(Vector2.UnitY * -8, Color.White, 1f, 24, 48));
-        Add(new SaveLoad.Utils.IgnoreSaveLoadComponent());
 
         // saved madeline sprite
         CreateMadelineSprite(player);

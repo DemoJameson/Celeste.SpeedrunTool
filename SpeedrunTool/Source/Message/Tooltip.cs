@@ -1,3 +1,4 @@
+using Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
 using System.Collections;
 using System.Linq;
 
@@ -5,11 +6,16 @@ namespace Celeste.Mod.SpeedrunTool.Message;
 
 [Tracked]
 public class Tooltip : Entity {
-    private const int Padding = 25;
+    internal const int Padding = 25;
     private readonly string message;
     private float alpha;
     private float unEasedAlpha;
     private readonly float duration;
+
+    [Load]
+    private static void Load() {
+        IgnoreSaveLoadComponent.Ignore(typeof(Tooltip));
+    }
 
     private Tooltip(string message, float duration = 1f) {
         this.message = message;
@@ -18,7 +24,6 @@ public class Tooltip : Entity {
         Position = new(Padding, Engine.Height - messageSize.Y - Padding / 2f);
         Tag = Tags.HUD | Tags.Global | Tags.FrozenUpdate | Tags.PauseUpdate | Tags.TransitionUpdate;
         Add(new Coroutine(Show()));
-        Add(new SaveLoad.Utils.IgnoreSaveLoadComponent());
     }
 
     private IEnumerator Show() {

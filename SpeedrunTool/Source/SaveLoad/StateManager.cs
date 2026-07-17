@@ -127,6 +127,7 @@ public sealed class StateManager {
         if (ModSettings.Enabled
             && ModSettings.AutoLoadStateAfterDeath
             && Instance.IsSaved
+            && !TasUtils.Running
             && !Instance.SavedByTas
             && !self.finished
             && Engine.Scene is Level level

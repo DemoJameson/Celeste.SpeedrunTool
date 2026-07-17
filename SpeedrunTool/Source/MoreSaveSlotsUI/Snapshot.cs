@@ -96,7 +96,7 @@ internal class Snapshot {
 
     [Load]
     private static void Load() {
-        
+
         On.Celeste.Level.BeforeRender += CaptureSnapshotsBeforeRender;
     }
 

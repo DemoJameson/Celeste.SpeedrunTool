@@ -10,7 +10,7 @@ using System.Linq;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 internal static class GameFreezeManager {
 
-    public static State State => StateManager.Instance.State;
+    private static State State => StateManager.Instance.State;
 
     private static readonly Dictionary<VirtualInput, bool> LastChecks = [];
 
@@ -27,7 +27,6 @@ internal static class GameFreezeManager {
 
     [Load]
     private static void Load() {
-
         IL.Monocle.Engine.Update += IL_Engine_Update;
         On.Celeste.Level.Update += MakeGameFreezeAfterSaveLoad;
         On.Monocle.Scene.BeforeUpdate += UnfreezeTheGame;
@@ -41,7 +40,6 @@ internal static class GameFreezeManager {
 
     [Unload]
     private static void Unload() {
-
         IL.Monocle.Engine.Update -= IL_Engine_Update;
         On.Celeste.Level.Update -= MakeGameFreezeAfterSaveLoad;
         On.Monocle.Scene.BeforeUpdate -= UnfreezeTheGame;

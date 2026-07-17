@@ -21,7 +21,7 @@ internal static class SpringCollab2020Utils {
         // 里面的逻辑有点奇怪. 我怀疑应该确实有情形会导致 removed 但不 unhook. 尤其在有 SL 的情况下这非常有可能
         // 于是我们这里的写法是, 记录下是否 hooked, 然后读档根据 hooked 去更新 hook 状态
 
-        if (   ModUtils.GetType("SpringCollab2020", "Celeste.Mod.SpringCollab2020.Entities.RainbowSpinnerColorController") is { } type1
+        if (ModUtils.GetType("SpringCollab2020", "Celeste.Mod.SpringCollab2020.Entities.RainbowSpinnerColorController") is { } type1
             && type1.GetFieldInfo(b_hooked1) != null
             && Delegate.CreateDelegate(typeof(On.Celeste.CrystalStaticSpinner.hook_GetHue),
                     type1.GetMethodInfo("getRainbowSpinnerHue")) is On.Celeste.CrystalStaticSpinner.hook_GetHue hookGetHue

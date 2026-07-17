@@ -30,7 +30,7 @@ internal static class ExtendedVariantsUtils {
                     module.GetFieldValue("TriggerManager") is { } triggerManager) {
                     savedValues[moduleType] = new Dictionary<string, object> { { "TriggerManager", triggerManager.DeepCloneShared() } };
                 }
-            }, 
+            },
             loadState: (savedValues, _) => {
                 if (savedValues.TryGetValue(moduleType, out Dictionary<string, object> dictionary) &&
                     dictionary.TryGetValue("TriggerManager", out object savedTriggerManager) &&

@@ -1,8 +1,8 @@
 using Celeste.Mod.SpeedrunTool.SaveLoad;
+using Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
 using MonoMod.ModInterop;
 using System.Collections.Generic;
 using System.Linq;
-using Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
 
 namespace Celeste.Mod.SpeedrunTool.ModInterop;
 

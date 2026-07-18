@@ -165,4 +165,5 @@ public static class DialogIds {
     public const string Hotkeys = "SPEEDRUN_TOOL_HOTKEYS";
     public const string HotkeysConfig = "SPEEDRUN_TOOL_HOTKEYS_CONFIG";
     public const string UnlockCamera = "SPEEDRUN_TOOL_UNLOCK_CAMERA";
+    public const string EmoteModPULP = "SPEEDRUN_TOOL_EMOTE_MOD_PULP";
 }

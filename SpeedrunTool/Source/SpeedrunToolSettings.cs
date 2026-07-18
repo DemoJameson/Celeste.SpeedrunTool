@@ -88,6 +88,8 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public bool AllowPauseDuringDeath { get; set; } = false;
     public bool MuteInBackground { get; set; } = false;
     public bool FixCoreRefillDashAfterTeleport { get; set; } = true;
+
+    public bool EmoteModPULP { get; set; } = true;
     public PopupMessageStyle PopupMessageStyle { get; set; } = PopupMessageStyle.Tooltip;
     public SpeedrunType AreaCompleteEnableTimerType { get; set; } = SpeedrunType.Off;
     public bool Hotkeys { get; set; } = true;

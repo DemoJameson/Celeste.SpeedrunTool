@@ -105,14 +105,14 @@ public sealed class SaveLoadAction {
 
     internal static SaveLoadAction InternalSafeAdd(Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState = null,
         Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState = null, Action clearState = null,
-        Action<Level> beforeSaveState = null, Action<Level> beforeLoadState = null, Action preCloneEntities = null) {
+        Action<Level> beforeSaveState = null, Action<Level> beforeLoadState = null, Action preCloneEntities = null, int skipFrames = 2) {
         if (internalActionInitialized) {
             throw new Exception("Internal SaveLoad actions are added after expected time!");
         }
         SaveLoadAction saveLoadAction = new(CreateSlAction(saveState), CreateSlAction(loadState), clearState, beforeSaveState, beforeLoadState, preCloneEntities);
         saveLoadAction.executeOrder = contextOrder.GetValueOrDefault(Order_InternalOtherAction);
 #if DEBUG
-        AddDebugDescription(saveLoadAction, internalCall: true);
+        AddDebugDescription(saveLoadAction, internalCall: true, skipFrame: skipFrames);
 #endif
         SharedActions.Add(saveLoadAction);
         return saveLoadAction;
@@ -131,17 +131,15 @@ public sealed class SaveLoadAction {
         SaveLoadAction saveLoadAction = new(CreateSlAction(saveState), CreateSlAction(loadState), clearState, beforeSaveState, beforeLoadState, preCloneEntities);
         saveLoadAction.executeOrder = Order_ExternalAction;
 #if DEBUG
-        AddDebugDescription(saveLoadAction, internalCall: false);
+        AddDebugDescription(saveLoadAction, internalCall: false, skipFrame: 3);
 #endif
         SharedActions.Add(saveLoadAction);
         return saveLoadAction;
     }
 
 #if DEBUG
-    private static void AddDebugDescription(SaveLoadAction action, bool internalCall = true) {
-        int frame = internalCall ? 2 : 3;
-        System.Diagnostics.StackTrace stackTrace = new System.Diagnostics.StackTrace();
-        System.Diagnostics.StackFrame stackFrame = stackTrace.GetFrame(frame);
+    private static void AddDebugDescription(SaveLoadAction action, bool internalCall, int skipFrame) {
+        System.Diagnostics.StackFrame stackFrame = new System.Diagnostics.StackTrace(skipFrame).GetFrame(0);
         if (stackFrame.GetMethod() is { } method) {
             if (internalCall) {
                 action.ActionDescription = $"{method.DeclaringType?.FullName?.

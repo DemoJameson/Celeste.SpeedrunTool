@@ -175,3 +175,4 @@ SPEEDRUN_TOOL_CLIPBOARD=                           剪贴板
 SPEEDRUN_TOOL_HOTKEYS=                             快捷键
 SPEEDRUN_TOOL_HOTKEYS_CONFIG=                      快捷键设置
 SPEEDRUN_TOOL_UNLOCK_CAMERA=                       解锁镜头
+SPEEDRUN_TOOL_EMOTE_MOD_PULP=                      允许 PULP 技巧 (EmoteMod)

@@ -174,3 +174,4 @@ SPEEDRUN_TOOL_CLIPBOARD=                           Clipboard
 SPEEDRUN_TOOL_HOTKEYS=                             Hotkeys
 SPEEDRUN_TOOL_HOTKEYS_CONFIG=                      Hotkeys Config
 SPEEDRUN_TOOL_UNLOCK_CAMERA=                       Unlock Camera
+SPEEDRUN_TOOL_EMOTE_MOD_PULP=                      Allow PULP Technique (EmoteMod)

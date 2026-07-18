@@ -232,6 +232,10 @@ public static class SpeedrunToolMenu {
             subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.FixCoreRefillDashAfterTeleport), ModSettings.FixCoreRefillDashAfterTeleport)
                 .Change(b => ModSettings.FixCoreRefillDashAfterTeleport = b));
 
+            if (SaveLoad.ThirdPartySupport.EmoteModUtils.Installed) {
+                subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.EmoteModPULP), ModSettings.EmoteModPULP).Change(b => ModSettings.EmoteModPULP = b));
+            }
+
             subMenu.Add(new EnumerableSliderCompact<PopupMessageStyle>(Dialog.Clean(DialogIds.PopupMessageStyle),
                 CreateEnumerableOptions<PopupMessageStyle>(), ModSettings.PopupMessageStyle).Change(value => {
                     ModSettings.PopupMessageStyle = value;

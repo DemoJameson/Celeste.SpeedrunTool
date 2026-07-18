@@ -20,6 +20,7 @@ internal static class ThirdParty {
         SpirialisHelperUtils.Support();
         DeathTrackerHelperUtils.Support();
         BrokemiaHelperUtils.Support();
+        EmoteModUtils.Support();
     }
 
 
@@ -39,7 +40,7 @@ internal static class ThirdParty {
 
 
         private static void CloneModTypeFields(string modName, params TypeFieldsTuple[] tuples) {
-            if (ModUtils.GetAssembly(modName) is not { }) {
+            if (!ModUtils.IsInstalled(modName)) {
                 return;
             }
 
@@ -64,7 +65,8 @@ internal static class ThirdParty {
                         SaveLoadAction.SaveStaticMemberValues(savedValues, pair.Item1, pair.Item2);
                     }
                 },
-                (savedValues, _) => SaveLoadAction.LoadStaticMemberValues(savedValues)
+                (savedValues, _) => SaveLoadAction.LoadStaticMemberValues(savedValues),
+                skipFrames: 3
             );
         }
 
@@ -77,7 +79,6 @@ internal static class ThirdParty {
 
         [Obsolete("these partially exist in CommunalHelper, we plan to remove it from SRT")]
         private static void CommunalHelperSupport() {
-
             CloneModTypeFields("CommunalHelper",
                 new TypeFieldsTuple("Celeste.Mod.CommunalHelper.DashStates.SeekerDash",
                     "hasSeekerDash", "seekerDashAttacking", "seekerDashTimer", "seekerDashLaunched", "launchPossible")
@@ -141,7 +142,6 @@ internal static class ThirdParty {
 
         private static void EmoteModSupport() {
             CloneModTypeFields("EmoteMod",
-                new TypeFieldsTuple("Celeste.Mod.EmoteMod.GravityModule", "playerY"),
                 new TypeFieldsTuple("Celeste.Mod.EmoteMod.EmoteModMain", "anim_by_game"),
                 new TypeFieldsTuple("Celeste.Mod.EmoteMod.MadhuntModule", "inRound"),
                 new TypeFieldsTuple("Celeste.Mod.EmoteMod.SpeedModule", "currentDelay"),

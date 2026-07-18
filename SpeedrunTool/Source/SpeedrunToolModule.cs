@@ -34,7 +34,7 @@ public class SpeedrunToolModule : EverestModule {
     public override Type SaveDataType => typeof(SpeedrunToolSaveData);
 
     public override void Load() {
-#if RELEASE
+#if RELEASE_HIDDEN
         string todo = "Boss Desync (应该好了)" +
             "/ ModSupportNotWell (应该正常了)" +
             "/ 此外也测一测 entity removed 到底发挥作用没有, 特别是带 hook 副作用的 (目测有, 懒得测了)" +

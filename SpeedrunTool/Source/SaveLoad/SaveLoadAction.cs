@@ -261,8 +261,9 @@ public sealed class SaveLoadAction {
         }
     }
     public static void LoadStaticMemberValues(Dictionary<Type, Dictionary<string, object>> values) {
-        // 使用时总是和 SaveStaticMemberValues 捆绑成一个 SaveLoadAction 使用
-        // 由于每个 SaveLoadAction 都有自己独立的字典, 因此这边的读取实际上并不会多读什么. type 和 memberNames 也不用作为参数 (不像 SaveStaticMemberValues 时)
+        // 使用时总是 (多个 SaveStaticMemberValues + 一个 LoadStaticMemberValues) 捆绑成一个 SaveLoadAction 使用
+        // 由于每个 SaveLoadAction 都有自己独立的字典, 因此这边的读取实际上并不会多读什么
+        // type 和 memberNames 自动地在这个双层字典中可以读出来, 不需要我们提供
         foreach (KeyValuePair<Type, Dictionary<string, object>> pair in values) {
             foreach (string memberName in pair.Value.Keys) {
                 Type type = pair.Key;
@@ -976,13 +977,5 @@ public sealed class SaveLoadAction {
             },
             preCloneEntities: () => ClonedEventInstancesWhenPreClone.Clear()
         );
-    }
-
-    internal static void CloneModTypeFields(string modName, string typeFullName, params string[] fields) {
-        if (ModUtils.GetType(modName, typeFullName) is { } modType) {
-            InternalSafeAdd(
-                (savedValues, _) => SaveStaticMemberValues(savedValues, modType, fields),
-                (savedValues, _) => LoadStaticMemberValues(savedValues));
-        }
     }
 }

@@ -160,7 +160,7 @@ internal static class TypeExtensions {
     }
 
     public static bool IsCompilerGenerated(this Type type) {
-        return type.Name.StartsWith("<");
+        return type.Name.StartsWith('<');
     }
 
     public static bool IsConst(this FieldInfo fieldInfo) {

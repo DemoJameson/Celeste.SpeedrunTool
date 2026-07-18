@@ -9,9 +9,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.ThirdPartySupport;
 internal static class SpirialisHelperUtils {
 
     internal static void Support() {
-        SaveLoadAction.CloneModTypeFields("SpirialisHelper", "Celeste.Mod.Spirialis.TimePlayerSettings", "instance", "stoppedX", "stoppedY");
-        SaveLoadAction.CloneModTypeFields("SpirialisHelper", "Celeste.Mod.Spirialis.CustomRainBG", "timeSinceFreeze");
-
         if (ModUtils.GetType("SpirialisHelper", "Celeste.Mod.Spirialis.TimeController") is { } timeControllerType) {
             SaveLoadAction action = SaveLoadAction.InternalSafeAdd(
                 loadState: (_, level) => {

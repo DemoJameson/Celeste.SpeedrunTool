@@ -30,12 +30,12 @@ internal static class GameFreezeManager {
         IL.Monocle.Engine.Update += IL_Engine_Update;
         On.Celeste.Level.Update += MakeGameFreezeAfterSaveLoad;
         On.Monocle.Scene.BeforeUpdate += UnfreezeTheGame;
+        Everest.Events.Input.OnInitialize += Input_OnInitialize;
         SaveLoadAction.InternalSafeAdd(
             (_, _) => UpdateLastChecks(),
             (_, _) => UpdateLastChecks(),
             () => LastChecks.Clear()
         );
-        Everest.Events.Input.OnInitialize += Input_OnInitialize;
     }
 
     [Unload]
@@ -45,6 +45,7 @@ internal static class GameFreezeManager {
         On.Monocle.Scene.BeforeUpdate -= UnfreezeTheGame;
         Everest.Events.Input.OnInitialize -= Input_OnInitialize;
     }
+
 
 
     #region Freeze_AfterSaveLoad

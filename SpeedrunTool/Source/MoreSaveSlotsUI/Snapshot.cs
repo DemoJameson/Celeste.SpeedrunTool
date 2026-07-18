@@ -426,8 +426,13 @@ internal static class SnapshotUI {
         minX = 0;
         minY = 0;
         maxX = viewWidth;
-        float spaceForTooltip = (ActiveFont.Measure("T").Y + Tooltip.Padding / 2f) / Engine.Height;
-        maxY = viewHeight * (1f + HeightPaddingPercent - spaceForTooltip);
+        if (SaveLoadHotkeys.SaveLoadStateShowMessage) {
+            float spaceForTooltip = (ActiveFont.Measure("T").Y + Tooltip.Padding / 2f) / Engine.Height;
+            maxY = viewHeight * (1f + HeightPaddingPercent - spaceForTooltip);
+        }
+        else {
+            maxY = viewHeight;
+        }
 
         TitleRender("SPEEDRUN TOOL", MathHelper.Lerp(TitleY1, TitleY2, yAnim));
 

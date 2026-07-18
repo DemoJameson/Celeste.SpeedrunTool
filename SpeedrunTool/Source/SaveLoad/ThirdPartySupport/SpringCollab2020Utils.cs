@@ -5,9 +5,6 @@ using System.Collections.Generic;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.ThirdPartySupport;
 internal static class SpringCollab2020Utils {
     internal static void Support() {
-        SaveLoadAction.CloneModTypeFields("SpringCollab2020", "Celeste.Mod.SpringCollab2020.Entities.RainbowSpinnerColorController",
-            "spinnerControllerOnScreen", "nextSpinnerController", "transitionProgress");
-
         const string key1 = "RainbowSpinnerColorController";
         const string key2 = "RainbowSpinnerColorAreaController";
         const string key3 = "SpikeHooked";

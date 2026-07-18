@@ -73,12 +73,24 @@ public class EndPoint : Entity {
 
     private static void LevelTemplateOnRenderContents(ILContext il) {
         ILCursor ilCursor = new(il);
+
+        // Everest 6399 or higher
         if (ilCursor.TryGotoNext(MoveType.After,
-                ins => ins.MatchLdfld<LevelTemplate>("EditorColorIndex"),
-                ins => ins.OpCode == OpCodes.Ldelem_Any
+                ins => ins.MatchCall<LevelTemplate>("get_EditorColor")
             )) {
             ilCursor.Emit(OpCodes.Ldarg_0)
                 .EmitDelegate<Func<Color, LevelTemplate, Color>>((color, template) => template.Name == roomIdEndPoint ? Color.Yellow : color);
+        }
+        // Everest 6397 or lower
+        else {
+            ilCursor.Goto(0);
+            if (ilCursor.TryGotoNext(MoveType.After,
+                    ins => ins.MatchLdfld<LevelTemplate>("EditorColorIndex"),
+                    ins => ins.OpCode == OpCodes.Ldelem_Any
+                )) {
+                ilCursor.Emit(OpCodes.Ldarg_0)
+                    .EmitDelegate<Func<Color, LevelTemplate, Color>>((color, template) => template.Name == roomIdEndPoint ? Color.Yellow : color);
+            }
         }
     }
 

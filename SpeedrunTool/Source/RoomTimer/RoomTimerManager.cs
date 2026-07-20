@@ -47,6 +47,7 @@ public static class RoomTimerManager {
         On.Celeste.SaveData.RegisterCassette += SaveDataOnRegisterCassette;
         On.Celeste.LevelExit.ctor += LevelExitOnCtor;
         IL.Celeste.TotalStrawberriesDisplay.Update += MoveStrawberryDisplayDown;
+        AutoSplitter.OnUpdateInfo += OverwriteAutosplitterChapterTime;
         TryTurnOffRoomTimer();
         RegisterHotkeys();
     }
@@ -61,6 +62,7 @@ public static class RoomTimerManager {
         On.Celeste.SaveData.RegisterCassette -= SaveDataOnRegisterCassette;
         On.Celeste.LevelExit.ctor -= LevelExitOnCtor;
         IL.Celeste.TotalStrawberriesDisplay.Update -= MoveStrawberryDisplayDown;
+        AutoSplitter.OnUpdateInfo -= OverwriteAutosplitterChapterTime;
     }
 
     private static void RegisterHotkeys() {
@@ -333,6 +335,12 @@ public static class RoomTimerManager {
     public static void TryTurnOffRoomTimer() {
         if (ModSettings.AutoResetRoomTimer) {
             SwitchRoomTimer(RoomTimerType.Off);
+        }
+    }
+
+    private static void OverwriteAutosplitterChapterTime(ref AutoSplitter.CoreAutoSplitterInfo info, Func<string, nint> stringWriter) {
+        if (ModSettings.Enabled && ModSettings.RoomTimerType is not RoomTimerType.Off) {
+            info.ChapterTime = Data_Auto.AutosplitterTime;
         }
     }
 

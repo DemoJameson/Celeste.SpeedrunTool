@@ -46,8 +46,8 @@ public static class RoomTimerManager {
         On.Celeste.HeartGem.RegisterAsCollected += HeartGemOnRegisterAsCollected;
         On.Celeste.SaveData.RegisterCassette += SaveDataOnRegisterCassette;
         On.Celeste.LevelExit.ctor += LevelExitOnCtor;
-        IL.Celeste.AutoSplitterInfo.Update += OverwriteAutosplitterChapterTime;
         IL.Celeste.TotalStrawberriesDisplay.Update += MoveStrawberryDisplayDown;
+        AutoSplitter.OnUpdateInfo += OverwriteAutosplitterChapterTime;
         TryTurnOffRoomTimer();
         RegisterHotkeys();
     }
@@ -61,8 +61,8 @@ public static class RoomTimerManager {
         On.Celeste.HeartGem.RegisterAsCollected -= HeartGemOnRegisterAsCollected;
         On.Celeste.SaveData.RegisterCassette -= SaveDataOnRegisterCassette;
         On.Celeste.LevelExit.ctor -= LevelExitOnCtor;
-        IL.Celeste.AutoSplitterInfo.Update -= OverwriteAutosplitterChapterTime;
         IL.Celeste.TotalStrawberriesDisplay.Update -= MoveStrawberryDisplayDown;
+        AutoSplitter.OnUpdateInfo -= OverwriteAutosplitterChapterTime;
     }
 
     private static void RegisterHotkeys() {
@@ -338,16 +338,9 @@ public static class RoomTimerManager {
         }
     }
 
-    private static void OverwriteAutosplitterChapterTime(ILContext il) {
-        ILCursor cursor = new(il);
-
-        if (cursor.TryGotoNext(MoveType.After, instr => instr.MatchLdfld<Session>("Time"))) {
-            cursor.EmitDelegate<Func<long, long>>((origTime) => {
-                if (ModSettings.Enabled && ModSettings.RoomTimerType is not RoomTimerType.Off) {
-                    return Data_Auto.AutosplitterTime;
-                }
-                return origTime;
-            });
+    private static void OverwriteAutosplitterChapterTime(ref AutoSplitter.CoreAutoSplitterInfo info, Func<string, nint> stringWriter) {
+        if (ModSettings.Enabled && ModSettings.RoomTimerType is not RoomTimerType.Off) {
+            info.ChapterTime = Data_Auto.AutosplitterTime;
         }
     }
 

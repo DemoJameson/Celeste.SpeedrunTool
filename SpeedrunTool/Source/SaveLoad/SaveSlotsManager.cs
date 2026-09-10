@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using EventInstance = FMOD.Studio.EventInstance;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
@@ -118,13 +119,17 @@ internal static class SaveSlotsManager {
     }
 
     public static void ClearAll() {
+        using OperationProgress progress = BusyIndicator.Begin("CLEAR_ALL");
         WaitUntilThreadSafe();
         bool anySaved = false;
+        int completed = 0;
         foreach (SaveSlot slot in Dictionary.Values) {
+            progress?.Report("CLEAR_ALL", slot.Name, completed, Dictionary.Count);
             anySaved = anySaved || slot.StateManager.IsSaved;
             Slot = slot; // 由于 clearState action 可能依赖于 slot, 所以这是必要的
             SlotName = Slot.Name; // Name 当然也要同步修改
             StateManagerInstance.ClearStateImpl(hasGc: false);
+            progress?.Report("CLEAR_ALL", slot.Name, ++completed, Dictionary.Count);
         }
         Dictionary = [];
 
@@ -139,12 +144,17 @@ internal static class SaveSlotsManager {
     private static void HandleSwitchScene(On.Monocle.Scene.orig_Begin orig, Scene self) {
         orig(self);
         SaveSlot current = Slot;
+        using OperationProgress progress = Dictionary.Values.Any(slot => slot.StateManager.IsSaved)
+            ? BusyIndicator.Begin("REBUILD_SLOTS") : null;
         WaitUntilThreadSafe();
+        int completed = 0;
         foreach (SaveSlot slot in SaveSlots) {
+            progress?.Report("REBUILD_SLOTS", slot.Name, completed, Dictionary.Count);
             Slot = slot;
             SlotName = Slot.Name;
             slot.StateManager.HandleSwitchScene(self);
-            slot.StateManager.preCloneTask?.Wait();
+            BusyIndicator.Wait(slot.StateManager.preCloneTask);
+            progress?.Report("REBUILD_SLOTS", slot.Name, ++completed, Dictionary.Count);
             // 因为涉及到存档槽切换, 干脆等一等
         }
         Slot = current;
@@ -173,7 +183,7 @@ internal static class SaveSlotsManager {
         // preCloneTask 涉及到多线程, 而 DeepClonerUtils 会多次用到 StateManager.Instance, 这玩意线程不安全
         // 所以我们一定要等它结束了再说
         foreach (SaveSlot s in SaveSlots) {
-            s.StateManager.preCloneTask?.Wait();
+            BusyIndicator.Wait(s.StateManager.preCloneTask);
         }
         // 此外 clearState 等也有可能访问 StateManager.Instance
     }

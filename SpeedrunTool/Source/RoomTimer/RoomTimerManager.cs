@@ -345,6 +345,7 @@ public static class RoomTimerManager {
     }
 
     private static void ExportRoomTimes() {
+        using OperationProgress progress = BusyIndicator.Begin("EXPORT_TIMES");
         RoomTimerData roomTimerData = Data_Auto;
         string timeKeyPrefix = roomTimerData.TimeKeyPrefix;
         long lastSplitTime = 0;
@@ -354,7 +355,9 @@ public static class RoomTimerManager {
         // Header row
         sb.Append("Room Number,Split,Segment,Best Split,Best Segment");
 
-        for (int roomNumber = 1; roomNumber <= Math.Max(roomTimerData.ThisRunTimes.Count, Math.Max(roomTimerData.PbTimes.Count, roomTimerData.BestSegments.Count)); roomNumber++) {
+        int total = Math.Max(roomTimerData.ThisRunTimes.Count, Math.Max(roomTimerData.PbTimes.Count, roomTimerData.BestSegments.Count));
+        for (int roomNumber = 1; roomNumber <= total; roomNumber++) {
+            progress?.Report("EXPORT_TIMES", "", roomNumber - 1, total);
             string timeKey = timeKeyPrefix + roomNumber;
 
             // Room Number
@@ -384,11 +387,13 @@ public static class RoomTimerManager {
         }
 
         if (ModSettings.RoomTimerExportType is RoomTimerExportType.File) {
+            progress?.Report("WRITE_FILE");
             Directory.CreateDirectory(Path.Combine(Everest.PathGame, "SRTool_RoomTimeExports"));
             using StreamWriter writer = File.CreateText(Path.Combine(Everest.PathGame, "SRTool_RoomTimeExports", $"{DateTime.Now:yyyyMMdd_HHmmss}.csv"));
             writer.WriteLine(sb.ToString());
         }
         else {
+            progress?.Report("CLIPBOARD");
             TextInput.SetClipboardText(sb.ToString());
         }
     }

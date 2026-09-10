@@ -88,6 +88,7 @@ public static class DeathStatisticsManager {
             level.Add(new DeathMark(playbackDeathInfo.DeathPosition));
 
             if (playbackDeathInfo.PlaybackFilePath.IsNotNullOrEmpty() && File.Exists(playbackDeathInfo.PlaybackFilePath)) {
+                using OperationProgress progress = BusyIndicator.Begin("READ_PLAYBACK");
                 List<Player.ChaserState> chaserStates = PlaybackData.Import(FileProxy.ReadAllBytes(playbackDeathInfo.PlaybackFilePath));
                 PlayerSpriteMode spriteMode = level.Session.Inventory.Backpack ? PlayerSpriteMode.Madeline : PlayerSpriteMode.MadelineNoBackpack;
                 if (SaveData.Instance.Assists.PlayAsBadeline) {
@@ -154,6 +155,7 @@ public static class DeathStatisticsManager {
     }
 
     private static void ExportPlayback(Player player) {
+        using OperationProgress progress = BusyIndicator.Begin("WRITE_PLAYBACK");
         string filePath = Path.Combine(PlaybackSlotDir, $"{DateTime.Now.Ticks}.bin");
         if (!Directory.Exists(PlaybackSlotDir)) {
             Directory.CreateDirectory(PlaybackSlotDir);

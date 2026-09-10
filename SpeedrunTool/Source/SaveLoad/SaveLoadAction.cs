@@ -1,4 +1,4 @@
-﻿using Celeste.Mod.SpeedrunTool.DeathStatistics;
+using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad.ThirdPartySupport;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
@@ -184,7 +184,7 @@ public sealed class SaveLoadAction {
         Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict = AllSavedValues;
 #if DEBUG
         System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
-        foreach (SaveLoadAction saveLoadAction in SharedActions) {
+        foreach (SaveLoadAction saveLoadAction in WithProgress("SAVE_CALLBACKS", action => action.saveState)) {
             sw.Restart();
             var before = DebugTool.MemoryTracker.TakeGcSample();
             saveLoadAction.saveState?.Invoke(dict[saveLoadAction.dictionaryId], level);
@@ -196,7 +196,7 @@ public sealed class SaveLoadAction {
             }
         }
 #else
-        foreach (SaveLoadAction saveLoadAction in SharedActions) {
+        foreach (SaveLoadAction saveLoadAction in WithProgress("SAVE_CALLBACKS", action => action.saveState)) {
             saveLoadAction.saveState?.Invoke(dict[saveLoadAction.dictionaryId], level);
         }
 #endif
@@ -206,7 +206,7 @@ public sealed class SaveLoadAction {
         Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict = AllSavedValues;
 #if DEBUG
         System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
-        foreach (SaveLoadAction saveLoadAction in SharedActions) {
+        foreach (SaveLoadAction saveLoadAction in WithProgress("LOAD_CALLBACKS", action => action.loadState)) {
             sw.Restart();
             var before = DebugTool.MemoryTracker.TakeGcSample();
             saveLoadAction.loadState?.Invoke(dict[saveLoadAction.dictionaryId], level);
@@ -218,7 +218,7 @@ public sealed class SaveLoadAction {
             }
         }
 #else
-        foreach (SaveLoadAction saveLoadAction in SharedActions) {
+        foreach (SaveLoadAction saveLoadAction in WithProgress("LOAD_CALLBACKS", action => action.loadState)) {
             saveLoadAction.loadState?.Invoke(dict[saveLoadAction.dictionaryId], level);
         }
 #endif
@@ -239,26 +239,44 @@ public sealed class SaveLoadAction {
             AllSavedValues = null;
             slotInitialized = false;
         }
-        foreach (SaveLoadAction saveLoadAction in SharedActions) {
+        foreach (SaveLoadAction saveLoadAction in WithProgress("CLEAR_CALLBACKS", action => action.clearState)) {
             saveLoadAction.clearState?.Invoke();
         }
     }
 
     internal static void OnBeforeSaveState(Level level) {
-        foreach (SaveLoadAction saveLoadAction in SharedActions) {
+        foreach (SaveLoadAction saveLoadAction in WithProgress("BEFORE_SAVE_CALLBACKS", action => action.beforeSaveState)) {
             saveLoadAction.beforeSaveState?.Invoke(level);
         }
     }
 
     internal static void OnBeforeLoadState(Level level) {
-        foreach (SaveLoadAction saveLoadAction in SharedActions) {
+        foreach (SaveLoadAction saveLoadAction in WithProgress("BEFORE_LOAD_CALLBACKS", action => action.beforeLoadState)) {
             saveLoadAction.beforeLoadState?.Invoke(level);
         }
     }
 
     internal static void OnPreCloneEntities() {
-        foreach (SaveLoadAction saveLoadAction in SharedActions) {
+        foreach (SaveLoadAction saveLoadAction in WithProgress("PRECLONE_CALLBACKS", action => action.preCloneEntities)) {
             saveLoadAction.preCloneEntities?.Invoke();
+        }
+    }
+
+    private static IEnumerable<SaveLoadAction> WithProgress(string stage, Func<SaveLoadAction, Delegate> selectCallback) {
+        // Count only actual callbacks, not empty registrations. Keep their original
+        // order, synchronous execution, exception propagation and shared clone state.
+        int total = SharedActions.Count(action => selectCallback(action) != null);
+        using OperationProgress progress = total > 0 ? BusyIndicator.Begin(stage) : null;
+        int completed = 0;
+        foreach (SaveLoadAction action in SharedActions) {
+            if (selectCallback(action) is not { } callback) {
+                continue;
+            }
+            MethodInfo method = callback.Method;
+            string name = $"{method.DeclaringType?.Assembly.GetName().Name} / {method.DeclaringType?.Name}.{method.Name}";
+            progress?.Report(stage, name, completed, total);
+            yield return action;
+            progress?.Report(stage, name, ++completed, total);
         }
     }
 

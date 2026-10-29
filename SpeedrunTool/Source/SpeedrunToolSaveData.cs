@@ -28,6 +28,7 @@ public class SpeedrunToolSaveData : EverestModuleSaveData {
             return;
         }
 
+        using OperationProgress progress = BusyIndicator.Begin("CLEAN_PLAYBACKS");
         int max = ModSettings.MaxNumberOfDeathData * 10;
         string[] saveFiles = Directory.GetFiles(DeathStatisticsManager.SavePath);
         foreach (string directory in Directory.GetDirectories(DeathStatisticsManager.PlaybackDir)) {
@@ -58,17 +59,23 @@ public class SpeedrunToolSaveData : EverestModuleSaveData {
         }
 
         if (DeathInfos.Count > max) {
+            using OperationProgress progress = BusyIndicator.Begin("CLEAN_PLAYBACKS");
             DeathInfos.RemoveRange(max, DeathInfos.Count - max);
 
-            foreach (string filePath in Directory.GetFiles(DeathStatisticsManager.PlaybackSlotDir)) {
+            string[] files = Directory.GetFiles(DeathStatisticsManager.PlaybackSlotDir);
+            int completed = 0;
+            foreach (string filePath in files) {
+                progress?.Report("CLEAN_PLAYBACKS", Path.GetFileName(filePath), completed, files.Length);
                 if (!DeathInfos.Exists(info => info.PlaybackFilePath == filePath)) {
                     File.Delete(filePath);
                 }
+                progress?.Report("CLEAN_PLAYBACKS", "", ++completed, files.Length);
             }
         }
     }
 
     public void Clear() {
+        using OperationProgress progress = BusyIndicator.Begin("CLEAR_DEATHS");
         Selection = -1;
         DeathInfos.Clear();
         DeathStatisticsManager.Clear();

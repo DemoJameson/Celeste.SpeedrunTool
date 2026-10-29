@@ -171,6 +171,8 @@ public sealed class StateManager {
             return false;
         }
 
+        using OperationProgress progress = BusyIndicator.Begin("SAVE");
+        progress?.Report("CHECK_STATE", SlotName);
         bool shouldDesyncCheck = DesyncRiskAnalyzer.GetAndRefreshIfDesyncCheck();
         if (shouldDesyncCheck && DesyncRiskAnalyzer.OnBeforeSaveState(level, out string reason2)) {
             popup = reason2;
@@ -188,11 +190,14 @@ public sealed class StateManager {
         Stopwatch sw = Stopwatch.StartNew();
 #endif
 
+        progress?.Report("INITIALIZE", SlotName);
         SaveLoadAction.InitSlots();
         State = State.Saving;
         SavedByTas = tas;
         SaveLoadAction.OnBeforeSaveState(level);
+        progress?.Report("CLONE_LEVEL", SlotName);
         level.DeepCloneToShared(savedLevel = (Level)RuntimeHelpers.GetUninitializedObject(typeof(Level)));
+        progress?.Report("CLONE_SAVE_DATA", SlotName);
         savedSaveData = SaveData.Instance.DeepCloneShared();
         savedTasCycleGroupCounter = TasUtils.GroupCounter;
         savedTransitionRoutine = transitionRoutine?.TryGetTarget(out IEnumerator enumerator) == true ? enumerator.DeepCloneShared() : null;
@@ -257,6 +262,8 @@ public sealed class StateManager {
             return false;
         }
 
+        using OperationProgress progress = BusyIndicator.Begin("LOAD");
+
 #if DEBUG
         if (Log_WhenLoading) {
             SaveLoadAction.LogSavedValues(level: savedLevel);
@@ -271,18 +278,23 @@ public sealed class StateManager {
 
         SaveLoadAction.OnBeforeLoadState(level);
 
+        BusyIndicator.Wait(preCloneTask);
         DeepClonerUtils.SetSharedDeepCloneState(preCloneTask?.Result);
 
+        progress?.Report("UNLOAD_LEVEL", SlotName);
         UpdateTimeAndDeaths(level);
         UnloadLevel(level);
 
+        progress?.Report("CLONE_LEVEL", SlotName);
         Tracker.Refresh(savedLevel); // 不能在 OnLoadState 里做. 否则多次读档会需要反复 Refresh Tracker
         savedLevel.DeepCloneToShared(level);
+        progress?.Report("CLONE_SAVE_DATA", SlotName);
         SaveData.Instance = savedSaveData.DeepCloneShared();
         if (savedTransitionRoutine != null) {
             transitionRoutine = new WeakReference<IEnumerator>(savedTransitionRoutine.DeepCloneShared());
         }
 
+        progress?.Report("RESTORE_AUDIO", SlotName);
         RestoreAudio_1(level);
         RestoreCassetteBlockManager1(level);
         SaveLoadAction.OnLoadState(level);
@@ -319,7 +331,8 @@ public sealed class StateManager {
     }
 
     internal bool ClearStateImpl(bool hasGc = true) {
-        preCloneTask?.Wait();
+        using OperationProgress progress = IsSaved || preCloneTask is { IsCompleted: false } ? BusyIndicator.Begin("CLEAR") : null;
+        BusyIndicator.Wait(preCloneTask);
 
         // fix: 读档冻结时被TAS清除状态后无法解除冻结
         if (State == State.Waiting && Engine.Scene is Level level) {
@@ -378,6 +391,9 @@ public sealed class StateManager {
         }
 
         static void GcCollectCore() {
+            using OperationProgress progress = BusyIndicator.Begin("GC");
+            // GC is indivisible: show the correct label before stopping all managed threads.
+            progress?.Refresh(force: true);
             // 以现在卡顿一些为代价, 保证之后游戏流程中尽量不卡顿 (后者更致命)
             // 作为推论, 我们不应该放在其他线程执行此事
 #if DEBUG
@@ -406,7 +422,11 @@ public sealed class StateManager {
 
         // 等效于 Level.UnloadEntities 然后 UpdateLists
 
-        foreach (Entity entity in entities.Distinct()) {
+        using OperationProgress progress = BusyIndicator.Begin("UNLOAD_LEVEL");
+        Entity[] uniqueEntities = entities.Distinct().ToArray();
+        int completed = 0;
+        foreach (Entity entity in uniqueEntities) {
+            progress?.Report("UNLOAD_LEVEL", entity.GetType().Name, completed++, uniqueEntities.Length);
             // TODO: 确定到底哪些 Global entity 可以移除
             // 这里知道的是 MirrorSurfaces 被移除会导致一些 VirtualRenderTarget Dispose
             // 于是如果在存档 1 存档, 在存档 2 清除, 再读档 1, 会崩溃
@@ -428,6 +448,7 @@ public sealed class StateManager {
         }
 
         // 移除剩下声音组件
+        progress?.Report("UNLOAD_LEVEL", "", uniqueEntities.Length, uniqueEntities.Length);
         level.Tracker.GetComponentsCopy<SoundSource>().ForEach(component => component.RemoveSelf());
     }
 

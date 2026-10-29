@@ -146,6 +146,8 @@ public static class TeleportRoomUtils {
             return;
         }
 
+        using OperationProgress progress = BusyIndicator.Begin("TELEPORT");
+        progress?.Report("UNLOAD_LEVEL", session.Level);
         // 修复问题：死亡瞬间传送 PlayerDeadBody 没被清除，导致传送完毕后 madeline 自动爆炸
         level.Entities.UpdateLists();
         level.RendererList.Renderers.ForEach(renderer => (renderer as ScreenWipe)?.Cancel());
@@ -200,14 +202,18 @@ public static class TeleportRoomUtils {
         }
 
         level.UnloadLevel();
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
+        using (OperationProgress gc = BusyIndicator.Begin("GC")) {
+            gc?.Refresh(force: true);
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+        }
 
         level.Completed = false;
         level.InCutscene = false;
         level.SkippingCutscene = false;
 
         // 修复：章节计时器在章节完成隐藏后传送无法重新显示
+        progress?.Report("LOAD_LEVEL", session.Level);
         level.Add(new SpeedrunTimerDisplay());
         level.LoadLevel(Player.IntroTypes.Respawn);
         level.Entities.UpdateLists();

@@ -1,4 +1,4 @@
-﻿# SpeedrunTool 性能优化报告（perf/savestate-optimization 分支）
+# SpeedrunTool 性能优化报告（perf/savestate-optimization 分支）
 
 > 目标：降低 savestate 的内存开销、提高 save/load 速度、并让游戏在持有 savestate 时不再因
 > 它产生额外卡顿（目标场景：8GB 内存旧机器游玩草莓酱 Grandmaster Heartside）。

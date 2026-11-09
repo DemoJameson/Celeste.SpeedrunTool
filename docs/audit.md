@@ -366,6 +366,11 @@
 - 问题：mod 在第一次 SL 之后才 `AddReturnSameObjectType`，已生成的克隆器不会更新 → 依然克隆该类型（desync 或多余内存）。`KnownTypes` 也永久缓存。
 - 建议：API 文档里要求“必须在第一次 SL 之前注册”；或注册时清 `DeepClonerCache` + `KnownTypes`（代价：重新 codegen）。
 
+### D15. 🟡 `DeepCloner` 类型缓存持有卸载 mod 的类型（热重载泄漏）
+- 位置：`DeepClonerCache.cs:5-10`（Key = `Type`，永不清理）、`ReflectionExtensions.cs:42-48`、`DynDataUtils.cs:9`、`DeepClonerSafeTypes.KnownTypes`
+- 问题：mod 热重载/禁用后，这些字典仍持有旧 `Type`/`MethodInfo` → mod 程序集无法卸载（Everest 热重载内存增长）。
+- 建议：`OnAssetReload`/`BeforeReload` 时清 Type 相关缓存（注意 `DeepClonerCache.ClearCache()` 后需要重新 codegen，成本可接受）。
+
 ### D16. 🟠 第三阶段 desync 检测（DeepClone 期间的 LateCheck）实际上已失效
 - 位置：`DesyncRiskAnalyzer.cs:187`（`Check` 的门槛）、`:129-140`（`GetAndRefreshIfDesyncCheck`）、`StateManager.cs:174-178`/`:202-206`（`shouldDesyncCheck` 同时门控 Before/AfterSaveState）
 - 机制（git 对比）：旧版本 `Check()` 的条件是 `if (State != Saving || !IsMainThread) return;`（每次主线程 save 都做 late check）。`0e27bfb`（"refactor: slightly refactor DesyncRiskAnalyzer"）改成 `if (!(State == Saving && IsMainThread && !shouldDesyncCheckTemporarily)) return;`。
@@ -375,9 +380,6 @@
   - 也就是说“第 3 阶段：检测 DeepClone 时字段里是否含 Lua 对象”这条防线整体形同虚设；`EarlyCheckEntityTypes` 也不会因 late check 而增长。
 - 建议：把条件改成 `&& shouldDesyncCheckTemporarily`（或直接去掉这个 negation，恢复“Saving + 主线程就检查”）；对 oracle-safe 地图要么不跑 late check、要么让 `OnAfterSaveState` 也执行（区分“拒绝存档”与“仅记录”）。加日志：第一轮 save 记录发现的 candidate 类型。
 - 严重度：🟠（不会崩，但“危险地图拒绝存档/自动清档”的保护失效，会让 LuaCutscenes/BossesHelper 系地图在 SL 后 desync 而不自知）。
-- 位置：`DeepClonerCache.cs:5-10`（Key = `Type`，永不清理）、`ReflectionExtensions.cs:42-48`、`DynDataUtils.cs:9`、`DeepClonerSafeTypes.KnownTypes`
-- 问题：mod 热重载/禁用后，这些字典仍持有旧 `Type`/`MethodInfo` → mod 程序集无法卸载（Everest 热重载内存增长）。
-- 建议：`OnAssetReload`/`BeforeReload` 时清 Type 相关缓存（注意 `DeepClonerCache.ClearCache()` 后需要重新 codegen，成本可接受）。
 
 ---
 
@@ -494,3 +496,31 @@ if (Profile) { var t0 = Stopwatch.GetTimestamp(); ... ; Record(type, t0); }
 - `Monocle.MTexture`：25 个字段（`VirtualTexture Texture`、`Rectangle ClipRect`、`string AtlasPath`、`Vector2 DrawOffset/Center`、`int Width/Height`、4×float UV、`MTexture Parent`、`Atlas _Atlas`、`ModAsset Metadata`、`_Orig*`、`List<ModAsset> _ModAssets`、`float _ScaleFix`）≈150B/个，**未被共享**。
 - `Monocle.VirtualMap<T>`：`T[,][,] segments`（分块二维数组）；`VirtualMap<char>`/`VirtualMap<MTexture>` 被共享，`VirtualMap<bool>`（`Grid.Data`）**未**共享（`SolidTiles.Grid`、`FgTilesLightMask` 等会克隆）。
 - `Engine.Pooler`：`Dictionary<Type,Queue<Entity>>`（静态字段被 `SaveLoadAction.cs:698` 存档/恢复 → 会克隆池中实体）。
+
+## 附录 3：复核记录与勘误
+
+**复核方法**
+- 源码：逐文件通读（SaveLoad 全部 + DeepCloner 全部 + 相关 Extensions）。
+- 类型/IL 事实：用 Mono.Cecil 写临时 dumper 读 `Celeste.dll` / `FNA.dll`，核对字段（含 `static` 标记）、构造函数里的 `newarr/ldc.i4` 数组长度、`Level.DoScreenWipe`/`Audio.ReleaseSnapshot` 的 IL。
+- 运行时事实：用 `/tmp/dcbench`（复制 vendored DeepCloner 源码 + 引用游戏目录的 `MonoMod.Utils.dll`/`Mono.Cecil.dll`）在 net8.0 Release 下做隔离微基准；用最小程序验证 `Expression.Assign` 对 `initonly` 字段抛异常。
+- 编译验证：`cd SpeedrunTool && dotnet build -c Release -p:CelestePrefix="D:\Games\SteamLibrary\steamapps\common\Celeste"` → **0 error**（仅 19 warning，均为可空注解/过时 API 提示）。
+
+**已复核并确认的关键结论**
+1. `ShallowObjectCloner.IsSafeVariant()` 在 .NET 8 实测 = `False` → `DeepClone` 走 `DeepClonerMsilGenerator`；`CloneObjectTo`（`DeepCloneTo`）**无条件**走 `ClonerToExprGenerator`（`DeepClonerGenerator.cs:264-274,276-315`）。
+2. `Expression.Assign` 写 `initonly` 字段 → `ArgumentException: Expression must be writeable`（实测），所以 WIP 在 `ClonerToExprGenerator.cs:91-103` 的修复是必需的；`DeepClonerExprGenerator.cs:139-141` 的同类问题仍是隐患（D3）。
+3. `Level.PauseSnapshot` / `DialogSnapshot` / `AssistSpeedSnapshot` 是 **static 字段**；`Level._PauseSnapshot` 是 **static 只读属性**（Cecil 实测）→ 不在克隆图内，不存在“模板与活动 Level 共享快照句柄”的问题（初稿 D7 判断有误，已修正）。
+4. `Level.DoScreenWipe(bool, Action, float)` 只有在 `onComplete == null && duration == 0` 时才会被 `SkipScreenWipes`/`LoadOverrides.SkipScreenWipes` 短路，SRT 调用时 `onComplete != null` → wipe 一定会走 `orig_DoScreenWipe`，回调不会因“skip wipe”被吞（D1 的冻结风险主要来自 `WaitingEntity.Render` 未执行/场景被替换，而非 wipe 短路）。
+5. SRT 的 hotkey 派发 `OnPressed?.Invoke(scene)`（`HotkeyConfigUi.cs:187-211`）无 try/catch → save/load 异常会逃出 `MInput.Update`（D1 的“崩溃”路径成立）。
+6. `DesyncRiskAnalyzer.Check` 的 late check 门槛在 `0e27bfb` 被改成 `!shouldDesyncCheckTemporarily`，与 `GetAndRefreshIfDesyncCheck` 的语义相反 → late check 实际失效（D16，git 对比确认旧条件是 `State != Saving || !IsMainThread`）。
+7. `Celeste.LevelLoader.LoadingThread` 每 Level 构造 `ParticleSystem(-8000,400)` / `(8000,400)` / `(-50000,800)`（Cecil 实测），`LightingRenderer` 构造 `VertexPositionColor[11520]` / `VertexPositionColorMaskTexture[384]` / `int[11520]`（Cecil 实测）。
+8. `InitFields` 的过滤表达式 `A && B && C && D && Entity || Component || Renderer` 因 `&&` 优先级等价于 `(A && … && Entity) || Component || Renderer`（D4）。
+
+**勘误（相对初稿）**
+- D7 初稿写“Level 的 3 个 EventInstance 快照字段是实例字段、会被克隆共享句柄、可能 double release”——错误。它们是 `static`，不参与克隆；已改写为“snapshot 状态未保存/未恢复 + mod 自持 EventInstance 的句柄共享风险”。
+- D1 初稿写“异常 → 永久软锁”——不准确。实际是“异常 → 逃出 `MInput.Update` → 进程崩溃”；不抛异常时 `State` 未复位的路径才表现为冻结。已改写为两类后果。
+- D5 补充：读档 NRE 会按 D1 路径升级为崩溃（不只是“读档失败”）。
+
+**后续可做（如果继续审计）**
+- 用 Mono.Cecil 把 `Celeste.dll` 里所有 `Entity/Component/Renderer` 子类的实例字段做一遍“可克隆性/是否共享”分类，产出精确的“克隆对象数/字节数”模型（用真实 SJ 地图的 `LevelData` 生成实体清单来算）。
+- 对 `ThirdPartySupport` 的每个 mod 做“存档→读档→字段 diff”的 harness（bench-env 已有游戏内 harness 的话最合适）。
+- 用 `dotnet-trace`/`dotnet-counters` 在游戏进程上抓 GC/分配，验证 B1/B2/B3 的实际占比（比隔离微基准更可信）。

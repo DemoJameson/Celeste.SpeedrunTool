@@ -184,7 +184,7 @@ internal static class DesyncRiskAnalyzer {
             return;
         }
         // skipDesyncCheckTemporarily 只有此时才有意义 (现在这个检查是在 DeepClone 中做的, 所以没被其他地方跳过)
-        if (!(StateManager.Instance.State == State.Saving && Thread.CurrentThread.IsMainThread() && !shouldDesyncCheckTemporarily)) {
+        if (!(StateManager.Instance.State == State.Saving && Thread.CurrentThread.IsMainThread() && shouldDesyncCheckTemporarily)) {
             return;
         }
         if (obj.GetType() is not { } entityType || CanSyncType(entityType, null)) {

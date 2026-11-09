@@ -236,6 +236,10 @@ run.cmd <tag> [timeout_seconds=600]
 
 ### 6.3 抓 SRT_PROFILE 分段耗时
 
+> 前提：**交付用的 Release 构建默认把 profiler 编译掉了（零调用点、零开销）**。
+> 需要分段数据时要先用 `-p:SrtProfiling=true` 构建一个 profiling 版本（`artifacts/profiling`），
+> 再把它 swap 进游戏；然后按下面方式开启。
+
 `configs` 里把 `"profile": true` 打开（参考 `configs\profiling-final-on.json` / `-off.json`），
 harness 会在游戏进程内 `Environment.SetEnvironmentVariable("SRT_PROFILE","1")`
 （SRT profiler 在首次 save/load 时才读这个变量，所以进程内设置有效）。跑完后：

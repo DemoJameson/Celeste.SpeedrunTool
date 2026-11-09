@@ -103,8 +103,10 @@
   在游戏目录内构建；新增 `DeployToGame` 目标；已知的 MSB3277/CS0436/CS0649 噪声按说明静默。
 - `SaveLoadAction` 拆分为注册/派发（主文件）与内置 action 注册（`SaveLoadAction.BuiltinActions.cs`，
   逐字节等价移动，见 `docs/review.md` §1.14）。
-- 新增 Release 可用的 `SaveLoadProfiler`（环境变量 `SRT_PROFILE=1`），log.txt 输出
-  save/load 分段耗时、堆/碎片/GC 计数，后台 preclone 单独输出 ms/allocMB。
+- 新增 **opt-in** 的 `SaveLoadProfiler`：默认 Release 构建里所有调用点被 `[Conditional]`
+  编译消除（已用 Cecil 验证 IL 中 0 个调用点，二进制小 2KB），对低配机**零运行时开销**；
+  用 `-p:SrtProfiling=true` 构建 profiling 版本后，log.txt 输出 save/load 分段耗时、
+  堆/碎片/GC 计数，后台 preclone 单独输出 ms/allocMB。
 - 新增 save/load ModInterop API（`SaveState/LoadState/SaveStateTas/LoadStateTas/ClearState/
   SwitchSlot/IsSaved/SetPreCloneEnabled/...`）供 TAS/工具/benchmark 使用。
 
@@ -113,7 +115,10 @@
 - 构建：`dotnet build -c Release -p:CelestePrefix=<Celeste> -p:DeployDir=<Celeste>/Mods/SpeedrunTool`。
 - 场景：StrawberryJam `5-Grandmaster/ZZ-HeartSide` 入口房间（222 entities），60fps vsync。
 - 对照：upstream master 构建 / 优化构建（Pre-clone On / Off）× 1 槽 / 3 槽；
-  `SRT_PROFILE=1` 抓分段耗时；debug 构建抓每 action 明细。
+  profiling 构建（`-p:SrtProfiling=true` + `SRT_PROFILE=1`）抓分段耗时；debug 构建抓每 action 明细。
+- 交付构建（profiler 已编译掉）另跑一次完整矩阵（tag `verify-noprof`）：save p50 12.40ms /
+  load p50 10.76ms / load 帧 max 48.1ms，与带 profiler 的构建在噪声范围内一致 —— 去掉
+  profiler 没有性能回归。
 - **对照数据（同一场景，20 iterations，已扣除 3 次 warmup；多次运行取区间）**：
   - save：upstream p50 17.4-17.6ms / 优化后（On）12.5-13.1ms；p99 91-101ms → 58-86ms
   - load：upstream p50 13.7-16.3ms / 优化后（On）10.8-11.4ms；p99 84-85ms → 12-47ms

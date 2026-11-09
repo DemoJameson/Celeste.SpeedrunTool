@@ -742,18 +742,22 @@ public sealed class StateManager {
         if (IsSaved) {
             SaveLoadAction.OnPreCloneEntities();
             preCloneTask = Task.Run(() => {
+#if SRT_PROFILE
                 bool profile = SaveLoadProfiler.Enabled;
                 long startTicks = profile ? Stopwatch.GetTimestamp() : 0L;
                 long startAllocated = profile ? GC.GetAllocatedBytesForCurrentThread() : 0L;
+#endif
 
                 DeepCloneState deepCloneState = new();
                 savedLevel.Entities.DeepClone(deepCloneState);
                 savedLevel.RendererList.DeepClone(deepCloneState);
                 savedSaveData.DeepClone(deepCloneState);
 
+#if SRT_PROFILE
                 if (profile) {
                     SaveLoadProfiler.LogBackgroundSection("preclone", startTicks, startAllocated);
                 }
+#endif
 
                 return deepCloneState;
             });

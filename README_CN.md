@@ -19,7 +19,7 @@
 - **预克隆以加快读档**（State 设置，默认「自动」）：在后台预先克隆下一次读档需要的对象图，读档明显更快，但存档会多保留一份实体图的内存。「自动」只会在内存大于约 10GB 的机器上开启；内存较小的电脑请保持「自动」或手动设为「关」，可以把存档常驻内存大约减半。
 - 存档缩略图改为小尺寸纹理（长边 ≤ 480px，不再是整屏截图），捕获用的缓冲区也会复用。
 - 原有的「加载存档后回收内存」「清除存档后回收内存」仍然控制强制 GC 的时机；如果清除/读取存档时出现卡顿，可以试着关掉它们。
-- 诊断：用环境变量 `SRT_PROFILE=1` 启动游戏后，log.txt 里每次 save/load 都会多一行 `SRT_PROFILE ...`，包含分阶段耗时、分配量和 GC/堆信息。
+- 诊断（可选，正式构建里零开销）：普通 Release 构建会把 profiler 完全编译掉（调用点被消除，没有任何运行时开销）。需要诊断时用 `-p:SrtProfiling=true` 构建，在 SpeedrunTool.dll 旁放一个空的 `srt-profile.flag`（或设环境变量 `SRT_PROFILE=1`），log.txt 里每次 save/load 就会多一行 `SRT_PROFILE ...`，包含分阶段耗时、分配量和 GC/堆信息。
 
 其它模组/工具可以通过 `SpeedrunTool.SaveLoad` 这组 ModInterop API 驱动存档与读档（`SaveState`、`LoadState`、`SaveStateTas`、`LoadStateTas`、`ClearState`、`SwitchSlot`、`IsSaved` 以及预克隆开关）。
 

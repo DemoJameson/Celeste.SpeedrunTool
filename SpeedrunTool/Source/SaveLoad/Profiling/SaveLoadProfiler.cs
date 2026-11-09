@@ -4,10 +4,14 @@ using System.Text;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Profiling;
 
+#if SRT_PROFILE
 /// <summary>
 /// Lightweight, Release-build profiling for the save/load pipeline.
-/// Enabled by setting the environment variable <c>SRT_PROFILE=1</c> before launching
-/// the game; when disabled every method is a single branch on a readonly bool.
+/// Only compiled when the <c>SRT_PROFILE</c> symbol is defined
+/// (<c>dotnet build -p:SrtProfiling=true</c>); the shipped Release build contains no call sites
+/// at all (see the stub below), so this is free on low-end machines.
+/// Enabled at runtime by <c>SRT_PROFILE=1</c> in the game's environment or by a file named
+/// <c>srt-profile.flag</c> next to SpeedrunTool.dll.
 ///
 /// Output goes to log.txt as one line per operation, e.g.
 /// <code>SRT_PROFILE load beforeLoad=0.31 waitPreclone=0.02 mergeTime=1.10 unload=4.20 ... heapMB=... gc=...</code>
@@ -16,11 +20,6 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Profiling;
 internal static class SaveLoadProfiler {
     internal static readonly bool Enabled = IsEnabled();
 
-    /// <summary>
-    /// Enabled by <c>SRT_PROFILE=1</c> in the game's environment, or (for launchers that do not
-    /// pass environment variables through) by a file named <c>srt-profile.flag</c> next to
-    /// SpeedrunTool.dll.
-    /// </summary>
     private static bool IsEnabled() {
         if (Environment.GetEnvironmentVariable("SRT_PROFILE") == "1") {
             return true;
@@ -87,3 +86,29 @@ internal static class SaveLoadProfiler {
             $"SRT_PROFILE {tag} ms={milliseconds:F1} allocMB={allocated / 1048576.0:F1}");
     }
 }
+#else
+/// <summary>
+/// Compile-time no-op stub for the normal Release build.
+/// <see cref="ConditionalAttribute"/> on every method makes the C# compiler erase the call
+/// sites from the assembly entirely when <c>SRT_PROFILE</c> is not defined, so the shipped
+/// build has no profiling branch, string or allocation to pay for on a low-end machine.
+/// Build a profiling variant with <c>dotnet build -p:SrtProfiling=true</c>.
+/// </summary>
+internal static class SaveLoadProfiler {
+    [Conditional("SRT_PROFILE")]
+    internal static void Begin(string tag) {
+    }
+
+    [Conditional("SRT_PROFILE")]
+    internal static void Mark(string segment) {
+    }
+
+    [Conditional("SRT_PROFILE")]
+    internal static void End() {
+    }
+
+    [Conditional("SRT_PROFILE")]
+    internal static void LogBackgroundSection(string tag, long startTicks, long startAllocatedBytes) {
+    }
+}
+#endif

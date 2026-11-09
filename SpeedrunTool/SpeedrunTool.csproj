@@ -9,11 +9,18 @@
         <ModRoot Condition="'$(ModRoot)' == ''">..</ModRoot>
         <!-- Optional: when set, the built mod is deployed to this directory (e.g. Celeste\Mods\SpeedrunTool). -->
         <DeployDir Condition="'$(DeployDir)' == ''"></DeployDir>
+        <!-- Opt-in profiling build: -p:SrtProfiling=true defines SRT_PROFILE and compiles
+             SaveLoadProfiler in. The normal Release build contains no profiling code at all. -->
+        <SrtProfiling Condition="'$(SrtProfiling)' == ''">false</SrtProfiling>
     </PropertyGroup>
 
     <Target Name="ValidateCelestePrefix" BeforeTargets="PrepareForBuild" Condition="'$(CelestePrefix)' == ''">
         <Error Text="Celeste.dll not found. Pass the Celeste install directory with -p:CelestePrefix=&quot;C:\Path\To\Celeste&quot;." />
     </Target>
+
+    <PropertyGroup Condition="'$(SrtProfiling)' == 'true'">
+        <DefineConstants>$(DefineConstants);SRT_PROFILE</DefineConstants>
+    </PropertyGroup>
     
     <PropertyGroup>
         <ProjectGuid>{C7DFDD37-907C-4A75-96DA-1C5828C97F96}</ProjectGuid>

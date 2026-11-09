@@ -1,4 +1,4 @@
-# SpeedrunTool savestate 基准结果（SJ Grandmaster Heartside）
+﻿# SpeedrunTool savestate 基准结果（SJ Grandmaster Heartside）
 
 > 本文是 "降低 savestate 内存 / 提升 save/load 速度 / 避免卡顿" 优化的**基准测量报告**。
 > 环境搭建方法见 [bench-setup.md](bench-setup.md)，原始数据在 benchmark 工作区
@@ -149,7 +149,9 @@ HeartSide 房间实体更多、SJ 依赖更多，耗时/内存都显著更高；
 
 ### 4.1 PreClone 的"内存 ↔ 速度"权衡（final，profiling 数据）
 
-用 `SRT_PROFILE=1` 采集 SRT 各阶段耗时（`results/PROFILE-profiling-final-on.txt` /
+用 `SRT_PROFILE=1` 采集 SRT 各阶段耗时（需要 `-p:SrtProfiling=true` 的 profiling 构建；交付的
+Release 构建里 profiler 已被 `[Conditional]` 编译掉，零运行时开销，见
+`results/PROFILE-profiling-final-on.txt` /
 `-off.txt`，每次 save/load 一行）：
 
 **PreClone On（稳态，非首次）**
@@ -305,3 +307,16 @@ bisect 结论（同一 `smoke-vanilla` 配置：进原版 1A + 2 次 save/load�
 final 已移除 `DeepCloner.ClearCaches()` 及所有调用（KnownTypes 永不清空），
 `Add/RemoveReturnSameObject*` 改为"必须在首次 save/load 前注册"的文档约束
 （FrostHelper 在 LoadContent 注册，满足），并保留安全的 ProcFlags 缓存清理。
+
+## 补充：交付构建（profiler 编译掉）的复核
+
+交付的 Release 构建不包含 profiling 代码（`[Conditional("SRT_PROFILE")]` 使所有调用点在编译期
+被消除，Cecil 验证 IL 调用点 = 0）。用该构建重跑同一矩阵（tag `verify-noprof`，20 iters）：
+
+| 指标 | 带 profiler 的 final（2 次中位数） | 交付构建 verify-noprof |
+|---|---|---|
+| save p50 | 13.10 ms | 12.40 ms |
+| load p50 | 11.28 ms | 10.76 ms |
+| load 帧 max | 55.10 ms | 48.13 ms |
+
+差异在测量噪声范围内 → **去掉 profiler 没有性能回归**（理论上只会更省：没有调用点/分支）。

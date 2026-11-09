@@ -27,9 +27,11 @@ versions keep that cost predictable and expose the main memory/speed trade-off:
   full-screen captures, and capture buffers are reused.
 - The existing "GC after Load State" / "GC after Clear State" options still control when the mod
   forces a collection; if you see a hitch while clearing or loading states, try turning them off.
-- Diagnostics: launch the game with the environment variable `SRT_PROFILE=1` and log.txt will
-  contain one `SRT_PROFILE ...` line per save/load with per-segment milliseconds, allocation and
-  GC/heap numbers.
+- Diagnostics (opt-in, zero cost in the shipped build): a normal Release build compiles the
+  profiler out completely (the call sites are erased, so there is nothing to pay for). To
+  diagnose, build with `-p:SrtProfiling=true`, put an empty `srt-profile.flag` next to
+  SpeedrunTool.dll (or set `SRT_PROFILE=1`), and log.txt will contain one `SRT_PROFILE ...`
+  line per save/load with per-segment milliseconds, allocation and GC/heap numbers.
 
 Other mods and tools can drive save states through the `SpeedrunTool.SaveLoad` ModInterop API
 (`SaveState`, `LoadState`, `SaveStateTas`, `LoadStateTas`, `ClearState`, `SwitchSlot`, `IsSaved`,

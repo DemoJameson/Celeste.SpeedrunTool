@@ -249,3 +249,25 @@ if (graphicsDevice.GetRenderTargets().Length > 0 || wipeActive) {
 }
 ```
 以及 `[Unload]` 里 `readbackBuffer = null; thumbnailBuffer = null;`。
+
+---
+
+## 6. 修复状态（截至 `9d4f3cb` "fix(saveload): address the issues found by the independent review"）
+
+| issue | 状态 | 备注 |
+|---|---|---|
+| #1 `ClearBeforeSave`/TAS 标志残留 | ✅ 已修 | `RecoverFromFailedSave` 复位 `ClearBeforeSave/SavedByTas/LoadByTas` |
+| #2 `OnClearState(true)` 旧 id | ✅ 已修 | `AllSavedValues ??= InitValueDictionary()` + `EnsureValueDictionaries` + `TryGetValue`；`SaveStateImpl` 把 `InitSlots()` 提到 clear-before-save 之前 |
+| #3 Snapshot 时机 | ✅ 已缓解 | `Level.Wipe != null` 时最多等 180 帧（`captureWaitFrames`）再回读；`[Unload]` 释放 `readbackBuffer/thumbnailBuffer`。**仍包含 HUD/overlay**（cosmetic）；wipe 持续 >180 帧时仍可能截到 wipe（fallback） |
+| #4 `preCloneTask` 竞争 | ✅ 已修 | `RecoverFromFailedLoad` 先 `try { preCloneTask?.Wait(); } catch {}` 再置空；`PreCloneEnabled` setter 关闭时等所有槽任务结束 |
+| #5 `AddReturnSameObject*` 反复清缓存 | ⏳ 部分 | 仍每次清缓存；未做批量/dirty 标记。实际影响：mod 一次性注册少量类型时可接受；若循环注册 N 个类型需注意（每次清 TypeCache+KnownTypes，下次 SL 重新 codegen） |
+| #6 `RemoveReturnSameObject*` 不清缓存 | ✅ 已修（`3377cf5`） | Add/Remove 都清缓存 |
+| #7 ProcFlags 单槽 thread-static | ✅ 已改 | 4 槽 direct-mapped（`RuntimeHelpers.GetHashCode(type) & 3`）；真实收益仍需 `SRT_PROFILE` 验证（见 §2） |
+| #8 注释/线程模型 | ⏳ 文档 | 代码未变；建议按 §1.5 的措辞更正注释，并在 `DeepClone` XML doc 注明“主线程调用” |
+| #9 `PreCloneEnabled` 同步 | ✅ 已修 | setter 关闭时 `WaitForPreCloneTask()`（所有槽） |
+| #10 `Areas_Safe` 静默跳过 | ⏳ 待验证 | 代码未变；需 bench 在 SJ 图确认 per-area 时间/死亡是否更新 |
+| #11 warm-up 细节 | ⏳ 低优 | 未判 `ModSettings.Enabled`；失败后不重试（首次 save 会再试） |
+| #12 Profiler 失败路径/后台线程日志 | ⏳ 低优 | 功能可用；失败路径无 profile 行 |
+| #13 `NoWarn CS0649` 作用域 | ⏳ 低优 | 仍为全局 |
+| #14 `PreCloneMode.Auto` 判定 | ⏳ 低优 | **`docs/optimization-report.md` §4 写作“按物理内存选择”，实现是 `GC.GetGCMemoryInfo().TotalAvailableMemoryBytes`**（≈GC 可用内存），措辞需统一 |
+| #15 GC 行为（review 之外的新改动） | ✅ 已优化 | `40bc769`：仅当碎片 >64MB 或 >5% 才请求 LOH compact；仍 `GC.Collect(2, Forced, blocking:true)`，若 mod 处于 `NoGCRegion` 会抛 `InvalidOperationException`（pre-existing，低概率） |

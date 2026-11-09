@@ -304,3 +304,16 @@ if (graphicsDevice.GetRenderTargets().Length > 0 || wipeActive) {
    - `preCloneEntities` 顺序同上：`GraphicResourcesHandler`/`ReleaseEventInstances` 最后，仍是清空收集列表 ✓。
 4. 拆分后的新变量（`ActionsVersion`）只用于 `AreValueDictionariesComplete`/`AllSavedValuesVersion`，与执行顺序无关；`SaveStateImpl` 把 `InitSlots()` 提前只让“clear-before-save 时的 id 更新”，不改变 action 的执行顺序。
 5. 备注：`ReleaseEventInstances` 只有 `clearState`/`preCloneEntities`（没有 saveState/loadState），其 order 只影响清理阶段——与 master 相同。
+
+---
+
+## 9. 最终状态补充（本 review 之后）
+
+- **issue #5 的“注册时清 DeepCloner 缓存”已实现但随后回退**：bisect 构建实测
+  `DeepClonerSafeTypes.KnownTypes.Clear()` 会让游戏在 LevelLoader 读图时无异常 native 崩溃
+  （variantD：只清 cloner 缓存 → ok；variantE：只清 KnownTypes → crash）。最终 commit
+  `dc82307` 移除 `DeepCloner.ClearCaches()` 及全部调用；D14 改为文档约束
+  （`Add/RemoveReturnSameObject*` 必须在首次 save/load 前注册，FrostHelper 在 LoadContent
+  注册、满足）。热重载时只清 `ProcFlags` 缓存，DeepCloner 类型缓存不再清理（D15 保留为已知小问题）。
+- 本次 review 的 issue #1/#2/#3/#4 与 #7~#10 中需要改的部分均已在 `9d4f3cb`/`db5ce34` 修复；
+  未处理项见 §7 表格中标注 “—/文档” 的条目。

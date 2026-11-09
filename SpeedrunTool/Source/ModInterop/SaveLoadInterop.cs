@@ -11,6 +11,12 @@ public static class SaveLoadInterop {
     private static readonly List<Func<object, object>> customDeepCloneProcessors = new();
     private static readonly HashSet<Type> returnSameObjectTypes = new();
 
+    // RegisterStaticTypes() is called by several mods for the same static types. Because mods are
+    // never unloaded in a running session (a mod unload requires restarting the game in practice),
+    // it is enough to remember identical registrations and hand back the already registered
+    // action instead of adding duplicate actions/reflection work.
+    private static readonly Dictionary<string, SaveLoadAction> registeredStaticTypeActions = new();
+
     internal static bool CanReturnSameObject(Type type) {
         return returnSameObjectTypes.Contains(type) || returnSameObjectPredicates.Any(predicate => predicate(type));
     }
@@ -58,11 +64,25 @@ public static class SaveLoadInterop {
         /// </summary>
         /// <returns>SaveLoadAction instance, used for unregister when your mod unloads </returns>
         public static object RegisterStaticTypes(Type type, params string[] memberNames) {
-            return SaveLoadAction.SafeAdd(
+            if (type is null) {
+                return null;
+            }
+
+            memberNames ??= [];
+            string key = type.AssemblyQualifiedName + "|" + string.Join("", memberNames.OrderBy(name => name, StringComparer.Ordinal));
+            if (registeredStaticTypeActions.TryGetValue(key, out SaveLoadAction existing)) {
+                return existing;
+            }
+
+            SaveLoadAction action = (SaveLoadAction)SaveLoadAction.SafeAdd(
                 (savedValues, _) => SaveLoadAction.SaveStaticMemberValues(savedValues, type, memberNames),
                 (savedValues, _) => SaveLoadAction.LoadStaticMemberValues(savedValues),
                 null, null, null, null
             );
+            if (action is not null) {
+                registeredStaticTypeActions[key] = action;
+            }
+            return action;
         }
 
         /// <summary>
@@ -70,7 +90,14 @@ public static class SaveLoadInterop {
         /// </summary>
         /// <param name="obj">The object return from RegisterStaticTypes()/RegisterSaveLoadAction()</param>
         public static void Unregister(object obj) {
-            SaveLoadAction.Remove((SaveLoadAction)obj);
+            if (obj is SaveLoadAction action) {
+                foreach (KeyValuePair<string, SaveLoadAction> pair in registeredStaticTypeActions
+                             .Where(pair => ReferenceEquals(pair.Value, action))
+                             .ToList()) {
+                    registeredStaticTypeActions.Remove(pair.Key);
+                }
+                SaveLoadAction.Remove(action);
+            }
         }
 
         /// <summary>

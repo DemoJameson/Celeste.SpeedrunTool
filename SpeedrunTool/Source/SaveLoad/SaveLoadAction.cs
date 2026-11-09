@@ -32,6 +32,17 @@ public sealed partial class SaveLoadAction {
     // only actions, no values stored. Share among all save slots
     private static List<SaveLoadAction> SharedActions = [];
 
+    // SharedActions split by callback. Rebuilt in InitSlots() after ordering; the hot paths only
+    // walk the lists that can actually do something instead of null-checking every action.
+    private static List<SaveLoadAction> saveActions = [];
+    private static List<SaveLoadAction> loadActions = [];
+    private static List<SaveLoadAction> clearActions = [];
+    private static List<SaveLoadAction> beforeSaveActions = [];
+    private static List<SaveLoadAction> beforeLoadActions = [];
+    private static List<SaveLoadAction> preCloneActions = [];
+    // actions that own a value dictionary for the slot (saveState and/or loadState)
+    private static List<SaveLoadAction> valueActions = [];
+
     // values, belong to each save slot
 
     internal static Dictionary<int, Dictionary<Type, Dictionary<string, object>>> AllSavedValues {
@@ -43,7 +54,7 @@ public sealed partial class SaveLoadAction {
 
     internal static Dictionary<int, Dictionary<Type, Dictionary<string, object>>> InitValueDictionary() {
         Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict = [];
-        foreach (SaveLoadAction saveLoadAction in SharedActions) {
+        foreach (SaveLoadAction saveLoadAction in valueActions) {
             dict[saveLoadAction.dictionaryId] = [];
         }
         return dict;
@@ -65,6 +76,10 @@ public sealed partial class SaveLoadAction {
     internal readonly SlAction loadState;
     private readonly SlAction saveState;
     private int executeOrder;
+
+    internal bool HasAnyCallback => saveState is not null || loadState is not null || clearState is not null
+                                   || beforeSaveState is not null || beforeLoadState is not null
+                                   || preCloneEntities is not null;
 
     private static int? contextOrder = null;
     private const int Order_InternalCoreAction = 0;
@@ -104,6 +119,7 @@ public sealed partial class SaveLoadAction {
     [Obsolete("crash on macOS if speedrun tool is not installed, use SafeAdd() instead")]
     public static void Add(SaveLoadAction saveLoadAction) {
         SharedActions.Add(saveLoadAction);
+        RebuildActionLists();
     }
 
     // ReSharper disable once MemberCanBePrivate.Global
@@ -116,11 +132,15 @@ public sealed partial class SaveLoadAction {
             throw new Exception("Internal SaveLoad actions are added after expected time!");
         }
         SaveLoadAction saveLoadAction = new(CreateSlAction(saveState), CreateSlAction(loadState), clearState, beforeSaveState, beforeLoadState, preCloneEntities);
+        if (!saveLoadAction.HasAnyCallback) {
+            return saveLoadAction;
+        }
         saveLoadAction.executeOrder = contextOrder.GetValueOrDefault(Order_InternalOtherAction);
 #if DEBUG
         AddDebugDescription(saveLoadAction, internalCall: true, skipFrame: skipFrames);
 #endif
         SharedActions.Add(saveLoadAction);
+        RebuildActionLists();
         return saveLoadAction;
     }
 
@@ -135,11 +155,15 @@ public sealed partial class SaveLoadAction {
         Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState, Action clearState,
         Action<Level> beforeSaveState, Action<Level> beforeLoadState, Action preCloneEntities = null) {
         SaveLoadAction saveLoadAction = new(CreateSlAction(saveState), CreateSlAction(loadState), clearState, beforeSaveState, beforeLoadState, preCloneEntities);
+        if (!saveLoadAction.HasAnyCallback) {
+            return saveLoadAction;
+        }
         saveLoadAction.executeOrder = Order_ExternalAction;
 #if DEBUG
         AddDebugDescription(saveLoadAction, internalCall: false, skipFrame: 3);
 #endif
         SharedActions.Add(saveLoadAction);
+        RebuildActionLists();
         return saveLoadAction;
     }
 
@@ -169,6 +193,7 @@ public sealed partial class SaveLoadAction {
         bool b = SharedActions.Remove(saveLoadAction);
         if (b) {
             needInitializeDictionaryId = true;
+            RebuildActionLists();
         }
         return b;
     }
@@ -192,10 +217,10 @@ public sealed partial class SaveLoadAction {
         EnsureValueDictionaries(dict);
 #if DEBUG
         System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
-        foreach (SaveLoadAction saveLoadAction in SharedActions) {
+        foreach (SaveLoadAction saveLoadAction in saveActions) {
             sw.Restart();
             var before = DebugTool.MemoryTracker.TakeGcSample();
-            saveLoadAction.saveState?.Invoke(dict[saveLoadAction.dictionaryId], level);
+            saveLoadAction.saveState(dict[saveLoadAction.dictionaryId], level);
             if (sw.ElapsedMilliseconds > 10 && EachAction_Profilling) {
                 Logger.Debug($"SpeedrunTool/Save",
                     $"{sw.ElapsedMilliseconds,3} ms, " +
@@ -204,8 +229,8 @@ public sealed partial class SaveLoadAction {
             }
         }
 #else
-        foreach (SaveLoadAction saveLoadAction in SharedActions) {
-            saveLoadAction.saveState?.Invoke(dict[saveLoadAction.dictionaryId], level);
+        foreach (SaveLoadAction saveLoadAction in saveActions) {
+            saveLoadAction.saveState(dict[saveLoadAction.dictionaryId], level);
         }
 #endif
     }
@@ -218,10 +243,10 @@ public sealed partial class SaveLoadAction {
         }
 #if DEBUG
         System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
-        foreach (SaveLoadAction saveLoadAction in SharedActions) {
+        foreach (SaveLoadAction saveLoadAction in loadActions) {
             sw.Restart();
             var before = DebugTool.MemoryTracker.TakeGcSample();
-            saveLoadAction.loadState?.Invoke(dict[saveLoadAction.dictionaryId], level);
+            saveLoadAction.loadState(dict[saveLoadAction.dictionaryId], level);
             if (sw.ElapsedMilliseconds > 10 && EachAction_Profilling) {
                 Logger.Debug($"SpeedrunTool/Load",
                     $"{sw.ElapsedMilliseconds,3} ms, " +
@@ -230,8 +255,8 @@ public sealed partial class SaveLoadAction {
             }
         }
 #else
-        foreach (SaveLoadAction saveLoadAction in SharedActions) {
-            saveLoadAction.loadState?.Invoke(dict[saveLoadAction.dictionaryId], level);
+        foreach (SaveLoadAction saveLoadAction in loadActions) {
+            saveLoadAction.loadState(dict[saveLoadAction.dictionaryId], level);
         }
 #endif
     }
@@ -243,7 +268,7 @@ public sealed partial class SaveLoadAction {
     /// </summary>
     private static bool EnsureValueDictionaries(Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict) {
         bool complete = true;
-        foreach (SaveLoadAction action in SharedActions) {
+        foreach (SaveLoadAction action in valueActions) {
             if (!dict.ContainsKey(action.dictionaryId)) {
                 dict[action.dictionaryId] = [];
                 complete = false;
@@ -264,7 +289,7 @@ public sealed partial class SaveLoadAction {
         if (SaveSlotsManager.Slot.AllSavedValuesVersion != ActionsVersion) {
             return false;
         }
-        foreach (SaveLoadAction action in SharedActions) {
+        foreach (SaveLoadAction action in valueActions) {
             if (!dict.ContainsKey(action.dictionaryId)) {
                 return false;
             }
@@ -280,7 +305,7 @@ public sealed partial class SaveLoadAction {
             // here would escape through the hotkey handler and take the game down).
             Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict = AllSavedValues ??= InitValueDictionary();
             EnsureValueDictionaries(dict);
-            foreach (SaveLoadAction saveLoadAction in SharedActions) {
+            foreach (SaveLoadAction saveLoadAction in valueActions) {
                 if (!dict.TryGetValue(saveLoadAction.dictionaryId, out Dictionary<Type, Dictionary<string, object>> values)) {
                     continue;
                 }
@@ -296,26 +321,26 @@ public sealed partial class SaveLoadAction {
             AllSavedValues = null;
             slotInitialized = false;
         }
-        foreach (SaveLoadAction saveLoadAction in SharedActions) {
-            saveLoadAction.clearState?.Invoke();
+        foreach (SaveLoadAction saveLoadAction in clearActions) {
+            saveLoadAction.clearState();
         }
     }
 
     internal static void OnBeforeSaveState(Level level) {
-        foreach (SaveLoadAction saveLoadAction in SharedActions) {
-            saveLoadAction.beforeSaveState?.Invoke(level);
+        foreach (SaveLoadAction saveLoadAction in beforeSaveActions) {
+            saveLoadAction.beforeSaveState(level);
         }
     }
 
     internal static void OnBeforeLoadState(Level level) {
-        foreach (SaveLoadAction saveLoadAction in SharedActions) {
-            saveLoadAction.beforeLoadState?.Invoke(level);
+        foreach (SaveLoadAction saveLoadAction in beforeLoadActions) {
+            saveLoadAction.beforeLoadState(level);
         }
     }
 
     internal static void OnPreCloneEntities() {
-        foreach (SaveLoadAction saveLoadAction in SharedActions) {
-            saveLoadAction.preCloneEntities?.Invoke();
+        foreach (SaveLoadAction saveLoadAction in preCloneActions) {
+            saveLoadAction.preCloneEntities();
         }
     }
 
@@ -404,6 +429,7 @@ public sealed partial class SaveLoadAction {
     [Unload]
     private static void Unload() {
         SharedActions.Clear();
+        RebuildActionLists();
     }
 
 
@@ -442,6 +468,44 @@ public sealed partial class SaveLoadAction {
         needInitializeDictionaryId = true;
     }
 
+    /// <summary>
+    /// Splits SharedActions into per-callback lists after (re)ordering. Dispatch then walks only
+    /// the lists that have non-null callbacks instead of null-checking every action.
+    /// </summary>
+    private static void RebuildActionLists() {
+        saveActions.Clear();
+        loadActions.Clear();
+        clearActions.Clear();
+        beforeSaveActions.Clear();
+        beforeLoadActions.Clear();
+        preCloneActions.Clear();
+        valueActions.Clear();
+
+        foreach (SaveLoadAction action in SharedActions) {
+            if (action.saveState is not null) {
+                saveActions.Add(action);
+            }
+            if (action.loadState is not null) {
+                loadActions.Add(action);
+            }
+            if (action.clearState is not null) {
+                clearActions.Add(action);
+            }
+            if (action.beforeSaveState is not null) {
+                beforeSaveActions.Add(action);
+            }
+            if (action.beforeLoadState is not null) {
+                beforeLoadActions.Add(action);
+            }
+            if (action.preCloneEntities is not null) {
+                preCloneActions.Add(action);
+            }
+            if (action.saveState is not null || action.loadState is not null) {
+                valueActions.Add(action);
+            }
+        }
+    }
+
     public static void InitSlots() {
         // most mods might add saveload actions before InitActions is executed
         InitActions();
@@ -455,6 +519,7 @@ public sealed partial class SaveLoadAction {
                 i++;
                 action.dictionaryId = i;
             }
+            RebuildActionLists();
             ActionsVersion++;
 #if DEBUG
             if (Log_AllActions) {

@@ -180,7 +180,15 @@ entities，运行时 **3451** entities，6160x640），而不是入口 `a0-Start
 | 稳态 load p50 | 32.9 ms | — | — | — |
 | 8 次 load（稳态/尖峰） | 14–15 ms（首次 101.6、末次 57.7） | **34–123 ms** | — | — |
 | preclone 后台任务 | **20.8–25.4 ms / 24.5 MB**（每次 load 一个） | 无 | — | — |
-| 存档常驻 managed（1/2/3 槽） | **+68.6 / +102.5 / +134.0 MB** | — | — | — |
+| 存档常驻 managed（1/2/3 槽） | **+52.1 / +86.4 / +117.7 MB** | +41.0 / +58.0 / +72.4 MB | +85.4 / +116.9 / +148.4 MB | — |
+| save p50 / p99（20 iters） | **40.7 / 115.1 ms** | 40.8 / 322.0 ms | 62.7 / 157.9 ms | — |
+| load p50 / p99（20 iters） | **32.7 / 285.3 ms** | 38.3 / 115.4 ms | 50.2 / 143.6 ms | — |
+
+重房间 **20 iters 矩阵**（warmup 3 次，3 slots）进一步确认：save p50 final 40.7ms vs upstream
+62.7ms（**−35%**），load p50 32.7 vs 50.2（**−35%**）；3 槽常驻 managed On 117.7MB / Off
+72.4MB vs upstream 148.4MB（On −21%、Off −51%）；load p99 285ms 与 PreClone Off 的 save p99
+322ms 都对应偶发 Gen2 GC（20 次里 1 次）——**重房间 + 8GB 机器的主要风险是 GC 尖峰，不是
+savestate 常驻**。
 
 结论：
 1. **持有 savestate 对第二面的每帧 CPU 没有可测影响**：B 段 CPU p50 1.81ms、p99 2.74ms，

@@ -8,7 +8,7 @@
 > 报告重点是可迁移的相对指标（耗时 p50/p99、GC 次数、分配量、managed 内存增量）。
 >
 > **环境版本**：§1–§8 的数字是"mod 文件夹安装"环境（2026-11 早些时候）。
-> 自 2026-11-09 起基准环境改为 **zip-mod 标准环境**（58 个下载 mod 全部为 `.zip`，
+> 自 2026-11-09 起基准环境改为 **zip-mod 标准环境**（52 个下载 mod 全部为 `.zip`，
 > 见 §10），§10 是 zip 环境 + 重房间 `a1_18-Xplosives` 的最终数据，**优先使用 §10**。
 
 ---
@@ -362,7 +362,7 @@ final 已移除 `DeepCloner.ClearCaches()` 及所有调用（KnownTypes 永不�
 | f3_01-Hydro | 2256 | 4672x8024 | |
 （其余房间见 `bench/results/probe-probe-sj.json` 的 `map_rooms`）
 
-## 10.3 帧时间归因（a1_18-Xplosives，final 04653ede，zip 环境，3451 entities）
+## 10.3 帧时间归因（a1_18-Xplosives，final 构建，zip 环境，3451 entities）
 
 每段 12s 采样；**CPU 时间**= `Engine.Update` 开始到 `Engine.Draw` 结束（排除 vsync 等待）。
 
@@ -405,7 +405,9 @@ final 已移除 `DeepCloner.ClearCaches()` 及所有调用（KnownTypes 永不�
   也是 GC 尖峰——**重房间 + 8GB 机器的主要风险是 GC 尖峰，而不是 sv 常驻**。
 - 首次 save 冷开销：693–747ms（3451 entities + 首次 JIT）；matrix 的 p50 已包含 3 次 warmup。
 
-## 10.5 重房间 profiling 分段（coldwarm-prof 构建，5 iters，3 slots）
+## 10.5 重房间 profiling 分段（profiling 构建，5 iters，3 slots）
+
+> 该轮 profiling 用的是实验分支的 profiling 构建（warm-up 已撤回，稳态分段与 final 一致）。
 
 | 分段 | 首次 | 稳态 |
 |---|---|---|

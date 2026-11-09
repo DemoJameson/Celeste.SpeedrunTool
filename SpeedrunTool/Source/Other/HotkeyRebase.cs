@@ -1,3 +1,4 @@
+﻿#nullable enable annotations
 using Celeste.Mod.SpeedrunTool.ModInterop;
 using Celeste.Mod.SpeedrunTool.Utils;
 using Celeste.Mod.UI;

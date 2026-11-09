@@ -1,3 +1,4 @@
+﻿#nullable enable annotations
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using System.Collections.Generic;

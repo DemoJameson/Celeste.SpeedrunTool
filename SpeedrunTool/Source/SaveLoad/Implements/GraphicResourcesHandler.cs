@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
@@ -11,33 +11,6 @@ internal static class GraphicResourcesHandler {
     internal static void AddSaveLoadAction() {
         VirtualAssetsHandler.ReloadVirtualAssets();
         AtlasHandler.AddAction();
-    }
-
-    private static class MemoryLeakHandler {
-        /* 
-         * 如果某个 mod 加载了某个 Disposable 的资源, 并且它还没有 Finalizer
-         * 并且这个资源在某个实例上
-         * 并且这个资源并不是 (在某个实体上的, 会随着实体 Removed 而 Dispose) 的
-         * 那么在加载此资源前存档
-         * 加载资源后, 读档回到加载前, 再加载, 再读档...
-         * 就会造成内存泄漏
-         * 
-         * GraphicResource 类当然是实现了 Finalizer 的... 那么 Celeste 里的情况应该不会很严重吧...
-         */
-
-        private static void Handle() {
-            throw new NotImplementedException("Don't know if there is memory leak");
-        }
-    }
-
-    private static class BackDropHandler {
-        /*
-         * BackDrop (用于前景, 背景) 虽然会 Update, 但是不太有必要克隆它的状态
-         * 不过直接用原对象好像会出问题, 我暂时还不知道怎么处理
-         */
-        private static void Handle() {
-            throw new NotImplementedException();
-        }
     }
 
     private static class VirtualAssetsHandler {

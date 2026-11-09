@@ -14,6 +14,22 @@
 - Controller support for debug map: use confirm to teleport, right analog to zoom.
 - Debug mode F6 teleport bug-fix – Dream blocks and Badeline not activating in Old Site, incorrect ice/fire state in Core, Celestial Resort huge mess hall being strangely lit, wind sound does not play in Summit 2000m.
 
+## Lua desync protection
+
+Savestates that capture live Lua VM state (Lua cutscenes, Lua bosses) cannot be restored safely: the
+C# side is rewound but the global Lua VM is not. The mod therefore refuses such saves by default.
+Two State settings control this:
+
+- **Enable Save in Lua Cutscene**: allow saving while a Lua cutscene/talker is active. The general
+  check for unknown mods still runs, so a state saved mid-cutscene may still be cleared or behave
+  unexpectedly.
+- **Disable Lua Desync Check** (advanced): turn the whole check off. This was the old behaviour of
+  the cutscene option; existing settings files that had it enabled are migrated to this option once.
+
+The v3.28.0 checker also finds Lua values nested in arrays/collections/generic containers, refuses
+saves while an unskippable Lua talker's coroutine is still running, and logs the entity type plus
+field path when a late check clears a save.
+
 ## Performance
 
 A save state has to keep a deep copy of the room's object graph, so it is heavy by nature. Recent

@@ -20,6 +20,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
         SetGcMemoryThreshold(Doubled_GcMemoryThreshold);
         ApplyPreCloneMode();
         MigrateLegacySceneSwitchSetting();
+        MigrateLuaCutsceneSetting();
 
         LogForDiagnostics();
     }
@@ -43,6 +44,28 @@ public class SpeedrunToolSettings : EverestModuleSettings {
             }
             catch (Exception exception) {
                 Logger.Warn("SpeedrunTool/Settings", $"Failed to persist the AutoClearStateOnSceneSwitch migration: {exception.Message}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Before v3.28.0 "SaveInLuaCutscene" disabled the whole desync checker. It is now only
+    /// "allow saving during Lua cutscenes" (the checker still runs); preserve the old intent for
+    /// existing settings files by turning on the explicit DisableDesyncCheck option once.
+    /// </summary>
+    private void MigrateLuaCutsceneSetting() {
+        if (DesyncCheckSettingsMigrated) {
+            return;
+        }
+
+        DesyncCheckSettingsMigrated = true;
+        if (SaveInLuaCutscene && !DisableDesyncCheck) {
+            DisableDesyncCheck = true;
+            try {
+                SpeedrunToolModule.Instance?.SaveSettings();
+            }
+            catch (Exception exception) {
+                Logger.Warn("SpeedrunTool/Settings", $"Failed to persist the DisableDesyncCheck migration: {exception.Message}");
             }
         }
     }
@@ -123,6 +146,13 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public bool SaveExtendedVariants { get; set; } = true;
 
     public bool SaveInLuaCutscene { get; set; } = false;
+    /// <summary>
+    /// Advanced/Old behaviour: turn off the whole Lua desync checker. This used to be implied by
+    /// SaveInLuaCutscene; it is now a separate explicit option.
+    /// </summary>
+    public bool DisableDesyncCheck { get; set; } = false;
+    /// <summary>Internal marker for the one-time v3.28.0 split of SaveInLuaCutscene / DisableDesyncCheck.</summary>
+    public bool DesyncCheckSettingsMigrated { get; set; } = false;
     public bool NoMessageAfterSaveLoad { get; set; } = false;
     public bool AllowStateDuringDeath { get; set; } = false;
     public bool ClearStateOnHotReload { get; set; } = true;

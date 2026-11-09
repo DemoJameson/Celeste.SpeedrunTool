@@ -31,7 +31,9 @@ public static class ExternalSafeOracle {
 
 internal static class DesyncRiskAnalyzer {
 
-    private static bool Enabled => !ModSettings.SaveInLuaCutscene;
+    // SaveInLuaCutscene only bypasses the cutscene-specific early checks now; disabling the
+    // whole checker is a separate, explicit advanced option.
+    private static bool Enabled => !ModSettings.DisableDesyncCheck;
 
     private static readonly HashSet<Type> EarlyCheckEntityTypes = [];
 
@@ -46,6 +48,11 @@ internal static class DesyncRiskAnalyzer {
     private static bool shouldDesyncCheckTemporarily = false;
 
     private static Type desyncReason;
+
+    // LateCheck 的诊断信息：命中时记录「从实体类型到 Lua 类型」的字段路径，
+    // 方便用户从日志里定位是哪个 mod 的哪个字段。只在主线程的 Check 中使用。
+    [ThreadStatic] private static List<string> canSyncTypePath;
+    [ThreadStatic] private static string unsafeLuaPath;
 
     // 我们把检测分为三个时期:
     // 1. VeryVeryEarlyCheck: 这一步检测本功能是否开启, 以及通过地图元数据等决定是否需要检测. 我们也允许外部在这一步注入检测
@@ -75,6 +82,9 @@ internal static class DesyncRiskAnalyzer {
             RegisterEarlyCheck(
                 ModUtils.GetType("LuaCutscenes", "Celeste.Mod.LuaCutscenes.LuaCutsceneEntity"),
                 (level, type) => {
+                    if (ModSettings.SaveInLuaCutscene) {
+                        return false;
+                    }
                     if (level.InCutscene && level.onCutsceneSkip?.Target?.GetType() == type) {
                         return true;
                     }
@@ -91,9 +101,34 @@ internal static class DesyncRiskAnalyzer {
             );
 
             // LuaTalker doesn't uses LuaCutsceneEntity
+            // unskippable 的 talker 不会调用 Level.StartCutscene（见 LuaCutscenes 0.2.13 的
+            // LuaTalker::onTalk），所以整个对话期间 level.InCutscene 都是 false：只看
+            // InCutscene 会漏掉“对话进行中存档”。这里退一步检查实体上是否有正在运行的
+            // Coroutine——LuaCutsceneEntity/LuaTalker 都用 Add(new Coroutine(routine, true))
+            // 驱动 Lua 协程，运行期间 Finished == false，结束时 removeOnComplete 会移除它。
             RegisterEarlyCheck(
                 ModUtils.GetType("LuaCutscenes", "Celeste.Mod.LuaCutscenes.LuaTalker"),
-                (level, type) => level.InCutscene && level.onCutsceneSkip?.Target?.GetType() == type
+                (level, type) => {
+                    if (ModSettings.SaveInLuaCutscene) {
+                        return false;
+                    }
+                    if (level.InCutscene && level.onCutsceneSkip?.Target?.GetType() == type) {
+                        return true;
+                    }
+                    if (level.Tracker.GetEntitiesTrackIfNeeded(type) is { } list && list.IsNotNullOrEmpty()) {
+                        foreach (Entity e in list) {
+                            if (e.Components is not { } components) {
+                                continue;
+                            }
+                            foreach (Component component in components) {
+                                if (component is Coroutine { Finished: false }) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                    return false;
+                }
             );
         }
 
@@ -187,10 +222,18 @@ internal static class DesyncRiskAnalyzer {
         if (!(StateManager.Instance.State == State.Saving && Thread.CurrentThread.IsMainThread() && shouldDesyncCheckTemporarily)) {
             return;
         }
-        if (obj.GetType() is not { } entityType || CanSyncType(entityType, null)) {
+        if (obj.GetType() is not { } entityType) {
+            return;
+        }
+        canSyncTypePath?.Clear();
+        canSyncTypePath ??= [];
+        unsafeLuaPath = null;
+        if (CanSyncType(entityType, null)) {
             return;
         }
         // it involves lua and we don't know whether it's safe to savestate, so we refuse to savestate
+        Logger.Warn("SpeedrunTool/DesyncRiskAnalyzer",
+            $"Entity [{entityType.FullName}] holds Lua state via [{unsafeLuaPath ?? "unknown"}]; the savestate will be cleared.");
         EarlyCheckEntityTypes.Add(entityType);
         // mark as safe coz it will be already checked in EarlyCheck
         KnownTypes[entityType] = true;
@@ -199,11 +242,47 @@ internal static class DesyncRiskAnalyzer {
 
     private static bool CanSyncType(Type type, HashSet<Type> processingTypes) {
         if (KnownTypes.TryGetValue(type, out bool isSafe)) {
+            if (!isSafe) {
+                unsafeLuaPath ??= FormatFieldPath(type);
+            }
             return isSafe;
+        }
+
+        // 泛型参数/指针/byref 没有可检查的实例字段；不缓存结果
+        if (type.IsGenericParameter || type.IsPointer || type.IsByRef) {
+            return true;
         }
 
         processingTypes ??= [];
         processingTypes.Add(type);
+
+        // 数组和泛型容器不会把元素类型暴露成字段：`LuaTable[]` / `List<LuaFunction>` /
+        // `Dictionary<string, LuaTable>` 的实例字段只有数组/内部结构（数组类型没有实例字段），
+        // 所以只看 GetFields 会把它们判成安全。这里显式展开元素类型与泛型实参。
+        // 代价是保守误报：只在泛型实参里“提及” Lua 类型、但并不保存 Lua 状态的类型
+        // （例如 Func<LuaTable>）也会被判为不安全；对 desync 检测而言宁可拒绝存档。
+        if (type.IsArray) {
+            PushFieldPath($"{type.Name}[element]");
+            bool arraySafe = CanSyncType(type.GetElementType(), processingTypes);
+            PopFieldPath();
+            KnownTypes.TryAdd(type, arraySafe);
+            return arraySafe;
+        }
+
+        if (type.IsGenericType) {
+            foreach (Type argument in type.GetGenericArguments()) {
+                if (argument.IsGenericParameter || processingTypes.Contains(argument)) {
+                    continue;
+                }
+                PushFieldPath($"{type.Name}[{argument.Name}]");
+                bool argumentSafe = CanSyncType(argument, processingTypes);
+                PopFieldPath();
+                if (!argumentSafe) {
+                    KnownTypes.TryAdd(type, false);
+                    return false;
+                }
+            }
+        }
 
         List<FieldInfo> fi = [];
         Type tp = type;
@@ -217,7 +296,10 @@ internal static class DesyncRiskAnalyzer {
             if (processingTypes.Contains(fieldType)) {
                 continue;
             }
-            if (!CanSyncType(fieldType, processingTypes)) {
+            PushFieldPath($"{fieldInfo.DeclaringType?.Name}.{fieldInfo.Name}");
+            bool fieldSafe = CanSyncType(fieldType, processingTypes);
+            PopFieldPath();
+            if (!fieldSafe) {
                 KnownTypes.TryAdd(type, false);
                 return false;
             }
@@ -225,5 +307,24 @@ internal static class DesyncRiskAnalyzer {
 
         KnownTypes.TryAdd(type, true);
         return true;
+    }
+
+    // LateCheck 只在主线程调用，路径栈用 [ThreadStatic] 防止意外跨线程复用。
+    private static void PushFieldPath(string segment) {
+        canSyncTypePath ??= [];
+        canSyncTypePath.Add(segment);
+    }
+
+    private static void PopFieldPath() {
+        if (canSyncTypePath is { Count: > 0 } path) {
+            path.RemoveAt(path.Count - 1);
+        }
+    }
+
+    private static string FormatFieldPath(Type leafType) {
+        string leaf = leafType.FullName ?? leafType.Name;
+        return canSyncTypePath is { Count: > 0 } path
+            ? string.Join(" -> ", path) + " -> " + leaf
+            : leaf;
     }
 }

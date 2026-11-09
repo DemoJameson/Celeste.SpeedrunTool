@@ -179,6 +179,11 @@ public static class SpeedrunToolMenu {
                 ModSettings.SaveInLuaCutscene = b));
             AddDescription(saveInLua, subMenu, menu, Dialog.Clean(DialogIds.SaveInLuaWarn));
 
+            TextMenu.Item disableDesyncCheck;
+            subMenu.Add(disableDesyncCheck = new TextMenu.OnOff(Dialog.Clean(DialogIds.DisableDesyncCheck), ModSettings.DisableDesyncCheck).Change(b =>
+                ModSettings.DisableDesyncCheck = b));
+            AddDescription(disableDesyncCheck, subMenu, menu, Dialog.Clean(DialogIds.DisableDesyncCheckDescription));
+
             subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AllowStateDuringDeath), ModSettings.AllowStateDuringDeath).Change(b =>
                 ModSettings.AllowStateDuringDeath = b));
 

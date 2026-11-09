@@ -185,7 +185,8 @@ run.cmd <tag> [timeout_seconds=600]
 1. 校验 `configs\<tag>.json` 与 `Mods\SrtBench` 存在；
 2. **单实例保护**：若已有 `Celeste.exe`，最多等 120s（每 2s 轮询）后才启动；
 3. 复制 `configs\<tag>.json` → `bench.json`，删除旧 `results\<tag>.*`；
-4. 若存在 `env-<tag>.cmd` 则 `call` 之（用来设 `set SRT_PROFILE=1` 等环境变量）；
+4. 若存在 `env-<tag>.cmd` 则 `call` 之（可设任意环境变量；注意实测从 batch/`start` 启动时环境变量
+   **不总能**被子进程继承，profiling 请改用配置项 `"profile": true`）；
 5. 写 `bench\RUN`（harness 的触发文件），从游戏目录 `start Celeste.exe`；
 6. 每 2s 轮询 `results\<tag>.done` / 进程存活；超时则 `taskkill /F /IM Celeste.exe`；
 7. 复制游戏 `log.txt` → `results\log-<tag>.txt`，删 `RUN`；
@@ -209,6 +210,7 @@ run.cmd <tag> [timeout_seconds=600]
   "target_sid": "StrawberryJam2021/5-Grandmaster/ZZ-HeartSide",
   "target_level": "",                // 可选：指定房间；空=地图起始房间
   "target_area_id": -1,              // 可选：直接指定 AreaData.ID（-1=按 SID 查）
+  "profile": false,                  // true=harness 在游戏进程内设 SRT_PROFILE=1（抓 SRT_PROFILE 分段日志）
   "bench_dir": "D:\\DSH\\Celeste\\bench",
   "output_dir": "D:\\DSH\\Celeste\\bench\\results"
 }
@@ -232,7 +234,29 @@ run.cmd <tag> [timeout_seconds=600]
    记录 call 时间、从调用到 SRT `State == None` 的 **visible 时间**、窗口内最大帧；
 9. 写 `results\<tag>.json` + `results\<tag>.done`，`Celeste.Instance.Exit()` 退出游戏。
 
-### 6.3 失败排查
+### 6.3 抓 SRT_PROFILE 分段耗时
+
+`configs` 里把 `"profile": true` 打开（参考 `configs\profiling-final-on.json` / `-off.json`），
+harness 会在游戏进程内 `Environment.SetEnvironmentVariable("SRT_PROFILE","1")`
+（SRT profiler 在首次 save/load 时才读这个变量，所以进程内设置有效）。跑完后：
+
+```cmd
+findstr /C:"SRT_PROFILE" results\log-<tag>.txt > results\PROFILE-<tag>.txt
+```
+
+每行形如：
+
+```
+[SpeedrunTool/Profile] SRT_PROFILE save initSlots=.. beforeSave=.. cloneLevel=.. saveActions=.. heapMB=..
+[SpeedrunTool/Profile] SRT_PROFILE preclone ms=.. allocMB=..
+[SpeedrunTool/Profile] SRT_PROFILE load beforeLoad=.. waitPreclone=.. unload=.. cloneBack=.. restoreSaveData=.. loadActions=.. heapMB=..
+```
+
+> 注意：实测通过 batch/`start` 启动时环境变量不总能被子进程继承（`env-<tag>.cmd` 机制保留，
+> 但 profiling 请用 `"profile": true`）。部分构建还支持在 `Mods\SpeedrunTool\` 放空文件
+> `srt-profile.flag` 作为备用触发。
+
+### 6.4 失败排查
 
 | 现象 | 看哪里 |
 |---|---|
@@ -241,6 +265,7 @@ run.cmd <tag> [timeout_seconds=600]
 | `SpeedrunTool interop unavailable` | 当前 SRT 构建太老（无 interop 且反射也找不到），换构建 |
 | 进图超时 | `harness-<tag>.log` 的 `waiting for level: scene=...`；若 scene 是 `Celeste.LevelEnter` 且一直在，检查 postcard/`StartedFromBeginning`；若 `LevelLoader` 崩溃见 §10 |
 | 主菜单卡住等 saveData | 不应再出现：旧版 harness 会等 `SaveData.Instance != null`，主菜单永远为 null；已改为 `SaveData.Start` |
+| profiling 没有 `SRT_PROFILE` 行 | 用配置项 `"profile": true`（进程内设 env）；若仍无，说明该构建未编译 profiling 代码或 `config.profile` 没生效 |
 
 ---
 
@@ -262,6 +287,15 @@ python D:\DSH\Celeste\bench\swap_srt.py --restore       # 恢复上一次被替�
 
 > ⚠️ 不要手工 `rm -rf Mods\SpeedrunTool`：会丢 CJK 字体 PNG。
 > 换构建后建议看一眼 `--current` 的输出和 `Mods\SpeedrunTool\SpeedrunTool.dll` 的大小/md5。
+
+已知构建的 md5（SRT 的 AssemblyVersion 恒为 1.0.0.0，只能靠 md5/artifact 目录区分）：
+
+| 构建 | md5 前缀 | 用途 |
+|---|---|---|
+| `artifacts\upstream-mod` | `0e2e700d9ded` | upstream baseline（无 ModInterop） |
+| `artifacts\opt-v1` | `f83caf44bf61` | 中间优化构建 |
+| `artifacts\final` | `04301bfb7123` | **最终交付构建**（当前部署） |
+| `artifacts\debug-mod` | `0408312aa026` | debug profiling 构建 |
 
 ---
 

@@ -1,4 +1,4 @@
-using Celeste.Mod.SpeedrunTool.ModInterop;
+﻿using Celeste.Mod.SpeedrunTool.ModInterop;
 using Celeste.Mod.SpeedrunTool.Utils;
 using Force.DeepCloner;
 using Force.DeepCloner.Helpers;
@@ -531,21 +531,22 @@ public sealed class StateManager {
 
         Session session = level.Session;
         Session savedSession = savedLevel.Session;
-        Session clonedSession = savedSession.DeepCloneShared();
-        SaveData clonedSaveData = savedSaveData.DeepCloneShared();
         AreaKey areaKey = session.Area;
 
-        clonedSession.Time = savedSession.Time = Math.Max(session.Time, clonedSession.Time);
-        clonedSaveData.Time = SaveData.Instance.Time;
+        // The template is updated in place. This used to first DeepCloneShared() the Session and
+        // the SaveData, but the clones were never installed anywhere - they were pure garbage on
+        // every load (a SaveData clone is not free: it clones the whole Areas_Safe list).
+        savedSession.Time = Math.Max(session.Time, savedSession.Time);
+        savedSaveData.Time = SaveData.Instance.Time;
 
         // A mod map may not have an AreaStats entry yet (or a shorter Modes array): the old
         // unchecked indexing threw ArgumentOutOfRangeException and aborted the whole load.
         if (areaKey.ID >= 0
-            && areaKey.ID < clonedSaveData.Areas_Safe.Count
+            && areaKey.ID < savedSaveData.Areas_Safe.Count
             && areaKey.ID < SaveData.Instance.Areas_Safe.Count
-            && (int)areaKey.Mode < clonedSaveData.Areas_Safe[areaKey.ID].Modes.Length
+            && (int)areaKey.Mode < savedSaveData.Areas_Safe[areaKey.ID].Modes.Length
             && (int)areaKey.Mode < SaveData.Instance.Areas_Safe[areaKey.ID].Modes.Length) {
-            clonedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].TimePlayed =
+            savedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].TimePlayed =
                 SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].TimePlayed;
         }
 
@@ -563,20 +564,17 @@ public sealed class StateManager {
         }
 
         int increaseDeath = level.IsPlayerDead() ? 0 : 1;
-        clonedSession.Deaths = savedSession.Deaths = Math.Max(session.Deaths + increaseDeath, clonedSession.Deaths);
-        clonedSession.DeathsInCurrentLevel = savedSession.DeathsInCurrentLevel =
-            Math.Max(session.DeathsInCurrentLevel + increaseDeath, clonedSession.DeathsInCurrentLevel);
-        clonedSaveData.TotalDeaths = savedSaveData.TotalDeaths = SaveData.Instance.TotalDeaths + increaseDeath;
+        savedSession.Deaths = Math.Max(session.Deaths + increaseDeath, savedSession.Deaths);
+        savedSession.DeathsInCurrentLevel =
+            Math.Max(session.DeathsInCurrentLevel + increaseDeath, savedSession.DeathsInCurrentLevel);
+        savedSaveData.TotalDeaths = SaveData.Instance.TotalDeaths + increaseDeath;
         if (areaKey.ID >= 0
-            && areaKey.ID < clonedSaveData.Areas_Safe.Count
             && areaKey.ID < savedSaveData.Areas_Safe.Count
             && areaKey.ID < SaveData.Instance.Areas_Safe.Count
-            && (int)areaKey.Mode < clonedSaveData.Areas_Safe[areaKey.ID].Modes.Length
             && (int)areaKey.Mode < savedSaveData.Areas_Safe[areaKey.ID].Modes.Length
             && (int)areaKey.Mode < SaveData.Instance.Areas_Safe[areaKey.ID].Modes.Length) {
-            clonedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths =
-                savedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths =
-                    SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths + increaseDeath;
+            savedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths =
+                SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths + increaseDeath;
         }
     }
 

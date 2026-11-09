@@ -10,11 +10,11 @@
 
 | # | 严重度 | 位置 | 问题 |
 |---|---|---|---|
-| 1 | 🔴 | `StateManager.cs:185` → `:268-280`（RecoverFromFailedSave 未复位 `ClearBeforeSave`）+ `SaveLoadAction.cs:275-282` | 保存失败后 `ClearBeforeSave` 残留 `true`；之后在“无存档”状态按 Clear State → `OnClearState(true)` 用 `AllSavedValues`（已为 null）→ **NRE 逃出 hotkey（无 try/catch）→ 崩溃** |
+| 1 | 🔴 | `StateManager.cs:185-187` → `:268-281`（RecoverFromFailedSave 未复位 `ClearBeforeSave`）+ `SaveLoadAction.cs:275-282` | 保存失败后 `ClearBeforeSave` 残留 `true`；之后按 Clear State 时 `OnClearState(true)` 用已失效的 id 查 `AllSavedValues`（或 dict 已为 null）→ **KeyNotFoundException/NRE 逃出 hotkey（无 try/catch）→ 崩溃**。`SavedByTas` 也可能残留设置 |
 | 2 | 🟠 | `SaveLoadAction.cs:275-282` + `SaveSlotsManager.cs`（`RequireReInit`） | `OnClearState(clearBeforeSave:true)` 用 `dict[action.dictionaryId]` 无保护：当 mod 在运行期增删 SaveLoadAction 后再次保存（`InitSlots` 尚未重排 id）会 `KeyNotFoundException` → 保存失败（现在会被 recovery 吞掉，但用户看到失败） |
 | 3 | 🟠 | `Snapshot.cs:82-155, 176-198` | 改为“整帧渲染后回读 backbuffer”：**存档发生在切屏/wipe 过程中时会截到黑屏/半屏**（旧实现会重新渲染房间）；且快照包含 HUD/overlay（cosmetic） |
 | 4 | 🟠 | `StateManager.cs:391-408`（RecoverFromFailedLoad） | `preCloneTask = null` 时**没有等待/观察正在跑的 preclone 任务** → 下一次 save/load 可能与旧任务并发克隆同一 `savedLevel`（写 `ClonedEventInstancesWhenPreClone`/`VirtualAssets`、`DynDataUtils.IgnoreTypes` HashSet）→ 重复条目/竞态 |
-| 5 | 🟡 | `SaveLoadInterop.cs:108,133` | `AddReturnSameObjectType/Processor` 每次调用都 `DeepCloner.ClearCaches()`：mod 循环注册 N 个类型 → N 次清空 → 下次 SL 重新 codegen（≈0.19ms/类型，见 audit 附录 1）。建议批量 API 或“dirty 标记 + 只在 SL 开始前清一次” |
+| 5 | 🟡 | `SaveLoadInterop.cs:103-108,131-134` | 非 Entity 分支的 `AddReturnSameObjectType` 和 `AddReturnSameObjectProcessor` **每次调用都** `DeepCloner.ClearCaches()`（清 TypeCache/KnownTypes）：mod 循环注册 N 个类型 → N 次全清 → 下次 SL 重新 codegen（≈0.19ms/类型，见 audit 附录 1）。建议批量 API 或“dirty 标记 + 只在 SL 开始前清一次”（Entity 分支走 `IgnoreSaveLoadComponent.Ignore`，不清缓存，无此问题） |
 | 6 | 🟡 | `SaveLoadInterop.cs`（Remove*） | `RemoveReturnSameObjectType/Processor` **没有**清缓存 → 运行期移除注册不生效（与 Add 不对称） |
 | 7 | 🟡 | `DeepClonerUtils.cs:120-151` | ProcFlags 的 `[ThreadStatic]` 只缓存**最后一个类型**；对象类型交替时 Miss 率高。**实测：纯分派 mock 中新版比旧版慢 ~0.2ms/9.4k 对象**（详见 §2），赢面完全依赖“省掉 58–118ns/容器对象的反射”。需要在真实房间用 `SRT_PROFILE` 做 A/B，不能只靠推断 |
 | 8 | 🟡 | `DeepClonerUtils.cs:200-360`（注释） | 注释声称“cloning is serialized by design (all entry points wait for a running pre-clone task)”**不完全成立**（跨槽操作可交错；recovery 路径会让任务继续跑；本分支新公开的 `SaveLoadInterop.DeepClone` 可被 mod 在任意线程调用）。去掉 per-object lock 本身没有回归（旧 lock 也保护不了那些共享集合），但注释应更正，且剩余共享状态应加锁/改成并发容器 |
@@ -168,3 +168,84 @@
 - `UpdateTimeAndDeaths` 在 SJ mod 图（AreaKey.ID 较大）下 per-area 时间/死亡是否更新。
 - `PreCloneMode.Auto` 在 8GB 机器上的实际内存/加载时间 trade（bench 应分别跑 Auto/On/Off 三组）。
 - 运行期增删 SaveLoadAction 的真实 mod 场景（1.1/1.2 的触发条件）——可用 `SaveLoadInterop.RegisterSaveLoadAction` 写一个测试 mod/命令触发。
+
+### 1.14 ✅ 内置 action 拆分（`SaveLoadAction.BuiltinActions.cs`）等价性 —— 已用脚本逐方法验证
+用 `git show master:...SaveLoadAction.cs` 与 `BuiltinActions.cs` 逐方法做“去掉所有空白后 md5 对比”：
+- `SupportSimpleStaticFields`、`SupportModModuleFields`、`FixSaveLoadIcon`、`BetterCasualPlay`、`SupportExternalMember`、`SupportCalcRandom`、`SupportSettings`、`SupportMInput`、`SupportInput`、`SupportAudioMusic`、`FixVertexLight`、`ExternalAction`、`SupportModSessionAndSaveData`、`SaveStaticMemberValues`、`LoadStaticMemberValues` → **逐字节相同（忽略空白）**；
+- `ReleaseEventInstances` → 唯一差异是文件末尾 `}}` 合并成一行（方法体相同）。
+- `InitActions()` 里各 `InternalSafeAdd` 的调用顺序与 master 完全一致（顺序决定 loadState 执行次序，见 audit 对 `SupportSimpleStaticFields` 先于 ThirdParty 的依赖）。
+结论：**拆分本身是纯移动，无行为变化**；行为变化只来自本分支明确修改的 `OnSaveState/OnLoadState`（`??=` + `EnsureValueDictionaries`）、`InitSlots`（`ActionsVersion`）、`InitFields`（括号修复）、warm-up 迁移、以及新增的 `IsAllowLoad` 版本检查。
+
+### 1.15 ✅ `InitFields` 的优先级 bug 修复正确
+`SaveLoadAction.cs:545-553` 现在的过滤是 `... && (IsSameOrSubclassOf(Entity) || Component || Renderer)`，与 audit D4 指出的 `&&/||` 优先级问题一致修复；`type.IsSubclassOf(...)` 的异常仍由外层 try/catch 处理。
+
+---
+
+## 5. 建议 patch（文本形式，未改源码）
+
+### 5.1 修 issue #1（`ClearBeforeSave` 残留）+ 复位 TAS 标志
+`SpeedrunTool/Source/SaveLoad/StateManager.cs` `RecoverFromFailedSave()`：
+```csharp
+private void RecoverFromFailedSave() {
+    Logger.Warn("SpeedrunTool/SaveState", "Recovering from a failed save...");
+    State = State.None;
+    freezeType = FreezeType.None;
+    Engine.FreezeTimer = 0f;
+    ClearBeforeSave = false;   // <-- 新增：避免残留导致后续 ClearState 走 clearBeforeSave 分支
+    SavedByTas = false;        // <-- 新增
+    LoadByTas = false;         // <-- 新增
+    DeepClonerUtils.ClearSharedDeepCloneState();
+    try { ClearStateImpl(hasGc: false); }
+    catch (Exception exception) { Logger.LogDetailed(exception, "SpeedrunTool"); }
+}
+```
+
+### 5.2 修 issue #1/#2 的根源：`OnClearState` 做成 null/旧 id 安全
+`SpeedrunTool/Source/SaveLoad/SaveLoadAction.cs` `OnClearState`：
+```csharp
+internal static void OnClearState(bool clearBeforeSave = false) {
+    if (clearBeforeSave && AllSavedValues is { } dict) {
+        foreach (SaveLoadAction saveLoadAction in SharedActions) {
+            if (!dict.TryGetValue(saveLoadAction.dictionaryId, out var byType)) {
+                continue; // id 过期（运行期增删过 action）或该槽未初始化
+            }
+            foreach (KeyValuePair<Type, Dictionary<string, object>> pair in byType) {
+                pair.Value.Clear();
+            }
+        }
+        slotInitialized = true;
+    }
+    else if (!clearBeforeSave) {
+        AllSavedValues = null;
+        slotInitialized = false;
+    }
+    foreach (SaveLoadAction saveLoadAction in SharedActions) {
+        saveLoadAction.clearState?.Invoke();
+    }
+}
+```
+> 注意：`clearBeforeSave==true` 但 `AllSavedValues==null` 时什么都不做（保持 `slotInitialized` 不变），比 NRE 安全。
+
+### 5.3 消除 issue #2 的触发窗口（可选）
+`StateManager.SaveStateImpl` 里把 `SaveLoadAction.InitSlots()` 提到 `if (IsSaved) { ClearBeforeSave = true; ClearStateImpl(...); }` **之前**（`InitSlots` 幂等；这样 clear-before-save 时 id 一定是最新的）。
+
+### 5.4 修 issue #4（recovery 与 preclone 任务竞争）
+`StateManager.RecoverFromFailedLoad`：不要直接把引用丢掉
+```csharp
+// 旧任务若还在跑，等它结束（异常只记录），避免下一次 SL 再启动一个任务并发克隆同一 savedLevel
+try { preCloneTask?.Wait(); }
+catch (Exception exception) { Logger.LogDetailed(exception, "SpeedrunTool"); }
+preCloneTask = null;
+```
+或更简单：**不置 null**（下一次 `PreCloneSavedEntities()` 会覆盖引用，旧任务完成后自然回收），但需要确认没有代码依赖 `preCloneTask == null` 表示“无 preclone”（当前 `SetSharedDeepCloneState(preCloneTask?.Result)` 会等待，所以保留引用更安全但会阻塞下一次 load——推荐“等待后再 null”）。
+
+### 5.5 Snapshot wipe 兜底（issue #3）
+`Snapshot.cs:93` 的 fallback 条件改为：
+```csharp
+bool wipeActive = level.Wipe is { Percent: > 0f };
+if (graphicsDevice.GetRenderTargets().Length > 0 || wipeActive) {
+    // 重渲染房间，避免把 wipe/HUD 截进快照
+    ...
+}
+```
+以及 `[Unload]` 里 `readbackBuffer = null; thumbnailBuffer = null;`。

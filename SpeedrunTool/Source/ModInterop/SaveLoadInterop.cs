@@ -160,7 +160,9 @@ public static class SaveLoadInterop {
         }
 
         /// <summary>
-        /// Performs deep (full) copy of object and related graph
+        /// Performs deep (full) copy of object and related graph.
+        /// Must be called from the main thread: it shares the clone state used by the
+        /// save/load pipeline, which is not thread safe.
         /// </summary>
         /// <param name="from"></param>
         /// appear in the MultipleSaveSlots update, which is after v3.24.4

@@ -274,9 +274,17 @@ public sealed partial class SaveLoadAction {
 
     internal static void OnClearState(bool clearBeforeSave = false) {
         if (clearBeforeSave) {
-            Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict = AllSavedValues;
+            // clearBeforeSave is set while replacing a state; the action layout may have changed
+            // since the old values were captured, so dictionary ids may be stale or the whole
+            // dictionary may be missing. Rebuild defensively instead of indexing blindly (a throw
+            // here would escape through the hotkey handler and take the game down).
+            Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict = AllSavedValues ??= InitValueDictionary();
+            EnsureValueDictionaries(dict);
             foreach (SaveLoadAction saveLoadAction in SharedActions) {
-                foreach (KeyValuePair<Type, Dictionary<string, object>> pair in dict[saveLoadAction.dictionaryId]) {
+                if (!dict.TryGetValue(saveLoadAction.dictionaryId, out Dictionary<Type, Dictionary<string, object>> values)) {
+                    continue;
+                }
+                foreach (KeyValuePair<Type, Dictionary<string, object>> pair in values) {
                     pair.Value.Clear();
                     // avoid creating new Dictionary instances
                 }

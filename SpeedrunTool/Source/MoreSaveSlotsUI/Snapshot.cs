@@ -164,6 +164,10 @@ internal class Snapshot {
         On.Celeste.Level.Render -= CaptureSnapshotsAfterRender;
         DisposeAllTextures();
         SnapshotsDict.Clear();
+        // Do not keep the full-screen readback buffer (8.3 MB at 1080p) alive across reloads.
+        readbackBuffer = null;
+        thumbnailBuffer = null;
+        captureWaitFrames = 0;
     }
 
     [Initialize]
@@ -173,12 +177,23 @@ internal class Snapshot {
         }
         LegalNames[0] = "DONT_USE_IT";
     }
+    private static int captureWaitFrames;
+
     private static void CaptureSnapshotsAfterRender(On.Celeste.Level.orig_Render orig, Level self) {
         orig(self);
 
         if (!ScheduledCaptureSnapshots) {
             return;
         }
+
+        // Saving starts a screen wipe right after the state is taken. Reading the frame back
+        // while it runs would store a white/black thumbnail, so wait until the wipe is gone.
+        // The game is frozen during this time, so the captured scene does not change.
+        if (self.Wipe is not null && captureWaitFrames < 180) {
+            captureWaitFrames++;
+            return;
+        }
+        captureWaitFrames = 0;
 
         ScheduledCaptureSnapshots = false; // immediately clear it so there won't be an infinite loop
         Snapshot snapshot = new(DemandingSlot);

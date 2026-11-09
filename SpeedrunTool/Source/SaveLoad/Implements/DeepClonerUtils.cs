@@ -9,6 +9,7 @@ using NLua;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
@@ -119,8 +120,11 @@ public static class DeepClonerUtils {
 
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<Type, ProcFlags> procFlagsCache = new();
 
-    [ThreadStatic] private static Type lastProcFlagsType;
-    [ThreadStatic] private static ProcFlags lastProcFlags;
+    // Direct-mapped thread-local cache in front of the concurrent dictionary. Four slots are
+    // enough to keep the common "alternating a few types while walking a list" pattern a hit.
+    private const int ProcFlagsCacheSlots = 4;
+    [ThreadStatic] private static Type[] lastProcFlagsTypes;
+    [ThreadStatic] private static ProcFlags[] lastProcFlagsValues;
 
     /// <summary>
     /// Drops the memoized per-type decisions. Called after a mod hot reload, because the cache
@@ -128,15 +132,17 @@ public static class DeepClonerUtils {
     /// </summary>
     internal static void ClearProcFlagsCache() {
         procFlagsCache.Clear();
-        lastProcFlagsType = null;
-        lastProcFlags = ProcFlags.None;
+        lastProcFlagsTypes = null;
+        lastProcFlagsValues = null;
     }
 
     private static ProcFlags GetProcFlags(Type type) {
-        // Objects are usually cloned in runs of the same type (arrays/lists), so this
-        // thread-local hit avoids the concurrent dictionary in the common case.
-        if (type == lastProcFlagsType) {
-            return lastProcFlags;
+        int slot = RuntimeHelpers.GetHashCode(type) & (ProcFlagsCacheSlots - 1);
+        Type[] cachedTypes = lastProcFlagsTypes ??= new Type[ProcFlagsCacheSlots];
+        ProcFlags[] cachedValues = lastProcFlagsValues ??= new ProcFlags[ProcFlagsCacheSlots];
+
+        if (cachedTypes[slot] == type) {
+            return cachedValues[slot];
         }
 
         if (!procFlagsCache.TryGetValue(type, out ProcFlags flags)) {
@@ -144,8 +150,8 @@ public static class DeepClonerUtils {
             procFlagsCache.TryAdd(type, flags);
         }
 
-        lastProcFlagsType = type;
-        lastProcFlags = flags;
+        cachedTypes[slot] = type;
+        cachedValues[slot] = flags;
         return flags;
     }
 

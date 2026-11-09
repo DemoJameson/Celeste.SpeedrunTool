@@ -181,6 +181,12 @@ public sealed class StateManager {
         popup = "";
         SaveLoadProfiler.Begin("save");
         try {
+            // Rebuild/validate the value dictionaries before touching a previously saved state:
+            // clearing it uses positional action ids, which may have changed if a mod registered
+            // or removed actions since the state was saved.
+            SaveLoadAction.InitSlots();
+            SaveLoadProfiler.Mark("initSlots");
+
             if (IsSaved) {
                 ClearBeforeSave = true;
                 ClearStateImpl(hasGc: false);
@@ -192,8 +198,6 @@ public sealed class StateManager {
             Stopwatch sw = Stopwatch.StartNew();
 #endif
 
-            SaveLoadAction.InitSlots();
-            SaveLoadProfiler.Mark("initSlots");
             State = State.Saving;
             SavedByTas = tas;
             SaveLoadAction.OnBeforeSaveState(level);
@@ -270,6 +274,11 @@ public sealed class StateManager {
         State = State.None;
         freezeType = FreezeType.None;
         Engine.FreezeTimer = 0f;
+        // These flags are consumed by the next save/clear; a failed save must not leak them
+        // (a stale ClearBeforeSave used to make the following clear-state call index stale ids).
+        ClearBeforeSave = false;
+        SavedByTas = false;
+        LoadByTas = false;
         DeepClonerUtils.ClearSharedDeepCloneState();
         try {
             ClearStateImpl(hasGc: false);
@@ -393,6 +402,14 @@ public sealed class StateManager {
         State = State.None;
         freezeType = FreezeType.None;
         Engine.FreezeTimer = 0f;
+        // Wait for a still-running pre-clone before dropping the reference, otherwise the old task
+        // and a new one could clone the same savedLevel concurrently.
+        try {
+            preCloneTask?.Wait();
+        }
+        catch (Exception exception) {
+            Logger.LogDetailed(exception, "SpeedrunTool");
+        }
         preCloneTask = null;
         DeepClonerUtils.ClearSharedDeepCloneState();
 
@@ -447,7 +464,34 @@ public sealed class StateManager {
     /// of keeping a second copy of the saved object graph alive while a state is saved.
     /// Disable it on memory-constrained machines to roughly halve the retained savestate memory.
     /// </summary>
-    public static bool PreCloneEnabled { get; set; } = true;
+    private static bool preCloneEnabled = true;
+
+    public static bool PreCloneEnabled {
+        get => preCloneEnabled;
+        set {
+            if (preCloneEnabled == value) {
+                return;
+            }
+            preCloneEnabled = value;
+            if (!value) {
+                // Dropping the pre-clone while its task is still running would keep the second
+                // object graph alive until the next save; wait for it and release the reference.
+                foreach (SaveSlot slot in SaveSlotsManager.SaveSlots) {
+                    slot.StateManager.WaitForPreCloneTask();
+                }
+            }
+        }
+    }
+
+    private void WaitForPreCloneTask() {
+        try {
+            preCloneTask?.Wait();
+        }
+        catch (Exception exception) {
+            Logger.LogDetailed(exception, "SpeedrunTool");
+        }
+        preCloneTask = null;
+    }
 
     internal void GcCollect(bool force = false) {
         // 使用内存很难低于这个值, 干脆此时强制执行. ModSettings 里也同样这般设置

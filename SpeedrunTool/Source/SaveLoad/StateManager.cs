@@ -1,4 +1,4 @@
-using Celeste.Mod.SpeedrunTool.ModInterop;
+﻿using Celeste.Mod.SpeedrunTool.ModInterop;
 using Celeste.Mod.SpeedrunTool.Utils;
 using Force.DeepCloner;
 using Force.DeepCloner.Helpers;
@@ -177,68 +177,98 @@ public sealed class StateManager {
             return false;
         }
 
-        if (IsSaved) {
-            ClearBeforeSave = true;
-            ClearStateImpl(hasGc: false);
-            ClearBeforeSave = false;
-        }
+        popup = "";
+        try {
+            if (IsSaved) {
+                ClearBeforeSave = true;
+                ClearStateImpl(hasGc: false);
+                ClearBeforeSave = false;
+            }
 #if DEBUG
-        DebugTool.MemoryTracker.CheckFragmentation("Save Start");
-        DebugTool.MemoryTracker.GcSample before = DebugTool.MemoryTracker.TakeGcSample();
-        Stopwatch sw = Stopwatch.StartNew();
+            DebugTool.MemoryTracker.CheckFragmentation("Save Start");
+            DebugTool.MemoryTracker.GcSample before = DebugTool.MemoryTracker.TakeGcSample();
+            Stopwatch sw = Stopwatch.StartNew();
 #endif
 
-        SaveLoadAction.InitSlots();
-        State = State.Saving;
-        SavedByTas = tas;
-        SaveLoadAction.OnBeforeSaveState(level);
-        level.DeepCloneToShared(savedLevel = (Level)RuntimeHelpers.GetUninitializedObject(typeof(Level)));
-        savedSaveData = SaveData.Instance.DeepCloneShared();
-        savedTasCycleGroupCounter = TasUtils.GroupCounter;
-        savedTransitionRoutine = transitionRoutine?.TryGetTarget(out IEnumerator enumerator) == true ? enumerator.DeepCloneShared() : null;
-        SaveLoadAction.OnSaveState(level);
-        DeepClonerUtils.ClearSharedDeepCloneState();
+            SaveLoadAction.InitSlots();
+            State = State.Saving;
+            SavedByTas = tas;
+            SaveLoadAction.OnBeforeSaveState(level);
+            level.DeepCloneToShared(savedLevel = (Level)RuntimeHelpers.GetUninitializedObject(typeof(Level)));
+            savedSaveData = SaveData.Instance.DeepCloneShared();
+            savedTasCycleGroupCounter = TasUtils.GroupCounter;
+            savedTransitionRoutine = transitionRoutine?.TryGetTarget(out IEnumerator enumerator) == true ? enumerator.DeepCloneShared() : null;
+            SaveLoadAction.OnSaveState(level);
+            DeepClonerUtils.ClearSharedDeepCloneState();
 
-        if (shouldDesyncCheck && DesyncRiskAnalyzer.OnAfterSaveState(out string reason3)) {
-            popup = reason3;
-            ClearStateImpl(hasGc: false);
-            return false;
-        }
+            if (shouldDesyncCheck && DesyncRiskAnalyzer.OnAfterSaveState(out string reason3)) {
+                popup = reason3;
+                ClearStateImpl(hasGc: false);
+                return false;
+            }
 
-        PreCloneSavedEntities();
+            PreCloneSavedEntities();
 
-        if (tas) {
-            State = State.None;
-        }
-        else {
-            FreezeGame(FreezeType.Save);
-            if (TasUtils.HideGamePlay) {
-                DoScreenWipe(level);
+            if (tas) {
+                State = State.None;
             }
             else {
-                level.Add(new WaitingEntity());
+                FreezeGame(FreezeType.Save);
+                if (TasUtils.HideGamePlay) {
+                    DoScreenWipe(level);
+                }
+                else {
+                    level.Add(new WaitingEntity());
+                }
             }
-        }
 
-        popup = $"Save to [{SlotName}]";
-        SlotDescription = GenerateSlotDescription();
-        Logger.Info("SpeedrunTool/SaveState", $"Save to {FullSlotDescription}");
+            popup = $"Save to [{SlotName}]";
+            SlotDescription = GenerateSlotDescription();
+            Logger.Info("SpeedrunTool/SaveState", $"Save to {FullSlotDescription}");
 
 #if DEBUG
-        if (InGame_Profiling) {
-            Logger.Debug("SpeedrunTool", $"{"Save",20}: {sw.ElapsedMilliseconds,7} ms");
-            Logger.Debug("SpeedrunTool", $"{"Allocated",20}: {DebugTool.MemoryTracker.FormatDiff(before, DebugTool.MemoryTracker.TakeGcSample(), simplified: false)}");
-            Logger.Debug("SpeedrunTool", $"{"ProcessMemoryUsage",20}: {Process.GetCurrentProcess().PrivateMemorySize64 / 1024.0 / 1024.0 / 1024.0,7:F2} GB");
-        }
-        DebugTool.MemoryTracker.CheckFragmentation("Save End");
-        if (Log_WhenSaving) {
-            SaveLoadAction.LogSavedValues(level: savedLevel);
-        }
+            if (InGame_Profiling) {
+                Logger.Debug("SpeedrunTool", $"{"Save",20}: {sw.ElapsedMilliseconds,7} ms");
+                Logger.Debug("SpeedrunTool", $"{"Allocated",20}: {DebugTool.MemoryTracker.FormatDiff(before, DebugTool.MemoryTracker.TakeGcSample(), simplified: false)}");
+                Logger.Debug("SpeedrunTool", $"{"ProcessMemoryUsage",20}: {Process.GetCurrentProcess().PrivateMemorySize64 / 1024.0 / 1024.0 / 1024.0,7:F2} GB");
+            }
+            DebugTool.MemoryTracker.CheckFragmentation("Save End");
+            if (Log_WhenSaving) {
+                SaveLoadAction.LogSavedValues(level: savedLevel);
+            }
 #endif
 
-        return true;
+            return true;
+        }
+        catch (Exception exception) {
+            // Never let an exception escape with State = Saving: GameFreezeManager skips
+            // level.Update for every non-None state and all save/load entry points are blocked
+            // by CannotSaveLoad(), which used to leave the session frozen / crash the game.
+            popup = "Failed to Save: please check the log!";
+            Logger.Warn("SpeedrunTool/SaveState", $"Failed to save state: {exception.GetType().Name}: {exception.Message}");
+            Logger.LogDetailed(exception, "SpeedrunTool");
+            RecoverFromFailedSave();
+            return false;
+        }
     }
 
+    /// <summary>
+    /// A save that threw mid-way leaves a partially built template and the state machine in
+    /// <see cref="State.Saving"/>. Release everything and go back to a clean idle state.
+    /// </summary>
+    private void RecoverFromFailedSave() {
+        Logger.Warn("SpeedrunTool/SaveState", "Recovering from a failed save...");
+        State = State.None;
+        freezeType = FreezeType.None;
+        Engine.FreezeTimer = 0f;
+        DeepClonerUtils.ClearSharedDeepCloneState();
+        try {
+            ClearStateImpl(hasGc: false);
+        }
+        catch (Exception exception) {
+            Logger.LogDetailed(exception, "SpeedrunTool");
+        }
+    }
 
     internal bool LoadStateImpl(bool tas, out string popup) {
         popup = "";
@@ -257,65 +287,101 @@ public sealed class StateManager {
             return false;
         }
 
+        // Once UnloadLevel() started, the live level is half destroyed and needs a reload
+        // before the player can continue (see the catch block below).
+        bool levelWasUnloaded = false;
+        try {
 #if DEBUG
-        if (Log_WhenLoading) {
-            SaveLoadAction.LogSavedValues(level: savedLevel);
-        }
-        DebugTool.MemoryTracker.CheckFragmentation("Load Start");
-        DebugTool.MemoryTracker.GcSample before = DebugTool.MemoryTracker.TakeGcSample();
-        Stopwatch sw = Stopwatch.StartNew();
+            if (Log_WhenLoading) {
+                SaveLoadAction.LogSavedValues(level: savedLevel);
+            }
+            DebugTool.MemoryTracker.CheckFragmentation("Load Start");
+            DebugTool.MemoryTracker.GcSample before = DebugTool.MemoryTracker.TakeGcSample();
+            Stopwatch sw = Stopwatch.StartNew();
 #endif
 
-        LoadByTas = tas;
-        State = State.Loading;
+            LoadByTas = tas;
+            State = State.Loading;
 
-        SaveLoadAction.OnBeforeLoadState(level);
+            SaveLoadAction.OnBeforeLoadState(level);
 
-        DeepClonerUtils.SetSharedDeepCloneState(preCloneTask?.Result);
+            DeepClonerUtils.SetSharedDeepCloneState(preCloneTask?.Result);
 
-        UpdateTimeAndDeaths(level);
-        UnloadLevel(level);
+            UpdateTimeAndDeaths(level);
+            levelWasUnloaded = true;
+            UnloadLevel(level);
 
-        Tracker.Refresh(savedLevel); // 不能在 OnLoadState 里做. 否则多次读档会需要反复 Refresh Tracker
-        savedLevel.DeepCloneToShared(level);
-        SaveData.Instance = savedSaveData.DeepCloneShared();
-        if (savedTransitionRoutine != null) {
-            transitionRoutine = new WeakReference<IEnumerator>(savedTransitionRoutine.DeepCloneShared());
-        }
+            Tracker.Refresh(savedLevel); // 不能在 OnLoadState 里做. 否则多次读档会需要反复 Refresh Tracker
+            savedLevel.DeepCloneToShared(level);
+            SaveData.Instance = savedSaveData.DeepCloneShared();
+            if (savedTransitionRoutine != null) {
+                transitionRoutine = new WeakReference<IEnumerator>(savedTransitionRoutine.DeepCloneShared());
+            }
 
-        RestoreAudio_1(level);
-        RestoreCassetteBlockManager1(level);
-        SaveLoadAction.OnLoadState(level);
+            RestoreAudio_1(level);
+            RestoreCassetteBlockManager1(level);
+            SaveLoadAction.OnLoadState(level);
 
-        PreCloneSavedEntities();
+            PreCloneSavedEntities();
 
-        if (tas) {
-            LoadStateComplete(level);
-        }
-        else {
-            // restore cycle hitbox color
-            RestoreLevelTime(level);
-            FreezeGame(FreezeType.Load);
-            DoScreenWipe(level);
-        }
+            if (tas) {
+                LoadStateComplete(level);
+            }
+            else {
+                // restore cycle hitbox color
+                RestoreLevelTime(level);
+                FreezeGame(FreezeType.Load);
+                DoScreenWipe(level);
+            }
 
-        if (!tas && ModSettings.GcAfterLoadState) {
-            GcCollect(force: false);
-        }
+            if (!tas && ModSettings.GcAfterLoadState) {
+                GcCollect(force: false);
+            }
 
-        popup = $"Load from [{SlotName}]";
-        Logger.Info("SpeedrunTool/LoadState", $"Load from {FullSlotDescription}");
+            popup = $"Load from [{SlotName}]";
+            Logger.Info("SpeedrunTool/LoadState", $"Load from {FullSlotDescription}");
 
 #if DEBUG
-        if (InGame_Profiling) {
-            Logger.Debug("SpeedrunTool", $"{"Load",20}: {sw.ElapsedMilliseconds,7} ms");
-            Logger.Debug("SpeedrunTool", $"{"Allocated",20}: {DebugTool.MemoryTracker.FormatDiff(before, DebugTool.MemoryTracker.TakeGcSample(), simplified: false)}");
-            Logger.Debug("SpeedrunTool", $"{"ProcessMemoryUsage",20}: {Process.GetCurrentProcess().PrivateMemorySize64 / 1024.0 / 1024.0 / 1024.0,7:F2} GB");
-        }
-        DebugTool.MemoryTracker.CheckFragmentation("Load End");
+            if (InGame_Profiling) {
+                Logger.Debug("SpeedrunTool", $"{"Load",20}: {sw.ElapsedMilliseconds,7} ms");
+                Logger.Debug("SpeedrunTool", $"{"Allocated",20}: {DebugTool.MemoryTracker.FormatDiff(before, DebugTool.MemoryTracker.TakeGcSample(), simplified: false)}");
+                Logger.Debug("SpeedrunTool", $"{"ProcessMemoryUsage",20}: {Process.GetCurrentProcess().PrivateMemorySize64 / 1024.0 / 1024.0 / 1024.0,7:F2} GB");
+            }
+            DebugTool.MemoryTracker.CheckFragmentation("Load End");
 #endif
 
-        return true;
+            return true;
+        }
+        catch (Exception exception) {
+            popup = "Failed to Load: please check the log!";
+            Logger.Warn("SpeedrunTool/LoadState", $"Failed to load state: {exception.GetType().Name}: {exception.Message}");
+            Logger.LogDetailed(exception, "SpeedrunTool");
+            RecoverFromFailedLoad(level, levelWasUnloaded);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// A load that threw mid-way used to leave State = Loading forever (level.Update skipped,
+    /// all hotkeys reporting "busy"). If the entities were already removed from the live level,
+    /// schedule a level reload so the session becomes playable again; the saved state itself is
+    /// kept, the pre-clone result is dropped so the next load falls back to a synchronous clone.
+    /// </summary>
+    private void RecoverFromFailedLoad(Level level, bool levelWasUnloaded) {
+        Logger.Warn("SpeedrunTool/LoadState", "Recovering from a failed load...");
+        State = State.None;
+        freezeType = FreezeType.None;
+        Engine.FreezeTimer = 0f;
+        preCloneTask = null;
+        DeepClonerUtils.ClearSharedDeepCloneState();
+
+        if (levelWasUnloaded && Engine.Scene == level) {
+            level.OnEndOfFrame += () => {
+                if (Engine.Scene == level) {
+                    level.Reload();
+                }
+            };
+        }
     }
 
     internal bool ClearStateImpl(bool hasGc = true) {
@@ -438,8 +504,10 @@ public sealed class StateManager {
                 level.Tracker.EntityRemoved(entity);
                 Engine.Pooler.EntityRemoved(entity);
             }
-            catch (NullReferenceException) {
-                // ignore https://discord.com/channels/403698615446536203/954507384183738438/954507384183738438
+            catch (Exception exception) {
+                // A broken entity (third-party mod code) must not abort the whole load and leave
+                // the state machine frozen; log it and continue with the remaining entities.
+                Logger.Warn("SpeedrunTool/LoadState", $"Failed to remove {entity.GetType().FullName}: {exception.GetType().Name}: {exception.Message}");
             }
         }
 

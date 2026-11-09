@@ -107,8 +107,28 @@
   编译消除（已用 Cecil 验证 IL 中 0 个调用点，二进制小 2KB），对低配机**零运行时开销**；
   用 `-p:SrtProfiling=true` 构建 profiling 版本后，log.txt 输出 save/load 分段耗时、
   堆/碎片/GC 计数，后台 preclone 单独输出 ms/allocMB。
+- `StateManager` 按职责拆成 partial 文件：`StateManager.cs`（状态机/门面/GC）、
+  `.Transitions.cs`（转场与死亡 hook）、`.Restore.cs`（读档后的时间/音频/磁带/存档数据恢复）、
+  `.Freeze.cs`（freeze/wipe/out-of-freeze）；纯代码移动，`StateManager.Instance` 等公开契约不变。
 - 新增 save/load ModInterop API（`SaveState/LoadState/SaveStateTas/LoadStateTas/ClearState/
-  SwitchSlot/IsSaved/SetPreCloneEnabled/...`）供 TAS/工具/benchmark 使用。
+  SwitchSlot/IsSaved/SetPreCloneEnabled/SetCloneWarmUpEnabled/...`）供 TAS/工具/benchmark 使用。
+
+### 2.5 冷启动预热（首次 save/load）
+
+profiling 显示**会话内第一次** save 比后续慢约 360ms（`cloneLevel` 216ms + `saveActions`
+142ms），第一次 load 的 `loadActions` 也有 ~62ms，来源是 DeepCloner 为运行期遇到的每个类型做
+`Expression.Compile` 的类型 cloner codegen（隔离微基准 ≈0.19ms/类型，累计数百个类型）+ 首次
+JIT；之后 save/load 稳定在 ~13/11ms。
+
+- 新增 `CloneWarmUp`：在第一次 `Level.Begin`（`InitSlots` 之后）用 `Task.Run` 后台遍历
+  **纯类型元数据** —— 所有 `Entity`/`Component`/`Renderer` 子类、被存档的静态字段/模块字段、
+  `Level`/`SaveData`/`Session`/各 mod 的 Session/SaveData 根、以及它们字段类型闭包 ——
+  调用 `DeepCloner.WarmUpCloner` / `WarmUpCloneToCloner` 预生成（不调用）cloner 并写入现有
+  cache。**不读取任何活对象**，因此可以安全地在后台线程跑；真实 save 时直接复用同一份 cache。
+- 只预热 codegen，不强制 JIT：首次 save 仍要为每个 delegate 付一次（小得多的）JIT，但剩下的
+  远低于原来的 360ms；预热本身藏在进图加载屏期间（只占一个后台核心）。
+- 类型数上限 6000，避免为完全用不到的类型保留过多 cloner 缓存；可用 ModInterop
+  `SetCloneWarmUpEnabled(false)` 关闭（benchmark A/B 用）。
 
 ## 3. 验证（进行中，数字由 bench 环境回填）
 

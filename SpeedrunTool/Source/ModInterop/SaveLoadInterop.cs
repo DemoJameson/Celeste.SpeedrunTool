@@ -165,5 +165,93 @@ public static class SaveLoadInterop {
         public static string GetSlotName() {
             return SaveSlotsManager.SlotName;
         }
+
+        /// <summary>
+        /// Save the current level state into the current save slot.
+        /// </summary>
+        public static bool SaveState() {
+            return SaveSlotsManager.SaveState(out _);
+        }
+
+        /// <summary>
+        /// Save the current level state into the given save slot (switch to it first).
+        /// </summary>
+        public static bool SaveState(string slot) {
+            return SaveSlotsManager.SwitchSlot(slot) && SaveSlotsManager.SaveState(out _);
+        }
+
+        /// <summary>
+        /// Load the current save slot.
+        /// </summary>
+        public static bool LoadState() {
+            return SaveSlotsManager.LoadState(out _);
+        }
+
+        /// <summary>
+        /// Load the given save slot (switch to it first).
+        /// </summary>
+        public static bool LoadState(string slot) {
+            return SaveSlotsManager.SwitchSlot(slot) && SaveSlotsManager.LoadState(out _);
+        }
+
+        /// <summary>
+        /// Save without the freeze/screen-wipe used for normal gameplay. Intended for TAS and tools.
+        /// </summary>
+        public static bool SaveStateTas(string slot) {
+            return SaveSlotsManager.SaveStateTas(slot);
+        }
+
+        /// <summary>
+        /// Load without the freeze/screen-wipe used for normal gameplay. Intended for TAS and tools.
+        /// </summary>
+        public static bool LoadStateTas(string slot) {
+            return SaveSlotsManager.LoadStateTas(slot);
+        }
+
+        /// <summary>
+        /// Clear the current save slot.
+        /// </summary>
+        public static bool ClearState() {
+            return SaveSlotsManager.ClearState();
+        }
+
+        /// <summary>
+        /// Clear every save slot.
+        /// </summary>
+        public static void ClearAllStates() {
+            SaveSlotsManager.ClearAll();
+        }
+
+        /// <summary>
+        /// Switch to the given save slot, returns false if a state is busy.
+        /// </summary>
+        public static bool SwitchSlot(string slot) {
+            return SaveSlotsManager.SwitchSlot(slot);
+        }
+
+        /// <summary>
+        /// Whether the given slot (or the current one when null) holds a state.
+        /// </summary>
+        public static bool IsSaved(string slot) {
+            return slot is null ? SaveSlotsManager.IsSaved() : SaveSlotsManager.IsSaved(slot);
+        }
+
+        /// <summary>
+        /// Allow save/load while the game is frozen after a save/load (e.g. for tools and benchmarks).
+        /// </summary>
+        public static void SetAllowSaveLoadWhenWaiting(bool allow) {
+            StateManager.AllowSaveLoadWhenWaiting = allow;
+        }
+
+        /// <summary>
+        /// See <see cref="StateManager.PreCloneEnabled"/>.
+        /// </summary>
+        public static void SetPreCloneEnabled(bool enabled) {
+            StateManager.PreCloneEnabled = enabled;
+        }
+
+        public static bool IsPreCloneEnabled() {
+            return StateManager.PreCloneEnabled;
+        }
     }
 }

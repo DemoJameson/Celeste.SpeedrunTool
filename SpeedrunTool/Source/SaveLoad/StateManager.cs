@@ -1,4 +1,4 @@
-﻿using Celeste.Mod.SpeedrunTool.ModInterop;
+using Celeste.Mod.SpeedrunTool.ModInterop;
 using Celeste.Mod.SpeedrunTool.Utils;
 using Force.DeepCloner;
 using Force.DeepCloner.Helpers;
@@ -354,6 +354,14 @@ public sealed class StateManager {
 
     internal static float MemoryThreshold = 2.5f; // GB
 
+    /// <summary>
+    /// When enabled, a background task pre-computes the clone graph needed by the next load
+    /// (entities, renderers and save data). This makes loading noticeably faster, at the cost
+    /// of keeping a second copy of the saved object graph alive while a state is saved.
+    /// Disable it on memory-constrained machines to roughly halve the retained savestate memory.
+    /// </summary>
+    public static bool PreCloneEnabled { get; set; } = true;
+
     internal void GcCollect(bool force = false) {
         // 使用内存很难低于这个值, 干脆此时强制执行. ModSettings 里也同样这般设置
         force = force || MemoryThreshold < 1f;
@@ -536,6 +544,11 @@ public sealed class StateManager {
     }
 
     private void PreCloneSavedEntities() {
+        if (!PreCloneEnabled) {
+            preCloneTask = null;
+            return;
+        }
+
         if (IsSaved) {
             SaveLoadAction.OnPreCloneEntities();
             preCloneTask = Task.Run(() => {

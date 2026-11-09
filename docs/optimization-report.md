@@ -199,6 +199,23 @@ entities，运行时 **3451** entities，6160x640），而不是入口 `a0-Start
 5. upstream 在同一房间的 B 段出现过 41.7ms 帧（GC 1/1/0），final 没有 —— 说明减少单槽分配量
    对"建槽那一下"的尖峰是有帮助的。
 
+### 3.2 zip mod 与文件夹 mod 的性能差异（回答"标准玩家布局"的问题）
+
+Everest 的加载路径（`Everest.Content.cs` / `Everest.Loader.cs` / `Everest.Relinker.cs`）：
+
+| 方面 | zip mod（大多数玩家的布局） | 文件夹 mod（开发布局） |
+|------|------------------------------|--------------------------|
+| 每帧 update/render | **无差别**：资源加载后在内存中，帧内不读磁盘 | 无差别 |
+| mod DLL | 从 zip 解压一次；之后走 `Mods/Cache` 的已重链接程序集缓存（`.sum` 校验），后续启动不再解压 | 同样走 `Mods/Cache` |
+| 资源首次加载 | 从 zip **流式解压**；同一个 zip 的所有读取共用**一把锁**（`SynchronizedZipEntryStream`），并发加载会串行化；流 seek 会重开 entry 从头解压 | 直接读文件，无解压；但每个文件夹 mod 挂一个 `FileSystemWatcher`（热重载用） |
+| 内存 | 保持打开的 `ZipArchive` + 资源索引（一个句柄/mod） | 每个 mod 一个 watcher/句柄 |
+
+结论：**zip 本身不会导致"实体多时掉帧"**，帧内没有区别；差异只在加载期和资源重新读取
+（进图/首次使用资源、以及 SRT 读档时对已 dispose 的虚拟资源 `Reload()`）。旧 HDD 上 zip 顺序
+读甚至可能更快，弱 CPU 上解压会多一点；把 zip 全转成文件夹反而会多出几十个 watcher，不建议
+盲目转换。`upstream`/`final`/归因数字都是在 **zip 标准环境**（52 个下载 mod 转 zip、用户自己的
+开发 mod 保持文件夹）下测的，与玩家实际布局一致。
+
 ## 4. 已知限制 / 后续可做
 
 - **pre-clone 的取舍是本质的**：读档速度 vs 常驻实体图内存二选一，目前用 Auto 按

@@ -61,7 +61,9 @@ public sealed partial class StateManager {
 
         // v3.28 新功能: 切换 Scene 时不再自动删除 SaveState.
         // 由于我们还保存了 Celeste.SaveData.Instance, 因此我们的多存档甚至可以存储 不同的原版存档文件上的不同章节
-        // todo: 目前这个功能还有问题, 比如资源有时候好像没有正确加载
+        // 读档时如果目标章节和当前场景不一致, StateManager.PendingLoad.cs 会先让游戏正常进入保存时的章节
+        // (LevelLoader 加载 map bin / tilesets / audio 等 area 资源), 再从 Level.Begin 里恢复状态.
+        // AutoClearStateOnSceneSwitch 保留为"旧行为/保守模式"开关, 默认关闭.
 
         if (ModSettings.AutoClearStateOnSceneSwitch) {
             if (self is Overworld && !SavedByTas && InGameOverworldHelperIsOpen.Value?.GetValue(null) as bool? != true
@@ -72,6 +74,7 @@ public sealed partial class StateManager {
 
         // 重启章节 Level 实例变更，所以之前预克隆的实体作废，需要重新克隆
         // 因为 preClone 期间若字段为 Level, 并且 Engine.Scene 也确实是 level, 则会直接把字段设为 level
+        // pending load 也依赖这里: 新章节的 Level.Begin 会先刷新 preclone, 然后才执行恢复.
         if (self is Level) {
             State = State.None;
             PreCloneSavedEntities();

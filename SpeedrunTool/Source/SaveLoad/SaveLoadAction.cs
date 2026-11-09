@@ -67,6 +67,10 @@ public sealed partial class SaveLoadAction {
     public string ActionDescription = "";
 #endif
 
+    // The action that saves/restores every mod's _Session/_SaveData. Kept so a pending
+    // (cross-chapter) load can apply the saved sessions before the target chapter creates entities.
+    private static SaveLoadAction moduleSessionAndSaveDataAction;
+
     private int dictionaryId;
 
     private readonly Action clearState;
@@ -341,6 +345,34 @@ public sealed partial class SaveLoadAction {
     internal static void OnPreCloneEntities() {
         foreach (SaveLoadAction saveLoadAction in preCloneActions) {
             saveLoadAction.preCloneEntities();
+        }
+    }
+
+    /// <summary>
+    /// Applies only the saved mod <c>_Session</c>/<c>_SaveData</c> values (the module action), without
+    /// running the other load actions. Used by a pending (cross-chapter) load right before the target
+    /// chapter builds its entities: LevelLoader's SaveData.StartSession replaces every module session
+    /// with a fresh empty object, so mod load-time code would otherwise not see the saved session.
+    /// The full OnLoadState runs again later and is the authoritative restore.
+    /// </summary>
+    internal static void TryRestoreSavedModuleStateEarly() {
+        SaveLoadAction action = moduleSessionAndSaveDataAction;
+        if (action?.loadState is null) {
+            return;
+        }
+
+        try {
+            Dictionary<int, Dictionary<Type, Dictionary<string, object>>> allValues = AllSavedValues;
+            if (allValues is null || !allValues.TryGetValue(action.dictionaryId, out Dictionary<Type, Dictionary<string, object>> values)) {
+                return;
+            }
+
+            action.loadState(values, null);
+        }
+        catch (Exception exception) {
+            Logger.Warn("SpeedrunTool/PendingLoad",
+                $"Failed to restore saved mod sessions before the chapter was built: {exception.GetType().Name}: {exception.Message}");
+            Logger.LogDetailed(exception, "SpeedrunTool");
         }
     }
 

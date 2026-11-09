@@ -31,7 +31,7 @@ internal static class SwitchAndSaveLoad {
             }
         });
         Hotkey.LoadFromLastSlot.RegisterPressedAction(scene => {
-            if (scene is Level { Paused: false }) {
+            if (scene is Level { Paused: false } or Overworld) {
 #if DEBUG
                 if (JetBrains_Profiling) {
                     JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();

@@ -78,7 +78,12 @@ public class SpeedrunToolSettings : EverestModuleSettings {
 
     public bool AutoLoadStateAfterDeath { get; set; } = false;
     public bool AutoClearStateOnScreenTransition { get; set; } = false;
-    public bool AutoClearStateOnSceneSwitch { get; set; } = true;
+    /// <summary>
+    /// Legacy conservative mode: when leaving a chapter (or entering a Level of another area), clear
+    /// the savestates that belong to the old area. Off by default: states survive chapter changes and
+    /// loading one automatically re-enters the chapter it was saved in.
+    /// </summary>
+    public bool AutoClearStateOnSceneSwitch { get; set; } = false;
     public FreezeAfterLoadStateType FreezeAfterLoadStateType { get; set; } = FreezeAfterLoadStateType.On;
     public bool GcAfterLoadState { get; set; } = false;
 

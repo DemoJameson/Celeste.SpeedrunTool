@@ -31,6 +31,10 @@ public sealed partial class StateManager {
     public Level SavedLevel => savedLevel;
     private Level savedLevel;
     private SaveData savedSaveData;
+    // Set while a cross-scene load is waiting for the saved chapter's LevelLoader/Level.Begin.
+    // See StateManager.PendingLoad.cs.
+    private PendingLoad pendingLoad;
+    internal bool HasPendingLoad => pendingLoad is not null;
     internal Task<DeepCloneState> preCloneTask;
     private FreezeType freezeType;
     private Process celesteProcess;
@@ -62,6 +66,11 @@ public sealed partial class StateManager {
         IL.Celeste.Level.TransitionRoutine += IL_LevelTransitionRoutine;
         On.Celeste.Level.TransitionRoutine += On_LevelTransitionRoutine;
         On.Celeste.Level.End += LevelOnEnd;
+        // Cross-scene (pending) loads: the restore has to run once the saved chapter's Level really
+        // exists. See StateManager.PendingLoad.cs for the whole flow.
+        On.Celeste.Level.Begin += OnLevelBeginFinishPendingLoad;
+        On.Celeste.Level.LoadLevel += OnLevelLoadLevelRestoreModuleStateEarly;
+        On.Monocle.Scene.BeforeUpdate += WatchPendingLoad;
     }
 
     internal static void Unload() {
@@ -69,6 +78,9 @@ public sealed partial class StateManager {
         IL.Celeste.Level.TransitionRoutine -= IL_LevelTransitionRoutine;
         On.Celeste.Level.TransitionRoutine -= On_LevelTransitionRoutine;
         On.Celeste.Level.End -= LevelOnEnd;
+        On.Celeste.Level.Begin -= OnLevelBeginFinishPendingLoad;
+        On.Celeste.Level.LoadLevel -= OnLevelLoadLevelRestoreModuleStateEarly;
+        On.Monocle.Scene.BeforeUpdate -= WatchPendingLoad;
     }
 
     #endregion Hook
@@ -174,7 +186,7 @@ public sealed partial class StateManager {
         catch (Exception exception) {
             // Never let an exception escape with State = Saving: GameFreezeManager skips
             // level.Update for every non-None state and all save/load entry points are blocked
-            // by CannotSaveLoad(), which used to leave the session frozen / crash the game.
+            // by the busy/allow checks, which used to leave the session frozen / crash the game.
             popup = "Failed to Save: please check the log!";
             Logger.Warn("SpeedrunTool/SaveState", $"Failed to save state: {exception.GetType().Name}: {exception.Message}");
             Logger.LogDetailed(exception, "SpeedrunTool");
@@ -208,10 +220,7 @@ public sealed partial class StateManager {
 
     internal bool LoadStateImpl(bool tas, out string popup) {
         popup = "";
-        if (Engine.Scene is not Level level) {
-            popup = "Cannot Load: Scene is not Level!";
-            return false;
-        }
+        Level level = Engine.Scene as Level;
 
         if (!IsAllowLoad(level, tas, out string reason)) {
             popup = reason;
@@ -223,6 +232,39 @@ public sealed partial class StateManager {
             return false;
         }
 
+        // Same chapter: the current Level already owns the map data, tilesets and area resources of
+        // the saved state, so the historical in-place restore is both safe and fastest.
+        if (LoadStateRouteDecider.Decide(level is not null, IsSameTargetArea(level?.Session, savedLevel?.Session)) == LoadStateRoute.Direct) {
+            return LoadStateCore(level, tas, mergeTimeAndDeaths: true, out popup);
+        }
+
+        // Another chapter (or the chapter select / another scene): the target area's map bin,
+        // tilesets, audio and area metadata only exist after the LevelLoader pipeline ran, so the
+        // saved chapter has to be entered first. The restore then runs from its Level.Begin hook.
+        if (!IsSceneAllowedForPendingLoad(Engine.Scene)) {
+            popup = "Cannot Load: Scene is not Level!";
+            return false;
+        }
+
+        if (tas) {
+            // TAS loading must be synchronous (the state is applied before the caller's next frame),
+            // which a chapter transition cannot guarantee. Refuse and keep the state for a manual load.
+            popup = "Cannot Load: TAS savestates cannot be loaded across chapters!";
+            Logger.Warn("SpeedrunTool/LoadState", popup);
+            return false;
+        }
+
+        return BeginPendingLoad(out popup);
+    }
+
+    /// <summary>
+    /// The restore half of a load. Assumes <paramref name="level"/> is the Level the state was saved
+    /// in: either the current Level of the same chapter, or the freshly loaded Level of the saved
+    /// chapter after a pending (cross-scene) load. <paramref name="mergeTimeAndDeaths"/> is false for
+    /// the pending path because it merged the live time/deaths before leaving the old scene.
+    /// </summary>
+    private bool LoadStateCore(Level level, bool tas, bool mergeTimeAndDeaths, out string popup) {
+        popup = "";
         // Once UnloadLevel() started, the live level is half destroyed and needs a reload
         // before the player can continue (see the catch block below).
         bool levelWasUnloaded = false;
@@ -246,7 +288,9 @@ public sealed partial class StateManager {
             DeepClonerUtils.SetSharedDeepCloneState(preCloneTask?.Result);
             SaveLoadProfiler.Mark("waitPreclone");
 
-            UpdateTimeAndDeaths(level);
+            if (mergeTimeAndDeaths) {
+                UpdateTimeAndDeaths(level);
+            }
             SaveLoadProfiler.Mark("mergeTime");
             levelWasUnloaded = true;
             UnloadLevel(level);
@@ -343,6 +387,13 @@ public sealed partial class StateManager {
     }
 
     internal bool ClearStateImpl(bool hasGc = true) {
+        // Clearing while a cross-scene load is entering the saved chapter would leave that half
+        // finished transition behind (and ClearStateImpl is about to null savedLevel). Give up on
+        // the pending load first and restore the live SaveData/module references it replaced.
+        if (pendingLoad is not null) {
+            AbortPendingLoadForClear();
+        }
+
         preCloneTask?.Wait();
 
         // fix: 读档冻结时被TAS清除状态后无法解除冻结
@@ -618,7 +669,7 @@ public sealed partial class StateManager {
             failReason = "Just Saved/Loaded!";
             return false;
         }
-        if (!tas && level.Paused) {
+        if (!tas && level is { Paused: true }) {
             failReason = "Cannot Save while Level is Paused!";
         }
         return true;

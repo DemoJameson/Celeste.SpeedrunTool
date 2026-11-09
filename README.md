@@ -7,7 +7,8 @@
 
 ## Features
 
-- Create save states* to practice certain segments of the room, automatically loaded after death. Customizable keyboard/controller shortcut for saving and loading. 
+- Create save states* to practice certain segments of the room, automatically loaded after death. Customizable keyboard/controller shortcut for saving and loading.
+- Save states survive chapter changes: loading a state that was saved in another chapter (or from the chapter select, F8 works there too) automatically re-enters the chapter it was saved in and then restores it. The old "clear the state when leaving the chapter" behaviour is still available as **Auto Clear State on Chapter Transition (Legacy)** in the State settings (off by default; if you already have a SpeedrunTool settings file from an older version, that entry keeps its old `On` value, so turn it off once to get the new behaviour).
 - Room timer compatible with Summit flags. Personal best is recorded.
 - Statistics on deaths, including location, time lost, etc.
 - Controller support for debug map: use confirm to teleport, right analog to zoom.
@@ -25,6 +26,10 @@ versions keep that cost predictable and expose the main memory/speed trade-off:
   savestate footprint.
 - Save-state thumbnails are stored as small textures (<= 480 px on the long edge), not as
   full-screen captures, and capture buffers are reused.
+- Loading a state saved in another chapter first has to load that chapter (map data, tilesets,
+  audio) before the state is restored, so it costs roughly one chapter load on top of a normal
+  same-chapter load. If entering the chapter fails, the state is kept and the game returns to the
+  chapter select instead of getting stuck.
 - The existing "GC after Load State" / "GC after Clear State" options still control when the mod
   forces a collection; if you see a hitch while clearing or loading states, try turning them off.
 - Diagnostics (opt-in, zero cost in the shipped build): a normal Release build compiles the

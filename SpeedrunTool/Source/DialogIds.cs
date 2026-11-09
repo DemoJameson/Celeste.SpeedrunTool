@@ -46,6 +46,7 @@ public static class DialogIds {
     public const string AutoLoadStateAfterDeath = "SPEEDRUN_TOOL_AUTO_LOAD_STATE_AFTER_DEATH";
     public const string AutoClearStateOnScreenTransition = "SPEEDRUN_TOOL_AUTO_CLEAR_STATE_ON_SCREEN_TRANSITION";
     public const string AutoClearStateOnSceneSwitch = "SPEEDRUN_TOOL_AUTO_CLEAR_STATE_ON_SCENE_SWITCH";
+    public const string AutoClearStateOnSceneSwitchDescription = "SPEEDRUN_TOOL_AUTO_CLEAR_STATE_ON_SCENE_SWITCH_DESCRIPTION";
     public const string GcAfterLoadState = "SPEEDRUN_TOOL_GC_AFTER_LOAD_STATE";
     public const string GcMemoryThreshold = "SPEEDRUN_TOOL_GC_MEMORY_THRESHOLD";
     public const string GcLoadDescription = "SPEEDRUN_TOOL_GC_LOAD_DESCRIPTION";

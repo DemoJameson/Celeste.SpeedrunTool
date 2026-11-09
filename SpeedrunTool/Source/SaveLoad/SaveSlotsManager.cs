@@ -61,19 +61,44 @@ internal static class SaveSlotsManager {
         return index == 1 ? "Default Slot" : $"SaveSlot@{index}";
     }
 
-    public static bool CannotSaveLoad() {
-        if (Engine.Scene is not Level) {
-            return true;
+    /// <summary>
+    /// Runs <paramref name="action"/> with the given slot installed as the current slot, so the
+    /// per-slot value dictionaries / action lists resolve to that slot. Used by the pending-load
+    /// hooks, which run outside the normal hotkey entry points.
+    /// </summary>
+    internal static void RunWithSlot(SaveSlot slot, Action action) {
+        SaveSlot current = Slot;
+        string currentSlotName = SlotName;
+        Slot = slot;
+        SlotName = slot.Name;
+        try {
+            action();
         }
-
-        if (!IsAllFree()) {
-            return true;
+        finally {
+            Slot = current;
+            SlotName = currentSlotName;
         }
-        return false;
     }
+
+    /// <summary>
+    /// Saving requires a live Level: the state has to be a level object graph. Loading is also
+    /// allowed from the chapter select now (the saved chapter is entered first, see
+    /// <see cref="StateManager"/>'s pending load), so it has its own check.
+    /// </summary>
+    public static bool CannotSave() {
+        return Engine.Scene is not Level || !IsAllFree();
+    }
+
+    public static bool CannotLoad() {
+        // The scene/SaveData requirements are checked by LoadStateImpl: the direct (same chapter)
+        // restore only needs the current Level, while a pending load needs a save file to take the
+        // target SaveData from.
+        return !IsAllFree();
+    }
+
     public static bool SaveState(out string popup) {
         bool b;
-        if (CannotSaveLoad()) {
+        if (CannotSave()) {
             b = false;
             popup = "Failed to Save: SpeedrunTool is Busy!";
         }
@@ -94,9 +119,9 @@ internal static class SaveSlotsManager {
 
     public static bool LoadState(out string popup) {
         bool b;
-        if (CannotSaveLoad()) {
+        if (CannotLoad()) {
             b = false;
-            popup = "Failed to Save: SpeedrunTool is Busy!";
+            popup = "Failed to Load: SpeedrunTool is Busy!";
         }
         else {
             b = StateManagerInstance.LoadStateImpl(false, out string message);
@@ -185,6 +210,12 @@ internal static class SaveSlotsManager {
         }
     }
     internal static void AfterAssetReload() {
+        // A pending load would keep references to the unloaded mod assemblies (and leave the game
+        // waiting for a Level that may never come after the reload). Drop it first.
+        foreach (SaveSlot slot in SaveSlots) {
+            RunWithSlot(slot, slot.StateManager.CancelPendingLoadForAssetReload);
+        }
+
         Dictionary = [];
         SwitchSlot(1);
     }
@@ -204,7 +235,7 @@ internal static class SaveSlotsManager {
         SwitchSlot(1);
     }
     public static bool SaveStateTas(string slot) {
-        if (CannotSaveLoad()) {
+        if (CannotSave()) {
             return false;
         }
 
@@ -213,7 +244,7 @@ internal static class SaveSlotsManager {
         return result;
     }
     public static bool LoadStateTas(string slot) {
-        if (CannotSaveLoad()) {
+        if (CannotLoad()) {
             return false;
         }
 

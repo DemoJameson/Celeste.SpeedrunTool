@@ -184,6 +184,15 @@ entities，运行时 **3451** entities，6160x640），而不是入口 `a0-Start
 | save p50 / p99（20 iters） | **40.7 / 115.1 ms** | 40.8 / 322.0 ms | 62.7 / 157.9 ms | — |
 | load p50 / p99（20 iters） | **32.7 / 285.3 ms** | 38.3 / 115.4 ms | 50.2 / 143.6 ms | — |
 
+**GC 压力测试**（`DOTNET_GCHeapHardLimit` 3GB / 2GB，Steam 版需临时 `steam_appid.txt` 才能传环境变量）：
+2GB 与 3GB 表现几乎相同（managed 峰值只有 1.0–1.2GB，远低于限制），说明单靠压 GC 堆上限复现不了
+8GB 旧机的真实压力（瓶颈更可能在进程 native/private ~3GB + 系统占用）。但在该压力下：
+- final 3GB 的 B/C 段 managed 峰值 840/1018MB，upstream 为 994/1206MB 且 B/C 各多 1 次 GC；
+  final save 729.5ms vs upstream 803.6ms —— **优化后内存/GC 压力更低**。
+- **"3 槽 + PreClone On" 是真正的放大因素**：managed 峰值 937MB、段内 1 次 GC、单帧 64ms。
+  8GB 机器建议 **≤2 槽**，3 槽时用 **PreClone Off**（更省内存/分配，代价 load 慢 2–3 倍）。
+- load 后 50–65ms 的 GC 尖峰在 1 槽也存在（属正常 GC），load p50 仍稳在 15–17ms（PreClone On）。
+
 重房间 **20 iters 矩阵**（warmup 3 次，3 slots）进一步确认：save p50 final 40.7ms vs upstream
 62.7ms（**−35%**），load p50 32.7 vs 50.2（**−35%**）；3 槽常驻 managed On 117.7MB / Off
 72.4MB vs upstream 148.4MB（On −21%、Off −51%）；load p99 285ms 与 PreClone Off 的 save p99

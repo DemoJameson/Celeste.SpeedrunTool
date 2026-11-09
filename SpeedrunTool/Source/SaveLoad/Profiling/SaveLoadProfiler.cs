@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO;
 using System.Text;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Profiling;
@@ -13,7 +14,26 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Profiling;
 /// so performance work does not depend on a DEBUG build (whose JIT/GC behaviour differs).
 /// </summary>
 internal static class SaveLoadProfiler {
-    internal static readonly bool Enabled = Environment.GetEnvironmentVariable("SRT_PROFILE") == "1";
+    internal static readonly bool Enabled = IsEnabled();
+
+    /// <summary>
+    /// Enabled by <c>SRT_PROFILE=1</c> in the game's environment, or (for launchers that do not
+    /// pass environment variables through) by a file named <c>srt-profile.flag</c> next to
+    /// SpeedrunTool.dll.
+    /// </summary>
+    private static bool IsEnabled() {
+        if (Environment.GetEnvironmentVariable("SRT_PROFILE") == "1") {
+            return true;
+        }
+
+        try {
+            string assemblyDirectory = Path.GetDirectoryName(typeof(SaveLoadProfiler).Assembly.Location);
+            return assemblyDirectory is not null && File.Exists(Path.Combine(assemblyDirectory, "srt-profile.flag"));
+        }
+        catch {
+            return false;
+        }
+    }
 
     private static readonly Stopwatch Stopwatch = new();
     private static long lastTicks;

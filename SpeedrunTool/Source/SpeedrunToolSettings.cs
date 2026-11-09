@@ -18,8 +18,32 @@ public class SpeedrunToolSettings : EverestModuleSettings {
 
     public void OnLoadSettings() {
         SetGcMemoryThreshold(Doubled_GcMemoryThreshold);
+        ApplyPreCloneMode();
 
         LogForDiagnostics();
+    }
+
+    /// <summary>
+    /// Pre-cloning keeps a second copy of the saved entity graph alive so that loading is
+    /// faster. On memory-constrained machines that is a bad trade, so the default is Auto:
+    /// enabled on machines with plenty of RAM, disabled on ~8 GB machines.
+    /// </summary>
+    public PreCloneMode PreCloneMode { get; set; } = PreCloneMode.Auto;
+
+    /// <summary> Roughly the amount of RAM below which we prefer memory over load speed. </summary>
+    private const long LowMemoryMachineThresholdBytes = 10L * 1024 * 1024 * 1024;
+
+    public void ApplyPreCloneMode() {
+        StateManager.PreCloneEnabled = PreCloneMode switch {
+            PreCloneMode.On => true,
+            PreCloneMode.Off => false,
+            _ => !IsLowMemoryMachine()
+        };
+    }
+
+    private static bool IsLowMemoryMachine() {
+        long totalAvailableMemory = GC.GetGCMemoryInfo().TotalAvailableMemoryBytes;
+        return totalAvailableMemory > 0 && totalAvailableMemory <= LowMemoryMachineThresholdBytes;
     }
 
     private void LogForDiagnostics() {
@@ -30,6 +54,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
             sb.Append($" | {nameof(StateManager.MemoryThreshold)}: {StateManager.MemoryThreshold} GB");
         }
         sb.Append($"\n - {nameof(GcAfterClearState)}: {GcAfterClearState}");
+        sb.Append($"\n - {nameof(PreCloneMode)}: {PreCloneMode} (effective: {StateManager.PreCloneEnabled})");
         Logger.Info("SpeedrunTool", sb.ToString());
         // log it in LogLevel.Info, so we know more to diagnose when user gives us a log.txt
     }
@@ -196,6 +221,12 @@ public enum FreezeAfterLoadStateType {
     Off,
     On,
     IgnoreHoldingKeys
+}
+
+public enum PreCloneMode {
+    Auto,
+    On,
+    Off
 }
 
 public enum TeleportRoomCategory {

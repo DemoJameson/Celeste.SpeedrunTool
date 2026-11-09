@@ -1,4 +1,4 @@
-﻿using Celeste.Mod.SpeedrunTool.DeathStatistics;
+using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
@@ -129,6 +129,15 @@ public static class SpeedrunToolMenu {
                 CreateEnumerableOptions<FreezeAfterLoadStateType>(),
                 ModSettings.FreezeAfterLoadStateType).Change(b =>
                 ModSettings.FreezeAfterLoadStateType = b));
+
+            TextMenu.Item preCloneMode;
+            subMenu.Add(preCloneMode = new EnumerableSliderCompact<PreCloneMode>(Dialog.Clean(DialogIds.PreCloneMode),
+                CreateEnumerableOptions<PreCloneMode>(),
+                ModSettings.PreCloneMode).Change(b => {
+                ModSettings.PreCloneMode = b;
+                ModSettings.ApplyPreCloneMode();
+            }));
+            AddDescription(preCloneMode, subMenu, menu, Dialog.Clean(DialogIds.PreCloneModeDescription));
 
             TextMenu.Item gcAfterLoad;
             TextMenu.Item gcThreshold_WhenLoad;

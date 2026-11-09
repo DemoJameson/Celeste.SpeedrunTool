@@ -16,6 +16,7 @@ public static class DialogIds {
     public const string All = "SPEEDRUN_TOOL_ALL";
     public const string Always = "SPEEDRUN_TOOL_ALWAYS";
     public const string Never = "SPEEDRUN_TOOL_NEVER";
+    public const string Auto = "SPEEDRUN_TOOL_AUTO";
     public const string Chapter = "SPEEDRUN_TOOL_CHAPTER";
     public const string File = "SPEEDRUN_TOOL_FILE";
     // ReSharper restore UnusedMember.Global
@@ -51,6 +52,8 @@ public static class DialogIds {
     public const string GcClearDescription = "SPEEDRUN_TOOL_GC_CLEAR_DESCRIPTION";
     public const string GcThresholdDescription = "SPEEDRUN_TOOL_GC_THRESHOLD_DESCRIPTION";
     public const string GcAfterClearState = "SPEEDRUN_TOOL_GC_AFTER_CLEAR_STATE";
+    public const string PreCloneMode = "SPEEDRUN_TOOL_PRE_CLONE_MODE";
+    public const string PreCloneModeDescription = "SPEEDRUN_TOOL_PRE_CLONE_MODE_DESCRIPTION";
     public const string SaveTimeAndDeaths = "SPEEDRUN_TOOL_SAVE_TIME_AND_DEATHS";
     public const string SaveTimeAndDeathsDescription = "SPEEDRUN_TOOL_SAVE_TIME_AND_DEATHS_DESCRIPTION";
     public const string SaveExtendedVariants = "SPEEDRUN_TOOL_SAVE_EXTENDED_VARIANTS";

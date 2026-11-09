@@ -251,18 +251,6 @@ public static class SaveLoadInterop {
         }
 
         /// <summary>
-        /// Enable/disable the background cloner warm-up that runs when a level loads
-        /// (mainly useful for benchmarking). Main thread only.
-        /// </summary>
-        public static void SetCloneWarmUpEnabled(bool enabled) {
-            CloneWarmUp.Enabled = enabled;
-        }
-
-        public static bool IsCloneWarmUpEnabled() {
-            return CloneWarmUp.Enabled;
-        }
-
-        /// <summary>
         /// See <see cref="StateManager.PreCloneEnabled"/>. Main thread only.
         /// </summary>
         public static void SetPreCloneEnabled(bool enabled) {

@@ -111,24 +111,27 @@
   `.Transitions.cs`（转场与死亡 hook）、`.Restore.cs`（读档后的时间/音频/磁带/存档数据恢复）、
   `.Freeze.cs`（freeze/wipe/out-of-freeze）；纯代码移动，`StateManager.Instance` 等公开契约不变。
 - 新增 save/load ModInterop API（`SaveState/LoadState/SaveStateTas/LoadStateTas/ClearState/
-  SwitchSlot/IsSaved/SetPreCloneEnabled/SetCloneWarmUpEnabled/...`）供 TAS/工具/benchmark 使用。
+  SwitchSlot/IsSaved/SetPreCloneEnabled/...`）供 TAS/工具/benchmark 使用。
 
-### 2.5 冷启动预热（首次 save/load）
+### 2.5 冷启动（首次 save/load）：已测量，未解决
 
-profiling 显示**会话内第一次** save 比后续慢约 360ms（`cloneLevel` 216ms + `saveActions`
-142ms），第一次 load 的 `loadActions` 也有 ~62ms，来源是 DeepCloner 为运行期遇到的每个类型做
-`Expression.Compile` 的类型 cloner codegen（隔离微基准 ≈0.19ms/类型，累计数百个类型）+ 首次
-JIT；之后 save/load 稳定在 ~13/11ms。
+profiling 显示**会话内第一次** save 比后续慢很多：入口房间 `cloneLevel` 216ms + `saveActions`
+142ms（后续 ~13ms 总计）；在 3451 实体的第二面，**首次 save 达 719ms**（稳态 41ms），首次 load
+的 `loadActions` 也有 ~60ms。根因不是类型 cloner 的 `Expression.Compile` codegen（这部分用后台
+类型预热后 `cloneSaveData` 21.5→4.3ms、`cloneLevel` 只降 8%），而是**首次 JIT**：运行期第一次
+执行那些生成的 cloner 委托和 save/load 的 lambda。
 
-- 新增 `CloneWarmUp`：在第一次 `Level.Begin`（`InitSlots` 之后）用 `Task.Run` 后台遍历
-  **纯类型元数据** —— 所有 `Entity`/`Component`/`Renderer` 子类、被存档的静态字段/模块字段、
-  `Level`/`SaveData`/`Session`/各 mod 的 Session/SaveData 根、以及它们字段类型闭包 ——
-  调用 `DeepCloner.WarmUpCloner` / `WarmUpCloneToCloner` 预生成（不调用）cloner 并写入现有
-  cache。**不读取任何活对象**，因此可以安全地在后台线程跑；真实 save 时直接复用同一份 cache。
-- 只预热 codegen，不强制 JIT：首次 save 仍要为每个 delegate 付一次（小得多的）JIT，但剩下的
-  远低于原来的 360ms；预热本身藏在进图加载屏期间（只占一个后台核心）。
-- 类型数上限 6000，避免为完全用不到的类型保留过多 cloner 缓存；可用 ModInterop
-  `SetCloneWarmUpEnabled(false)` 关闭（benchmark A/B 用）。
+尝试过两种预热方案，均**已撤回**（`de9ebc5` → 后续 revert），没有进入交付版本：
+1. 后台按类型元数据预生成 cloner：安全，但只覆盖 codegen，首次 save 只从 719→~700ms，且为
+   数千个类型保留 cloner 缓存会增加常驻内存（对 8GB 不划算）。
+2. 进图时主线程做一次"丢弃式 save/level clone"以触发 JIT：能把热路径跑一遍，但会污染
+   DeepCloner 的类型/委托缓存，实测导致后续真实 save 抛
+   `ArgumentException: Object of type 'System.RuntimeType' cannot be converted to type
+   'Celeste.Player'`（每 20 次 save 全失败），风险不可接受。
+
+因此冷启动开销保留为已知限制（见 §4），下一步的正确方向是**隔离**地预热（例如把预热产生的
+缓存放到可丢弃的独立 AppDomain/AssemblyLoadContext，或在真实 save 前做一次隔离的 clone 校验），
+而不是复用主缓存。
 
 ## 3. 验证（进行中，数字由 bench 环境回填）
 
@@ -184,7 +187,7 @@ entities，运行时 **3451** entities，6160x640），而不是入口 `a0-Start
    与无 savestate（1.93/2.57）和完全禁用 SRT（1.96/2.66）都在噪声范围内；B 段帧 max 只有
    19.8ms，12 秒内没有 >20ms 帧。**第二面卡顿不是 SRT 造成的**，主要是 3451 实体 + helper mod
    的 update/render 成本（这台机器 60fps 下还有余量，8GB 旧机的 CPU/GC 压力会放大问题）。
-2. SRT 的成本集中在 save/load 边界：**首次 save 719ms**（冷启动，正在用 §2.5 的预热消除）、
+2. SRT 的成本集中在 save/load 边界：**首次 save 719ms**（冷启动，见 §2.5，暂未解决）、
    稳态 save 41.4ms / load 32.9ms；每次 load 后有一个 **20.8–25.4ms / 24.5MB 的后台 preclone
    任务**（PreClone On）。
 3. **重房间里 PreClone 的收益比入口房间大得多**：On 时稳态 load 14–15ms，Off 时 34–123ms

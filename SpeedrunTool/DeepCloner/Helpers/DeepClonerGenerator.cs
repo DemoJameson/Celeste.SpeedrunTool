@@ -1,5 +1,4 @@
 using System.Linq;
-using System.Reflection;
 
 namespace Force.DeepCloner.Helpers {
     internal static class DeepClonerGenerator {

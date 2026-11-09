@@ -383,34 +383,6 @@ public sealed partial class SaveLoadAction {
     // used to happen inside the first save, i.e. as a one-time hitch on the save path. Do it when
     // the first level starts loading instead: all mods are loaded by then and the player is
     // already waiting for the level.
-    /// <summary>
-    /// Runs every registered <c>saveState</c> action once into throw-away dictionaries, so their
-    /// lambdas and cloner delegates get JITed while the level is loading. The produced values are
-    /// discarded; callers must set <see cref="DeepClonerUtils.WarmingUp"/> so the clone processors
-    /// (which have side effects on the live game) are skipped.
-    /// </summary>
-    internal static void WarmUpSaveState(Level level, out int failures, out string firstFailure) {
-        failures = 0;
-        firstFailure = null;
-        foreach (SaveLoadAction saveLoadAction in SharedActions) {
-            SlAction saveState = saveLoadAction.saveState;
-            if (saveState is null) {
-                continue;
-            }
-
-            Dictionary<Type, Dictionary<string, object>> throwAway = [];
-            try {
-                saveState(throwAway, level);
-            }
-            catch (Exception exception) {
-                // Best effort: a few third-party actions may not be re-entrant outside a real
-                // save, it does not matter for the warm-up.
-                failures++;
-                firstFailure ??= saveState.Method.Name + ": " + exception.GetType().Name + ": " + exception.Message;
-            }
-        }
-    }
-
     private static void WarmUpOnFirstLevel(On.Monocle.Scene.orig_Begin orig, Scene self) {
         orig(self);
 
@@ -427,9 +399,6 @@ public sealed partial class SaveLoadAction {
             Logger.Warn("SpeedrunTool/SaveLoadAction", $"Failed to initialize save/load actions: {exception.GetType().Name}: {exception.Message}");
             Logger.LogDetailed(exception, "SpeedrunTool");
         }
-
-        // Hide the first save/load's JIT/codegen cost behind the loading screen.
-        CloneWarmUp.WarmUp((Level)self);
     }
 
     [Unload]

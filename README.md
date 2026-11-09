@@ -25,9 +25,6 @@ versions keep that cost predictable and expose the main memory/speed trade-off:
   savestate footprint.
 - Save-state thumbnails are stored as small textures (<= 480 px on the long edge), not as
   full-screen captures, and capture buffers are reused.
-- The cloner code generation needed by the first save/load of a session is warmed up on a
-  background thread while a level loads, so the once-per-session first-save hitch (several
-  hundred ms on slow CPUs) is hidden behind the loading screen instead.
 - The existing "GC after Load State" / "GC after Clear State" options still control when the mod
   forces a collection; if you see a hitch while clearing or loading states, try turning them off.
 - Diagnostics (opt-in, zero cost in the shipped build): a normal Release build compiles the

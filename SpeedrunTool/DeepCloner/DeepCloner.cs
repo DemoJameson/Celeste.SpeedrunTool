@@ -52,7 +52,6 @@ namespace Force.DeepCloner {
             _postCloneProcessor = null;
         }
 
-
         internal static object InvokePostCloneProcessor(object sourceObj, object clonedObj, DeepCloneState deepCloneState) {
             if (_postCloneProcessor == null) {
                 return clonedObj;

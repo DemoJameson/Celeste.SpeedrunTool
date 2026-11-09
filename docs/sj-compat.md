@@ -16,7 +16,7 @@
 2. **FrostHelper 的“FrostTemple 系列”在本 chapter（含 Heartside）的地图数据里完全没有出现**（`grep -i temple` 只命中原版贴图/音效路径）。FrostHelper 在 Heartside 用到的是 20 个其它实体（见 §5），在 chapter 用到 35 个。
 3. FrostHelper 的静态状态基本都被 SRT 的通用静态扫描覆盖（静态 `MTexture`/`MTexture[]`/`List<MTexture>`/bool 标志）；模块类的 static int（`FrostModule.CustomDreamDashState`）经 Cecil 读写点分析确认是 **Player 状态注册 ID**，不需要保存（§7.3）。**FrostHelper 唯一真实缺口是实体持有的裸 `EventInstance`**（`ToggleSwapBlock.moveSfx/returnSfx`），结论见 §6。
 4. **多个 mod 自己接入了 SRT ModInterop**（`[ModImportName("SpeedrunTool.SaveLoad")]`）：`MaxHelpingHand`（`RegisterSaveLoadAction` 保存 `flagMapping`/`colorsMildOverride`；`RegisterStaticTypes` 保存 `StylegroundFadeController` 静态字段）、`FrostHelper`（`AddReturnSameObjectProcessor`：`ISavestatePersisted` 类型共享不克隆）、`CommunalHelper`/`FemtoHelper`/`EeveeHelper`（`RegisterStaticTypes`）。→ SRT 侧对这些 mod 的兼容有相当一部分是 mod 作者自己补的，**不要重复实现**。
-5. `FrostHelper.ModIntegration.ISavestatePersisted` 的 16 个实现类型（`ColorRainbowChannel`/`CustomSpinnerSpriteSource`/`VirtualRenderTargetRef`/`SessionExpressions.CompiledCondition<>` 等）由 FrostHelper 在 `LoadContent` 里通过 `AddReturnSameObjectProcessor` 声明为**共享不克隆**；SRT 的 `ClearCaches()` 修复（D14）保证这个迟到注册能生效。
+5. `FrostHelper.ModIntegration.ISavestatePersisted` 的 16 个实现类型（`ColorRainbowChannel`/`CustomSpinnerSpriteSource`/`VirtualRenderTargetRef`/`SessionExpressions.CompiledCondition<>` 等）由 FrostHelper 在 `LoadContent` 里通过 `AddReturnSameObjectProcessor` 声明为**共享不克隆**；它在首次 save/load 之前完成注册，满足 SRT 的要求（见 §7.4：本分支曾尝试运行期清 DeepCloner 缓存，实测会崩溃，已回退，D14 改为文档约束）。
 
 **需要 Lead 补代码的清单（按优先级）**
 | # | 目标 | 类型 | 建议改动 / 现状 |

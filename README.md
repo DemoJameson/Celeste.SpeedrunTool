@@ -13,6 +13,28 @@
 - Controller support for debug map: use confirm to teleport, right analog to zoom.
 - Debug mode F6 teleport bug-fix – Dream blocks and Badeline not activating in Old Site, incorrect ice/fire state in Core, Celestial Resort huge mess hall being strangely lit, wind sound does not play in Summit 2000m.
 
+## Performance
+
+A save state has to keep a deep copy of the room's object graph, so it is heavy by nature. Recent
+versions keep that cost predictable and expose the main memory/speed trade-off:
+
+- **Pre-clone for Faster Load** (State settings, default `Auto`): the object graph needed by the
+  next load is prepared on a background thread, which makes loading noticeably faster but keeps a
+  second copy of the saved entities in memory. `Auto` enables it only on machines with more than
+  ~10 GB of RAM; on a low-memory machine keep it `Auto` or set it to `Off` to roughly halve the
+  savestate footprint.
+- Save-state thumbnails are stored as small textures (<= 480 px on the long edge), not as
+  full-screen captures, and capture buffers are reused.
+- The existing "GC after Load State" / "GC after Clear State" options still control when the mod
+  forces a collection; if you see a hitch while clearing or loading states, try turning them off.
+- Diagnostics: launch the game with the environment variable `SRT_PROFILE=1` and log.txt will
+  contain one `SRT_PROFILE ...` line per save/load with per-segment milliseconds, allocation and
+  GC/heap numbers.
+
+Other mods and tools can drive save states through the `SpeedrunTool.SaveLoad` ModInterop API
+(`SaveState`, `LoadState`, `SaveStateTas`, `LoadStateTas`, `ClearState`, `SwitchSlot`, `IsSaved`,
+and the pre-clone toggle).
+
 ## Previews
 
 ![preview1](./Preview/preview1.jpg)

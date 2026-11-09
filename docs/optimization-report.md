@@ -1,4 +1,4 @@
-# SpeedrunTool 性能优化报告（perf/savestate-optimization 分支）
+﻿# SpeedrunTool 性能优化报告（perf/savestate-optimization 分支）
 
 > 目标：降低 savestate 的内存开销、提高 save/load 速度、并让游戏在持有 savestate 时不再因
 > 它产生额外卡顿（目标场景：8GB 内存旧机器游玩草莓酱 Grandmaster Heartside）。
@@ -12,28 +12,31 @@
 ## 0. 结论摘要
 
 测于 Strawberry Jam `5-Grandmaster/ZZ-HeartSide` 入口房间（222 entities，60fps vsync，
-20 iterations + 3 warmup，Pre-clone On）：
+20 iterations + 3 warmup；不同构建各跑 1–3 次，下表为区间/代表值）：
 
-| 指标 | upstream master | 优化后 | 变化 |
-|------|-----------------|--------|------|
-| save p50 | 17.56 ms | 12.9 ms | **-26%** |
-| save p99 | 91.3 ms | 57.6 ms | **-35%** |
-| load p50 | 16.25 ms | 11.6 ms | **-28%** |
-| load p99 | 85.2 ms | 16.7–33.3 ms | **-60%~-80%** |
-| load 所在帧 p99/max | 90.1 ms | 64.2–68.4 ms | **-25%~-29%** |
-| 存档 1 槽常驻 managed 增量 | +41.4 MB | +15.1 MB | **-64%** |
-| 存档 3 槽常驻 managed 增量 | +70.7 MB | +44.9 MB | **-36%** |
-| load 后 1 秒内帧时间 | p50 16.67 ms | p50 16.67 ms，窗口内基本无掉帧 | 60fps 稳定 |
+| 指标 | upstream master | 优化后（Pre-clone On） | 优化后（Pre-clone Off，8GB 默认） |
+|------|-----------------|------------------------|----------------------------------|
+| save p50 | 17.4–17.6 ms | 12.5–13.1 ms（**-26%）** | 12.0–12.5 ms |
+| save p99 | 91–101 ms | 58–86 ms（**-15%~-43%）** | 51–68 ms |
+| load p50 | 13.7–16.3 ms | 10.8–11.4 ms（**-20%~-30%）** | 14.0–15.4 ms（比 On 慢 ~25%） |
+| load p99 | 84–85 ms | 12–47 ms（**-45%~-85%）** | 52–71 ms |
+| load 所在帧 max | 89.6 ms | 51.8–58.4 ms（**-35%~-42%）** | 55–76 ms |
+| 存档 1 槽常驻 managed | +30.8 MB | +15.9～25.0 MB（**-19%~-48%）** | +8.7～17.2 MB |
+| 存档 3 槽常驻 managed | +60.0 MB | +45.8～54.8 MB（**-9%~-24%）** | +24.1～32.7 MB（**-46%~-60%）** |
+| load 后 1 秒内帧时间 | p50 16.67 ms | p50 16.67 ms；>33ms 帧约 0–0.05/62 帧 | 同左 |
 
 要点：
-- save/load 的 p50 降低约 1/4~1/3，p99 的改善更大（旧构建的尖峰主要来自 snapshot 全屏
-  捕获/LOH 分配与更慢的克隆处理器）。
-- 存档常驻内存明显下降（1 槽 -64%），主要来自 snapshot 缩略图与克隆图缩小；3 槽时
-  因每槽边际内存接近（~15MB/槽），相对收益被已有 baseline 稀释。
-- load 的尖峰只出现在 load 所在那一帧（被 load 的 wipe 动画覆盖），load 之后帧时间稳定在
-  60fps，没有“有了 savestate 之后持续卡顿”的现象。
-- 关掉 Pre-clone（8GB 机器的 Auto 默认）时：存档常驻从 15.2MB/槽降到 8.7MB/槽（-43%），
-  load p50 从 11.6ms 变成 14.8ms（+27%）——这就是 Auto 模式要做的取舍。
+- save/load p50 降低约 1/4；p99 与 load 帧尖峰的改善更大（旧构建的尖峰主要来自 snapshot
+  全屏捕获 / 8.3MB LOH 分配、以及更慢的克隆处理器）。p99 受 GC/调度噪声影响较大，表中给区间。
+- 存档常驻内存明显下降：**Pre-clone Off 时 3 槽从 60.0MB 降到 24.1–32.7MB（-45%~-60%）**，
+  这是 8GB 目标机实际会走到的路径。On 时的收益较小，因为多出来的 pre-clone 第二份实体图本身
+  就是设计上的取舍。
+- load 的尖峰只出现在 load 所在那一帧（被 load 的 wipe 动画覆盖）；load 之后 1 秒窗口内帧时间
+  稳定在 60fps，没有“有了 savestate 之后持续卡顿”。normal 模式（含 freeze+wipe）的可见过渡
+  约 520-550ms，来自 wipe 动画本身，期间最大帧 17-27ms。
+- 8GB 机器上 `PreCloneMode=Auto` 会生效为 Off：用 load p50 从 ~11ms 变成 ~14-15ms 的代价，
+  换取每槽约一半的常驻内存。这个交换在 8GB + 大房间场景是值得的（旧机内存压力比 load 快
+  几毫秒更重要）。
 
 ## 1. 方法
 
@@ -109,16 +112,20 @@
 - 场景：StrawberryJam `5-Grandmaster/ZZ-HeartSide` 入口房间（222 entities），60fps vsync。
 - 对照：upstream master 构建 / 优化构建（Pre-clone On / Off）× 1 槽 / 3 槽；
   `SRT_PROFILE=1` 抓分段耗时；debug 构建抓每 action 明细。
-- **对照数据（同一场景，Pre-clone On，20 iterations，已扣除 3 次 warmup）**：
-  - save：upstream p50 17.56ms / 优化后 12.9ms；p99 91.3ms → 57.6ms
-  - load：upstream p50 16.25ms / 优化后 11.6ms；p99 85.2ms → 16.7-33.3ms
-  - load 所在帧：upstream p99 90.1ms / 优化后 64.2-68.4ms；load 之后 1s 内均稳定 60fps
-  - 存档常驻内存（强制 GC 后 vs 进图 baseline，managed）：upstream 1 槽 +41.4MB / 3 槽 +70.7MB；
-    优化后 1 槽 +15.1MB / 3 槽 +44.9MB（≈15MB/槽）
-  - Pre-clone Off（优化后）：1/2/3 槽 +8.7/+16.7/+24.1MB，load p50 14.8ms（vs on 11.6ms）
+- **对照数据（同一场景，20 iterations，已扣除 3 次 warmup；多次运行取区间）**：
+  - save：upstream p50 17.4-17.6ms / 优化后（On）12.5-13.1ms；p99 91-101ms → 58-86ms
+  - load：upstream p50 13.7-16.3ms / 优化后（On）10.8-11.4ms；p99 84-85ms → 12-47ms
+  - load 所在帧 max：upstream 89.6ms / 优化后（On）51.8-58.4ms；load 之后 1s 窗口内均
+    p50 16.67ms、>33ms 帧 ≈0
+  - 存档常驻内存（强制 GC 后 vs 进图 baseline，managed）：
+    upstream 1/2/3 槽 +30.8/+45.4/+60.0MB；优化后（On）+15.9~25.0/+31.2~40.2/+45.8~54.8MB；
+    优化后（Off）+8.7~17.2/+16.7~25.3/+24.1~32.7MB（每槽测量有 ±10MB 噪声）
   - GC（20 save + 20 load）：gen0/gen1/gen2 ≈ 3/3/0（save）、3/3/0（load）
-  - normal 模式（含 freeze+wipe）：save 调用 ~10.8-12.7ms → 可见过渡 ~530-550ms（wipe 动画），
+  - normal 模式（含 freeze+wipe）：save 调用 ~10.8-12.7ms → 可见过渡 ~520-550ms（wipe 动画），
     期间最大帧 17-27ms（分帧动画，不是单帧卡顿）
+  - 备用场景 `5-Grandmaster/maya` 房间 Insert Coin（193 entities，opt-v1）：save p50 7.6ms /
+    load p50 8.9ms，槽内存 +3.9/+9.7/+14.8MB —— 与场景规模同向
+  - 测量机是 16 线程/64GB 开发机（**不是** 8GB 目标机）；跨构建横向对比有效，绝对值仅供参考
 
 ## 4. 已知限制 / 后续可做
 

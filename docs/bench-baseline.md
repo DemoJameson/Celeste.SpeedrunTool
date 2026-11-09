@@ -640,3 +640,21 @@ sid: StrawberryJam2021/5-Grandmaster/ZZ-HeartSide  |  LevelData count: 33  |  so
 | 30 | z05 | 0 | 16x56@57720,-15992 |
 | 31 | z06 | 0 | 176x56@58880,-16080 |
 | 32 | z74 | 0 | 48x32@30112,-5944 |
+
+---
+
+## 11. scene-state 跨章节读档验证（scenefix af3e8bd，2026-11-10）
+
+使用 `feat/scene-persistent-state`（commit `af3e8bd`）构建的 SpeedrunTool.dll（md5 `5f0a625106c0016e4e35185b5932e44b`）在 bench 实例验证。
+
+**AutoClear 注意**：用户旧设置文件里 `AutoClearStateOnSceneSwitch: true` 会在场景切换时清档（初始测试全部失败的原因）；scenefix 新默认只影响新设置。bench 测试时 harness 覆盖为 false。
+
+| # | 场景 | 结果 | 关键数据 |
+|---|---|---|---|
+| B1 | 同章节同图换房间 → 读档 | PASS | LoadState 成功回到保存房间 |
+| B2 | A(SJ HeartSide)→B(ForsakenCity) 跨章节 | PASS | `PendingLoad: Entering '…'` → **ready after 1452 ms** → 恢复 A |
+| B4 | 不同原版存档文件（只读） | PASS | 槽 1/2 切换、无 SaveData.Save；**ready after 1505 ms**，未写回存档 |
+| B6 | 切场景后立刻读档 | PASS（happy path） | **ready after 1495 ms**；abort/retry 边角未触发 |
+| B8 | 跨章节耗时 | 数据 | pending 恢复 1452–1505 ms（B2/B4/B6/B8：1452/1505/1495/1476 ms）；整体 wall save→restored ~3.5 s（含 1 s 观察 pause）；memory 未采样 |
+
+B3（Overworld→A）、B5（CollabUtils2 helper）、B7（加载失败回滚）需要手动 UI/改 mod 文件验证，步骤见 `bench/results/scene-state-b1-b8-report.md`。

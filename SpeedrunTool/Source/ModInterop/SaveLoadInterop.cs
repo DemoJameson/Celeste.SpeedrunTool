@@ -119,6 +119,7 @@ public static class SaveLoadInterop {
             }
             else {
                 returnSameObjectTypes.Remove(type);
+                Force.DeepCloner.DeepCloner.ClearCaches();
             }
         }
 
@@ -139,6 +140,7 @@ public static class SaveLoadInterop {
         /// <param name="predicate"></param>
         public static void RemoveReturnSameObjectProcessor(Func<Type, bool> predicate) {
             returnSameObjectPredicates.Remove(predicate);
+            Force.DeepCloner.DeepCloner.ClearCaches();
         }
 
         /// <summary>

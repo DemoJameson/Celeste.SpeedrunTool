@@ -1,4 +1,4 @@
-
+﻿
 using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
@@ -87,13 +87,24 @@ internal class Snapshot {
         int width = viewport.Width;
         int height = viewport.Height;
         bool success = true;
+        bool renderedHere = false;
         try {
-            level.BeforeRender();
             graphicsDevice.Viewport = viewport;
-            graphicsDevice.SetRenderTarget(null);
-            graphicsDevice.Clear(Engine.ClearColor);
-            level.Render();
-            level.AfterRender();
+            if (graphicsDevice.GetRenderTargets().Length > 0) {
+                // Unusual frame (rendering into a render target): fall back to rendering the
+                // room once into the back buffer.
+                level.BeforeRender();
+                graphicsDevice.SetRenderTarget(null);
+                graphicsDevice.Clear(Engine.ClearColor);
+                level.Render();
+                level.AfterRender();
+                renderedHere = true;
+            }
+
+            // The level of this frame has just been rendered into the back buffer by the normal
+            // frame, so read it back instead of rendering the whole room a second time (the old
+            // code re-rendered the level inside Level.BeforeRender, doubling that frame and the
+            // GPU sync cost of saving).
             EnsureBufferSize(ref readbackBuffer, width * height);
             graphicsDevice.GetBackBufferData(viewport.Bounds, readbackBuffer, 0, width * height);
         }
@@ -105,10 +116,12 @@ internal class Snapshot {
         finally {
             graphicsDevice.SetRenderTarget(null);
             graphicsDevice.Viewport = viewport2;
-            try {
-                Draw.SpriteBatch.End();
-            }
-            catch {
+            if (renderedHere) {
+                try {
+                    Draw.SpriteBatch.End();
+                }
+                catch {
+                }
             }
         }
 
@@ -143,13 +156,12 @@ internal class Snapshot {
 
     [Load]
     private static void Load() {
-
-        On.Celeste.Level.BeforeRender += CaptureSnapshotsBeforeRender;
+        On.Celeste.Level.Render += CaptureSnapshotsAfterRender;
     }
 
     [Unload]
     private static void Unload() {
-        On.Celeste.Level.BeforeRender -= CaptureSnapshotsBeforeRender;
+        On.Celeste.Level.Render -= CaptureSnapshotsAfterRender;
         DisposeAllTextures();
         SnapshotsDict.Clear();
     }
@@ -161,21 +173,23 @@ internal class Snapshot {
         }
         LegalNames[0] = "DONT_USE_IT";
     }
-    private static void CaptureSnapshotsBeforeRender(On.Celeste.Level.orig_BeforeRender orig, Level self) {
-        if (ScheduledCaptureSnapshots) {
-            ScheduledCaptureSnapshots = false;
-            // immediately set it so there won't be infinite loop
-            Snapshot snapshot = new(DemandingSlot);
-            CaptureSnapshots(self, snapshot);
-            // Re-saving into the same slot replaces the dictionary entry: dispose the texture of
-            // the snapshot being replaced, otherwise every save leaks one texture.
-            if (SnapshotsDict.TryGetValue(DemandingSlot, out Snapshot previous) && previous != snapshot) {
-                previous.snapshotTex?.Dispose();
-                previous.snapshotTex = null;
-            }
-            SnapshotsDict[DemandingSlot] = snapshot;
-        }
+    private static void CaptureSnapshotsAfterRender(On.Celeste.Level.orig_Render orig, Level self) {
         orig(self);
+
+        if (!ScheduledCaptureSnapshots) {
+            return;
+        }
+
+        ScheduledCaptureSnapshots = false; // immediately clear it so there won't be an infinite loop
+        Snapshot snapshot = new(DemandingSlot);
+        CaptureSnapshots(self, snapshot);
+        // Re-saving into the same slot replaces the dictionary entry: dispose the texture of
+        // the snapshot being replaced, otherwise every save leaks one texture.
+        if (SnapshotsDict.TryGetValue(DemandingSlot, out Snapshot previous) && previous != snapshot) {
+            previous.snapshotTex?.Dispose();
+            previous.snapshotTex = null;
+        }
+        SnapshotsDict[DemandingSlot] = snapshot;
     }
     internal void RenderContent(float x1, float y1, float x2, float y2, float alpha, bool highlight) {
         bool hasSnapshot = true;

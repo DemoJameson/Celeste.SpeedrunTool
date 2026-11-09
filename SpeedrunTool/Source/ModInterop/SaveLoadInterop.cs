@@ -102,6 +102,10 @@ public static class SaveLoadInterop {
             }
             else {
                 returnSameObjectTypes.Add(type);
+                // Cloners are generated and cached per type; a type registered after the first
+                // save/load would otherwise keep being cloned (audit D14, hit by FrostHelper's
+                // ISavestatePersisted handling).
+                Force.DeepCloner.DeepCloner.ClearCaches();
             }
         }
 
@@ -124,6 +128,9 @@ public static class SaveLoadInterop {
         /// <param name="predicate">Returning true means that an object of the type returns the same object when cloned.</param>
         public static void AddReturnSameObjectProcessor(Func<Type, bool> predicate) {
             returnSameObjectPredicates.Add(predicate);
+            // Same as AddReturnSameObjectType: drop the cached per-type decisions so types that
+            // were already cloned once pick up the new predicate.
+            Force.DeepCloner.DeepCloner.ClearCaches();
         }
 
         /// <summary>

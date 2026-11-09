@@ -52,6 +52,16 @@ namespace Force.DeepCloner {
             _postCloneProcessor = null;
         }
 
+        /// <summary>
+        /// Drops the cached per-type cloners and safe-type decisions. Must be called when a mod
+        /// registers a new "return the same object" predicate/type after cloning already happened,
+        /// otherwise the previously generated cloners keep the old decision (see audit D14).
+        /// </summary>
+        public static void ClearCaches() {
+            DeepClonerCache.ClearCache();
+            DeepClonerSafeTypes.KnownTypes.Clear();
+        }
+
         internal static object InvokePostCloneProcessor(object sourceObj, object clonedObj, DeepCloneState deepCloneState) {
             if (_postCloneProcessor == null) {
                 return clonedObj;

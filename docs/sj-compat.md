@@ -154,18 +154,20 @@ SRT 只对 `SoundSource.instance` 和 `CassetteBlockManager.sfx/snapshot` 做 ma
 - 读档后 `UnloadLevel` 会跑旧实体的 `Removed()`；若它 `stop/release` 了该实例，模板里的句柄就悬垂 → 读档后 `.start()`/`.setParameterValue()` 无效或 FMOD 报错；
 - 即使不释放，两份对象共享一个 FMOD 实例，音量/参数互相干扰。
 
-**chapter 地图里使用到的、带裸 EventInstance 字段的实体**（Cecil 扫描结果）：
+**chapter 地图里使用到的、带裸 EventInstance 字段的实体**（Cecil 扫描结果；“bin 序”= 该实体名在 `ZZ-HeartSide.bin` 中首次出现的字符串序号，≈房间顺序，越小越靠前）
 | 类型 | 字段 | 备注 |
 |---|---|---|
-| `FrostHelper.ToggleSwapBlock` | `moveSfx`, `returnSfx` | Heartside 使用；建议优先修 |
-| `Celeste.Mod.StrawberryJam2021.Entities.CustomBadelineBoost` | `FinalBoostSfx` | SJ 本体 |
-| `Celeste.Mod.StrawberryJam2021.Entities.WonkyCassetteBlockController` | `sfx`, `snapshot` | 类似 CassetteBlockManager，但没有被 SRT 的 special-case 命中 |
-| `Celeste.Mod.StrawberryJam2021.Entities.FakeCassette` | `collectAudioEvent` | |
-| `Celeste.Mod.CollabUtils2.Entities.MiniHeart` | `pauseMusicSnapshot`（+ `Coroutine smashRoutine`） | Heartside 18 屏使用 |
-| `Celeste.Mod.XaphanHelper.Entities.FlagSwapBlock` | `moveSfx`, `returnSfx` | |
-| `Celeste.Mod.XaphanHelper.Entities.Liquid` | `riseSoundSource`（+ `Coroutine LiquidDamageRoutine`, `MagneticCeiling.JumpGraceTimerRoutine`） | |
-| `Celeste.Mod.CommunalHelper.Entities.Chain` | `sfx` | |
+| `FrostHelper.ToggleSwapBlock` | `moveSfx`, `returnSfx` | **在 Heartside，bin 序≈777（最早）**；建议优先修 |
+| `Celeste.Mod.StrawberryJam2021.Entities.WonkyCassetteBlockController` | `sfx`, `snapshot` | **在 Heartside，bin 序≈893**；类似 CassetteBlockManager，但没被 SRT 的 special-case 命中 |
+| `Celeste.Mod.StrawberryJam2021.Entities.CustomBadelineBoost` | `FinalBoostSfx` | 在 Heartside，bin 序≈2973（后段） |
+| `Celeste.Mod.XaphanHelper.Entities.FlagSwapBlock` | `moveSfx`, `returnSfx` | 在 Heartside，bin 序≈2557（中段） |
+| `Celeste.Mod.XaphanHelper.Entities.Liquid` | `riseSoundSource`（+ `Coroutine LiquidDamageRoutine`） | 在 Heartside，bin 序≈3223（后段） |
+| `Celeste.Mod.CollabUtils2.Entities.MiniHeart` | `pauseMusicSnapshot`（+ `Coroutine smashRoutine`） | chapter 使用（非 Heartside） |
+| `Celeste.Mod.StrawberryJam2021.Entities.FakeCassette` | `collectAudioEvent` | chapter 使用（非 Heartside） |
+| `Celeste.Mod.CommunalHelper.Entities.Chain` | `sfx` | chapter 使用（非 Heartside） |
 | （另：`CommunalHelper.CassetteSwapBlock/ConnectedSwapBlock/DreamSwapBlock`、`DJMapHelper.BadelineBoostTeleport`、`FemtoHelper.FuckingAwesomeEmulator`、`BrokemiaHelper.*`、`vitmod.*` 等同类字段在其它图使用） | | |
+
+**Heartside 前几屏（bin 序 600–1200）里的其它“读档需要验证”的类型**：`MaxHelpingHand/MovingFlagTouchSwitch`（640，静态 flagMapping，已由 MHM 自接 SRT）、`YetAnotherHelper/SpikeJumpThruController`（769，hook 需重建）、`VivHelper/RefillCancelSpace`（977，静态 Camera 引用）、`CommunalHelper/DreamMoveBlock`（1159，`Coroutine controller`）。
 
 **建议方案（二选一）**：
 1. **通用（推荐，一次性解决所有 mod）**：新增内置 SaveLoadAction：
@@ -181,29 +183,55 @@ SRT 只对 `SoundSource.instance` 和 `CassetteBlockManager.sfx/snapshot` 做 ma
 
 > 以下 `file:line` 为建议插入位置（基于当前 HEAD）。
 
-### 7.1 YetAnotherHelper hook 重建（新文件 `ThirdPartySupport/YetAnotherHelperUtils.cs`）
+### 7.1 YetAnotherHelper hook 重建（新文件 `ThirdPartySupport/YetAnotherHelperUtils.cs`）——已按 Cecil 实证修正
+
+> **注意**：`Load()`/`Unload()` 管的是 **模块生命周期** 的 `On.Celeste.Level.LoadLevel` hook，**不要**在 loadState 里调用它们。需要重建的是 `Awake` 里挂的 `On.Celeste.Spikes.OnCollide`（静态回调 `OnCollideHook`）。
+
 ```csharp
 internal static class YetAnotherHelperUtils {
+    private static Type spikeCtrlType;
+    private static On.Celeste.Spikes.hook_OnCollide onCollideHook;
+
+    [Initialize]
+    private static void Initialize() {
+        spikeCtrlType = ModUtils.GetType("YetAnotherHelper", "Celeste.Mod.YetAnotherHelper.Entities.SpikeJumpThruController");
+        if (spikeCtrlType is null) return;
+        Tracker.AddTypeToTracker(spikeCtrlType);   // 为了 GetEntitiesTrackIfNeeded
+        onCollideHook = (On.Celeste.Spikes.hook_OnCollide)Delegate.CreateDelegate(
+            typeof(On.Celeste.Spikes.hook_OnCollide), spikeCtrlType.GetMethodInfo("OnCollideHook"));
+    }
+
     internal static void Support() {
-        if (ModUtils.GetType("YetAnotherHelper", "Celeste.Mod.YetAnotherHelper.Entities.SpikeJumpThruController") is not { } type) return;
-        if (type.GetMethodInfo("Load") is not { } load || type.GetMethodInfo("Unload") is not { } unload) return;
+        if (spikeCtrlType is null) return;
         SaveLoadAction.InternalSafeAdd(loadState: (_, level) => {
-            foreach (Entity e in level.Tracker.GetEntitiesTrackIfNeeded(type)) {
-                unload.Invoke(e, null);   // 幂等：先摘掉可能残留的 hooks
-                load.Invoke(e, null);     // 重新注册 Level.LoadLevel + Spikes.OnCollide
+            bool any = level.Tracker.GetEntitiesTrackIfNeeded(spikeCtrlType) is { Count: > 0 };
+            if (any) {
+                On.Celeste.Spikes.OnCollide -= onCollideHook;   // 幂等（OnCollideHook 是静态方法，delegate 相等）
+                On.Celeste.Spikes.OnCollide += onCollideHook;
+                spikeCtrlType.SetFieldValue("SpikeHooked", true);   // 校正 SRT 静态恢复后的可能不一致
+            }
+            else if (spikeCtrlType.GetFieldValue<bool>("SpikeHooked")) {
+                On.Celeste.Spikes.OnCollide -= onCollideHook;
+                spikeCtrlType.SetFieldValue("SpikeHooked", false);
             }
         });
     }
 }
 ```
-并在 `ThirdParty.ComplexModsSupport()`（`ThirdParty.cs:16-24`）末尾加 `YetAnotherHelperUtils.Support();`。
+并在 `ThirdParty.ComplexModsSupport()`（`ThirdParty.cs:16-24`）末尾加 `YetAnotherHelperUtils.Support();`（`Initialize` 由 SRT 的 `[Initialize]` 分发自动调用）。
 
-### 7.2 CollabUtils2 hook 重建（同上文件）
+### 7.2 CollabUtils2 hook 重建（同上文件）——GM Heartside 实际未用到该实体，低优先
+
+> `hook()` / `unhook()` 是 **`private static void`（无参数）**，全局生效；而且 `hooked` 是 static bool（SRT 会保存/恢复它）→ 读档后可能 `hooked==true` 但事件已摘。做法：先 `unhook()`（幂等）再按实体存在与否决定 `hook()`。
+
 ```csharp
-if (ModUtils.GetType("CollabUtils2", "Celeste.Mod.CollabUtils2.Entities.CollabCrystalHeart") is { } type
-    && type.GetMethodInfo("hook") is { } hook && type.GetMethodInfo("unhook") is { } unhook) {
+if (ModUtils.GetType("CollabUtils2", "Celeste.Mod.CollabUtils2.Entities.CollabCrystalHeart") is { } type) {
+    Tracker.AddTypeToTracker(type);
     SaveLoadAction.InternalSafeAdd(loadState: (_, level) => {
-        foreach (Entity e in level.Tracker.GetEntitiesTrackIfNeeded(type)) { unhook.Invoke(e, null); hook.Invoke(e, null); }
+        type.InvokeMethod("unhook");   // 幂等；修正 SRT 静态恢复的 hooked=true 与实际未挂钩的不一致
+        if (level.Tracker.GetEntitiesTrackIfNeeded(type) is { Count: > 0 }) {
+            type.InvokeMethod("hook"); // 重新注册 On.Celeste.Level.RegisterAreaComplete + IL.Celeste.Level.CompleteArea
+        }
     });
 }
 ```

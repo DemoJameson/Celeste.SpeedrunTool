@@ -21,6 +21,8 @@ internal static class ThirdParty {
         DeathTrackerHelperUtils.Support();
         BrokemiaHelperUtils.Support();
         EmoteModUtils.Support();
+        YetAnotherHelperUtils.Support();
+        CollabUtils2SavestateUtils.Support();
     }
 
 

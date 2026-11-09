@@ -479,11 +479,28 @@ public sealed class StateManager {
             DebugTool.MemoryTracker.CheckFragmentation("GC Start");
 #endif
             Stopwatch sw = Stopwatch.StartNew();
-            GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
-            GC.Collect();
+
+            // LOH compaction is by far the most expensive part of this collect (it can move
+            // hundreds of MB), and it is only worth paying when the large object heap is
+            // actually fragmented. Compacting on every clear used to be a guaranteed
+            // multi-hundred-ms stall on a low-memory machine, exactly when the player hits
+            // the clear-state hotkey or changes chapter.
+            GCMemoryInfo memoryInfo = GC.GetGCMemoryInfo();
+            long fragmentedBytes = memoryInfo.FragmentedBytes;
+            long heapBytes = memoryInfo.HeapSizeBytes;
+            bool compactLoh = fragmentedBytes > 64L * 1024L * 1024L
+                              || (heapBytes > 0 && fragmentedBytes * 100L / heapBytes > 5L);
+
+            if (compactLoh) {
+                GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+            }
+
+            GC.Collect(2, GCCollectionMode.Forced, blocking: true);
             GC.WaitForPendingFinalizers();
             // 这里一般也没太多 IDisposable, 所以我们不再跑一次 GC.Collect()
-            Logger.Info("SpeedrunTool", $"GC latency: {sw.ElapsedMilliseconds}ms.");
+            Logger.Info("SpeedrunTool",
+                $"GC latency: {sw.ElapsedMilliseconds}ms. LOH compaction: {(compactLoh ? "yes" : "no")} " +
+                $"(fragmented {fragmentedBytes / 1048576.0:F1} MB / heap {heapBytes / 1048576.0:F1} MB).");
 #if DEBUG
             DebugTool.MemoryTracker.CheckFragmentation("GC End");
 #endif

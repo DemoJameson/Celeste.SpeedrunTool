@@ -8,7 +8,7 @@
 ## Features
 
 - Create save states* to practice certain segments of the room, automatically loaded after death. Customizable keyboard/controller shortcut for saving and loading.
-- Save states survive chapter changes: loading a state that was saved in another chapter (or from the chapter select, F8 works there too) automatically re-enters the chapter it was saved in and then restores it. The old "clear the state when leaving the chapter" behaviour is still available as **Auto Clear State on Chapter Transition (Legacy)** in the State settings (off by default; if you already have a SpeedrunTool settings file from an older version, that entry keeps its old `On` value, so turn it off once to get the new behaviour).
+- Save states survive chapter changes: loading a state that was saved in another chapter (or from the chapter select, F8 works there too) automatically re-enters the chapter it was saved in and then restores it. The old "clear the state when leaving the chapter" behaviour is still available as **Auto Clear State on Chapter Transition (Legacy)** in the State settings (off by default). The option was hidden in older release builds, so v3.28.0 migrates an existing settings file once: a stored `On` value is treated as the old default and switched to `Off`; enable it again in the State settings if you really want the legacy behaviour.
 - Room timer compatible with Summit flags. Personal best is recorded.
 - Statistics on deaths, including location, time lost, etc.
 - Controller support for debug map: use confirm to teleport, right analog to zoom.
@@ -58,8 +58,8 @@ A release zip (same layout the old `toZip.cmd` produced: `everest.yaml` + `Speed
 zip root plus `Dialog/` and `Graphics/`) is made explicitly, not on every build:
 
 ```bash
-dotnet build -c Release -p:CelestePrefix="/path/to/Celeste" -p:PackageMod=true -p:SrtPackageVersion=3.27.22
-# -> dist/SpeedrunTool-3.27.22.zip
+dotnet build -c Release -p:CelestePrefix="/path/to/Celeste" -p:PackageMod=true -p:SrtPackageVersion=3.28.0
+# -> dist/SpeedrunTool-3.28.0.zip
 ```
 
 The version in `everest.yaml` remains the single source of truth; `SrtPackageVersion` only names the

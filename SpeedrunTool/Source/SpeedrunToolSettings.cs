@@ -19,8 +19,32 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public void OnLoadSettings() {
         SetGcMemoryThreshold(Doubled_GcMemoryThreshold);
         ApplyPreCloneMode();
+        MigrateLegacySceneSwitchSetting();
 
         LogForDiagnostics();
+    }
+
+    /// <summary>
+    /// Up to v3.27.22 the release build never showed AutoClearStateOnSceneSwitch in the mod menu,
+    /// so a stored <c>true</c> can only be the legacy default rather than an explicit choice.
+    /// v3.28.0 flips it once to the new default (states survive chapter changes); players who
+    /// really want the old behaviour can turn the now-visible Legacy option back on.
+    /// </summary>
+    private void MigrateLegacySceneSwitchSetting() {
+        if (SceneSwitchDefaultMigrated) {
+            return;
+        }
+
+        SceneSwitchDefaultMigrated = true;
+        if (AutoClearStateOnSceneSwitch) {
+            AutoClearStateOnSceneSwitch = false;
+            try {
+                SpeedrunToolModule.Instance?.SaveSettings();
+            }
+            catch (Exception exception) {
+                Logger.Warn("SpeedrunTool/Settings", $"Failed to persist the AutoClearStateOnSceneSwitch migration: {exception.Message}");
+            }
+        }
     }
 
     /// <summary>
@@ -84,6 +108,8 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     /// loading one automatically re-enters the chapter it was saved in.
     /// </summary>
     public bool AutoClearStateOnSceneSwitch { get; set; } = false;
+    /// <summary>Internal marker for the one-time v3.28.0 migration of the legacy scene-switch setting.</summary>
+    public bool SceneSwitchDefaultMigrated { get; set; } = false;
     public FreezeAfterLoadStateType FreezeAfterLoadStateType { get; set; } = FreezeAfterLoadStateType.On;
     public bool GcAfterLoadState { get; set; } = false;
 

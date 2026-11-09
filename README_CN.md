@@ -6,7 +6,7 @@
 ## 功能
 - 通过自定义的按键快速保存恢复状态
 - 死亡时自动加载状态
-- 状态会跨章节保留: 读档时如果存档是别的章节的 (或者在章节选择界面按 F8 读档), 会自动回到保存时的章节再恢复. State 设置里的 **章节切换时自动清除状态 (旧行为)** 默认关闭, 开启后恢复旧的"离开章节就清档"行为; 如果之前已经生成过旧版本的 SpeedrunTool 设置文件, 该项会保留旧的"开"值, 需要手动关一次才能用新行为.
+- 状态会跨章节保留: 读档时如果存档是别的章节的 (或者在章节选择界面按 F8 读档), 会自动回到保存时的章节再恢复. State 设置里的 **章节切换时自动清除状态 (旧行为)** 默认关闭, 开启后恢复旧的"离开章节就清档"行为. 旧版本的发布版菜单里不显示该项, 因此 v3.28.0 会对已有的设置文件做一次迁移: 存量的"开"值视为旧默认值, 自动改成"关"; 如果你确实想要旧行为, 可以在 State 设置里重新打开.
 - 统计死亡数据，包括位置，损失的时间等
 - 增加单个房间类型的计时器，支持记录最佳时间与第七章旗子间的计时
 - 只用游戏手柄就也可以使用 Debug 地图，确认键选择房间，右摇杆缩放（已经整合到最新的 Everest 版本中）
@@ -38,8 +38,8 @@ dotnet build -c Release -p:CelestePrefix="/path/to/Celeste" -p:DeployDir="/path/
 发布用 zip（和旧 `toZip.cmd` 相同布局：zip 根目录 `everest.yaml` + `SpeedrunTool.dll`，外加 `Dialog/`、`Graphics/`）是**显式**动作，不会每次 build 都生成：
 
 ```bash
-dotnet build -c Release -p:CelestePrefix="/path/to/Celeste" -p:PackageMod=true -p:SrtPackageVersion=3.27.22
-# -> dist/SpeedrunTool-3.27.22.zip
+dotnet build -c Release -p:CelestePrefix="/path/to/Celeste" -p:PackageMod=true -p:SrtPackageVersion=3.28.0
+# -> dist/SpeedrunTool-3.28.0.zip
 ```
 
 版本号仍以 `everest.yaml` 为准，`SrtPackageVersion` 只用于命名发布包；建议在 CI 的 tag 流程里调用，避免调试构建产出发布 zip。

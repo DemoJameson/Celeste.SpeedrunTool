@@ -22,29 +22,58 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 /// </summary>
 public sealed partial class StateManager {
     private void UpdateTimeAndDeaths(Level level) {
+        MergeTimeAndDeaths(level?.Session, SaveData.Instance, level);
+    }
+
+    /// <summary>
+    /// Merges the live run's time/deaths into the saved templates when "Save Time and Deaths" is off.
+    /// The live data is read from the scene that is still active, so a pending (cross-scene) load
+    /// calls this BEFORE leaving for the saved chapter; the actual restore then runs without merging.
+    /// Loading a state saved from another save file keeps the template unchanged: both files have
+    /// their own totals and per-area stats, and mixing them would corrupt the restored SaveData.
+    /// </summary>
+    private void MergeTimeAndDeaths(Session session, SaveData currentSaveData, Level level) {
         if (SavedByTas || ModSettings.SaveTimeAndDeaths) {
             return;
         }
 
-        Session session = level.Session;
-        Session savedSession = savedLevel.Session;
-        AreaKey areaKey = session.Area;
+        if (savedLevel?.Session is not { } savedSession || savedSaveData is null || currentSaveData is null) {
+            return;
+        }
+
+        if (currentSaveData.FileSlot != savedSaveData.FileSlot) {
+            Logger.Info("SpeedrunTool/LoadState",
+                $"Not merging time/deaths: state was saved on save file {savedSaveData.FileSlot}, current file is {currentSaveData.FileSlot}");
+            return;
+        }
+
+        // The overworld has no Session; fall back to the last session of the save file so time and
+        // deaths still never roll back when loading from the chapter select.
+        session ??= currentSaveData.CurrentSession_Safe;
 
         // The template is updated in place. This used to first DeepCloneShared() the Session and
         // the SaveData, but the clones were never installed anywhere - they were pure garbage on
         // every load (a SaveData clone is not free: it clones the whole Areas_Safe list).
+        savedSaveData.Time = currentSaveData.Time;
+        int increaseDeath = level is null || level.IsPlayerDead() ? 0 : 1;
+        savedSaveData.TotalDeaths = currentSaveData.TotalDeaths + increaseDeath;
+
+        if (session is null) {
+            return;
+        }
+
+        AreaKey areaKey = session.Area;
         savedSession.Time = Math.Max(session.Time, savedSession.Time);
-        savedSaveData.Time = SaveData.Instance.Time;
 
         // A mod map may not have an AreaStats entry yet (or a shorter Modes array): the old
         // unchecked indexing threw ArgumentOutOfRangeException and aborted the whole load.
         if (areaKey.ID >= 0
             && areaKey.ID < savedSaveData.Areas_Safe.Count
-            && areaKey.ID < SaveData.Instance.Areas_Safe.Count
+            && areaKey.ID < currentSaveData.Areas_Safe.Count
             && (int)areaKey.Mode < savedSaveData.Areas_Safe[areaKey.ID].Modes.Length
-            && (int)areaKey.Mode < SaveData.Instance.Areas_Safe[areaKey.ID].Modes.Length) {
+            && (int)areaKey.Mode < currentSaveData.Areas_Safe[areaKey.ID].Modes.Length) {
             savedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].TimePlayed =
-                SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].TimePlayed;
+                currentSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].TimePlayed;
         }
 
         // 修复：切屏时存档，若干秒后读档游戏会误以为卡死自动重生
@@ -60,18 +89,16 @@ public sealed partial class StateManager {
             playerStuck.SetValue(savedTransitionRoutine.DeepCloneShared(), TimeSpan.FromTicks(session.Time));
         }
 
-        int increaseDeath = level.IsPlayerDead() ? 0 : 1;
         savedSession.Deaths = Math.Max(session.Deaths + increaseDeath, savedSession.Deaths);
         savedSession.DeathsInCurrentLevel =
             Math.Max(session.DeathsInCurrentLevel + increaseDeath, savedSession.DeathsInCurrentLevel);
-        savedSaveData.TotalDeaths = SaveData.Instance.TotalDeaths + increaseDeath;
         if (areaKey.ID >= 0
             && areaKey.ID < savedSaveData.Areas_Safe.Count
-            && areaKey.ID < SaveData.Instance.Areas_Safe.Count
+            && areaKey.ID < currentSaveData.Areas_Safe.Count
             && (int)areaKey.Mode < savedSaveData.Areas_Safe[areaKey.ID].Modes.Length
-            && (int)areaKey.Mode < SaveData.Instance.Areas_Safe[areaKey.ID].Modes.Length) {
+            && (int)areaKey.Mode < currentSaveData.Areas_Safe[areaKey.ID].Modes.Length) {
             savedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths =
-                SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths + increaseDeath;
+                currentSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths + increaseDeath;
         }
     }
 

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <!-- Offline, game-free tests for the pure decision logic of the cross-chapter (pending) load.
+         Run with: dotnet run (this directory) -c Release
+         The production file is linked instead of copied so the tests cannot drift from the mod. -->
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>disable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <AssemblyName>SceneStateTests</AssemblyName>
+        <RootNamespace>SceneStateTests</RootNamespace>
+        <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    </PropertyGroup>
+    <ItemGroup>
+        <Compile Include="Program.cs" />
+        <Compile Include="..\..\SpeedrunTool\Source\SaveLoad\PendingLoadWatchdog.cs" Link="PendingLoadWatchdog.cs" />
+    </ItemGroup>
+</Project>

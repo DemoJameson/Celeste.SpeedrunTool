@@ -332,7 +332,7 @@ public sealed partial class SaveLoadAction {
     }
 
     private static void SupportModSessionAndSaveData() {
-        InternalSafeAdd(
+        moduleSessionAndSaveDataAction = InternalSafeAdd(
             (savedValues, _) => {
                 foreach (EverestModule module in Everest.Modules.Where(module => module.GetType().Name != "NullModule")) {
                     savedValues[module.GetType()] = new Dictionary<string, object> {

@@ -57,7 +57,9 @@ internal static class SaveLoadHotkeys {
             }
         });
         Hotkey.LoadState.RegisterPressedAction(scene => {
-            if (scene is Level { Paused: false }) {
+            // Loading is also allowed from the chapter select: a state saved in another chapter first
+            // re-enters that chapter, so the player can get back to it without walking there again.
+            if (scene is Level { Paused: false } or Overworld) {
 #if DEBUG
                 if (JetBrains_Profiling) {
                     JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();

@@ -261,27 +261,45 @@ Everest 的加载路径（`Everest.Content.cs` / `Everest.Loader.cs` / `Everest.
 盲目转换。`upstream`/`final`/归因数字都是在 **zip 标准环境**（52 个下载 mod 转 zip、用户自己的
 开发 mod 保持文件夹）下测的，与玩家实际布局一致。
 
-### 3.3 真实 TAS 回放验证（TAS 驱动实际输入）
+### 3.3 真实 TAS 回放验证（TAS 驱动实际输入，全程 + 第二面 A/B/C）
 
-为了不只测"站着不动"，用 `StrawberryJamTAS-main/5_Grandmaster/grandmaster_heartside.tas`
-（Grandmaster Heartside 全图 TAS，带房间标签）在第二面做真实操作回放。TAS 是旧版依赖下录制的，
-**完整从 a0-Start 播会 desync**（实际到 a1 的帧是 315 而不是录制的 246，之后 49 帧死亡/回退），
-所以改为：先直接进 a1_18-Xplosives，再从 TAS 第 246 帧开始播放（`Manager.Controller.CurrentFrameInTas=246`），
-稳定在房间内播放了 **181 帧（TAS 帧 246→427）**，房间运行时 3459 entities。
+用 `StrawberryJamTAS-main/5_Grandmaster/grandmaster_heartside.tas`（Grandmaster Heartside 全图
+TAS）做真实操作回放。为避免 CommunalHelper+CelesteTAS 在**主菜单/Overworld**（无 Player）时
+的第三方 NRE（`Elytra.Input_UpdateGrab`，与 SRT 无关），harness 先 `LevelEnter.Go` 进 a0-Start
+再开始 playback，结束时直接 `Environment.Exit`；CeilingUltra 保持加载、用 `TasEnableAll=false`
+关闭其功能。
 
-| 阶段（TAS 实际输入） | 帧间隔 p50 / p99 / max | CPU p50 / p99 | 说明 |
-|----------------------|------------------------|----------------|------|
-| A 无 savestate | 16.52 / 309.57 / 309.57 ms | 2.58 / 4.54 ms | 309ms 是进房间首帧 |
-| B 建 1 槽后继续玩 | 17.57 / 758.10 / 758.10 ms | 2.94 / 744.01 ms | 758ms = **save 调用本身**（冷启动，740.8ms） |
-| C 读档后继续玩 | 16.62 / 126.34 / 126.34 ms | 2.73 / 112.88 ms | 126ms = **load 调用本身**（首次 load，111.0ms） |
+**结论修正：全程 TAS 没有 desync。** 之前看到的"a1 在 TAS 帧 315 而不是录制的 246"是**冻结帧
+记账**：转场/加载/wipe 帧期间输入帧不推进，所以每次转场都会累积偏移（a1 315、a2 1071、
+f3 22310…），但 24 个房间全部按路线通过、全程仅 1 次死亡（d3_07-Maya 处）。因此逐房间统计
+以**实际进入/离开房间 + 墙钟帧**为准，不依赖 TAS 帧标签。
 
-把 save/load 所在那一帧剔除后，A/B/C 的稳态都是 **p50 16.5–17.6ms、p99 20–30ms、CPU ~2.6–2.9ms**，
-与"站着不动"的归因结果一致：**持有 savestate 不会让第二面的真实游玩持续掉帧**；唯一的卡顿是
-save/load 那一帧（重房间首次 save 的冷启动开销，见 §2.5；稳态 save 见 §3.1 的矩阵）。
+**全程 24 个房间的逐房间帧统计**（zip 环境、53 mods、silent 模式；完整表见
+`docs/bench-baseline.md`）：所有房间 p50 都是 16.66–16.67ms（60fps）；除个别尖峰外 p99 17–19ms。
+按 CPU p50 排，最重的是 **a1_18-Xplosives（4.02ms/帧）**，其次是 d1_09-xlibiza（2.65）、
+f3_01-Hydro（2.34）、f2_02-Soloiini（1.88）、e1_06-tofu（1.76）。**帧尖峰最多的是
+`f3_01-Hydro`（9 帧 >50ms，max 294.7ms）和 `d2_08-Aiden`（max 219.6ms）**，a1 的 max 是
+89.2ms（1 帧 >50ms）——也就是说旧机最该担心的"大尖峰"未必是第二面，f3/d2 这类大房间更明显
+（GC/资源加载/特定 mod 事件），这属于游戏+mod 侧，不是 SRT 常驻开销。
 
-> 采样说明：本轮的帧计数来自 harness 的 Draw hook，部分"只有 Update 没有 Draw"的帧没被统计
-> （A/B/C 分别采到 17/29/55 帧而不是各 60 帧），所以 p50/p99 仅作参考；房间停留帧数（181）和
-> save/load 实际耗时是准确的。
+**第二面 A/B/C**（进 a1 后 TAS 从帧 246 跳播，真实输入；silent 模式）：
+
+| 阶段 | 帧 p50 / p95 | 动作 | 备注 |
+|------|--------------|------|------|
+| A 无 savestate | 16.65 / 18.44 | — | 含进房首帧（305ms）|
+| B 建 1 槽后继续玩 | 16.65 / 18.16 | save **777.6ms** | B 段 max 792.8ms = save 那一帧 |
+| C 读档后继续玩 | 16.65 / 17.94 | load **93.8ms** | C 段 max 245.6ms = load + 随后 GC |
+
+剔除 save/load 所在帧后，A/B/C 的稳态帧/Cpu 完全一致（p50 16.65ms、CPU p50 2.19–2.21ms）——
+**持有 savestate 不影响 TAS 实际游玩中的每帧耗时**，与 §3.1 的 idle 归因一致；卡顿只在
+save/load 那一帧（重房间首次 save 的 JIT 冷启动 ~0.78s，见 §2.5；load ~94ms）。
+
+> **TAS 与 save/load 不要混在一次 run 里做**：在 TAS 播放中 load 会把游戏状态倒回，而输入帧
+> 继续前进，之后必然错位（实测继续跑会回到 a0 并累积死亡）。所以"全程逐房间统计"必须由
+> **一次纯播放的 clean run** 产生，A/B/C 单独跑。
+
+> 静默模式验证：游戏窗口最小化/移出屏幕后，`frames-a1_18-Xplosives-a` 的帧 p50 仍为 16.67ms、
+> CPU p50 2.14ms（前台 2.20ms，差 <5%）→ benchmark 数据不受静默模式影响。
 
 ## 4. 已知限制 / 后续可做
 

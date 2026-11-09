@@ -333,11 +333,15 @@ ASALocalRun/
 SpeedrunTool/lib-stripped/*
 /SpeedrunTool.sln.DotSettings
 
-SpeedrunTool.dll
-Dialog
-Graphics
-everest.yaml
-toZip.cmd
+# Build outputs copied next to the project folder by OutputAsModStructure.
+# These must stay anchored to the repository root: unanchored "Dialog" / "Graphics"
+# also matched SpeedrunTool/Dialog and SpeedrunTool/Graphics, silently ignoring
+# every new dialog/graphic asset added to the mod (including generated CJK font pages).
+/SpeedrunTool.dll
+/Dialog
+/Graphics
+/everest.yaml
+/toZip.cmd
 /JetBrains.FormatRipper.dll
 /JetBrains.HabitatDetector.dll
 /JetBrains.Profiler.Api.dll

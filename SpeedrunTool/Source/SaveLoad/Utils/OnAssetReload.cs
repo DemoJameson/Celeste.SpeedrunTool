@@ -26,9 +26,10 @@ internal static class OnAssetReload {
     }
 
     private static void AfterReload(bool silent) {
-        // Hot reload unloaded the previous mod assemblies; drop the per-type caches that would
-        // otherwise keep their Types (and generated cloners) alive forever.
-        Force.DeepCloner.DeepCloner.ClearCaches();
+        // Hot reload unloaded the previous mod assemblies; drop the per-type processor cache so
+        // it does not keep their Types alive. (The DeepCloner type caches are intentionally not
+        // cleared: DeepClonerSafeTypes.KnownTypes is pre-seeded with framework types and clearing
+        // it crashes the game when those types are evaluated again.)
         DeepClonerUtils.ClearProcFlagsCache();
 
         if (ModSettings.ClearStateOnHotReload) {

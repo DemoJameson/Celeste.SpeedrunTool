@@ -254,7 +254,7 @@ if (ModUtils.GetType("CollabUtils2", "Celeste.Mod.CollabUtils2.Entities.CollabCr
 - **MaxHelpingHand**：`Module.SpeedrunToolInterop` → `RegisterSaveLoadAction`（保存 `MovingFlagTouchSwitch.flagMapping` + `BlackholeCustomColors.colorsMildOverride`，load 时 `stsfld` 回静态字段）+ `RegisterStaticTypes(typeof(StylegroundFadeController), StylegroundFadeController.StaticFieldsToClone)`。
 - **FrostHelper**：`ModIntegration.SpeedrunToolIntegration.AddReturnSameObjectProcessor`（`LoadContent` 里注册：`ISavestatePersisted` 类型共享不克隆，实现类型见 §5）；`AddCustomDeepCloneProcessor` 字段存在但程序集内没有读取点。
 - **CommunalHelper / FemtoHelper / EeveeHelper**：`RegisterStaticTypes`（各自 dll 里含 `SpeedrunTool.SaveLoad` import）。
-- 相关风险（与 audit D14 同源）：SRT 的 `returnSameObjectTypes/Predicates` 结果缓存在 `DeepClonerSafeTypes.KnownTypes`；若 mod 在 cloner 已生成后才注册 predicate，旧实现会不生效。**本分支已修**：`SaveLoadInterop.AddReturnSameObjectType/Processor` 里调用 `DeepCloner.ClearCaches()`（清 `TypeCache/DeepTo/ShallowTo/StructAsObject + KnownTypes`）。注意 `RemoveReturnSameObjectType/Processor` 目前**没有**清缓存 → 运行期移除注册不会生效（低危，建议补上或文档说明）。
+- 相关风险（与 audit D14 同源）：SRT 的 `returnSameObjectTypes/Predicates` 结果缓存在 `DeepClonerSafeTypes.KnownTypes`；若 mod 在 cloner 已生成后才注册 predicate，则不会生效。**本分支的结论**：`KnownTypes` 绝不能清（它预置了 `System.RuntimeType` 等框架类型，清空后重新判定会让游戏进图时 native 崩溃，已用 bisect 变体实测）；因此改为**文档约束**：`Add/RemoveReturnSameObject*` 必须在首次 save/load 前注册。FrostHelper 在 `LoadContent` 注册，满足约束。
 
 ### 7.5 若要“通用 hook 重建”而不是逐个 mod 写
 可行性评估：hook 注册方法都是“幂等 + 只依赖静态表”，可以在 load 后对 `level.Entities` 里每个实体类型检查：

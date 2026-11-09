@@ -102,10 +102,10 @@ public static class SaveLoadInterop {
             }
             else {
                 returnSameObjectTypes.Add(type);
-                // Cloners are generated and cached per type; a type registered after the first
-                // save/load would otherwise keep being cloned (audit D14, hit by FrostHelper's
-                // ISavestatePersisted handling).
-                Force.DeepCloner.DeepCloner.ClearCaches();
+                // NOTE: cloners are generated and cached per type, so this must be called before
+                // the first save/load; registering later keeps the old decision (audit D14).
+                // (Clearing DeepClonerSafeTypes.KnownTypes here is not possible: it is pre-seeded
+                // with types like System.RuntimeType and clearing it crashes the game natively.)
             }
         }
 
@@ -119,7 +119,6 @@ public static class SaveLoadInterop {
             }
             else {
                 returnSameObjectTypes.Remove(type);
-                Force.DeepCloner.DeepCloner.ClearCaches();
             }
         }
 
@@ -128,10 +127,8 @@ public static class SaveLoadInterop {
         /// </summary>
         /// <param name="predicate">Returning true means that an object of the type returns the same object when cloned.</param>
         public static void AddReturnSameObjectProcessor(Func<Type, bool> predicate) {
+            // Must be called before the first save/load, see AddReturnSameObjectType.
             returnSameObjectPredicates.Add(predicate);
-            // Same as AddReturnSameObjectType: drop the cached per-type decisions so types that
-            // were already cloned once pick up the new predicate.
-            Force.DeepCloner.DeepCloner.ClearCaches();
         }
 
         /// <summary>
@@ -140,7 +137,6 @@ public static class SaveLoadInterop {
         /// <param name="predicate"></param>
         public static void RemoveReturnSameObjectProcessor(Func<Type, bool> predicate) {
             returnSameObjectPredicates.Remove(predicate);
-            Force.DeepCloner.DeepCloner.ClearCaches();
         }
 
         /// <summary>

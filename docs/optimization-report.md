@@ -79,8 +79,11 @@
 - **SJ 依赖兼容**：`YetAnotherHelper.SpikeJumpThruController`（实体级 `Spikes.OnCollide` hook
   在 load 后重建）、`CollabUtils2.CollabCrystalHeart`（collab area-complete hook 重建）；
   `MaxHelpingHand` 等 mod 自己已通过 ModInterop 接入的部分不重复实现（见 `docs/sj-compat.md`）。
-- **D14 类型缓存失效**：`DeepCloner.ClearCaches()`，`Add/RemoveReturnSameObjectType/Processor`
-  注册/注销后清 cloner 缓存（FrostHelper 的 `ISavestatePersisted` 就依赖这一点）。
+- **D14（未做运行时缓存失效，改为文档约束）**：`DeepClone` 的类型缓存/安全类型判定在类型首次
+  克隆时生成并缓存，因此 `Add/RemoveReturnSameObjectType/Processor` 必须在**第一次 save/load
+  之前**注册。FrostHelper 的 `ISavestatePersisted` 注册发生在 `LoadContent`，满足该约束。
+  曾尝试在注册时清 `DeepClonerSafeTypes.KnownTypes`，但实测会让游戏在进图时**无异常 native
+  崩溃**（KnownTypes 预置了 `System.RuntimeType` 等类型，清空后重新判定会走坏），已回退。
 - **热重载缓存清理**：asset reload 后清 DeepCloner 类型缓存与处理器 flags 缓存，避免钉住旧 mod 程序集。
 - **补齐缺失的 CJK 字体 page**：fresh clone 构建出的模组在中文语言下启动即崩（`chinese.fnt`
   引用的 png 未入库）。
@@ -129,7 +132,9 @@
   统一改成 IL 生成的方案见 `docs/msil-plan.md`。
 - **DynData / DynamicData 探测**仍是每对象成本（CWT 查找 + 逐基类查找），没有在本轮优化中改动。
 - **第三方 mod 支持仍是白名单式**：FrostHelper 无专门支持；其它 SJ helper 的 hook/静态状态
-  结论见 `docs/sj-compat.md` §4/§7。裸 `EventInstance` 字段（`FrostHelper.ToggleSwapBlock`、
+  结论见 `docs/sj-compat.md` §4/§7。mod 的 `Add/RemoveReturnSameObject*` 注册必须在首次
+  save/load 之前（见 §2.3 D14）。热重载后 DeepCloner 类型缓存仍会钉住旧 mod 类型（audit D15，
+  内存量很小，未处理）。裸 `EventInstance` 字段（`FrostHelper.ToggleSwapBlock`、
   `SJ2021.WonkyCassetteBlockController` 等）的通用重建**未做**（生命周期风险大于收益，见
   `docs/sj-compat.md` §6）。
 - **异常兜底边界**：save/load 主路径已覆盖；hotkey 派发（`HotkeyConfigUi`）与 `GC.TryStartNoGCRegion`

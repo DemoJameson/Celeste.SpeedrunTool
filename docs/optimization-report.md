@@ -216,6 +216,28 @@ Everest 的加载路径（`Everest.Content.cs` / `Everest.Loader.cs` / `Everest.
 盲目转换。`upstream`/`final`/归因数字都是在 **zip 标准环境**（52 个下载 mod 转 zip、用户自己的
 开发 mod 保持文件夹）下测的，与玩家实际布局一致。
 
+### 3.3 真实 TAS 回放验证（TAS 驱动实际输入）
+
+为了不只测"站着不动"，用 `StrawberryJamTAS-main/5_Grandmaster/grandmaster_heartside.tas`
+（Grandmaster Heartside 全图 TAS，带房间标签）在第二面做真实操作回放。TAS 是旧版依赖下录制的，
+**完整从 a0-Start 播会 desync**（实际到 a1 的帧是 315 而不是录制的 246，之后 49 帧死亡/回退），
+所以改为：先直接进 a1_18-Xplosives，再从 TAS 第 246 帧开始播放（`Manager.Controller.CurrentFrameInTas=246`），
+稳定在房间内播放了 **181 帧（TAS 帧 246→427）**，房间运行时 3459 entities。
+
+| 阶段（TAS 实际输入） | 帧间隔 p50 / p99 / max | CPU p50 / p99 | 说明 |
+|----------------------|------------------------|----------------|------|
+| A 无 savestate | 16.52 / 309.57 / 309.57 ms | 2.58 / 4.54 ms | 309ms 是进房间首帧 |
+| B 建 1 槽后继续玩 | 17.57 / 758.10 / 758.10 ms | 2.94 / 744.01 ms | 758ms = **save 调用本身**（冷启动，740.8ms） |
+| C 读档后继续玩 | 16.62 / 126.34 / 126.34 ms | 2.73 / 112.88 ms | 126ms = **load 调用本身**（首次 load，111.0ms） |
+
+把 save/load 所在那一帧剔除后，A/B/C 的稳态都是 **p50 16.5–17.6ms、p99 20–30ms、CPU ~2.6–2.9ms**，
+与"站着不动"的归因结果一致：**持有 savestate 不会让第二面的真实游玩持续掉帧**；唯一的卡顿是
+save/load 那一帧（重房间首次 save 的冷启动开销，见 §2.5；稳态 save 见 §3.1 的矩阵）。
+
+> 采样说明：本轮的帧计数来自 harness 的 Draw hook，部分"只有 Update 没有 Draw"的帧没被统计
+> （A/B/C 分别采到 17/29/55 帧而不是各 60 帧），所以 p50/p99 仅作参考；房间停留帧数（181）和
+> save/load 实际耗时是准确的。
+
 ## 4. 已知限制 / 后续可做
 
 - **pre-clone 的取舍是本质的**：读档速度 vs 常驻实体图内存二选一，目前用 Auto 按

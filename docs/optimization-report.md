@@ -40,6 +40,29 @@
   save `cloneLevel=215.9ms + saveActions=142.4ms`，首次 load `loadActions=61.7ms`，来自
   JIT + 每种类型的 cloner codegen）。后续 save/load 稳定在 13/11ms。见 §4 后续可做。
 
+### 第二面 / zip 标准环境（最终基准，优先看这一组）
+
+按"多数玩家"的 **zip mod** 布局（52 个下载 mod 转 zip）在用户实际感觉卡的**第二面**
+`a1_18-Xplosives`（运行时 3451–3459 entities）重测：
+
+| 指标 | upstream | final PreClone On | final PreClone Off |
+|---|---|---|---|
+| save p50 / p99 | 62.7 / 157.9 ms | **40.7 / 115.1 ms（-35%）** | 40.8 / 322.0 ms |
+| load p50 / p99 | 50.2 / 143.6 ms | **32.7 / 285.3 ms（-35%）** | 38.3 / 115.4 ms |
+| 3 槽 managed 增量 | 148.4 MB | 117.7 MB（-21%） | **72.4 MB（-51%）** |
+| 持有 savestate 每帧 CPU（p50/p99） | 1.99/2.76 ms | **1.81/2.74 ms** | 1.97/2.69 ms |
+
+- **最关键结论**：持有 savestate 时第二面每帧 CPU 与"无 savestate"（1.93/2.57）以及
+  **完全禁用 SRT**（1.96/2.66）没有可测差异，帧 p50 16.67ms、p99 16.8–17.0ms → **第二面卡顿
+  不是 SRT 造成的**，主要是 3451 实体 + helper mod 的 update/render 成本；TAS 真实操作回放
+  也得到同样结论。
+- SRT 的成本集中在 **save/load 边界**：首次 save 约 719–740ms（冷启动，见 §2.5，未解决）、
+  稳态 save/load 40.7/32.7ms；每次 load 后 PreClone On 有一个 21–25ms / 24.5MB 的后台任务。
+- **8GB 机器建议**：`PreCloneMode=Auto`（默认 Off）+ **≤2 槽**；3 槽 + PreClone On 时 managed
+  峰值 937MB 并出现 1 次 GC/64ms 帧。GC 压力测试中 2GB/3GB heap limit 表现几乎相同（无法单靠
+  GC 堆上限复现 8GB 真机压力）。
+
+
 ## 1. 方法
 
 1. `code-audit` 通读 save/load 全链路，产出 `docs/audit.md`（内存/性能热点排序、bug 清单、

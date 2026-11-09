@@ -1,4 +1,4 @@
-﻿using Celeste.Mod.SpeedrunTool.ModInterop;
+using Celeste.Mod.SpeedrunTool.ModInterop;
 using Celeste.Mod.SpeedrunTool.Utils;
 using Force.DeepCloner;
 using Force.DeepCloner.Helpers;
@@ -537,8 +537,17 @@ public sealed class StateManager {
 
         clonedSession.Time = savedSession.Time = Math.Max(session.Time, clonedSession.Time);
         clonedSaveData.Time = SaveData.Instance.Time;
-        clonedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].TimePlayed =
-            SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].TimePlayed;
+
+        // A mod map may not have an AreaStats entry yet (or a shorter Modes array): the old
+        // unchecked indexing threw ArgumentOutOfRangeException and aborted the whole load.
+        if (areaKey.ID >= 0
+            && areaKey.ID < clonedSaveData.Areas_Safe.Count
+            && areaKey.ID < SaveData.Instance.Areas_Safe.Count
+            && (int)areaKey.Mode < clonedSaveData.Areas_Safe[areaKey.ID].Modes.Length
+            && (int)areaKey.Mode < SaveData.Instance.Areas_Safe[areaKey.ID].Modes.Length) {
+            clonedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].TimePlayed =
+                SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].TimePlayed;
+        }
 
         // 修复：切屏时存档，若干秒后读档游戏会误以为卡死自动重生
 
@@ -558,9 +567,17 @@ public sealed class StateManager {
         clonedSession.DeathsInCurrentLevel = savedSession.DeathsInCurrentLevel =
             Math.Max(session.DeathsInCurrentLevel + increaseDeath, clonedSession.DeathsInCurrentLevel);
         clonedSaveData.TotalDeaths = savedSaveData.TotalDeaths = SaveData.Instance.TotalDeaths + increaseDeath;
-        clonedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths =
-            savedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths =
-                SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths + increaseDeath;
+        if (areaKey.ID >= 0
+            && areaKey.ID < clonedSaveData.Areas_Safe.Count
+            && areaKey.ID < savedSaveData.Areas_Safe.Count
+            && areaKey.ID < SaveData.Instance.Areas_Safe.Count
+            && (int)areaKey.Mode < clonedSaveData.Areas_Safe[areaKey.ID].Modes.Length
+            && (int)areaKey.Mode < savedSaveData.Areas_Safe[areaKey.ID].Modes.Length
+            && (int)areaKey.Mode < SaveData.Instance.Areas_Safe[areaKey.ID].Modes.Length) {
+            clonedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths =
+                savedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths =
+                    SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths + increaseDeath;
+        }
     }
 
     private void LoadStateComplete(Level level) {
@@ -675,6 +692,13 @@ public sealed class StateManager {
         failReason = "";
         if (!IsSaved) {
             failReason = DialogIds.NotSavedStateTooltip.DialogClean() + $" [{SlotName}]";
+            return false;
+        }
+        // A mod that registered/unregistered SaveLoadActions after this state was saved changes
+        // the positional ids of the value dictionaries, so replaying the stored values would
+        // write them into the wrong actions (and used to NRE on the null dictionaries).
+        if (!SaveLoadAction.AreValueDictionariesComplete()) {
+            failReason = "Cannot Load: a mod changed save/load handlers after this state was saved. Please save the state again.";
             return false;
         }
         if (State == State.Loading || State == State.Saving) {

@@ -1,4 +1,4 @@
-﻿using Celeste.Mod.SpeedrunTool.DeathStatistics;
+using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad.ThirdPartySupport;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
@@ -71,6 +71,13 @@ public sealed class SaveLoadAction {
     private const int Order_InternalOtherAction = 100;
     private const int Order_ExternalAction = 10000;
     private const int Order_ExecuteAtLast = 1000000;
+
+    /// <summary>
+    /// Bumped whenever the set/order of registered actions changes. A slot whose values were
+    /// captured under a different version cannot be loaded safely: dictionary ids are
+    /// positional, so the old values would be replayed into different actions.
+    /// </summary>
+    internal static int ActionsVersion { get; private set; }
 
     public SaveLoadAction(SlAction saveState = null, SlAction loadState = null, Action clearState = null,
         Action<Level> beforeSaveState = null, Action preCloneEntities = null) {
@@ -181,7 +188,8 @@ public sealed class SaveLoadAction {
     }
 
     internal static void OnSaveState(Level level) {
-        Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict = AllSavedValues;
+        Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict = AllSavedValues ??= InitValueDictionary();
+        EnsureValueDictionaries(dict);
 #if DEBUG
         System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
         foreach (SaveLoadAction saveLoadAction in SharedActions) {
@@ -203,7 +211,11 @@ public sealed class SaveLoadAction {
     }
 
     internal static void OnLoadState(Level level) {
-        Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict = AllSavedValues;
+        Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict = AllSavedValues ??= InitValueDictionary();
+        if (!EnsureValueDictionaries(dict)) {
+            Logger.Warn("SpeedrunTool/SaveLoadAction",
+                "Some save/load actions were registered after this state was saved; loading it may be incomplete.");
+        }
 #if DEBUG
         System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
         foreach (SaveLoadAction saveLoadAction in SharedActions) {
@@ -222,6 +234,42 @@ public sealed class SaveLoadAction {
             saveLoadAction.loadState?.Invoke(dict[saveLoadAction.dictionaryId], level);
         }
 #endif
+    }
+
+    /// <summary>
+    /// Makes sure every currently registered action has a value dictionary for this slot.
+    /// Returns false when entries had to be created (i.e. the slot was saved with a different
+    /// set of actions, which happens if a mod adds/removes actions at runtime).
+    /// </summary>
+    private static bool EnsureValueDictionaries(Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict) {
+        bool complete = true;
+        foreach (SaveLoadAction action in SharedActions) {
+            if (!dict.ContainsKey(action.dictionaryId)) {
+                dict[action.dictionaryId] = [];
+                complete = false;
+            }
+        }
+        return complete;
+    }
+
+    /// <summary>
+    /// Whether the current slot holds a value dictionary for every registered action, captured
+    /// under the current action layout.
+    /// </summary>
+    internal static bool AreValueDictionariesComplete() {
+        Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict = AllSavedValues;
+        if (dict is null || !SaveSlotsManager.Slot.ValueDictionaryInitialized) {
+            return false;
+        }
+        if (SaveSlotsManager.Slot.AllSavedValuesVersion != ActionsVersion) {
+            return false;
+        }
+        foreach (SaveLoadAction action in SharedActions) {
+            if (!dict.ContainsKey(action.dictionaryId)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     internal static void OnClearState(bool clearBeforeSave = false) {
@@ -366,6 +414,7 @@ public sealed class SaveLoadAction {
                 i++;
                 action.dictionaryId = i;
             }
+            ActionsVersion++;
 #if DEBUG
             if (Log_AllActions) {
                 System.Text.StringBuilder sb = new();
@@ -386,6 +435,7 @@ public sealed class SaveLoadAction {
         }
 
         AllSavedValues = InitValueDictionary();
+        SaveSlotsManager.Slot.AllSavedValuesVersion = ActionsVersion;
         slotInitialized = true;
     }
 
@@ -468,8 +518,9 @@ public sealed class SaveLoadAction {
             && type.FullName != null
             && !type.FullName.StartsWith("Celeste.Mod.SpeedrunTool")
             && !type.IsSubclassOf(typeof(Oui))
-            && type.IsSameOrSubclassOf(typeof(Entity)) || type.IsSameOrSubclassOf(typeof(Component)) ||
-            type.IsSameOrSubclassOf(typeof(Renderer)));
+            && (type.IsSameOrSubclassOf(typeof(Entity))
+                || type.IsSameOrSubclassOf(typeof(Component))
+                || type.IsSameOrSubclassOf(typeof(Renderer))));
 
         foreach (Type type in types) {
             try {

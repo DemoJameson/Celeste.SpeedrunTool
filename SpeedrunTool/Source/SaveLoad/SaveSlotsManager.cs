@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using EventInstance = FMOD.Studio.EventInstance;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
@@ -235,6 +235,9 @@ public class SaveSlot {
     public StateManager StateManager;
 
     public bool ValueDictionaryInitialized = false;
+
+    /// <summary>Version of the registered save/load actions when AllSavedValues was captured.</summary>
+    internal int AllSavedValuesVersion;
 
     public Dictionary<int, Dictionary<Type, Dictionary<string, object>>> AllSavedValues = [];
 

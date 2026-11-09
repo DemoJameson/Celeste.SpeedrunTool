@@ -317,3 +317,22 @@ if (graphicsDevice.GetRenderTargets().Length > 0 || wipeActive) {
   注册、满足）。热重载时只清 `ProcFlags` 缓存，DeepCloner 类型缓存不再清理（D15 保留为已知小问题）。
 - 本次 review 的 issue #1/#2/#3/#4 与 #7~#10 中需要改的部分均已在 `9d4f3cb`/`db5ce34` 修复；
   未处理项见 §7 表格中标注 “—/文档” 的条目。
+
+## 10. 本 review 之后的追加改动（复核状态）
+
+- **`SaveLoadProfiler` 改为编译期 opt-in**（commit `f3721b5`）：默认 Release 构建用
+  `[Conditional("SRT_PROFILE")]` 桩把调用点从 IL 中消除；已用 Mono.Cecil dump `StateManager`
+  验证默认构建 0 个调用点、profiling 构建（`-p:SrtProfiling=true`）21 个，二进制小 ~2KB。
+  不影响上述任何执行顺序结论（profiling 段计时是纯观测）。
+- **`StateManager` 拆成 partial 文件**（`79a7a21`）：`.cs`（状态机/门面/GC）、`.Transitions.cs`、
+  `.Restore.cs`、`.Freeze.cs`。纯代码移动，`StateManager.Instance`、`Save/Load/Clear` 签名和
+  hook 注册位置不变（review §8 的顺序结论仍成立）。
+- **第二面归因 + 真实 TAS 回放**（见 `docs/optimization-report.md` §3.1/§3.3）：在 zip 标准
+  环境、3451 实体的 `a1_18-Xplosives` 中，持有 1 槽 savestate 时每帧 CPU 与无 savestate /
+  完全禁用 SRT 无差异（p99 2.5-2.7ms），第二面卡顿主要不是 SRT；SRT 成本集中在 save/load 边界
+  （首次 save 719ms 冷启动、稳态 41/33ms、preclone 后台 20-25ms/24.5MB、单槽 69MB）。
+- **冷启动预热尝试已撤回**：后台类型 codegen 预热（`de9ebc5`）收益太小；进图丢弃式 clone 会
+  污染 DeepCloner 的生成缓存，实测导致后续 save 全部失败（RuntimeType→Player 构造器不匹配），
+  随后 revert（`faf757f`）。冷启动保留为已知限制，见报告 §2.5/§4。
+- **benchmark 环境改为 zip 标准布局**（52 个下载 mod 转 zip、用户开发 mod 保持文件夹），
+  原始 JSON/脚本在 `D:\DSH\Celesteench`，仓库内见 `docs/bench-baseline.md`。

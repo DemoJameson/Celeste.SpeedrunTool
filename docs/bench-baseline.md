@@ -6,6 +6,10 @@
 >
 > 测量机器 **不是** 8GB 目标机（详见 §2），因此绝对值只用于同机横向对比；
 > 报告重点是可迁移的相对指标（耗时 p50/p99、GC 次数、分配量、managed 内存增量）。
+>
+> **环境版本**：§1–§8 的数字是"mod 文件夹安装"环境（2026-11 早些时候）。
+> 自 2026-11-09 起基准环境改为 **zip-mod 标准环境**（58 个下载 mod 全部为 `.zip`，
+> 见 §10），§10 是 zip 环境 + 重房间 `a1_18-Xplosives` 的最终数据，**优先使用 §10**。
 
 ---
 
@@ -320,3 +324,158 @@ final 已移除 `DeepCloner.ClearCaches()` 及所有调用（KnownTypes 永不�
 | load 帧 max | 55.10 ms | 48.13 ms |
 
 差异在测量噪声范围内 → **去掉 profiler 没有性能回归**（理论上只会更省：没有调用点/分支）。
+
+
+---
+
+# 10. zip 标准环境 + 重房间（Grandmaster Heartside `a1_18-Xplosives`）
+
+> 用户反馈：HeartSide 第一面 `a0-Start` 开销很小，**第二面 `a1_18-Xplosives` 才是实体多、旧机卡的地方**。
+> 同时用户要求基准环境与真实玩家一致：**下载的 mod 用 zip 安装**（玩家就是这样装的），
+> 只有用户自有/开发 mod 保持文件夹。本节所有数字都在该 zip 标准环境下测得。
+
+## 10.1 zip 标准环境
+
+- 转换脚本：`bench/convert_to_zip.py`（dry-run / execute / rollback；把原文件夹移到
+  `D:\DSH\Celeste\backup\mods-folders\<timestamp>\`，不删除；blacklist 备份并只删除命中 `<mod>.zip` 的行）。
+- 52 个下载 mod → `Mods/<原文件夹名>.zip`（根目录直接是 `everest.yaml`，deflate；排除 `.git/.vs/obj`；
+  校验每个 zip 声明 DLL 存在）。原始 1272.3 MB → zip 1173.2 MB。
+- 保持文件夹：SpeedrunTool、CeilingUltra、CeilingUltraGym、BodyDouble、CelesteTAS-EverestInterop、
+  TAS-Helper、LozenTestMod、TestMap、ForILSpy、GhostModForTas、LeaveTheCastle、NiceToCU、SlashDash、SrtBench、Cache。
+- blacklist.txt：备份后删除 **52 行**匹配 `<mod>.zip` 的条目（用户其它 182 行保留；现 234 行）。
+- **验证**：连续两次启动，`Loaded 60 modules`（与文件夹环境一致），FrostHelper 1.81.1 +
+  StrawberryJam2021 1.0.13 正常注册，`AreaData.Areas=143` / SJ 128 图，
+  probe `target_resolved=true, areaId=141`。
+- 启动耗时：第 1 次（zip relink 缓存重建）`DONE LOADING 11642ms`；第 2 次（暖）`11587ms`，
+  run.cmd 总耗时 24s（文件夹环境约 24–26s，无明显差异）。
+
+## 10.2 房间枚举（ZZ-HeartSide，33 个 LevelData）
+
+| room | LevelData entities | bounds | 备注 |
+|---|---|---|---|
+| a0-Start | 10 | 464x1016 | 第一面（运行时 222 entities） |
+| **a1_18-Xplosives** | **2461** | **6160x640** | **第二面，全场实体最多；运行时 3451–3459 entities** |
+| a2_17-Todd | 379 | 12656x392 | |
+| a3_16-Cookie | 770 | 1312x1688 | |
+| b2_14-Ecl1psed | 1515 | 3584x1368 | |
+| d1_09-xlibiza | 2325 | 2544x1440 | |
+| f3_01-Hydro | 2256 | 4672x8024 | |
+（其余房间见 `bench/results/probe-probe-sj.json` 的 `map_rooms`）
+
+## 10.3 帧时间归因（a1_18-Xplosives，final 04653ede，zip 环境，3451 entities）
+
+每段 12s 采样；**CPU 时间**= `Engine.Update` 开始到 `Engine.Draw` 结束（排除 vsync 等待）。
+
+| 实验 | 段 | 采样帧 | CPU p50 / p99 / max (ms) | 帧间隔 p50 / p99 / max (ms) | >20ms 帧 | managed 末值 |
+|---|---|---|---|---|---|---|
+| final，无 savestate | A | 720 | 1.93 / 2.57 / 316.80 | 16.67 / 16.81 / 319.20 | 2 | 756 MB |
+| final，持 1 槽 | B | 720 | 1.81 / 2.74 / 5.05 | 16.67 / 17.02 / 19.75 | 0 | 833 MB |
+| final，8 次 load 后 | C | 720 | 1.81 / 2.49 / 6.29 | 16.67 / 16.79 / 21.12 | 3 | 1011 MB |
+| final，持 3 槽 | B | 720 | 1.99 / 2.49 / **44.10** | 16.67 / 16.76 / **58.58** | 1 | 922 MB |
+| final，PreClone Off，A/B/C | A/B/C | 720/720/720 | 1.96–1.97 / 2.69–2.77 / max 309（首帧） | p50 16.67，B max 20.3、C max 18.6 | 0–2 | 757/813/990 MB |
+| upstream，A/B/C | A/B/C | 720/720/720 | 1.99 / 2.57–2.76 / max 330（首帧） | p50 16.67，B max 41.7、C max 18.2 | 1–2 | 901/970/1160 MB |
+| **SRT 完全禁用**，A | A | 721 | **1.96 / 2.66 / max 300（首帧）** | 16.67 / 16.85 / 310 | 4 | 754 MB |
+
+关键结论：
+1. **持有 savestate 不增加每帧 CPU**：A vs B vs C 的 CPU p50 都是 1.8–2.0ms；SRT 完全禁用的 A 段
+   （1.96/2.66）与启用 SRT 的 A 段（1.93/2.57）一致。**第二面卡顿不是 SRT 常驻造成的**。
+2. 唯一明显尖峰：房间**首帧**（A 段 max 300–330ms，渲染 3451 实体），属 room load；
+   3 槽时偶发一次 ~44ms CPU / 58ms 帧（GC，该段 GC 1/1/0）。
+3. save/load 本身的卡顿见下：**首次 save 693–747ms**、随后 load 15–17ms（PreClone On）；
+   PreClone Off 时 load 抖动大（34–123ms/次）。
+4. `ab3` 3 槽 save 耗时：718 / 41.2 / 40.1 ms（首槽冷、后续稳态）。
+
+## 10.4 重房间 save/load 矩阵（20 iters + 3 warmup + 3 slots，zip 环境）
+
+| 指标 | upstream-mod | final PreClone On | final PreClone Off |
+|---|---|---|---|
+| save p50 / p99 (ms) | 62.70 / 157.86 | **40.73 / 115.14** | 40.75 / 321.98 |
+| load p50 / p99 (ms) | **50.19** / 143.63 | **32.68** / 285.29 | 38.31 / 115.43 |
+| load 帧 p50 / p99 (ms) | 54.62 / 152.28 | **36.69 / 290.43** | 42.26 / 132.12 |
+| 存档 1/2/3 槽 managed 增量 | **85.4 / 116.9 / 148.4 MB** | 52.1 / 86.4 / 117.7 MB | **41.0 / 58.0 / 72.4 MB** |
+| load 后 managed 均值 | 1564 MB | 1268 MB | 1186 MB |
+| GC（20 save / 20 load） | 9/9/0 · 9/9/1 | 8/8/0 · 8/8/1 | 7/7/1 · 7/7/0 |
+
+结论（重房间）：
+- **save p50：final 40.7ms vs upstream 62.7ms（−35%）**；load p50：32.7 vs 50.2（−35%）。
+  重房间把 SRT save/load 的绝对耗时放大了约 3 倍，但优化收益同比例保留。
+- **槽位内存：final On 3 槽 117.7MB / Off 72.4MB vs upstream 148.4MB**（On −21%、Off −51%）；
+  首槽 On 52.1 / Off 41.0 / upstream 85.4 MB（重房间单槽是 a0-Start 的 ~3–3.5 倍）。
+- load p99 的 285ms 尖峰对应一次 Gen2 GC（gc2=1，20 次里 1 次）；PreClone Off 的 save p99 322ms
+  也是 GC 尖峰——**重房间 + 8GB 机器的主要风险是 GC 尖峰，而不是 sv 常驻**。
+- 首次 save 冷开销：693–747ms（3451 entities + 首次 JIT）；matrix 的 p50 已包含 3 次 warmup。
+
+## 10.5 重房间 profiling 分段（coldwarm-prof 构建，5 iters，3 slots）
+
+| 分段 | 首次 | 稳态 |
+|---|---|---|
+| save cloneLevel | 283.6 ms | **56.8–65.7 ms**（a0-Start 为 6.7） |
+| save cloneSaveData | 4.2 ms | 1.7–1.8 |
+| save saveActions | 127.0 ms | 3.5–3.6 |
+| load unload | 9.8 ms | **6.9–7.3 ms** |
+| load cloneBack | 1.4 ms | **1.15–1.43 ms** |
+| load loadActions | 60.4 ms | 6.5–7.0 |
+| **后台 preclone** | 44.9ms / 24.7MB | **20.8–25.4ms / 24.5MB 每次 save/load** |
+
+→ 重房间里 PreClone On 的隐藏成本是**每 save/load 约 21–25ms CPU、约 24.5MB 分配**（a0-Start 是 4–6ms/9MB）；
+这是 8GB 机器上需要权衡的点（PreClone Off 更省内存/分配，但 load 慢 ~2–3 倍）。
+
+## 10.6 TAS 回放（真实游玩卡顿）
+
+TAS：`D:\Games\SteamLibrary\steamapps\common\Celeste\TAS Files\StrawberryJamTAS-main\5_Grandmaster\grandmaster_heartside.tas`
+（`RecordCount 57969`；a1_18-Xplosives = 录制帧 246–874）。CelesteTAS 3.46.2 已启用（blacklist 备份后删行）。
+
+- **完整 TAS 播放会 desync**：TAS 自己的 `console load` 能进图，但到 a1 是帧 315（录制为 246，晚 ~69 帧），
+  49 帧后退出房间 → 无法用于稳定采样。
+- **可行方案**：harness 直接进 a1_18-Xplosives，TAS 从帧 246 跳播（`Manager.Controller.CurrentFrameInTas=246`）。
+  实测在房间内稳定播放 181 帧（帧 246→427），A/B/C 三段均完成：
+
+| 段 | save/load 动作 | 首帧（含 action）| 稳态帧 p50 / p99 | CPU p50 |
+|---|---|---|---|---|
+| A 无 savestate | — | — | 16.5 / 309.6（房间首帧） | 2.6 ms |
+| B 持 1 槽继续玩 | save 740.8 ms | **max 758 ms（= save 本身）** | 17.6 /（剔除 save 帧后 ~20ms） | 2.9 ms |
+| C 读档后继续玩 | load 111.0 ms | **max 126 ms（= load 本身）** | 16.6 /（剔除 load 帧后 ~20ms） | 2.7 ms |
+
+结论：**真实 TAS 操作下，持有 savestate 没有额外每帧开销，也没有持续掉帧**；
+卡顿集中在 save（重房间首次 ~740ms）/ load（首次 ~111ms）那一刻，与 §10.3/§10.4 一致。
+（注：TAS 段帧采样数受 harness Draw-hook 覆盖影响小于实际帧数，房间停留帧数 181 与 save/load 时间是准确的。）
+
+## 10.7 冷启动预热实验（2026-11-09，已撤回，仅记录）
+
+为降低"会话内首次 save ~360ms（a0-Start）/ ~740ms（重房间）"，尝试了三版 SRT 侧预热（均在 benchmark 环境测得）：
+
+| 版本 | 机制 | 结果 |
+|---|---|---|
+| v1 | 类型 codegen 预热（5936 类型，后台 247ms） | 首次 cloneSaveData 21.5→4.3ms（−80%），cloneLevel 216→198ms（−8%），**saveActions 142ms / loadActions 62ms 基本不变** |
+| v2 | 主线程 dry-save（丢弃式，覆盖 action lambda） | dry-save 33–36ms/0 失败；首次 save 仍 205/139/62ms，**无改善** |
+| v3 | 增加"真实对象图丢弃式 Level 克隆" | Level warm-up 8ms 后 NRE abort（WarmingUp 时 post-processor 返回 null 导致图被污染） |
+| v4 | 修复 post-processor 返回值 | warm-up 正常（100ms/0 失败），但**之后所有 save 失败**：`ArgumentException: RuntimeType → Celeste.Player`，DeepCloner per-type 缓存被 warm-up 污染 |
+
+结论：**预热方案全部撤回**（SRT 仓库已 revert，见 `docs/optimization-report.md §2.5`），
+保留已有的 cloneSaveData 优化。首次 save 的 `saveActions`/`loadActions` 大头是首次真实执行/JIT，
+在不污染 cloner 缓存的前提下无法安全预热；8GB 机器上建议通过"进图后先做一次用户不可见的 save/load"
+（由用户操作触发）来掩盖冷启动成本。
+
+## 10.8 复现
+
+```cmd
+:: zip 标准环境（已长期保留；回滚见 convert_to_zip.py rollback）
+python D:\DSH\Celeste\bench\collect_results.py
+
+:: 重房间帧归因
+run.cmd frames-a1_18-Xplosives-abc 420
+run.cmd frames-a1_18-Xplosives-ab3 420
+run.cmd frames-a1_18-Xplosives-abc-off 420
+python toggle_srt.py disable && run.cmd frames-nosrt-a1_18-Xplosives-a 300 && python toggle_srt.py enable
+
+:: 重房间矩阵
+run.cmd room2-final-on 420 / room2-final-off 420
+python swap_srt.py upstream-mod && run.cmd room2-upstream 420 && python swap_srt.py final
+
+:: TAS 回放（需 CelesteTAS 启用；BodyDouble 的 dev auto.tas 需临时改名）
+run.cmd tasplay-final-a1-mid 300
+```
+
+原始数据：`bench/results/` 下 `room2-*.json`、`frames-*.json`、`tasplay-*.json`、
+`PROFILE-profiling-room2-on.txt`、`probe-probe-sj.json`、`SUMMARY.md`；zip 清单在
+`bench/zip-conversion-manifest.json`。

@@ -417,3 +417,50 @@ copy configs\baseline-preclone-on.json bench.json  :: 手工改 config 时
 - 关键版本：SJ `StrawberryJam2021 1.0.13`、CollabUtils2 `1.13.6`、FrostHelper `1.81.1`、
   MaxHelpingHand `1.40.11`、CelesteTAS `3.46.2`、SpeedrunTool 见当前 `Mods\SpeedrunTool\everest.yaml`。
 - 校验依赖：`python D:\DSH\Celeste\bench\check_deps.py`（需 `install_sj.py` 的解析器）。
+
+
+---
+
+## 12. zip-mod 标准环境（2026-11-09 起）
+
+用户要求基准与真实玩家一致：**下载安装的 mod 用 zip**，用户自有/开发 mod 保持文件夹。
+长期保留该布局，回滚脚本见 §12.3。
+
+### 12.1 转换
+
+```bash
+python D:\DSH\Celeste\bench\convert_to_zip.py            # dry-run：在 bench\zip-build 生成/校验所有 zip，打印计划
+python D:\DSH\Celeste\bench\convert_to_zip.py execute    # 需先关闭游戏
+python D:\DSH\Celeste\bench\convert_to_zip.py rollback   # 恢复文件夹 + 还原 blacklist
+```
+
+- 以 `bench/installed-mods.json` 为准（52 个下载 mod：SJ + Assets + AudioA/B/C + 49 helpers）。
+- zip 名 = 原文件夹名；**zip 根目录直接是 everest.yaml**（Everest 只认根级）；标准 deflate；
+  排除 `.git/.vs/obj`；生成后校验每个 zip 的根 yaml + 声明 DLL 存在。
+- 原文件夹移动到 `D:\DSH\Celeste\backup\mods-folders\<timestamp>\`（不删除）；
+  blacklist.txt 备份到 `bench\backup_mods\blacklist-before-zip-<timestamp>.txt`，
+  只删除与 `<mod>.zip` 完全匹配的行（用户其它条目保留）。
+- 记录：`bench/zip-conversion-manifest.json`（清单/大小/blacklist 变更/备份路径）。
+
+### 12.2 验证（本机实测）
+
+| 项 | 第 1 次（zip relink 重建） | 第 2 次（暖） |
+|---|---|---|
+| 游戏内部 DONE LOADING | 11642 ms | 11587 ms |
+| run.cmd 全流程 | ~44–50 s | 24 s |
+| log `Loaded N modules` | 60 | 60（与文件夹环境一致） |
+| AreaData / SJ 图 | 143 / 128 | 143 / 128 |
+| probe | `target_resolved=true`，areaId=141 | 同 |
+| SJ 房间枚举 | `map_rooms` 33 个（a1_18-Xplosives 2461 LevelData entities / 运行时 3451） | 同 |
+
+### 12.3 回滚
+
+`convert_to_zip.py rollback`：把 Mods 里的转换后 zip 移到 `bench\zip-build\rollback-<ts>\`，
+把备份文件夹移回 `Mods\`，并从 `manifest` 记录的备份恢复 `blacklist.txt`。
+
+### 12.4 CelesteTAS（TAS 回放需要）
+
+CelesteTAS 3.46.2 默认被用户 blacklist 禁用（`blacklist.txt` 行 `CelesteTAS-EverestInterop`）。
+做 TAS 回放时：备份 blacklist → 删除该行 → 启动后 log 应有 `Registered code module ... for module CelesteTAS 3.46.2`，
+`playtas` 命令可用。**BodyDouble 的 dev 模式会自动播放 `Mods\BodyDouble\tas\auto.tas`**，与 harness 的 TAS 回放冲突，
+做 TAS 实验时需临时把 `auto.tas` 改名（测完恢复）。

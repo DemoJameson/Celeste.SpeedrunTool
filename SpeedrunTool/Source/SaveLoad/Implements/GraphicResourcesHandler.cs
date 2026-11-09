@@ -42,7 +42,7 @@ internal static class GraphicResourcesHandler {
 
     private static class VirtualAssetsHandler {
 
-        private static readonly List<VirtualAsset> VirtualAssets = []; // added and cleared when loading, so no need to be individual
+        private static readonly HashSet<VirtualAsset> VirtualAssets = []; // added and cleared when loading, so no need to be individual
 
         internal static void Add(VirtualAsset asset) {
             VirtualAssets.Add(asset);

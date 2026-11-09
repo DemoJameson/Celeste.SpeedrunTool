@@ -404,17 +404,25 @@ public sealed class StateManager {
     }
 
     // 触发 Entity.Removed, 从而释放资源，停止正在播放的声音, 解除 hook 等
+    private static readonly List<Entity> unloadEntities = [];
+    private static readonly HashSet<Entity> unloadEntitiesSeen = [];
+
     private static void UnloadLevel(Level level) {
-        List<Entity> entities =
-        [
-            // Player 必须最早移除，不然在处理 player.triggersInside 字段时会产生空指针异常
-            .. level.Tracker.GetEntities<Player>(),
-            .. level.Entities,
-        ];
+        unloadEntities.Clear();
+        unloadEntitiesSeen.Clear();
+
+        // Player 必须最早移除，不然在处理 player.triggersInside 字段时会产生空指针异常
+        unloadEntities.AddRange(level.Tracker.GetEntities<Player>());
+        unloadEntities.AddRange(level.Entities);
 
         // 等效于 Level.UnloadEntities 然后 UpdateLists
+        // (the list is a copy, and "seen" keeps the Player entry from being processed twice;
+        //  the previous LINQ Distinct() allocated a HashSet and an iterator on every load)
 
-        foreach (Entity entity in entities.Distinct()) {
+        foreach (Entity entity in unloadEntities) {
+            if (!unloadEntitiesSeen.Add(entity)) {
+                continue;
+            }
             // TODO: 确定到底哪些 Global entity 可以移除
             // 这里知道的是 MirrorSurfaces 被移除会导致一些 VirtualRenderTarget Dispose
             // 于是如果在存档 1 存档, 在存档 2 清除, 再读档 1, 会崩溃
@@ -508,9 +516,13 @@ public sealed class StateManager {
     private void RestoreAudio_1(Level level) {
         playingEventInstances.Clear();
 
-        foreach (Component component in level.Entities.SelectMany(entity => entity.Components.ToArray())) {
-            if (component is SoundSource { Playing: true, instance: { } eventInstance }) {
-                playingEventInstances.Add(eventInstance);
+        // Iterate the component lists directly: the LINQ version allocated a Component[]
+        // (and a "SelectMany" iterator) per entity, i.e. one array per entity per load.
+        foreach (Entity entity in level.Entities) {
+            foreach (Component component in entity.Components) {
+                if (component is SoundSource { Playing: true, instance: { } eventInstance }) {
+                    playingEventInstances.Add(eventInstance);
+                }
             }
         }
     }

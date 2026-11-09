@@ -167,6 +167,12 @@ internal class Snapshot {
             // immediately set it so there won't be infinite loop
             Snapshot snapshot = new(DemandingSlot);
             CaptureSnapshots(self, snapshot);
+            // Re-saving into the same slot replaces the dictionary entry: dispose the texture of
+            // the snapshot being replaced, otherwise every save leaks one texture.
+            if (SnapshotsDict.TryGetValue(DemandingSlot, out Snapshot previous) && previous != snapshot) {
+                previous.snapshotTex?.Dispose();
+                previous.snapshotTex = null;
+            }
             SnapshotsDict[DemandingSlot] = snapshot;
         }
         orig(self);

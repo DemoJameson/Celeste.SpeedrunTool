@@ -27,8 +27,18 @@ internal class Snapshot {
     }
 
     internal static void ClearAll() {
+        DisposeAllTextures();
         SnapshotsDict.Clear();
         SnapshotUI.Close();
+    }
+
+    // The snapshot textures are unmanaged GPU resources: dropping the dictionary is not
+    // enough, every texture has to be disposed explicitly or it leaks VRAM on clear/reload.
+    internal static void DisposeAllTextures() {
+        foreach (Snapshot snapshot in SnapshotsDict.Values) {
+            snapshot.snapshotTex?.Dispose();
+            snapshot.snapshotTex = null;
+        }
     }
 
     internal static Dictionary<string, Snapshot> SnapshotsDict = [];
@@ -51,6 +61,24 @@ internal class Snapshot {
 
     internal static string DemandingSlot;
 
+    // Thumbnails are only ever drawn inside ~1/3 of the screen (SnapshotUI), so storing a
+    // full-resolution texture per slot wastes a lot of VRAM: 1920x1080 = 8.3 MB per slot,
+    // ~75 MB for all 9 slots. Downscaling to at most this long edge keeps the UI crisp
+    // while using ~0.5 MB per slot.
+    private const int MaxSnapshotLongEdge = 480;
+
+    // The full-screen readback and the downscaled thumbnail are reused between captures.
+    // A fresh Color[1920 * 1080] (~8.3 MB) per save lands on the LOH and is a classic
+    // source of late-generation GC pauses, so keep one buffer and overwrite it.
+    private static Color[] readbackBuffer;
+    private static Color[] thumbnailBuffer;
+
+    private static void EnsureBufferSize(ref Color[] buffer, int length) {
+        if (buffer is null || buffer.Length < length) {
+            buffer = new Color[length];
+        }
+    }
+
     private static void CaptureSnapshots(Level level, Snapshot instance) {
         // codes are modified from AssetReloadHelper
         GraphicsDevice graphicsDevice = Engine.Instance.GraphicsDevice;
@@ -58,7 +86,6 @@ internal class Snapshot {
         Viewport viewport2 = graphicsDevice.Viewport;
         int width = viewport.Width;
         int height = viewport.Height;
-        Color[] array = new Color[width * height];
         bool success = true;
         try {
             level.BeforeRender();
@@ -67,7 +94,8 @@ internal class Snapshot {
             graphicsDevice.Clear(Engine.ClearColor);
             level.Render();
             level.AfterRender();
-            graphicsDevice.GetBackBufferData(viewport.Bounds, array, 0, array.Length);
+            EnsureBufferSize(ref readbackBuffer, width * height);
+            graphicsDevice.GetBackBufferData(viewport.Bounds, readbackBuffer, 0, width * height);
         }
         catch (Exception e) {
             Logger.Warn("SpeedrunTool", "Failed to render original scene for SpeedrunTool snapshot:");
@@ -85,12 +113,31 @@ internal class Snapshot {
         }
 
         instance.snapshotTex?.Dispose();
-        if (!success) {
+        if (!success || width <= 0 || height <= 0) {
             instance.snapshotTex = null;
             return;
         }
-        instance.snapshotTex = new Texture2D(graphicsDevice, width, height, mipMap: false, SurfaceFormat.Color);
-        instance.snapshotTex.SetData(array);
+
+        int scale = Math.Max(1, (int)Math.Ceiling(Math.Max(width, height) / (float)MaxSnapshotLongEdge));
+        int thumbnailWidth = Math.Max(1, width / scale);
+        int thumbnailHeight = Math.Max(1, height / scale);
+        EnsureBufferSize(ref thumbnailBuffer, thumbnailWidth * thumbnailHeight);
+
+        // Nearest-neighbour downscale. The source rows are read sequentially, so this is
+        // cache friendly despite the stride, and it is only ~130k pixels at 1080p.
+        int halfScale = scale / 2;
+        for (int y = 0; y < thumbnailHeight; y++) {
+            int sourceY = Math.Min(height - 1, y * scale + halfScale);
+            int sourceRow = sourceY * width;
+            int thumbnailRow = y * thumbnailWidth;
+            for (int x = 0; x < thumbnailWidth; x++) {
+                int sourceX = Math.Min(width - 1, x * scale + halfScale);
+                thumbnailBuffer[thumbnailRow + x] = readbackBuffer[sourceRow + sourceX];
+            }
+        }
+
+        instance.snapshotTex = new Texture2D(graphicsDevice, thumbnailWidth, thumbnailHeight, mipMap: false, SurfaceFormat.Color);
+        instance.snapshotTex.SetData(thumbnailBuffer, 0, thumbnailWidth * thumbnailHeight);
     }
 
 
@@ -103,6 +150,8 @@ internal class Snapshot {
     [Unload]
     private static void Unload() {
         On.Celeste.Level.BeforeRender -= CaptureSnapshotsBeforeRender;
+        DisposeAllTextures();
+        SnapshotsDict.Clear();
     }
 
     [Initialize]

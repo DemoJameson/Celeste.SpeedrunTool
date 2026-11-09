@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Reflection;
 
 namespace Force.DeepCloner.Helpers {
     internal static class DeepClonerGenerator {
@@ -254,6 +255,66 @@ namespace Force.DeepCloner.Helpers {
             }
 
             return (Func<T, DeepCloneState, T>)value;
+        }
+
+        /// <summary>
+        /// Generates (but does not invoke) the cloner for a type and caches it.
+        /// Best effort: any failure is swallowed, the cloner will simply be generated lazily later.
+        /// </summary>
+        internal static void WarmUpCloner(Type type) {
+            if (type is null || type.IsPointer || type.IsByRef || type.IsGenericTypeDefinition) {
+                return;
+            }
+
+            try {
+                if (type.IsValueType()) {
+                    if (!DeepClonerCache.StructAsObjectCache.ContainsKey(type)) {
+                        lock (type) {
+                            DeepClonerCache.StructAsObjectCache.TryAdd(type, GenerateCloner(type, false));
+                        }
+                    }
+
+                    // The generic struct cloner (used by CloneStructInternal) is a separate cache.
+                    typeof(DeepClonerGenerator)
+                        .GetMethod(nameof(GetClonerForValueType), BindingFlags.NonPublic | BindingFlags.Static)
+                        ?.MakeGenericMethod(type)
+                        .Invoke(null, null);
+                }
+                else if (!DeepClonerCache.TypeCache.ContainsKey(type)) {
+                    lock (type) {
+                        DeepClonerCache.TypeCache.TryAdd(type, GenerateCloner(type, true));
+                    }
+                }
+            }
+            catch {
+                // warm-up is best effort only
+            }
+        }
+
+        /// <summary>
+        /// Generates (but does not invoke) the DeepCloneTo / ShallowCloneTo cloners for a root type.
+        /// </summary>
+        internal static void WarmUpCloneToCloner(Type type) {
+            if (type is null || type.IsValueType() || type.IsPointer || type.IsByRef || type.IsGenericTypeDefinition) {
+                return;
+            }
+
+            try {
+                if (!DeepClonerCache.TypeCacheDeepTo.ContainsKey(type)) {
+                    lock (type) {
+                        DeepClonerCache.TypeCacheDeepTo.TryAdd(type, ClonerToExprGenerator.GenerateClonerInternal(type, true));
+                    }
+                }
+
+                if (!DeepClonerCache.TypeCacheShallowTo.ContainsKey(type)) {
+                    lock (type) {
+                        DeepClonerCache.TypeCacheShallowTo.TryAdd(type, ClonerToExprGenerator.GenerateClonerInternal(type, false));
+                    }
+                }
+            }
+            catch {
+                // warm-up is best effort only
+            }
         }
 
         private static object GenerateCloner(Type t, bool asObject) {

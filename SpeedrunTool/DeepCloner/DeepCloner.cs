@@ -52,6 +52,24 @@ namespace Force.DeepCloner {
             _postCloneProcessor = null;
         }
 
+        /// <summary>
+        /// Generates and caches the cloner delegate for a type without cloning anything.
+        /// Reflection-only and thread-safe, so it can be used to warm up the cloner cache from a
+        /// background thread (e.g. while a level is loading) so the first real clone does not pay
+        /// the Expression.Compile cost.
+        /// </summary>
+        public static void WarmUpCloner(Type type) {
+            DeepClonerGenerator.WarmUpCloner(type);
+        }
+
+        /// <summary>
+        /// Same as <see cref="WarmUpCloner"/> for the <c>DeepCloneTo</c> cloner used on root
+        /// objects (Level, SaveData, Session, Everest module sessions/save data, ...).
+        /// </summary>
+        public static void WarmUpCloneToCloner(Type type) {
+            DeepClonerGenerator.WarmUpCloneToCloner(type);
+        }
+
         internal static object InvokePostCloneProcessor(object sourceObj, object clonedObj, DeepCloneState deepCloneState) {
             if (_postCloneProcessor == null) {
                 return clonedObj;

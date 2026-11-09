@@ -383,6 +383,30 @@ public sealed partial class SaveLoadAction {
     // used to happen inside the first save, i.e. as a one-time hitch on the save path. Do it when
     // the first level starts loading instead: all mods are loaded by then and the player is
     // already waiting for the level.
+    /// <summary>
+    /// Field types that the save actions will clone; used by <see cref="CloneWarmUp"/> to
+    /// pre-generate their cloners while the level loads.
+    /// </summary>
+    internal static void CollectWarmUpTypes(Action<Type> add) {
+        if (simpleStaticFields is null || modModuleFields is null) {
+            return;
+        }
+
+        foreach (KeyValuePair<Type, FieldInfo[]> pair in simpleStaticFields) {
+            add(pair.Key);
+            foreach (FieldInfo field in pair.Value) {
+                add(field.FieldType);
+            }
+        }
+
+        foreach (KeyValuePair<Type, FieldInfo[]> pair in modModuleFields) {
+            add(pair.Key);
+            foreach (FieldInfo field in pair.Value) {
+                add(field.FieldType);
+            }
+        }
+    }
+
     private static void WarmUpOnFirstLevel(On.Monocle.Scene.orig_Begin orig, Scene self) {
         orig(self);
 
@@ -399,6 +423,9 @@ public sealed partial class SaveLoadAction {
             Logger.Warn("SpeedrunTool/SaveLoadAction", $"Failed to initialize save/load actions: {exception.GetType().Name}: {exception.Message}");
             Logger.LogDetailed(exception, "SpeedrunTool");
         }
+
+        // Hide the first save/load's cloner codegen behind the loading screen.
+        CloneWarmUp.Start();
     }
 
     [Unload]

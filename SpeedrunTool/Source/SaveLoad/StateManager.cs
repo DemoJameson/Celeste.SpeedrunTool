@@ -1,4 +1,4 @@
-﻿using Celeste.Mod.SpeedrunTool.ModInterop;
+using Celeste.Mod.SpeedrunTool.ModInterop;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Profiling;
 using Celeste.Mod.SpeedrunTool.Utils;
 using Force.DeepCloner;
@@ -17,7 +17,7 @@ using EventInstance = FMOD.Studio.EventInstance;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
-public sealed class StateManager {
+public sealed partial class StateManager {
     public static StateManager Instance => SaveSlotsManager.StateManagerInstance;
     internal StateManager() { }
 
@@ -54,7 +54,6 @@ public sealed class StateManager {
 
     private readonly HashSet<EventInstance> playingEventInstances = [];
 
-
     #region Hook
 
     // manually call this to ensure it's first called
@@ -70,88 +69,6 @@ public sealed class StateManager {
         IL.Celeste.Level.TransitionRoutine -= IL_LevelTransitionRoutine;
         On.Celeste.Level.TransitionRoutine -= On_LevelTransitionRoutine;
         On.Celeste.Level.End -= LevelOnEnd;
-    }
-
-    private static void IL_LevelTransitionRoutine(ILContext context) {
-        ILCursor cursor = new(context);
-        if (cursor.TryGotoNext(MoveType.After, ins => ins.OpCode == OpCodes.Newobj && ins.Operand.ToString().Contains("Level/<TransitionRoutine>"))) {
-            cursor.EmitDelegate(SaveTransitionRoutine);
-        }
-    }
-
-    private static IEnumerator SaveTransitionRoutine(IEnumerator enumerator) {
-        Instance.transitionRoutine = new WeakReference<IEnumerator>(enumerator);
-        return enumerator;
-    }
-
-    private static IEnumerator On_LevelTransitionRoutine(On.Celeste.Level.orig_TransitionRoutine orig, Level self, LevelData next, Vector2 direction) {
-        IEnumerator enumerator = orig(self, next, direction);
-        while (enumerator.MoveNext()) {
-            yield return enumerator.Current;
-        }
-
-        Instance.transitionRoutine = null;
-    }
-
-    private static void LevelOnEnd(On.Celeste.Level.orig_End orig, Level self) {
-        orig(self);
-        Instance.transitionRoutine = null;
-        DesyncRiskAnalyzer.CheckAll = true;
-    }
-
-
-
-    private static readonly Lazy<PropertyInfo> InGameOverworldHelperIsOpen = new(
-        () => ModUtils.GetType("CollabUtils2", "Celeste.Mod.CollabUtils2.UI.InGameOverworldHelper")?.GetPropertyInfo("IsOpen")
-    );
-
-    internal void HandleSwitchScene(Scene self) {
-        if (!IsSaved) {
-            return;
-        }
-
-        // v3.28 新功能: 切换 Scene 时不再自动删除 SaveState.
-        // 由于我们还保存了 Celeste.SaveData.Instance, 因此我们的多存档甚至可以存储 不同的原版存档文件上的不同章节
-        // todo: 目前这个功能还有问题, 比如资源有时候好像没有正确加载
-
-        if (ModSettings.AutoClearStateOnSceneSwitch) {
-            if (self is Overworld && !SavedByTas && InGameOverworldHelperIsOpen.Value?.GetValue(null) as bool? != true
-                || self.GetSession() is { } session && session.Area != savedLevel.Session.Area) {
-                ClearStateImpl(hasGc: true);
-            }
-        }
-
-        // 重启章节 Level 实例变更，所以之前预克隆的实体作废，需要重新克隆
-        // 因为 preClone 期间若字段为 Level, 并且 Engine.Scene 也确实是 level, 则会直接把字段设为 level
-        if (self is Level) {
-            State = State.None;
-            PreCloneSavedEntities();
-        }
-    }
-
-    private static void AutoLoadStateWhenDeath(On.Celeste.PlayerDeadBody.orig_End orig, PlayerDeadBody self) {
-        if (ModSettings.Enabled
-            && ModSettings.AutoLoadStateAfterDeath
-            && Instance.IsSaved
-            && !TasUtils.Running
-            && !Instance.SavedByTas
-            && !self.finished
-            && Engine.Scene is Level level
-            && level.Entities.FindFirst<PlayerSeeker>() == null
-           ) {
-            level.OnEndOfFrame += () => {
-                if (Instance.IsSaved) {
-                    Instance.LoadStateImpl(false, out _);
-                }
-                else {
-                    level.DoScreenWipe(wipeIn: false, self.DeathAction ?? level.Reload);
-                }
-            };
-            self.RemoveSelf();
-        }
-        else {
-            orig(self);
-        }
     }
 
     #endregion Hook
@@ -619,120 +536,6 @@ public sealed class StateManager {
         }
     }
 
-    private void UpdateTimeAndDeaths(Level level) {
-        if (SavedByTas || ModSettings.SaveTimeAndDeaths) {
-            return;
-        }
-
-        Session session = level.Session;
-        Session savedSession = savedLevel.Session;
-        AreaKey areaKey = session.Area;
-
-        // The template is updated in place. This used to first DeepCloneShared() the Session and
-        // the SaveData, but the clones were never installed anywhere - they were pure garbage on
-        // every load (a SaveData clone is not free: it clones the whole Areas_Safe list).
-        savedSession.Time = Math.Max(session.Time, savedSession.Time);
-        savedSaveData.Time = SaveData.Instance.Time;
-
-        // A mod map may not have an AreaStats entry yet (or a shorter Modes array): the old
-        // unchecked indexing threw ArgumentOutOfRangeException and aborted the whole load.
-        if (areaKey.ID >= 0
-            && areaKey.ID < savedSaveData.Areas_Safe.Count
-            && areaKey.ID < SaveData.Instance.Areas_Safe.Count
-            && (int)areaKey.Mode < savedSaveData.Areas_Safe[areaKey.ID].Modes.Length
-            && (int)areaKey.Mode < SaveData.Instance.Areas_Safe[areaKey.ID].Modes.Length) {
-            savedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].TimePlayed =
-                SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].TimePlayed;
-        }
-
-        // 修复：切屏时存档，若干秒后读档游戏会误以为卡死自动重生
-
-        // 2025.08.25: 这里我们不能用 level.transition, 因为有可能 TransitionRoutine 已经被 hook 过
-        // 使得这个 coroutine 的类型不一样, 这里写的反射获取 <playerStuck> 就不对了
-        // 不过理论上多写一些代码去解开 Coroutine 的嵌套应该也行...
-        // 这个 bug 被 DJ 在 2023.10.07 修复了, 不过我把多存档合并进来的时候可能不小心丢失了这个提交
-        // 总之我们采用 DJ 的写法
-        if (savedTransitionRoutine?.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
-                .FirstOrDefault(info => info.Name.StartsWith("<playerStuck>")) is { } playerStuck) {
-            playerStuck.SetValue(savedTransitionRoutine, TimeSpan.FromTicks(session.Time));
-            playerStuck.SetValue(savedTransitionRoutine.DeepCloneShared(), TimeSpan.FromTicks(session.Time));
-        }
-
-        int increaseDeath = level.IsPlayerDead() ? 0 : 1;
-        savedSession.Deaths = Math.Max(session.Deaths + increaseDeath, savedSession.Deaths);
-        savedSession.DeathsInCurrentLevel =
-            Math.Max(session.DeathsInCurrentLevel + increaseDeath, savedSession.DeathsInCurrentLevel);
-        savedSaveData.TotalDeaths = SaveData.Instance.TotalDeaths + increaseDeath;
-        if (areaKey.ID >= 0
-            && areaKey.ID < savedSaveData.Areas_Safe.Count
-            && areaKey.ID < SaveData.Instance.Areas_Safe.Count
-            && (int)areaKey.Mode < savedSaveData.Areas_Safe[areaKey.ID].Modes.Length
-            && (int)areaKey.Mode < SaveData.Instance.Areas_Safe[areaKey.ID].Modes.Length) {
-            savedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths =
-                SaveData.Instance.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths + increaseDeath;
-        }
-    }
-
-    private void LoadStateComplete(Level level) {
-        RestoreLevelTime(level);
-        RestoreAudio_2();
-        RestoreCassetteBlockManager2(level);
-        DeepClonerUtils.ClearSharedDeepCloneState();
-        State = State.None;
-    }
-
-    private void RestoreLevelTime(Level level) {
-        level.TimeActive = savedLevel.TimeActive;
-        level.RawTimeActive = savedLevel.RawTimeActive;
-    }
-
-    private void RestoreCycleGroupCounter() {
-        TasUtils.GroupCounter = savedTasCycleGroupCounter;
-    }
-
-    // 收集需要继续播放的声音
-    private void RestoreAudio_1(Level level) {
-        playingEventInstances.Clear();
-
-        // Iterate the component lists directly: the LINQ version allocated a Component[]
-        // (and a "SelectMany" iterator) per entity, i.e. one array per entity per load.
-        foreach (Entity entity in level.Entities) {
-            foreach (Component component in entity.Components) {
-                if (component is SoundSource { Playing: true, instance: { } eventInstance }) {
-                    playingEventInstances.Add(eventInstance);
-                }
-            }
-        }
-    }
-
-    // 等 ScreenWipe 完毕再开始播放
-    private void RestoreAudio_2() {
-        foreach (EventInstance instance in playingEventInstances) {
-            instance.start();
-        }
-
-        playingEventInstances.Clear();
-    }
-
-    // 分两步的原因是更早的停止音乐，听起来更舒服更好一点
-    // 第一步：停止播放主音乐
-    private static void RestoreCassetteBlockManager1(Level level) {
-        if (level.Tracker.GetEntity<CassetteBlockManager>() is { } manager) {
-            manager.snapshot?.start();
-        }
-    }
-
-    // 第二步：播放节奏音乐
-    // https://discord.com/channels/403698615446536203/429775260108324865/1422017531098566776
-    // 理论上, 在 Cassette cycle 图中 LoadState 后暂停会引入额外的读图优势, 但这显然不是我们的问题.
-    private static void RestoreCassetteBlockManager2(Level level) {
-        if (level.Tracker.GetEntity<CassetteBlockManager>() is { } manager) {
-            if (manager.sfx is { } sfx && !manager.isLevelMusic && manager.leadBeats <= 0) {
-                sfx.start();
-            }
-        }
-    }
-
     private void PreCloneSavedEntities() {
         if (!PreCloneEnabled) {
             preCloneTask = null;
@@ -819,39 +622,6 @@ public sealed class StateManager {
             failReason = "Cannot Save while Level is Paused!";
         }
         return true;
-    }
-
-    private void FreezeGame(FreezeType freeze) {
-        freezeType = freeze;
-    }
-
-    private void DoScreenWipe(Level level) {
-        level.DoScreenWipe(true, () => {
-            if (ModSettings.FreezeAfterLoadStateType != FreezeAfterLoadStateType.Off) {
-                State = State.Waiting;
-            }
-            else {
-                OutOfFreeze(level);
-            }
-        });
-    }
-
-    internal void OutOfFreeze(Level level) {
-        if (freezeType == FreezeType.Save || savedLevel == null) {
-            if (savedLevel != null) {
-                RestoreLevelTime(level);
-            }
-
-            State = State.None;
-        }
-        else {
-            LoadStateComplete(level);
-        }
-
-        // when freeze by SRT, the CycleGroupCounter still updates, so we restore it when out of freeze
-        RestoreCycleGroupCounter();
-
-        freezeType = FreezeType.None;
     }
 
     private class WaitingEntity : Entity {

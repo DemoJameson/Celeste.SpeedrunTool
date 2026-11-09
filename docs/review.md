@@ -335,4 +335,4 @@ if (graphicsDevice.GetRenderTargets().Length > 0 || wipeActive) {
   污染 DeepCloner 的生成缓存，实测导致后续 save 全部失败（RuntimeType→Player 构造器不匹配），
   随后 revert（`faf757f`）。冷启动保留为已知限制，见报告 §2.5/§4。
 - **benchmark 环境改为 zip 标准布局**（52 个下载 mod 转 zip、用户开发 mod 保持文件夹），
-  原始 JSON/脚本在 `D:\DSH\Celesteench`，仓库内见 `docs/bench-baseline.md`。
+  原始 JSON/脚本在 `D:\DSH\Celeste\ench`，仓库内见 `docs/bench-baseline.md`。

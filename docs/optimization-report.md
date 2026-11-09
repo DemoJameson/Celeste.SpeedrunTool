@@ -262,5 +262,5 @@ save/load 那一帧（重房间首次 save 的冷启动开销，见 §2.5；稳�
   codegen），两次预热方案（后台类型预热、进图丢弃式 clone）分别因收益太小 / 会污染 DeepCloner
   缓存导致后续 save 失败而撤回（详见 §2.5）。后续方向：隔离预热（独立 AssemblyLoadContext 或
   可丢弃的缓存层）或接受"每次会话一次、且 normal 模式 save 本身带 freeze"。
-- **benchmark 结果文件**：harness（SrtBench/脚本/原始 JSON）在仓库外 `D:\DSH\Celesteench`；
+- **benchmark 结果文件**：harness（SrtBench/脚本/原始 JSON）在仓库外 `D:\DSH\Celeste\ench`；
   仓库内保留 `docs/bench-baseline.md`（结果）与 `docs/bench-setup.md`（复现方法）。

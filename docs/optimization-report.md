@@ -133,7 +133,7 @@ profiling 显示**会话内第一次** save 比后续慢很多：入口房间 `c
 缓存放到可丢弃的独立 AppDomain/AssemblyLoadContext，或在真实 save 前做一次隔离的 clone 校验），
 而不是复用主缓存。
 
-## 3. 验证（进行中，数字由 bench 环境回填）
+## 3. 验证
 
 - 构建：`dotnet build -c Release -p:CelestePrefix=<Celeste> -p:DeployDir=<Celeste>/Mods/SpeedrunTool`。
 - 场景：StrawberryJam `5-Grandmaster/ZZ-HeartSide` 入口房间（222 entities），60fps vsync。
@@ -257,4 +257,10 @@ save/load 那一帧（重房间首次 save 的冷启动开销，见 §2.5；稳�
   `docs/sj-compat.md` §6）。
 - **异常兜底边界**：save/load 主路径已覆盖；hotkey 派发（`HotkeyConfigUi`）与 `GC.TryStartNoGCRegion`
   冲突等边界仍未兜底。
-- **benchmark 结果文件**：JSON/文档由 bench-env 在仓库外提供（本仓库 `docs/` 只保留分析与本报告）。
+- **会话内首次 save/load 的冷启动开销未消除**：入口房间首次 save ~380ms、3451 实体的第二面
+  首次 save **719–741ms**、首次 load ~111ms，后续稳定在 41ms/33ms（本机）。根因是 JIT（不是
+  codegen），两次预热方案（后台类型预热、进图丢弃式 clone）分别因收益太小 / 会污染 DeepCloner
+  缓存导致后续 save 失败而撤回（详见 §2.5）。后续方向：隔离预热（独立 AssemblyLoadContext 或
+  可丢弃的缓存层）或接受"每次会话一次、且 normal 模式 save 本身带 freeze"。
+- **benchmark 结果文件**：harness（SrtBench/脚本/原始 JSON）在仓库外 `D:\DSH\Celesteench`；
+  仓库内保留 `docs/bench-baseline.md`（结果）与 `docs/bench-setup.md`（复现方法）。

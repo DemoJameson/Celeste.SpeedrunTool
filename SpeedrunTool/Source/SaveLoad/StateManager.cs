@@ -1,4 +1,5 @@
 ﻿using Celeste.Mod.SpeedrunTool.ModInterop;
+using Celeste.Mod.SpeedrunTool.SaveLoad.Profiling;
 using Celeste.Mod.SpeedrunTool.Utils;
 using Force.DeepCloner;
 using Force.DeepCloner.Helpers;
@@ -178,6 +179,7 @@ public sealed class StateManager {
         }
 
         popup = "";
+        SaveLoadProfiler.Begin("save");
         try {
             if (IsSaved) {
                 ClearBeforeSave = true;
@@ -191,14 +193,19 @@ public sealed class StateManager {
 #endif
 
             SaveLoadAction.InitSlots();
+            SaveLoadProfiler.Mark("initSlots");
             State = State.Saving;
             SavedByTas = tas;
             SaveLoadAction.OnBeforeSaveState(level);
+            SaveLoadProfiler.Mark("beforeSave");
             level.DeepCloneToShared(savedLevel = (Level)RuntimeHelpers.GetUninitializedObject(typeof(Level)));
+            SaveLoadProfiler.Mark("cloneLevel");
             savedSaveData = SaveData.Instance.DeepCloneShared();
+            SaveLoadProfiler.Mark("cloneSaveData");
             savedTasCycleGroupCounter = TasUtils.GroupCounter;
             savedTransitionRoutine = transitionRoutine?.TryGetTarget(out IEnumerator enumerator) == true ? enumerator.DeepCloneShared() : null;
             SaveLoadAction.OnSaveState(level);
+            SaveLoadProfiler.Mark("saveActions");
             DeepClonerUtils.ClearSharedDeepCloneState();
 
             if (shouldDesyncCheck && DesyncRiskAnalyzer.OnAfterSaveState(out string reason3)) {
@@ -208,6 +215,8 @@ public sealed class StateManager {
             }
 
             PreCloneSavedEntities();
+            SaveLoadProfiler.Mark("precloneStart");
+            SaveLoadProfiler.End();
 
             if (tas) {
                 State = State.None;
@@ -290,6 +299,7 @@ public sealed class StateManager {
         // Once UnloadLevel() started, the live level is half destroyed and needs a reload
         // before the player can continue (see the catch block below).
         bool levelWasUnloaded = false;
+        SaveLoadProfiler.Begin("load");
         try {
 #if DEBUG
             if (Log_WhenLoading) {
@@ -304,25 +314,34 @@ public sealed class StateManager {
             State = State.Loading;
 
             SaveLoadAction.OnBeforeLoadState(level);
+            SaveLoadProfiler.Mark("beforeLoad");
 
             DeepClonerUtils.SetSharedDeepCloneState(preCloneTask?.Result);
+            SaveLoadProfiler.Mark("waitPreclone");
 
             UpdateTimeAndDeaths(level);
+            SaveLoadProfiler.Mark("mergeTime");
             levelWasUnloaded = true;
             UnloadLevel(level);
+            SaveLoadProfiler.Mark("unload");
 
             Tracker.Refresh(savedLevel); // 不能在 OnLoadState 里做. 否则多次读档会需要反复 Refresh Tracker
             savedLevel.DeepCloneToShared(level);
+            SaveLoadProfiler.Mark("cloneBack");
             SaveData.Instance = savedSaveData.DeepCloneShared();
+            SaveLoadProfiler.Mark("restoreSaveData");
             if (savedTransitionRoutine != null) {
                 transitionRoutine = new WeakReference<IEnumerator>(savedTransitionRoutine.DeepCloneShared());
             }
 
             RestoreAudio_1(level);
+            SaveLoadProfiler.Mark("restoreAudio");
             RestoreCassetteBlockManager1(level);
             SaveLoadAction.OnLoadState(level);
+            SaveLoadProfiler.Mark("loadActions");
 
             PreCloneSavedEntities();
+            SaveLoadProfiler.Mark("precloneStart");
 
             if (tas) {
                 LoadStateComplete(level);
@@ -337,6 +356,8 @@ public sealed class StateManager {
             if (!tas && ModSettings.GcAfterLoadState) {
                 GcCollect(force: false);
             }
+
+            SaveLoadProfiler.End();
 
             popup = $"Load from [{SlotName}]";
             Logger.Info("SpeedrunTool/LoadState", $"Load from {FullSlotDescription}");
@@ -647,10 +668,19 @@ public sealed class StateManager {
         if (IsSaved) {
             SaveLoadAction.OnPreCloneEntities();
             preCloneTask = Task.Run(() => {
+                bool profile = SaveLoadProfiler.Enabled;
+                long startTicks = profile ? Stopwatch.GetTimestamp() : 0L;
+                long startAllocated = profile ? GC.GetAllocatedBytesForCurrentThread() : 0L;
+
                 DeepCloneState deepCloneState = new();
                 savedLevel.Entities.DeepClone(deepCloneState);
                 savedLevel.RendererList.DeepClone(deepCloneState);
                 savedSaveData.DeepClone(deepCloneState);
+
+                if (profile) {
+                    SaveLoadProfiler.LogBackgroundSection("preclone", startTicks, startAllocated);
+                }
+
                 return deepCloneState;
             });
         }

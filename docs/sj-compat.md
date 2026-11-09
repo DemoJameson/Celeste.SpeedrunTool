@@ -14,18 +14,20 @@
    - `CollabUtils2.Entities.CollabCrystalHeart`（`Added` 注册 `Level.RegisterAreaComplete/CompleteArea`，`Removed` 注销）。
    其余 mod（FrostHelper/CommunalHelper/MaxHelpingHand/VivHelper/CrystallineHelper/SJ2021 等）的 hook 全部是**模块生命周期**（`LoadIfNeeded`/`Load` 注册，`Unload` 只在 mod 卸载时调用；实测这些 `Unload` 在程序集内**没有调用者**）→ **SRT 读档不会移除它们，不需要重建**。这是本次分析最重要的结论，避免了对 FrostHelper 等做大量无用 workaround。
 2. **FrostHelper 的“FrostTemple 系列”在本 chapter（含 Heartside）的地图数据里完全没有出现**（`grep -i temple` 只命中原版贴图/音效路径）。FrostHelper 在 Heartside 用到的是 20 个其它实体（见 §5），在 chapter 用到 35 个。
-3. FrostHelper 的静态状态基本都被 SRT 的通用静态扫描覆盖（静态 `MTexture`/`MTexture[]`/`List<MTexture>`/bool 标志）；**真正缺失的只有 2 类**：模块类的静态 int（`FrostModule.CustomDreamDashState`）和实体持有的裸 `EventInstance`（`ToggleSwapBlock.moveSfx/returnSfx`）。
+3. FrostHelper 的静态状态基本都被 SRT 的通用静态扫描覆盖（静态 `MTexture`/`MTexture[]`/`List<MTexture>`/bool 标志）；模块类的 static int（`FrostModule.CustomDreamDashState`）经 Cecil 读写点分析确认是 **Player 状态注册 ID**，不需要保存（§7.3）。**FrostHelper 唯一真实缺口是实体持有的裸 `EventInstance`**（`ToggleSwapBlock.moveSfx/returnSfx`），结论见 §6。
+4. **多个 mod 自己接入了 SRT ModInterop**（`[ModImportName("SpeedrunTool.SaveLoad")]`）：`MaxHelpingHand`（`RegisterSaveLoadAction` 保存 `flagMapping`/`colorsMildOverride`；`RegisterStaticTypes` 保存 `StylegroundFadeController` 静态字段）、`FrostHelper`（`AddReturnSameObjectProcessor`：`ISavestatePersisted` 类型共享不克隆）、`CommunalHelper`/`FemtoHelper`/`EeveeHelper`（`RegisterStaticTypes`）。→ SRT 侧对这些 mod 的兼容有相当一部分是 mod 作者自己补的，**不要重复实现**。
+5. `FrostHelper.ModIntegration.ISavestatePersisted` 的 16 个实现类型（`ColorRainbowChannel`/`CustomSpinnerSpriteSource`/`VirtualRenderTargetRef`/`SessionExpressions.CompiledCondition<>` 等）由 FrostHelper 在 `LoadContent` 里通过 `AddReturnSameObjectProcessor` 声明为**共享不克隆**；SRT 的 `ClearCaches()` 修复（D14）保证这个迟到注册能生效。
 
 **需要 Lead 补代码的清单（按优先级）**
-| # | 目标 | 类型 | 建议改动 |
+| # | 目标 | 类型 | 建议改动 / 现状 |
 |---|------|------|----------|
-| 1 | hook 重建 | `YetAnotherHelper.Entities.SpikeJumpThruController` | loadState 里对每个该类型实体调用其私有 `Load()`（注册 `Level.LoadLevel` + `Spikes.OnCollide`）；`Awake` 里也会注册 `Spikes.OnCollide`，两者都要覆盖 |
-| 2 | hook 重建 | `CollabUtils2.Entities.CollabCrystalHeart` | loadState 里对每个该类型实体调用其私有 `hook()`（注册 `Level.RegisterAreaComplete/CompleteArea`） |
-| 3 | 静态状态 | `MaxHelpingHand.Entities.MovingFlagTouchSwitch.flagMapping`（`static Dictionary<Entity, Dictionary<string,object>>`） | `CloneModTypeFields("MaxHelpingHand", new TypeFieldsTuple("Celeste.Mod.MaxHelpingHand.Entities.MovingFlagTouchSwitch", "flagMapping"))` |
-| 4 | 模块静态状态 | `VivHelper.VivHelperModule` 的 static int 组（`type, BooState, PinkState, OrangeState, WindBoostState, CustomDashState, CustomBoostState, createdCassetteManager`） | 先用 bench 验证是否影响 SL；确认需要则 `CloneModTypeFields("VivHelper", new TypeFieldsTuple("VivHelper.VivHelperModule", ...))` |
-| 5 | 模块静态状态 | `FrostHelper.FrostModule.CustomDreamDashState`（static int） | 同上，先验证语义（可能是状态注册 ID，不是 per-run 状态） |
-| 6 | 裸 `EventInstance` | 见 §6 表（重点：`FrostHelper.ToggleSwapBlock`、`SJ2021.CustomBadelineBoost`、`SJ2021.WonkyCassetteBlockController`、`CollabUtils2.MiniHeart`、`XaphanHelper.FlagSwapBlock`） | 通用方案：save 时记录实体 `EventInstance` 字段的 event name + timeline，load 时重建并赋值（新增一个内置 SaveLoadAction，反射缓存 FieldInfo）；或对已知类型白名单处理 |
-| 7 | 静态 Camera 引用 | `VivHelper.Entities.RefillCancelSpace.camera` | 低优先；load 后把它重新指向 `Engine.Scene.Camera`（或把该字段排除并接受风险） |
+| 1 | hook 重建 | `YetAnotherHelper.Entities.SpikeJumpThruController` | **已由 Lead 落地**（`YetAnotherHelperUtils.cs`）：loadState 里 `On.Celeste.Spikes.OnCollide -= onCollideHook; += onCollideHook;` 幂等重挂（`OnCollideHook` 是 private static，用 `Delegate.CreateDelegate` 取），并按房间内是否有该类型实体校正 `SpikeHooked`。**不要**调用 `Load()`/`Unload()`（那是模块生命周期的 `Level.LoadLevel` hook）。 |
+| 2 | hook 重建 | `CollabUtils2.Entities.CollabCrystalHeart` | **已由 Lead 落地**（`CollabUtils2SavestateUtils.cs`）：loadState 先 `unhook()`（幂等，清掉 SRT 静态恢复的 `hooked=true` 与实际未挂钩的不一致）再按需 `hook()`。GM Heartside 未使用该实体（bin 里 0 命中），属通用兼容。 |
+| 3 | ~~静态状态~~ | `MaxHelpingHand.Entities.MovingFlagTouchSwitch.flagMapping` | **无需改动**：MHM 自己通过 SRT ModInterop（`[ModImportName("SpeedrunTool.SaveLoad")]` + `RegisterSaveLoadAction`）保存/恢复 `flagMapping` 与 `BlackholeCustomColors.colorsMildOverride`（`MaxHelpingHand.Module.SpeedrunToolInterop.Initialize`，save lambda `<>c::<Initialize>b__2_0`）。**不要**再 `CloneModTypeFields`（会重复保存）。 |
+| 4 | ~~模块静态状态~~ | `VivHelper.VivHelperModule` 的 static int 组 | **不要克隆**：Cecil 读写点显示 `BooState/PinkState/OrangeState/WindBoostState/CustomDashState/CustomBoostState` 只在 `Player_ctor` 里注册（Player 状态机 state ID），`type` 只在 `Load` 里 setup；克隆=同值、无收益。`createdCassetteManager`（per-level 派生 bool）先不动，bench 发现问题再说。 |
+| 5 | ~~模块静态状态~~ | `FrostHelper.FrostModule.CustomDreamDashState` | **不要克隆**：只写于 `.cctor` / `PlayerOnOnRegisterStates`（Player 状态注册），读于 `CustomDreamBlock` 的 4 个 hook 里与 `player.StateMachine.State` 比较 → 注册 ID，不是 per-run 状态。 |
+| 6 | 裸 `EventInstance` | 见 §6 表 | **结论：不做通用重建**（见 §6 末尾的风险/收益分析）；只作为已知风险记录；若 bench 定位到具体音频 bug，再对白名单类型（`FrostHelper.ToggleSwapBlock`、`SJ2021.WonkyCassetteBlockController`）做定向处理。 |
+| 7 | 静态 Camera 引用 | `VivHelper.Entities.RefillCancelSpace.camera` | 低优先；load 后把它重新指向 `Engine.Scene.Camera`（或接受风险）。 |
 
 ---
 
@@ -169,13 +171,19 @@ SRT 只对 `SoundSource.instance` 和 `CassetteBlockManager.sfx/snapshot` 做 ma
 
 **Heartside 前几屏（bin 序 600–1200）里的其它“读档需要验证”的类型**：`MaxHelpingHand/MovingFlagTouchSwitch`（640，静态 flagMapping，已由 MHM 自接 SRT）、`YetAnotherHelper/SpikeJumpThruController`（769，hook 需重建）、`VivHelper/RefillCancelSpace`（977，静态 Camera 引用）、`CommunalHelper/DreamMoveBlock`（1159，`Coroutine controller`）。
 
-**建议方案（二选一）**：
-1. **通用（推荐，一次性解决所有 mod）**：新增内置 SaveLoadAction：
-   - save：遍历 `level.Entities`（含 `Tracker.Components`），对每个实体类型缓存 `FieldInfo[]`（`field.FieldType == typeof(EventInstance)`），把 `(entityType, fieldName, Audio.GetEventName(instance), instance.getTimelinePosition())` 存进槽（`Audio.GetEventName` 对无效路径返回 null，跳过）；
-   - load：对新 level 的同类型实体，按字段名重建 `Audio.CreateInstance(path)`，复制存下的 timeline，赋回字段（用 `FastInvoker`/IL setter，避免 boxing 开销）；
-   - 风险：FMOD 实例数量增加（按实体字段数，通常每房间个位数）；需要在 `clearState` 时 `Audio.ReleaseSnapshot`/`instance.release()` 释放，避免 native 泄漏。
-2. **白名单**：只对已知的 5–6 个类型做 `SaveLoadAction`（例如在本文件表格里勾选），实现简单但要持续维护。
-3. **Coroutine 字段**（`DreamMoveBlock.controller`、`MiniHeart.smashRoutine` 等）：SRT 会克隆 `Coroutine` 对象本身（其 enumerator 状态机也是克隆图的一部分）。风险是“读档后 coroutine 是否会被重复启动/重复 Update”。建议 bench 验证：存档 → 触发相关 cutscene/机制 → 读档 → 再触发，观察是否重复播放。若出问题，可考虑把 `Coroutine` 归一化为“读档后清空并在 Added 时重启动”（需要 mod 支持）。
+**结论（C 项决定）：不做通用 `EventInstance` 重建；只作为已知风险记录。**
+
+理由（风险 > 收益）：
+1. **旧句柄的 release 生命周期不可控**：模组实体在 `Removed()` 里可能 `stop/release` 自己的 EventInstance；SRT 读档时旧实体已被 `UnloadLevel` 移除，句柄可能已失效。通用重建需要在 **save 时**就把 `Audio.GetEventName(instance)` + `getTimelinePosition()` + 参数 + 音量/3D 属性都记下来（`GetEventName` 对已失效/空路径返回 null，信息会丢），否则重建出来的实例可能与原状态不一致（静音、循环点错、参数丢失）。
+2. **与现有 manual-clone 路径冲突/重复**：`SoundSource.instance` 与 `CassetteBlockManager.sfx/snapshot` 已经由 `DeepClonerUtils.PreCloneProcessor` + `EventInstanceUtils.Clone` 处理；再做一个“全字段通用重建”会对同一对象产生两套实例（或时序竞争：克隆期 vs loadState 期）。
+3. **新建实例必须由 SRT 负责释放**：每个槽每次 load 都会新建实例；若 `clearState` 路径漏释放（多槽切换、失败回滚），就是 FMOD native 泄漏（比托管内存更危险，无法被 GC 回收）。
+4. **收益面很窄**：GM Heartside 前几屏只有 2 个类型（`FrostHelper.ToggleSwapBlock`、`SJ2021.WonkyCassetteBlockController`）命中；即使做白名单也只需 2 个 `SaveLoadAction`，而通用机制的维护/回归成本高得多。
+5. **验证成本**：音频问题在 bench 里很难自动判定（听感/循环点/FMOD 日志），回归风险高。
+
+**如果 bench-env 定位到具体音频 bug**：再按白名单定向做（不改通用路径）：
+- `FrostHelper.ToggleSwapBlock.moveSfx/returnSfx`、`SJ2021.WonkyCassetteBlockController.sfx/snapshot`；
+- 做法：save 时记录 `(eventName, timeline, 参数快照)`，load 时 `Audio.CreateInstance` 重建并赋回字段；**只在该字段当前句柄 invalid 时重建**；把新实例记入槽的“待释放”列表，`clearState` 统一 `Audio.ReleaseSnapshot`。
+- `Coroutine` 字段（`DreamMoveBlock.controller` 等）单独验证“读档后是否重复启动”，不在此机制内。
 
 ---
 
@@ -236,19 +244,19 @@ if (ModUtils.GetType("CollabUtils2", "Celeste.Mod.CollabUtils2.Entities.CollabCr
 }
 ```
 
-### 7.3 静态状态补充（`ThirdParty.EasyMods` 风格，建议插在 `ComplexModsSupport` 之前）
-```csharp
-CloneModTypeFields("MaxHelpingHand",
-    new TypeFieldsTuple("Celeste.Mod.MaxHelpingHand.Entities.MovingFlagTouchSwitch", "flagMapping"));
-CloneModTypeFields("VivHelper",
-    new TypeFieldsTuple("VivHelper.VivHelperModule",
-        "type", "BooState", "PinkState", "OrangeState", "WindBoostState", "CustomDashState", "CustomBoostState", "createdCassetteManager"));
-CloneModTypeFields("FrostHelper",
-    new TypeFieldsTuple("FrostHelper.FrostModule", "CustomDreamDashState"));
-```
-> 注意：`CloneModTypeFields` 内部用 `SaveStaticMemberValues` → `DeepCloneShared`，对 `flagMapping` 这种 `Dictionary<Entity, ...>` 会走 shared state：save 时 key 会映射到 `savedLevel` 的克隆实体，load 时再映射到 preclone 实体，语义正确（前提是该静态字段在 `OnSaveState` 期间读取，见 `SaveLoadAction.cs:107-118` 的调用时机）。对 `VivHelperModule`/`FrostModule` 的 int 字段无副作用。**加之前先用 bench 确认这些字段确实是 per-run 状态**（尤其 `CustomDreamDashState`）。
+### 7.3 静态状态补充 —— 经复核后**无需新增**
+- `MaxHelpingHand.Entities.MovingFlagTouchSwitch.flagMapping`：**MHM 已通过 SRT ModInterop 自行保存/恢复**（见 §7.4），不要再 `CloneModTypeFields`（会重复保存同一份状态）。
+- `VivHelper.VivHelperModule` / `FrostHelper.FrostModule` 的 static int 组：Cecil 读写点证明它们是 **Player 状态注册 ID**（只在 `Player_ctor` / `PlayerOnOnRegisterStates` 写，读用于与 `StateMachine.State` 比较），克隆没有收益 → 不处理。
+- `VivHelper.VivHelperModule.createdCassetteManager`（bool，per-level 派生标志）：先 bench 验证；目前不改。
 
-### 7.4 若要“通用 hook 重建”而不是逐个 mod 写
+### 7.4 各 mod 自己的 SRT 接入（避免重复劳动）
+以下 mod 已实现 `[ModImportName("SpeedrunTool.SaveLoad")]` 并主动注册 SRT 回调：
+- **MaxHelpingHand**：`Module.SpeedrunToolInterop` → `RegisterSaveLoadAction`（保存 `MovingFlagTouchSwitch.flagMapping` + `BlackholeCustomColors.colorsMildOverride`，load 时 `stsfld` 回静态字段）+ `RegisterStaticTypes(typeof(StylegroundFadeController), StylegroundFadeController.StaticFieldsToClone)`。
+- **FrostHelper**：`ModIntegration.SpeedrunToolIntegration.AddReturnSameObjectProcessor`（`LoadContent` 里注册：`ISavestatePersisted` 类型共享不克隆，实现类型见 §5）；`AddCustomDeepCloneProcessor` 字段存在但程序集内没有读取点。
+- **CommunalHelper / FemtoHelper / EeveeHelper**：`RegisterStaticTypes`（各自 dll 里含 `SpeedrunTool.SaveLoad` import）。
+- 相关风险（与 audit D14 同源）：SRT 的 `returnSameObjectTypes/Predicates` 结果缓存在 `DeepClonerSafeTypes.KnownTypes`；若 mod 在 cloner 已生成后才注册 predicate，旧实现会不生效。**本分支已修**：`SaveLoadInterop.AddReturnSameObjectType/Processor` 里调用 `DeepCloner.ClearCaches()`（清 `TypeCache/DeepTo/ShallowTo/StructAsObject + KnownTypes`）。注意 `RemoveReturnSameObjectType/Processor` 目前**没有**清缓存 → 运行期移除注册不会生效（低危，建议补上或文档说明）。
+
+### 7.5 若要“通用 hook 重建”而不是逐个 mod 写
 可行性评估：hook 注册方法都是“幂等 + 只依赖静态表”，可以在 load 后对 `level.Entities` 里每个实体类型检查：
 - 类型上有 static bool 字段名匹配 `*hooksLoaded*`/`*loaded*`（区分大小写不敏感）且为 true；
 - 类型上有方法（`Load`/`LoadIfNeeded`/`LoadHooksIfNeeded`/`Hook`）在 IL 里含 `On.*`/`IL.*` 的 `add_`；

@@ -26,6 +26,11 @@ internal static class OnAssetReload {
     }
 
     private static void AfterReload(bool silent) {
+        // Hot reload unloaded the previous mod assemblies; drop the per-type caches that would
+        // otherwise keep their Types (and generated cloners) alive forever.
+        Force.DeepCloner.DeepCloner.ClearCaches();
+        DeepClonerUtils.ClearProcFlagsCache();
+
         if (ModSettings.ClearStateOnHotReload) {
             SaveSlotsManager.AfterAssetReload();
         }

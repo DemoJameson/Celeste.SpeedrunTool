@@ -122,6 +122,16 @@ public static class DeepClonerUtils {
     [ThreadStatic] private static Type lastProcFlagsType;
     [ThreadStatic] private static ProcFlags lastProcFlags;
 
+    /// <summary>
+    /// Drops the memoized per-type decisions. Called after a mod hot reload, because the cache
+    /// keys (and the flags) belong to the unloaded mod assemblies and would otherwise pin them.
+    /// </summary>
+    internal static void ClearProcFlagsCache() {
+        procFlagsCache.Clear();
+        lastProcFlagsType = null;
+        lastProcFlags = ProcFlags.None;
+    }
+
     private static ProcFlags GetProcFlags(Type type) {
         // Objects are usually cloned in runs of the same type (arrays/lists), so this
         // thread-local hit avoids the concurrent dictionary in the common case.

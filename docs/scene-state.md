@@ -1,6 +1,8 @@
 # 跨场景（跨章节 / 章节选择界面）Savestate：现状、根因、设计与验证
 
-状态: **已实现**（分支 `feat/scene-persistent-state`，基于 `6fa430a`）。
+状态: **已实现并部分验证**（分支 `feat/scene-persistent-state`，代码 commit `af3e8bd`，基于 `6fa430a`）。
+自动化子集已由 bench 验证：**B1 同章节 / B2 A→B / B4 不同存档文件（只读）/ B6 切场景立刻读档 PASS，0 abort**；
+B3 Overworld→A、B5 CollabUtils2 helper、B7 加载失败回滚仍需手动验证（清单见 §8.2）。
 范围: 只改 SpeedrunTool；不改游戏本体、不部署、不启动游戏。
 相关文档: `docs/audit.md`（D8：SaveData 整体替换、C3：Scene.Begin re-preclone）、`docs/review.md`、
 `docs/sj-compat.md`。
@@ -16,6 +18,10 @@
    游戏保持可玩；**savestate 保留**，可重试。
 4. TAS 模式**不允许**跨章节读档（`LoadStateTas` 的同步契约无法保证）：直接拒绝，state 保留。
 5. 旧设置文件保留用户已存的 `true`（不做迁移）；新默认只影响新用户/未写过设置文件的用户。
+   **bench 实测确认**：bench 环境的 `Saves/Settings/SpeedrunTool.celeste` 里该值仍是旧的 `true`，因此切章节
+   仍会清档；harness 覆盖为 `false` 后 B1/B2/B4/B6 全部正常。**升级用户想用"跨场景保留"需在
+   State 设置里手动关闭该项**（或重置/删除该设置条目，让它使用新默认）；如果不关，行为与旧版一致（推荐的
+   保守回退方式）。
 
 ---
 
@@ -81,7 +87,7 @@
 | 章节 A 存 → 切到章节 B 读 | 混合态 / 资源错误 / crash | 直读把 A 模板克隆进 B 的 Level；B 的 map data、tileset、audio 都在，A 的没有 |
 | Overworld 读 | 直接拒绝（"Scene is not Level!"） | `LoadStateImpl` / `CannotSaveLoad` 的场景检查 |
 | 不同原版存档文件 | 直接拒绝或 SaveData 混乱 | 场景检查 + `SaveData.Instance` 只在 UnloadLevel 后替换，没有 `StartSession` 对齐 |
-| CollabUtils2 in-game overworld helper 打开 | 状态能跨章节保留（旧默认 true 下唯一入口），但读档必坏 | 同"章节 A→B"，helper 打开只是让 `HandleSwitchScene` 不清档 |
+| CollabUtils2 in-game overworld helper | legacy 下打开 helper 时会被误清档，跨章节读档必坏 | helper 是**包在 Level 里的 wrapped `Overworld`**（`SceneWrappingEntity`），打开时 `WrappedScene.Begin()` 会触发 `On.Monocle.Scene.Begin(Overworld)` → 旧 `HandleSwitchScene` 误判为"进入 Overworld"而清档（`IsOpen` 特判就是为此）；真正切章节仍会走目标章节的 `Level.Begin`（area 不同） |
 | 切场景后立刻读档 | 取决于落在哪个 scene；非 Level 时拒绝 | 同上场景检查；没有"等目标 Level 就绪"的机制 |
 | 读档中途失败 | 可能停在 Loading / 半毁 Level | 没有 pending 状态可回滚/超时兜底 |
 
@@ -233,26 +239,116 @@
 
 ---
 
-## 8. 游戏内验证（bench 计划）
+## 8. 游戏内验证（bench）
 
 > 由 bench 在唯一游戏实例上执行；需先把本分支构建的 SpeedrunTool.dll 部署到游戏 Mods（Lead 协调）。
-> 建议开启 `log.txt` 并记录 `SpeedrunTool/PendingLoad` 日志行。
+> 建议开启 `log.txt`，过滤 `SpeedrunTool/PendingLoad` 与 `SpeedrunTool/LoadState`。
+> 构建是 Release（无 profiling 代码）；需要分阶段耗时/内存时另建 `-p:SrtProfiling=true` + `srt-profile.flag`。
 
-| # | 场景 | 步骤 | 预期 | 成本（估） |
+### 8.1 自动化子集结果（bench，2026-11-10，代码 `af3e8bd`）
+
+- 环境：`scenefix` 构建的 SpeedrunTool.dll，harness 把 `AutoClearStateOnSceneSwitch` 覆盖为 `false`
+  （用户设置文件里仍是旧值 `true`，见 §1.5）。
+- 结果：
+
+| # | 场景 | 结果 | 数据/备注 |
+| --- | --- | --- | --- |
+| B1 | 同章节回归 | **PASS** | 与改动前一致（直读路径，无 pending 日志） |
+| B2 | 章节 A→B | **PASS** | `PendingLoad: ... is ready after **1452 ms**` |
+| B3 | Overworld→A | 未自动化 | 手动清单见 §8.2 |
+| B4 | 不同原版存档文件（只读） | **PASS** | `is ready after **1505 ms**`；只读验证，未触发游戏内保存 |
+| B5 | CollabUtils2 helper | 未自动化 | 手动清单见 §8.2 |
+| B6 | 切场景后立刻读档 | **PASS** | happy path：`is ready after **1495 ms**`；说明 `OnEndOfFrame` 延迟进入赢过了原 scene 的 `Engine.Scene` 赋值 |
+| B7 | 加载失败回滚 | 未自动化 | 手动清单见 §8.2 |
+| B8 | 性能/内存 | 部分 | 另一轮 `is ready after **1476 ms**`；整条 save→restored wall ≈ **3.5 s**（含 harness 的 1 s 观察 pause，实际 ≈2.5 s）；峰值内存未采，需要时用 SRT_PROFILE 或外部采样 |
+
+- 解读：章节进入（`Entering` → `is ready`）稳定在 **约 1.45–1.51 s**，与设计预期"≈一次章节加载"一致；
+  剩余 ≈1.0 s 是常规 restore（`UnloadLevel` + clone-back + actions + wipe）。同章节读档（B1）没有额外成本。
+- **0 abort**：自动化只走了 happy path，watchdog/rollback 的失败分类没有被自动化覆盖；失败路径由
+  §8.2 的 B7 手动验证 + `tests/SceneStateTests` 的真值表覆盖。
+- 未发现与设计预期不符的数字或行为，**无需追加修复 commit**。
+
+### 8.2 B3 / B5 / B7 手动验证清单
+
+前置：
+- 先把 State 设置里的 **Auto Clear State on Chapter Transition (Legacy)** 关掉（否则 B3/B5 的跨章节状态会被清）；
+  若测试 legacy 行为（B5)则按该项单独说明。
+- 只读验证：不要触发游戏内保存/退出保存（尤其 B4/B7 之后），避免把 Savestate 的 `FileSlot` 写回原版存档。
+- 日志过滤：`grep -E "SpeedrunTool/(PendingLoad|LoadState)" log.txt`。
+
+#### B3 Overworld → 章节 A（约 3–5 min）
+1. 进入章节 A 的某个房间 → F7 存到 slot 1（日志 `SpeedrunTool/SaveState: Save to [Default Slot]`）。
+2. 通过暂停菜单"回到章节选择/退出章节"回到 Overworld（看到章节选择界面即可，不必回标题）。
+3. 在 Overworld 直接按 **F8**（读档热键已在 Overworld 放宽）。
+4. 预期日志顺序：
+   - `SpeedrunTool/PendingLoad: Entering '<A 的 SID> [<room>]' to load the state from [Default Slot]`
+   - `SpeedrunTool/PendingLoad: '<A 的 SID> [<room>]' is ready after N ms, restoring the state from [Default Slot]`
+   - 无 `Pending load watchdog` / `Aborting the pending load`。
+5. 预期表现：自动进入 A 的存档房间并恢复；贴图/tileset/背景/音乐/cassette/实体正确；存档位置/朝向/时间与 F7 时一致。
+6. （可选 ModInterop 变体）在 Overworld 调 `SpeedrunTool.SaveLoad.LoadState()`，预期同上。
+
+#### B5 CollabUtils2 in-game overworld helper（约 5–7 min）
+
+背景（已按 CollabUtils2 反编译确认）：helper 是包在 **当前 Level** 里的 `SceneWrappingEntity<Overworld>`
+（`Engine.Scene` 仍是 Level）。打开 helper 时 `WrappedScene.Begin()` 会触发一次
+`On.Monocle.Scene.Begin(Overworld)`；`HandleSwitchScene` 里 `InGameOverworldHelperIsOpen` 特判的作用就是
+**避免 legacy 模式仅仅因为打开 helper 就误清档**。真正切换章节仍然会进目标章节的 `Level.Begin`
+（area 不同 → legacy 语义下会清档）。
+
+**B5a legacy 模式：打开 helper 不应误清档（约 3 min）**
+1. 开启 `Auto Clear State on Chapter Transition (Legacy) = On`。
+2. 进入章节 A → F7 存 slot 1（helper 打开时 SRT 会拒绝保存，所以必须先存）。
+3. 在 LEVEL 内打开 CJ2 in-game overworld helper（**不要在里面选章节**）。
+4. 预期：log 中没有因打开 helper 产生的 `SpeedrunTool/ClearState: Clear [Default Slot]`；
+   `IsSaved` 仍为 true（关闭 helper 后按 F8 能读，而不是 "Not saved state yet"）。
+5. 关闭 helper → 按 F8：同一章节走**直读**（没有 `PendingLoad` 日志，popup `Load from [Default Slot]`），
+   恢复正确、helper 消失、无 crash。
+6. 可选（新覆盖）：**保持 helper 打开**直接按 F8 → 也应恢复 A 并关闭 helper；若 crash/卡住请回传 log。
+
+**B5b legacy 反例：helper 里真正切章节会清档（预期，约 2 min）**
+1. 仍为 legacy=On，A 存 slot 1。
+2. 打开 helper，在其中选另一个章节 B 并进入。
+3. 预期：进入 B 的 `Level.Begin` 时清档（`SpeedrunTool/ClearState`），之后 F8 显示 "Not saved state yet"。
+   这是 legacy 语义，不是 bug。
+
+**B5c 新语义（默认 AutoClear=false，可选但推荐，约 2–3 min）**
+1. 把 `Auto Clear State on Chapter Transition (Legacy)` 关掉。
+2. A 存 slot 1 → 打开 helper → 在 helper 里进入章节 B。
+3. 在 B 里按 F8：预期 pending 自动回 A 并恢复（日志 `Entering 'A'` → `is ready after N ms`，无 abort）。
+
+#### B7 加载失败回滚（约 5–8 min，两段）
+B7a 目标章节不可用（安全、无需改文件，**在共享 bench 实例上也做**）：
+1. 在章节 A（来自某个可单独禁用的 mod，或任意 mod 图）F7 存 slot 1。
+2. 退出游戏；在 Mods 里把提供该地图的 mod 移走/改名（或用 Everest 的 mod 选择禁用）。
+3. 启动游戏进入任意章节（不必是 A）→ F8。
+4. 预期（不进入过渡，被前置校验拒绝）：
+   - popup：`Cannot Load: the chapter of the savestate is not loaded by any mod!`（或 SID/mode 变化的对应文案）；
+   - 日志：`SpeedrunTool/PendingLoad: Cannot Load: ...`；
+   - 游戏保持可玩、**savestate 仍保留**（再按 F8 仍是同样拒绝，而不是 "Not saved state yet"）。
+5. 把 mod 放回/启用后重进游戏，再按 F8 → 应成功（B2 流程）。
+
+B7b 进入过渡后失败（**只在 disposable 游戏副本上做**，会改地图文件）：
+1. 在副本里保留 mod 注册但让目标章节加载失败（例如改名/替换该 mod 的 map bin）。
+2. 存有 A 的 savestate → 从别的章节 F8。
+3. 预期（watchdog 回滚路径）：
+   - 日志：`Pending load watchdog: LevelEnterError (the game failed to load the saved chapter)` 和/或
+     `ReturnedToChapterSelect`、随后 `Aborting the pending load from [<slot>]: <reason>`；
+   - 回滚后 `SaveData.Instance`/模块 `_Session/_SaveData` 恢复成读档前的引用；游戏回到章节选择/可玩，不 crash/不软锁；
+   - savestate 保留：恢复地图文件后重进，F8 应成功（B2 流程）。
+4. 失败判定：卡在 loading/黑屏不返回、crash、或 savestate 丢失、或游戏进入目标章节但半恢复（贴图/实体异常）→ 回传 log.txt 定位。
+
+### 8.3 完整矩阵（参考，含已自动化项）
+
+| # | 场景 | 步骤 | 预期 | 状态 |
 | --- | --- | --- | --- | --- |
-| B1 | 同章节回归 | A 图存 F7 → 走到别的房间 / 死亡 / PageUp → F8 | 与改动前一致：回到存档房间，贴图/音频正常，无 crash | 3–5 min |
-| B2 | 章节 A→B | A 图存 → 回章节选择进 B 图 → F8 | 自动进 A 并恢复；`pending` 日志有 "Entering 'A'" 与 "is ready, restoring"；贴图/背景/音乐/实体正常 | 5–8 min（含一次章节加载） |
-| B3 | Overworld→A | A 图存 → 回章节选择（默认 AutoClear=false）→ 在 Overworld 按 F8 | 同上；若用 ModInterop 则调用 `SpeedrunTool.SaveLoad.LoadState()` | 5–8 min |
-| B4 | 不同原版存档文件 | 文件 1 的 A 图存 → 退到标题 → 进文件 2 的 B 图 → F8 | 进入 A（文件 1 的 SaveData/时间/死亡数）；不 crash；再退出到标题不损坏文件 2 的存档（注意只检查项，不做存档写入） | 6–10 min |
-| B5 | CollabUtils2 helper | 开启 legacy `AutoClear=True` → 打开 CJ2 in-game overworld helper 跨章节 → F8 | helper 打开时状态仍保留，F8 自动进存档章节并恢复；关闭 helper 后正常 | 5–8 min |
-| B6 | 切场景立刻读档 | A→B 刚进 B（Level.Begin 后立即）按 F8；以及 Overworld 加载过程中用 ModInterop 调 `LoadState()` | 前者 pending 进 A 成功；后者若被其它 scene 覆盖则 popup 拒绝 + 保持可玩 + state 保留（看门狗 abort），重试成功 | 5–8 min |
-| B7 | 加载失败回滚 | 临时禁用存档章节的 mod（或换一张已删除的 mod 图存档）再 F8 | popup "Cannot Load: ... not loaded by any mod" 或看门狗 abort；游戏回到章节选择/可玩，state 仍保留；log 有原因 | 3–5 min |
-| B8 | 跨章节读档的性能/内存 | B2 全流程计时与 GC/内存日志 | 记录"章节加载 + 恢复"总耗时、峰值内存；与同章节读档对比，作为文档数据 | 3–5 min |
-
-合计约 35–55 分钟（含地图加载）。B2–B6 需要目标章节资源真实存在；建议用 SJ 图（Grandmaster
-Heartside）+ CollabUtils2 场景各跑一次。
-
----
+| B1 | 同章节回归 | A 图存 F7 → 换房间/死亡/PageUp → F8 | 与改动前一致，无 pending 日志 | PASS（自动化） |
+| B2 | 章节 A→B | A 存 → B 图 → F8 | 自动进 A 恢复；`Entering`→`is ready` | PASS（1452 ms） |
+| B3 | Overworld→A | A 存 → 回章节选择 → F8 | 同上 | 手动（§8.2） |
+| B4 | 不同原版存档文件 | 文件 1 存 A → 文件 2 的 B → F8 | 进 A 用文件 1 SaveData；只读 | PASS（1505 ms，只读） |
+| B5 | CJ2 helper | legacy On：打开 helper 不误清档，关闭后 F8 直读；默认 false：helper 进 B 后 F8 回 A | 见 §8.2 的 B5a/B5b/B5c | 手动（§8.2） |
+| B6 | 切场景立即读档 | A→B 刚进 B 后立即 F8 | pending 进 A | PASS（1495 ms） |
+| B7 | 加载失败回滚 | 禁用目标 mod / 破坏目标 map → F8 | 合法拒绝或 watchdog abort；可玩、state 保留 | 手动（§8.2） |
+| B8 | 性能/内存 | B2 全流程计时/采样 | 章节加载 + 恢复耗时/峰值内存 | 部分：1476 ms entry，wall≈2.5 s(+1 s pause)，内存未采 |
 
 ## 9. 已知未做 / 后续
 
@@ -261,3 +357,8 @@ Heartside）+ CollabUtils2 场景各跑一次。
 - 跨存档文件读档的时间/死亡数合并策略：当前跨文件跳过合并（保留模板值）。
 - 若 bench 发现某些 mod 在目标章节加载期需要更完整的 session 语义，可扩展 early restore 到更多
   action（目前只恢复 `_Session/_SaveData`）。
+- **验证状态**：自动化 bench 覆盖 B1/B2/B4/B6（PASS，0 abort）；B3/B5/B7 待手动执行 §8.2；
+  B8 只采到耗时（entry ≈1.45–1.51 s，wall ≈2.5 s + 1 s 观察 pause），峰值内存未采（可另建
+  `-p:SrtProfiling=true` 构建用 `SRT_PROFILE` 行或外部采样）。目前没有发现需要追加修复 commit 的问题。
+- 旧设置文件里的 `AutoClearStateOnSceneSwitch=true` 会让升级用户默认仍是旧行为（bench 实测）；
+  README/本节已说明手动关闭方式，未做自动迁移（避免静默改变老用户行为）。

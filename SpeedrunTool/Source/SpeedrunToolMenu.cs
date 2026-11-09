@@ -1,4 +1,4 @@
-using Celeste.Mod.SpeedrunTool.DeathStatistics;
+﻿using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.RoomTimer;

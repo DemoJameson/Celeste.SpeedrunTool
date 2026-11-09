@@ -24,7 +24,11 @@
         <PlatformTarget>x86</PlatformTarget>
         <OutputPath>bin\$(Configuration)\</OutputPath>
         <DebugType>portable</DebugType>
-        <MSBuildWarningsAsMessages>$(MSBuildWarningsAsMessages);MSB3270</MSBuildWarningsAsMessages>
+        <!-- MSB3277: MonoMod/MMHOOK reference the same assembly with different versions, expected here. -->
+        <MSBuildWarningsAsMessages>$(MSBuildWarningsAsMessages);MSB3270;MSB3277</MSBuildWarningsAsMessages>
+        <!-- CS0436: Publicizer generates IgnoresAccessChecksToAttribute, MonoMod.Utils has a copy.
+             CS0649: ModInterop import fields are assigned by the ModInterop generator at runtime. -->
+        <NoWarn>$(NoWarn);CS0436;CS0649</NoWarn>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
     

@@ -1,4 +1,4 @@
-# Celeste 速通辅助工具
+﻿# Celeste 速通辅助工具
 
 ## 下载
 [GameBanana](https://gamebanana.com/tools/6597)

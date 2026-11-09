@@ -271,3 +271,36 @@ if (graphicsDevice.GetRenderTargets().Length > 0 || wipeActive) {
 | #13 `NoWarn CS0649` 作用域 | ⏳ 低优 | 仍为全局 |
 | #14 `PreCloneMode.Auto` 判定 | ⏳ 低优 | **`docs/optimization-report.md` §4 写作“按物理内存选择”，实现是 `GC.GetGCMemoryInfo().TotalAvailableMemoryBytes`**（≈GC 可用内存），措辞需统一 |
 | #15 GC 行为（review 之外的新改动） | ✅ 已优化 | `40bc769`：仅当碎片 >64MB 或 >5% 才请求 LOH compact；仍 `GC.Collect(2, Forced, blocking:true)`，若 mod 处于 `NoGCRegion` 会抛 `InvalidOperationException`（pre-existing，低概率） |
+
+---
+
+## 7. 对 `9d4f3cb`（修复提交）的追加 review 发现
+
+> 修复本身与 §5 的 patch 等价或更保守；以下只列“修复提交新引入/遗留”的点。
+
+| # | 严重度 | 位置 | 问题 | 建议 |
+|---|---|---|---|---|
+| 7.1 | 🟠 | `StateManager.cs:475-497`（`PreCloneEnabled` setter / `WaitForPreCloneTask`） | `Task.Wait()` **无超时**：preclone 任务本身不等主线程，但 mod 的 `SaveLoadInterop.AddCustomDeepCloneProcessor` 在后台线程里可能等主线程资源/本身很慢 → 从菜单切 PreCloneMode 或 `RecoverFromFailedLoad` 时主线程会**无限期卡住**；此外 setter **遍历所有槽**串行等待，多个槽各有刚启动的 preclone 时会等“所有克隆时间之和”（菜单明显卡顿） | 两个 Wait 点都用有界等待（如 `task.Wait(TimeSpan.FromSeconds(2))`，超时记 Warn 后置 null）；setter 只等当前槽，其它槽用“延迟释放”标记在下一次 Save/Load/Clear 入口处理；XML doc 注明“仅主线程” |
+| 7.2 | 🟡 | `SaveLoadAction.cs:275-298` | `OnClearState(clearBeforeSave:true)` 的 `slotInitialized = true` 语义正确（表示“字典结构已按当前布局建好”），但 `AllSavedValues ??= InitValueDictionary()` 的**重建路径**没有同步 `SaveSlotsManager.Slot.AllSavedValuesVersion = ActionsVersion` → 之后 `AreValueDictionariesComplete()` 可能因版本陈旧拒绝读档（触发条件苛刻，但修法零成本） | 在 `slotInitialized = true;` 后补一行版本同步 |
+| 7.3 | 🟡 | `Snapshot.cs`（`RequireCaptureSnapshot`） | `captureWaitFrames` 只在捕获成功/`[Unload]` 时归零；等待 wipe 期间若再排一次快照（同槽/异槽），计数从旧值继续累加，可能提前到 180 帧上限、截到 wipe | `RequireCaptureSnapshot` 里 `captureWaitFrames = 0;` |
+| 7.4 | 🟢 | `RecoverFromFailedLoad` | `preCloneTask?.Wait()` 在 `State=None` 之后、调度 reload 之前 ✓（无 TOCTOU）；若采纳超时方案，超时后仍需 `preCloneTask=null`，否则下次 `LoadStateImpl` 的 `.Result` 会阻塞 | — |
+| 7.5 | 🟢 | `SaveLoadProfiler` | `InitSlots()` 提前后，`beforeSave` 段现在包含“clear 旧状态 + OnBeforeSaveState”，解读 `SRT_PROFILE` 时需注意 | 可在 clear 前后各加 Mark |
+| 7.6 | 🟢 | `DeepClonerUtils.cs` ProcFlags 4 槽 / `GcCollect` | 4 槽 direct-mapped 正确性无问题（撞槽只影响命中率）；`ClearProcFlagsCache` 只清当前线程 ThreadStatic 数组（后台池线程各残留 ≤4 个 Type 引用，可忽略）；`GC.Collect(2, Forced, blocking:true)` 与旧 `GC.Collect()` 等价，条件 LOH compact 是净收益；`NoGCRegion` 下抛 `InvalidOperationException` 为 pre-existing 低概率风险 | — |
+
+---
+
+## 8. （原任务 ③）`BuiltinActions` 拆分后的 load/clear 执行顺序核对
+
+**结论：顺序语义与 master 完全一致，拆分/预热/`InitSlots` 提前都没有破坏依赖。**
+
+依据：
+1. `InitActions()` 的方法调用顺序与 master 一致（`InitFields → SupportSimpleStaticFields → SupportModModuleFields → … → SupportAudioMusic → FixVertexLight → MuteAudioUtils → ExternalAction → SupportModSessionAndSaveData → ThirdParty.Support()`），且 `SaveLoadAction.BuiltinActions.cs` 中这些方法体的逐字节等价性已用脚本验证（§1.14）。
+2. `InitSlots()` 用 `OrderBy(executeOrder)`（稳定排序）：内置 action 都是 `Order_InternalCoreAction`；外部 mod 的 `SafeAdd` 是 `Order_ExternalAction(10000)`；`GraphicResourcesHandler.AddSaveLoadAction()` 与 `ReleaseEventInstances()` 在 `contextOrder = Order_ExecuteAtLast(1000000)` 下注册 → 仍是最后两个。**注册顺序 = load 执行顺序**，与 master 相同。
+3. 关键依赖满足：
+   - `SupportSimpleStaticFields`（order 0、最先注册）→ 恢复 static 字段（`SpikeHooked`/`hooked`/`_hooksLoaded` 等）**先于** `ThirdParty.Support()` 里注册的 hook 重建 loadState（order 0、最后注册）✓（这正是 `YetAnotherHelperUtils`/`CollabUtils2SavestateUtils` 需要的“先恢复静态值再校正 hook”的次序）。
+   - `ExternalAction.loadState`（`IgnoreSaveLoadComponent.ReAddAll`、`EndPoint.AllReadyForTime()`）在 ThirdParty 之前执行 → 被 ignore 的实体会先回到 `Tracker`，ThirdParty 的 `GetEntitiesTrackIfNeeded` 能看见它们 ✓。
+   - `SaveLoadProfiler` 日志里 `loadActions` 段覆盖“内置 action + 外部 action + order-last action”的全部；`SupportAudioMusic` 在 `RestoreAudio_1`（收集 SoundSource 实例）之后、`RestoreAudio_2`（wipe 后 start）之前，与 master 一致 ✓。
+   - `clearState` 顺序：order 0（含 `ExternalAction.clearState` 清 shared state/DynData 缓存）→ 外部 → `GraphicResourcesHandler.clearState`（VirtualAssets.Clear）→ `ReleaseEventInstances.clearState`（释放克隆的 FMOD 实例）——与 master 相同，且“先清缓存/资源、后释放原生句柄”的顺序正确。
+   - `preCloneEntities` 顺序同上：`GraphicResourcesHandler`/`ReleaseEventInstances` 最后，仍是清空收集列表 ✓。
+4. 拆分后的新变量（`ActionsVersion`）只用于 `AreValueDictionariesComplete`/`AllSavedValuesVersion`，与执行顺序无关；`SaveStateImpl` 把 `InitSlots()` 提前只让“clear-before-save 时的 id 更新”，不改变 action 的执行顺序。
+5. 备注：`ReleaseEventInstances` 只有 `clearState`/`preCloneEntities`（没有 saveState/loadState），其 order 只影响清理阶段——与 master 相同。

@@ -290,6 +290,7 @@ public sealed partial class SaveLoadAction {
                 }
             }
             slotInitialized = true;
+            SaveSlotsManager.Slot.AllSavedValuesVersion = ActionsVersion;
         }
         else {
             AllSavedValues = null;

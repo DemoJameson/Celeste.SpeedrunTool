@@ -15,6 +15,7 @@ internal class Snapshot {
         }
         DemandingSlot = slot;
         ScheduledCaptureSnapshots = true;
+        captureWaitFrames = 0;
     }
 
     internal static void RemoveSnapshot(string slot) {

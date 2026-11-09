@@ -255,7 +255,7 @@ public static class SaveLoadInterop {
         }
 
         /// <summary>
-        /// See <see cref="StateManager.PreCloneEnabled"/>.
+        /// See <see cref="StateManager.PreCloneEnabled"/>. Main thread only.
         /// </summary>
         public static void SetPreCloneEnabled(bool enabled) {
             StateManager.PreCloneEnabled = enabled;

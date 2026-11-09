@@ -192,6 +192,7 @@ public sealed class StateManager {
                 ClearStateImpl(hasGc: false);
                 ClearBeforeSave = false;
             }
+            SaveLoadProfiler.Mark("clearOldState");
 #if DEBUG
             DebugTool.MemoryTracker.CheckFragmentation("Save Start");
             DebugTool.MemoryTracker.GcSample before = DebugTool.MemoryTracker.TakeGcSample();
@@ -403,14 +404,16 @@ public sealed class StateManager {
         freezeType = FreezeType.None;
         Engine.FreezeTimer = 0f;
         // Wait for a still-running pre-clone before dropping the reference, otherwise the old task
-        // and a new one could clone the same savedLevel concurrently.
+        // and a new one could clone the same savedLevel concurrently. Bounded, so a stuck
+        // third-party clone processor cannot freeze the game.
+        Task<DeepCloneState> task = preCloneTask;
+        preCloneTask = null;
         try {
-            preCloneTask?.Wait();
+            task?.Wait(TimeSpan.FromSeconds(2));
         }
         catch (Exception exception) {
             Logger.LogDetailed(exception, "SpeedrunTool");
         }
-        preCloneTask = null;
         DeepClonerUtils.ClearSharedDeepCloneState();
 
         if (levelWasUnloaded && Engine.Scene == level) {
@@ -475,22 +478,32 @@ public sealed class StateManager {
             preCloneEnabled = value;
             if (!value) {
                 // Dropping the pre-clone while its task is still running would keep the second
-                // object graph alive until the next save; wait for it and release the reference.
-                foreach (SaveSlot slot in SaveSlotsManager.SaveSlots) {
-                    slot.StateManager.WaitForPreCloneTask();
-                }
+                // object graph alive until the next save; wait (bounded) for it and release the
+                // reference. Only the current slot is waited for: the other slots are synchronized
+                // by their own entry points (WaitUntilThreadSafe / .Result) and waiting for all of
+                // them here could stall the settings menu for the sum of their clone times.
+                SaveSlotsManager.Slot?.StateManager.WaitForPreCloneTask();
             }
         }
     }
 
     private void WaitForPreCloneTask() {
+        Task<DeepCloneState> task = preCloneTask;
+        preCloneTask = null;
+        if (task is null) {
+            return;
+        }
+
         try {
-            preCloneTask?.Wait();
+            if (!task.Wait(TimeSpan.FromSeconds(2))) {
+                // A stuck third-party clone processor must not freeze the main thread forever.
+                // The task keeps running in the background and its result is released by GC.
+                Logger.Warn("SpeedrunTool", "Pre-clone task did not finish within 2s; dropping the reference anyway.");
+            }
         }
         catch (Exception exception) {
             Logger.LogDetailed(exception, "SpeedrunTool");
         }
-        preCloneTask = null;
     }
 
     internal void GcCollect(bool force = false) {

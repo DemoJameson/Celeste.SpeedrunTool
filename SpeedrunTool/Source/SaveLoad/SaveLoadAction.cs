@@ -384,25 +384,29 @@ public sealed partial class SaveLoadAction {
     // the first level starts loading instead: all mods are loaded by then and the player is
     // already waiting for the level.
     /// <summary>
-    /// Field types that the save actions will clone; used by <see cref="CloneWarmUp"/> to
-    /// pre-generate their cloners while the level loads.
+    /// Runs every registered <c>saveState</c> action once into throw-away dictionaries, so their
+    /// lambdas and cloner delegates get JITed while the level is loading. The produced values are
+    /// discarded; callers must set <see cref="DeepClonerUtils.WarmingUp"/> so the clone processors
+    /// (which have side effects on the live game) are skipped.
     /// </summary>
-    internal static void CollectWarmUpTypes(Action<Type> add) {
-        if (simpleStaticFields is null || modModuleFields is null) {
-            return;
-        }
-
-        foreach (KeyValuePair<Type, FieldInfo[]> pair in simpleStaticFields) {
-            add(pair.Key);
-            foreach (FieldInfo field in pair.Value) {
-                add(field.FieldType);
+    internal static void WarmUpSaveState(Level level, out int failures, out string firstFailure) {
+        failures = 0;
+        firstFailure = null;
+        foreach (SaveLoadAction saveLoadAction in SharedActions) {
+            SlAction saveState = saveLoadAction.saveState;
+            if (saveState is null) {
+                continue;
             }
-        }
 
-        foreach (KeyValuePair<Type, FieldInfo[]> pair in modModuleFields) {
-            add(pair.Key);
-            foreach (FieldInfo field in pair.Value) {
-                add(field.FieldType);
+            Dictionary<Type, Dictionary<string, object>> throwAway = [];
+            try {
+                saveState(throwAway, level);
+            }
+            catch (Exception exception) {
+                // Best effort: a few third-party actions may not be re-entrant outside a real
+                // save, it does not matter for the warm-up.
+                failures++;
+                firstFailure ??= saveState.Method.Name + ": " + exception.GetType().Name + ": " + exception.Message;
             }
         }
     }
@@ -424,8 +428,8 @@ public sealed partial class SaveLoadAction {
             Logger.LogDetailed(exception, "SpeedrunTool");
         }
 
-        // Hide the first save/load's cloner codegen behind the loading screen.
-        CloneWarmUp.Start();
+        // Hide the first save/load's JIT/codegen cost behind the loading screen.
+        CloneWarmUp.WarmUp((Level)self);
     }
 
     [Unload]

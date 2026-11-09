@@ -201,10 +201,17 @@ public static class DeepClonerUtils {
         return flags;
     }
 
+    /// <summary>
+    /// True while the throw-away warm-up clone runs (see <see cref="Utils.CloneWarmUp"/>).
+    /// The processors below have side effects on the live game (virtual assets, audio, DynData,
+    /// ...), so they are skipped for the disposable warm-up graph.
+    /// </summary>
+    internal static bool WarmingUp;
+
     // Clone 对象的字段前，判断哪些类型是直接使用原对象或者自行通过其它方法 clone
     // Before cloning object's field, determine which types are directly used by the original object
     private static object PreCloneProcessor(object sourceObj, DeepCloneState deepCloneState) {
-        if (sourceObj == null) {
+        if (sourceObj == null || WarmingUp) {
             return null;
         }
 
@@ -352,6 +359,12 @@ public static class DeepClonerUtils {
     private static object PostCloneProcessor(object sourceObj, object clonedObj, DeepCloneState deepCloneState) {
         if (sourceObj == null) {
             return null;
+        }
+
+        if (WarmingUp) {
+            // The return value replaces the clone: null would null out every cloned object in the
+            // throw-away warm-up graph and make it blow up with a NullReferenceException.
+            return clonedObj;
         }
 
         Type type = clonedObj.GetType();

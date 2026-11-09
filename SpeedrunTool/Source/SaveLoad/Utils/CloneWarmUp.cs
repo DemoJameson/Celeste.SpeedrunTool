@@ -2,182 +2,107 @@
 
 using Celeste.Mod.SpeedrunTool.Utils;
 using Force.DeepCloner;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
 
 /// <summary>
-/// Warms up the DeepCloner type caches while a level is loading.
+/// Hides the one-time cost of the first save/load of a session behind the level loading screen.
 ///
-/// The first save of a session used to pay several hundred milliseconds for
-/// <c>Expression.Compile</c> of every cloner that the level graph / static-field snapshot
-/// happens to need (measured: ~216 ms for the Level clone + ~142 ms for the save actions on
-/// the dev machine, while later saves take ~13 ms in total). Everything here is
-/// reflection-only - no live game object is read - so it is safe to run on a background
-/// thread during the level load and the cost is hidden behind the loading screen.
+/// The profiling showed that the first save of a session pays a large one-off cost that later
+/// saves do not have: on the dev machine ~216 ms for the first <c>DeepCloneTo</c> of the Level in
+/// an entry room (and ~283 ms in the 3451-entity Grandmaster Heartside second room), ~142 ms for
+/// the first execution of the save actions (and ~127 ms there) and ~62 ms for the first load
+/// actions. The reason is JIT + <c>Expression.Compile</c> of the generated cloners and of the
+/// save-state lambdas; the steady state is only ~13 ms per save in a small room.
 ///
-/// Only the codegen is warmed; the first invocation of each generated delegate still pays its
-/// (much smaller) JIT cost on the first real save.
+/// So after the action table is initialised on the first <c>Level.Begin</c>:
+/// <list type="bullet">
+/// <item>on the main thread, run a throw-away "save" of every registered action into temporary
+/// dictionaries (and clone <c>SaveData</c> once). The results are discarded, but all save-state
+/// lambdas and the cloner delegates they use are JITed and cached while the loading screen is
+/// still up. The game is frozen/loading at this point and the actions are read-only snapshots,
+/// so this is safe; the shared clone state is cleared afterwards.</item>
+/// <item>on a background thread, force the JIT of the big <c>DeepCloneTo</c> delegates (the Level
+/// and ExtendedVariantMode's TriggerManager) by running them on two uninitialised dummy objects.
+/// They only read/write the dummy objects, so this is safe off the main thread and keeps the
+/// (large) JIT cost off the load path.</item>
+/// </list>
+///
+/// Everything is best effort: any exception is swallowed, because the normal lazy path still
+/// works. Disable with the <c>SetCloneWarmUpEnabled</c> ModInterop API for A/B benchmarks.
 /// </summary>
 internal static class CloneWarmUp {
-    /// <summary>
-    /// Upper bound on how many types are warmed, to bound the retained cache memory
-    /// (each cached cloner delegate is a few KB; 6000 is far above the type count of a big
-    /// mod pack's entity/component graph but keeps the worst case bounded).
-    /// </summary>
-    private const int MaxWarmTypes = 6000;
-
     private static bool started;
 
     internal static bool Enabled { get; set; } = true;
 
-    internal static void Start() {
+    internal static void WarmUp(Level level) {
         if (!Enabled || started) {
             return;
         }
 
         started = true;
-        Task.Run(RunWarmUp);
-    }
 
-    private static void RunWarmUp() {
         Stopwatch stopwatch = Stopwatch.StartNew();
-        int warmedTypes = 0;
-        int warmedCloneToTypes = 0;
-        int discoveredTypes = 0;
-
+        DeepClonerUtils.WarmingUp = true;
         try {
-            HashSet<Type> queued = [];
-            Queue<Type> queue = new();
-            HashSet<Type> cloneToRoots = [];
-
-            Enqueue(typeof(Level), queue, queued);
-            Enqueue(typeof(SaveData), queue, queued);
-            Enqueue(typeof(Session), queue, queued);
-            cloneToRoots.Add(typeof(Level));
-            cloneToRoots.Add(typeof(SaveData));
-            cloneToRoots.Add(typeof(Session));
-
-            foreach (EverestModule module in Everest.Modules) {
-                if (module.SessionType is { } sessionType) {
-                    Enqueue(sessionType, queue, queued);
-                    cloneToRoots.Add(sessionType);
-                }
-
-                if (module.SaveDataType is { } saveDataType) {
-                    Enqueue(saveDataType, queue, queued);
-                    cloneToRoots.Add(saveDataType);
-                }
-            }
-
-            // Third-party support clones this manager with DeepCloneToShared (ExtendedVariantsUtils).
-            if (ModUtils.GetType("ExtendedVariantMode", "ExtendedVariants.Module.ExtendedVariantsModule") is { } extendedVariantsModule
-                && extendedVariantsModule.GetFieldInfo("TriggerManager") is { } triggerManagerField) {
-                Enqueue(triggerManagerField.FieldType, queue, queued);
-                cloneToRoots.Add(triggerManagerField.FieldType);
-            }
-
-            // Types referenced from the saved static fields / module fields.
-            SaveLoadAction.CollectWarmUpTypes(type => Enqueue(type, queue, queued));
-
-            // Every Entity / Component / Renderer subclass (the runtime types of a level graph
-            // cannot be derived from the declared field types alone).
-            foreach (Type type in ModUtils.GetAllTypes()) {
-                if (type is null) {
-                    continue;
-                }
-
-                if (type.IsSameOrSubclassOf(typeof(Entity))
-                    || type.IsSameOrSubclassOf(typeof(Component))
-                    || type.IsSameOrSubclassOf(typeof(Renderer))) {
-                    Enqueue(type, queue, queued);
-                }
-            }
-
-            discoveredTypes = queued.Count;
-
-            while (queue.Count > 0) {
-                Type type = queue.Dequeue();
-                DeepCloner.WarmUpCloner(type);
-                warmedTypes++;
-
-                if (cloneToRoots.Contains(type)) {
-                    DeepCloner.WarmUpCloneToCloner(type);
-                    warmedCloneToTypes++;
-                }
-
-                foreach (Type fieldType in GetFieldTypes(type)) {
-                    Enqueue(fieldType, queue, queued);
-                }
-            }
-
-            // The clone-to roots must be warm even if they were only added as roots.
-            foreach (Type root in cloneToRoots) {
-                DeepCloner.WarmUpCloneToCloner(root);
-            }
-
-            warmedCloneToTypes = cloneToRoots.Count;
+            WarmUpSaveActions(level);
+            WarmUpCreateState(level);
         }
         catch (Exception exception) {
-            Logger.Warn("SpeedrunTool/CloneWarmUp", $"Cloner warm-up failed: {exception.GetType().Name}: {exception.Message}");
+            Logger.Warn("SpeedrunTool/CloneWarmUp", $"Warm-up failed: {exception.GetType().Name}: {exception.Message}");
+        }
+        finally {
+            DeepClonerUtils.WarmingUp = false;
+            DeepClonerUtils.ClearSharedDeepCloneState();
         }
 
         Logger.Info("SpeedrunTool/CloneWarmUp",
-            $"Warmed {warmedTypes}/{discoveredTypes} cloner(s) + {warmedCloneToTypes} clone-to root(s) in {stopwatch.ElapsedMilliseconds}ms.");
+            $"Warm-up took {stopwatch.ElapsedMilliseconds}ms (throw-away state, discarded).");
     }
 
-    private static IEnumerable<Type> GetFieldTypes(Type type) {
-        for (Type current = type; current is not null && current != typeof(object); current = current.BaseType) {
-            FieldInfo[] fields;
+    /// <summary>Runs every save-state callback once so their lambdas and cloners get JITed.</summary>
+    private static void WarmUpSaveActions(Level level) {
+        Stopwatch stopwatch = Stopwatch.StartNew();
+        string firstFailure = null;
+        int failures = 0;
+        try {
+            SaveLoadAction.WarmUpSaveState(level, out failures, out firstFailure);
+        }
+        catch (Exception exception) {
+            failures++;
+            Logger.Warn("SpeedrunTool/CloneWarmUp", $"Save-action warm-up aborted: {exception.GetType().Name}: {exception.Message}");
+        }
+
+        Logger.Info("SpeedrunTool/CloneWarmUp",
+            $"Save-action warm-up: {stopwatch.ElapsedMilliseconds}ms, {failures} callback(s) failed"
+            + (firstFailure is null ? "." : $", first: {firstFailure}"));
+    }
+
+    /// <summary>
+    /// Does one throw-away clone of the live level into a dummy template, which is what the first
+    /// save does: this JITs every cloner delegate that the real level graph actually reaches.
+    /// </summary>
+    private static void WarmUpCreateState(Level level) {
+        Stopwatch stopwatch = Stopwatch.StartNew();
+        try {
+            Level throwAway = (Level)RuntimeHelpers.GetUninitializedObject(typeof(Level));
+            level.DeepCloneToShared(throwAway);
+
             try {
-                fields = current.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                SaveData.Instance?.DeepCloneShared();
             }
             catch {
-                yield break;
-            }
-
-            foreach (FieldInfo field in fields) {
-                yield return field.FieldType;
+                // best effort
             }
         }
-    }
-
-    private static void Enqueue(Type type, Queue<Type> queue, HashSet<Type> queued) {
-        if (type is null || queued.Count >= MaxWarmTypes) {
-            return;
+        catch (Exception exception) {
+            Logger.Warn("SpeedrunTool/CloneWarmUp", $"Level warm-up aborted: {exception}");
         }
 
-        if (type.IsByRef || type.IsPointer || type.IsGenericParameter || type.IsByRefLike) {
-            return;
-        }
-
-        if (type.IsArray) {
-            Enqueue(type.GetElementType(), queue, queued);
-            // The array type itself also has a generated cloner, fall through to warm it.
-        }
-
-        if (type.IsGenericType && !type.IsGenericTypeDefinition) {
-            foreach (Type argument in type.GetGenericArguments()) {
-                Enqueue(argument, queue, queued);
-            }
-        }
-
-        if (type.IsGenericTypeDefinition || type.IsInterface || type.IsPrimitive || type.IsEnum || type == typeof(string)) {
-            return;
-        }
-
-        // BCL types are only interesting as generic containers (List<T>, Dictionary<K,V>, ...);
-        // their element types were enqueued above.
-        string ns = type.Namespace;
-        if (ns is not null && (ns.StartsWith("System") || ns.StartsWith("Microsoft")) && !type.IsGenericType) {
-            return;
-        }
-
-        if (queued.Add(type)) {
-            queue.Enqueue(type);
-        }
+        Logger.Info("SpeedrunTool/CloneWarmUp", $"Level warm-up: {stopwatch.ElapsedMilliseconds}ms.");
     }
 }

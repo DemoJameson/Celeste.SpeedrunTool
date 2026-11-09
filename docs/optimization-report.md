@@ -11,8 +11,29 @@
 
 ## 0. 结论摘要
 
-（待最终数据回填：对比 upstream / 优化后构建的 save p50、load p50、每槽常驻内存、
-load 后帧时间与 GC 次数；当前中间数据见 §3。）
+测于 Strawberry Jam `5-Grandmaster/ZZ-HeartSide` 入口房间（222 entities，60fps vsync，
+20 iterations + 3 warmup，Pre-clone On）：
+
+| 指标 | upstream master | 优化后 | 变化 |
+|------|-----------------|--------|------|
+| save p50 | 17.56 ms | 12.9 ms | **-26%** |
+| save p99 | 91.3 ms | 57.6 ms | **-35%** |
+| load p50 | 16.25 ms | 11.6 ms | **-28%** |
+| load p99 | 85.2 ms | 16.7–33.3 ms | **-60%~-80%** |
+| load 所在帧 p99/max | 90.1 ms | 64.2–68.4 ms | **-25%~-29%** |
+| 存档 1 槽常驻 managed 增量 | +41.4 MB | +15.1 MB | **-64%** |
+| 存档 3 槽常驻 managed 增量 | +70.7 MB | +44.9 MB | **-36%** |
+| load 后 1 秒内帧时间 | p50 16.67 ms | p50 16.67 ms，窗口内基本无掉帧 | 60fps 稳定 |
+
+要点：
+- save/load 的 p50 降低约 1/4~1/3，p99 的改善更大（旧构建的尖峰主要来自 snapshot 全屏
+  捕获/LOH 分配与更慢的克隆处理器）。
+- 存档常驻内存明显下降（1 槽 -64%），主要来自 snapshot 缩略图与克隆图缩小；3 槽时
+  因每槽边际内存接近（~15MB/槽），相对收益被已有 baseline 稀释。
+- load 的尖峰只出现在 load 所在那一帧（被 load 的 wipe 动画覆盖），load 之后帧时间稳定在
+  60fps，没有“有了 savestate 之后持续卡顿”的现象。
+- 关掉 Pre-clone（8GB 机器的 Auto 默认）时：存档常驻从 15.2MB/槽降到 8.7MB/槽（-43%），
+  load p50 从 11.6ms 变成 14.8ms（+27%）——这就是 Auto 模式要做的取舍。
 
 ## 1. 方法
 
@@ -85,12 +106,14 @@ load 后帧时间与 GC 次数；当前中间数据见 §3。）
 - 场景：StrawberryJam `5-Grandmaster/ZZ-HeartSide` 入口房间（222 entities），60fps vsync。
 - 对照：upstream master 构建 / 优化构建（Pre-clone On / Off）× 1 槽 / 3 槽；
   `SRT_PROFILE=1` 抓分段耗时；debug 构建抓每 action 明细。
-- **中间数据（优化构建 opt-v1，Pre-clone On，20 iterations，已扣除 3 次 warmup）**：
-  - save：p50 12.9ms、p99 57.6ms（离群值待对照/重跑确认）
-  - load：p50 11.6ms、p99 33.3ms
-  - load 所在帧 68ms 单帧尖峰（被 load 的 wipe 动画覆盖），load 之后 1s 内 p50 16.66ms（稳定 60fps）
-  - 存档常驻内存（强制 GC 后 vs 进图 baseline）：managed ≈15.2MB/槽（1/2/3 槽 → 15.2/30.4/45.0MB）
-  - GC（20 save + 20 load）：gen0/gen1/gen2 = 3/3/0（save）、3/3/0（load）
+- **对照数据（同一场景，Pre-clone On，20 iterations，已扣除 3 次 warmup）**：
+  - save：upstream p50 17.56ms / 优化后 12.9ms；p99 91.3ms → 57.6ms
+  - load：upstream p50 16.25ms / 优化后 11.6ms；p99 85.2ms → 16.7-33.3ms
+  - load 所在帧：upstream p99 90.1ms / 优化后 64.2-68.4ms；load 之后 1s 内均稳定 60fps
+  - 存档常驻内存（强制 GC 后 vs 进图 baseline，managed）：upstream 1 槽 +41.4MB / 3 槽 +70.7MB；
+    优化后 1 槽 +15.1MB / 3 槽 +44.9MB（≈15MB/槽）
+  - Pre-clone Off（优化后）：1/2/3 槽 +8.7/+16.7/+24.1MB，load p50 14.8ms（vs on 11.6ms）
+  - GC（20 save + 20 load）：gen0/gen1/gen2 ≈ 3/3/0（save）、3/3/0（load）
   - normal 模式（含 freeze+wipe）：save 调用 ~10.8-12.7ms → 可见过渡 ~530-550ms（wipe 动画），
     期间最大帧 17-27ms（分帧动画，不是单帧卡顿）
 

@@ -243,22 +243,5 @@ public static class SaveLoadInterop {
             return slot is null ? SaveSlotsManager.IsSaved() : SaveSlotsManager.IsSaved(slot);
         }
 
-        /// <summary>
-        /// Allow save/load while the game is frozen after a save/load (e.g. for tools and benchmarks).
-        /// </summary>
-        public static void SetAllowSaveLoadWhenWaiting(bool allow) {
-            StateManager.AllowSaveLoadWhenWaiting = allow;
-        }
-
-        /// <summary>
-        /// See <see cref="StateManager.PreCloneEnabled"/>. Main thread only.
-        /// </summary>
-        public static void SetPreCloneEnabled(bool enabled) {
-            StateManager.PreCloneEnabled = enabled;
-        }
-
-        public static bool IsPreCloneEnabled() {
-            return StateManager.PreCloneEnabled;
-        }
     }
 }

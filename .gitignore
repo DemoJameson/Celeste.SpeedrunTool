@@ -341,7 +341,7 @@ SpeedrunTool/lib-stripped/*
 /Dialog
 /Graphics
 /everest.yaml
-/toZip.cmd
+/dist/
 /JetBrains.FormatRipper.dll
 /JetBrains.HabitatDetector.dll
 /JetBrains.Profiler.Api.dll

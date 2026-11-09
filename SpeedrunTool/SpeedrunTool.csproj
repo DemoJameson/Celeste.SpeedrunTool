@@ -111,6 +111,32 @@
 
     <!-- Optional convenience target: deploys the built mod into a Celeste Mods directory in one command, e.g.
          dotnet build -c Release -p:CelestePrefix="C:\Celeste" -p:DeployDir="C:\Celeste\Mods\SpeedrunTool" -->
+    <!-- Release packaging: dotnet build -c Release -p:CelestePrefix=... -t:PackageMod -p:PackageMod=true -p:SrtPackageVersion=3.27.22
+         Produces dist/SpeedrunTool-<PackageVersion>.zip with the same layout as the manual
+         toZip.cmd used to make: everest.yaml + SpeedrunTool.dll at the zip root plus Dialog/
+         and Graphics/. Not run automatically on every build: packaging a release is an explicit
+         step and the version in everest.yaml stays the single source of truth; pass
+         -p:SrtPackageVersion=... to put a version into the release asset name. -->
+    <Target Name="PackageMod" AfterTargets="Build" DependsOnTargets="OutputAsModStructure"
+            Condition="'$(PackageMod)' == 'true'">
+        <PropertyGroup>
+            <_PackageStage>$(BaseIntermediateOutputPath)package</_PackageStage>
+            <_PackageSuffix Condition="'$(SrtPackageVersion)' != ''">-$(SrtPackageVersion)</_PackageSuffix>
+            <_PackageZip>$(MSBuildProjectDirectory)\..\dist\SpeedrunTool$(_PackageSuffix).zip</_PackageZip>
+        </PropertyGroup>
+        <RemoveDir Directories="$(_PackageStage)" />
+        <MakeDir Directories="$(_PackageStage);$(MSBuildProjectDirectory)\..\dist" />
+        <Copy SourceFiles="$(ModRoot)\$(AssemblyName).dll;$(MSBuildProjectDirectory)\everest.yaml" DestinationFolder="$(_PackageStage)" />
+        <ItemGroup>
+            <_PackageDialog Include="$(MSBuildProjectDirectory)\Dialog\**\*" />
+            <_PackageGraphics Include="$(MSBuildProjectDirectory)\Graphics\**\*" />
+        </ItemGroup>
+        <Copy SourceFiles="@(_PackageDialog)" DestinationFiles="@(_PackageDialog->'$(_PackageStage)\Dialog\%(RecursiveDir)%(Filename)%(Extension)')" />
+        <Copy SourceFiles="@(_PackageGraphics)" DestinationFiles="@(_PackageGraphics->'$(_PackageStage)\Graphics\%(RecursiveDir)%(Filename)%(Extension)')" />
+        <ZipDirectory SourceDirectory="$(_PackageStage)" DestinationFile="$(_PackageZip)" Overwrite="true" />
+        <Message Importance="high" Text="Packaged $(AssemblyName) -> $(_PackageZip)" />
+    </Target>
+
     <Target Name="DeployToGame" AfterTargets="OutputAsModStructure" Condition="'$(DeployDir)' != ''">
         <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="$(DeployDir)" />
         <Copy SourceFiles="$(MSBuildProjectDirectory)\everest.yaml" DestinationFolder="$(DeployDir)" />

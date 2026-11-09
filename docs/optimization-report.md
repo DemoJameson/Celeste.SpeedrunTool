@@ -134,7 +134,12 @@
   `.Transitions.cs`（转场与死亡 hook）、`.Restore.cs`（读档后的时间/音频/磁带/存档数据恢复）、
   `.Freeze.cs`（freeze/wipe/out-of-freeze）；纯代码移动，`StateManager.Instance` 等公开契约不变。
 - 新增 save/load ModInterop API（`SaveState/LoadState/SaveStateTas/LoadStateTas/ClearState/
-  SwitchSlot/IsSaved/SetPreCloneEnabled/...`）供 TAS/工具/benchmark 使用。
+  SwitchSlot/IsSaved`）供 TAS/工具使用；benchmark/自动化专用的开关（`SetPreCloneEnabled`、
+  `SetAllowSaveLoadWhenWaiting`）单独放在 `SpeedrunTool.Bench` export 里，公开给 mod 的
+  `SpeedrunTool.SaveLoad` 契约保持精简。
+- 发布打包：删除旧的手工 `toZip.cmd`，改为 `-p:PackageMod=true -p:SrtPackageVersion=x.y.z`
+  生成 `dist/SpeedrunTool-x.y.z.zip`（zip 根目录 `everest.yaml` + DLL + `Dialog/` + `Graphics/`）。
+  不在每次 build 自动打包（版本号仍以 everest.yaml 为准，发布是显式步骤，适合放 CI 的 tag 流程）。
 
 ### 2.5 冷启动（首次 save/load）：已测量，未解决
 

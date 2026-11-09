@@ -21,7 +21,26 @@
 - 原有的「加载存档后回收内存」「清除存档后回收内存」仍然控制强制 GC 的时机；如果清除/读取存档时出现卡顿，可以试着关掉它们。
 - 诊断（可选，正式构建里零开销）：普通 Release 构建会把 profiler 完全编译掉（调用点被消除，没有任何运行时开销）。需要诊断时用 `-p:SrtProfiling=true` 构建，在 SpeedrunTool.dll 旁放一个空的 `srt-profile.flag`（或设环境变量 `SRT_PROFILE=1`），log.txt 里每次 save/load 就会多一行 `SRT_PROFILE ...`，包含分阶段耗时、分配量和 GC/堆信息。
 
-其它模组/工具可以通过 `SpeedrunTool.SaveLoad` 这组 ModInterop API 驱动存档与读档（`SaveState`、`LoadState`、`SaveStateTas`、`LoadStateTas`、`ClearState`、`SwitchSlot`、`IsSaved` 以及预克隆开关）。
+其它模组/工具可以通过 `SpeedrunTool.SaveLoad` 这组 ModInterop API 驱动存档与读档（`SaveState`、`LoadState`、`SaveStateTas`、`LoadStateTas`、`ClearState`、`SwitchSlot`、`IsSaved`）；benchmark/自动化专用的开关（`SetPreCloneEnabled`、`SetAllowSaveLoadWhenWaiting`）单独放在 `SpeedrunTool.Bench` 这组 export 里，公开给 mod 的契约保持精简。
+
+## 构建
+
+用 .NET SDK 即可构建（不需要 Visual Studio）。`CelestePrefix` 指向装有 Everest 和引用程序集的 Celeste：
+
+```bash
+dotnet build -c Release -p:CelestePrefix="/path/to/Celeste"
+# 可选：直接部署到游戏
+dotnet build -c Release -p:CelestePrefix="/path/to/Celeste" -p:DeployDir="/path/to/Celeste/Mods/SpeedrunTool"
+```
+
+发布用 zip（和旧 `toZip.cmd` 相同布局：zip 根目录 `everest.yaml` + `SpeedrunTool.dll`，外加 `Dialog/`、`Graphics/`）是**显式**动作，不会每次 build 都生成：
+
+```bash
+dotnet build -c Release -p:CelestePrefix="/path/to/Celeste" -p:PackageMod=true -p:SrtPackageVersion=3.27.22
+# -> dist/SpeedrunTool-3.27.22.zip
+```
+
+版本号仍以 `everest.yaml` 为准，`SrtPackageVersion` 只用于命名发布包；建议在 CI 的 tag 流程里调用，避免调试构建产出发布 zip。
 
 ## 预览
 

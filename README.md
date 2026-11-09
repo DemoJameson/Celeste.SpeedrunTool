@@ -34,8 +34,31 @@ versions keep that cost predictable and expose the main memory/speed trade-off:
   line per save/load with per-segment milliseconds, allocation and GC/heap numbers.
 
 Other mods and tools can drive save states through the `SpeedrunTool.SaveLoad` ModInterop API
-(`SaveState`, `LoadState`, `SaveStateTas`, `LoadStateTas`, `ClearState`, `SwitchSlot`, `IsSaved`,
-and the pre-clone toggle).
+(`SaveState`, `LoadState`, `SaveStateTas`, `LoadStateTas`, `ClearState`, `SwitchSlot`, `IsSaved`).
+Benchmark/automation-only knobs (`SetPreCloneEnabled`, `SetAllowSaveLoadWhenWaiting`) live in a
+separate `SpeedrunTool.Bench` export, so the public mod-facing contract stays small.
+
+## Building
+
+The mod builds with the .NET SDK (no Visual Studio required). Point `CelestePrefix` at a Celeste
+installation that has Everest and the referenced assemblies:
+
+```bash
+dotnet build -c Release -p:CelestePrefix="/path/to/Celeste"
+# optional: deploy the built mod straight into the game
+dotnet build -c Release -p:CelestePrefix="/path/to/Celeste" -p:DeployDir="/path/to/Celeste/Mods/SpeedrunTool"
+```
+
+A release zip (same layout the old `toZip.cmd` produced: `everest.yaml` + `SpeedrunTool.dll` at the
+zip root plus `Dialog/` and `Graphics/`) is made explicitly, not on every build:
+
+```bash
+dotnet build -c Release -p:CelestePrefix="/path/to/Celeste" -p:PackageMod=true -p:SrtPackageVersion=3.27.22
+# -> dist/SpeedrunTool-3.27.22.zip
+```
+
+The version in `everest.yaml` remains the single source of truth; `SrtPackageVersion` only names the
+release asset. Use a CI step (on a tag) to call this, so a debug build can never produce a release zip.
 
 ## Previews
 

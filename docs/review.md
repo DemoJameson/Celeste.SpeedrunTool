@@ -116,7 +116,7 @@
 
 ### 1.10 🟢 `SaveLoadInterop` 新 API 的副作用
 - `SaveState(string slot)`/`LoadState(string slot)` 先 `SwitchSlot`（成功则当前槽已改变）再执行；如果 save/load 失败，**当前槽停留在新槽**。文档没写；bench/TAS harness 需要注意。
-- `SetAllowSaveLoadWhenWaiting`/`SetPreCloneEnabled` 直接改静态状态，无“仅主线程/空闲时”约束；建议文档注明。
+- `SetAllowSaveLoadWhenWaiting`/`SetPreCloneEnabled` 直接改静态状态，无“仅主线程/空闲时”约束；后续已移到独立的 `SpeedrunTool.Bench` export（benchmark/自动化专用）并在文档注明主线程/使用范围。
 - `DeepClone(object)`（原有 API）依赖 `DeepCloneShared` 的静态 `sharedDeepCloneState` → **若 mod 在非主线程调用，会与主线程的 save/load 共享同一个 Dictionary**（无锁）→ 数据竞争。建议在 XML doc 里要求“只能主线程调用”。
 - 严重度：🟢。
 

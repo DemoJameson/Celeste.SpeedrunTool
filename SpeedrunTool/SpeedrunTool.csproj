@@ -3,7 +3,17 @@
         <TargetFramework>net8.0</TargetFramework>
         <LangVersion>latest</LangVersion>
         <CelestePrefix Condition="'$(CelestePrefix)' == '' And Exists('../../../Celeste.dll')">../../..</CelestePrefix>
+        <!-- Path to the CelesteTAS-EverestInterop.dll used for compile-time interop. -->
+        <CelesteTasPath Condition="'$(CelesteTasPath)' == ''">$(CelestePrefix)\Mods\CelesteTAS-EverestInterop\bin\CelesteTAS-EverestInterop.dll</CelesteTasPath>
+        <!-- Directory the built mod structure (DLL + everest.yaml + Dialog/Graphics) is copied to. -->
+        <ModRoot Condition="'$(ModRoot)' == ''">..</ModRoot>
+        <!-- Optional: when set, the built mod is deployed to this directory (e.g. Celeste\Mods\SpeedrunTool). -->
+        <DeployDir Condition="'$(DeployDir)' == ''"></DeployDir>
     </PropertyGroup>
+
+    <Target Name="ValidateCelestePrefix" BeforeTargets="PrepareForBuild" Condition="'$(CelestePrefix)' == ''">
+        <Error Text="Celeste.dll not found. Pass the Celeste install directory with -p:CelestePrefix=&quot;C:\Path\To\Celeste&quot;." />
+    </Target>
     
     <PropertyGroup>
         <ProjectGuid>{C7DFDD37-907C-4A75-96DA-1C5828C97F96}</ProjectGuid>
@@ -58,7 +68,7 @@
         <Reference Include="$(CelestePrefix)\MonoMod.Utils.dll" />
         <Reference Include="$(CelestePrefix)\MonoMod.RuntimeDetour.dll" />
         <Reference Include="CelesteTAS-EverestInterop">
-            <HintPath>..\..\CelesteTAS-EverestInterop\bin\CelesteTAS-EverestInterop.dll</HintPath>
+            <HintPath>$(CelesteTasPath)</HintPath>
         </Reference>
     </ItemGroup>
 
@@ -72,13 +82,7 @@
         <Publicize Include="MonoMod.RuntimeDetour" />
     </ItemGroup>
 
-    <!-- DeepCloner -->
-    <ItemGroup>
-        <Compile Include="..\DeepCloner\DeepCloner\**\*.cs">
-            <Link>Source\DeepCloner\%(RecursiveDir)%(FileName)%(Extension)</Link>
-        </Compile>
-        <Compile Remove="..\DeepCloner\DeepCloner\Properties\**" />
-    </ItemGroup>
+    <!-- DeepCloner is vendored under SpeedrunTool\DeepCloner\ (see DeepCloner\UPSTREAM.md) and is picked up by the default glob. -->
 
     <!-- OutputAsModStructure -->
     <ItemGroup>
@@ -87,10 +91,19 @@
     </ItemGroup>
 
     <Target Name="OutputAsModStructure" AfterTargets="Build">
-        <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder=".." />
-        <Copy SourceFiles="$(OutputPath)$(AssemblyName).pdb" DestinationFolder=".." />
-        <Copy SourceFiles="$(MSBuildProjectDirectory)\everest.yaml" DestinationFolder=".." />
-        <Copy SourceFiles="@(DialogResources)" DestinationFolder="..\Dialog\%(RecursiveDir)" SkipUnchangedFiles="true" />
-        <Copy SourceFiles="@(GraphicResources)" DestinationFolder="..\Graphics\%(RecursiveDir)" SkipUnchangedFiles="true" />
+        <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="$(ModRoot)" />
+        <Copy SourceFiles="$(OutputPath)$(AssemblyName).pdb" DestinationFolder="$(ModRoot)" />
+        <Copy SourceFiles="$(MSBuildProjectDirectory)\everest.yaml" DestinationFolder="$(ModRoot)" />
+        <Copy SourceFiles="@(DialogResources)" DestinationFolder="$(ModRoot)\Dialog\%(RecursiveDir)" SkipUnchangedFiles="true" />
+        <Copy SourceFiles="@(GraphicResources)" DestinationFolder="$(ModRoot)\Graphics\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    </Target>
+
+    <!-- Optional convenience target: deploys the built mod into a Celeste Mods directory in one command, e.g.
+         dotnet build -c Release -p:CelestePrefix="C:\Celeste" -p:DeployDir="C:\Celeste\Mods\SpeedrunTool" -->
+    <Target Name="DeployToGame" AfterTargets="OutputAsModStructure" Condition="'$(DeployDir)' != ''">
+        <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="$(DeployDir)" />
+        <Copy SourceFiles="$(MSBuildProjectDirectory)\everest.yaml" DestinationFolder="$(DeployDir)" />
+        <Copy SourceFiles="@(DialogResources)" DestinationFolder="$(DeployDir)\Dialog\%(RecursiveDir)" SkipUnchangedFiles="true" />
+        <Copy SourceFiles="@(GraphicResources)" DestinationFolder="$(DeployDir)\Graphics\%(RecursiveDir)" SkipUnchangedFiles="true" />
     </Target>
 </Project>

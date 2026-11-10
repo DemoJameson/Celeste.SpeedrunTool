@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <!-- Offline, game-free tests for the desync checker's pure decision logic.
+         Run with: dotnet run (this directory) -c Release
+         The production files are linked instead of copied so the tests cannot drift from the mod.
+         Only BCL types are involved; the game assembly is never referenced. -->
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>disable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <AssemblyName>DesyncCheckerTests</AssemblyName>
+        <RootNamespace>DesyncCheckerTests</RootNamespace>
+        <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    </PropertyGroup>
+    <ItemGroup>
+        <Compile Include="Program.cs" />
+        <Compile Include="..\..\SpeedrunTool\Source\SaveLoad\Implements\DesyncCheckLogic.cs" Link="DesyncCheckLogic.cs" />
+        <Compile Include="..\..\SpeedrunTool\Source\SaveLoad\Implements\DesyncRegistration.cs" Link="DesyncRegistration.cs" />
+    </ItemGroup>
+</Project>

@@ -363,9 +363,20 @@ public interface ILuaStateProvider {
      `Finished=false`、`enumerators.Count>0`，栈内 `LuaProxyCoroutine._Valid=true`、
      `coroutine.status(proxy.value)==suspended`；`BossController.PatternCoroutine` idle
      （`Finished=true/Active=false`）。即「pattern idle 但 background Lua 仍在跑」，必须拒绝。
-4. 后续（不在本轮）：移植 lua-work `BossesHelperLuaAdapter` + 把
-   `BossesHelperEcosystem.AllowAtRestBossesWithAdapter` 打开，再按原 E5b 步骤（idle 存档 →
-   F8 读档观察 Boss 行为）做游戏内验证。
+4. 后续（不在本轮）：E5b 的 checkpoint/replay 方案与成本见 lua-desync
+   `lua-work/docs/e5b-checkpoint-options.md`（commit `392d210`）：
+   - **A（短期推荐）**：保持拒绝；E5b adapter 只适合「没有常驻 coroutine」的 BossesHelper boss；
+   - **B（若 CC Knight idle save 必须支持）**：mod-level checkpoint API + 脚本状态机化
+     （BossesHelper 登记 `{name, func, stateTable}`；CC 的 4 组 setup 把 loop locals 改成
+     `state.phase`；`ILuaStateProvider` 增加 `Save/Restore`；还需解决 Lua 环境里
+     `puppet/player/boss` 等 userdata 的 old→new 重绑定），预计 1–2 周且需要
+     BossesHelper/CrossoverCollab 作者接受 helper/脚本改动；
+   - C（通用 replay，4–8 周）/ D（native 序列化，月级）不建议作为 PoC 首选。
+   若走 B：移植 `BossesHelperLuaAdapter` → 把常驻 coroutine 纳入 checkpoint/replay →
+   才能把 `AllowAtRestBossesWithAdapter` 打开并跑 idle 存档 → F8 行为验证。
+   **待 Lead/用户决策**（同 e5b-checkpoint-options.md §6）：
+   ① CC Knight 是否必须支持 idle save（若否，E5b 按现状收尾）；
+   ② 若必须，是否允许修改 BossesHelper/CrossoverCollab 的 Lua helper/脚本（方案 B 前提）。
 
 ### E5（FrostHelper `LuaBadelineBoss`）——**需 opt-in adapter，暂不放行**
 
@@ -402,7 +413,7 @@ flag 默认 false，等 E5 adapter 移植后开启并用测试房间验证。
 | probe 误报（纯装饰性 Lua 协程） | 任何非 LuaCutscenes 生态的活跃 `LuaCoroutine` 都会被拒绝，即使脚本只做视觉效果 | 用户可用 `AddSafeType`/`AddSafeEntityPredicate`/`AddSafeLevelPredicate`，或 `DisableDesyncCheck`；最坏情况 revert analyzer 提交 |
 | Celeste 内部结构变化 | probe 依赖 `Monocle.Coroutine.enumerators` 与 `SwapImmediatelyExtension+Flattened.enums`（反射，字段名已 Cecil 核对） | fail-closed 拒绝 + `Logger.Error` 明确提示；更新后改反射名即可（集中在 `LuaUsageProbe`） |
 | LuaCutscenes 字段漂移 | `Finished` / `onTalkRoutine` / `<>1__state` 改名 → 实例在 → 直接拒绝（不会半放行） | fail-closed + 日志；用 Cecil 重新核对清单（§3.1 即维护清单） |
-| BossesHelper/FrostHelper 功能推迟 | at-rest 放行等 E5/E5b adapter；当前房间仍「有实例即拒绝」 | 与旧版一致（无回归）；adapter 移植后打开 `AllowAtRest*WithAdapter` flag 并 bench 验证 |
+| BossesHelper/FrostHelper 功能推迟 | at-rest 放行等 E5/E5b adapter；当前房间仍「有实例即拒绝」 | 与旧版一致（无回归）；方案/成本见 `lua-work/docs/e5b-checkpoint-options.md`（`392d210`）：短期 A 保持拒绝，中期 B（mod-level checkpoint + 脚本状态机化）才可能打开 flag，需 Lead/用户先决策（§7 E5b step 4） |
 | 组件运行时类型检查新增命中 | 某些 mod 的 Component 可能持有 Lua（离线扫描当前环境为 0），会从「漏报」变「`Saved but Cleared`」 | 预期行为（fail-closed）；mod 可用 `AddSafeType(componentType)` 解除 |
 | 性能 | probe 每个 save 扫全部 entity/components + 反射栈；gate 扫全部 entity；类型检查有 per-save/全局缓存 | 估算 O(entities×components) 每 save 一次，通常 < 几 ms 量级；如 bench 发现卡顿，可把 probe 改为「仅扫描有 Coroutine 组件的实体」（已是）或懒加载 |
 | `SaveInLuaCutscene` 用户预期 | 旧文档/用户可能以为该开关能关闭全部 Lua 检查 | 文档 + 设置描述已说明「只允许过场中存档」；保持 v3.28.0 拆分 |
@@ -456,4 +467,6 @@ override 组合、Reset。
   §15/§16（E5/E5b adapter，本分支未移植）、§8（E1–E3 原始 bench 步骤）
 - `D:\DSH\Celeste\lua-work\docs\checker-lua-gates.md`（commit `64b808d`）：两个 gate 的 IL 证据
   ——E1 detached stale Coroutine、E5b CC Knight 常驻 background Lua coroutine
+- `D:\DSH\Celeste\lua-work\docs\e5b-checkpoint-options.md`（commit `392d210`）：E5b 后续方案
+  A/B/C/D、成本与待用户决策问题（checker 分支按方案 A 现状收尾）
 - `docs/scene-state.md`、`docs/audit.md`（SRT 既有验证/审计记录）

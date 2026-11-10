@@ -103,11 +103,16 @@ internal static class DesyncRiskAnalyzer {
             // LuaTalker doesn't uses LuaCutsceneEntity
             // unskippable 的 talker 不会调用 Level.StartCutscene（见 LuaCutscenes 0.2.13 的
             // LuaTalker::onTalk），所以整个对话期间 level.InCutscene 都是 false：只看
-            // InCutscene 会漏掉“对话进行中存档”。这里退一步检查实体上是否有正在运行的
-            // Coroutine——LuaCutsceneEntity/LuaTalker 都用 Add(new Coroutine(routine, true))
-            // 驱动 Lua 协程，运行期间 Finished == false，结束时 removeOnComplete 会移除它。
+            // InCutscene 会漏掉“对话进行中存档”。这里检查两层：
+            //  1) 实体上有正在运行的 Coroutine（LuaCutsceneEntity/LuaTalker 用
+            //     Add(new Coroutine(routine, true)) 驱动 Lua 协程；Finished == false 表示运行中）；
+            //  2) onTalkRoutine 的状态机还没 finish。onTalkRoutine 在 onEnd 里不会被清空，
+            //     所以必须看状态机状态（0/1/2/3 = 活动，-1 = 已结束），不能只看非 null。
+            Type luaTalkerType = ModUtils.GetType("LuaCutscenes", "Celeste.Mod.LuaCutscenes.LuaTalker");
+            FieldInfo onTalkRoutineField = luaTalkerType?.GetField("onTalkRoutine",
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             RegisterEarlyCheck(
-                ModUtils.GetType("LuaCutscenes", "Celeste.Mod.LuaCutscenes.LuaTalker"),
+                luaTalkerType,
                 (level, type) => {
                     if (ModSettings.SaveInLuaCutscene) {
                         return false;
@@ -117,13 +122,17 @@ internal static class DesyncRiskAnalyzer {
                     }
                     if (level.Tracker.GetEntitiesTrackIfNeeded(type) is { } list && list.IsNotNullOrEmpty()) {
                         foreach (Entity e in list) {
-                            if (e.Components is not { } components) {
-                                continue;
-                            }
-                            foreach (Component component in components) {
-                                if (component is Coroutine { Finished: false }) {
-                                    return true;
+                            if (e.Components is { } components) {
+                                foreach (Component component in components) {
+                                    if (component is Coroutine { Finished: false }) {
+                                        return true;
+                                    }
                                 }
+                            }
+                            // onTalkRoutine 在 onEnd 里不会清空（LuaTalker::onEnd 只调
+                            // onEndFunction + EndCutscene），对话结束后它仍是非 null。
+                            if (onTalkRoutineField?.GetValue(e) is { } routine && IsLuaCoroutineRoutineActive(routine)) {
+                                return true;
                             }
                         }
                     }
@@ -238,6 +247,34 @@ internal static class DesyncRiskAnalyzer {
         // mark as safe coz it will be already checked in EarlyCheck
         KnownTypes[entityType] = true;
         desyncReason = entityType;
+    }
+
+    /// <summary>
+    /// True when a LuaCutscenes <c>LuaCoroutineToIEnumerator</c> state machine is still alive.
+    /// States: 0 = not started, 1 = waiting (float/int64 yield), 2 = yielded object,
+    /// 3 = inner routine finished but the outer wrapper has not consumed it yet; -1 = finished.
+    /// Falls back to Celeste.Mod.LuaCoroutine._Valid if the compiler-generated state field is
+    /// missing (newer LuaCutscenes / different compiler), and conservatively returns true when
+    /// no state can be inspected at all (do not silently allow a live Lua coroutine).
+    /// </summary>
+    private static bool IsLuaCoroutineRoutineActive(object routine) {
+        Type routineType = routine.GetType();
+        FieldInfo stateField = routineType.GetField("<>1__state",
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        if (stateField is not null && stateField.FieldType == typeof(int)) {
+            return (int)stateField.GetValue(routine) >= 0;
+        }
+
+        FieldInfo luaCoroutineField = routineType.GetField("routine",
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        object luaCoroutine = luaCoroutineField?.GetValue(routine);
+        FieldInfo validField = luaCoroutine?.GetType().GetField("_Valid",
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        if (validField is not null && validField.FieldType == typeof(bool)) {
+            return (bool)validField.GetValue(luaCoroutine);
+        }
+
+        return true;
     }
 
     private static bool CanSyncType(Type type, HashSet<Type> processingTypes) {

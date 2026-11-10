@@ -161,6 +161,25 @@ profiling 显示**会话内第一次** save 比后续慢很多：入口房间 `c
 缓存放到可丢弃的独立 AppDomain/AssemblyLoadContext，或在真实 save 前做一次隔离的 clone 校验），
 而不是复用主缓存。
 
+### 2.6 v3.28.0：跨章节读档与 Lua desync 检查
+
+在性能优化之外，这一版修掉了 `HandleSwitchScene` 里"切换场景就清档 / 资源有时没加载"的旧 TODO：
+
+- **跨章节 / 章节选择界面读档**：读档时若当前 Level 的 area 与存档不同，不再把模板硬塞进当前
+  Level，而是走 pending load：合并 live time/deaths（跨原版存档文件时跳过）、快照 `SaveData`
+  与各 mod `_Session/_SaveData`、装存档的 SaveData，然后 `LevelEnter.Go(saved session,
+  fromSaveData:true)` 让目标章节正常加载 map/tileset/audio，最后在 `Level.Begin` 跑原 restore
+  流程；30s 看门狗在加载失败/退回章节选择时回滚并保留 savestate。代价是跨章节读档 ≈ 同章节
+  读档 + 一次章节加载（bench：pending entry **1452–1505ms**，整体 wall ~2.5s，同章节无额外成本）。
+  `AutoClearStateOnSceneSwitch` 默认改为关闭旧行为，并做一次性设置迁移；TAS 模式跨章节仍拒绝。
+- **Lua desync 检查 P0**：容器/数组/泛型实参里的 Lua 检测（P1）、unskippable LuaTalker 的
+  `onTalkRoutine` 状态机判定（P2）、late-check 字段路径日志（P3）；`SaveInLuaCutscene` 语义
+  收窄为"放行剧情存档"，新增显式的 `DisableDesyncCheck`（旧行为）。
+- **验证**：a1 save/load smoke、跨章节 B2、tofu/Soloiini LuaTalker、CC Knight 的 fail-closed
+  行为均通过；checker 大重构（`feat/desync-checker`）另做分支验证，默认不改变 E5b 的拒绝行为。
+
+最终交付构建 `SpeedrunTool.dll` md5 `861478588279f8a02e68bc28e324c29b`（v3.28.0）。
+
 ## 3. 验证
 
 - 构建：`dotnet build -c Release -p:CelestePrefix=<Celeste> -p:DeployDir=<Celeste>/Mods/SpeedrunTool`。

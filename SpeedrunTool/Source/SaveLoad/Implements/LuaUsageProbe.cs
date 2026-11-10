@@ -148,6 +148,12 @@ internal static class LuaUsageProbe {
             return null;
         }
 
+        // A finished Coroutine is not updated anymore: it cannot advance Lua. This also guards against
+        // stale components left on detached entities (see lua-work docs/checker-lua-gates.md §1/§2.4).
+        if (coroutine.Finished) {
+            return null;
+        }
+
         if (coroutineEnumeratorsField.GetValue(coroutine) is not Stack<IEnumerator> stack) {
             return null;
         }

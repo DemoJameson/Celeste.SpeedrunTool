@@ -197,8 +197,16 @@ internal abstract class EcosystemBase {
         };
     }
 
+    /// <summary>
+    /// True when the entity carries a <c>Monocle.Coroutine</c> that is still allowed to advance.
+    /// Detached entities are ignored: LuaCutscenes finishes a cutscene by calling
+    /// <c>CutsceneEntity.EndCutscene(removeSelf: true)</c> from inside the entity's own coroutine, so
+    /// the entity leaves the scene before that coroutine can complete; its <c>Finished</c> flag then
+    /// stays false forever (IL evidence: lua-work docs/checker-lua-gates.md §1). A removed entity is
+    /// never updated again, so such a stale component cannot advance Lua and must not count here.
+    /// </summary>
     protected static bool HasUnfinishedCoroutine(Entity entity) {
-        if (entity?.Components is not { } components) {
+        if (entity?.Components is not { } components || entity.Scene is null) {
             return false;
         }
 
@@ -496,10 +504,15 @@ internal sealed class BossesHelperEcosystem : EcosystemBase {
     internal override string ModName => "BossesHelper";
 
     // The lua-work E5b adapter (main-thread cloning of the boss Lua state) is NOT ported into this
-    // branch. Bench showed that the idle PatternCoroutine check alone is not enough: an idle
-    // LuaProxyCoroutine on CustomBossPuppet still triggers the [LuaExecuting] probe, so "at-rest boss"
-    // saves are not safe without the adapter. Keep the old fail-closed behaviour (a BossController in
-    // the level refuses the save) until the adapter is ported and bench-verified; flip this flag then.
+    // branch. Bench + IL analysis (lua-work docs/checker-lua-gates.md §2) showed that the idle
+    // PatternCoroutine check alone is not enough: CrossoverCollab Knight's setup.lua installs
+    // "constant background coroutines" (helpers.addConstantBackgroundCoroutine) on the puppet, i.e.
+    // live LuaProxyCoroutine components with `while true do ... wait() end`, suspended for the whole
+    // fight regardless of the pattern. Saving would share that live Lua state. Closing this needs a
+    // checkpoint/replay of those coroutines, not just Lua table/function cloning, so keep the old
+    // fail-closed behaviour (a BossController in the level refuses the save) until the adapter lands
+    // and is bench-verified. Note: even if this flag is flipped, the generic probe still refuses
+    // while a background LuaProxyCoroutine is live, which is the correct safety net.
     private static readonly bool AllowAtRestBossesWithAdapter = false;
 
     private Type bossControllerType;

@@ -126,6 +126,17 @@ hasUnfinishedCoroutine=True)`。结论：`Finished==true` 时实体已完成 `On
 `Finished` 时不因残留 Coroutine 误拒。目标行为：**tofu Atrium 对话结束后 F7 成功；Soloiini
 对话中仍拒绝**（后者由 `onTalkRoutine` state 0/1/2/3 或 LuaCutsceneEntity `Finished==false` 命中）。
 
+**IL 根因（lua-desync，`lua-work/docs/checker-lua-gates.md` §1，commit `64b808d`）**：stale
+Coroutine 的来源是 **detached 实体**。顺序为：外层 `<onBeginWrapper>d__17` state1 调
+`CutsceneEntity.EndCutscene(removeSelf: true)` → 其中先虚调 `LuaCutsceneEntity.OnEnd`（置
+`Finished=true`）→ `Level.EndCutscene()` → `Entity.RemoveSelf()`；实体在自己的 Coroutine 栈里被
+移出场景，之后不再 `Update`，因此外层 `Monocle.Coroutine.Finished` 可能永远停在 false，且
+`LuaCutsceneTrigger.OnEnter` 保存 `cutsceneEntity` 后从不清理（该类型没有 OnEnd）。修复采用
+「`Finished` 权威」+ 通用加固：`DesyncEcosystems.HasUnfinishedCoroutine` 对
+**`entity.Scene == null`（detached）直接返回 false**（脱离场景的组件不会再推进 Lua），
+`LuaUsageProbe.CollectLuaDrives` 也跳过 `Coroutine.Finished == true` 的组件（stale 防御）。
+不需要去读 `onBeginRoutine` 的 state（内层脚本结束时它本来就是 -1）。
+
 **LuaTalker 的 bench 盲区（SJ `tofu [Atrium]`）**：该路径对话进行中 `Level.InCutscene == false`、
 `onTalkRoutine = <LuaCoroutineToIEnumerator>d__2`（非 null）、`cutsceneEnv` 已设置，但实体的
 `Components` 里只有 `TalkComponent`、没有 `Monocle.Coroutine` 组件——旧 P2「只看 Coroutine 组件」
@@ -149,9 +160,21 @@ hasUnfinishedCoroutine=True)`。结论：`Finished==true` 时实体已完成 `On
 ### 3.2 BossesHelper（adapter 未移植，保持旧行为：有实例即拒绝）
 
 第一轮 bench 的 E5b：`BossController` 空闲时，其 `CustomBossPuppet` 上仍有空闲的
-`LuaProxyCoroutine`，被 §2 step 2 的 probe 判为 `[LuaExecuting]`。**at-rest 放行需要 lua-work
-的 E5b adapter（主线程克隆/恢复 Boss Lua 状态），本分支未移植**，因此不能靠「pattern 没在跑」
-放行。现在的策略：
+`LuaProxyCoroutine`，被 probe 判为 `[LuaExecuting]`。**at-rest 放行需要 lua-work 的 E5b adapter
+（主线程克隆/恢复 Boss Lua 状态），本分支未移植**，因此不能靠「pattern 没在跑」放行。
+
+**IL/资产证据（lua-desync，`checker-lua-gates.md` §2）——这是真实在运行，不是误报**：
+CrossoverCollab Knight 的 `setup.lua` 在 `HollowKnight/Nosk/Uumuu/WatcherKnight` 里调用
+`helpers.addConstantBackgroundCoroutine(...)`；BossesHelper `helper_functions.lua:1563` →
+`puppet:Add(helpers.getLuaCoroutine(...))` → `monocle.Coroutine(LuaProxyCoroutine)`，脚本体是
+`while true do ... wait() end`，整个战斗期间 suspended（`_Valid == true`），与
+`PatternCoroutine` 是否 idle 无关。保存会共享这份 live Lua 状态，读档后从“读档时刻”继续 →
+真 desync。**不能给 `BossPuppet/CustomBossPuppet` 注册 safe predicate**；要让 CC Knight idle
+存档，必须把常驻 coroutine 做 checkpoint/replay（表/函数克隆不够），或 mod 提供 checkpoint API。
+`AllowAtRestBossesWithAdapter` 即使未来打开，generic probe 仍会把 live `LuaProxyCoroutine`
+拒绝（安全网），所以不能只靠 `PatternCoroutine` idle。
+
+现在的策略：
 
 | 场景 | 行为 |
 |---|---|
@@ -300,6 +323,9 @@ public interface ILuaStateProvider {
    - 期望：**存档成功**（`LuaCutsceneEntity` 以 `Finished` 为准、`LuaTalker` 以 `onTalkRoutine`
      `<>1__state == -1` 为准，残留 Coroutine 不再误拒）。这是第一轮 bench 的过度拒绝修复点。
    - Soloiini 对话中应按 F7 拒绝；对话结束后应成功。
+   - 若仍被拒：按 lua-desync §1.5 dump 的字段（trigger 的 `cutsceneEntity`：`Scene` 是否为
+     null、`Coroutine.Finished/Active/enumerators.Count`、`Finished`、`onBeginRoutine.<>1__state`
+     预期 -1）可定位；`Scene == null` + `Coroutine{Finished:false}` 即证实现有的 detached 加固生效。
 4. `SaveInLuaCutscene=true` 后重进对话按 F7：期望存档成功（用户显式承担风险）。
 
 ### E2：普通 SJ 房间无误报 + 新 probe 行为（5–10 分钟）
@@ -333,6 +359,10 @@ public interface ILuaStateProvider {
 2. Boss pattern 正在执行时按 **F7** → 期望拒绝 `[BossController]`（或 `[LuaExecuting]`；本轮
    修复后 gate 先运行，通常应为 `[BossController]`）。
 3. 等 pattern 结束 / Boss 死亡后按 F7 → **期望仍然拒绝**（旧行为，无回归）；记录弹窗/日志。
+   - lua-desync §2.5 建议的确认 dump（预期）：`CustomBossPuppet` 上常驻 `Coroutine` 的
+     `Finished=false`、`enumerators.Count>0`，栈内 `LuaProxyCoroutine._Valid=true`、
+     `coroutine.status(proxy.value)==suspended`；`BossController.PatternCoroutine` idle
+     （`Finished=true/Active=false`）。即「pattern idle 但 background Lua 仍在跑」，必须拒绝。
 4. 后续（不在本轮）：移植 lua-work `BossesHelperLuaAdapter` + 把
    `BossesHelperEcosystem.AllowAtRestBossesWithAdapter` 打开，再按原 E5b 步骤（idle 存档 →
    F8 读档观察 Boss 行为）做游戏内验证。
@@ -410,6 +440,9 @@ override 组合、Reset。
 **游戏内 bench 记录**：
 - 第一轮（`e840e4c`，DLL `d2eb9d96…`）：E2/E3 通过；E1 tofu Atrium 过度拒绝（已修）；E5b 被
   `[LuaExecuting]` 挡住（已按「adapter 前不放行」处理）。
+- lua-desync 离线 IL 复核（`lua-work/docs/checker-lua-gates.md`，commit `64b808d`）：
+  E1 = detached 实体上的 stale Coroutine（已按 §3.1 加固）；E5b = CC Knight 常驻 background
+  Lua coroutine 真实 suspended（确认必须保持拒绝，不能给 puppet 注册 safe）。
 - 第二轮（本提交）：待复测 E1/E2/E3；E5b 预期仍拒绝（与旧版一致）。
 
 产物保留在 `SpeedrunTool/bin/Release/net8.0/SpeedrunTool.dll` 供 bench 使用。
@@ -421,4 +454,6 @@ override 组合、Reset。
 - `D:\DSH\Celeste\lua-survey\docs\lua-usage-survey.md` §9–§11（checker 现状/方案对比/分阶段建议）
 - `D:\DSH\Celeste\lua-work\docs\lua-desync.md` §1–§3（Lua 克隆边界）、§6（P1/P2/P3）、
   §15/§16（E5/E5b adapter，本分支未移植）、§8（E1–E3 原始 bench 步骤）
+- `D:\DSH\Celeste\lua-work\docs\checker-lua-gates.md`（commit `64b808d`）：两个 gate 的 IL 证据
+  ——E1 detached stale Coroutine、E5b CC Knight 常驻 background Lua coroutine
 - `docs/scene-state.md`、`docs/audit.md`（SRT 既有验证/审计记录）

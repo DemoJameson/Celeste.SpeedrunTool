@@ -42,8 +42,8 @@ kit v1.0.0，SRT `86147858…`（v3.28.0），SrtBench `281b554a…`。6 项核�
   这是 SRT 的已知首次 JIT/冷启动问题，在老 CPU 上被放大（主测试机最新一次为 **620.6 ms**）。
 - a1 的后续 load 中位数 **268 ms（preclone On）**，关 preclone 后 **434 ms**；
   preclone 只多用约 20–30 MB managed/private，却省掉约 40% load 时间。
-  → **当前 `PreCloneMode=Auto` 在 ≤10 GB 机器上自动选 Off 对这台机器不划算**，
-  建议显式 `On`（或重新评估 Auto 阈值/文案）。
+  → **当前 `PreCloneMode=Auto` 在 ≤10 GB 机器上自动选 Off 对这台机器不划算**；
+  **v3.28.1 已按此把 Auto 改为始终 On**（旧机实测直接驱动了这个决定），想省内存可手动 Off。
 - a0 轻房间的 load 中位数只有 **79 ms**，说明 SRT 本身在轻负载房间可用；
   问题集中在 a1_18-Xplosives 这种重房间。
 
@@ -122,8 +122,8 @@ kit v1.0.0，SRT `86147858…`（v3.28.0），SrtBench `281b554a…`。6 项核�
 1. **旧机卡顿的主因是 a1_18-Xplosives 房间本身对 4C/1.0 GHz CPU 太重**（CPU p50 ~22 ms），
    不是 SRT 的 GC 策略或 2 GB 限制；SRT 在此基础上进一步放大尾部（p99 +70%、>50 ms ×4.5）。
 2. **`PreCloneMode=Auto` 在 ≤10 GB 上选 Off 对这台机器不利**：preclone On 的 load 中位数
-   268 ms vs Off 434 ms，内存只多 ~20–30 MB；建议这台机器显式设为 **On**，或把 Auto 的
-   内存阈值/文案重新评估（"低内存机器关 preclone"的收益没有原先假设的大）。
+   268 ms vs Off 434 ms，内存只多 ~20–30 MB；**v3.28.1 已把 Auto 改为始终 On**，
+   想省内存的用户可显式选 Off（"低内存机器关 preclone"的收益没有原先假设的大）。
 3. **冷启动 save 缩放严重**：a0 2.9 s / a1 6.2–6.3 s（主测试机 0.62 s，约 5–10 倍）。首次 save 的 JIT
    冷启动在弱 CPU 上被放大 5 倍；建议在文档/设置里明确"进图后第一次 F7 可能卡数秒"，
    并继续探索隔离预热（不能污染主缓存）。

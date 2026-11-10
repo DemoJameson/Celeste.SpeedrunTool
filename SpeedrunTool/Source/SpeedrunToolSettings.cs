@@ -72,25 +72,15 @@ public class SpeedrunToolSettings : EverestModuleSettings {
 
     /// <summary>
     /// Pre-cloning keeps a second copy of the saved entity graph alive so that loading is
-    /// faster. On memory-constrained machines that is a bad trade, so the default is Auto:
-    /// enabled on machines with plenty of RAM, disabled on ~8 GB machines.
+    /// faster, at the cost of some extra memory. Auto enables it everywhere (v3.28.1): the
+    /// old "low-memory machine = Off" heuristic saved only a few tens of MB in the 8 GB
+    /// benchmark while roughly doubling the load time, so the default now favours load speed.
+    /// Set it to Off explicitly to trade load speed for maximum memory savings.
     /// </summary>
     public PreCloneMode PreCloneMode { get; set; } = PreCloneMode.Auto;
 
-    /// <summary> Roughly the amount of RAM below which we prefer memory over load speed. </summary>
-    private const long LowMemoryMachineThresholdBytes = 10L * 1024 * 1024 * 1024;
-
     public void ApplyPreCloneMode() {
-        StateManager.PreCloneEnabled = PreCloneMode switch {
-            PreCloneMode.On => true,
-            PreCloneMode.Off => false,
-            _ => !IsLowMemoryMachine()
-        };
-    }
-
-    private static bool IsLowMemoryMachine() {
-        long totalAvailableMemory = GC.GetGCMemoryInfo().TotalAvailableMemoryBytes;
-        return totalAvailableMemory > 0 && totalAvailableMemory <= LowMemoryMachineThresholdBytes;
+        StateManager.PreCloneEnabled = PreCloneMode != PreCloneMode.Off;
     }
 
     private void LogForDiagnostics() {

@@ -37,9 +37,9 @@ versions keep that cost predictable and expose the main memory/speed trade-off:
 
 - **Pre-clone for Faster Load** (State settings, default `Auto`): the object graph needed by the
   next load is prepared on a background thread, which makes loading noticeably faster but keeps a
-  second copy of the saved entities in memory. `Auto` enables it only on machines with more than
-  ~10 GB of RAM; on a low-memory machine keep it `Auto` or set it to `Off` to roughly halve the
-  savestate footprint.
+  second copy of the saved entities in memory. `Auto` enables it on every machine (v3.28.1): on
+  the 8 GB benchmark the extra memory was only a few tens of MB while load time roughly halved,
+  so choose `Off` explicitly if you need to minimize the savestate footprint.
 - Save-state thumbnails are stored as small textures (<= 480 px on the long edge), not as
   full-screen captures, and capture buffers are reused.
 - Loading a state saved in another chapter first has to load that chapter (map data, tilesets,
@@ -74,8 +74,8 @@ A release zip (same layout the old `toZip.cmd` produced: `everest.yaml` + `Speed
 zip root plus `Dialog/` and `Graphics/`) is made explicitly, not on every build:
 
 ```bash
-dotnet build -c Release -p:CelestePrefix="/path/to/Celeste" -p:PackageMod=true -p:SrtPackageVersion=3.28.0
-# -> dist/SpeedrunTool-3.28.0.zip
+dotnet build -c Release -p:CelestePrefix="/path/to/Celeste" -p:PackageMod=true -p:SrtPackageVersion=3.28.1
+# -> dist/SpeedrunTool-3.28.1.zip
 ```
 
 The version in `everest.yaml` remains the single source of truth; `SrtPackageVersion` only names the

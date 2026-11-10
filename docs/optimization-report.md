@@ -14,7 +14,7 @@
 测于 Strawberry Jam `5-Grandmaster/ZZ-HeartSide` 入口房间（222 entities，60fps vsync，
 20 iterations + 3 warmup；每项 2 次运行取中位数，原始数据见 `docs/bench-baseline.md`）：
 
-| 指标（中位数） | upstream master | 优化后（Pre-clone On） | 优化后（Pre-clone Off，8GB 默认） |
+| 指标（中位数） | upstream master | 优化后（Pre-clone On） | 优化后（Pre-clone Off） |
 |----------------|-----------------|------------------------|----------------------------------|
 | save p50 | 17.47 ms | 13.10 ms（**-25%**） | 12.41 ms（**-29%**） |
 | load p50 | 15.00 ms | 11.28 ms（**-25%**） | 14.72 ms（-2%） |
@@ -28,14 +28,16 @@
 要点：
 - save/load p50 降低约 1/4；load 帧尖峰降低 27%~39%（旧构建的尖峰主要来自 snapshot
   全屏捕获 / 8.3MB LOH 分配、以及更慢的克隆处理器）。
-- 存档常驻内存明显下降：**Pre-clone Off 时 3 槽从 65.4MB 降到 28.4MB（-57%）**，这是 8GB
-  目标机实际会走到的路径（Auto 在 ≤10GB 机器上选中 Off）；On 时 3 槽 50.3MB（-23%），因为
-  Pre-clone 的第二份实体图本身就是“用内存换取读档速度”的设计。
+- 存档常驻内存明显下降：**Pre-clone Off 时 3 槽从 65.4MB 降到 28.4MB（-57%）**；
+  On 时 3 槽 50.3MB（-23%），因为 Pre-clone 的第二份实体图本身就是“用内存换取读档速度”的设计。
+  注意 v3.28.1 起 `Auto` 始终等于 On（见下方 8GB 机器说明），Off 仍需手动选择。
 - load 的尖峰只出现在 load 所在那一帧（被 load 的 wipe 动画覆盖）；load 之后 1 秒窗口帧时间
   稳定 60fps，没有“有了 savestate 之后持续卡顿”。normal 模式（含 freeze+wipe）的可见过渡
   约 520-550ms，来自 wipe 动画本身，期间最大帧 17-27ms。
-- 8GB 机器上 `PreCloneMode=Auto` 生效为 Off：用 load p50 11.3→14.7ms（+3.4ms）换取每槽
-  约一半常驻内存 —— 对目标机器是划算的取舍（内存压力 > 每次读档多 3ms）。
+- **8GB 机器（v3.28.0 及以前）**：`PreCloneMode=Auto` 生效为 Off，用 load p50 11.3→14.7ms
+  （+3.4ms）换取每槽约一半常驻内存。**v3.28.1 已改为 Auto 始终 On**：旧机（i5-1035G1/8GB）
+  实测 preclone On 只多 ~20–30MB，却把 a1 房间 load 中位数从 434ms 降到 268ms，内存收益远小于
+  读档收益；想省内存的用户仍可手动 Off。
 - **冷启动已知问题**：会话内**第一次** save/load 仍有一笔一次性开销（本机 profile：首次
   save `cloneLevel=215.9ms + saveActions=142.4ms`，首次 load `loadActions=61.7ms`，来自
   JIT + 每种类型的 cloner codegen）。后续 save/load 稳定在 13/11ms。见 §4 后续可做。
@@ -58,9 +60,9 @@
   也得到同样结论。
 - SRT 的成本集中在 **save/load 边界**：首次 save 约 719–740ms（冷启动，见 §2.5，未解决）、
   稳态 save/load 40.7/32.7ms；每次 load 后 PreClone On 有一个 21–25ms / 24.5MB 的后台任务。
-- **8GB 机器建议**：`PreCloneMode=Auto`（默认 Off）+ **≤2 槽**；3 槽 + PreClone On 时 managed
-  峰值 937MB 并出现 1 次 GC/64ms 帧。GC 压力测试中 2GB/3GB heap limit 表现几乎相同（无法单靠
-  GC 堆上限复现 8GB 真机压力）。
+- **8GB 机器建议（v3.28.1）**：`PreCloneMode=Auto`（现在始终 On）+ **≤2 槽**；3 槽 + PreClone On
+  时 managed 峰值 937MB 并出现 1 次 GC/64ms 帧。GC 压力测试中 2GB/3GB heap limit 表现几乎相同
+  （无法单靠 GC 堆上限复现 8GB 真机压力）。如果内存特别紧张，显式 Off 仍是可选项。
 
 
 ## 1. 方法
@@ -79,7 +81,7 @@
 | 改动 | 说明 | 收益 |
 |------|------|------|
 | Snapshot 缩略图 | 多槽存档缩略图从整屏纹理改为长边 ≤480px；捕获 buffer 复用；清除/覆盖/热重载时 Dispose | VRAM 8.3MB/槽 → ≤0.9MB/槽；每次 save 的 8.3MB LOH 垃圾 → 0 |
-| Pre-clone 可开关（Auto/On/Off） | 预克隆在后台保留第二份**实体图**以加速读档；Auto 在 GC 可用内存 ≤10GB 的机器上关闭 | 关闭后 savestate 的实体图常驻内存约减半（映射表/静态值/Snapshot 仍在） |
+| Pre-clone 可开关（Auto/On/Off） | 预克隆在后台保留第二份**实体图**以加速读档；v3.28.1 起 Auto 始终 On（旧机实测内存代价很小、读档收益明显） | 手动关闭后 savestate 的实体图常驻内存约减半（映射表/静态值/Snapshot 仍在），但读档变慢 |
 | PreCloneEnabled 切换安全 | 关闭时先等待所有槽的 preclone 任务结束再释放引用，避免第二份图滞留到下次 save | 运行期切换真正释放内存 |
 | 移除 load 路径的无用克隆 | `UpdateTimeAndDeaths` 里 Session/SaveData 克隆后从未使用；`UnloadLevel` 的 LINQ Distinct、`RestoreAudio_1` 的每实体 `ToArray()`、重复 VirtualAsset | 每次 load 少一次 SaveData 全量克隆和一批临时分配 |
 | 纹理/事件实例生命周期修复 | Snapshot `ClearAll`/热重载 Dispose；同槽重复存档 Dispose 旧纹理；`readbackBuffer` 不跨重载常驻 | 消除 VRAM 泄漏 |
@@ -333,8 +335,8 @@ f3_01-Hydro 的 9 帧 >50ms、d2_08-Aiden 的 219.6ms），不是 SRT。
 
 ## 4. 已知限制 / 后续可做
 
-- **pre-clone 的取舍是本质的**：读档速度 vs 常驻实体图内存二选一，目前用 Auto 按
-  `GC.GetGCMemoryInfo().TotalAvailableMemoryBytes`（≈物理内存上限，含容器限制）选择；
+- **pre-clone 的取舍是本质的**：读档速度 vs 常驻实体图内存二选一；v3.28.1 起 Auto 始终 On
+  （旧机实测内存代价仅 ~20–30MB、load 中位数 434→268ms），需要省内存的用户手动 Off；
   若要两者兼得，需要把模板压缩成“实体清单 + 重建 Tracker”的方案（`docs/audit.md` B1 档 3）。
 - **`ForceSetField`**（`DeepCloneTo` 的 root 类型链上的 readonly 字段，如 Level/Scene 的
   `LoadOverrides`/`EntityLoaders`；其它 `DeepCloneToShared` 调用点也会经过）仍是反射实现，

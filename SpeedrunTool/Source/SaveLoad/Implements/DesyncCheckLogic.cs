@@ -140,11 +140,16 @@ internal static class DesyncCheckLogic {
         return false;
     }
 
-    /// <summary>LuaCutscenes <c>LuaCutsceneEntity</c>: safe only when finished and no coroutine is running.</summary>
+    /// <summary>
+    /// LuaCutscenes <c>LuaCutsceneEntity</c>: safe only when <c>Finished</c> and not driving the level
+    /// cutscene. Bench E1 hit a false rejection where a finished entity still carried an unfinished
+    /// wrapper <c>Monocle.Coroutine</c> (the entity had already run <c>OnEnd</c>, so Lua no longer
+    /// executes). <c>Finished</c> is set by <c>OnEnd</c> and is the authoritative "the Lua cutscene is
+    /// over" signal, so a lingering coroutine component must not override it.
+    /// </summary>
     /// <param name="finished"><c>Finished</c> field value; null means the field is missing (fail-closed).</param>
     /// <param name="drivenByLevelCutscene">The level's current skippable cutscene is driven by this type.</param>
-    /// <param name="hasUnfinishedCoroutine">The entity still carries an unfinished <c>Monocle.Coroutine</c>.</param>
-    public static AtRestVerdict LuaCutsceneEntity(bool? finished, bool drivenByLevelCutscene, bool hasUnfinishedCoroutine) {
+    public static AtRestVerdict LuaCutsceneEntity(bool? finished, bool drivenByLevelCutscene) {
         if (finished is null) {
             return AtRestVerdict.Unsafe; // field missing -> fail-closed
         }
@@ -153,21 +158,19 @@ internal static class DesyncCheckLogic {
             return AtRestVerdict.Unsafe; // level cutscene still running
         }
 
-        if (!finished.Value) {
-            return AtRestVerdict.Unsafe;
-        }
-
-        if (hasUnfinishedCoroutine) {
-            return AtRestVerdict.Unsafe;
-        }
-
-        return AtRestVerdict.Safe;
+        return finished.Value ? AtRestVerdict.Safe : AtRestVerdict.Unsafe;
     }
 
     /// <summary>
-    /// LuaCutscenes <c>LuaTalker</c> (P2). Safe only when the level is not inside a cutscene driven by
-    /// the talker, no coroutine component is running, and <c>onTalkRoutine</c> is either absent or
-    /// proven finished.
+    /// LuaCutscenes <c>LuaTalker</c> (P2). The introspected <c>onTalkRoutine</c> state is authoritative
+    /// when it is available:
+    /// <list type="bullet">
+    /// <item><see cref="TalkRoutineState.Finished"/>: the Lua routine completed, so a lingering wrapper
+    /// <c>Monocle.Coroutine</c> must not cause a false rejection (bench E1);</item>
+    /// <item><see cref="TalkRoutineState.Running"/> / <see cref="TalkRoutineState.Unknown"/>: refuse;</item>
+    /// <item><see cref="TalkRoutineState.None"/>: no routine was created, fall back to the old P2
+    /// coroutine-component signal.</item>
+    /// </list>
     /// </summary>
     /// <param name="drivenByLevelCutscene">The level's current skippable cutscene is driven by a LuaTalker.</param>
     /// <param name="hasUnfinishedCoroutine">The entity still carries an unfinished <c>Monocle.Coroutine</c>.</param>
@@ -177,18 +180,26 @@ internal static class DesyncCheckLogic {
             return AtRestVerdict.Unsafe;
         }
 
-        if (hasUnfinishedCoroutine) {
-            return AtRestVerdict.Unsafe;
+        switch (talkRoutineState) {
+            case TalkRoutineState.Running:
+            case TalkRoutineState.Unknown:
+                return AtRestVerdict.Unsafe; // still advancing, or fail-closed
+            case TalkRoutineState.Finished:
+                return AtRestVerdict.Safe; // authoritative: the Lua routine is over
+            default:
+                // onTalkRoutine is null: keep the P2 coroutine-component signal.
+                return hasUnfinishedCoroutine ? AtRestVerdict.Unsafe : AtRestVerdict.Safe;
         }
-
-        return talkRoutineState is TalkRoutineState.None or TalkRoutineState.Finished
-            ? AtRestVerdict.Safe
-            : AtRestVerdict.Unsafe; // Running or Unknown (fail-closed)
     }
 
     /// <summary>
     /// BossesHelper <c>BossController</c>: safe unless its <c>PatternCoroutine</c> is actively running.
     /// A missing <c>PatternCoroutine</c> field is fail-closed.
+    /// <para>
+    /// Reserved for the future opt-in E5b adapter: the default gate refuses saves whenever a
+    /// <c>BossController</c> exists (its Lua boss state cannot be cloned/restored without that
+    /// adapter), so this rule is currently only exercised by the offline tests.
+    /// </para>
     /// </summary>
     /// <param name="patternCoroutineFinished"><c>PatternCoroutine.Finished</c>; null = field missing.</param>
     /// <param name="patternCoroutineActive"><c>PatternCoroutine.Active</c>.</param>

@@ -74,15 +74,15 @@ internal static class Program {
     // 2. Built-in at-rest predicates
     // ---------------------------------------------------------------------------------------------
     private static void AtRestTests() {
-        // LuaCutscenes.LuaCutsceneEntity
+        // LuaCutscenes.LuaCutsceneEntity. Bench E1: a finished entity must not be refused because a
+        // wrapper Coroutine is still around, so Finished is the only signal (besides the level
+        // cutscene driver flag).
         ExpectVerdict("LuaCutsceneEntity finished + idle is at rest", AtRestVerdict.Safe,
-            DesyncCheckLogic.LuaCutsceneEntity(finished: true, drivenByLevelCutscene: false, hasUnfinishedCoroutine: false));
+            DesyncCheckLogic.LuaCutsceneEntity(finished: true, drivenByLevelCutscene: false));
         ExpectVerdict("LuaCutsceneEntity not finished is unsafe", AtRestVerdict.Unsafe,
-            DesyncCheckLogic.LuaCutsceneEntity(finished: false, drivenByLevelCutscene: false, hasUnfinishedCoroutine: false));
+            DesyncCheckLogic.LuaCutsceneEntity(finished: false, drivenByLevelCutscene: false));
         ExpectVerdict("LuaCutsceneEntity running in level cutscene is unsafe", AtRestVerdict.Unsafe,
-            DesyncCheckLogic.LuaCutsceneEntity(finished: true, drivenByLevelCutscene: true, hasUnfinishedCoroutine: false));
-        ExpectVerdict("LuaCutsceneEntity with running coroutine is unsafe", AtRestVerdict.Unsafe,
-            DesyncCheckLogic.LuaCutsceneEntity(finished: true, drivenByLevelCutscene: false, hasUnfinishedCoroutine: true));
+            DesyncCheckLogic.LuaCutsceneEntity(finished: true, drivenByLevelCutscene: true));
 
         // LuaCutscenes.LuaTalker (P2). Bench found a shape (SJ tofu [Atrium]) where the talk runs with
         // InCutscene == false and without a Monocle.Coroutine component, so onTalkRoutine must be
@@ -91,6 +91,9 @@ internal static class Program {
             DesyncCheckLogic.LuaTalker(drivenByLevelCutscene: false, hasUnfinishedCoroutine: false, TalkRoutineState.None));
         ExpectVerdict("LuaTalker with a finished talk routine is at rest", AtRestVerdict.Safe,
             DesyncCheckLogic.LuaTalker(drivenByLevelCutscene: false, hasUnfinishedCoroutine: false, TalkRoutineState.Finished));
+        // Bench E1: after the talk the wrapper Coroutine may linger; the finished routine state wins.
+        ExpectVerdict("LuaTalker with a finished talk routine ignores a lingering coroutine", AtRestVerdict.Safe,
+            DesyncCheckLogic.LuaTalker(drivenByLevelCutscene: false, hasUnfinishedCoroutine: true, TalkRoutineState.Finished));
         ExpectVerdict("LuaTalker with a pending/running talk routine is unsafe", AtRestVerdict.Unsafe,
             DesyncCheckLogic.LuaTalker(drivenByLevelCutscene: false, hasUnfinishedCoroutine: false, TalkRoutineState.Running));
         ExpectVerdict("LuaTalker with an uninspectable talk routine fails closed", AtRestVerdict.Unsafe,
@@ -132,7 +135,7 @@ internal static class Program {
     // ---------------------------------------------------------------------------------------------
     private static void FailClosedTests() {
         ExpectVerdict("LuaCutsceneEntity with missing Finished fails closed", AtRestVerdict.Unsafe,
-            DesyncCheckLogic.LuaCutsceneEntity(finished: null, drivenByLevelCutscene: false, hasUnfinishedCoroutine: false));
+            DesyncCheckLogic.LuaCutsceneEntity(finished: null, drivenByLevelCutscene: false));
         ExpectVerdict("BossController with missing PatternCoroutine fails closed", AtRestVerdict.Unsafe,
             DesyncCheckLogic.BossController(patternCoroutineFinished: null, patternCoroutineActive: false));
         ExpectVerdict("FrostHelper boss with missing CreatedCoroutines fails closed", AtRestVerdict.Unsafe,
@@ -205,7 +208,7 @@ internal static class Program {
 
         // End-to-end override shape: an at-rest rule says Unsafe, a registration overrides that instance.
         DesyncRegistration.AddEntityPredicate(value => ReferenceEquals(value, "knownSafeCutsceneEntity"));
-        AtRestVerdict verdict = DesyncCheckLogic.LuaCutsceneEntity(finished: false, drivenByLevelCutscene: false, hasUnfinishedCoroutine: false);
+        AtRestVerdict verdict = DesyncCheckLogic.LuaCutsceneEntity(finished: false, drivenByLevelCutscene: false);
         verdict = DesyncCheckLogic.ApplyEntityOverride(verdict, DesyncRegistration.IsEntitySafe("knownSafeCutsceneEntity"));
         Expect("registered entity overrides an Unsafe at-rest verdict", AtRestVerdict.Safe, verdict);
 

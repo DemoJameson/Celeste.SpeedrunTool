@@ -149,14 +149,9 @@ internal static class DesyncRiskAnalyzer {
             return false;
         }
 
-        // ---- 1. Generic "is Lua executing right now?" probe -------------------------------------
-        if (LuaUsageProbe.TryFindExecutingLua(level, ModSettings.SaveInLuaCutscene, out string executingDetail)) {
-            desyncDetail = executingDetail;
-            reason = "Failed to Save: [LuaExecuting] may lead to desync!";
-            return true;
-        }
-
-        // ---- 2. Built-in ecosystem at-rest gates -------------------------------------------------
+        // ---- 1. Built-in ecosystem at-rest gates -------------------------------------------------
+        // Run before the generic probe so ecosystem-owned problems keep their old, specific popup
+        // ([BossController] / [LuaTalker] / ...) instead of being reported as generic [LuaExecuting].
         foreach (EcosystemGateResult gate in DesyncEcosystems.EvaluateAtRest(level)) {
             switch (gate.State) {
                 case EcosystemGateState.NotInstalled:
@@ -189,6 +184,15 @@ internal static class DesyncRiskAnalyzer {
                     reason = $"Failed to Save: [{gate.EntityTypeName ?? "UnknownEntity"}] may lead to desync!";
                     return true;
             }
+        }
+
+        // ---- 2. Generic "is Lua executing right now?" probe -------------------------------------
+        // Catches Lua execution that no ecosystem gate covers (including unknown mods). Runs after
+        // the gates so their instances keep the more specific popup.
+        if (LuaUsageProbe.TryFindExecutingLua(level, ModSettings.SaveInLuaCutscene, out string executingDetail)) {
+            desyncDetail = executingDetail;
+            reason = "Failed to Save: [LuaExecuting] may lead to desync!";
+            return true;
         }
 
         // ---- 3. Dynamic fail-closed list from previous late checks --------------------------------

@@ -22,6 +22,11 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 /// Reflective field/member names were verified against the installed DLLs with Cecil; the inventory
 /// and its provenance are written down in docs/desync-checker.md (maintenance: re-run the inventory
 /// when one of the mods updates).
+///
+/// Policy status after bench: the LuaCutscenes instance-level gate is active (E1/E2/E3 verified),
+/// while the BossesHelper / FrostHelper at-rest allow-list stays behind a disabled flag because the
+/// lua-work E5/E5b adapters that clone/restore the mods' Lua state are not ported into this branch.
+/// Until they are, a boss instance keeps refusing the save exactly like the old checker.
 /// </summary>
 internal static class DesyncEcosystems {
     private static readonly LuaCutscenesEcosystem luaCutscenes = new();
@@ -370,11 +375,11 @@ internal sealed class LuaCutscenesEcosystem : EcosystemBase {
                 }
 
                 bool? finished = ReadBool(finishedField, entity);
-                bool hasUnfinishedCoroutine = HasUnfinishedCoroutine(entity);
-                if (!DesyncCheckLogic.LuaCutsceneEntity(finished, drivenByEntity, hasUnfinishedCoroutine).IsSafe()) {
+                // Bench E1: only Finished decides - a finished entity must not be refused because a
+                // wrapper Coroutine is still around (OnEnd already ran, Lua no longer executes).
+                if (!DesyncCheckLogic.LuaCutsceneEntity(finished, drivenByEntity).IsSafe()) {
                     return UnsafeResult(entity, runtimeType.Name,
-                        $"LuaCutsceneEntity is not at rest (Finished={Describe(finished)}, drivenByLevelCutscene={drivenByEntity}, "
-                        + $"hasUnfinishedCoroutine={hasUnfinishedCoroutine})");
+                        $"LuaCutsceneEntity is not at rest (Finished={Describe(finished)}, drivenByLevelCutscene={drivenByEntity})");
                 }
             }
             else if (talkerType is not null && talkerType.IsAssignableFrom(runtimeType)) {
@@ -417,13 +422,12 @@ internal sealed class LuaCutscenesEcosystem : EcosystemBase {
                 }
 
                 // The trigger may keep a reference to an entity that is no longer in level.Entities;
-                // validate it as well instead of trusting the trigger blindly.
+                // validate it as well instead of trusting the trigger blindly. Bench E1: a finished
+                // entity with a lingering wrapper Coroutine must not be refused (see LuaCutsceneEntity).
                 bool? finished = ReadBool(finishedField, referenced);
-                bool hasUnfinishedCoroutine = HasUnfinishedCoroutine(referenced);
-                if (!DesyncCheckLogic.LuaCutsceneEntity(finished, drivenByEntity, hasUnfinishedCoroutine).IsSafe()) {
+                if (!DesyncCheckLogic.LuaCutsceneEntity(finished, drivenByEntity).IsSafe()) {
                     return UnsafeResult(referenced, referenced.GetType().Name,
-                        $"LuaCutsceneTrigger holds a LuaCutsceneEntity that is not at rest (Finished={Describe(finished)}, "
-                        + $"hasUnfinishedCoroutine={hasUnfinishedCoroutine})");
+                        $"LuaCutsceneTrigger holds a LuaCutsceneEntity that is not at rest (Finished={Describe(finished)})");
                 }
             }
         }
@@ -491,6 +495,13 @@ internal sealed class BossesHelperEcosystem : EcosystemBase {
     internal override DesyncEcosystemKind Kind => DesyncEcosystemKind.BossesHelper;
     internal override string ModName => "BossesHelper";
 
+    // The lua-work E5b adapter (main-thread cloning of the boss Lua state) is NOT ported into this
+    // branch. Bench showed that the idle PatternCoroutine check alone is not enough: an idle
+    // LuaProxyCoroutine on CustomBossPuppet still triggers the [LuaExecuting] probe, so "at-rest boss"
+    // saves are not safe without the adapter. Keep the old fail-closed behaviour (a BossController in
+    // the level refuses the save) until the adapter is ported and bench-verified; flip this flag then.
+    private static readonly bool AllowAtRestBossesWithAdapter = false;
+
     private Type bossControllerType;
     private FieldInfo patternCoroutineField;
     private Type[] ownedTypes = [];
@@ -517,7 +528,7 @@ internal sealed class BossesHelperEcosystem : EcosystemBase {
         patternCoroutineField = bossControllerType.GetFieldInfo("PatternCoroutine");
         if (patternCoroutineField is null) {
             Logger.Warn("SpeedrunTool/DesyncRiskAnalyzer",
-                "BossesHelper.BossController.PatternCoroutine is missing; instances will fail closed.");
+                "BossesHelper.BossController.PatternCoroutine is missing; at-rest adapter support would fail closed.");
         }
 
         // Entity types that can hold Lua state directly or transitively (Cecil inventory in
@@ -562,11 +573,22 @@ internal sealed class BossesHelperEcosystem : EcosystemBase {
             return UnavailableResult("BossesHelper is installed but BossController could not be resolved");
         }
 
+        Entity boss = FirstInspectableEntityOfType(level, bossControllerType);
+        if (boss is null) {
+            // No BossController in the level: same as the old "blanket safe" behaviour for the rest of
+            // the assembly (e.g. a standalone health-system room).
+            return SafeResult();
+        }
+
+        if (!AllowAtRestBossesWithAdapter) {
+            return UnsafeResult(boss, boss.GetType().Name,
+                "BossesHelper BossController present; saving its Lua boss state needs the opt-in E5b adapter "
+                + "(not ported yet), so the save is refused (old fail-closed behaviour)");
+        }
+
         if (patternCoroutineField is null) {
-            return FirstInspectableEntityOfType(level, bossControllerType) is { } uninspectable
-                ? UnsafeResult(uninspectable, uninspectable.GetType().Name,
-                    "BossesHelper.BossController.PatternCoroutine is missing; cannot prove the boss is idle (fail-closed)")
-                : UnavailableResult("BossesHelper.BossController.PatternCoroutine is missing");
+            return UnsafeResult(boss, boss.GetType().Name,
+                "BossesHelper.BossController.PatternCoroutine is missing; cannot prove the boss is idle (fail-closed)");
         }
 
         foreach (Entity entity in level.Entities) {
@@ -602,6 +624,11 @@ internal sealed class BossesHelperEcosystem : EcosystemBase {
 internal sealed class FrostHelperEcosystem : EcosystemBase {
     internal override DesyncEcosystemKind Kind => DesyncEcosystemKind.FrostHelper;
     internal override string ModName => "FrostHelper";
+
+    // Same policy as BossesHelper: the E5 LuaBadelineBoss adapter is not ported, so an at-rest save
+    // would share the (possibly mutated) Lua tables across load. Keep the old fail-closed behaviour
+    // until the adapter is ported and bench-verified; flip this flag then.
+    private static readonly bool AllowAtRestFrostBossWithAdapter = false;
 
     private Type luaBossType;
     private PropertyInfo createdCoroutinesProperty;
@@ -647,6 +674,17 @@ internal sealed class FrostHelperEcosystem : EcosystemBase {
 
         if (!Resolved || luaBossType is null) {
             return UnavailableResult("FrostHelper is installed but LuaBadelineBoss could not be resolved");
+        }
+
+        Entity boss = FirstInspectableEntityOfType(level, luaBossType);
+        if (boss is null) {
+            return SafeResult();
+        }
+
+        if (!AllowAtRestFrostBossWithAdapter) {
+            return UnsafeResult(boss, boss.GetType().Name,
+                "FrostHelper LuaBadelineBoss present; saving its Lua state needs the opt-in E5 adapter "
+                + "(not ported yet), so the save is refused (old fail-closed behaviour)");
         }
 
         foreach (Entity entity in level.Entities) {

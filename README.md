@@ -1,6 +1,6 @@
-# Celeste Speedrun Tool
+﻿# Celeste Speedrun Tool
 
-[中文说明](./README_CN.md)
+[涓枃璇存槑](./README_CN.md)
 
 ## Download
 [GameBanana](https://gamebanana.com/tools/6597)
@@ -12,7 +12,7 @@
 - Room timer compatible with Summit flags. Personal best is recorded.
 - Statistics on deaths, including location, time lost, etc.
 - Controller support for debug map: use confirm to teleport, right analog to zoom.
-- Debug mode F6 teleport bug-fix – Dream blocks and Badeline not activating in Old Site, incorrect ice/fire state in Core, Celestial Resort huge mess hall being strangely lit, wind sound does not play in Summit 2000m.
+- Debug mode F6 teleport bug-fix 鈥?Dream blocks and Badeline not activating in Old Site, incorrect ice/fire state in Core, Celestial Resort huge mess hall being strangely lit, wind sound does not play in Summit 2000m.
 
 ## Lua desync protection
 
@@ -40,6 +40,9 @@ versions keep that cost predictable and expose the main memory/speed trade-off:
   second copy of the saved entities in memory. `Auto` enables it on every machine (v3.28.1): on
   the 8 GB benchmark the extra memory was only a few tens of MB while load time roughly halved,
   so choose `Off` explicitly if you need to minimize the savestate footprint.
+- **First level load is ~1.4 s longer once per game session** (v3.28.2): a throwaway save/clear is
+  run on the loading screen to warm the first-save JIT path, so the first real save is no longer
+  slower than the following ones. Set `WarmUpFirstSave: false` in the mod settings file to disable.
 - Save-state thumbnails are stored as small textures (<= 480 px on the long edge), not as
   full-screen captures, and capture buffers are reused.
 - Loading a state saved in another chapter first has to load that chapter (map data, tilesets,
@@ -74,8 +77,8 @@ A release zip (same layout the old `toZip.cmd` produced: `everest.yaml` + `Speed
 zip root plus `Dialog/` and `Graphics/`) is made explicitly, not on every build:
 
 ```bash
-dotnet build -c Release -p:CelestePrefix="/path/to/Celeste" -p:PackageMod=true -p:SrtPackageVersion=3.28.1
-# -> dist/SpeedrunTool-3.28.1.zip
+dotnet build -c Release -p:CelestePrefix="/path/to/Celeste" -p:PackageMod=true -p:SrtPackageVersion=3.28.2
+# -> dist/SpeedrunTool-3.28.2.zip
 ```
 
 The version in `everest.yaml` remains the single source of truth; `SrtPackageVersion` only names the
@@ -90,8 +93,8 @@ release asset. Use a CI step (on a tag) to call this, so a debug build can never
 ## Acknowledgments
 
 - A huge shout-out to [Extremely OK Games, Ltd.](https://exok.com/) for designing [Celeste](http://www.celestegame.com/) , it has been my favorite platformer ever since.
-- [Everest](https://everestapi.github.io/) – Celeste Mod Loader and modding API, making this Mod a reality.
-- [Ahorn](https://github.com/CelestialCartographers/Ahorn) – Map maker and level editor, useful for identifying different entities in the game.
-- [Power Up Audio](https://www.powerupaudio.com/) – Curated library of high-quality sound effects for games, used to acquire Celeste audio project
-- [西瓜](https://space.bilibili.com/18705633), [buhbai](https://www.speedrun.com/user/buhbai), [Evansfight](https://www.speedrun.com/user/Evansfight), [Lev067](https://www.speedrun.com/user/Lev067), [sonicyellow](https://www.speedrun.com/user/sonicyellow), [nameguy](https://gamebanana.com/members/1653060) – Mod tester.
-- [rjdimo](https://steamcommunity.com/id/rjdimo/) – Shameless self-promoting translator of this readme file.
+- [Everest](https://everestapi.github.io/) 鈥?Celeste Mod Loader and modding API, making this Mod a reality.
+- [Ahorn](https://github.com/CelestialCartographers/Ahorn) 鈥?Map maker and level editor, useful for identifying different entities in the game.
+- [Power Up Audio](https://www.powerupaudio.com/) 鈥?Curated library of high-quality sound effects for games, used to acquire Celeste audio project
+- [瑗跨摐](https://space.bilibili.com/18705633), [buhbai](https://www.speedrun.com/user/buhbai), [Evansfight](https://www.speedrun.com/user/Evansfight), [Lev067](https://www.speedrun.com/user/Lev067), [sonicyellow](https://www.speedrun.com/user/sonicyellow), [nameguy](https://gamebanana.com/members/1653060) 鈥?Mod tester.
+- [rjdimo](https://steamcommunity.com/id/rjdimo/) 鈥?Shameless self-promoting translator of this readme file.

@@ -1,61 +1,74 @@
-# Desync checker: cold start vs pre-warm (measured)
+# Desync checker cold start: moving the one-off cost to level loading
 
-Date: 2026-11-11. Machine: main benchmark PC (Ryzen 7 9850X3D, 61 GB), SJ
+Date: 2026-11-12. Machine: main benchmark PC (Ryzen 7 9850X3D, 61 GB), SJ
 `5-Grandmaster/ZZ-HeartSide` → `a1_18-Xplosives` (3468 entities), SrtBench
 `normal` mode, 20 save/load cycles, 1 slot, preclone On.
 
-## Measurements
+## Results
 
-| configuration | first save | subsequent saves | loads |
-|---|---:|---:|---:|
-| default (Lua desync checker on) | **1267–1333 ms** | 50–80 ms | 73–130 ms |
-| `DisableDesyncCheck = true` | **637 ms** | 50–80 ms | 73–130 ms |
-| legacy 3.24.7 (no checker) | 761–798 ms | 148–337 ms | 140–460 ms |
+| configuration | loading screen | first save | first load | subsequent saves |
+|---|---:|---:|---:|---:|
+| v3.28.1, no warm-up | — | **1267–1333 ms** | 243–259 ms | 50–80 ms |
+| v3.28.1, `DisableDesyncCheck` | — | 637 ms | 243 ms | 50–80 ms |
+| legacy 3.24.7 (no checker) | — | 761–798 ms | 241–244 / 321 ms | 148–337 ms |
+| **v3.28.2 with `WarmUpFirstSave`** | **+1361 ms** | **71.5 ms** | **259 ms** | 50–80 ms |
 
-So the checker adds ~0.6 s to the **first** save and effectively nothing to later
-saves. Initial hypotheses were "type graph scan" / "cold type cache", so I measured
-the checker itself after instrumenting `Check`:
+The warm-up dry-run is executed on the first `Level.Begin` (while the level is still
+on the loading screen), so the player-visible first save is now as fast as the
+following ones. The 1361 ms is a one-time cost per game session, not per room or
+per save.
 
-- first save: `Check` called **3621** times, `Check` total **~69.5k Stopwatch
-  ticks ≈ 6.9 ms**, of which `CanSyncType` ≈ 6.7 ms; `KnownTypes` = 1640 entries;
-- later saves: 10844 calls, `Check` ≈ 0.35 ms.
+## Why type-only warm-up did not work
 
-The whole late-check type walk is therefore **~7 ms**, not 600 ms. The cold cost is
-first-call JIT/tiered codegen of the save/clone path (the checker being registered
-changes the first-call code path), not the cache warm-up.
+Initial attempts warmed `CanSyncType` for every entity type (background at level
+begin, then parallel in `OnBeforeSaveState`). Neither reduced the first save.
+Instrumentation showed why:
 
-## Warm-up experiments (both reverted)
+- first save: `Check` called 3621 times, total `Check` time ≈ 6.9 ms
+  (`CanSyncType` ≈ 6.7 ms), `KnownTypes` = 1640 entries;
+- later saves: `Check` ≈ 0.35 ms.
 
-1. **Background warm-up at first Level.Begin** over `level.Tracker.Entities.Keys`
-   (1718 entity types): the scan did not finish before the first save, gave no
-   reduction, and competes for CPU with the game; reverted.
-2. **Parallel `CanSyncType` warm-up in `OnBeforeSaveState`** over unique entity
-   types: first save 1297 ms (no change); reverted.
+The expensive part is not the type graph but the **first execution of the whole
+save/clone path** (`cloneLevel` 371 ms + `saveActions` 265 ms in the profiler);
+pre-computing type safety cannot remove JIT of that path.
 
-This is consistent with the instrumentation: the type graph is cheap, so
-pre-computing it cannot remove the 0.6 s cost.
+## Implemented fix (v3.28.2)
 
-## What this means in practice
+`WarmUpFirstSave` runs once, after `InitSlots`, on the first Level's `Scene.Begin`:
 
-- In real play the cost is **once per game session**, on the first save after
-  entering a level; later saves are 50–80 ms. Pre-warming at level load would just
-  move the same JIT cost into the loading screen (plus background CPU), and would
-  not make the first save faster unless the whole clone/save path is pre-JITed.
-- Doing a real isolated JIT warm-up (e.g. a throwaway clone in a separate
-  AssemblyLoadContext) is the only way to remove it without weakening the checker;
-  the earlier global warm-up attempts were reverted because they polluted
-  DeepCloner caches (see `docs/optimization-report.md` §2.5).
-- For pure performance comparisons with legacy (which has no checker), use
-  `DisableDesyncCheck` in the benchmark config; with it on, our build's first save
-  is 637 ms (faster than legacy's 761–798 ms) and steady save/load is already 2–4×
-  faster with much lower memory.
-- Default product decision: **keep the checker on and the cold start as a documented
-  one-time cost**. Pre-warming is not worth the complexity/risk with the current
-  data.
+1. calls `StateManager.Instance.SaveStateImpl(false, out _)` against the freshly
+   loaded level (this executes the real clone, save actions, checker, preclone
+   start — the whole first-save path);
+2. if a temporary state was created, it is cleared immediately with
+   `ClearStateImpl(false)`; no savestate is exposed to the player;
+3. skips if `StateManager.State != None` (e.g. a cross-chapter pending load) or if
+   the hidden setting `WarmUpFirstSave` is false.
 
-## Suggested next step (only if the first-save hitch becomes a real complaint)
+Log line: `SpeedrunTool/SaveLoadAction: Warmed the first-save path during level
+load: 1361 ms (temporary state created=True)`.
 
-Isolate a JIT warm-up of the save path in a disposable context (not the shared
-DeepCloner caches), or run the late check on a background thread after the clone
-with a safe rollback before the state is exposed. Both are larger changes than the
-warm-up attempts above and should be validated on the old PC before shipping.
+Validated with a 20-cycle steady test, a full a1_18-Xplosives frames test and the
+TAS playback test (`tasplay-ff-a1-abc`: status=ok, phases sampled). The temporary
+state is cleared (`IsSaved == false` before the test starts).
+
+## Trade-offs / caveats
+
+- The loading screen is ~1.4 s longer **once per session** on the benchmark PC.
+  On the 8 GB i5 the JIT is slower, so this may be several seconds; that is the
+  intended place to pay it (the player is waiting anyway).
+- The dry-run briefly creates a full savestate, so peak memory during loading goes
+  up. On 8 GB machines this must be watched; if it causes OOM, set
+  `WarmUpFirstSave: false` in the mod settings YAML (hidden option, default true)
+  or guard it by available memory.
+- If the first level cannot be saved (e.g. active Lua cutscene refused by the
+  checker), the dry-run fails safe, no state remains, and the first real save
+  simply pays the cost as before.
+- For pure performance comparisons against legacy, use `DisableDesyncCheck`; for
+  default-product behavior, keep the warm-up on.
+
+## Old PC next step
+
+Run the kit v1.2.0 compare tests on the old PC: check `WarmUpFirstSave` loading time,
+first save, memory peak, and whether the dry-run survives the 8 GB limit. If it
+does, our first save is ~0.07 s vs legacy's 0.76–0.80 s and the "cold save" gap on
+the old machine is closed.

@@ -31,6 +31,7 @@ v3.28.0 的检查器还能发现数组/容器/泛型实参里嵌套的 Lua 值, 
 ## 性能说明
 存档本质上要保留整个房间对象图的深拷贝，因此开销天然较大。现在这些开销更可控，并且把主要的内存/速度取舍开放成了设置：
 - **预克隆以加快读档**（State 设置，默认「自动」）：在后台预先克隆下一次读档需要的对象图，读档明显更快，但存档会多保留一份实体图的内存。「自动」在所有机器上开启（v3.28.1）：8GB 旧机实测只多用几十 MB，读档时间却大约减半；如果确实想省内存，请手动选「关」。
+- **每局第一次进入章节的读图时间会多约 1.4 秒**（v3.28.2）：在读图阶段做一次丢弃式 save/clear 预热，之后第一次真实存档不再有明显冷启动卡顿。不想多等读图可在 mod 设置文件里设 `WarmUpFirstSave: false`。
 - 存档缩略图改为小尺寸纹理（长边 ≤ 480px，不再是整屏截图），捕获用的缓冲区也会复用。
 - 读取别的章节的存档时，需要先把那个章节加载出来（map、tileset、音频），再恢复状态，所以会比同章节读档多花大约一次章节加载的时间；如果进章节失败，存档会保留、游戏回到章节选择界面，不会卡死。
 - 原有的「加载存档后回收内存」「清除存档后回收内存」仍然控制强制 GC 的时机；如果清除/读取存档时出现卡顿，可以试着关掉它们。
@@ -51,8 +52,8 @@ dotnet build -c Release -p:CelestePrefix="/path/to/Celeste" -p:DeployDir="/path/
 发布用 zip（和旧 `toZip.cmd` 相同布局：zip 根目录 `everest.yaml` + `SpeedrunTool.dll`，外加 `Dialog/`、`Graphics/`）是**显式**动作，不会每次 build 都生成：
 
 ```bash
-dotnet build -c Release -p:CelestePrefix="/path/to/Celeste" -p:PackageMod=true -p:SrtPackageVersion=3.28.1
-# -> dist/SpeedrunTool-3.28.1.zip
+dotnet build -c Release -p:CelestePrefix="/path/to/Celeste" -p:PackageMod=true -p:SrtPackageVersion=3.28.2
+# -> dist/SpeedrunTool-3.28.2.zip
 ```
 
 版本号仍以 `everest.yaml` 为准，`SrtPackageVersion` 只用于命名发布包；建议在 CI 的 tag 流程里调用，避免调试构建产出发布 zip。

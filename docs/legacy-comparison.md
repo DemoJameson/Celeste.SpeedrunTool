@@ -16,7 +16,7 @@ steady test). Raw JSON: `D:\DSH\Celeste\legacy-vs-ours\`.
 
 | metric | ours run 1 | ours run 2 | legacy run 1 | legacy run 2 |
 |---|---:|---:|---:|---:|
-| first save (setup) | 1309 ms | 1262 ms | 772 ms | 761 ms |
+| first save (setup) | **71.5 ms** (v3.28.2 warm-up) | 1262 ms (v3.28.1, no warm-up) | 772 ms | 761 ms |
 | load #1 (cold) | 239.5 ms | 234.0 ms | 241.6 ms | 244.1 ms |
 | following loads median | **81.8 ms** | **79.9 ms** | 131.0 ms | 136.3 ms |
 | phase p50 | 16.66 | 16.66 | 16.66 | 16.66 |
@@ -24,11 +24,13 @@ steady test). Raw JSON: `D:\DSH\Celeste\legacy-vs-ours\`.
 | managed peak (a/b/c) | 1450/1542/1797 MB | same | 2394/2537/2944 MB | 1442/1585/1995 MB |
 | private peak (a/b/c) | 3124/3012/3574 MB | 3107/2999/3587 MB | 4312/4265/5506 MB | 3187/3141/4508 MB |
 
-**First save** is the only metric where ours loses by default: +0.5 s vs legacy.
-That difference is the Lua desync checker's first-save whole-entity-type walk; with
-`disable_desync_check: 1` ours' first save drops to **637.6 ms** (faster than
-legacy), while steady save/load and memory stay the same. Legacy has no checker at
-all, so this is a safety-vs-cold-save trade-off, not a general slowdown.
+**First save** used to be the only metric where ours lost by default (+0.5 s vs
+legacy). v3.28.2 moves that one-off JIT cost to the first **loading screen** with a
+throwaway save+clear (`WarmUpFirstSave`): loading is ~1361 ms longer once per
+session, and the first user-visible save is now **71.5 ms** — ~10× faster than
+legacy. Steady save/load and memory are unchanged. Legacy has no checker at all;
+with `disable_desync_check: 1` ours' first save was already 637 ms before the
+warm-up, so both routes beat legacy now.
 
 Loads after the cold one are **~1.6× faster** on ours; frame pacing is identical
 (16.66 ms p50) and p99 is in the same range.
@@ -59,8 +61,9 @@ the steady save/load advantage remains.
 
 - **Ours wins steady save, steady load, and memory**, including the 3-slot case vs
   legacy's 1 slot.
-- **Ours loses only the first cold save by default** (+0.5 s), because of the Lua
-  desync checker; disabling the checker makes ours faster than legacy there too.
+- **Ours no longer loses the first save**: v3.28.2 pays ~1.36 s once on the loading
+  screen and the first visible save is 71.5 ms (legacy 761–798 ms). The only cost
+  is the loading time, which is the intended trade-off.
 - Frame times are the same in this room (both 16.66 ms p50); the difference is
   SRT latency/memory, not gameplay frame pacing.
 

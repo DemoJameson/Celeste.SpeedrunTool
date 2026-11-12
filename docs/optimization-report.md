@@ -143,7 +143,7 @@
   生成 `dist/SpeedrunTool-x.y.z.zip`（zip 根目录 `everest.yaml` + DLL + `Dialog/` + `Graphics/`）。
   不在每次 build 自动打包（版本号仍以 everest.yaml 为准，发布是显式步骤，适合放 CI 的 tag 流程）。
 
-### 2.5 冷启动（首次 save/load）：已测量，未解决
+### 2.5 冷启动（首次 save/load）：已用读图期 dry-run 消除
 
 profiling 显示**会话内第一次** save 比后续慢很多：入口房间 `cloneLevel` 216ms + `saveActions`
 142ms（后续 ~13ms 总计）；在 3451 实体的第二面，**首次 save 达 719ms**（稳态 41ms），首次 load
@@ -151,17 +151,20 @@ profiling 显示**会话内第一次** save 比后续慢很多：入口房间 `c
 类型预热后 `cloneSaveData` 21.5→4.3ms、`cloneLevel` 只降 8%），而是**首次 JIT**：运行期第一次
 执行那些生成的 cloner 委托和 save/load 的 lambda。
 
-尝试过两种预热方案，均**已撤回**（`de9ebc5` → 后续 revert），没有进入交付版本：
-1. 后台按类型元数据预生成 cloner：安全，但只覆盖 codegen，首次 save 只从 719→~700ms，且为
-   数千个类型保留 cloner 缓存会增加常驻内存（对 8GB 不划算）。
-2. 进图时主线程做一次"丢弃式 save/level clone"以触发 JIT：能把热路径跑一遍，但会污染
-   DeepCloner 的类型/委托缓存，实测导致后续真实 save 抛
-   `ArgumentException: Object of type 'System.RuntimeType' cannot be converted to type
-   'Celeste.Player'`（每 20 次 save 全失败），风险不可接受。
+早期两种预热方案（仅按类型预生成 cloner、在 `OnBeforeSaveState` 里并行扫描类型）均**无收益**
+并已撤回：instrumentation 显示首次 save 的 checker 本身只有 ~7ms，成本来自整条
+clone/save 路径的首次 JIT（profiling：`cloneLevel=371ms + saveActions=265ms`）。
 
-因此冷启动开销保留为已知限制（见 §4），下一步的正确方向是**隔离**地预热（例如把预热产生的
-缓存放到可丢弃的独立 AppDomain/AssemblyLoadContext，或在真实 save 前做一次隔离的 clone 校验），
-而不是复用主缓存。
+v3.28.2 改为在**第一次进入 Level 的读图阶段**做一次完整的 **dry-run save+clear**：
+`WarmUpFirstSave` 调用 `SaveStateImpl` 走完真实的 clone/save actions/checker/preclone 路径，
+成功后立刻 `ClearStateImpl(false)` 丢弃临时状态。实测：
+
+- 读图时间 +1361ms（每游戏会话一次）；
+- 首次玩家可见 save 从 **1267–1333ms 降到 71.5ms**，首次 load 259ms，后续不变；
+- 20 轮 steady、a1 frames、TAS `tasplay-ff-a1-abc` 均通过，临时状态已清除（`IsSaved=false`）。
+
+隐藏设置 `WarmUpFirstSave`（默认 true）可关闭；旧机暂未验证，若 8GB 下 dry-run 峰值内存有
+问题，应关闭或加内存门槛。
 
 ### 2.6 v3.28.0：跨章节读档与 Lua desync 检查
 
@@ -352,10 +355,7 @@ f3_01-Hydro 的 9 帧 >50ms、d2_08-Aiden 的 219.6ms），不是 SRT。
   `docs/sj-compat.md` §6）。
 - **异常兜底边界**：save/load 主路径已覆盖；hotkey 派发（`HotkeyConfigUi`）与 `GC.TryStartNoGCRegion`
   冲突等边界仍未兜底。
-- **会话内首次 save/load 的冷启动开销未消除**：入口房间首次 save ~380ms、3451 实体的第二面
-  首次 save **719–741ms**、首次 load ~111ms，后续稳定在 41ms/33ms（本机）。根因是 JIT（不是
-  codegen），两次预热方案（后台类型预热、进图丢弃式 clone）分别因收益太小 / 会污染 DeepCloner
-  缓存导致后续 save 失败而撤回（详见 §2.5）。后续方向：隔离预热（独立 AssemblyLoadContext 或
-  可丢弃的缓存层）或接受"每次会话一次、且 normal 模式 save 本身带 freeze"。
+- **会话内首次 save/load 的冷启动开销已通过读图期 dry-run 移到加载屏幕**（v3.28.2，见 §2.5）：
+  读图 +~1.4s/会话，首次玩家 save 71.5ms；旧机（8GB）的加载时间/峰值内存仍需用 kit 验证。
 - **benchmark 结果文件**：harness（SrtBench/脚本/原始 JSON）在仓库外 `D:\DSH\Celeste\ench`；
   仓库内保留 `docs/bench-baseline.md`（结果）与 `docs/bench-setup.md`（复现方法）。

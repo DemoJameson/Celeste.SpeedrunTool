@@ -451,10 +451,36 @@ public sealed partial class SaveLoadAction {
 
         try {
             InitSlots();
+            // The first real save otherwise pays a one-off JIT cost (~0.6 s on the benchmark
+            // machine, more on slow CPUs) because the whole clone/save path runs for the first
+            // time there. Run a throwaway save+clear while the level is still on the loading
+            // screen: nobody notices the extra loading time, and the first user-visible save is
+            // then as fast as the following ones. The dry-run is discarded immediately, so no
+            // savestate is exposed to the player.
+            WarmUpFirstSave((Level)self);
         }
         catch (Exception exception) {
             Logger.Warn("SpeedrunTool/SaveLoadAction", $"Failed to initialize save/load actions: {exception.GetType().Name}: {exception.Message}");
             Logger.LogDetailed(exception, "SpeedrunTool");
+        }
+    }
+
+    private static void WarmUpFirstSave(Level level) {
+        try {
+            if (!ModSettings.WarmUpFirstSave || StateManager.Instance.State != State.None) {
+                return;
+            }
+            System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+            bool saved = StateManager.Instance.SaveStateImpl(false, out _);
+            if (saved) {
+                StateManager.Instance.ClearStateImpl(false);
+            }
+            Logger.Log("SpeedrunTool/SaveLoadAction",
+                $"Warmed the first-save path during level load: {sw.ElapsedMilliseconds} ms (temporary state created={saved})");
+        }
+        catch (Exception exception) {
+            Logger.Warn("SpeedrunTool/SaveLoadAction",
+                $"First-save warm-up failed: {exception.GetType().Name}: {exception.Message}");
         }
     }
 
@@ -781,3 +807,4 @@ public sealed partial class SaveLoadAction {
         }
     }
 }
+

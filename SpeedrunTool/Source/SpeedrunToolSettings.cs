@@ -79,6 +79,13 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     /// </summary>
     public PreCloneMode PreCloneMode { get; set; } = PreCloneMode.Auto;
 
+    /// <summary>
+    /// Run a throwaway save+clear on the loading screen the first time a level starts, so the
+    /// first real save does not pay the one-off JIT cost. Hidden option (default on); set false
+    /// in the settings YAML if the extra loading time is not wanted.
+    /// </summary>
+    public bool WarmUpFirstSave { get; set; } = true;
+
     public void ApplyPreCloneMode() {
         StateManager.PreCloneEnabled = PreCloneMode != PreCloneMode.Off;
     }

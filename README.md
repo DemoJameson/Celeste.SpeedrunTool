@@ -32,6 +32,12 @@ field path when a late check clears a save.
 
 ## Performance
 
+**Multi-slot is best-effort on low-memory machines.** The guaranteed/optimized path is one
+resident savestate: on the 8 GB test PC its frame p99 is ~29-31 ms, matching upstream
+LegacySupport, while holding 3 states adds a GC tail (p99 ~47 ms; ~69 ms with preclone on).
+Multi-slot is still fully supported and never auto-evicted; it is simply not performance-
+guaranteed on 8 GB hardware.
+
 A save state has to keep a deep copy of the room's object graph, so it is heavy by nature. Recent
 versions keep that cost predictable and expose the main memory/speed trade-off:
 

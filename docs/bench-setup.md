@@ -5,7 +5,7 @@
 > 最终目标场景是 **Strawberry Jam (SJ) Grandmaster Heartside**；测量机器不是 8GB 目标机，
 > 因此本基准的用途是 **同一台机器上不同构建的横向对比**，绝对值仅供参考。
 >
-> 结果见 [bench-baseline.md](bench-baseline.md)，原始数据在 `D:\DSH\Celeste\bench\results\`。
+> 结果见 [bench-baseline.md](bench-baseline.md)，原始数据在 `D:\DSH\Celeste\work\SpeedrunTool\bench\results\`。
 
 ---
 
@@ -20,15 +20,15 @@
 | 机器 | 16 logical CPU，64GB RAM（注意：**不是**用户目标 8GB 旧机） |
 | SJ 场景 | `StrawberryJam2021/5-Grandmaster/ZZ-HeartSide`（areaId 141），起点房间 `a0-Start`，222 entities，bounds 464x1016 |
 | 备用场景 | `StrawberryJam2021/5-Grandmaster/maya`（SRT 的 desync-safe map），房间 `Insert Coin`，193 entities |
-| 构建产物 | `D:\DSH\Celeste\artifacts\{upstream-mod,opt-v1,opt-v2,debug-mod,...}`（每个目录包含 `SpeedrunTool.dll` + `everest.yaml` + `Dialog/` + `Graphics/`） |
-| 基准工程 | `D:\DSH\Celeste\bench`（不属于 SRT 仓库，不进 PR） |
+| 构建产物 | `D:\DSH\Celeste\work\SpeedrunTool\artifacts\{upstream-mod,opt-v1,opt-v2,debug-mod,...}`（每个目录包含 `SpeedrunTool.dll` + `everest.yaml` + `Dialog/` + `Graphics/`） |
+| 基准工程 | `D:\DSH\Celeste\work\SpeedrunTool\bench`（不属于 SRT 仓库，不进 PR） |
 
 ---
 
 ## 2. 目录与文件清单
 
 ```
-D:\DSH\Celeste\bench\
+D:\DSH\Celeste\work\SpeedrunTool\bench\
 ├─ SrtBench\                # 基准测试 mod 源码（net8.0, Everest 模组）
 │  ├─ SrtBench.csproj
 │  ├─ everest.yaml          # Name: SrtBench, DLL: bin/net8.0/SrtBench.dll
@@ -102,7 +102,7 @@ Olympus 的下载逻辑走的是「GameBanana API + 多个 banana 镜像」，�
 
 ```bash
 # 期望：required satisfied: 51/51, missing=[]
-python D:\DSH\Celeste\bench\check_deps.py
+python D:\DSH\Celeste\work\SpeedrunTool\bench\check_deps.py
 ```
 
 > 注意：`check_deps.py` 用 indentation-aware 的极简 YAML 解析器（`install_sj.py` 内），
@@ -161,7 +161,7 @@ upstream 老构建没有这些导出，`SrtBridge` 会反射 fallback 到内部
 （`preclone_supported=false`）。
 
 ```bash
-cd D:\DSH\Celeste\bench
+cd D:\DSH\Celeste\work\SpeedrunTool\bench
 build.cmd
 # 等价于:
 #   dotnet build SrtBench\SrtBench.csproj -c Release -p:CelestePrefix="D:\Games\SteamLibrary\steamapps\common\Celeste"
@@ -176,7 +176,7 @@ SrtBench 依赖（everest.yaml）：`Everest 1.6662.0`、`SpeedrunTool 3.27.0`�
 ## 6. 跑测试
 
 ```cmd
-cd D:\DSH\Celeste\bench
+cd D:\DSH\Celeste\work\SpeedrunTool\bench
 run.cmd <tag> [timeout_seconds=600]
 ```
 
@@ -278,10 +278,10 @@ findstr /C:"SRT_PROFILE" results\log-<tag>.txt > results\PROFILE-<tag>.txt
 `artifacts\<name>\` 目录须包含 `SpeedrunTool.dll` + `everest.yaml`（+ 可选 `Dialog/`、`Graphics/`）。
 
 ```bash
-python D:\DSH\Celeste\bench\swap_srt.py opt-v1          # 切到 artifacts\opt-v1
-python D:\DSH\Celeste\bench\swap_srt.py upstream-mod    # 切到 upstream baseline
-python D:\DSH\Celeste\bench\swap_srt.py --current       # 查看当前部署版本+字体数
-python D:\DSH\Celeste\bench\swap_srt.py --restore       # 恢复上一次被替换的构建
+python D:\DSH\Celeste\work\SpeedrunTool\bench\swap_srt.py opt-v1          # 切到 artifacts\opt-v1
+python D:\DSH\Celeste\work\SpeedrunTool\bench\swap_srt.py upstream-mod    # 切到 upstream baseline
+python D:\DSH\Celeste\work\SpeedrunTool\bench\swap_srt.py --current       # 查看当前部署版本+字体数
+python D:\DSH\Celeste\work\SpeedrunTool\bench\swap_srt.py --restore       # 恢复上一次被替换的构建
 ```
 
 行为：先 `taskkill` 检查（**有 Celeste 在跑会拒绝执行**），把当前 `Mods\SpeedrunTool` 移动到
@@ -349,10 +349,10 @@ python D:\DSH\Celeste\bench\swap_srt.py --restore       # 恢复上一次被替�
 ```cmd
 :: 0) 确认构建产物 & 没有游戏在跑
 tasklist | findstr /I Celeste.exe
-dir D:\DSH\Celeste\artifacts\<build>
+dir D:\DSH\Celeste\work\SpeedrunTool\artifacts\<build>
 
 :: 1) 切构建（自动备份当前 + 补字体）
-python D:\DSH\Celeste\bench\swap_srt.py <build>
+python D:\DSH\Celeste\work\SpeedrunTool\bench\swap_srt.py <build>
 
 :: 2) 冒烟：确认能进图、能 save/load（~50s）
 ::    用 configs\smoke-vanilla.json（原版 1A，2 iter），崩不崩一眼看出
@@ -364,7 +364,7 @@ run.cmd baseline-preclone-off 420     :: preclone=false
 ::   （configs 里 preclone 字段控制；slots=3 会一次测出 1/2/3 槽）
 
 :: 4) 汇总
-python D:\DSH\Celeste\bench\collect_results.py     :: → results\SUMMARY.md
+python D:\DSH\Celeste\work\SpeedrunTool\bench\collect_results.py     :: → results\SUMMARY.md
 ```
 
 命令行小抄：
@@ -409,14 +409,14 @@ copy configs\baseline-preclone-on.json bench.json  :: 手工改 config 时
 
 ## 11. 附录：已安装 mod 清单
 
-- 机器可读清单：`D:\DSH\Celeste\bench\installed-mods.json`
+- 机器可读清单：`D:\DSH\Celeste\work\SpeedrunTool\bench\installed-mods.json`
   （`{generated, mods_dir, sj_mod, mods:[{name,version,gamebanana_mod_id,gamebanana_file_id}], missing:[]}`）
 - 数量：SJ map pack + Assets + AudioA/B/C + 53 个 required helper = 58 个 mod 目录；
   加上用户原有的 SpeedrunTool / CelesteTAS / BodyDouble / CeilingUltra / LozenTestMod 等，
   Everest 实际加载 **60 个 modules**（见每次 `results\log-<tag>.txt` 的 `Loaded N modules`）。
 - 关键版本：SJ `StrawberryJam2021 1.0.13`、CollabUtils2 `1.13.6`、FrostHelper `1.81.1`、
   MaxHelpingHand `1.40.11`、CelesteTAS `3.46.2`、SpeedrunTool 见当前 `Mods\SpeedrunTool\everest.yaml`。
-- 校验依赖：`python D:\DSH\Celeste\bench\check_deps.py`（需 `install_sj.py` 的解析器）。
+- 校验依赖：`python D:\DSH\Celeste\work\SpeedrunTool\bench\check_deps.py`（需 `install_sj.py` 的解析器）。
 
 
 ---
@@ -429,9 +429,9 @@ copy configs\baseline-preclone-on.json bench.json  :: 手工改 config 时
 ### 12.1 转换
 
 ```bash
-python D:\DSH\Celeste\bench\convert_to_zip.py            # dry-run：在 bench\zip-build 生成/校验所有 zip，打印计划
-python D:\DSH\Celeste\bench\convert_to_zip.py execute    # 需先关闭游戏
-python D:\DSH\Celeste\bench\convert_to_zip.py rollback   # 恢复文件夹 + 还原 blacklist
+python D:\DSH\Celeste\work\SpeedrunTool\bench\convert_to_zip.py            # dry-run：在 bench\zip-build 生成/校验所有 zip，打印计划
+python D:\DSH\Celeste\work\SpeedrunTool\bench\convert_to_zip.py execute    # 需先关闭游戏
+python D:\DSH\Celeste\work\SpeedrunTool\bench\convert_to_zip.py rollback   # 恢复文件夹 + 还原 blacklist
 ```
 
 - 以 `bench/installed-mods.json` 为准（52 个下载 mod：SJ + Assets + AudioA/B/C + 49 helpers）。

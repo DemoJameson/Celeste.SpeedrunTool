@@ -2,7 +2,7 @@
 
 > 本文是 "降低 savestate 内存 / 提升 save/load 速度 / 避免卡顿" 优化的**基准测量报告**。
 > 环境搭建方法见 [bench-setup.md](bench-setup.md)，原始数据在 benchmark 工作区
-> `D:\DSH\Celeste\bench\results\`（该目录不在本仓库内）。
+> `D:\DSH\Celeste\work\SpeedrunTool\bench\results\`（该目录不在本仓库内）。
 >
 > 测量机器 **不是** 8GB 目标机（详见 §2），因此绝对值只用于同机横向对比；
 > 报告重点是可迁移的相对指标（耗时 p50/p99、GC 次数、分配量、managed 内存增量）。
@@ -258,7 +258,7 @@ load beforeLoad=0.00 waitPreclone=0.00 mergeTime=0.00 unload=2.74
 ```cmd
 :: 环境（一次性）：见 docs\bench-setup.md §3–§5
 :: 构建/部署 harness
-cd D:\DSH\Celeste\bench && build.cmd
+cd D:\DSH\Celeste\work\SpeedrunTool\bench && build.cmd
 
 :: 切到某个构建后跑 tag
 python swap_srt.py final
@@ -269,7 +269,7 @@ run.cmd final-off-r1 420
 python collect_results.py        :: → results\SUMMARY.md
 ```
 
-原始数据（benchmark 工作区 `D:\DSH\Celeste\bench\results\`）：
+原始数据（benchmark 工作区 `D:\DSH\Celeste\work\SpeedrunTool\bench\results\`）：
 
 | 文件 | 内容 |
 |---|---|
@@ -540,7 +540,7 @@ TAS：`D:\Games\SteamLibrary\steamapps\common\Celeste\TAS Files\StrawberryJamTAS
 
 ```cmd
 :: zip 标准环境（已长期保留；回滚见 convert_to_zip.py rollback）
-python D:\DSH\Celeste\bench\collect_results.py
+python D:\DSH\Celeste\work\SpeedrunTool\bench\collect_results.py
 
 :: 重房间帧归因
 run.cmd frames-a1_18-Xplosives-abc 420

@@ -602,8 +602,7 @@ public sealed partial class StateManager {
                 long startAllocated = profile ? GC.GetAllocatedBytesForCurrentThread() : 0L;
 #endif
 
-                int preCloneCapacity = Math.Max(1024, savedLevel.Entities.Count * 2 + 512);
-                DeepCloneState deepCloneState = new(preCloneCapacity);
+                DeepCloneState deepCloneState = new();
                 savedLevel.Entities.DeepClone(deepCloneState);
                 savedLevel.RendererList.DeepClone(deepCloneState);
                 savedSaveData.DeepClone(deepCloneState);

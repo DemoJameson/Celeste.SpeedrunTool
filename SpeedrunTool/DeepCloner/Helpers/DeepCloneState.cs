@@ -20,16 +20,7 @@ namespace Force.DeepCloner.Helpers {
             }
         }
 
-        private readonly Dictionary<object, object> _loops;
-
-        public DeepCloneState() : this(0) {
-        }
-
-        public DeepCloneState(int capacity) {
-            _loops = capacity > 0
-                ? new Dictionary<object, object>(capacity, CustomEqualityComparer.Instance)
-                : new Dictionary<object, object>(CustomEqualityComparer.Instance);
-        }
+        private readonly Dictionary<object, object> _loops = new(CustomEqualityComparer.Instance);
 
         public object GetKnownRef(object from) {
             return _loops.TryGetValue(from, out object to) ? to : null;

@@ -65,6 +65,7 @@ dotnet build -c Release -p:CelestePrefix="/path/to/Celeste" -p:PackageMod=true -
 ![preview2_cn](./Preview/preview2_cn.jpg)
 
 ## 致谢
+- [DemoJameson](https://github.com/DemoJameson) —— SpeedrunTool 的初代作者与前维护者，感谢他打下的基础。
 - [Extremely OK Games, Ltd.](https://exok.com/) —— 感谢他们开发出了 [Celeste](http://www.celestegame.com/) 这款我最爱的平台跳跃游戏
 - [Everest](https://everestapi.github.io/) —— Celeste Mod 加载器，没有它就没有这个 Mod
 - [Ahorn](https://github.com/CelestialCartographers/Ahorn) —— 用来查找物体在游戏代码里的命名

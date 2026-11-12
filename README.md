@@ -92,6 +92,7 @@ release asset. Use a CI step (on a tag) to call this, so a debug build can never
 
 ## Acknowledgments
 
+- [DemoJameson](https://github.com/DemoJameson) — creator and original maintainer of SpeedrunTool. Thanks for laying the foundation this project builds on.
 - A huge shout-out to [Extremely OK Games, Ltd.](https://exok.com/) for designing [Celeste](http://www.celestegame.com/) , it has been my favorite platformer ever since.
 - [Everest](https://everestapi.github.io/) – Celeste Mod Loader and modding API, making this Mod a reality.
 - [Ahorn](https://github.com/CelestialCartographers/Ahorn) – Map maker and level editor, useful for identifying different entities in the game.

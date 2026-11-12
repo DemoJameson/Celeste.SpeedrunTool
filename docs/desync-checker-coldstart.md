@@ -68,7 +68,19 @@ state is cleared (`IsSaved == false` before the test starts).
 
 ## Old PC next step
 
-Run the kit v1.2.0 compare tests on the old PC: check `WarmUpFirstSave` loading time,
-first save, memory peak, and whether the dry-run survives the 8 GB limit. If it
-does, our first save is ~0.07 s vs legacy's 0.76–0.80 s and the "cold save" gap on
-the old machine is closed.
+## Old PC validation (2026-11-12)
+
+Kit session `DESKTOP-40H8K5Q-SrtBench-20261112-234530` (i5-1035G1, 7.71 GB RAM):
+
+- warm-up log: `Warmed the first-save path during level load: 4427–4821 ms`
+  (once per session, on the loading screen);
+- first save: **416 ms** (vs legacy 3207 ms; before v3.28.2 the old-PC first save
+  was ~6.3 s);
+- first load 764 ms (cold), later loads median ~140 ms; steady save median 453 ms,
+  load median 154 ms;
+- memory: managed peak 0.85–1.08 GB, private peak 2.31–2.36 GB (legacy 1-slot:
+  1.72–2.15 GB / 3.15–3.66 GB); no OOM at 7.71 GB during the dry-run.
+
+The old PC pays ~4.4–4.8 s extra on its first level load, which is acceptable for
+a one-time per-session cost; the first-save gap against legacy is closed (416 ms
+vs 3207 ms).

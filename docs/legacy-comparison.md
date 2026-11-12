@@ -57,17 +57,38 @@ Legacy 1-slot private peak was 4.3–5.5 GB, managed 1.4–2.9 GB. So even with 
 savestates, ours stays at or below legacy's single-slot memory on this room, and
 the steady save/load advantage remains.
 
-## Verdict (new machine)
+## Old PC (DESKTOP-40H8K5Q: i5-1035G1, 7.71 GB RAM, 1920×1080@60)
 
-- **Ours wins steady save, steady load, and memory**, including the 3-slot case vs
-  legacy's 1 slot.
-- **Ours no longer loses the first save**: v3.28.2 pays ~1.36 s once on the loading
-  screen and the first visible save is 71.5 ms (legacy 761–798 ms). The only cost
-  is the loading time, which is the intended trade-off.
-- Frame times are the same in this room (both 16.66 ms p50); the difference is
-  SRT latency/memory, not gameplay frame pacing.
+Returned kit session `DESKTOP-40H8K5Q-SrtBench-20261112-234530` (SRT
+`89abb881…` = v3.28.2 with read-screen warm-up, legacy `0208979f…`, SrtBench
+`2ae3f400…`), same a1 room and same compare configs.
 
-Next: run the same `compare-*` configs on the old PC (kit v1.1.0) and add the old-PC
-table. If the first-save checker cost matters on the target machine, the options
-are (a) leave it (safety), (b) document `DisableDesyncCheck` for pure-performance
-comparisons, or (c) a future warm-up/precompute optimization.
+| metric | ours 1-slot | legacy 1-slot |
+|---|---:|---:|
+| first save (setup) | **416 ms** | 3207 ms |
+| loads median (cold excluded) | **~140 ms** (cold 764 ms) | ~686 ms |
+| steady save median (20 cycles) | **453 ms** | 1087 ms |
+| steady load median | **154 ms** | 600 ms |
+| managed peak (phases a/b/c) | 0.85 / 0.90 / 1.08 GB | 1.72 / 1.83 / 2.15 GB |
+| private peak | 2.31 / 2.31 / 2.36 GB | 3.15 / 3.18 / 3.66 GB |
+| frame p50 | 17.26 / 16.97 / 17.12 ms | 17.21 / 16.87 / 17.48 ms |
+| first level load cost (warm-up) | **+4427–4821 ms once** | — |
+
+Ours 3 slots on the same machine: setup saves 511 + 342 + 312 ms, loads median
+~527 ms, managed peak 1.75–2.11 GB, private peak 3.25–3.42 GB — still at or below
+legacy's **single-slot** private peak (3.15–3.66 GB) and managed peak.
+
+**Verdict (old PC):** ours wins every measured save/load/memory metric, including
+a 7.7× faster first save and ~5× faster loads; the only cost is ~4.4–4.8 s extra
+on the first level load (once per session), which is the intended place to pay the
+one-off JIT cost. No OOM at 7.71 GB during the dry-run.
+
+## Verdict (both machines)
+
+- **Ours wins steady save, steady load, and memory on both machines**, including
+  the 3-slot case vs legacy's 1 slot.
+- **Ours no longer loses the first save**: v3.28.2 pays 1.36 s on the new machine
+  and 4.4–4.8 s on the old machine once on the loading screen; the first visible
+  save is 71.5 ms (new) / 416 ms (old) vs legacy's 761–798 / 3207 ms.
+- Frame times are the same in this room (17 ms p50 on the old PC); the difference
+  is SRT latency/memory, not gameplay frame pacing.

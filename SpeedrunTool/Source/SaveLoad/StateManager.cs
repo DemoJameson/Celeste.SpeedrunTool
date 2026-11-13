@@ -1,4 +1,5 @@
 using Celeste.Mod.SpeedrunTool.ModInterop;
+using Celeste.Mod.SpeedrunTool.Progress;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Profiling;
 using Celeste.Mod.SpeedrunTool.Utils;
 using Force.DeepCloner;
@@ -108,6 +109,7 @@ public sealed partial class StateManager {
         }
 
         popup = "";
+        using OperationProgress progress = BusyIndicator.Begin("SAVE");
         SaveLoadProfiler.Begin("save");
         try {
             // Rebuild/validate the value dictionaries before touching a previously saved state:
@@ -115,6 +117,7 @@ public sealed partial class StateManager {
             // or removed actions since the state was saved.
             SaveLoadAction.InitSlots();
             SaveLoadProfiler.Mark("initSlots");
+            progress?.Report("CHECK_STATE", SlotName);
 
             if (IsSaved) {
                 ClearBeforeSave = true;
@@ -122,6 +125,7 @@ public sealed partial class StateManager {
                 ClearBeforeSave = false;
             }
             SaveLoadProfiler.Mark("clearOldState");
+            
 #if DEBUG
             DebugTool.MemoryTracker.CheckFragmentation("Save Start");
             DebugTool.MemoryTracker.GcSample before = DebugTool.MemoryTracker.TakeGcSample();
@@ -132,14 +136,18 @@ public sealed partial class StateManager {
             SavedByTas = tas;
             SaveLoadAction.OnBeforeSaveState(level);
             SaveLoadProfiler.Mark("beforeSave");
+            
             level.DeepCloneToShared(savedLevel = (Level)RuntimeHelpers.GetUninitializedObject(typeof(Level)));
             SaveLoadProfiler.Mark("cloneLevel");
+            progress?.Report("CLONE_LEVEL", SlotName);
             savedSaveData = SaveData.Instance.DeepCloneShared();
             SaveLoadProfiler.Mark("cloneSaveData");
+            progress?.Report("CLONE_SAVE_DATA", SlotName);
             savedTasCycleGroupCounter = TasUtils.GroupCounter;
             savedTransitionRoutine = transitionRoutine?.TryGetTarget(out IEnumerator enumerator) == true ? enumerator.DeepCloneShared() : null;
             SaveLoadAction.OnSaveState(level);
             SaveLoadProfiler.Mark("saveActions");
+            
             DeepClonerUtils.ClearSharedDeepCloneState();
 
             if (shouldDesyncCheck && DesyncRiskAnalyzer.OnAfterSaveState(out string reason3)) {
@@ -150,6 +158,7 @@ public sealed partial class StateManager {
 
             PreCloneSavedEntities();
             SaveLoadProfiler.Mark("precloneStart");
+            
             SaveLoadProfiler.End();
 
             if (tas) {
@@ -268,6 +277,7 @@ public sealed partial class StateManager {
         // Once UnloadLevel() started, the live level is half destroyed and needs a reload
         // before the player can continue (see the catch block below).
         bool levelWasUnloaded = false;
+        using OperationProgress progress = BusyIndicator.Begin("LOAD");
         SaveLoadProfiler.Begin("load");
         try {
 #if DEBUG
@@ -284,35 +294,45 @@ public sealed partial class StateManager {
 
             SaveLoadAction.OnBeforeLoadState(level);
             SaveLoadProfiler.Mark("beforeLoad");
+            
 
+            BusyIndicator.Wait(preCloneTask);
             DeepClonerUtils.SetSharedDeepCloneState(preCloneTask?.Result);
             SaveLoadProfiler.Mark("waitPreclone");
+            
 
             if (mergeTimeAndDeaths) {
                 UpdateTimeAndDeaths(level);
             }
             SaveLoadProfiler.Mark("mergeTime");
+            
             levelWasUnloaded = true;
             UnloadLevel(level);
             SaveLoadProfiler.Mark("unload");
+            progress?.Report("UNLOAD_LEVEL", SlotName);
 
             Tracker.Refresh(savedLevel); // 不能在 OnLoadState 里做. 否则多次读档会需要反复 Refresh Tracker
             savedLevel.DeepCloneToShared(level);
             SaveLoadProfiler.Mark("cloneBack");
+            progress?.Report("CLONE_LEVEL", SlotName);
             SaveData.Instance = savedSaveData.DeepCloneShared();
             SaveLoadProfiler.Mark("restoreSaveData");
+            progress?.Report("CLONE_SAVE_DATA", SlotName);
             if (savedTransitionRoutine != null) {
                 transitionRoutine = new WeakReference<IEnumerator>(savedTransitionRoutine.DeepCloneShared());
             }
 
             RestoreAudio_1(level);
             SaveLoadProfiler.Mark("restoreAudio");
+            progress?.Report("RESTORE_AUDIO", SlotName);
             RestoreCassetteBlockManager1(level);
             SaveLoadAction.OnLoadState(level);
             SaveLoadProfiler.Mark("loadActions");
+            
 
             PreCloneSavedEntities();
             SaveLoadProfiler.Mark("precloneStart");
+            
 
             if (tas) {
                 LoadStateComplete(level);
@@ -394,7 +414,8 @@ public sealed partial class StateManager {
             AbortPendingLoadForClear();
         }
 
-        preCloneTask?.Wait();
+        using OperationProgress progress = BusyIndicator.Begin("CLEAR");
+        BusyIndicator.Wait(preCloneTask);
 
         // fix: 读档冻结时被TAS清除状态后无法解除冻结
         if (State == State.Waiting && Engine.Scene is Level level) {
@@ -418,6 +439,7 @@ public sealed partial class StateManager {
         // 2025.10.08 fix: clear 之后读档更加卡顿 (这个问题在老版本好像也有, 之前在这里压根不 Gc)
         // 2025.10.19: 不过似乎不是每个人都喜欢卡顿一下, 姑且先做成可选项, 使得用户可以保留之前的体验
         if (hasGc && ModSettings.GcAfterClearState) {
+            progress?.Refresh();
             GcCollect(force: true);
         }
         if (doSomething) {

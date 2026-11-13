@@ -63,9 +63,9 @@ public sealed partial class SaveLoadAction {
     private static Dictionary<Type, FieldInfo[]> simpleStaticFields;
     private static Dictionary<Type, FieldInfo[]> modModuleFields;
 
-#if DEBUG
+    // Kept in Release too: WithProgress uses it for the busy-indicator detail.
+    // Only the debug description generator fills it with the full signature.
     public string ActionDescription = "";
-#endif
 
     // The action that saves/restores every mod's _Session/_SaveData. Kept so a pending
     // (cross-chapter) load can apply the saved sessions before the target chapter creates entities.
@@ -216,12 +216,25 @@ public sealed partial class SaveLoadAction {
         }
     }
 
+    private static IEnumerable<SaveLoadAction> WithProgress(string stage, IReadOnlyList<SaveLoadAction> actions) {
+        // Count only actual callbacks, not empty registrations. Keep their original
+        // order, synchronous execution, exception propagation and shared clone state.
+        int total = actions.Count;
+        using OperationProgress progress = total > 0 ? BusyIndicator.Begin(stage) : null;
+        int completed = 0;
+        foreach (SaveLoadAction action in actions) {
+            progress?.Report(stage, action.ActionDescription, completed, total);
+            yield return action;
+            progress?.Report(stage, action.ActionDescription, ++completed, total);
+        }
+    }
+
     internal static void OnSaveState(Level level) {
         Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict = AllSavedValues ??= InitValueDictionary();
         EnsureValueDictionaries(dict);
 #if DEBUG
         System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
-        foreach (SaveLoadAction saveLoadAction in saveActions) {
+        foreach (SaveLoadAction saveLoadAction in WithProgress("SAVE_CALLBACKS", saveActions)) {
             sw.Restart();
             var before = DebugTool.MemoryTracker.TakeGcSample();
             saveLoadAction.saveState(dict[saveLoadAction.dictionaryId], level);
@@ -233,7 +246,7 @@ public sealed partial class SaveLoadAction {
             }
         }
 #else
-        foreach (SaveLoadAction saveLoadAction in saveActions) {
+        foreach (SaveLoadAction saveLoadAction in WithProgress("SAVE_CALLBACKS", saveActions)) {
             saveLoadAction.saveState(dict[saveLoadAction.dictionaryId], level);
         }
 #endif
@@ -247,7 +260,7 @@ public sealed partial class SaveLoadAction {
         }
 #if DEBUG
         System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
-        foreach (SaveLoadAction saveLoadAction in loadActions) {
+        foreach (SaveLoadAction saveLoadAction in WithProgress("LOAD_CALLBACKS", loadActions)) {
             sw.Restart();
             var before = DebugTool.MemoryTracker.TakeGcSample();
             saveLoadAction.loadState(dict[saveLoadAction.dictionaryId], level);
@@ -259,7 +272,7 @@ public sealed partial class SaveLoadAction {
             }
         }
 #else
-        foreach (SaveLoadAction saveLoadAction in loadActions) {
+        foreach (SaveLoadAction saveLoadAction in WithProgress("LOAD_CALLBACKS", loadActions)) {
             saveLoadAction.loadState(dict[saveLoadAction.dictionaryId], level);
         }
 #endif
@@ -325,25 +338,25 @@ public sealed partial class SaveLoadAction {
             AllSavedValues = null;
             slotInitialized = false;
         }
-        foreach (SaveLoadAction saveLoadAction in clearActions) {
+        foreach (SaveLoadAction saveLoadAction in WithProgress("CLEAR_CALLBACKS", clearActions)) {
             saveLoadAction.clearState();
         }
     }
 
     internal static void OnBeforeSaveState(Level level) {
-        foreach (SaveLoadAction saveLoadAction in beforeSaveActions) {
+        foreach (SaveLoadAction saveLoadAction in WithProgress("BEFORE_SAVE_CALLBACKS", beforeSaveActions)) {
             saveLoadAction.beforeSaveState(level);
         }
     }
 
     internal static void OnBeforeLoadState(Level level) {
-        foreach (SaveLoadAction saveLoadAction in beforeLoadActions) {
+        foreach (SaveLoadAction saveLoadAction in WithProgress("BEFORE_LOAD_CALLBACKS", beforeLoadActions)) {
             saveLoadAction.beforeLoadState(level);
         }
     }
 
     internal static void OnPreCloneEntities() {
-        foreach (SaveLoadAction saveLoadAction in preCloneActions) {
+        foreach (SaveLoadAction saveLoadAction in WithProgress("PRECLONE_CALLBACKS", preCloneActions)) {
             saveLoadAction.preCloneEntities();
         }
     }
@@ -610,8 +623,16 @@ public sealed partial class SaveLoadAction {
 
         foreach (SaveLoadAction slAction in SharedActions) {
             sb.Append($"\n======  {slAction.ActionDescription}  ======\n");
+            // Not every SharedAction owns a value dictionary (e.g. actions that only
+            // register callbacks). Indexing blindly threw KeyNotFoundException *after*
+            // a successful save, which then cleared the state and poisoned the first
+            // save warm-up too.
+            if (AllSavedValues is null || !AllSavedValues.TryGetValue(slAction.dictionaryId, out Dictionary<Type, Dictionary<string, object>> actionValues)) {
+                sb.Append("(no saved values for this action)\n");
+                continue;
+            }
             int count = 1;
-            foreach (KeyValuePair<Type, Dictionary<string, object>> pair in AllSavedValues[slAction.dictionaryId]) {
+            foreach (KeyValuePair<Type, Dictionary<string, object>> pair in actionValues) {
                 sb.Append($"---  Type {count.ToString().PadRight(3)} =   {pair.Key.FullName}  ---\n");
                 foreach (KeyValuePair<string, object> pair2 in pair.Value) {
                     sb.Append($" ├  {PadToMultiple(pair2.Key, 32)} | {pair2.Value}\n");

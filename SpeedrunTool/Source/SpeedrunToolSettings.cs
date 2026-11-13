@@ -20,6 +20,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
         SetGcMemoryThreshold(Doubled_GcMemoryThreshold);
         ApplyPreCloneMode();
         MigrateLegacySceneSwitchSetting();
+        MigrateSaveInLuaCutsceneSetting();
 
         LogForDiagnostics();
     }
@@ -44,6 +45,21 @@ public class SpeedrunToolSettings : EverestModuleSettings {
             catch (Exception exception) {
                 Logger.Warn("SpeedrunTool/Settings", $"Failed to persist the AutoClearStateOnSceneSwitch migration: {exception.Message}");
             }
+        }
+    }
+
+    private void MigrateSaveInLuaCutsceneSetting() {
+        if (!SaveInLuaCutscene) {
+            return;
+        }
+
+        AllowUnsafeLuaSavestates = true;
+        SaveInLuaCutscene = false;
+        try {
+            SpeedrunToolModule.Instance?.SaveSettings();
+        }
+        catch (Exception exception) {
+            Logger.Warn("SpeedrunTool/Settings", $"Failed to persist the SaveInLuaCutscene migration: {exception.Message}");
         }
     }
 
@@ -117,10 +133,11 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public bool SaveTimeAndDeaths { get; set; } = false;
     public bool SaveExtendedVariants { get; set; } = true;
 
+    public bool AllowUnsafeLuaSavestates { get; set; } = false;
+
     /// <summary>
-    /// Legacy serialized name for the single master switch over every desync check. Keeping the
-    /// property name preserves existing settings files; the menu exposes it as Allow Unsafe Lua
-    /// Savestates.
+    /// Migration-only legacy key. Older settings files used SaveInLuaCutscene for the same master
+    /// switch; OnLoadSettings copies it to AllowUnsafeLuaSavestates and clears it once.
     /// </summary>
     public bool SaveInLuaCutscene { get; set; } = false;
     public bool NoMessageAfterSaveLoad { get; set; } = false;

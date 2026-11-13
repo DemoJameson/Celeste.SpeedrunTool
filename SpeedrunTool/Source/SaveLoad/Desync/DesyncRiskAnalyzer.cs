@@ -36,7 +36,7 @@ internal static class DesyncRiskAnalyzer {
 
     // One master switch for every desync check. The property keeps its old serialized name,
     // SaveInLuaCutscene, so existing settings files retain their choice.
-    private static bool Enabled => !ModSettings.SaveInLuaCutscene;
+    private static bool Enabled => !ModSettings.AllowUnsafeLuaSavestates;
 
     // Fail-closed late-check hits. Instances of these types are refused in the next save's early check.
     private static readonly HashSet<Type> EarlyCheckEntityTypes = [];

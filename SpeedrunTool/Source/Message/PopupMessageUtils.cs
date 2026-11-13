@@ -2,6 +2,10 @@ namespace Celeste.Mod.SpeedrunTool.Message;
 
 public static class PopupMessageUtils {
     public static void Show(string message, string dialogId) {
+        // Do not try to render text before the game font exists (issue #53).
+        if (ActiveFont.Font is null) {
+            return;
+        }
         if (ModSettings.PopupMessageStyle == PopupMessageStyle.Tooltip || Engine.Scene is not Level || MoreSaveSlotsUI.SnapshotUI.OnScreen) {
             Tooltip.Show(message);
         }

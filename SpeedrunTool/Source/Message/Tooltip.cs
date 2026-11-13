@@ -54,6 +54,11 @@ public class Tooltip : Entity {
     }
 
     public static void Show(string message, float duration = 1f) {
+        // Hotkeys can fire on the pre-title GameLoader screen, before ActiveFont is ready.
+        // Creating a Tooltip there calls ActiveFont.Measure with a null font and crashes (issue #53).
+        if (ActiveFont.Font is null) {
+            return;
+        }
         if (Engine.Scene is { } scene) {
             if (!scene.Tracker.Entities.TryGetValue(typeof(Tooltip), out var tooltips)) {
                 tooltips = scene.Entities.FindAll<Tooltip>().Cast<Entity>().ToList();

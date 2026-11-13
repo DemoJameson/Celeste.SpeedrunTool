@@ -57,9 +57,9 @@ internal static class SaveLoadHotkeys {
             }
         });
         Hotkey.LoadState.RegisterPressedAction(scene => {
-            // Loading is also allowed from the chapter select: a state saved in another chapter first
-            // re-enters that chapter, so the player can get back to it without walking there again.
-            if (scene is Level { Paused: false } or Overworld) {
+            // Cross-chapter loading is a save/load hotkey: it must only fire inside a Level.
+            // The chapter select is not a savestate context; doing a load there is surprising.
+            if (scene is Level { Paused: false }) {
 #if DEBUG
                 if (JetBrains_Profiling) {
                     JetBrains.Profiler.Api.MeasureProfiler.StartCollectingData();

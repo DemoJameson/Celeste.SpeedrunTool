@@ -88,7 +88,9 @@ public sealed partial class StateManager {
     }
 
     private static bool IsSceneAllowedForPendingLoad(Scene scene) {
-        return scene is Level or Overworld or OverworldLoader or LevelLoader or LevelEnter;
+        // The chapter select deliberately cannot start a load: hotkeys only fire in a Level and
+        // the pending operation's user-visible semantics are "load this state from the current run".
+        return scene is Level or LevelLoader or LevelEnter;
     }
 
     private static bool IsTargetAreaAvailable(AreaKey area, out string reason) {

@@ -449,6 +449,10 @@ internal static class SnapshotUI {
                 bool success = false;
                 bool allow = StateManager.AllowSaveLoadWhenWaiting;
                 StateManager.AllowSaveLoadWhenWaiting = true;
+                // The snapshot UI freezes Engine.Update before Scene.AfterUpdate runs. A pending
+                // (cross-chapter) load defers LevelEnter.Go to Scene.OnEndOfFrame, so close the UI
+                // first or that deferred switch can never fire.
+                Close();
                 if (itemOptionIndex == 0) {
                     success = SaveSlotsManager.SwitchSlot(selectionIndex) && SaveLoadHotkeys.SaveStateAndMessage();
                 }

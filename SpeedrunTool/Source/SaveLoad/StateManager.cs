@@ -373,6 +373,13 @@ public sealed partial class StateManager {
 
             Tracker.Refresh(savedLevel); // 不能在 OnLoadState 里做. 否则多次读档会需要反复 Refresh Tracker
             savedLevel.DeepCloneToShared(level);
+            // MirrorSurfaces owns a VirtualRenderTarget that is disposed when its old area is
+            // unloaded. A cross-chapter state still carries the entity; force it to drop the
+            // stale target so its next BeforeRender recreates one for the loaded area.
+            foreach (MirrorSurfaces mirror in level.Entities.FindAll<MirrorSurfaces>()) {
+                mirror.Dispose();
+            }
+            GraphicResourcesHandler.ResetDisposedGlobalResources(level);
             SaveLoadProfiler.Mark("cloneBack");
             progress?.Report("CLONE_LEVEL", SlotName);
             SaveData.Instance = savedSaveData.DeepCloneShared();
@@ -638,29 +645,114 @@ public sealed partial class StateManager {
             // 这里知道的是 MirrorSurfaces 被移除会导致一些 VirtualRenderTarget Dispose
             // 于是如果在存档 1 存档, 在存档 2 清除, 再读档 1, 会崩溃
             if (entity.TagCheck(Tags.Global) && !GlobalEntitiesToRemove.Contains(entity.GetType())) {
+                // Global entities survive the manual unload. Some of them own GPU resources that
+                // are disposed when their old area unloads (MirrorSurfaces/TrailManager/WaveDash);
+                // log only the ones that actually carry such resources so a crash report names the
+                // entity instead of only the later SpriteBatch.Draw stack.
+                string resources = DescribeGlobalResources(entity.GetType());
+                if (resources.Length > 0) {
+                    Logger.Info("SpeedrunTool/UnloadLevel",
+                        $"Keeping global resource entity [{entity.GetType().FullName}]: {resources}");
+                }
                 continue;
             }
             try {
                 entity.Removed(level); // 触发各式各样的副作用
-                // Scene.TagLists / Scene.Tracker / Engine.Pooler 本身都将被克隆出来, 大部分情况下无需处理. 同理也不用 UpdateLists
-                // 但是小部分情况下, Removed 副作用会依赖于 Tracker 等的内部状态 (例如实体带 hook, 只有移除到最后一个才解除 hook)
-                // 所以我们还是做整套流程
-                level.TagLists.EntityRemoved(entity);
-                level.Tracker.EntityRemoved(entity);
-                Engine.Pooler.EntityRemoved(entity);
             }
             catch (Exception exception) {
                 // A broken entity (third-party mod code) must not abort the whole load and leave
                 // the state machine frozen; log it and continue with the remaining entities.
                 Logger.Warn("SpeedrunTool/LoadState", $"Failed to remove {entity.GetType().FullName}: {exception.GetType().Name}: {exception.Message}");
             }
+            finally {
+                // Scene.TagLists / Scene.Tracker / Engine.Pooler 本身都将被克隆出来, 大部分情况下无需处理. 同理也不用 UpdateLists
+                // 但是小部分情况下, Removed 副作用会依赖于 Tracker 等的内部状态 (例如实体带 hook, 只有移除到最后一个才解除 hook)
+                // 所以即使 Removed 抛异常也仍要清理这三个引用，避免把半移除的实体留在 Tracker 里。
+                TryRemoveEntityReferences(level, entity);
+            }
         }
 
-        // 移除剩下声音组件
-        level.Tracker.GetComponentsCopy<SoundSource>().ForEach(component => component.RemoveSelf());
+        // 移除剩下声音组件（避免每次 load 都分配一个 ForEach delegate）
+        List<Component> remainingSounds = level.Tracker.GetComponentsCopy<SoundSource>();
+        for (int i = 0; i < remainingSounds.Count; i++) {
+            remainingSounds[i].RemoveSelf();
+        }
+    }
+
+    private static void TryRemoveEntityReferences(Level level, Entity entity) {
+        try {
+            level.TagLists.EntityRemoved(entity);
+        }
+        catch (Exception exception) {
+            Logger.Warn("SpeedrunTool/LoadState",
+                $"Failed to remove {entity.GetType().FullName} from TagLists: {exception.GetType().Name}: {exception.Message}");
+        }
+        try {
+            level.Tracker.EntityRemoved(entity);
+        }
+        catch (Exception exception) {
+            Logger.Warn("SpeedrunTool/LoadState",
+                $"Failed to remove {entity.GetType().FullName} from Tracker: {exception.GetType().Name}: {exception.Message}");
+        }
+        try {
+            Engine.Pooler.EntityRemoved(entity);
+        }
+        catch (Exception exception) {
+            Logger.Warn("SpeedrunTool/LoadState",
+                $"Failed to remove {entity.GetType().FullName} from Pooler: {exception.GetType().Name}: {exception.Message}");
+        }
     }
 
     private static readonly HashSet<Type> GlobalEntitiesToRemove = [typeof(CassetteBlockManager)];
+
+    // Reflection is only used once per type, on load. Cache the result: the same handful of
+    // vanilla/mod global entities is encountered for every save slot.
+    private static readonly Dictionary<Type, string> GlobalResourceDescriptionCache = [];
+
+    private static string DescribeGlobalResources(Type type) {
+        if (GlobalResourceDescriptionCache.TryGetValue(type, out string cached)) {
+            return cached;
+        }
+
+        HashSet<string> names = [];
+        try {
+            for (Type current = type; current is not null && current != typeof(Entity); current = current.BaseType) {
+                foreach (FieldInfo field in current.GetFields(BindingFlags.Instance | BindingFlags.Public |
+                                                              BindingFlags.NonPublic | BindingFlags.DeclaredOnly)) {
+                    if (ContainsGpuResource(field.FieldType)) {
+                        names.Add(field.Name);
+                    }
+                }
+            }
+        }
+        catch (Exception exception) {
+            Logger.Warn("SpeedrunTool/UnloadLevel",
+                $"Could not inspect global entity [{type.FullName}]: {exception.GetType().Name}: {exception.Message}");
+        }
+
+        List<string> sortedNames = [.. names];
+        sortedNames.Sort(StringComparer.Ordinal);
+        string result = string.Join(", ", sortedNames);
+        GlobalResourceDescriptionCache[type] = result;
+        return result;
+
+        static bool ContainsGpuResource(Type fieldType) {
+            if (fieldType.IsArray) {
+                return ContainsGpuResource(fieldType.GetElementType());
+            }
+            if (fieldType.IsGenericType) {
+                foreach (Type argument in fieldType.GetGenericArguments()) {
+                    if (ContainsGpuResource(argument)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            return typeof(VirtualAsset).IsAssignableFrom(fieldType)
+                   || typeof(Microsoft.Xna.Framework.Graphics.GraphicsResource).IsAssignableFrom(fieldType)
+                   || fieldType == typeof(Atlas);
+        }
+    }
 
     [Initialize]
     private static void InitGlobalEntitiesToRemove() {

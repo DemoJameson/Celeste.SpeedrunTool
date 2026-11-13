@@ -20,7 +20,10 @@ internal static class OnAssetReload {
     }
 
     private static void BeforeReload(bool silent) {
-        if (ModSettings.ClearStateOnHotReload) {
+        // Silent asset reloads (for example the WaveDashing atlas) are not mod-assembly hot
+        // reloads. Clearing every slot for those discards valid savestates; only clear for a
+        // non-silent mod reload.
+        if (ModSettings.ClearStateOnHotReload && !silent) {
             SaveSlotsManager.ClearAll();
         }
     }
@@ -32,7 +35,7 @@ internal static class OnAssetReload {
         // it crashes the game when those types are evaluated again.)
         DeepClonerUtils.ClearProcFlagsCache();
 
-        if (ModSettings.ClearStateOnHotReload) {
+        if (ModSettings.ClearStateOnHotReload && !silent) {
             SaveSlotsManager.AfterAssetReload();
         }
     }

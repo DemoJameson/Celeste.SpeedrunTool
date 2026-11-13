@@ -50,11 +50,34 @@ internal static class GraphicResourcesHandler {
 
         ResetDisposedStaticAssets();
         ResetKnownStaticAssets();
+        ResetDisposedJungleUiText(level);
 #if DEBUG
         Logger.Info("SpeedrunTool/GraphicResourcesHandler",
             $"ResetDisposedGlobalResources: {stopwatch.Elapsed.TotalMilliseconds:F2} ms, " +
             $"entities={level.Entities.Count}");
 #endif
+    }
+
+    // JungleHelper.UIText owns a render target created only in its constructor, plus a private
+    // "disposed" flag set when the old scene ends. Reloading the target alone avoids the null
+    // dereference, but the cloned entity still needs the flag cleared to render its text again.
+    private static void ResetDisposedJungleUiText(Level level) {
+        Type type = ModUtils.GetType("JungleHelper", "Celeste.Mod.JungleHelper.Triggers.UIText");
+        if (type is null) {
+            return;
+        }
+        FieldInfo targetField = type.GetField("textTarget", BindingFlags.Instance | BindingFlags.NonPublic);
+        FieldInfo disposedField = type.GetField("disposed", BindingFlags.Instance | BindingFlags.NonPublic);
+        if (targetField is null || disposedField is null) {
+            return;
+        }
+        foreach (Entity entity in level.Entities) {
+            if (!type.IsInstanceOfType(entity) || targetField.GetValue(entity) is not VirtualAsset target
+                || IsDisposedAsset(target)) {
+                continue;
+            }
+            disposedField.SetValue(entity, false);
+        }
     }
 
     private static void ResetDisposedComponents(Level level) {
@@ -144,10 +167,7 @@ internal static class GraphicResourcesHandler {
             object fieldTarget = field.IsStatic ? null : target;
             object value = field.GetValue(fieldTarget);
             if (value is VirtualAsset asset) {
-                if (IsDisposedAsset(asset)) {
-                    field.SetValue(fieldTarget, null);
-                    LogReset(type, field.Name);
-                }
+                ReloadDisposedAsset(asset, type, field.Name);
             }
             else if (value is Array array && IsVirtualAssetContainer(array.GetType().GetElementType())) {
                 for (int i = 0; i < array.Length; i++) {

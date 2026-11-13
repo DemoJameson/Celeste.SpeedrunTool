@@ -29,7 +29,53 @@ internal static class GraphicResourcesHandler {
         ResetDisposedBackdrops(level.Background);
         ResetDisposedBackdrops(level.Foreground);
 
+        // Components can own their own VirtualRenderTarget too (census found several mod
+        // components). Scan the components of the restored entities; the field filter below only
+        // touches VirtualAsset (VirtualTexture/VirtualRenderTarget), never shared Atlas objects.
+        ResetDisposedComponents(level);
+
         ResetDisposedStaticAssets();
+        ResetKnownStaticAssets();
+    }
+
+    private static void ResetDisposedComponents(Level level) {
+        foreach (Entity entity in level.Entities) {
+            foreach (Component component in entity.Components) {
+                ResetDisposedAssets(component);
+            }
+        }
+    }
+
+    // Static fields cannot be found by walking entity instances: some are shared render targets
+    // used by another entity, and the owner type may not be instantiated in the restored level.
+    // Keep this list explicit instead of scanning GetAllTypes at runtime.
+    private static readonly (string Mod, string Type, string[] Fields)[] KnownStaticAssets = [
+        ("MaxHelpingHand", "Celeste.Mod.MaxHelpingHand.Entities.StylegroundFadeController", ["tempRenderTarget"]),
+        ("Microlith57Misc", "Celeste.Mod.Microlith57Misc.Entities.BlackHoleRefractionController", ["RefractionFill"]),
+        ("StrawberryJam2021", "Celeste.Mod.StrawberryJam2021.Entities.DarkMatterRenderer", ["DarkMatterLightning", "BlurTempBuffer"]),
+        ("FrostHelper", "FrostHelper.EntityBatcher", ["temp", "temp2"]),
+        ("CommunalHelper", "Celeste.Mod.CommunalHelper.Backdrops.Cloudscape", ["bufferFullscreen", "buffer320x180"]),
+        ("PrismaticHelper", "PrismaticHelper.Entities.Panels.WorldPanelManager", ["Displacement2"]),
+        ("StyleMaskHelper", "Celeste.Mod.StyleMaskHelper.Entities.BloomMask", ["BloomBuffer"]),
+        ("StyleMaskHelper", "Celeste.Mod.StyleMaskHelper.Entities.ColorGradeMask", ["FadeBuffers"]),
+        ("StyleMaskHelper", "Celeste.Mod.StyleMaskHelper.Entities.LightingMask", ["FadeBuffers"]),
+    ];
+
+    private static void ResetKnownStaticAssets() {
+        foreach ((string mod, string typeName, string[] fieldNames) in KnownStaticAssets) {
+            Type type = ModUtils.GetType(mod, typeName);
+            if (type is null) {
+                continue;
+            }
+            foreach (string fieldName in fieldNames) {
+                FieldInfo field = type.GetField(fieldName, BindingFlags.Static | BindingFlags.Public |
+                                                             BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                if (field is null || field.IsInitOnly) {
+                    continue;
+                }
+                ResetField(null, type, field);
+            }
+        }
     }
 
     private static void ResetDisposedBackdrops(BackdropRenderer renderer) {
@@ -72,29 +118,33 @@ internal static class GraphicResourcesHandler {
         }
 
         foreach (FieldInfo field in fields) {
-            try {
-                object fieldTarget = field.IsStatic ? null : target;
-                object value = field.GetValue(fieldTarget);
-                if (value is VirtualAsset asset) {
-                    if (IsDisposedAsset(asset)) {
-                        field.SetValue(fieldTarget, null);
-                        LogReset(type, field.Name);
-                    }
+            ResetField(target, type, field);
+        }
+    }
+
+    private static void ResetField(object target, Type type, FieldInfo field) {
+        try {
+            object fieldTarget = field.IsStatic ? null : target;
+            object value = field.GetValue(fieldTarget);
+            if (value is VirtualAsset asset) {
+                if (IsDisposedAsset(asset)) {
+                    field.SetValue(fieldTarget, null);
+                    LogReset(type, field.Name);
                 }
-                else if (value is Array array && array.GetType().GetElementType() is { } elementType
-                         && typeof(VirtualAsset).IsAssignableFrom(elementType)) {
-                    for (int i = 0; i < array.Length; i++) {
-                        if (array.GetValue(i) is VirtualAsset element && IsDisposedAsset(element)) {
-                            array.SetValue(null, i);
-                            LogReset(type, $"{field.Name}[{i}]");
-                        }
+            }
+            else if (value is Array array && array.GetType().GetElementType() is { } elementType
+                     && typeof(VirtualAsset).IsAssignableFrom(elementType)) {
+                for (int i = 0; i < array.Length; i++) {
+                    if (array.GetValue(i) is VirtualAsset element && IsDisposedAsset(element)) {
+                        array.SetValue(null, i);
+                        LogReset(type, $"{field.Name}[{i}]");
                     }
                 }
             }
-            catch (Exception exception) {
-                Logger.Warn("SpeedrunTool/GraphicResourcesHandler",
-                    $"Could not reset disposed asset {type.FullName}.{field.Name}: {exception.GetType().Name}: {exception.Message}");
-            }
+        }
+        catch (Exception exception) {
+            Logger.Warn("SpeedrunTool/GraphicResourcesHandler",
+                $"Could not reset disposed asset {type.FullName}.{field.Name}: {exception.GetType().Name}: {exception.Message}");
         }
     }
 

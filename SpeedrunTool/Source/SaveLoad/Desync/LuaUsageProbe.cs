@@ -58,7 +58,7 @@ internal static class LuaUsageProbe {
             reflectionUnavailable = true;
             Logger.Error("SpeedrunTool/DesyncRiskAnalyzer",
                 "LuaUsageProbe cannot inspect Monocle.Coroutine internals (Celeste version changed?); "
-                + "the desync check will fail closed. Use the DisableDesyncCheck option if you must save anyway.");
+                + "the desync check will fail closed; the save will be refused.");
         }
     }
 

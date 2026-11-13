@@ -8,7 +8,7 @@
 ## Features
 
 - Create save states* to practice certain segments of the room, automatically loaded after death. Customizable keyboard/controller shortcut for saving and loading.
-- Save states survive chapter changes: loading a state that was saved in another chapter (or from the chapter select, F8 works there too) automatically re-enters the chapter it was saved in and then restores it. The old "clear the state when leaving the chapter" behaviour is still available as **Auto Clear State on Chapter Transition (Legacy)** in the State settings (off by default). The option was hidden in older release builds, so v3.28.0 migrates an existing settings file once: a stored `On` value is treated as the old default and switched to `Off`; enable it again in the State settings if you really want the legacy behaviour.
+- Save states survive chapter changes: loading a state that was saved in another chapter automatically re-enters the chapter it was saved in and then restores it. The old "clear the state when leaving the chapter" behaviour is still available as **Auto Clear State on Chapter Transition** in the State settings (off by default). The option was hidden in older release builds, so v3.28.0 migrates an existing settings file once: a stored `On` value is treated as the old default and switched to `Off`; enable it again in the State settings if you really want the legacy behaviour.
 - Room timer compatible with Summit flags. Personal best is recorded.
 - Statistics on deaths, including location, time lost, etc.
 - Controller support for debug map: use confirm to teleport, right analog to zoom.

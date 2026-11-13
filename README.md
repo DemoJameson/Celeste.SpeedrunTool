@@ -83,8 +83,8 @@ A release zip (same layout the old `toZip.cmd` produced: `everest.yaml` + `Speed
 zip root plus `Dialog/` and `Graphics/`) is made explicitly, not on every build:
 
 ```bash
-dotnet build -c Release -p:CelestePrefix="/path/to/Celeste" -p:PackageMod=true -p:SrtPackageVersion=3.29.0
-# -> dist/SpeedrunTool-3.29.0.zip
+dotnet build -c Release -p:CelestePrefix="/path/to/Celeste" -p:PackageMod=true -p:SrtPackageVersion=3.28.2
+# -> dist/SpeedrunTool-3.28.2.zip
 ```
 
 The version in `everest.yaml` remains the single source of truth; `SrtPackageVersion` only names the

@@ -44,7 +44,7 @@ versions keep that cost predictable and expose the main memory/speed trade-off:
   second copy of the saved entities in memory. `On` is the default: on the 8 GB benchmark the
   extra memory was only a few tens of MB while load time roughly halved, so choose `Off`
   explicitly if you need to minimize the savestate footprint.
-- **First level load is ~1.4 s longer once per game session** (new machine; ~4.5 s on the 8 GB old machine) (v3.29.0): a dedicated warm-up save is
+- **First level load is ~1.4 s longer once per game session** (new machine; ~4.5 s on the 8 GB old machine) (v3.29.1): a dedicated warm-up save is
   performed on the loading screen to warm the first-save JIT path, so the first real save is no longer
   slower than the following ones. Set `WarmUpFirstSave: false` in the mod settings file to disable.
 - Save-state thumbnails are stored as small textures (<= 480 px on the long edge), not as
@@ -81,8 +81,8 @@ A release zip (same layout the old `toZip.cmd` produced: `everest.yaml` + `Speed
 zip root plus `Dialog/` and `Graphics/`) is made explicitly, not on every build:
 
 ```bash
-dotnet build -c Release -p:CelestePrefix="/path/to/Celeste" -p:PackageMod=true -p:SrtPackageVersion=3.29.0
-# -> dist/SpeedrunTool-3.29.0.zip
+dotnet build -c Release -p:CelestePrefix="/path/to/Celeste" -p:PackageMod=true -p:SrtPackageVersion=3.29.1
+# -> dist/SpeedrunTool-3.29.1.zip
 ```
 
 The version in `everest.yaml` remains the single source of truth; `SrtPackageVersion` only names the

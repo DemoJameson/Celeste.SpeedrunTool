@@ -841,7 +841,8 @@ public sealed partial class StateManager {
             return false;
         }
         if (!tas && level is { Paused: true }) {
-            failReason = "Cannot Save while Level is Paused!";
+            failReason = "Cannot Load while Level is Paused!";
+            return false;
         }
         return true;
     }

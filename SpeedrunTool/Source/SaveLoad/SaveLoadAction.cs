@@ -230,6 +230,12 @@ public sealed partial class SaveLoadAction {
     }
 
     internal static void OnSaveState(Level level) {
+        // The warm-up runs during the first Level.Begin on the live level. Save callbacks
+        // deliberately mutate the live level (clear trails/timers, remove entities), so they must
+        // not run there; the warm-up only exercises the clone/deep-clone path.
+        if (StateManager.Instance.IsWarmingUp) {
+            return;
+        }
         Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict = AllSavedValues ??= InitValueDictionary();
         EnsureValueDictionaries(dict);
 #if DEBUG
@@ -344,6 +350,9 @@ public sealed partial class SaveLoadAction {
     }
 
     internal static void OnBeforeSaveState(Level level) {
+        if (StateManager.Instance.IsWarmingUp) {
+            return;
+        }
         foreach (SaveLoadAction saveLoadAction in WithProgress("BEFORE_SAVE_CALLBACKS", beforeSaveActions)) {
             saveLoadAction.beforeSaveState(level);
         }

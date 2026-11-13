@@ -111,7 +111,7 @@
 
     <!-- Optional convenience target: deploys the built mod into a Celeste Mods directory in one command, e.g.
          dotnet build -c Release -p:CelestePrefix="C:\Celeste" -p:DeployDir="C:\Celeste\Mods\SpeedrunTool" -->
-    <!-- Release packaging: dotnet build -c Release -p:CelestePrefix=... -t:PackageMod -p:PackageMod=true -p:SrtPackageVersion=3.28.2
+    <!-- Release packaging: dotnet build -c Release -p:CelestePrefix=... -t:PackageMod -p:PackageMod=true -p:SrtPackageVersion=3.29.0
          Produces dist/SpeedrunTool-<PackageVersion>.zip with the same layout as the manual
          toZip.cmd used to make: everest.yaml + SpeedrunTool.dll at the zip root plus Dialog/
          and Graphics/. Not run automatically on every build: packaging a release is an explicit

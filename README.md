@@ -30,11 +30,11 @@ field path when a late check clears a save.
 
 ## Performance
 
-**Multi-slot is best-effort on low-memory machines.** The guaranteed/optimized path is one
+**Multi-slot performance is not guaranteed on low-memory machines.** The optimized path is one
 resident savestate: on the fixed-harness 8 GB run its frame p99 is ~30-32 ms, matching upstream
 LegacySupport. Holding 3 states adds a GC tail (fixed-harness phase-c p99 ~92 ms, `gc_pause_ms`
-~1.0 s per 20 s phase). Multi-slot is still fully supported and never auto-evicted; it is simply
-not performance-guaranteed on 8 GB hardware.
+~1.0 s per 20 s phase). Multi-slot still works and slots are never auto-evicted; only performance
+is not guaranteed on 8 GB hardware.
 
 A save state has to keep a deep copy of the room's object graph, so it is heavy by nature. Recent
 versions keep that cost predictable and expose the main memory/speed trade-off:
@@ -44,7 +44,7 @@ versions keep that cost predictable and expose the main memory/speed trade-off:
   second copy of the saved entities in memory. `On` is the default: on the 8 GB benchmark the
   extra memory was only a few tens of MB while load time roughly halved, so choose `Off`
   explicitly if you need to minimize the savestate footprint.
-- **First level load is ~1.4 s longer once per game session** (new machine; ~4.5 s on the 8 GB old machine) (v3.28.2): a dedicated warm-up save is
+- **First level load is ~1.4 s longer once per game session** (new machine; ~4.5 s on the 8 GB old machine) (v3.29.0): a dedicated warm-up save is
   performed on the loading screen to warm the first-save JIT path, so the first real save is no longer
   slower than the following ones. Set `WarmUpFirstSave: false` in the mod settings file to disable.
 - Save-state thumbnails are stored as small textures (<= 480 px on the long edge), not as
@@ -81,8 +81,8 @@ A release zip (same layout the old `toZip.cmd` produced: `everest.yaml` + `Speed
 zip root plus `Dialog/` and `Graphics/`) is made explicitly, not on every build:
 
 ```bash
-dotnet build -c Release -p:CelestePrefix="/path/to/Celeste" -p:PackageMod=true -p:SrtPackageVersion=3.28.2
-# -> dist/SpeedrunTool-3.28.2.zip
+dotnet build -c Release -p:CelestePrefix="/path/to/Celeste" -p:PackageMod=true -p:SrtPackageVersion=3.29.0
+# -> dist/SpeedrunTool-3.29.0.zip
 ```
 
 The version in `everest.yaml` remains the single source of truth; `SrtPackageVersion` only names the

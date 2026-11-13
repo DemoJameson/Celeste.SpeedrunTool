@@ -18,7 +18,6 @@ public class SpeedrunToolSettings : EverestModuleSettings {
 
     public void OnLoadSettings() {
         SetGcMemoryThreshold(Doubled_GcMemoryThreshold);
-        NormalizePreCloneMode();
         ApplyPreCloneMode();
         MigrateLegacySceneSwitchSetting();
         MigrateLuaCutsceneSetting();
@@ -73,10 +72,8 @@ public class SpeedrunToolSettings : EverestModuleSettings {
 
     /// <summary>
     /// Pre-cloning keeps a second copy of the saved entity graph alive so that loading is
-    /// faster, at the cost of some extra memory. Auto enables it everywhere (v3.28.1): the
-    /// old "low-memory machine = Off" heuristic saved only a few tens of MB in the 8 GB
-    /// benchmark while roughly doubling the load time, so the default now favours load speed.
-    /// Set it to Off explicitly to trade load speed for maximum memory savings.
+    /// faster, at the cost of some extra memory. It is On by default; set it to Off to trade
+    /// load speed for maximum memory savings.
     /// </summary>
     public PreCloneMode PreCloneMode { get; set; } = PreCloneMode.On;
 
@@ -86,14 +83,6 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     /// in the settings YAML if the extra loading time is not wanted.
     /// </summary>
     public bool WarmUpFirstSave { get; set; } = true;
-
-    private void NormalizePreCloneMode() {
-        // Auto was historically identical to On (it never selected Off). Keep the enum member for
-        // old settings files, but do not expose a choice with no observable difference.
-        if (PreCloneMode == PreCloneMode.Auto) {
-            PreCloneMode = PreCloneMode.On;
-        }
-    }
 
     public void ApplyPreCloneMode() {
         StateManager.PreCloneEnabled = PreCloneMode != PreCloneMode.Off;
@@ -291,8 +280,6 @@ public enum FreezeAfterLoadStateType {
 }
 
 public enum PreCloneMode {
-    /// <summary>Legacy serialized value; normalized to On because it never selected Off.</summary>
-    Auto,
     On,
     Off
 }

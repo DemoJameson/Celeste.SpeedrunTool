@@ -41,11 +41,11 @@ not performance-guaranteed on 8 GB hardware.
 A save state has to keep a deep copy of the room's object graph, so it is heavy by nature. Recent
 versions keep that cost predictable and expose the main memory/speed trade-off:
 
-- **Pre-clone for Faster Load** (State settings, default `Auto`): the object graph needed by the
+- **Pre-clone for Faster Load** (State settings, default `On`): the object graph needed by the
   next load is prepared on a background thread, which makes loading noticeably faster but keeps a
-  second copy of the saved entities in memory. `Auto` enables it on every machine (v3.28.1): on
-  the 8 GB benchmark the extra memory was only a few tens of MB while load time roughly halved,
-  so choose `Off` explicitly if you need to minimize the savestate footprint.
+  second copy of the saved entities in memory. `On` is the default: on the 8 GB benchmark the
+  extra memory was only a few tens of MB while load time roughly halved, so choose `Off`
+  explicitly if you need to minimize the savestate footprint.
 - **First level load is ~1.4 s longer once per game session** (new machine; ~4.5 s on the 8 GB old machine) (v3.28.2): a dedicated warm-up save is
   performed on the loading screen to warm the first-save JIT path, so the first real save is no longer
   slower than the following ones. Set `WarmUpFirstSave: false` in the mod settings file to disable.

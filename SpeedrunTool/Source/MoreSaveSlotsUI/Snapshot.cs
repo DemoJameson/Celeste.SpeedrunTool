@@ -102,12 +102,23 @@ internal class Snapshot {
                 renderedHere = true;
             }
 
-            // The level of this frame has just been rendered into the back buffer by the normal
-            // frame, so read it back instead of rendering the whole room a second time (the old
-            // code re-rendered the level inside Level.BeforeRender, doubling that frame and the
-            // GPU sync cost of saving).
-            EnsureBufferSize(ref readbackBuffer, width * height);
-            graphicsDevice.GetBackBufferData(viewport.Bounds, readbackBuffer, 0, width * height);
+            // Prefer GameplayBuffers.Level: it holds the composed level before Level.Render
+            // applies the color grade and the final letterboxed draw to the back buffer.
+            // Reading the back buffer stored the graded frame, making previews change color and
+            // darkness with the room's color grade/lights.
+            RenderTarget2D levelBuffer = GameplayBuffers.Level?.Target;
+            if (levelBuffer is not null && !levelBuffer.IsDisposed) {
+                width = levelBuffer.Width;
+                height = levelBuffer.Height;
+                EnsureBufferSize(ref readbackBuffer, width * height);
+                levelBuffer.GetData(readbackBuffer, 0, width * height);
+            }
+            else {
+                // Unusual frame (level buffer unavailable): fall back to the frame the engine
+                // just drew into the back buffer.
+                EnsureBufferSize(ref readbackBuffer, width * height);
+                graphicsDevice.GetBackBufferData(viewport.Bounds, readbackBuffer, 0, width * height);
+            }
         }
         catch (Exception e) {
             Logger.Warn("SpeedrunTool", "Failed to render original scene for SpeedrunTool snapshot:");

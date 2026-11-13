@@ -25,6 +25,10 @@ public sealed partial class StateManager {
     internal static bool AllowSaveLoadWhenWaiting = false;
 
     public bool IsSaved => savedLevel != null;
+
+    // True only during the one-time scene-load warm-up. Save callbacks that paint
+    // user-visible state (timer/berry recoloring) must not run then.
+    internal bool IsWarmingUp { get; private set; }
     public State State { get; private set; } = State.None;
     public bool SavedByTas { get; private set; }
     public bool LoadByTas { get; private set; }
@@ -201,6 +205,62 @@ public sealed partial class StateManager {
             Logger.LogDetailed(exception, "SpeedrunTool");
             RecoverFromFailedSave();
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Warm up the expensive save path once, during the first level load.
+    /// This must never enter the user-facing save lifecycle: no freeze, no wipe, no
+    /// WaitingEntity, no desync check, no pre-clone task and no snapshot. Those side
+    /// effects used to survive ClearStateImpl and left the game waiting for input.
+    /// </summary>
+    internal void WarmUpSaveState(Level level) {
+        if (!ModSettings.WarmUpFirstSave || State != State.None || IsSaved) {
+            return;
+        }
+
+        IsWarmingUp = true;
+        System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+        Level temporaryLevel = null;
+        SaveData temporarySaveData = null;
+        try {
+            SaveLoadAction.InitSlots();
+
+            // Match the real save's clone semantics for one-time JIT/codegen cost,
+            // but keep the temporary objects local to this method.
+            State = State.Saving;
+            SaveLoadAction.OnBeforeSaveState(level);
+            temporaryLevel = (Level)RuntimeHelpers.GetUninitializedObject(typeof(Level));
+            level.DeepCloneToShared(temporaryLevel);
+            temporarySaveData = SaveData.Instance.DeepCloneShared();
+            SaveLoadAction.OnSaveState(level);
+        }
+        catch (Exception exception) {
+            Logger.Warn("SpeedrunTool/SaveLoadAction",
+                $"First-save warm-up failed: {exception.GetType().Name}: {exception.Message}");
+            Logger.LogDetailed(exception, "SpeedrunTool");
+        }
+        finally {
+            temporaryLevel = null;
+            temporarySaveData = null;
+            try {
+                DeepClonerUtils.ClearSharedDeepCloneState();
+                SaveLoadAction.OnClearState(false);
+            }
+            catch (Exception exception) {
+                Logger.Warn("SpeedrunTool/SaveLoadAction",
+                    $"First-save warm-up cleanup failed: {exception.GetType().Name}: {exception.Message}");
+            }
+
+            IsWarmingUp = false;
+            State = State.None;
+            freezeType = FreezeType.None;
+            ClearBeforeSave = false;
+            SavedByTas = false;
+            LoadByTas = false;
+
+            Logger.Log("SpeedrunTool/SaveLoadAction",
+                $"Warmed the first-save path during level load: {sw.ElapsedMilliseconds} ms (temporary clone only)");
         }
     }
 

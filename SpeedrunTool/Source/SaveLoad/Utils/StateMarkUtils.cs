@@ -1,4 +1,4 @@
-﻿using Celeste.Mod.SpeedrunTool.RoomTimer;
+using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using System.Collections.Generic;
@@ -32,7 +32,7 @@ internal static class StateMarkUtils {
     }
 
     private static void ReColor(Dictionary<Type, Dictionary<string, object>> savedValues, Level level) {
-        if (StateManager.Instance.SavedByTas) {
+        if (StateManager.Instance.IsWarmingUp || StateManager.Instance.SavedByTas) {
             return;
         }
 

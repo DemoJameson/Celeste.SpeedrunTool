@@ -480,20 +480,12 @@ public sealed partial class SaveLoadAction {
 
     private static void WarmUpFirstSave(Level level) {
         try {
-            if (!ModSettings.WarmUpFirstSave || StateManager.Instance.State != State.None) {
-                return;
-            }
-            System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
-            bool saved = StateManager.Instance.SaveStateImpl(false, out _);
-            if (saved) {
-                StateManager.Instance.ClearStateImpl(false);
-            }
-            Logger.Log("SpeedrunTool/SaveLoadAction",
-                $"Warmed the first-save path during level load: {sw.ElapsedMilliseconds} ms (temporary state created={saved})");
+            StateManager.Instance.WarmUpSaveState(level);
         }
         catch (Exception exception) {
             Logger.Warn("SpeedrunTool/SaveLoadAction",
                 $"First-save warm-up failed: {exception.GetType().Name}: {exception.Message}");
+            Logger.LogDetailed(exception, "SpeedrunTool");
         }
     }
 

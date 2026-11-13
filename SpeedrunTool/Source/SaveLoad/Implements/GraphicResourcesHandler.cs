@@ -9,12 +9,14 @@ using Celeste.Mod.SpeedrunTool.Utils;
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 internal static class GraphicResourcesHandler {
 
-    // Some vanilla/mod global entities cache a VirtualRenderTarget/VirtualTexture in a field and
-    // only create it when the field is null. When the old area unloads, that asset is disposed but
-    // the field still points at the disposed object; the entity's next BeforeRender can crash in
-    // SpriteBatch.Draw (e.g. GlassBlockBg -> StarJumpBlock). Nulling disposed fields lets the
-    // entity's own lazy initializer recreate them on the first render of the loaded area.
+    // Some vanilla/mod entities cache a VirtualRenderTarget/VirtualTexture in a field. When the
+    // old area unloads, that asset is disposed but the field still points at it; the entity's next
+    // BeforeRender can crash in SpriteBatch.Draw. Prefer Reload() over nulling: some owners
+    // (StarJumpController, JungleHelper UIText/UIImage, Poem) create their target only in the
+    // constructor and never recover from a null field. Owners with a companion "disposed" bool
+    // also need that flag cleared after the target is valid again.
     private static readonly Dictionary<Type, FieldInfo[]> DisposableAssetFields = [];
+    private static readonly Dictionary<Type, FieldInfo[]> DisposedFlagFields = [];
     private static readonly HashSet<string> LoggedResetFields = [];
     private static readonly MethodInfo VirtualAssetReload =
         typeof(VirtualAsset).GetMethod("Reload", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
@@ -50,34 +52,11 @@ internal static class GraphicResourcesHandler {
 
         ResetDisposedStaticAssets();
         ResetKnownStaticAssets();
-        ResetDisposedJungleUiText(level);
 #if DEBUG
         Logger.Info("SpeedrunTool/GraphicResourcesHandler",
             $"ResetDisposedGlobalResources: {stopwatch.Elapsed.TotalMilliseconds:F2} ms, " +
             $"entities={level.Entities.Count}");
 #endif
-    }
-
-    // JungleHelper.UIText owns a render target created only in its constructor, plus a private
-    // "disposed" flag set when the old scene ends. Reloading the target alone avoids the null
-    // dereference, but the cloned entity still needs the flag cleared to render its text again.
-    private static void ResetDisposedJungleUiText(Level level) {
-        Type type = ModUtils.GetType("JungleHelper", "Celeste.Mod.JungleHelper.Triggers.UIText");
-        if (type is null) {
-            return;
-        }
-        FieldInfo targetField = type.GetField("textTarget", BindingFlags.Instance | BindingFlags.NonPublic);
-        FieldInfo disposedField = type.GetField("disposed", BindingFlags.Instance | BindingFlags.NonPublic);
-        if (targetField is null || disposedField is null) {
-            return;
-        }
-        foreach (Entity entity in level.Entities) {
-            if (!type.IsInstanceOfType(entity) || targetField.GetValue(entity) is not VirtualAsset target
-                || IsDisposedAsset(target)) {
-                continue;
-            }
-            disposedField.SetValue(entity, false);
-        }
     }
 
     private static void ResetDisposedComponents(Level level) {
@@ -157,22 +136,55 @@ internal static class GraphicResourcesHandler {
             DisposableAssetFields[type] = fields;
         }
 
+        bool reset = false;
         foreach (FieldInfo field in fields) {
-            ResetField(target, type, field);
+            reset |= ResetField(target, type, field);
+        }
+
+        if (reset) {
+            foreach (FieldInfo flag in GetDisposedFlags(type)) {
+                try {
+                    flag.SetValue(target, false);
+                }
+                catch (Exception exception) {
+                    Logger.Warn("SpeedrunTool/GraphicResourcesHandler",
+                        $"Could not clear {type.FullName}.{flag.Name}: {exception.GetType().Name}: {exception.Message}");
+                }
+            }
         }
     }
 
-    private static void ResetField(object target, Type type, FieldInfo field) {
+    private static FieldInfo[] GetDisposedFlags(Type type) {
+        if (DisposedFlagFields.TryGetValue(type, out FieldInfo[] flags)) {
+            return flags;
+        }
+        List<FieldInfo> found = [];
+        for (Type current = type; current is not null && current != typeof(object); current = current.BaseType) {
+            foreach (FieldInfo field in current.GetFields(BindingFlags.Instance | BindingFlags.Public |
+                                                          BindingFlags.NonPublic | BindingFlags.DeclaredOnly)) {
+                if (!field.IsInitOnly && field.FieldType == typeof(bool)
+                    && field.Name.Equals("disposed", StringComparison.OrdinalIgnoreCase)) {
+                    found.Add(field);
+                }
+            }
+        }
+        flags = [.. found];
+        DisposedFlagFields[type] = flags;
+        return flags;
+    }
+
+    private static bool ResetField(object target, Type type, FieldInfo field) {
         try {
             object fieldTarget = field.IsStatic ? null : target;
             object value = field.GetValue(fieldTarget);
             if (value is VirtualAsset asset) {
-                ReloadDisposedAsset(asset, type, field.Name);
+                return ReloadDisposedAsset(asset, type, field.Name);
             }
-            else if (value is Array array && IsVirtualAssetContainer(array.GetType().GetElementType())) {
+            bool reset = false;
+            if (value is Array array && IsVirtualAssetContainer(array.GetType().GetElementType())) {
                 for (int i = 0; i < array.Length; i++) {
                     if (array.GetValue(i) is VirtualAsset element) {
-                        ReloadDisposedAsset(element, type, $"{field.Name}[{i}]");
+                        reset |= ReloadDisposedAsset(element, type, $"{field.Name}[{i}]");
                     }
                 }
             }
@@ -180,14 +192,16 @@ internal static class GraphicResourcesHandler {
                      && IsVirtualAssetContainer(list.GetType())) {
                 for (int i = 0; i < list.Count; i++) {
                     if (list[i] is VirtualAsset element) {
-                        ReloadDisposedAsset(element, type, $"{field.Name}[{i}]");
+                        reset |= ReloadDisposedAsset(element, type, $"{field.Name}[{i}]");
                     }
                 }
             }
+            return reset;
         }
         catch (Exception exception) {
             Logger.Warn("SpeedrunTool/GraphicResourcesHandler",
                 $"Could not reset disposed asset {type.FullName}.{field.Name}: {exception.GetType().Name}: {exception.Message}");
+            return false;
         }
     }
 
@@ -211,17 +225,19 @@ internal static class GraphicResourcesHandler {
         return false;
     }
 
-    private static void ReloadDisposedAsset(VirtualAsset asset, Type type, string label) {
+    private static bool ReloadDisposedAsset(VirtualAsset asset, Type type, string label) {
         if (!IsDisposedAsset(asset)) {
-            return;
+            return false;
         }
         try {
             VirtualAssetReload?.Invoke(asset, null);
             LogReset(type, label);
+            return true;
         }
         catch (Exception exception) {
             Logger.Warn("SpeedrunTool/GraphicResourcesHandler",
                 $"Could not reload disposed asset {type.FullName}.{label}: {exception.GetType().Name}: {exception.Message}");
+            return false;
         }
     }
 

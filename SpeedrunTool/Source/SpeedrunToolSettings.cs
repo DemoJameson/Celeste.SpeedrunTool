@@ -117,6 +117,11 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public bool SaveTimeAndDeaths { get; set; } = false;
     public bool SaveExtendedVariants { get; set; } = true;
 
+    /// <summary>
+    /// Legacy serialized name for the single master switch over every desync check. Keeping the
+    /// property name preserves existing settings files; the menu exposes it as Allow Unsafe Lua
+    /// Savestates.
+    /// </summary>
     public bool SaveInLuaCutscene { get; set; } = false;
     public bool NoMessageAfterSaveLoad { get; set; } = false;
     public bool AllowStateDuringDeath { get; set; } = false;

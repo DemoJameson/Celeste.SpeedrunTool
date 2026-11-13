@@ -34,6 +34,10 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 internal static class DesyncRiskAnalyzer {
     private const string LogTag = "SpeedrunTool/DesyncRiskAnalyzer";
 
+    // One master switch for every desync check. The property keeps its old serialized name,
+    // SaveInLuaCutscene, so existing settings files retain their choice.
+    private static bool Enabled => !ModSettings.SaveInLuaCutscene;
+
     // Fail-closed late-check hits. Instances of these types are refused in the next save's early check.
     private static readonly HashSet<Type> EarlyCheckEntityTypes = [];
 
@@ -99,7 +103,7 @@ internal static class DesyncRiskAnalyzer {
 
         // some maps are actually safe to save even though they have lua cutscene, in that case return false
         static bool VeryVeryEarlyCheck() {
-            if (Engine.Scene is not Level level) {
+            if (!Enabled || Engine.Scene is not Level level) {
                 return false;
             }
 
@@ -233,6 +237,10 @@ internal static class DesyncRiskAnalyzer {
     }
 
     internal static void Check(Entity obj) {
+        if (!Enabled) {
+            return;
+        }
+
         // 在每个 Level 第一次 SL 时, CheckAll = true, 尽可能多地执行检查, 方便后续在 EarlyCheck 阶段就终止.
         if (desyncReason is not null && !CheckAll) {
             return;

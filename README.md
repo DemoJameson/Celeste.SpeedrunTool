@@ -20,9 +20,9 @@ Savestates that capture live Lua VM state (Lua cutscenes, Lua bosses) cannot be 
 C# side is rewound but the global Lua VM is not. The mod therefore refuses such saves by default.
 One State setting controls this:
 
-- **Enable Save in Lua Cutscene**: allow saving while a Lua cutscene/talker is active. The general
-  check for unknown mods still runs, so a state saved mid-cutscene may still be cleared or behave
-  unexpectedly.
+- **Allow Unsafe Lua Savestates**: skip every Lua desync check, including Lua cutscenes and Lua
+  bosses. Savestates made in those states may load with an inconsistent Lua state; leave it off
+  unless you accept that risk.
 
 The v3.28.0 checker also finds Lua values nested in arrays/collections/generic containers, refuses
 saves while an unskippable Lua talker's coroutine is still running, and logs the entity type plus

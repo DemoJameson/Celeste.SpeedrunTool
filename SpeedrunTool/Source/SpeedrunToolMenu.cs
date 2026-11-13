@@ -175,10 +175,10 @@ public static class SpeedrunToolMenu {
             subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.SaveExtendedVariants), ModSettings.SaveExtendedVariants).Change(b =>
                 ModSettings.SaveExtendedVariants = b));
 
-            TextMenu.Item saveInLua;
-            subMenu.Add(saveInLua = new TextMenu.OnOff(Dialog.Clean(DialogIds.SaveInLuaCutscene), ModSettings.SaveInLuaCutscene).Change(b =>
+            TextMenu.Item allowUnsafeLuaSavestates;
+            subMenu.Add(allowUnsafeLuaSavestates = new TextMenu.OnOff(Dialog.Clean(DialogIds.AllowUnsafeLuaSavestates), ModSettings.SaveInLuaCutscene).Change(b =>
                 ModSettings.SaveInLuaCutscene = b));
-            AddDescription(saveInLua, subMenu, menu, Dialog.Clean(DialogIds.SaveInLuaWarn));
+            AddDescription(allowUnsafeLuaSavestates, subMenu, menu, Dialog.Clean(DialogIds.AllowUnsafeLuaSavestatesDescription));
 
             subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AllowStateDuringDeath), ModSettings.AllowStateDuringDeath).Change(b =>
                 ModSettings.AllowStateDuringDeath = b));

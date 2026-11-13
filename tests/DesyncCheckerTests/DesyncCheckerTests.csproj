@@ -14,7 +14,7 @@
     </PropertyGroup>
     <ItemGroup>
         <Compile Include="Program.cs" />
-        <Compile Include="..\..\SpeedrunTool\Source\SaveLoad\Implements\DesyncCheckLogic.cs" Link="DesyncCheckLogic.cs" />
-        <Compile Include="..\..\SpeedrunTool\Source\SaveLoad\Implements\DesyncRegistration.cs" Link="DesyncRegistration.cs" />
+        <Compile Include="..\..\SpeedrunTool\Source\SaveLoad\Desync\DesyncCheckLogic.cs" Link="DesyncCheckLogic.cs" />
+        <Compile Include="..\..\SpeedrunTool\Source\SaveLoad\Desync\DesyncRegistration.cs" Link="DesyncRegistration.cs" />
     </ItemGroup>
 </Project>

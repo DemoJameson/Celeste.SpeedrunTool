@@ -57,6 +57,7 @@ public static class SpeedrunToolMenu {
     }
 
     private static void AddDescription(TextMenu.Item subMenuItem, TextMenuExt.SubMenu subMenu, TextMenu containingMenu, string description) {
+        description = description.Replace("\\n", "\n");
         TextMenuExt.EaseInSubHeaderExt descriptionText = new(description, false, containingMenu) {
             TextColor = Color.Gray,
             HeightExtra = 0f
@@ -132,7 +133,7 @@ public static class SpeedrunToolMenu {
 
             TextMenu.Item preCloneMode;
             subMenu.Add(preCloneMode = new EnumerableSliderCompact<PreCloneMode>(Dialog.Clean(DialogIds.PreCloneMode),
-                CreateEnumerableOptions<PreCloneMode>(),
+                CreateEnumerableOptions<PreCloneMode>().Where(pair => pair.Key != PreCloneMode.Auto),
                 ModSettings.PreCloneMode).Change(b => {
                 ModSettings.PreCloneMode = b;
                 ModSettings.ApplyPreCloneMode();
@@ -179,10 +180,10 @@ public static class SpeedrunToolMenu {
                 ModSettings.SaveInLuaCutscene = b));
             AddDescription(saveInLua, subMenu, menu, Dialog.Clean(DialogIds.SaveInLuaWarn));
 
-            TextMenu.Item disableDesyncCheck;
-            subMenu.Add(disableDesyncCheck = new TextMenu.OnOff(Dialog.Clean(DialogIds.DisableDesyncCheck), ModSettings.DisableDesyncCheck).Change(b =>
-                ModSettings.DisableDesyncCheck = b));
-            AddDescription(disableDesyncCheck, subMenu, menu, Dialog.Clean(DialogIds.DisableDesyncCheckDescription));
+            TextMenu.Item luaDesyncCheck;
+            subMenu.Add(luaDesyncCheck = new TextMenu.OnOff(Dialog.Clean(DialogIds.LuaDesyncCheck), !ModSettings.DisableDesyncCheck).Change(enabled =>
+                ModSettings.DisableDesyncCheck = !enabled));
+            AddDescription(luaDesyncCheck, subMenu, menu, Dialog.Clean(DialogIds.LuaDesyncCheckDescription));
 
             subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.AllowStateDuringDeath), ModSettings.AllowStateDuringDeath).Change(b =>
                 ModSettings.AllowStateDuringDeath = b));

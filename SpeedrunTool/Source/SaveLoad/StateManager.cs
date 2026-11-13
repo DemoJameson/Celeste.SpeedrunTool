@@ -373,12 +373,7 @@ public sealed partial class StateManager {
 
             Tracker.Refresh(savedLevel); // 不能在 OnLoadState 里做. 否则多次读档会需要反复 Refresh Tracker
             savedLevel.DeepCloneToShared(level);
-            // MirrorSurfaces owns a VirtualRenderTarget that is disposed when its old area is
-            // unloaded. A cross-chapter state still carries the entity; force it to drop the
-            // stale target so its next BeforeRender recreates one for the loaded area.
-            foreach (MirrorSurfaces mirror in level.Entities.FindAll<MirrorSurfaces>()) {
-                mirror.Dispose();
-            }
+            progress?.Report("RESET_GRAPHICS", SlotName);
             GraphicResourcesHandler.ResetDisposedGlobalResources(level);
             SaveLoadProfiler.Mark("cloneBack");
             progress?.Report("CLONE_LEVEL", SlotName);

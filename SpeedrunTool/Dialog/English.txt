@@ -213,3 +213,5 @@ SPEEDRUN_TOOL_BUSY_CLEAR_DEATHS=Clearing death statistics
 SPEEDRUN_TOOL_BUSY_READ_PLAYBACK=Reading death playback
 SPEEDRUN_TOOL_BUSY_WRITE_PLAYBACK=Saving death playback
 SPEEDRUN_TOOL_BUSY_WAIT=Please wait
+
+SPEEDRUN_TOOL_BUSY_RESET_GRAPHICS=Restoring graphics resources

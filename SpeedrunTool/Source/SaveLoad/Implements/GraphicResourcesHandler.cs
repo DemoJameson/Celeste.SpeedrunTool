@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Diagnostics;
 using System.Reflection;
 using Celeste.Mod.Entities;
 using Celeste.Mod.SpeedrunTool.Utils;
@@ -16,6 +17,14 @@ internal static class GraphicResourcesHandler {
     private static readonly HashSet<string> LoggedResetFields = [];
 
     internal static void ResetDisposedGlobalResources(Level level) {
+        Stopwatch stopwatch = Stopwatch.StartNew();
+        // MirrorSurfaces owns a VirtualRenderTarget that is disposed when its old area is
+        // unloaded. A cross-chapter state still carries the entity; force it to drop the stale
+        // target so its next BeforeRender recreates one for the loaded area.
+        foreach (MirrorSurfaces mirror in level.Entities.FindAll<MirrorSurfaces>()) {
+            mirror.Dispose();
+        }
+
         // Not only Global entities own disposable graphics caches. StarJumpController is a
         // regular level entity and its public BlockFill target is disposed when the old area
         // unloads; StarJumpBlock.Render reads it directly. Reset disposed fields on every entity;
@@ -36,6 +45,9 @@ internal static class GraphicResourcesHandler {
 
         ResetDisposedStaticAssets();
         ResetKnownStaticAssets();
+        Logger.Info("SpeedrunTool/GraphicResourcesHandler",
+            $"ResetDisposedGlobalResources: {stopwatch.Elapsed.TotalMilliseconds:F2} ms, " +
+            $"entities={level.Entities.Count}");
     }
 
     private static void ResetDisposedComponents(Level level) {

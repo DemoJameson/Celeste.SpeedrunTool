@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Diagnostics;
@@ -17,7 +18,9 @@ internal static class GraphicResourcesHandler {
     private static readonly HashSet<string> LoggedResetFields = [];
 
     internal static void ResetDisposedGlobalResources(Level level) {
+#if DEBUG
         Stopwatch stopwatch = Stopwatch.StartNew();
+#endif
         // MirrorSurfaces owns a VirtualRenderTarget that is disposed when its old area is
         // unloaded. A cross-chapter state still carries the entity; force it to drop the stale
         // target so its next BeforeRender recreates one for the loaded area.
@@ -45,9 +48,11 @@ internal static class GraphicResourcesHandler {
 
         ResetDisposedStaticAssets();
         ResetKnownStaticAssets();
+#if DEBUG
         Logger.Info("SpeedrunTool/GraphicResourcesHandler",
             $"ResetDisposedGlobalResources: {stopwatch.Elapsed.TotalMilliseconds:F2} ms, " +
             $"entities={level.Entities.Count}");
+#endif
     }
 
     private static void ResetDisposedComponents(Level level) {
@@ -68,9 +73,8 @@ internal static class GraphicResourcesHandler {
         ("FrostHelper", "FrostHelper.EntityBatcher", ["temp", "temp2"]),
         ("CommunalHelper", "Celeste.Mod.CommunalHelper.Backdrops.Cloudscape", ["bufferFullscreen", "buffer320x180"]),
         ("PrismaticHelper", "PrismaticHelper.Entities.Panels.WorldPanelManager", ["Displacement2"]),
-        ("StyleMaskHelper", "Celeste.Mod.StyleMaskHelper.Entities.BloomMask", ["BloomBuffer"]),
+        ("StyleMaskHelper", "Celeste.Mod.StyleMaskHelper.Entities.BloomMask", ["BloomBuffer", "FadeBuffer"]),
         ("StyleMaskHelper", "Celeste.Mod.StyleMaskHelper.Entities.ColorGradeMask", ["FadeBuffers"]),
-        ("StyleMaskHelper", "Celeste.Mod.StyleMaskHelper.Entities.LightingMask", ["FadeBuffers"]),
     ];
 
     private static void ResetKnownStaticAssets() {
@@ -119,8 +123,7 @@ internal static class GraphicResourcesHandler {
                     if (field.IsInitOnly) {
                         continue;
                     }
-                    if (typeof(VirtualAsset).IsAssignableFrom(field.FieldType) || field.FieldType.IsArray
-                        && typeof(VirtualAsset).IsAssignableFrom(field.FieldType.GetElementType())) {
+                    if (IsVirtualAssetContainer(field.FieldType)) {
                         found.Add(field);
                     }
                 }
@@ -144,11 +147,18 @@ internal static class GraphicResourcesHandler {
                     LogReset(type, field.Name);
                 }
             }
-            else if (value is Array array && array.GetType().GetElementType() is { } elementType
-                     && typeof(VirtualAsset).IsAssignableFrom(elementType)) {
+            else if (value is Array array && IsVirtualAssetContainer(array.GetType().GetElementType())) {
                 for (int i = 0; i < array.Length; i++) {
                     if (array.GetValue(i) is VirtualAsset element && IsDisposedAsset(element)) {
                         array.SetValue(null, i);
+                        LogReset(type, $"{field.Name}[{i}]");
+                    }
+                }
+            }
+            else if (value is IList list && IsVirtualAssetContainer(list.GetType())) {
+                for (int i = 0; i < list.Count; i++) {
+                    if (list[i] is VirtualAsset element && IsDisposedAsset(element)) {
+                        list[i] = null;
                         LogReset(type, $"{field.Name}[{i}]");
                     }
                 }
@@ -158,6 +168,26 @@ internal static class GraphicResourcesHandler {
             Logger.Warn("SpeedrunTool/GraphicResourcesHandler",
                 $"Could not reset disposed asset {type.FullName}.{field.Name}: {exception.GetType().Name}: {exception.Message}");
         }
+    }
+
+    private static bool IsVirtualAssetContainer(Type type) {
+        if (type is null) {
+            return false;
+        }
+        if (type.IsArray) {
+            return IsVirtualAssetContainer(type.GetElementType());
+        }
+        if (typeof(VirtualAsset).IsAssignableFrom(type)) {
+            return true;
+        }
+        if (type.IsGenericType) {
+            foreach (Type argument in type.GetGenericArguments()) {
+                if (typeof(VirtualAsset).IsAssignableFrom(argument)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private static bool IsDisposedAsset(VirtualAsset asset) {

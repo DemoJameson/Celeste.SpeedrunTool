@@ -46,31 +46,31 @@ internal static class BusyIndicator {
         }
     }
 
+    [Conditional("DEBUG")]
+    private static void Diag(string message) => Logger.Info("SpeedrunTool/Progress/Diag", message);
+
     internal static OperationProgress Begin(string title) {
         bool root = OperationProgress.Current == null;
         if (!MainThreadHelper.IsMainThread || !hasDrawn || drawing || AssetReloadHelper.IsReloading
             || TasUtils.Running || TasUtils.HideGamePlay) {
             if (root) {
-                Logger.Info("SpeedrunTool/Progress/Diag",
-                    $"suppress {title}: main={MainThreadHelper.IsMainThread} drawn={hasDrawn} " +
-                    $"drawing={drawing} reload={AssetReloadHelper.IsReloading} " +
-                    $"tas={TasUtils.Running} hideTas={TasUtils.HideGamePlay}");
+                Diag($"suppress {title}: main={MainThreadHelper.IsMainThread} drawn={hasDrawn} " +
+                     $"drawing={drawing} reload={AssetReloadHelper.IsReloading} " +
+                     $"tas={TasUtils.Running} hideTas={TasUtils.HideGamePlay}");
             }
             return null;
         }
         OperationProgress progress = null;
         progress = new OperationProgress(title, TryPresent, () => {
             if (root) {
-                Logger.Info("SpeedrunTool/Progress/Diag",
-                    $"end {title} total={progress.ElapsedSeconds * 1000.0:F0}ms shown={progress.Presented}");
+                Diag($"end {title} total={progress.ElapsedSeconds * 1000.0:F0}ms shown={progress.Presented}");
                 ReleaseBackground();
             }
         });
         if (root) {
             Level level = Engine.Scene as Level;
-            Logger.Info("SpeedrunTool/Progress/Diag",
-                $"begin {title} scene={Engine.Scene?.GetType().Name ?? "null"} " +
-                $"room={level?.Session?.Level ?? "?"} slot={SaveSlotsManager.SlotName}");
+            Diag($"begin {title} scene={Engine.Scene?.GetType().Name ?? "null"} " +
+                 $"room={level?.Session?.Level ?? "?"} slot={SaveSlotsManager.SlotName}");
         }
         return progress;
     }
@@ -206,8 +206,7 @@ internal static class BusyIndicator {
             device.Present();
             if (!progress.Presented) {
                 progress.Presented = true;
-                Logger.Info("SpeedrunTool/Progress/Diag",
-                    $"show {progress.Title} at {progress.ElapsedSeconds * 1000.0:F0}ms");
+                Diag($"show {progress.Title} at {progress.ElapsedSeconds * 1000.0:F0}ms");
             }
             lastPresentation = Clock.Elapsed.TotalSeconds;
         }

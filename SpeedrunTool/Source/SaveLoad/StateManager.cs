@@ -644,11 +644,13 @@ public sealed partial class StateManager {
                 // are disposed when their old area unloads (MirrorSurfaces/TrailManager/WaveDash);
                 // log only the ones that actually carry such resources so a crash report names the
                 // entity instead of only the later SpriteBatch.Draw stack.
+#if DEBUG
                 string resources = DescribeGlobalResources(entity.GetType());
                 if (resources.Length > 0) {
                     Logger.Info("SpeedrunTool/UnloadLevel",
                         $"Keeping global resource entity [{entity.GetType().FullName}]: {resources}");
                 }
+#endif
                 continue;
             }
             try {

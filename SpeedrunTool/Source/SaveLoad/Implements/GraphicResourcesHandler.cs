@@ -16,6 +16,8 @@ internal static class GraphicResourcesHandler {
     // entity's own lazy initializer recreate them on the first render of the loaded area.
     private static readonly Dictionary<Type, FieldInfo[]> DisposableAssetFields = [];
     private static readonly HashSet<string> LoggedResetFields = [];
+    private static readonly MethodInfo VirtualAssetReload =
+        typeof(VirtualAsset).GetMethod("Reload", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
     internal static void ResetDisposedGlobalResources(Level level) {
 #if DEBUG
@@ -149,17 +151,16 @@ internal static class GraphicResourcesHandler {
             }
             else if (value is Array array && IsVirtualAssetContainer(array.GetType().GetElementType())) {
                 for (int i = 0; i < array.Length; i++) {
-                    if (array.GetValue(i) is VirtualAsset element && IsDisposedAsset(element)) {
-                        array.SetValue(null, i);
-                        LogReset(type, $"{field.Name}[{i}]");
+                    if (array.GetValue(i) is VirtualAsset element) {
+                        ReloadDisposedAsset(element, type, $"{field.Name}[{i}]");
                     }
                 }
             }
-            else if (value is IList list && IsVirtualAssetContainer(list.GetType())) {
+            else if (value is IList list && !list.IsReadOnly && !list.IsFixedSize
+                     && IsVirtualAssetContainer(list.GetType())) {
                 for (int i = 0; i < list.Count; i++) {
-                    if (list[i] is VirtualAsset element && IsDisposedAsset(element)) {
-                        list[i] = null;
-                        LogReset(type, $"{field.Name}[{i}]");
+                    if (list[i] is VirtualAsset element) {
+                        ReloadDisposedAsset(element, type, $"{field.Name}[{i}]");
                     }
                 }
             }
@@ -180,7 +181,7 @@ internal static class GraphicResourcesHandler {
         if (typeof(VirtualAsset).IsAssignableFrom(type)) {
             return true;
         }
-        if (type.IsGenericType) {
+        if (typeof(IList).IsAssignableFrom(type) && type.IsGenericType) {
             foreach (Type argument in type.GetGenericArguments()) {
                 if (typeof(VirtualAsset).IsAssignableFrom(argument)) {
                     return true;
@@ -188,6 +189,20 @@ internal static class GraphicResourcesHandler {
             }
         }
         return false;
+    }
+
+    private static void ReloadDisposedAsset(VirtualAsset asset, Type type, string label) {
+        if (!IsDisposedAsset(asset)) {
+            return;
+        }
+        try {
+            VirtualAssetReload?.Invoke(asset, null);
+            LogReset(type, label);
+        }
+        catch (Exception exception) {
+            Logger.Warn("SpeedrunTool/GraphicResourcesHandler",
+                $"Could not reload disposed asset {type.FullName}.{label}: {exception.GetType().Name}: {exception.Message}");
+        }
     }
 
     private static bool IsDisposedAsset(VirtualAsset asset) {

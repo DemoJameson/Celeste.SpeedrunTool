@@ -26,7 +26,8 @@ public sealed partial class StateManager {
     }
 
     /// <summary>
-    /// Merges the live run's time/deaths into the saved templates when "Save Time and Deaths" is off.
+    /// Merges the live run's time/deaths/monotonic counters into the saved templates when
+    /// "Save Time, Deaths and Counters" is off.
     /// The live data is read from the scene that is still active, so a pending (cross-scene) load
     /// calls this BEFORE leaving for the saved chapter; the actual restore then runs without merging.
     /// Loading a state saved from another save file keeps the template unchanged: both files have
@@ -57,6 +58,9 @@ public sealed partial class StateManager {
         savedSaveData.Time = currentSaveData.Time;
         int increaseDeath = level is null || level.IsPlayerDead() ? 0 : 1;
         savedSaveData.TotalDeaths = currentSaveData.TotalDeaths + increaseDeath;
+        savedSaveData.TotalDashes = currentSaveData.TotalDashes;
+        savedSaveData.TotalJumps = currentSaveData.TotalJumps;
+        savedSaveData.TotalWallJumps = currentSaveData.TotalWallJumps;
 
         if (session is null) {
             return;

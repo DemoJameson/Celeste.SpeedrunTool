@@ -130,6 +130,10 @@ public class SpeedrunToolSettings : EverestModuleSettings {
         StateManager.MemoryThreshold = doubleNum / 2f;
     }
     public bool GcAfterClearState { get; set; } = true;
+    /// <summary>
+    /// Also restore time, deaths and the monotonic dash/jump/wall-jump counters. The serialized
+    /// name is kept for existing settings files.
+    /// </summary>
     public bool SaveTimeAndDeaths { get; set; } = false;
     public bool SaveExtendedVariants { get; set; } = true;
 

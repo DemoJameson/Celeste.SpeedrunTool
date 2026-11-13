@@ -1,69 +1,78 @@
-using Celeste.Mod.SpeedrunTool.Utils;
+using Celeste.Mod.SpeedrunTool.ModInterop;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 
-public static class ExternalSafeOracle {
-    // each oracle returns if it thinks it's safe
-    // contact me if you need an API to add your oracles
-    public static readonly List<Func<Level, bool>> Oracles = [];
-
-    internal static bool Consult(Level level) {
-        foreach (Func<Level, bool> provider in Oracles) {
-            if (provider(level)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static readonly HashSet<string> SafeMaps = ["StrawberryJam2021/5-Grandmaster/maya"];
-
-    [Initialize]
-    private static void Initialize() {
-        Oracles.Add(static (level) => SafeMaps.Contains(level.Session.Area.SID));
-    }
-}
-
-
+/// <summary>
+/// Lua desync checker ("checker") entry points used by the save pipeline.
+///
+/// The checker has three stages (the StateManager / DeepCloner call sites are unchanged):
+/// <list type="number">
+/// <item><b>VeryVeryEarlyCheck</b> (<see cref="GetAndRefreshIfDesyncCheck"/>): is the checker enabled
+/// for this save at all? A level predicate registered through <c>SpeedrunTool.Desync</c> (plus the
+/// historical Strawberry Jam "maya" safe map) can opt the level out entirely.</item>
+/// <item><b>EarlyCheck</b> (<see cref="OnBeforeSaveState"/>, main thread, before cloning):
+/// <list type="bullet">
+/// <item>the generic <see cref="LuaUsageProbe"/> refuses the save when Lua is currently executing
+/// (unless <c>SaveInLuaCutscene</c> covers a LuaCutscenes-driven coroutine);</item>
+/// <item>the built-in <see cref="DesyncEcosystems"/> gates (LuaCutscenes / BossesHelper / FrostHelper)
+/// verify that every instance in the level is at rest;</item>
+/// <item>entity types that a previous save's late check had to refuse are refused up front
+/// (dynamic fail-closed list).</item>
+/// </list></item>
+/// <item><b>LateCheck</b> (<see cref="Check"/>, main thread, during the save clone; result read by
+/// <see cref="OnAfterSaveState"/>): fail-closed type-graph walk for entities that no gate covers.
+/// It keeps the P1 container/array/generic expansion, the P3 field-path log, and additionally walks
+/// <see cref="Entity.Components"/> by their <i>runtime</i> types. A hit clears the state and shows
+/// "Saved but Cleared".</item>
+/// </list>
+/// </summary>
 internal static class DesyncRiskAnalyzer {
+    private const string LogTag = "SpeedrunTool/DesyncRiskAnalyzer";
 
-    // SaveInLuaCutscene only bypasses the cutscene-specific early checks now; disabling the
-    // whole checker is a separate, explicit advanced option.
+    // SaveInLuaCutscene only bypasses the cutscene-specific part; disabling the whole checker is a
+    // separate, explicit advanced option (kept from v3.28.0).
     private static bool Enabled => !ModSettings.DisableDesyncCheck;
 
+    // Fail-closed late-check hits. Instances of these types are refused in the next save's early check.
     private static readonly HashSet<Type> EarlyCheckEntityTypes = [];
 
-    private static readonly Dictionary<Type, Func<Level, Type, bool>> EarlyCheckSpecialHandlers = [];
-
-    // similar to Force.DeepCloner DeepClonerSafeTypes. Used for late checks
-
+    // Late-check type decisions (similar to Force.DeepCloner DeepClonerSafeTypes). Seeded with the
+    // Lua wrapper types; populated lazily while walking entity/component type graphs.
     private static readonly ConcurrentDictionary<Type, bool> KnownTypes = new();
 
     internal static bool CheckAll = true;
 
-    private static bool shouldDesyncCheckTemporarily = false;
-
+    private static bool shouldDesyncCheckTemporarily;
     private static Type desyncReason;
+    private static string desyncDetail;
 
-    // LateCheck 的诊断信息：命中时记录「从实体类型到 Lua 类型」的字段路径，
+    // LateCheck 的诊断信息（P3）：命中时记录「从实体类型到 Lua 类型」的字段路径，
     // 方便用户从日志里定位是哪个 mod 的哪个字段。只在主线程的 Check 中使用。
     [ThreadStatic] private static List<string> canSyncTypePath;
     [ThreadStatic] private static string unsafeLuaPath;
 
-    // 我们把检测分为三个时期:
-    // 1. VeryVeryEarlyCheck: 这一步检测本功能是否开启, 以及通过地图元数据等决定是否需要检测. 我们也允许外部在这一步注入检测
-    // 2. EarlyCheck/BeforeSaveState: 检测有嫌疑的那些实体是否在关卡中
-    // 3. AfterSaveState: 检测 DeepClone 时是否有某些实体的某个字段是 Lua 对象
-
     [Initialize]
     private static void Initialize() {
         desyncReason = null;
+        desyncDetail = null;
+        EarlyCheckEntityTypes.Clear();
+        ResetKnownTypes();
 
-        // they are not in any EverestModule's assembly so ModUtils.GetAllTypes() don't include them
+        DesyncInterop.InstallDefaults();
+        DesyncRegistration.SafeTypeRegisteredHook = OnSafeTypeRegistered;
+        DesyncEcosystems.Initialize();
+        LuaUsageProbe.Initialize();
+    }
+
+    private static void ResetKnownTypes() {
+        KnownTypes.Clear();
+
+        // They are not in any EverestModule's assembly so ModUtils.GetAllTypes() does not include them.
         KnownTypes.TryAdd(typeof(NLua.Lua), false);
         KnownTypes.TryAdd(typeof(KeraLua.Lua), false);
         foreach (Type type in typeof(NLua.LuaBase).Assembly.GetTypes()) {
@@ -72,106 +81,24 @@ internal static class DesyncRiskAnalyzer {
             }
         }
         KnownTypes.TryAdd(typeof(LuaCoroutine), false);
+    }
 
-        // almost everything relies on LuaCutsceneEntity so detecting the cutscene entity is enough
-        if (ModUtils.GetAssembly("LuaCutscenes")?.GetTypes() is { } list && list.IsNotNullOrEmpty()) {
-            foreach (Type type in list) {
-                KnownTypes.TryAdd(type, true);
-            }
-
-            RegisterEarlyCheck(
-                ModUtils.GetType("LuaCutscenes", "Celeste.Mod.LuaCutscenes.LuaCutsceneEntity"),
-                (level, type) => {
-                    if (ModSettings.SaveInLuaCutscene) {
-                        return false;
-                    }
-                    if (level.InCutscene && level.onCutsceneSkip?.Target?.GetType() == type) {
-                        return true;
-                    }
-                    if (level.Tracker.GetEntitiesTrackIfNeeded(type) is { } list && list.IsNotNullOrEmpty()) {
-                        // 如果 cs 是 unskippable, 那么可能 Level 并不 InCutscene (而是在结束 Cutscene 的过程中)
-                        foreach (Entity e in list) {
-                            if (!e.GetFieldValue<bool>("Finished")) {
-                                return true;
-                            }
-                        }
-                    }
-                    return false;
-                }
-            );
-
-            // LuaTalker doesn't uses LuaCutsceneEntity
-            // unskippable 的 talker 不会调用 Level.StartCutscene（见 LuaCutscenes 0.2.13 的
-            // LuaTalker::onTalk），所以整个对话期间 level.InCutscene 都是 false：只看
-            // InCutscene 会漏掉“对话进行中存档”。这里检查两层：
-            //  1) 实体上有正在运行的 Coroutine（LuaCutsceneEntity/LuaTalker 用
-            //     Add(new Coroutine(routine, true)) 驱动 Lua 协程；Finished == false 表示运行中）；
-            //  2) onTalkRoutine 的状态机还没 finish。onTalkRoutine 在 onEnd 里不会被清空，
-            //     所以必须看状态机状态（0/1/2/3 = 活动，-1 = 已结束），不能只看非 null。
-            Type luaTalkerType = ModUtils.GetType("LuaCutscenes", "Celeste.Mod.LuaCutscenes.LuaTalker");
-            FieldInfo onTalkRoutineField = luaTalkerType?.GetField("onTalkRoutine",
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            RegisterEarlyCheck(
-                luaTalkerType,
-                (level, type) => {
-                    if (ModSettings.SaveInLuaCutscene) {
-                        return false;
-                    }
-                    if (level.InCutscene && level.onCutsceneSkip?.Target?.GetType() == type) {
-                        return true;
-                    }
-                    if (level.Tracker.GetEntitiesTrackIfNeeded(type) is { } list && list.IsNotNullOrEmpty()) {
-                        foreach (Entity e in list) {
-                            if (e.Components is { } components) {
-                                foreach (Component component in components) {
-                                    if (component is Coroutine { Finished: false }) {
-                                        return true;
-                                    }
-                                }
-                            }
-                            // onTalkRoutine 在 onEnd 里不会清空（LuaTalker::onEnd 只调
-                            // onEndFunction + EndCutscene），对话结束后它仍是非 null。
-                            if (onTalkRoutineField?.GetValue(e) is { } routine && IsLuaCoroutineRoutineActive(routine)) {
-                                return true;
-                            }
-                        }
-                    }
-                    return false;
-                }
-            );
-        }
-
-        // almost everything relies on BossController
-        if (ModUtils.GetAssembly("BossesHelper")?.GetTypes() is { } list2 && list2.IsNotNullOrEmpty()) {
-            foreach (Type type in list2) {
-                KnownTypes.TryAdd(type, true);
-            }
-            RegisterEarlyCheck(
-                ModUtils.GetType("BossesHelper", "Celeste.Mod.BossesHelper.Code.Entities.BossController"),
-                null
-            );
-        }
-
-        static void RegisterEarlyCheck(Type type, Func<Level, Type, bool> func) {
-            if (type is null) {
-                return;
-            }
-            KnownTypes.TryAdd(type, true); // it will be checked in EarlyCheck, so it's always safe in LateCheck
-            if (func is null) {
-                if (!type.IsSubclassOf(typeof(Entity))) {
-                    throw new Exception($"{nameof(DesyncRiskAnalyzer)}: {type} is not a subclass of Entity!");
-                }
-                EarlyCheckEntityTypes.Add(type);
-                Tracker.AddTypeToTracker(type);
-            }
-            else {
-                EarlyCheckSpecialHandlers[type] = func;
-            }
-        }
+    /// <summary>
+    /// A mod registered an entire type as safe through <c>SpeedrunTool.Desync.AddSafeType</c>. Drop it
+    /// from the dynamic fail-closed list so the next save does not refuse it up front. The late check
+    /// consults the registration directly (it takes precedence over cached negative decisions), so no
+    /// "safe" entry is written into <see cref="KnownTypes"/>: that keeps unregistration honest.
+    /// </summary>
+    internal static void OnSafeTypeRegistered(Type type) {
+        EarlyCheckEntityTypes.RemoveWhere(known => known == type || known.IsSubclassOf(type));
+        Logger.Info(LogTag, $"[{type.FullName}] was declared safe through SpeedrunTool.Desync.AddSafeType.");
     }
 
     internal static bool GetAndRefreshIfDesyncCheck() {
         shouldDesyncCheckTemporarily = VeryVeryEarlyCheck();
+        if (!shouldDesyncCheckTemporarily) {
+            DesyncEcosystems.ResetPerSaveState();
+        }
         return shouldDesyncCheckTemporarily;
 
         // some maps are actually safe to save even though they have lua cutscene, in that case return false
@@ -179,7 +106,13 @@ internal static class DesyncRiskAnalyzer {
             if (!Enabled || Engine.Scene is not Level level) {
                 return false;
             }
-            return !ExternalSafeOracle.Consult(level);
+
+            if (DesyncRegistration.IsLevelSafe(level)) {
+                Logger.Info(LogTag, $"Level [{level.Session.Area.SID}] is declared safe; skipping the desync check for this save.");
+                return false;
+            }
+
+            return true;
         }
     }
 
@@ -188,96 +121,226 @@ internal static class DesyncRiskAnalyzer {
             popup = reason;
             return true;
         }
+
         popup = "";
         desyncReason = null;
+        desyncDetail = null;
         return false;
     }
 
     internal static bool OnAfterSaveState(out string popup) {
         CheckAll = false;
-        bool b = desyncReason is not null;
-        popup = b ? $"Saved but Cleared: [{desyncReason.Name ?? "UnknownEntity"}] may lead to desync!" : "";
-        return b;
+        bool unsafeState = desyncReason is not null;
+        if (!unsafeState) {
+            popup = "";
+            return false;
+        }
+
+        Logger.Warn(LogTag,
+            $"Saved but cleared: [{desyncReason.FullName}] may lead to desync (via {desyncDetail ?? "unknown"}). "
+            + "If this state is known safe, the mod can register SpeedrunTool.Desync.AddSafeType/AddSafeEntityPredicate.");
+        popup = $"Saved but Cleared: [{desyncReason.Name ?? "UnknownEntity"}] may lead to desync!";
+        return true;
     }
 
     private static bool EarlyCheckDesyncRisk(Level level, out string reason) {
-        foreach (KeyValuePair<Type, Func<Level, Type, bool>> pair in EarlyCheckSpecialHandlers) {
-            Type type = pair.Key;
-            if (pair.Value(level, type)) {
-                reason = $"Failed to Save: [{type.Name}] may lead to desync!";
-                return true;
-            }
-        }
-        foreach (Type type in EarlyCheckEntityTypes) {
-            if (level.Tracker.GetEntitiesTrackIfNeeded(type) is { } list && list.IsNotNullOrEmpty()) {
-                reason = $"Failed to Save: [{type.Name ?? "UnknownEntity"}] may lead to desync!";
-                return true;
-            }
-        }
         reason = "";
+        if (level is null) {
+            return false;
+        }
+
+        // ---- 1. Built-in ecosystem at-rest gates -------------------------------------------------
+        // Run before the generic probe so ecosystem-owned problems keep their old, specific popup
+        // ([BossController] / [LuaTalker] / ...) instead of being reported as generic [LuaExecuting].
+        foreach (EcosystemGateResult gate in DesyncEcosystems.EvaluateAtRest(level)) {
+            switch (gate.State) {
+                case EcosystemGateState.NotInstalled:
+                case EcosystemGateState.Safe:
+                    continue;
+
+                case EcosystemGateState.Unavailable:
+                    if (gate.Kind == DesyncEcosystemKind.LuaCutscenes && ModSettings.SaveInLuaCutscene) {
+                        DesyncEcosystems.AcceptOverride(gate.Kind);
+                        Logger.Info(LogTag, $"LuaCutscenes state cannot be inspected but SaveInLuaCutscene is enabled: {gate.Detail}");
+                        continue;
+                    }
+
+                    // Fail closed in the late check: the ecosystem types are not governed.
+                    Logger.Warn(LogTag,
+                        $"[{NameOf(gate.Kind)}] at-rest state cannot be inspected ({gate.Detail}); "
+                        + "falling back to the fail-closed late check for its types.");
+                    continue;
+
+                default: // EcosystemGateState.Unsafe
+                    if (gate.Kind == DesyncEcosystemKind.LuaCutscenes && ModSettings.SaveInLuaCutscene) {
+                        DesyncEcosystems.AcceptOverride(gate.Kind);
+                        Logger.Info(LogTag,
+                            $"[{gate.EntityTypeName}] is not at rest but SaveInLuaCutscene is enabled; allowed by the user setting. {gate.Detail}");
+                        continue;
+                    }
+
+                    desyncDetail = gate.Detail;
+                    Logger.Warn(LogTag, $"Desync risk: [{gate.EntityTypeName ?? "unknown"}] {gate.Detail}");
+                    reason = $"Failed to Save: [{gate.EntityTypeName ?? "UnknownEntity"}] may lead to desync!";
+                    return true;
+            }
+        }
+
+        // ---- 2. Generic "is Lua executing right now?" probe -------------------------------------
+        // Catches Lua execution that no ecosystem gate covers (including unknown mods). Runs after
+        // the gates so their instances keep the more specific popup.
+        if (LuaUsageProbe.TryFindExecutingLua(level, ModSettings.SaveInLuaCutscene, out string executingDetail)) {
+            desyncDetail = executingDetail;
+            reason = "Failed to Save: [LuaExecuting] may lead to desync!";
+            return true;
+        }
+
+        // ---- 3. Dynamic fail-closed list from previous late checks --------------------------------
+        foreach (Type type in EarlyCheckEntityTypes.ToArray()) {
+            if (level.Tracker.GetEntitiesTrackIfNeeded(type) is not { Count: > 0 } entities) {
+                continue;
+            }
+
+            bool anyUnsafe = false;
+            foreach (Entity entity in entities) {
+                if (entity is null) {
+                    continue;
+                }
+
+                if (DesyncRegistration.IsTypeSafe(type) || DesyncRegistration.IsEntitySafe(entity)) {
+                    continue;
+                }
+
+                anyUnsafe = true;
+                break;
+            }
+
+            if (!anyUnsafe) {
+                continue;
+            }
+
+            desyncDetail = $"the late check refused [{type.FullName}] in an earlier save";
+            reason = $"Failed to Save: [{type.Name}] may lead to desync!";
+            return true;
+        }
+
         return false;
     }
 
+    private static string NameOf(DesyncEcosystemKind kind) {
+        return kind switch {
+            DesyncEcosystemKind.LuaCutscenes => "LuaCutscenes",
+            DesyncEcosystemKind.BossesHelper => "BossesHelper",
+            DesyncEcosystemKind.FrostHelper => "FrostHelper",
+            _ => kind.ToString(),
+        };
+    }
 
     internal static void Check(Entity obj) {
         if (!Enabled) {
             return;
         }
+
         // 在每个 Level 第一次 SL 时, CheckAll = true, 尽可能多地执行检查, 方便后续在 EarlyCheck 阶段就终止.
         if (desyncReason is not null && !CheckAll) {
             return;
         }
+
         // skipDesyncCheckTemporarily 只有此时才有意义 (现在这个检查是在 DeepClone 中做的, 所以没被其他地方跳过)
         if (!(StateManager.Instance.State == State.Saving && Thread.CurrentThread.IsMainThread() && shouldDesyncCheckTemporarily)) {
             return;
         }
-        if (obj.GetType() is not { } entityType) {
+
+        if (obj is null) {
             return;
         }
+
+        Type entityType = obj.GetType();
+
+        // Instance-level validation already happened in the ecosystem gate -> the whole type is
+        // accounted for during this save (no blanket: this only applies after the gate passed).
+        if (DesyncEcosystems.IsGovernedType(entityType)) {
+            return;
+        }
+
+        // An explicit registration takes full responsibility for this instance (and its subtree).
+        // Deliberately no KnownTypes write here: if the mod unregisters the type again, the next save
+        // must go back to the fail-closed type walk instead of trusting a stale "safe" cache entry.
+        if (DesyncRegistration.IsTypeSafe(entityType) || DesyncRegistration.IsEntitySafe(obj)) {
+            return;
+        }
+
         canSyncTypePath?.Clear();
         canSyncTypePath ??= [];
         unsafeLuaPath = null;
-        if (CanSyncType(entityType, null)) {
+
+        bool typeSafe = CanSyncType(entityType, null);
+        string detail = typeSafe ? null : (unsafeLuaPath ?? "unknown");
+
+        if (typeSafe && !CanSyncComponents(obj, out Type unsafeComponentType, out string componentDetail)) {
+            // 组件盲区：字段声明为 List<Component>/Component 时，声明类型里看不到组件内部的 Lua。
+            detail = componentDetail;
+            typeSafe = false;
+            KnownTypes[unsafeComponentType] = false;
+        }
+
+        if (typeSafe) {
             return;
         }
-        // it involves lua and we don't know whether it's safe to savestate, so we refuse to savestate
-        Logger.Warn("SpeedrunTool/DesyncRiskAnalyzer",
-            $"Entity [{entityType.FullName}] holds Lua state via [{unsafeLuaPath ?? "unknown"}]; the savestate will be cleared.");
+
+        // It involves lua and we don't know whether it's safe to savestate, so refuse to savestate
+        // (the state is cleared by OnAfterSaveState and the type is refused up front next time).
+        Logger.Warn(LogTag,
+            $"Entity [{entityType.FullName}] holds Lua state via [{detail ?? "unknown"}]; the savestate will be cleared. "
+            + "If this state is known safe, the mod can register SpeedrunTool.Desync.AddSafeType/AddSafeEntityPredicate.");
         EarlyCheckEntityTypes.Add(entityType);
         // mark as safe coz it will be already checked in EarlyCheck
         KnownTypes[entityType] = true;
         desyncReason = entityType;
+        desyncDetail = detail;
     }
 
     /// <summary>
-    /// True when a LuaCutscenes <c>LuaCoroutineToIEnumerator</c> state machine is still alive.
-    /// States: 0 = not started, 1 = waiting (float/int64 yield), 2 = yielded object,
-    /// 3 = inner routine finished but the outer wrapper has not consumed it yet; -1 = finished.
-    /// Falls back to Celeste.Mod.LuaCoroutine._Valid if the compiler-generated state field is
-    /// missing (newer LuaCutscenes / different compiler), and conservatively returns true when
-    /// no state can be inspected at all (do not silently allow a live Lua coroutine).
+    /// Checks the runtime types of the entity's components (the clone graph walks <c>Components</c>,
+    /// so a mod component that holds Lua state would otherwise be invisible to the declared-type walk).
     /// </summary>
-    private static bool IsLuaCoroutineRoutineActive(object routine) {
-        Type routineType = routine.GetType();
-        FieldInfo stateField = routineType.GetField("<>1__state",
-            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        if (stateField is not null && stateField.FieldType == typeof(int)) {
-            return (int)stateField.GetValue(routine) >= 0;
+    private static bool CanSyncComponents(Entity entity, out Type unsafeComponentType, out string detail) {
+        unsafeComponentType = null;
+        detail = null;
+        if (entity.Components is not { } components) {
+            return true;
         }
 
-        FieldInfo luaCoroutineField = routineType.GetField("routine",
-            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        object luaCoroutine = luaCoroutineField?.GetValue(routine);
-        FieldInfo validField = luaCoroutine?.GetType().GetField("_Valid",
-            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        if (validField is not null && validField.FieldType == typeof(bool)) {
-            return (bool)validField.GetValue(luaCoroutine);
+        foreach (Component component in components) {
+            if (component is null) {
+                continue;
+            }
+
+            Type componentType = component.GetType();
+            if (DesyncEcosystems.IsGovernedType(componentType) || DesyncRegistration.IsTypeSafe(componentType)) {
+                continue;
+            }
+
+            canSyncTypePath?.Clear();
+            unsafeLuaPath = null;
+            if (CanSyncType(componentType, null)) {
+                continue;
+            }
+
+            unsafeComponentType = componentType;
+            detail = $"Components[{componentType.FullName}] -> {unsafeLuaPath ?? "unknown"}";
+            return false;
         }
 
         return true;
     }
 
     private static bool CanSyncType(Type type, HashSet<Type> processingTypes) {
+        // Registrations and passing ecosystem gates take precedence over cached negative decisions.
+        if (DesyncRegistration.IsTypeSafe(type) || DesyncEcosystems.IsGovernedType(type)) {
+            return true;
+        }
+
         if (KnownTypes.TryGetValue(type, out bool isSafe)) {
             if (!isSafe) {
                 unsafeLuaPath ??= FormatFieldPath(type);

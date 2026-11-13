@@ -70,14 +70,14 @@ state is cleared (`IsSaved == false` before the test starts).
 
 ## Old PC validation (2026-11-12)
 
-Kit session `DESKTOP-40H8K5Q-SrtBench-20261112-234530` (i5-1035G1, 7.71 GB RAM):
+Kit session `DESKTOP-40H8K5Q-SrtBench-20261113-121520` on the fixed SrtBench
+v1.4.3 (i5-1035G1, 7.71 GB RAM):
 
 - warm-up log: `Warmed the first-save path during level load: 4427–4821 ms`
   (once per session, on the loading screen);
-- first save: **416 ms** (vs legacy 3207 ms; before v3.28.2 the old-PC first save
+- first save: **443 ms** (vs legacy 3511 ms; before v3.28.2 the old-PC first save
   was ~6.3 s);
-- first load 764 ms (cold), later loads median ~140 ms; steady save median 453 ms,
-  load median 154 ms;
+- later loads median ~195 ms; steady save median 551 ms, load median 166 ms;
 - memory: managed peak 0.85–1.08 GB, private peak 2.31–2.36 GB (legacy 1-slot:
   1.72–2.15 GB / 3.15–3.66 GB); no OOM at 7.71 GB during the dry-run.
 

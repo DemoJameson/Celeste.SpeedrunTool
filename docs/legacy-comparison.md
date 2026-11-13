@@ -59,36 +59,41 @@ the steady save/load advantage remains.
 
 ## Old PC (DESKTOP-40H8K5Q: i5-1035G1, 7.71 GB RAM, 1920×1080@60)
 
-Returned kit session `DESKTOP-40H8K5Q-SrtBench-20261112-234530` (SRT
-`89abb881…` = v3.28.2 with read-screen warm-up, legacy `0208979f…`, SrtBench
-`2ae3f400…`), same a1 room and same compare configs.
+Measured again on the **fixed SrtBench v1.4.3** (the old 2 s `Engine.Scene =
+new LevelLoader` fallback was overriding LevelEnter and produced a level with
+entities but no player/HUD/tiles; every old-PC number before this fix is
+discarded). Session `DESKTOP-40H8K5Q-20261113-121520-session`, same room/configs,
+SrtBench `9c8bf5fe…`.
 
 | metric | ours 1-slot | legacy 1-slot |
 |---|---:|---:|
-| first save (setup) | **416 ms** | 3207 ms |
-| loads median (cold excluded) | **~140 ms** (cold 764 ms) | ~686 ms |
-| steady save median (20 cycles) | **453 ms** | 1087 ms |
-| steady load median | **154 ms** | 600 ms |
-| managed peak (phases a/b/c) | 0.85 / 0.90 / 1.08 GB | 1.72 / 1.83 / 2.15 GB |
-| private peak | 2.31 / 2.31 / 2.36 GB | 3.15 / 3.18 / 3.66 GB |
-| frame p50 | 17.26 / 16.97 / 17.12 ms | 17.21 / 16.87 / 17.48 ms |
-| first level load cost (warm-up) | **+4427–4821 ms once** | — |
+| first save (setup) | **443 ms** | 3511 ms |
+| loads median (cold excluded) | **195 ms** | 824 ms |
+| steady save median (20 cycles) | **551 ms** | 1567 ms |
+| steady load median | **166 ms** | 767 ms |
+| managed peak (phases a/b/c) | 0.85 / 0.90 / 1.08 GB | 1.72 / 1.83 / 2.04 GB |
+| private peak | 2.29 / 2.30 / 2.34 GB | 3.09 / 3.13 / 3.60 GB |
+| frame p50 | 16.69 / 16.66 / 16.63 ms | 16.42 / 16.58 / 16.88 ms |
+| frame p99 | 31.2 / 29.9 / 32.4 ms | 32.9 / 36.3 / 33.8 ms |
+| first level load cost (warm-up) | **+4.4–4.8 s once** | — |
 
-Ours 3 slots on the same machine: setup saves 511 + 342 + 312 ms, loads median
-~527 ms, managed peak 1.75–2.11 GB, private peak 3.25–3.42 GB — still at or below
-legacy's **single-slot** private peak (3.15–3.66 GB) and managed peak.
+Ours 3 slots on the same fixed-harness run: setup saves 725 + 484 + 361 ms,
+loads median ~629 ms, managed peak 1.75–2.01 GB, private peak 3.05–3.26 GB;
+phase-c p99 **91.6 ms** with `gc_pause_ms=1009` (the 3-slot GC tail). Multi-slot
+is best-effort: it stays below legacy's single-slot private peak, but its p99 is
+not a guaranteed target on 8 GB.
 
-**Verdict (old PC):** ours wins every measured save/load/memory metric, including
-a 7.7× faster first save and ~5× faster loads; the only cost is ~4.4–4.8 s extra
-on the first level load (once per session), which is the intended place to pay the
-one-off JIT cost. No OOM at 7.71 GB during the dry-run.
+**Verdict (old PC, fixed harness):** ours wins every 1-slot save/load/memory
+metric, including an 8× faster first save and ~4× faster loads; the only cost is
+~4.4–4.8 s extra on the first level load (once per session). No OOM at 7.71 GB.
 
 ## Verdict (both machines)
 
-- **Ours wins steady save, steady load, and memory on both machines**, including
-  the 3-slot case vs legacy's 1 slot.
+- **Ours wins steady save, steady load, and memory on both machines** on the
+  1-slot path; the 3-slot case stays below legacy's single-slot memory but is
+  best-effort performance-wise (8 GB p99 ~92 ms).
 - **Ours no longer loses the first save**: v3.28.2 pays 1.36 s on the new machine
   and 4.4–4.8 s on the old machine once on the loading screen; the first visible
-  save is 71.5 ms (new) / 416 ms (old) vs legacy's 761–798 / 3207 ms.
+  save is 71.5 ms (new) / 443 ms (old) vs legacy's 761–798 / 3511 ms.
 - Frame times are the same in this room (17 ms p50 on the old PC); the difference
   is SRT latency/memory, not gameplay frame pacing.

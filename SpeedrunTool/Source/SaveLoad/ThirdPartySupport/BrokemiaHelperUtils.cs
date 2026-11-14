@@ -1,5 +1,6 @@
 
 using Celeste.Mod.SpeedrunTool.Utils;
+using Monocle;
 using System.Collections.Generic;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.ThirdPartySupport;
@@ -26,6 +27,16 @@ internal static class BrokemiaHelperUtils {
                     foreach (Entity entity in entities) {
                         object pixelComponent = entity.GetFieldValue("pixelComponent");
                         pixelComponent.SetFieldValue("textureChunks", null);
+                        // A restored PixelComponent has its chunk data but its dirty flags are clean.
+                        // CommitChunks only uploads dirty chunks, so mark every chunk dirty first or
+                        // the vine/lizard can stay invisible after a cross-chapter load.
+                        if (pixelComponent.GetFieldValue("dirtyChunks") is VirtualMap<bool> dirtyChunks) {
+                            for (int x = 0; x < dirtyChunks.Columns; x++) {
+                                for (int y = 0; y < dirtyChunks.Rows; y++) {
+                                    dirtyChunks[x, y] = true;
+                                }
+                            }
+                        }
                         pixelComponent.InvokeMethod("CommitChunks");
                     }
                 }

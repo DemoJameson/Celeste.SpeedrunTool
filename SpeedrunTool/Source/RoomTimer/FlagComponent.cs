@@ -40,7 +40,6 @@ public class FlagComponent : Component {
             mTexture = Scene.BetweenInterval(0.25f) ? baseEmpty : baseToggle;
         }
 
-        // ReSharper disable once PossibleLossOfFraction
         mTexture.Draw(offset - new Vector2(mTexture.Width / 2 + 1, mTexture.Height / 2));
 
         mTextureList[0]

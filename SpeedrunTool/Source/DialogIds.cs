@@ -10,7 +10,6 @@ public static class DialogIds {
     public const string BtnConfigNoController = "BTN_CONFIG_NOCONTROLLER";
 
     // Common
-    // ReSharper disable UnusedMember.Global
     public const string On = "SPEEDRUN_TOOL_ON";
     public const string Off = "SPEEDRUN_TOOL_OFF";
     public const string All = "SPEEDRUN_TOOL_ALL";
@@ -19,7 +18,6 @@ public static class DialogIds {
     public const string Auto = "SPEEDRUN_TOOL_AUTO";
     public const string Chapter = "SPEEDRUN_TOOL_CHAPTER";
     public const string File = "SPEEDRUN_TOOL_FILE";
-    // ReSharper restore UnusedMember.Global
 
     // Mod Menu
     public const string SpeedrunTool = "SPEEDRUN_TOOL";

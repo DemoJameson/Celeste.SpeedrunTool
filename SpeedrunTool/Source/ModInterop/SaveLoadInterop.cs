@@ -210,7 +210,6 @@ public static class SaveLoadInterop {
         typeof(SaveLoadExports).ModInterop();
     }
 
-    // ReSharper disable once MemberCanBePrivate.Global
     [ModExportName("SpeedrunTool.SaveLoad")]
     public static class SaveLoadExports {
         /// <summary>

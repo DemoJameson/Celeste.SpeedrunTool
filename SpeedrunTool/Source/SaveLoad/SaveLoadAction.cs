@@ -126,8 +126,6 @@ public sealed partial class SaveLoadAction {
         RebuildActionLists();
     }
 
-    // ReSharper disable once MemberCanBePrivate.Global
-    // ReSharper disable once UnusedMethodReturnValue.Global
 
     internal static SaveLoadAction InternalSafeAdd(Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState = null,
         Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState = null, Action clearState = null,

@@ -217,7 +217,6 @@ public class EndPoint : Entity {
             case SpriteStyle.Yuri:
                 CreateSecretSprite();
                 break;
-            // ReSharper disable once RedundantCaseLabel
             case SpriteStyle.Random:
             default:
                 throw new ArgumentOutOfRangeException(nameof(spriteStyle), spriteStyle, null);
@@ -296,7 +295,6 @@ public class EndPoint : Entity {
                 playerSprite.SetAnimationFrame(origSprite.CurrentAnimationFrame);
             }
         }
-        // ReSharper disable once EmptyGeneralCatchClause
         catch (Exception) { }
 
         if (playerHair == null) {

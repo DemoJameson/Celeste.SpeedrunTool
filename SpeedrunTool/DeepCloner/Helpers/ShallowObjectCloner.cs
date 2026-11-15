@@ -68,9 +68,7 @@ namespace Force.DeepCloner.Helpers {
 
             ILGenerator cil = ctorBuilder.GetILGenerator();
             cil.Emit(OpCodes.Ldarg_0);
-            // ReSharper disable AssignNullToNotNullAttribute
             cil.Emit(OpCodes.Call, typeof(ShallowObjectCloner).GetPrivateConstructors()[0]);
-            // ReSharper restore AssignNullToNotNullAttribute
             cil.Emit(OpCodes.Ret);
 
             MethodBuilder methodBuilder = builder.DefineMethod(

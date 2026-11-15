@@ -3,7 +3,6 @@ using FMOD.Studio;
 
 namespace Celeste.Mod.SpeedrunTool;
 
-// ReSharper disable once ClassNeverInstantiated.Global
 public class SpeedrunToolModule : EverestModule {
     public static SpeedrunToolModule Instance { get; private set; }
 

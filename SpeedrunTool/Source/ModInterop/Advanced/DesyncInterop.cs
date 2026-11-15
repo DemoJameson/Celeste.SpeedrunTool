@@ -65,7 +65,6 @@ public static class DesyncInterop {
             $"SpeedrunTool.Desync API ready (default safe maps: {string.Join(", ", DefaultSafeMaps)}).");
     }
 
-    // ReSharper disable once MemberCanBePrivate.Global
     /// <summary>ModInterop surface: import with <c>[ModImportName("SpeedrunTool.Desync")]</c>.</summary>
     [ModExportName("SpeedrunTool.Desync")]
     public static class DesyncExports {

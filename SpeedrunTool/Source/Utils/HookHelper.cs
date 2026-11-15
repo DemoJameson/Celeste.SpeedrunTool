@@ -18,7 +18,6 @@ internal static class HookHelper {
         Hooks.Clear();
     }
 
-    // ReSharper disable once InconsistentNaming
     public static void ILHook(this MethodBase from, Action<ILCursor, ILContext> manipulator) {
         if (from == null) {
             Logger.LogDetailed(new ArgumentNullException(nameof(from)), "SpeedrunTool");

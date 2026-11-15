@@ -11,7 +11,6 @@ internal static class ReflectionExtensions {
     private const BindingFlags StaticInstanceAnyVisibility =
         BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
 
-    // ReSharper disable UnusedMember.Local
     private record struct MemberKey(Type Type, string Name) {
         public readonly Type Type = Type;
         public readonly string Name = Name;
@@ -33,7 +32,6 @@ internal static class ReflectionExtensions {
         public readonly Type Type = Type;
         public readonly long Types = Types;
     }
-    // ReSharper restore UnusedMember.Local
 
     public delegate T GetDelegate<out T>(object instance);
 

@@ -1,4 +1,4 @@
-﻿using FMOD;
+using FMOD;
 using FMOD.Studio;
 using System.Collections.Concurrent;
 using System.Collections.Generic;

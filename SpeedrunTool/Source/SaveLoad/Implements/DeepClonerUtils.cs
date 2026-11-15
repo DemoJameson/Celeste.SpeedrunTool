@@ -1,4 +1,4 @@
-﻿using Celeste.Mod.SpeedrunTool.ModInterop;
+using Celeste.Mod.SpeedrunTool.ModInterop;
 using FMOD.Studio;
 using Force.DeepCloner;
 using Force.DeepCloner.Helpers;

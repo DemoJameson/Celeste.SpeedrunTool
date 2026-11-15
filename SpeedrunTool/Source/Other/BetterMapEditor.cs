@@ -1,4 +1,4 @@
-﻿using Celeste.Editor;
+using Celeste.Editor;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using System.Collections;

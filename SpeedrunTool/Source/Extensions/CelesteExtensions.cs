@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Threading;
 
 namespace Celeste.Mod.SpeedrunTool.Extensions;

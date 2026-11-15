@@ -1,4 +1,4 @@
-﻿#if !NETCORE
+#if !NETCORE
 using System.Reflection;
 
 namespace Force.DeepCloner.Helpers {

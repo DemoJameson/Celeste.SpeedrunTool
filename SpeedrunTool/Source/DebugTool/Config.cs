@@ -1,4 +1,4 @@
-﻿#if DEBUG
+#if DEBUG
 global using static Celeste.Mod.SpeedrunTool.DebugTool.Config;
 
 namespace Celeste.Mod.SpeedrunTool.DebugTool;

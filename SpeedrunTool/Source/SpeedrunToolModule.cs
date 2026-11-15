@@ -1,4 +1,4 @@
-﻿using Celeste.Mod.SpeedrunTool.SaveLoad;
+using Celeste.Mod.SpeedrunTool.SaveLoad;
 using FMOD.Studio;
 
 namespace Celeste.Mod.SpeedrunTool;

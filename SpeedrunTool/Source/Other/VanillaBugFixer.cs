@@ -1,4 +1,4 @@
-﻿namespace Celeste.Mod.SpeedrunTool.Other;
+namespace Celeste.Mod.SpeedrunTool.Other;
 
 public static class VanillaBugFixer {
     [Load]

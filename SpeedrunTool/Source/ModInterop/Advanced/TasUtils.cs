@@ -1,4 +1,4 @@
-﻿using Celeste.Mod.SpeedrunTool.Utils;
+using Celeste.Mod.SpeedrunTool.Utils;
 using MonoMod.ModInterop;
 using System.Reflection;
 using System.Runtime.CompilerServices;

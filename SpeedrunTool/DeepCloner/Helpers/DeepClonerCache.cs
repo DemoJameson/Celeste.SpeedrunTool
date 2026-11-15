@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 
 namespace Force.DeepCloner.Helpers {
     internal static class DeepClonerCache {

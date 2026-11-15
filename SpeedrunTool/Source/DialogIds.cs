@@ -1,4 +1,4 @@
-﻿namespace Celeste.Mod.SpeedrunTool;
+namespace Celeste.Mod.SpeedrunTool;
 
 public static class DialogIds {
     public const string Prefix = "SPEEDRUN_TOOL_";

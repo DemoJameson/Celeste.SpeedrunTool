@@ -1,4 +1,4 @@
-﻿#if DEBUG
+#if DEBUG
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 
 namespace Celeste.Mod.SpeedrunTool.DebugTool;

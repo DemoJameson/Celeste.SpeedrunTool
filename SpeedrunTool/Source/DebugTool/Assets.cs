@@ -1,4 +1,4 @@
-﻿#if DEBUG
+#if DEBUG
 
 namespace Celeste.Mod.SpeedrunTool.DebugTool;
 internal static class Assets {

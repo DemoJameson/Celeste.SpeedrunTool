@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 
 namespace Force.DeepCloner.Helpers {
     internal static class ReflectionHelper {

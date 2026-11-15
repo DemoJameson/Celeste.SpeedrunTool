@@ -1,4 +1,4 @@
-﻿namespace Force.DeepCloner.Helpers {
+namespace Force.DeepCloner.Helpers {
     internal static class ShallowClonerGenerator {
         public static T CloneObject<T>(T obj) {
             // this is faster than typeof(T).IsValueType

@@ -80,6 +80,21 @@ internal class Snapshot {
         }
     }
 
+    // A capture is only worth keeping when it actually contains pixels. Reading a render target that
+    // was cleared but never composed yields a fully transparent buffer, which is how MotionSmoothing
+    // turned every thumbnail into an empty cell. Sampling every Nth pixel keeps this to a few thousand
+    // reads instead of two million, which matters because it runs on the save frame.
+    private static bool HasVisibleContent(Color[] buffer, int count) {
+        int step = Math.Max(1, count / 4096);
+        for (int i = 0; i < count; i += step) {
+            if (buffer[i].A != 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static void CaptureSnapshots(Level level, Snapshot instance) {
         // codes are modified from AssetReloadHelper
         GraphicsDevice graphicsDevice = Engine.Instance.GraphicsDevice;
@@ -91,7 +106,8 @@ internal class Snapshot {
         bool renderedHere = false;
         try {
             graphicsDevice.Viewport = viewport;
-            if (graphicsDevice.GetRenderTargets().Length > 0) {
+            bool useBackBuffer = RenderTargetModLoaded;
+            if (!useBackBuffer && graphicsDevice.GetRenderTargets().Length > 0) {
                 // Unusual frame (rendering into a render target): fall back to rendering the
                 // room once into the back buffer.
                 level.BeforeRender();
@@ -106,18 +122,36 @@ internal class Snapshot {
             // applies the color grade and the final letterboxed draw to the back buffer.
             // Reading the back buffer stored the graded frame, making previews change color and
             // darkness with the room's color grade/lights.
-            RenderTarget2D levelBuffer = GameplayBuffers.Level?.Target;
+            bool captured = false;
+            // See RenderTargetModLoaded: with such a mod this buffer holds an arbitrary intermediate
+            // pass, so it is not a usable source even though it is neither null nor transparent.
+            RenderTarget2D levelBuffer = useBackBuffer ? null : GameplayBuffers.Level?.Target;
             if (levelBuffer is not null && !levelBuffer.IsDisposed) {
                 width = levelBuffer.Width;
                 height = levelBuffer.Height;
                 EnsureBufferSize(ref readbackBuffer, width * height);
                 levelBuffer.GetData(readbackBuffer, 0, width * height);
+                captured = HasVisibleContent(readbackBuffer, width * height);
             }
-            else {
-                // Unusual frame (level buffer unavailable): fall back to the frame the engine
-                // just drew into the back buffer.
+
+            if (!captured) {
+                // The level buffer can be a scratch target another mod cleared but never composed.
+                // MotionSmoothing does exactly that: it renders the level into its own hires buffers
+                // and flushes GameplayBuffers.Level with Clear(Color.Transparent), so the read above
+                // came back fully transparent and every saved slot drew an empty cell. The back buffer
+                // always holds the frame the player is looking at, so it is the safer source here, at
+                // the cost of the color grade (better a graded preview than an invisible one).
+                width = viewport.Width;
+                height = viewport.Height;
                 EnsureBufferSize(ref readbackBuffer, width * height);
                 graphicsDevice.GetBackBufferData(viewport.Bounds, readbackBuffer, 0, width * height);
+                captured = HasVisibleContent(readbackBuffer, width * height);
+            }
+
+            if (!captured) {
+                // Nothing worth keeping: leave snapshotTex null so the UI reports "Snapshot Not Found"
+                // instead of showing a blank cell that looks like a saved but broken state.
+                success = false;
             }
         }
         catch (Exception e) {
@@ -191,6 +225,21 @@ internal class Snapshot {
     }
     private static int captureWaitFrames;
 
+    // MotionSmoothing (and anything else that renders the level through its own buffers) leaves
+    // GameplayBuffers.Level holding the last intermediate pass rather than the composed frame: a flat
+    // wipe colour, only the stylegrounds, or a blurred bloom, depending on where the flush landed.
+    // A complete frame cannot be told apart from a partial one by looking at the pixels, so while such
+    // a mod is loaded the back buffer -- which always holds what the player sees -- is the source.
+    // The price is the colour grade in the preview.
+    private static bool? renderTargetModLoaded;
+
+    private static bool RenderTargetModLoaded {
+        get {
+            renderTargetModLoaded ??= Everest.Modules?.Any(module => module.Metadata?.Name == "MotionSmoothing") == true;
+            return renderTargetModLoaded.Value;
+        }
+    }
+
     private static void CaptureSnapshotsAfterRender(On.Celeste.Level.orig_Render orig, Level self) {
         orig(self);
 
@@ -205,6 +254,14 @@ internal class Snapshot {
             captureWaitFrames++;
             return;
         }
+
+        // Same for the slot UI: saving from this grid and capturing right away stored the grid itself.
+        // Skip while it is on screen and capture on the first frame after it closes -- the game is
+        // frozen until the save finishes, so the scene is still the one that was saved.
+        if (SnapshotUI.OnScreen) {
+            return;
+        }
+
         captureWaitFrames = 0;
 
         ScheduledCaptureSnapshots = false; // immediately clear it so there won't be an infinite loop

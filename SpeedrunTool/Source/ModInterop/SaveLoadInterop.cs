@@ -1,4 +1,4 @@
-using Celeste.Mod.SpeedrunTool.SaveLoad;
+﻿using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
 using MonoMod.ModInterop;
 using System.Collections.Generic;
@@ -6,10 +6,174 @@ using System.Linq;
 
 namespace Celeste.Mod.SpeedrunTool.ModInterop;
 
+#if false
+/* How to use the SpeedrunTool ModInterop API
+ *
+ *   1. Copy this whole class into your mod (any namespace) and keep it in one file.
+ *   2. Call SrtImports.Init(...) from your module's Initialize(), and SrtImports.Unload() from
+ *      its Unload():
+ *
+ *        // in your EverestModule
+ *        public override void Initialize() {
+ *            SrtImports.Init();
+ *        }
+ *
+ *        public override void Unload() {
+ *            SrtImports.Unload();
+ *        }
+ *
+ * Init() binds the ModInterop fields and runs the registrations listed inside it; Unload() drops
+ * every registration this class made, so a reloaded mod leaves nothing behind. RegisterStatic() and
+ * Register() add more, one call each -- all of them are tracked for Unload().
+ *
+ * Call these from Initialize()/Unload(), not from [Load]. Everest runs every mod's Load() before it
+ * calls Initialize() on any mod, and SpeedrunTool registers its exports from its own [Load], so the
+ * fields are bound by the time Initialize() runs. A [Load] registration only works when
+ * SpeedrunTool happens to load first, and a call made too early is dropped without an error.
+ *
+ * Running without SpeedrunTool is supported: the fields stay null and Init() does nothing.
+ * This template assumes <Nullable>enable</Nullable>; drop the "?" annotations if yours is off.
+ */
+
+using Celeste;
+using Celeste.Mod;
+using MonoMod.ModInterop;
+using Monocle;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace YourMod;
+
+public static class SrtImports {
+    private static readonly List<object> handles = new();
+
+    /// <summary>True once SpeedrunTool's exports were found.</summary>
+    public static bool IsInstalled => Imports.RegisterStaticTypes != null;
+
+    /// <summary>
+    /// Binds the ModInterop fields and runs the registrations listed below. Call once, from your
+    /// module's Initialize(). Everything registered through this class -- here, or through
+    /// RegisterStatic()/Register() later -- is dropped again by Unload().
+    /// <para>
+    /// Replace MyModule and the member names with your own type and fields/properties; a member that
+    /// does not exist is a compile error, which is the point.
+    /// </para>
+    /// </summary>
+    public static void Init() {
+        typeof(Imports).ModInterop();
+
+        // TODO: point this at the state that must survive a savestate.
+        RegisterStatic(typeof(MyModule), nameof(MyModule.Foo), nameof(MyModule.Bar));
+    }
+
+    /// <summary>
+    /// Registers the named static fields and properties of <paramref name="type"/>, to be saved and
+    /// restored with the savestate. Add one call per type.
+    /// </summary>
+    public static void RegisterStatic(Type type, params string[] memberNames) {
+        if (Imports.RegisterStaticTypes == null) {
+            WarnIfLoadedButUnbound();
+            return;
+        }
+
+        Track(Imports.RegisterStaticTypes(type, memberNames));
+    }
+
+    /// <summary>
+    /// Registers save/load callbacks for state that does not live in static members. Write into the
+    /// dictionary handed to the callbacks: a value parked in a plain field is not per-slot, so with
+    /// several save slots only the last write survives.
+    /// </summary>
+    public static void Register(
+        Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState,
+        Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState,
+        Action? clearState = null) {
+        if (Imports.RegisterSaveLoadAction == null) {
+            WarnIfLoadedButUnbound();
+            return;
+        }
+
+        Track(Imports.RegisterSaveLoadAction(saveState, loadState, clearState, null, null, null));
+    }
+
+    /// <summary>Drops every registration made through this class. Call from your module's Unload().</summary>
+    public static void Unload() {
+        foreach (object handle in handles) {
+            Imports.Unregister?.Invoke(handle);
+        }
+
+        handles.Clear();
+    }
+
+    private static void Track(object? handle) {
+        if (handle != null) {
+            handles.Add(handle);
+        }
+    }
+
+    private static bool warned;
+
+    private static void WarnIfLoadedButUnbound() {
+        if (warned) {
+            return;
+        }
+
+        warned = true;
+        if (Everest.Modules?.Any(module => module.Metadata?.Name == "SpeedrunTool") == true) {
+            Logger.Warn("SrtImports",
+                "SpeedrunTool is loaded but its SaveLoad exports are not bound yet, so the registration was dropped. " +
+                "Call Init() from Initialize(), which Everest runs after every mod's Load.");
+        }
+    }
+    /// <summary>
+    /// The raw ModInterop fields, filled in by Init(). Use them directly only for what Init() does
+    /// not cover -- RegisterSaveLoadAction for instance state (its callbacks write into the per-slot
+    /// dictionary), the cloner rules, IgnoreSaveState, DeepClone.
+    /// </summary>
+    [ModImportName("SpeedrunTool.SaveLoad")]
+    public static class Imports {
+        public delegate object RegisterStaticTypesDelegate(Type type, params string[] memberNames);
+
+        public static RegisterStaticTypesDelegate? RegisterStaticTypes;
+
+        public delegate object RegisterSaveLoadActionDelegate(
+            Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState,
+            Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState,
+            Action? clearState,
+            Action<Level>? beforeSaveState,
+            Action<Level>? beforeLoadState,
+            Action? preCloneEntities);
+
+        public static RegisterSaveLoadActionDelegate? RegisterSaveLoadAction;
+
+        public static Action<object>? Unregister;
+
+        public static Action<Entity, bool>? IgnoreSaveState;
+
+        public static Action<Type>? AddReturnSameObjectType;
+
+        public static Action<Type>? RemoveReturnSameObjectType;
+
+        public static Action<Func<Type, bool>>? AddReturnSameObjectProcessor;
+
+        public static Action<Func<Type, bool>>? RemoveReturnSameObjectProcessor;
+
+        public static Action<Func<object, object>>? AddCustomDeepCloneProcessor;
+
+        public static Action<Func<object, object>>? RemoveCustomDeepCloneProcessor;
+
+        public static Func<object, object>? DeepClone;
+    }
+}
+#endif
+
 /// <summary>
-/// The entry point for other mods: import <c>SpeedrunTool.SaveLoad</c> to take part in a savestate --
-/// register a save/load action, register static members to clone, or teach the cloner which objects
-/// are shared instead of copied.
+/// The entry point for other mods. Most mods need exactly one thing from this file --
+/// <see cref="SaveLoadExports.RegisterStaticTypes"/> -- to hand over the static state that has to
+/// survive a savestate. A mod whose state lives on instances uses
+/// <see cref="SaveLoadExports.RegisterSaveLoadAction"/> instead; the cloner hooks are for types the
+/// cloner would otherwise copy wrongly.
 /// <para>
 /// The surfaces most mods never need are under <c>ModInterop/Advanced</c>: driving the pipeline
 /// (SpeedrunTool.SaveLoadControl), TAS save/load (SpeedrunTool.TasAction), benchmarks
@@ -50,36 +214,31 @@ public static class SaveLoadInterop {
     [ModExportName("SpeedrunTool.SaveLoad")]
     public static class SaveLoadExports {
         /// <summary>
-        /// <para> Register SaveLoadAction. </para>
-        /// <para> Please save your values into the dictionary, otherwise multi saveslots will not be supported. </para>
-        /// <para> DON'T pass in method calls of a singleton instance, use static methods instead. </para>
+        /// Saves and restores the named static members of <paramref name="type"/>: fields and
+        /// properties, public or private. Several mods registering the same type and names share
+        /// one action, so a second registration is not a duplicate save.
+        /// <para>
+        /// An empty <paramref name="memberNames"/> registers an action that saves nothing -- name
+        /// at least one member, otherwise the call is a silent no-op.
+        /// </para>
         /// </summary>
-        /// <param name="saveState"></param>
-        /// <param name="loadState"></param>
-        /// <param name="clearState"></param>
-        /// <param name="beforeSaveState"></param>
-        /// <param name="beforeLoadState"></param>
-        /// <param name="preCloneEntities"></param>
-        /// <returns>SaveLoadAction instance, used for unregister when your mod unloads </returns>
-
-        // not recommended to pass in method calls of a singleton
-        public static object RegisterSaveLoadAction(Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState,
-            Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState, Action clearState,
-            Action<Level> beforeSaveState, Action<Level> beforeLoadState, Action preCloneEntities) {
-            return SaveLoadAction.SafeAdd(saveState, loadState, clearState, beforeSaveState, beforeLoadState, preCloneEntities);
-        }
-
-        /// <summary>
-        /// Specify the static members to be cloned
-        /// </summary>
-        /// <returns>SaveLoadAction instance, used for unregister when your mod unloads </returns>
+        /// <param name="type">Type whose static members are snapshotted. Null returns null.</param>
+        /// <param name="memberNames">Field or property names on <paramref name="type"/>.</param>
+        /// <returns>Handle to pass to <see cref="Unregister"/>, or null if nothing was registered.</returns>
+        /// <remarks>Available since SpeedrunTool v3.26.4.</remarks>
         public static object RegisterStaticTypes(Type type, params string[] memberNames) {
             if (type is null) {
                 return null;
             }
 
             memberNames ??= [];
-            string key = type.AssemblyQualifiedName + "|" + string.Join("", memberNames.OrderBy(name => name, StringComparer.Ordinal));
+            if (memberNames.Length == 0) {
+                Logger.Warn("SpeedrunTool/Interop",
+                    $"RegisterStaticTypes({type.FullName}) was called without member names, so it will save nothing. " +
+                    "Name the static members that should survive a savestate, e.g. RegisterStaticTypes(typeof(M), nameof(M.Foo)).");
+            }
+
+            string key = type.AssemblyQualifiedName + "|" + string.Join("", memberNames.OrderBy(name => name, StringComparer.Ordinal));
             if (registeredStaticTypeActions.TryGetValue(key, out SaveLoadAction existing)) {
                 return existing;
             }
@@ -96,9 +255,36 @@ public static class SaveLoadInterop {
         }
 
         /// <summary>
-        /// Unregister the SaveLoadAction return from RegisterStaticTypes()/RegisterSaveLoadAction()
+        /// Saves and restores state that does not live in static members: the callbacks receive the
+        /// per-slot dictionary to write into on save and to read from on load.
+        /// <para>
+        /// Putting values in a plain field instead of the dictionary works with a single save slot
+        /// but not with several -- the dictionary is what makes a savestate per-slot.
+        /// </para>
         /// </summary>
-        /// <param name="obj">The object return from RegisterStaticTypes()/RegisterSaveLoadAction()</param>
+        /// <param name="saveState">Called before a savestate is captured. May be null.</param>
+        /// <param name="loadState">Called after a savestate is restored. May be null.</param>
+        /// <param name="clearState">Called when the state is cleared. May be null.</param>
+        /// <param name="beforeSaveState">Called earlier than <paramref name="saveState"/>, for
+        /// entities that must be adjusted before the snapshot. May be null.</param>
+        /// <param name="beforeLoadState">Called before <paramref name="loadState"/>. May be null.</param>
+        /// <param name="preCloneEntities">Called when the entity graph is pre-cloned on the
+        /// background thread, so it must not touch the save dictionary. May be null.</param>
+        /// <returns>Handle to pass to <see cref="Unregister"/>, or null if nothing was registered.</returns>
+        /// <remarks>Available since SpeedrunTool v3.26.4. Pass static methods, not calls on a singleton.</remarks>
+        public static object RegisterSaveLoadAction(Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState,
+            Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState, Action clearState,
+            Action<Level> beforeSaveState, Action<Level> beforeLoadState, Action preCloneEntities) {
+            return SaveLoadAction.SafeAdd(saveState, loadState, clearState, beforeSaveState, beforeLoadState, preCloneEntities);
+        }
+
+        /// <summary>
+        /// Removes an action returned by <see cref="RegisterSaveLoadAction"/> or
+        /// <see cref="RegisterStaticTypes"/>. Anything else -- including null -- is ignored.
+        /// Call it from [Unload] so a reloaded mod does not keep a dangling registration.
+        /// </summary>
+        /// <param name="obj">The handle returned by a registration call.</param>
+        /// <remarks>Available since SpeedrunTool v3.26.4.</remarks>
         public static void Unregister(object obj) {
             if (obj is SaveLoadAction action) {
                 foreach (KeyValuePair<string, SaveLoadAction> pair in registeredStaticTypeActions
@@ -111,28 +297,37 @@ public static class SaveLoadInterop {
         }
 
         /// <summary>
-        /// Ignore the entities when saving state. They will be removed before saving state and then added into level after loading state.
+        /// Keeps an entity out of the snapshot: it is removed before saving and added back into the
+        /// level after loading. Use it for entities that cannot be cloned meaningfully (a live
+        /// native handle, a bridge to another mod).
         /// </summary>
-        /// <param name="entity">Ignored entity</param>
-        /// <param name="based">The Added/Removed method of the entity will not be triggered when based is true</param>
+        /// <param name="entity">Entity to exclude.</param>
+        /// <param name="based">When true the entity's Added/Removed calls are not triggered by this.</param>
+        /// <remarks>Available since SpeedrunTool v3.26.4.</remarks>
         public static void IgnoreSaveState(Entity entity, bool based = false) {
             IgnoreSaveLoadComponent.Ignore(entity, based);
         }
 
         /// <summary>
-        /// Ignore the entities when saving state. They will be removed before saving state and then added into level after loading state.
+        /// Same as the entity overload, for every entity of a type: excluded before saving,
+        /// re-added after loading.
         /// </summary>
-        /// <param name="entityType">Ignored entity</param>
-        /// <param name="based">The Added/Removed method of the entity will not be triggered when based is true</param>
-        /// appear in v3.27.15
+        /// <param name="entityType">Entity type to exclude.</param>
+        /// <param name="based">When true the entities' Added/Removed calls are not triggered by this.</param>
+        /// <remarks>Available since SpeedrunTool v3.27.15.</remarks>
         public static void IgnoreSaveState(Type entityType, bool based = false) {
             IgnoreSaveLoadComponent.Ignore(entityType, based);
         }
 
         /// <summary>
-        /// Determine which type needs to return the same object when deep cloning.
+        /// Teaches the cloner that objects of this type must be shared instead of copied. For entity
+        /// types this means the entity is kept out of the snapshot as well.
+        /// <para>
+        /// Must run before the first save/load of the session: cloners are generated and cached per
+        /// type, so a later registration keeps the decision made earlier.
+        /// </para>
         /// </summary>
-        /// appear in v3.27.15
+        /// <remarks>Available since SpeedrunTool v3.27.16.</remarks>
         public static void AddReturnSameObjectType(Type type) {
             if (type.IsSameOrSubclassOf(typeof(Entity))) {
                 IgnoreSaveLoadComponent.Ignore(type, false);
@@ -147,9 +342,10 @@ public static class SaveLoadInterop {
         }
 
         /// <summary>
-        /// Remove previously added type.
+        /// Undoes <see cref="AddReturnSameObjectType"/>. It cannot undo a clone decision that was
+        /// already made for a type it had to clone.
         /// </summary>
-        /// appear in v3.27.15
+        /// <remarks>Available since SpeedrunTool v3.27.16.</remarks>
         public static void RemoveReturnSameObjectType(Type type) {
             if (type.IsSameOrSubclassOf(typeof(Entity))) {
                 IgnoreSaveLoadComponent.RemoveIgnore(type);
@@ -160,52 +356,54 @@ public static class SaveLoadInterop {
         }
 
         /// <summary>
-        /// Determine which types need to return the same object when deep cloning.
+        /// Predicate form of <see cref="AddReturnSameObjectType"/>, for whole families of types
+        /// (for example an interface several mods implement).
+        /// <para>Must run before the first save/load, see <see cref="AddReturnSameObjectType"/>.</para>
         /// </summary>
-        /// <param name="predicate">Returning true means that an object of the type returns the same object when cloned.</param>
+        /// <param name="predicate">Returning true means objects of that type are shared, not cloned.</param>
+        /// <remarks>Available since SpeedrunTool v3.26.4.</remarks>
         public static void AddReturnSameObjectProcessor(Func<Type, bool> predicate) {
-            // Must be called before the first save/load, see AddReturnSameObjectType.
             returnSameObjectPredicates.Add(predicate);
         }
 
         /// <summary>
-        /// Remove previously added predicate.
+        /// Removes a predicate added by <see cref="AddReturnSameObjectProcessor"/>.
         /// </summary>
-        /// <param name="predicate"></param>
+        /// <remarks>Available since SpeedrunTool v3.26.4.</remarks>
         public static void RemoveReturnSameObjectProcessor(Func<Type, bool> predicate) {
             returnSameObjectPredicates.Remove(predicate);
         }
 
         /// <summary>
-        /// Customize the cloning process.
+        /// Takes over the cloning of some objects: return the original, build a replacement, or
+        /// return null to let the normal deep clone run.
         /// </summary>
-        /// <param name="processor">Return the original object directly or construct it by yourself, return null for normal cloning</param>
+        /// <param name="processor">Return an object to use it, or null for normal cloning.</param>
+        /// <remarks>Available since SpeedrunTool v3.26.4.</remarks>
         public static void AddCustomDeepCloneProcessor(Func<object, object> processor) {
             customDeepCloneProcessors.Add(processor);
         }
 
         /// <summary>
-        /// Remove previously added processor.
+        /// Removes a processor added by <see cref="AddCustomDeepCloneProcessor"/>.
         /// </summary>
-        /// <param name="processor"></param>
+        /// <remarks>Available since SpeedrunTool v3.26.4.</remarks>
         public static void RemoveCustomDeepCloneProcessor(Func<object, object> processor) {
             customDeepCloneProcessors.Remove(processor);
         }
 
         /// <summary>
-        /// Performs deep (full) copy of object and related graph.
-        /// Must be called from the main thread: it shares the clone state used by the
-        /// save/load pipeline, which is not thread safe.
+        /// Deep copy of an object and its graph, using the same cloner and clone state as the
+        /// save/load pipeline.
         /// </summary>
-        /// <param name="from"></param>
-        /// appear in the MultipleSaveSlots update, which is after v3.24.4
+        /// <param name="from">Object to copy.</param>
+        /// <returns>The copy.</returns>
+        /// <remarks>
+        /// Available since SpeedrunTool v3.26.4 (multi save slot update).
+        /// Main thread only: the clone state is not thread safe.
+        /// </remarks>
         public static object DeepClone(object from) {
             return from.DeepCloneShared();
         }
-
-        // Driving the pipeline (GetSlotName, SaveState, LoadState, ClearState, ClearAllStates,
-        // SwitchSlot, IsSaved) is not part of this surface: registering behaviour and controlling
-        // a savestate are different jobs, so those live in the SpeedrunTool.SaveLoadControl
-        // exports (SaveLoadControlInterop). Freeze-free TAS save/load lives in SpeedrunTool.TasAction.
     }
 }

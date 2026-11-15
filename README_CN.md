@@ -39,7 +39,7 @@ v3.28.0 的检查器还能发现数组/容器/泛型实参里嵌套的 Lua 值, 
 - 原有的「加载存档后回收内存」「清除存档后回收内存」仍然控制强制 GC 的时机；如果清除/读取存档时出现卡顿，可以试着关掉它们。
 - 诊断（可选，正式构建里零开销）：普通 Release 构建会把 profiler 完全编译掉（调用点被消除，没有任何运行时开销）。需要诊断时用 `-p:SrtProfiling=true` 构建，在 SpeedrunTool.dll 旁放一个空的 `srt-profile.flag`（或设环境变量 `SRT_PROFILE=1`），log.txt 里每次 save/load 就会多一行 `SRT_PROFILE ...`，包含分阶段耗时、分配量和 GC/堆信息。
 
-其它模组/工具可以通过 `SpeedrunTool.SaveLoad` 这组 ModInterop API 驱动存档与读档（`SaveState`、`LoadState`、`SaveStateTas`、`LoadStateTas`、`ClearState`、`SwitchSlot`、`IsSaved`）；benchmark/自动化专用的开关（`SetPreCloneEnabled`、`SetAllowSaveLoadWhenWaiting`）单独放在 `SpeedrunTool.Bench` 这组 export 里，公开给 mod 的契约保持精简。
+其它模组/工具可以通过 `SpeedrunTool.SaveLoad` 这组 ModInterop API 驱动存档与读档（`SaveState`、`LoadState`、`ClearState`、`SwitchSlot`、`IsSaved`）；不 freeze/不 wipe 的 TAS 存档读档单独放在 `SpeedrunTool.TasAction` 这组 export 里（`SaveState(slot)`、`LoadState(slot)`、`ClearState(slot)`、`TasIsSaved(slot)`、`OnTasDisableRun`），也就是 CelesteTAS 和 TASHelper 已经在用的那组；benchmark/自动化专用的开关（`SetPreCloneEnabled`、`SetAllowSaveLoadWhenWaiting`）单独放在 `SpeedrunTool.Bench` 这组 export 里，公开给 mod 的契约保持精简。
 
 ## 构建
 

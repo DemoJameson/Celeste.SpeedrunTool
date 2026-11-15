@@ -62,7 +62,9 @@ versions keep that cost predictable and expose the main memory/speed trade-off:
   line per save/load with per-segment milliseconds, allocation and GC/heap numbers.
 
 Other mods and tools can drive save states through the `SpeedrunTool.SaveLoad` ModInterop API
-(`SaveState`, `LoadState`, `SaveStateTas`, `LoadStateTas`, `ClearState`, `SwitchSlot`, `IsSaved`).
+(`SaveState`, `LoadState`, `ClearState`, `SwitchSlot`, `IsSaved`). Freeze-free TAS save/load is the
+separate `SpeedrunTool.TasAction` export (`SaveState(slot)`, `LoadState(slot)`, `ClearState(slot)`,
+`TasIsSaved(slot)`, `OnTasDisableRun`), the surface CelesteTAS and TASHelper already import.
 Benchmark/automation-only knobs (`SetPreCloneEnabled`, `SetAllowSaveLoadWhenWaiting`) live in a
 separate `SpeedrunTool.Bench` export, so the public mod-facing contract stays small.
 

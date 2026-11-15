@@ -228,19 +228,10 @@ public static class SaveLoadInterop {
             return SaveSlotsManager.SwitchSlot(slot) && SaveSlotsManager.LoadState(out _);
         }
 
-        /// <summary>
-        /// Save without the freeze/screen-wipe used for normal gameplay. Intended for TAS and tools.
-        /// </summary>
-        public static bool SaveStateTas(string slot) {
-            return SaveSlotsManager.SaveStateTas(slot);
-        }
-
-        /// <summary>
-        /// Load without the freeze/screen-wipe used for normal gameplay. Intended for TAS and tools.
-        /// </summary>
-        public static bool LoadStateTas(string slot) {
-            return SaveSlotsManager.LoadStateTas(slot);
-        }
+        // Freeze-free (TAS) save/load is deliberately not duplicated here. It lives in the
+        // SpeedrunTool.TasAction exports (TasSpeedrunToolInterop): SaveState(slot), LoadState(slot),
+        // ClearState(slot), TasIsSaved(slot) and OnTasDisableRun -- the same surface CelesteTAS and
+        // TASHelper already import, all of which forward to SaveSlotsManager.SaveStateTas & co.
 
         /// <summary>
         /// Clear the current save slot.

@@ -134,6 +134,11 @@ internal class Snapshot {
                 EnsureBufferSize(ref readbackBuffer, width * height);
                 levelBuffer.GetData(readbackBuffer, 0, width * height);
                 captured = HasVisibleContent(readbackBuffer, width * height);
+#if DEBUG
+                if (!captured) {
+                    ReportEmptyLevelBuffer(width, height);
+                }
+#endif
             }
 
             if (!captured) {
@@ -154,6 +159,9 @@ internal class Snapshot {
                 // Nothing worth keeping: leave snapshotTex null so the UI reports "Snapshot Not Found"
                 // instead of showing a blank cell that looks like a saved but broken state.
                 success = false;
+#if DEBUG
+                ReportNoUsableFrame();
+#endif
             }
         }
         catch (Exception e) {
@@ -301,6 +309,40 @@ internal class Snapshot {
     };
 
     private static readonly HashSet<string> ReportedRenderHookers = new();
+
+    private static bool reportedEmptyLevelBuffer;
+    private static bool reportedNoUsableFrame;
+
+    // The fallback to the back buffer is itself the signal that some mod owns the level render: a
+    // complete frame cannot be told from a partial one, so if the level buffer held no visible pixel,
+    // something redirected it. Unlike the hook tripwire above, this fires on the symptom and therefore
+    // also catches mods that never touch GameplayRenderer.Render (custom wipes, skipped frames, ...).
+    private static void ReportEmptyLevelBuffer(int width, int height) {
+        if (reportedEmptyLevelBuffer) {
+            return;
+        }
+
+        reportedEmptyLevelBuffer = true;
+        Logger.Error("SpeedrunTool/Snapshot",
+            $"GameplayBuffers.Level ({width}x{height}) had no visible pixel, so a mod is redirecting the level " +
+            $"render; the snapshot fell back to the back buffer. Enabled mods: {LoadedModNames()}");
+    }
+
+    private static void ReportNoUsableFrame() {
+        if (reportedNoUsableFrame) {
+            return;
+        }
+
+        reportedNoUsableFrame = true;
+        Logger.Error("SpeedrunTool/Snapshot",
+            "Neither GameplayBuffers.Level nor the back buffer contained a frame; the thumbnail was dropped. " +
+            $"Enabled mods: {LoadedModNames()}");
+    }
+
+    private static string LoadedModNames() {
+        IEnumerable<string> names = Everest.Modules?.Select(module => module.Metadata?.Name) ?? Enumerable.Empty<string>();
+        return string.Join(", ", names.Where(name => !string.IsNullOrWhiteSpace(name)));
+    }
 
     private static void AssertNoUnknownRendererHookers() {
         foreach (string installer in GameplayRendererHookInstallers()) {

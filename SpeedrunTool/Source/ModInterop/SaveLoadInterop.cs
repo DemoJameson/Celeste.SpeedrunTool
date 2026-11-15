@@ -6,6 +6,16 @@ using System.Linq;
 
 namespace Celeste.Mod.SpeedrunTool.ModInterop;
 
+/// <summary>
+/// The entry point for other mods: import <c>SpeedrunTool.SaveLoad</c> to take part in a savestate --
+/// register a save/load action, register static members to clone, or teach the cloner which objects
+/// are shared instead of copied.
+/// <para>
+/// The surfaces most mods never need are under <c>ModInterop/Advanced</c>: driving the pipeline
+/// (SpeedrunTool.SaveLoadControl), TAS save/load (SpeedrunTool.TasAction), benchmarks
+/// (SpeedrunTool.Bench) and the desync oracle (SpeedrunTool.Desync).
+/// </para>
+/// </summary>
 public static class SaveLoadInterop {
     private static readonly List<Func<Type, bool>> returnSameObjectPredicates = new();
     private static readonly List<Func<object, object>> customDeepCloneProcessors = new();

@@ -1,9 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <!-- Offline, game-free tests for the pure decision logic of the cross-chapter (pending) load.
-         Run with: dotnet run (this directory) -c Release
+         Run with: dotnet run -c Release   (from this directory),
+         or from the repo root: dotnet tests/SceneStateTests/bin/Release/net8.0/SceneStateTests.dll
+         UseAppHost is off so `dotnet run` launches the managed dll directly instead of the generated
+         apphost .exe, which this machine's application-control policy refuses to start. Note that
+         Smart App Control can still block a freshly built unsigned assembly it has not seen before
+         (Event ID 3077/3118 in Microsoft-Windows-CodeIntegrity/Operational).
          The production file is linked instead of copied so the tests cannot drift from the mod. -->
     <PropertyGroup>
         <OutputType>Exe</OutputType>
+        <UseAppHost>false</UseAppHost>
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>disable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>

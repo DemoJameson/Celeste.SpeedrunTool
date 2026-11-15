@@ -27,7 +27,7 @@
         <RootNamespace>Celeste.Mod.SpeedrunTool</RootNamespace>
         <AssemblyTitle>SpeedrunTool</AssemblyTitle>
         <Product>SpeedrunTool</Product>
-        <Copyright>Copyright 漏 2019</Copyright>
+        <Copyright>Copyright © 2019</Copyright>
         <PlatformTarget>x86</PlatformTarget>
         <OutputPath>bin\$(Configuration)\</OutputPath>
         <DebugType>portable</DebugType>

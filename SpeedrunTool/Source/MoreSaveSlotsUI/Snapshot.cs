@@ -3,7 +3,9 @@ using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework.Graphics;
+using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Linq;
 
 namespace Celeste.Mod.SpeedrunTool.MoreSaveSlotsUI;
@@ -264,6 +266,9 @@ internal class Snapshot {
 
         captureWaitFrames = 0;
 
+#if DEBUG
+        AssertNoUnknownRendererHookers();
+#endif
         ScheduledCaptureSnapshots = false; // immediately clear it so there won't be an infinite loop
         Snapshot snapshot = new(DemandingSlot);
         CaptureSnapshots(self, snapshot);
@@ -275,6 +280,132 @@ internal class Snapshot {
         }
         SnapshotsDict[DemandingSlot] = snapshot;
     }
+#if DEBUG
+    // DEBUG-only tripwire. Snapshot assumes GameplayBuffers.Level holds the composed frame; a mod that
+    // renders the level through its own target breaks that assumption in a way pixels cannot prove.
+    // A DEBUG build is meant to break loudly instead of quietly storing wrong thumbnails, so an
+    // installer we have not reviewed throws -- once per installer, on the first save that needs a
+    // snapshot, not at startup.
+    // Every installer seen on GameplayRenderer.Render and reviewed by hand (see
+    // work/SpeedrunTool/notes/mod-render-review.md). A new name here means a new mod to read.
+    private static readonly string[] ReviewedRenderHookers = {
+        "MotionSmoothing",        // redirects the level into its own hires buffers -- the reason for the list
+        "auspicioushelper",       // takes over only when material layers exist
+        "ScugHelper",             // orig first, then rim-light post-process on Gameplay
+        "CelesteTAS-EverestInterop", // hide-gameplay / hitbox overlays
+        "CommunalHelper",         // show-hitbox trigger
+        "StrawberryJam2021",      // show-hitbox trigger
+        "StrawberryTool",         // detector info overlay
+        "VidPlayer",              // extra gameplay-HUD renderer
+        "ExtendedVariants",       // zoom/blur variants, only when enabled
+    };
+
+    private static readonly HashSet<string> ReportedRenderHookers = new();
+
+    private static void AssertNoUnknownRendererHookers() {
+        foreach (string installer in GameplayRendererHookInstallers()) {
+            if (ReviewedRenderHookers.Any(known => installer.StartsWith(known + " :: ", StringComparison.Ordinal))) {
+                continue;
+            }
+
+            if (!ReportedRenderHookers.Add(installer)) {
+                continue;
+            }
+
+            Logger.Error("SpeedrunTool/Snapshot",
+                $"Unreviewed mod hooks GameplayRenderer.Render: {installer}. " +
+                "GameplayBuffers.Level may not be the composed frame; read its render code, then add it to " +
+                "ReviewedRenderHookers (safe) or to the render-redirecting list.");
+            throw new Exception($"Unreviewed GameplayRenderer.Render hook: {installer}");
+        }
+    }
+
+    // Same reflection the HookProbe tool uses (work/SpeedrunTool/tools/hookprobe): MonoMod keeps every
+    // managed detour in DetourManager.detourStates, and each state carries the chain of installed
+    // handlers. Private fields, so this is DEBUG-only on purpose.
+    private static List<string> GameplayRendererHookInstallers() {
+        var installers = new List<string>();
+        Type manager = typeof(MonoMod.RuntimeDetour.Hook).Assembly.GetType("MonoMod.RuntimeDetour.DetourManager");
+        FieldInfo statesField = manager?.GetField("detourStates", BindingFlags.NonPublic | BindingFlags.Static);
+        if (statesField?.GetValue(null) is not IEnumerable table) {
+            return installers;
+        }
+
+        foreach (object entry in table) {
+            if (entry.GetType().GetProperty("Key")?.GetValue(entry) is not MethodBase target) {
+                continue;
+            }
+
+            string name = (target.DeclaringType?.FullName ?? "") + "." + target.Name;
+            if (name != "Celeste.GameplayRenderer.Render") {
+                continue;
+            }
+
+            object state = entry.GetType().GetProperty("Value")?.GetValue(entry);
+            if (state is null) {
+                continue;
+            }
+
+            object node = Field(state, "detourList");
+            for (int guard = 0; node is not null && guard < 512; guard++) {
+                if (Field(node, "FirstDelegate") is Delegate hook) {
+                    installers.Add(Describe(hook.Method));
+                }
+                else if (Property(node, "Entry") is MethodBase entryMethod) {
+                    installers.Add(Describe(entryMethod));
+                }
+
+                node = Field(node, "Next");
+            }
+
+            if (Field(state, "noConfigIlhooks") is IEnumerable ilHooks) {
+                foreach (object ilHook in ilHooks) {
+                    if (Property(ilHook, "Manip") is Delegate manip) {
+                        installers.Add(Describe(manip.Method));
+                    }
+                }
+            }
+
+            object chain = Field(Field(state, "ilhookGraph"), "ListHead");
+            for (int guard = 0; chain is not null && guard < 512; guard++) {
+                if (Field(chain, "ChainNode") is { } ilEntry && Property(ilEntry, "Manip") is Delegate manip) {
+                    installers.Add(Describe(manip.Method));
+                }
+
+                chain = Field(chain, "Next");
+            }
+        }
+
+        return installers;
+    }
+
+    private static string Describe(MethodBase method) {
+        string assembly = method.DeclaringType?.Assembly.GetName().Name ?? "?";
+        return assembly + " :: " + (method.DeclaringType?.FullName ?? "?") + "." + method.Name;
+    }
+
+    private static object Field(object target, string name) {
+        for (Type t = target?.GetType(); t is not null; t = t.BaseType) {
+            FieldInfo field = t.GetField(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            if (field is not null) {
+                return field.GetValue(target);
+            }
+        }
+
+        return null;
+    }
+
+    private static object Property(object target, string name) {
+        for (Type t = target?.GetType(); t is not null; t = t.BaseType) {
+            PropertyInfo property = t.GetProperty(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            if (property is not null) {
+                return property.GetValue(target);
+            }
+        }
+
+        return null;
+    }
+#endif
     internal void RenderContent(float x1, float y1, float x2, float y2, float alpha, bool highlight) {
         bool hasSnapshot = true;
         Vector2 scale = Vector2.One;

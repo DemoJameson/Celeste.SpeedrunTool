@@ -349,8 +349,12 @@ SpeedrunTool/lib-stripped/*
 # Agent instruction files are workspace/machine specific: they carry the D:\DSH\Celeste
 # layout, the local game install and this machine's Smart App Control notes, none of which
 # mean anything in the published repo. Keep them local; project-wide conventions belong in
-# README.md / docs/.
+# README.md.
 /AGENTS.md
 /CLAUDE.md
 AGENTS.local.md
 CLAUDE.local.md
+
+# Internal design and maintenance notes (desync-checker provenance and the like) are workspace
+# material, not part of the published mod. Keep them local.
+/docs/

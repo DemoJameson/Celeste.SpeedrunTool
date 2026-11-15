@@ -462,11 +462,17 @@ override 组合、Reset。
 
 ## 11. 相关文档
 
-- `D:\DSH\Celeste\lua-survey\docs\lua-usage-survey.md` §9–§11（checker 现状/方案对比/分阶段建议）
-- `D:\DSH\Celeste\lua-work\docs\lua-desync.md` §1–§3（Lua 克隆边界）、§6（P1/P2/P3）、
-  §15/§16（E5/E5b adapter，本分支未移植）、§8（E1–E3 原始 bench 步骤）
-- `D:\DSH\Celeste\lua-work\docs\checker-lua-gates.md`（commit `64b808d`）：两个 gate 的 IL 证据
-  ——E1 detached stale Coroutine、E5b CC Knight 常驻 background Lua coroutine
-- `D:\DSH\Celeste\lua-work\docs\e5b-checkpoint-options.md`（commit `392d210`）：E5b 后续方案
-  A/B/C/D、成本与待用户决策问题（checker 分支按方案 A 现状收尾）
-- `docs/scene-state.md`、`docs/audit.md`（SRT 既有验证/审计记录）
+> 下文提到的 `lua-work/`、`lua-survey/` 指 `work/SpeedrunTool/experiments/` 下的两个 git worktree，
+> 分别 checkout `research/lua-desync` 和 `research/lua-usage-survey` 分支。
+
+- `D:\DSH\Celeste\work\SpeedrunTool\experiments\lua-survey\docs\lua-usage-survey.md` §9–§11
+  （checker 现状/方案对比/分阶段建议）
+- `D:\DSH\Celeste\work\SpeedrunTool\experiments\lua-work\docs\lua-desync.md` §1–§3（Lua 克隆边界）、
+  §6（P1/P2/P3）、§15/§16（E5/E5b adapter，本分支未移植）、§8（E1–E3 原始 bench 步骤）
+- `D:\DSH\Celeste\work\SpeedrunTool\experiments\lua-work\docs\checker-lua-gates.md`（commit `64b808d`）：
+  两个 gate 的 IL 证据——E1 detached stale Coroutine、E5b CC Knight 常驻 background Lua coroutine
+- `D:\DSH\Celeste\work\SpeedrunTool\experiments\lua-work\docs\e5b-checkpoint-options.md`（commit `392d210`）：
+  E5b 后续方案 A/B/C/D、成本与待用户决策问题（checker 分支按方案 A 现状收尾）
+- `D:\DSH\Celeste\work\SpeedrunTool\docs-internal\srt-20261114\scene-state.md`、
+  `D:\DSH\Celeste\work\SpeedrunTool\docs-internal\srt-20261114\audit.md`
+  （SRT 既有验证/审计记录；`docs/` 下的副本已在 `9c7f3d1` 移出仓库）

@@ -298,7 +298,11 @@ internal class Snapshot {
     // work/SpeedrunTool/notes/mod-render-review.md). A new name here means a new mod to read.
     private static readonly string[] ReviewedRenderHookers = {
         "MotionSmoothing",        // redirects the level into its own hires buffers -- the reason for the list
-        "auspicioushelper",       // takes over only when material layers exist
+        // Takes over the whole gameplay render when material layers exist. NOT VERIFIED: no map with
+        // layers was tested, so it may well produce the same broken frames as MotionSmoothing. If a
+        // snapshot comes out wrong on such a map, move this name to the redirecting list (that is,
+        // make RenderTargetModLoaded match it) instead of leaving it here.
+        "auspicioushelper",
         "ScugHelper",             // orig first, then rim-light post-process on Gameplay
         "CelesteTAS-EverestInterop", // hide-gameplay / hitbox overlays
         "CommunalHelper",         // show-hitbox trigger

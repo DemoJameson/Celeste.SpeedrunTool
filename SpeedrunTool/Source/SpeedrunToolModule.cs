@@ -26,6 +26,9 @@ public class SpeedrunToolModule : EverestModule {
         AttributeUtils.CollectMethods<UnloadAttribute>();
         AttributeUtils.CollectMethods<LoadContentAttribute>();
         AttributeUtils.CollectMethods<InitializeAttribute>();
+#if DEBUG
+        Logger.Log("SpeedrunTool", "This is a DEBUG build.");
+#endif
     }
 
     public override Type SettingsType => typeof(SpeedrunToolSettings);

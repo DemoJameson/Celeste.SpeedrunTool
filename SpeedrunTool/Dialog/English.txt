@@ -8,6 +8,7 @@ SPEEDRUN_TOOL_AUTO=  Auto
 
 # ================================== Mod Options Menu ==================================
 SPEEDRUN_TOOL=              Speedrun Tool
+SPEEDRUN_TOOL_DEBUG=       Speedrun Tool (DEBUG)
 SPEEDRUN_TOOL_ENABLED=      Enabled
 SPEEDRUN_TOOL_ROOM_TIMER=   Room Timer
 SPEEDRUN_TOOL_STATE=        State

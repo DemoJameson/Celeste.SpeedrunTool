@@ -1,4 +1,4 @@
-namespace Celeste.Mod.SpeedrunTool;
+﻿namespace Celeste.Mod.SpeedrunTool;
 
 public static class DialogIds {
     public const string Prefix = "SPEEDRUN_TOOL_";
@@ -21,6 +21,8 @@ public static class DialogIds {
 
     // Mod Menu
     public const string SpeedrunTool = "SPEEDRUN_TOOL";
+
+    public const string SpeedrunTool_DEBUG = "SPEEDRUN_TOOL_DEBUG";
     public const string Enabled = "SPEEDRUN_TOOL_ENABLED";
     public const string RoomTimer = "SPEEDRUN_TOOL_ROOM_TIMER";
     public const string State = "SPEEDRUN_TOOL_STATE";

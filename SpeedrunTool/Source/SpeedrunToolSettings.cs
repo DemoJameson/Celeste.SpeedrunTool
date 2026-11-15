@@ -1,4 +1,4 @@
-using Celeste.Mod.SpeedrunTool.Message;
+﻿using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
@@ -8,7 +8,11 @@ using System.Text;
 
 namespace Celeste.Mod.SpeedrunTool;
 
+#if DEBUG
+[SettingName(DialogIds.SpeedrunTool_DEBUG)]
+#else
 [SettingName(DialogIds.SpeedrunTool)]
+#endif
 public class SpeedrunToolSettings : EverestModuleSettings {
     public static SpeedrunToolSettings Instance { get; private set; }
 

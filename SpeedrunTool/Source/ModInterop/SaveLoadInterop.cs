@@ -193,73 +193,9 @@ public static class SaveLoadInterop {
             return from.DeepCloneShared();
         }
 
-        /// <summary>
-        /// Name of the currently using save slot, appear after v3.25.0
-        /// </summary>
-        public static string GetSlotName() {
-            return SaveSlotsManager.SlotName;
-        }
-
-        /// <summary>
-        /// Save the current level state into the current save slot.
-        /// </summary>
-        public static bool SaveState() {
-            return SaveSlotsManager.SaveState(out _);
-        }
-
-        /// <summary>
-        /// Save the current level state into the given save slot (switch to it first).
-        /// </summary>
-        public static bool SaveState(string slot) {
-            return SaveSlotsManager.SwitchSlot(slot) && SaveSlotsManager.SaveState(out _);
-        }
-
-        /// <summary>
-        /// Load the current save slot.
-        /// </summary>
-        public static bool LoadState() {
-            return SaveSlotsManager.LoadState(out _);
-        }
-
-        /// <summary>
-        /// Load the given save slot (switch to it first).
-        /// </summary>
-        public static bool LoadState(string slot) {
-            return SaveSlotsManager.SwitchSlot(slot) && SaveSlotsManager.LoadState(out _);
-        }
-
-        // Freeze-free (TAS) save/load is deliberately not duplicated here. It lives in the
-        // SpeedrunTool.TasAction exports (TasSpeedrunToolInterop): SaveState(slot), LoadState(slot),
-        // ClearState(slot), TasIsSaved(slot) and OnTasDisableRun -- the same surface CelesteTAS and
-        // TASHelper already import, all of which forward to SaveSlotsManager.SaveStateTas & co.
-
-        /// <summary>
-        /// Clear the current save slot.
-        /// </summary>
-        public static bool ClearState() {
-            return SaveSlotsManager.ClearState();
-        }
-
-        /// <summary>
-        /// Clear every save slot.
-        /// </summary>
-        public static void ClearAllStates() {
-            SaveSlotsManager.ClearAll();
-        }
-
-        /// <summary>
-        /// Switch to the given save slot, returns false if a state is busy.
-        /// </summary>
-        public static bool SwitchSlot(string slot) {
-            return SaveSlotsManager.SwitchSlot(slot);
-        }
-
-        /// <summary>
-        /// Whether the given slot (or the current one when null) holds a state.
-        /// </summary>
-        public static bool IsSaved(string slot) {
-            return slot is null ? SaveSlotsManager.IsSaved() : SaveSlotsManager.IsSaved(slot);
-        }
-
+        // Driving the pipeline (GetSlotName, SaveState, LoadState, ClearState, ClearAllStates,
+        // SwitchSlot, IsSaved) is not part of this surface: registering behaviour and controlling
+        // a savestate are different jobs, so those live in the SpeedrunTool.SaveLoadControl
+        // exports (SaveLoadControlInterop). Freeze-free TAS save/load lives in SpeedrunTool.TasAction.
     }
 }

@@ -2,15 +2,10 @@
     <!-- Offline, game-free tests for the desync checker's pure decision logic.
          Run with: dotnet run -c Release   (from this directory),
          or from the repo root: dotnet tests/DesyncCheckerTests/bin/Release/net8.0/DesyncCheckerTests.dll
-         UseAppHost is off so `dotnet run` launches the managed dll directly instead of the generated
-         apphost .exe, which this machine's application-control policy refuses to start. Note that
-         Smart App Control can still block a freshly built unsigned assembly it has not seen before
-         (Event ID 3077/3118 in Microsoft-Windows-CodeIntegrity/Operational).
          The production files are linked instead of copied so the tests cannot drift from the mod.
          Only BCL types are involved; the game assembly is never referenced. -->
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <UseAppHost>false</UseAppHost>
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>disable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>

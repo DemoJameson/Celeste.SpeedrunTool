@@ -52,32 +52,34 @@ public sealed partial class StateManager {
         // deaths still never roll back when loading from the chapter select.
         session ??= currentSaveData.CurrentSession_Safe;
 
-        // The template is updated in place. This used to first DeepCloneShared() the Session and
-        // the SaveData, but the clones were never installed anywhere - they were pure garbage on
-        // every load (a SaveData clone is not free: it clones the whole Areas_Safe list).
-        savedSaveData.Time = currentSaveData.Time;
         int increaseDeath = level is null || level.IsPlayerDead() ? 0 : 1;
-        savedSaveData.TotalDeaths = currentSaveData.TotalDeaths + increaseDeath;
-        savedSaveData.TotalDashes = currentSaveData.TotalDashes;
-        savedSaveData.TotalJumps = currentSaveData.TotalJumps;
-        savedSaveData.TotalWallJumps = currentSaveData.TotalWallJumps;
+
+        // The restore installs whatever the shared clone state returns for savedSaveData, and the
+        // pre-clone task registered a copy of it before this merge runs. Writing only the template
+        // would be discarded by that copy (the merge then took effect every other load, and after a
+        // remap it costs a full SaveData clone on every load), so the same merge is applied to both.
+        //
+        // The Session is in that state for a less obvious reason: SaveData.StartSession stores the
+        // level's session in savedSaveData.CurrentSession_Safe, so at save time the level clone had
+        // already registered that instance and the SaveData clone reused it. Cloning savedSaveData in
+        // the pre-clone therefore clones the Session too, and savedLevel.Session is that same instance.
+        // The restore installs that copy, so the template write alone would not survive a load.
+        SaveData cachedSaveData = DeepClonerUtils.GetSharedClone(savedSaveData) as SaveData;
+        Session cachedSession = DeepClonerUtils.GetSharedClone(savedSession) as Session;
+
+        MergeSaveData(savedSaveData, currentSaveData, increaseDeath);
+        if (cachedSaveData is not null) {
+            MergeSaveData(cachedSaveData, currentSaveData, increaseDeath);
+        }
 
         if (session is null) {
             return;
         }
 
         AreaKey areaKey = session.Area;
-        savedSession.Time = Math.Max(session.Time, savedSession.Time);
-
-        // A mod map may not have an AreaStats entry yet (or a shorter Modes array): the old
-        // unchecked indexing threw ArgumentOutOfRangeException and aborted the whole load.
-        if (areaKey.ID >= 0
-            && areaKey.ID < savedSaveData.Areas_Safe.Count
-            && areaKey.ID < currentSaveData.Areas_Safe.Count
-            && (int)areaKey.Mode < savedSaveData.Areas_Safe[areaKey.ID].Modes.Length
-            && (int)areaKey.Mode < currentSaveData.Areas_Safe[areaKey.ID].Modes.Length) {
-            savedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].TimePlayed =
-                currentSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].TimePlayed;
+        MergeSession(savedSession, session, increaseDeath);
+        if (cachedSession is not null) {
+            MergeSession(cachedSession, session, increaseDeath);
         }
 
         // 修复：切屏时存档，若干秒后读档游戏会误以为卡死自动重生
@@ -93,17 +95,41 @@ public sealed partial class StateManager {
             playerStuck.SetValue(savedTransitionRoutine.DeepCloneShared(), TimeSpan.FromTicks(session.Time));
         }
 
-        savedSession.Deaths = Math.Max(session.Deaths + increaseDeath, savedSession.Deaths);
-        savedSession.DeathsInCurrentLevel =
-            Math.Max(session.DeathsInCurrentLevel + increaseDeath, savedSession.DeathsInCurrentLevel);
-        if (areaKey.ID >= 0
-            && areaKey.ID < savedSaveData.Areas_Safe.Count
-            && areaKey.ID < currentSaveData.Areas_Safe.Count
-            && (int)areaKey.Mode < savedSaveData.Areas_Safe[areaKey.ID].Modes.Length
-            && (int)areaKey.Mode < currentSaveData.Areas_Safe[areaKey.ID].Modes.Length) {
-            savedSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths =
-                currentSaveData.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths + increaseDeath;
+        MergeAreaStats(savedSaveData, currentSaveData, areaKey, increaseDeath);
+        if (cachedSaveData is not null) {
+            MergeAreaStats(cachedSaveData, currentSaveData, areaKey, increaseDeath);
         }
+    }
+
+    private static void MergeSaveData(SaveData target, SaveData current, int increaseDeath) {
+        target.Time = current.Time;
+        target.TotalDeaths = current.TotalDeaths + increaseDeath;
+        target.TotalDashes = current.TotalDashes;
+        target.TotalJumps = current.TotalJumps;
+        target.TotalWallJumps = current.TotalWallJumps;
+    }
+
+    private static void MergeSession(Session target, Session current, int increaseDeath) {
+        target.Time = Math.Max(current.Time, target.Time);
+        target.Deaths = Math.Max(current.Deaths + increaseDeath, target.Deaths);
+        target.DeathsInCurrentLevel = Math.Max(current.DeathsInCurrentLevel + increaseDeath, target.DeathsInCurrentLevel);
+    }
+
+    // A mod map may not have an AreaStats entry yet (or a shorter Modes array): the old unchecked
+    // indexing threw ArgumentOutOfRangeException and aborted the whole load.
+    private static void MergeAreaStats(SaveData target, SaveData current, AreaKey areaKey, int increaseDeath) {
+        if (areaKey.ID < 0
+            || areaKey.ID >= target.Areas_Safe.Count
+            || areaKey.ID >= current.Areas_Safe.Count
+            || (int)areaKey.Mode >= target.Areas_Safe[areaKey.ID].Modes.Length
+            || (int)areaKey.Mode >= current.Areas_Safe[areaKey.ID].Modes.Length) {
+            return;
+        }
+
+        target.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].TimePlayed =
+            current.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].TimePlayed;
+        target.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths =
+            current.Areas_Safe[areaKey.ID].Modes[(int)areaKey.Mode].Deaths + increaseDeath;
     }
 
     private void LoadStateComplete(Level level) {

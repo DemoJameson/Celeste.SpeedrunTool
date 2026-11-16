@@ -271,7 +271,13 @@ public static class DeepClonerUtils {
                 SaveLoadAction.ClonedEventInstancesWhenSave.Add(clonedEventInstance);
             }
             else if (!isMainThread) {
-                SaveLoadAction.ClonedEventInstancesWhenPreClone.Add(clonedEventInstance);
+                // The pre-clone runs on a background thread, and a save or clear can reach the same list
+                // before the task is joined -- when the bounded wait above gives up, for one. Lock the list
+                // itself: it is per slot and only ever touched through the property.
+                List<EventInstance> preCloned = SaveLoadAction.ClonedEventInstancesWhenPreClone;
+                lock (preCloned) {
+                    preCloned.Add(clonedEventInstance);
+                }
             }
 
             return clonedEventInstance;
@@ -462,6 +468,18 @@ public static class DeepClonerUtils {
         sharedDeepCloneState = null;
     }
 
+    /// <summary>
+    /// Whether the shared clone state already holds a copy of <paramref name="obj"/>. Two callers care, and
+    /// it means the same thing to both: a mod callback that stores such an object is storing a stale
+    /// pointer, and a merge that mutates one has to remap it or the mutation is discarded.
+    /// </summary>
+    internal static bool HasSharedClone(object obj) => obj is not null && sharedDeepCloneState?.GetKnownRef(obj) is not null;
+
+    /// <summary>
+    /// The copy the shared clone state already holds for an object, or null. A merge that writes to an
+    /// object it may have cached has to write to that copy too: the restore installs whatever this returns.
+    /// </summary>
+    internal static object GetSharedClone(object obj) => obj is null ? null : sharedDeepCloneState?.GetKnownRef(obj);
     internal static void SetSharedDeepCloneState(DeepCloneState deepCloneState) {
         sharedDeepCloneState = deepCloneState;
     }

@@ -539,7 +539,7 @@ public sealed partial class StateManager {
         }
     }
 
-    private void WaitForPreCloneTask() {
+    internal void WaitForPreCloneTask() {
         Task<DeepCloneState> task = preCloneTask;
         preCloneTask = null;
         if (task is null) {

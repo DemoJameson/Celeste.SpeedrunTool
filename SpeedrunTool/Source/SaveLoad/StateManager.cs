@@ -374,7 +374,7 @@ public sealed partial class StateManager {
             Tracker.Refresh(savedLevel); // 不能在 OnLoadState 里做. 否则多次读档会需要反复 Refresh Tracker
             savedLevel.DeepCloneToShared(level);
             progress?.Report("RESET_GRAPHICS", SlotName);
-            GraphicResourcesHandler.ResetDisposedGlobalResources(level);
+            GraphicResourcesHandler.RepairDisposedGraphicsResources(level);
             SaveLoadProfiler.Mark("cloneBack");
             progress?.Report("CLONE_LEVEL", SlotName);
             SaveData.Instance = savedSaveData.DeepCloneShared();

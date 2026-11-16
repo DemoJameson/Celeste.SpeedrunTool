@@ -44,11 +44,13 @@ internal static class MuteAudioUtils {
     public static void AddAction() {
         SaveLoadAction.InternalSafeAdd(
             loadState: (_, level) => {
-                level.Entities.FindAll<SoundEmitter>().ForEach(emitter => {
-                    if (emitter.Source.instance is { } eventInstance) {
+                // SoundEmitter is tracked at Initialize, so this is an index lookup rather than a walk
+                // over every entity in the level.
+                foreach (Entity entity in TrackerWarmup.GetEntities(level, typeof(SoundEmitter))) {
+                    if (entity is SoundEmitter emitter && emitter.Source.instance is { } eventInstance) {
                         eventInstance.setVolume(0f);
                     }
-                });
+                }
 
                 foreach (EventInstance sfx in RequireMuteAudios) {
                     sfx.setVolume(0f);

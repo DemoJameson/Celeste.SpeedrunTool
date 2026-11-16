@@ -37,8 +37,12 @@ internal static class StateMarkUtils {
         }
 
         // recolor golden berry
-        foreach (Strawberry berry in level.Entities.FindAll<Strawberry>().Where(strawberry => strawberry.Golden)) {
-            TryRecolorSprite(berry);
+        // Strawberry is tracked at Initialize, so this is an index lookup rather than a walk over every
+        // entity in the level.
+        foreach (Entity entity in TrackerWarmup.GetEntities(level, typeof(Strawberry))) {
+            if (entity is Strawberry { Golden: true } berry) {
+                TryRecolorSprite(berry);
+            }
         }
 
         // recolor timer

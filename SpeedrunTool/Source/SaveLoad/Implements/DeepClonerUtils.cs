@@ -227,9 +227,12 @@ public static class DeepClonerUtils {
 
         if ((flags & ProcFlags.VirtualAsset) != 0) {
             VirtualAsset virtualAsset = (VirtualAsset)sourceObj;
-            if (StateManager.Instance.State == State.Loading || !Thread.CurrentThread.IsMainThread()) {
+            // The main-thread check comes first on purpose: StateManager.Instance resolves through the
+            // current slot, which a background clone must not depend on (the slot can change while the
+            // task runs). Only the main-thread save path needs to look at the state at all.
+            if (!Thread.CurrentThread.IsMainThread() || StateManager.Instance.State == State.Loading) {
                 // 预克隆的资源需要等待 LoadState 中移除实体之后才能判断是否需要 Reload，必须等待主线程中再操作
-                GraphicResourcesHandler.Add(virtualAsset);
+                GraphicResourcesHandler.TrackAsset(virtualAsset);
             }
             return virtualAsset;
         }
@@ -276,7 +279,9 @@ public static class DeepClonerUtils {
             EventInstance clonedEventInstance = eventInstance.Clone();
 
             bool isMainThread = Thread.CurrentThread.IsMainThread();
-            if (StateManager.Instance.State == State.Saving && isMainThread) {
+            // isMainThread first, as above: a background clone must not read StateManager.Instance,
+            // which resolves through the slot that it is not pinned to.
+            if (isMainThread && StateManager.Instance.State == State.Saving) {
                 SaveLoadAction.ClonedEventInstancesWhenSave.Add(clonedEventInstance);
             }
             else if (!isMainThread) {

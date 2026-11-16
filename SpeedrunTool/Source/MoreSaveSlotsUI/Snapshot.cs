@@ -349,7 +349,10 @@ internal class Snapshot {
     }
 
     private static void AssertNoUnknownRendererHookers() {
-        foreach (string installer in GameplayRendererHookInstallers()) {
+        // Only third-party installers count. The detour chain starts at a root node that represents the
+        // target method itself, so walking it yields "Celeste :: Celeste.GameplayRenderer.Render" for the
+        // original; vanilla and runtime hooks must not trip a wire meant for mods.
+        foreach (string installer in GameplayRendererHookInstallers().Where(IsFromLoadedModule)) {
             if (ReviewedRenderHookers.Any(known => installer.StartsWith(known + " :: ", StringComparison.Ordinal))) {
                 continue;
             }
@@ -387,6 +390,19 @@ internal class Snapshot {
                 continue;
             }
 
+            // MonoMod keeps the target method itself at the root of the detour chain (and as the
+            // Entry of the shims below it), so the walk reports the vanilla method as an installer.
+            // That string is exactly the one this tripwire must never report, and it cannot be
+            // filtered by assembly name: Everest's own core module lives in Celeste.dll, so the
+            // game assembly counts as "a loaded mod" too.
+            string targetDescription = Describe(target);
+
+            void Add(string description) {
+                if (description != targetDescription) {
+                    installers.Add(description);
+                }
+            }
+
             object state = entry.GetType().GetProperty("Value")?.GetValue(entry);
             if (state is null) {
                 continue;
@@ -395,10 +411,10 @@ internal class Snapshot {
             object node = Field(state, "detourList");
             for (int guard = 0; node is not null && guard < 512; guard++) {
                 if (Field(node, "FirstDelegate") is Delegate hook) {
-                    installers.Add(Describe(hook.Method));
+                    Add(Describe(hook.Method));
                 }
                 else if (Property(node, "Entry") is MethodBase entryMethod) {
-                    installers.Add(Describe(entryMethod));
+                    Add(Describe(entryMethod));
                 }
 
                 node = Field(node, "Next");
@@ -407,7 +423,7 @@ internal class Snapshot {
             if (Field(state, "noConfigIlhooks") is IEnumerable ilHooks) {
                 foreach (object ilHook in ilHooks) {
                     if (Property(ilHook, "Manip") is Delegate manip) {
-                        installers.Add(Describe(manip.Method));
+                        Add(Describe(manip.Method));
                     }
                 }
             }
@@ -415,7 +431,7 @@ internal class Snapshot {
             object chain = Field(Field(state, "ilhookGraph"), "ListHead");
             for (int guard = 0; chain is not null && guard < 512; guard++) {
                 if (Field(chain, "ChainNode") is { } ilEntry && Property(ilEntry, "Manip") is Delegate manip) {
-                    installers.Add(Describe(manip.Method));
+                    Add(Describe(manip.Method));
                 }
 
                 chain = Field(chain, "Next");
@@ -423,6 +439,26 @@ internal class Snapshot {
         }
 
         return installers;
+    }
+
+    private static bool IsFromLoadedModule(string installer) {
+        // Whitelist rather than blacklist: only an assembly that hosts a loaded Everest module counts,
+        // so MonoMod.Core, Mono.Cecil and System.* helpers are ignored. Note that this does NOT mean
+        // "only mods": Everest's core module is defined in Celeste.dll, so "Celeste" passes here. The
+        // chain root is excluded by method identity in GameplayRendererHookInstallers instead.
+        string assembly = installer.Split(" :: ")[0];
+        if (assembly == "SpeedrunTool") {
+            return false;
+        }
+
+        // A DynamicMethod has no DeclaringType, so Describe() reports it as "? :: ?.Method". Keep
+        // those: a hook installed through one is still a hook, and the whitelist exists to drop
+        // MonoMod/System plumbing, not anonymous installers.
+        if (assembly == "?") {
+            return true;
+        }
+
+        return Everest.Modules?.Any(module => module.GetType().Assembly.GetName().Name == assembly) == true;
     }
 
     private static string Describe(MethodBase method) {

@@ -97,10 +97,25 @@ public sealed partial class StateManager {
         // 不过理论上多写一些代码去解开 Coroutine 的嵌套应该也行...
         // 这个 bug 被 DJ 在 2023.10.07 修复了, 不过我把多存档合并进来的时候可能不小心丢失了这个提交
         // 总之我们采用 DJ 的写法
-        if (savedTransitionRoutine?.GetType().GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
-                .FirstOrDefault(info => info.Name.StartsWith("<playerStuck>")) is { } playerStuck) {
-            playerStuck.SetValue(savedTransitionRoutine, TimeSpan.FromTicks(session.Time));
-            playerStuck.SetValue(savedTransitionRoutine.DeepCloneShared(), TimeSpan.FromTicks(session.Time));
+        if (savedTransitionRoutine is not null) {
+            Type routineType = savedTransitionRoutine.GetType();
+            FieldInfo playerStuck = routineType
+                .GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
+                .FirstOrDefault(info => info.Name.StartsWith("<playerStuck>"));
+
+            // The name and type are compiler-generated: a refactored coroutine renames the field, and
+            // a changed one makes SetValue throw *after* Time/Deaths were written to the template, so a
+            // retried load counts the death twice. Check before writing; the warning fires on every
+            // load, which is fine -- a renamed field is a persistent defect, not a transient one.
+            if (playerStuck is null || playerStuck.FieldType != typeof(TimeSpan)) {
+                Logger.Warn("SpeedrunTool/LoadState", playerStuck is null
+                    ? $"{routineType.FullName} has no <playerStuck> field; its saved transition cannot be adjusted."
+                    : $"{routineType.FullName}.<playerStuck> is a {playerStuck.FieldType.Name}, not a TimeSpan; its saved transition cannot be adjusted.");
+            }
+            else {
+                playerStuck.SetValue(savedTransitionRoutine, TimeSpan.FromTicks(session.Time));
+                playerStuck.SetValue(savedTransitionRoutine.DeepCloneShared(), TimeSpan.FromTicks(session.Time));
+            }
         }
 
         MergeAreaStats(savedSaveData, currentSaveData, areaKey, increaseDeath);

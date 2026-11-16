@@ -17,8 +17,25 @@ internal static class BrokemiaHelperUtils {
         }
     }
 
+    private static readonly HashSet<Type> warnedMissingChunks = [];
+
     private static void RebuildPixelComponent(object pixelComponent) {
-        if (pixelComponent is null || pixelComponent.GetFieldValue("chunks") is null) {
+        if (pixelComponent is null) {
+            return;
+        }
+
+        // Distinguish "the mod renamed/removed the field" from "this component has no chunks yet":
+        // only the former means the rebuild silently stopped working, and only it is worth a warning.
+        if (pixelComponent.GetType().GetFieldInfo("chunks") is null) {
+            if (warnedMissingChunks.Add(pixelComponent.GetType())) {
+                Logger.Warn("SpeedrunTool/BrokemiaHelper",
+                    $"{pixelComponent.GetType().FullName} no longer has a 'chunks' field; its pixel component " +
+                    "is not rebuilt after a load (the vine/lizard may stay invisible).");
+            }
+            return;
+        }
+
+        if (pixelComponent.GetFieldValue("chunks") is null) {
             return;
         }
 

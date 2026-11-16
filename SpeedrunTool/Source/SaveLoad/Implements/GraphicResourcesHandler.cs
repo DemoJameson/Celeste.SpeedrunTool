@@ -17,6 +17,18 @@ internal static partial class GraphicResourcesHandler {
     private static readonly MethodInfo VirtualAssetReload =
         typeof(VirtualAsset).GetMethod("Reload", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
+    [Load]
+    private static void Load() {
+        // A renamed/removed VirtualAsset.Reload would otherwise turn every repair into a no-op that
+        // still logs "Repaired": the load would keep its disposed targets and only a later
+        // SpriteBatch.Draw would crash, with the log pointing the wrong way.
+        if (VirtualAssetReload is null) {
+            Logger.Warn("SpeedrunTool/GraphicResourcesHandler",
+                "VirtualAsset.Reload was not found; repairing disposed graphics caches is disabled. " +
+                "A load that hits a disposed asset will draw nothing instead of crashing.");
+        }
+    }
+
 
     /// <summary>
     /// Repairs GPU resources that the saved graph points at but that were disposed after the state was
@@ -299,11 +311,11 @@ internal static partial class GraphicResourcesHandler {
     }
 
     private static bool ReloadDisposedAsset(VirtualAsset asset, Type type, string label) {
-        if (!IsDisposedAsset(asset)) {
+        if (VirtualAssetReload is null || !IsDisposedAsset(asset)) {
             return false;
         }
         try {
-            VirtualAssetReload?.Invoke(asset, null);
+            VirtualAssetReload.Invoke(asset, null);
             LogRepair(type, label);
             return true;
         }

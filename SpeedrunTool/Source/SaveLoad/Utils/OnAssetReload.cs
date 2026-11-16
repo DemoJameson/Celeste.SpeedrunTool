@@ -1,4 +1,5 @@
 using Celeste.Mod.SpeedrunTool.Utils;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
@@ -12,11 +13,17 @@ internal static class OnAssetReload {
 
         Everest.Events.AssetReload.OnAfterReload += AfterReload;
 
-        typeof(AssetReloadHelper)
-            .GetMethodInfo(nameof(AssetReloadHelper.Do), [typeof(string), typeof(Func<bool, Task>), typeof(bool), typeof(bool)])!
-            .ILHook((cursor, _) => {
+        MethodInfo doMethod = typeof(AssetReloadHelper)
+            .GetMethodInfo(nameof(AssetReloadHelper.Do), [typeof(string), typeof(Func<bool, Task>), typeof(bool), typeof(bool)]);
+        if (doMethod is null) {
+            Logger.Warn("SpeedrunTool/OnAssetReload",
+                "AssetReloadHelper.Do was not found; the snapshot UI will not be closed before a hot reload.");
+        }
+        else {
+            doMethod.ILHook((cursor, _) => {
                 cursor.EmitDelegate(MoreSaveSlotsUI.SnapshotUI.Close);
             });
+        }
     }
 
     private static void BeforeReload(bool silent) {

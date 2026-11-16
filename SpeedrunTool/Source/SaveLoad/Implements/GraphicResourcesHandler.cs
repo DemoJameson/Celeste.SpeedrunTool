@@ -292,13 +292,28 @@ internal static class GraphicResourcesHandler {
 
         private static readonly HashSet<VirtualAsset> VirtualAssets = []; // added and cleared when loading, so no need to be individual
 
+        // The pre-clone task can append while the main thread snapshots or clears, most visibly when the
+        // bounded wait gives up on a slow task and the save or clear proceeds without it.
+        private static readonly object Sync = new();
+
         internal static void Add(VirtualAsset asset) {
-            VirtualAssets.Add(asset);
+            lock (Sync) {
+                VirtualAssets.Add(asset);
+            }
+        }
+
+        internal static void Clear() {
+            lock (Sync) {
+                VirtualAssets.Clear();
+            }
         }
         internal static void ReloadVirtualAssets() {
             SaveLoadAction.InternalSafeAdd(
                 loadState: static (_, level) => {
-                    List<VirtualAsset> list = [.. VirtualAssets];
+                    List<VirtualAsset> list;
+                    lock (Sync) {
+                        list = [.. VirtualAssets];
+                    }
                     // if load too frequently and switching between different slots, then collection might be modified? idk
                     // so we avoid the crash in this way
 
@@ -317,7 +332,7 @@ internal static class GraphicResourcesHandler {
                         }
                     }
 
-                    VirtualAssets.Clear();
+                    Clear();
 
                     if (level.Tracker.GetEntity<TrailManager>() is { } trailManager) {
                         for (int i = 0; i < trailManager.buffers.Length; i++) {
@@ -327,8 +342,8 @@ internal static class GraphicResourcesHandler {
                         }
                     }
                 },
-                clearState: VirtualAssets.Clear,
-                preCloneEntities: VirtualAssets.Clear
+                clearState: Clear,
+                preCloneEntities: Clear
             );
         }
     }

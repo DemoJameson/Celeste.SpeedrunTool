@@ -27,6 +27,11 @@ public sealed partial class StateManager {
 
     private void DoScreenWipe(Level level) {
         level.DoScreenWipe(true, () => {
+            // The player can move again as soon as the freeze ends, so nothing may still be cloning by
+            // then (AGENTS.md §16: no background work after the operation). The pre-clone was started
+            // before the wipe and the wipe is long enough that this join is free; it is also the last
+            // point that is still inside the operation, so the cost never lands on the next input.
+            WaitForPreClone();
             if (ModSettings.FreezeAfterLoadStateType != FreezeAfterLoadStateType.Off) {
                 State = State.Waiting;
             }

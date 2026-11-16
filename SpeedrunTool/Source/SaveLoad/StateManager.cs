@@ -357,7 +357,7 @@ public sealed partial class StateManager {
             
 
             BusyIndicator.Wait(preCloneTask);
-            DeepClonerUtils.SetSharedDeepCloneState(preCloneTask?.Result);
+            DeepClonerUtils.SetSharedDeepCloneState(GetPreCloneResult());
             SaveLoadProfiler.Mark("waitPreclone");
             
 
@@ -446,17 +446,11 @@ public sealed partial class StateManager {
         State = State.None;
         freezeType = FreezeType.None;
         Engine.FreezeTimer = 0f;
-        // Wait for a still-running pre-clone before dropping the reference, otherwise the old task
-        // and a new one could clone the same savedLevel concurrently. Bounded, so a stuck
-        // third-party clone processor cannot freeze the game.
-        Task<DeepCloneState> task = preCloneTask;
+        // Wait for a still-running pre-clone before dropping the reference: otherwise the old task and
+        // a new one could clone the same savedLevel concurrently. The failed load's clone state is
+        // unusable either way, so the reference goes too.
+        WaitForPreClone();
         preCloneTask = null;
-        try {
-            task?.Wait(TimeSpan.FromSeconds(2));
-        }
-        catch (Exception exception) {
-            Logger.LogDetailed(exception, "SpeedrunTool");
-        }
         DeepClonerUtils.ClearSharedDeepCloneState();
 
         if (levelWasUnloaded && Engine.Scene == level) {
@@ -529,33 +523,44 @@ public sealed partial class StateManager {
             }
             preCloneEnabled = value;
             if (!value) {
-                // Dropping the pre-clone while its task is still running would keep the second
-                // object graph alive until the next save; wait (bounded) for it and release the
-                // reference. Only the current slot is waited for: the other slots are synchronized
-                // by their own entry points (WaitUntilThreadSafe / .Result) and waiting for all of
-                // them here could stall the settings menu for the sum of their clone times.
-                SaveSlotsManager.Slot?.StateManager.WaitForPreCloneTask();
+                // Turning it off means "stop keeping a second copy of the object graph": wait for the
+                // task and drop the reference. Only the current slot is handled here -- the other
+                // slots are synchronized by their own entry points (WaitForRunningPreClones / the
+                // load path), and waiting for all of them could stall the settings menu.
+                if (SaveSlotsManager.Slot?.StateManager is { } manager) {
+                    manager.WaitForPreClone();
+                    manager.preCloneTask = null;
+                }
             }
         }
     }
 
-    internal void WaitForPreCloneTask() {
-        Task<DeepCloneState> task = preCloneTask;
-        preCloneTask = null;
-        if (task is null) {
-            return;
-        }
-
+    /// <summary>
+    /// Waits for a running pre-clone without consuming its result: the load path reads it, and the
+    /// entry points that only need exclusive access (Scene.Begin, switching slots) must not drop it.
+    /// Unbounded on purpose: every caller runs on the main thread at a point where the player is
+    /// already waiting (a scene load, a state load, the settings menu), and cloning concurrently with
+    /// a still-running pre-clone is never safe.
+    /// </summary>
+    internal void WaitForPreClone() {
         try {
-            if (!task.Wait(TimeSpan.FromSeconds(2))) {
-                // A stuck third-party clone processor must not freeze the main thread forever.
-                // The task keeps running in the background and its result is released by GC.
-                Logger.Warn("SpeedrunTool", "Pre-clone task did not finish within 2s; dropping the reference anyway.");
-            }
+            preCloneTask?.Wait();
         }
         catch (Exception exception) {
+            // A third-party clone processor threw. The state it was building is unusable, and
+            // GetPreCloneResult() reports null for it, so the next load falls back to a synchronous clone.
             Logger.LogDetailed(exception, "SpeedrunTool");
         }
+    }
+
+    /// <summary>
+    /// The clone state a restore may reuse, or null when there is none: pre-clone disabled or already
+    /// dropped, or the clone processor threw. Blocks until a still-running task finishes, which is why
+    /// this is a method and not a property.
+    /// </summary>
+    private DeepCloneState GetPreCloneResult() {
+        WaitForPreClone();
+        return preCloneTask is { IsCompletedSuccessfully: true } ? preCloneTask.Result : null;
     }
 
     internal void GcCollect(bool force = false) {
@@ -766,25 +771,36 @@ public sealed partial class StateManager {
 
         if (IsSaved) {
             SaveLoadAction.OnPreCloneEntities();
+
+            // Bind the slot on this side of the task: the clone processors write what they recreate into
+            // that slot's lists, and reading SaveSlotsManager.Slot once the task is running would file
+            // them under whichever slot is current by then.
+            SaveSlot slot = SaveSlotsManager.Slot;
             preCloneTask = Task.Run(() => {
+                DeepClonerUtils.PreCloneEventInstanceTarget = slot.ClonedEventInstancesWhenPreClone;
+                try {
 #if SRT_PROFILE
-                bool profile = SaveLoadProfiler.Enabled;
-                long startTicks = profile ? Stopwatch.GetTimestamp() : 0L;
-                long startAllocated = profile ? GC.GetAllocatedBytesForCurrentThread() : 0L;
+                    bool profile = SaveLoadProfiler.Enabled;
+                    long startTicks = profile ? Stopwatch.GetTimestamp() : 0L;
+                    long startAllocated = profile ? GC.GetAllocatedBytesForCurrentThread() : 0L;
 #endif
 
-                DeepCloneState deepCloneState = new();
-                savedLevel.Entities.DeepClone(deepCloneState);
-                savedLevel.RendererList.DeepClone(deepCloneState);
-                savedSaveData.DeepClone(deepCloneState);
+                    DeepCloneState deepCloneState = new();
+                    savedLevel.Entities.DeepClone(deepCloneState);
+                    savedLevel.RendererList.DeepClone(deepCloneState);
+                    savedSaveData.DeepClone(deepCloneState);
 
 #if SRT_PROFILE
-                if (profile) {
-                    SaveLoadProfiler.LogBackgroundSection("preclone", startTicks, startAllocated);
+                    if (profile) {
+                        SaveLoadProfiler.LogBackgroundSection("preclone", startTicks, startAllocated);
+                    }
+#endif
+
+                    return deepCloneState;
                 }
-#endif
-
-                return deepCloneState;
+                finally {
+                    DeepClonerUtils.PreCloneEventInstanceTarget = null;
+                }
             });
         }
     }

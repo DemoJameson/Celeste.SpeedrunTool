@@ -24,6 +24,15 @@ public static class DeepClonerUtils {
     // 共用 DeepCloneState 可使多次 DeepClone 复用相同对象避免多次克隆同一对象
     private static DeepCloneState sharedDeepCloneState = new();
 
+    /// <summary>
+    /// The slot whose pre-clone is running on this thread. A clone processor that has to recreate an
+    /// event instance files it under the slot that started the task, not under whichever slot happens
+    /// to be current when the write lands: RunWithSlot restores Slot while a pre-clone started inside
+    /// it is still running, and switching slots can do the same.
+    /// </summary>
+    [ThreadStatic]
+    internal static List<EventInstance> PreCloneEventInstanceTarget;
+
     // Clone 开始时，判断哪些类型是直接使用原对象而不 DeepClone 的
     // Before cloning, determine which types use the original object directly
     private static bool? KnownTypeProcessor(Type type) {
@@ -271,10 +280,10 @@ public static class DeepClonerUtils {
                 SaveLoadAction.ClonedEventInstancesWhenSave.Add(clonedEventInstance);
             }
             else if (!isMainThread) {
-                // The pre-clone runs on a background thread, and a save or clear can reach the same list
-                // before the task is joined -- when the bounded wait above gives up, for one. Lock the list
-                // itself: it is per slot and only ever touched through the property.
-                List<EventInstance> preCloned = SaveLoadAction.ClonedEventInstancesWhenPreClone;
+                // The pre-clone runs on a background thread while the main thread may already have
+                // repointed Slot. Lock the list itself and prefer the slot the task was started for
+                // over the current one.
+                List<EventInstance> preCloned = PreCloneEventInstanceTarget ?? SaveLoadAction.ClonedEventInstancesWhenPreClone;
                 lock (preCloned) {
                     preCloned.Add(clonedEventInstance);
                 }

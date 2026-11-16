@@ -41,7 +41,7 @@ internal static class SaveSlotsManager {
             // to ensure safety
             return false;
         }
-        WaitUntilThreadSafe();
+        WaitForRunningPreClones();
         if (name != SlotName) {
             Logger.Info("SpeedrunTool", $"Switch to [{name}]");
         }
@@ -143,7 +143,7 @@ internal static class SaveSlotsManager {
     }
 
     public static void ClearAll() {
-        WaitUntilThreadSafe();
+        WaitForRunningPreClones();
         bool anySaved = false;
         foreach (SaveSlot slot in Dictionary.Values) {
             anySaved = anySaved || slot.StateManager.IsSaved;
@@ -164,12 +164,12 @@ internal static class SaveSlotsManager {
     private static void HandleSwitchScene(On.Monocle.Scene.orig_Begin orig, Scene self) {
         orig(self);
         SaveSlot current = Slot;
-        WaitUntilThreadSafe();
+        WaitForRunningPreClones();
         foreach (SaveSlot slot in SaveSlots) {
             Slot = slot;
             SlotName = Slot.Name;
             slot.StateManager.HandleSwitchScene(self);
-            slot.StateManager.preCloneTask?.Wait();
+            slot.StateManager.WaitForPreClone();
             // 因为涉及到存档槽切换, 干脆等一等
         }
         Slot = current;
@@ -194,13 +194,15 @@ internal static class SaveSlotsManager {
         return true;
     }
 
-    private static void WaitUntilThreadSafe() {
-        // preCloneTask 涉及到多线程, 而 DeepClonerUtils 会多次用到 StateManager.Instance, 这玩意线程不安全
-        // 所以我们一定要等它结束了再说
+    /// <summary>
+    /// Blocks while any slot's pre-clone is running. The clone processors read the ambient
+    /// <c>StateManager.Instance</c>, which resolves through <see cref="Slot"/>, so Slot must not change
+    /// underneath a running clone. Called before every place that rebinds Slot.
+    /// </summary>
+    private static void WaitForRunningPreClones() {
         foreach (SaveSlot s in SaveSlots) {
-            s.StateManager.preCloneTask?.Wait();
+            s.StateManager.WaitForPreClone();
         }
-        // 此外 clearState 等也有可能访问 StateManager.Instance
     }
 
     internal static void RequireReInit() {

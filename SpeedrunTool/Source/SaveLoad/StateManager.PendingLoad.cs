@@ -159,7 +159,7 @@ public sealed partial class StateManager {
         }
 
         // The background pre-clone task reads the template concurrently; never mutate it while it runs.
-        WaitForPreCloneTask();
+        WaitForPreClone();
         // ...and start the new clone graph from a clean state (a previous failed operation may have
         // left a mapping in the shared state).
         DeepClonerUtils.ClearSharedDeepCloneState();

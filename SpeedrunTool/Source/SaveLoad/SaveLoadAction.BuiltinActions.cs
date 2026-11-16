@@ -416,13 +416,29 @@ public sealed partial class SaveLoadAction {
     private static void ReleaseEventInstances() {
         InternalSafeAdd(
             clearState: () => {
-                foreach (EventInstance eventInstance in ClonedEventInstancesWhenSave.Union(ClonedEventInstancesWhenPreClone)) {
+                // Snapshot under the lock instead of enumerating the list. Defensive: every entry point
+                // joins a running pre-clone before a clear runs, so this should never contend, but the
+                // list is written from the clone task and enumerating it during a write would throw.
+                List<EventInstance> preCloned = ClonedEventInstancesWhenPreClone;
+                List<EventInstance> snapshot;
+                lock (preCloned) {
+                    snapshot = [.. preCloned];
+                }
+
+                foreach (EventInstance eventInstance in ClonedEventInstancesWhenSave.Union(snapshot)) {
                     Audio.ReleaseSnapshot(eventInstance);
                 }
 
                 ClonedEventInstancesWhenSave.Clear();
-                ClonedEventInstancesWhenPreClone.Clear();
+                lock (preCloned) {
+                    preCloned.Clear();
+                }
             },
-            preCloneEntities: () => ClonedEventInstancesWhenPreClone.Clear()
+            preCloneEntities: () => {
+                List<EventInstance> preCloned = ClonedEventInstancesWhenPreClone;
+                lock (preCloned) {
+                    preCloned.Clear();
+                }
+            }
         );
     }}

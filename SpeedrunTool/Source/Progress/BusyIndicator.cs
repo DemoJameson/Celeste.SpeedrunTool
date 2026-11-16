@@ -79,17 +79,24 @@ internal static class BusyIndicator {
         if (task == null) {
             return;
         }
-        if (task.IsCompleted) {
-            task.Wait();
-            return;
+
+        // A pre-clone task that faulted (a third-party clone processor throwing) used to escape here as an
+        // AggregateException on whatever called us. The result is only a head start for the next load, so
+        // log it and move on -- but never continue while the task is still running: cloning concurrently
+        // with it is not safe, which is why the wait has no timeout.
+        try {
+            if (task.IsCompleted) {
+                task.Wait();
+                return;
+            }
+
+            using OperationProgress progress = Begin("PRECLONE");
+            while (!task.Wait(100)) {
+                progress?.Refresh();
+            }
         }
-        using OperationProgress progress = Begin("PRECLONE");
-        if (progress == null) {
-            task.Wait();
-            return;
-        }
-        while (!task.Wait(100)) {
-            progress.Refresh();
+        catch (Exception exception) {
+            Logger.LogDetailed(exception, "SpeedrunTool");
         }
     }
 

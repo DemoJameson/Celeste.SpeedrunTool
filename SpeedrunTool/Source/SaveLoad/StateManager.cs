@@ -130,11 +130,7 @@ public sealed partial class StateManager {
             }
             SaveLoadProfiler.Mark("clearOldState");
             
-#if DEBUG
-            DebugTool.MemoryTracker.CheckFragmentation("Save Start");
-            DebugTool.MemoryTracker.GcSample before = DebugTool.MemoryTracker.TakeGcSample();
-            Stopwatch sw = Stopwatch.StartNew();
-#endif
+            Debug_SaveStart();
 
             State = State.Saving;
             SavedByTas = tas;
@@ -182,17 +178,7 @@ public sealed partial class StateManager {
             SlotDescription = GenerateSlotDescription();
             Logger.Info("SpeedrunTool/SaveState", $"Save to {FullSlotDescription}");
 
-#if DEBUG
-            if (InGame_Profiling) {
-                Logger.Debug("SpeedrunTool", $"{"Save",20}: {sw.ElapsedMilliseconds,7} ms");
-                Logger.Debug("SpeedrunTool", $"{"Allocated",20}: {DebugTool.MemoryTracker.FormatDiff(before, DebugTool.MemoryTracker.TakeGcSample(), simplified: false)}");
-                Logger.Debug("SpeedrunTool", $"{"ProcessMemoryUsage",20}: {Process.GetCurrentProcess().PrivateMemorySize64 / 1024.0 / 1024.0 / 1024.0,7:F2} GB");
-            }
-            DebugTool.MemoryTracker.CheckFragmentation("Save End");
-            if (Log_WhenSaving) {
-                SaveLoadAction.LogSavedValues(level: savedLevel);
-            }
-#endif
+            Debug_SaveEnd();
 
             return true;
         }
@@ -338,14 +324,7 @@ public sealed partial class StateManager {
         using OperationProgress progress = BusyIndicator.Begin("LOAD");
         SaveLoadProfiler.Begin("load");
         try {
-#if DEBUG
-            if (Log_WhenLoading) {
-                SaveLoadAction.LogSavedValues(level: savedLevel);
-            }
-            DebugTool.MemoryTracker.CheckFragmentation("Load Start");
-            DebugTool.MemoryTracker.GcSample before = DebugTool.MemoryTracker.TakeGcSample();
-            Stopwatch sw = Stopwatch.StartNew();
-#endif
+            Debug_LoadStart();
 
             LoadByTas = tas;
             State = State.Loading;
@@ -413,14 +392,7 @@ public sealed partial class StateManager {
             popup = $"Load from [{SlotName}]";
             Logger.Info("SpeedrunTool/LoadState", $"Load from {FullSlotDescription}");
 
-#if DEBUG
-            if (InGame_Profiling) {
-                Logger.Debug("SpeedrunTool", $"{"Load",20}: {sw.ElapsedMilliseconds,7} ms");
-                Logger.Debug("SpeedrunTool", $"{"Allocated",20}: {DebugTool.MemoryTracker.FormatDiff(before, DebugTool.MemoryTracker.TakeGcSample(), simplified: false)}");
-                Logger.Debug("SpeedrunTool", $"{"ProcessMemoryUsage",20}: {Process.GetCurrentProcess().PrivateMemorySize64 / 1024.0 / 1024.0 / 1024.0,7:F2} GB");
-            }
-            DebugTool.MemoryTracker.CheckFragmentation("Load End");
-#endif
+            Debug_LoadEnd();
 
             return true;
         }
@@ -598,9 +570,7 @@ public sealed partial class StateManager {
         static void GcCollectCore() {
             // 以现在卡顿一些为代价, 保证之后游戏流程中尽量不卡顿 (后者更致命)
             // 作为推论, 我们不应该放在其他线程执行此事
-#if DEBUG
-            DebugTool.MemoryTracker.CheckFragmentation("GC Start");
-#endif
+            Debug_CheckFragmentation("GC Start");
             Stopwatch sw = Stopwatch.StartNew();
 
             // LOH compaction is by far the most expensive part of this collect (it can move
@@ -624,9 +594,7 @@ public sealed partial class StateManager {
             Logger.Info("SpeedrunTool",
                 $"GC latency: {sw.ElapsedMilliseconds}ms. LOH compaction: {(compactLoh ? "yes" : "no")} " +
                 $"(fragmented {fragmentedBytes / 1048576.0:F1} MB / heap {heapBytes / 1048576.0:F1} MB).");
-#if DEBUG
-            DebugTool.MemoryTracker.CheckFragmentation("GC End");
-#endif
+            Debug_CheckFragmentation("GC End");
         }
     }
 
@@ -658,13 +626,7 @@ public sealed partial class StateManager {
                 // are disposed when their old area unloads (MirrorSurfaces/TrailManager/WaveDash);
                 // log only the ones that actually carry such resources so a crash report names the
                 // entity instead of only the later SpriteBatch.Draw stack.
-#if DEBUG
-                string resources = DescribeGlobalResources(entity.GetType());
-                if (resources.Length > 0) {
-                    Logger.Info("SpeedrunTool/UnloadLevel",
-                        $"Keeping global resource entity [{entity.GetType().FullName}]: {resources}");
-                }
-#endif
+                Debug_LogKeptGlobalEntity(entity);
                 continue;
             }
             try {
@@ -689,55 +651,6 @@ public sealed partial class StateManager {
     }
 
     private static readonly HashSet<Type> GlobalEntitiesToRemove = [typeof(CassetteBlockManager)];
-
-    // Reflection is only used once per type, on load. Cache the result: the same handful of
-    // vanilla/mod global entities is encountered for every save slot.
-    private static readonly Dictionary<Type, string> GlobalResourceDescriptionCache = [];
-
-    private static string DescribeGlobalResources(Type type) {
-        if (GlobalResourceDescriptionCache.TryGetValue(type, out string cached)) {
-            return cached;
-        }
-
-        HashSet<string> names = [];
-        try {
-            for (Type current = type; current is not null && current != typeof(Entity); current = current.BaseType) {
-                foreach (FieldInfo field in current.GetFields(BindingFlags.Instance | BindingFlags.Public |
-                                                              BindingFlags.NonPublic | BindingFlags.DeclaredOnly)) {
-                    if (ContainsGpuResource(field.FieldType)) {
-                        names.Add(field.Name);
-                    }
-                }
-            }
-        }
-        catch (Exception exception) {
-            Logger.Warn("SpeedrunTool/UnloadLevel",
-                $"Could not inspect global entity [{type.FullName}]: {exception.GetType().Name}: {exception.Message}");
-        }
-
-        List<string> sortedNames = [.. names];
-        sortedNames.Sort(StringComparer.Ordinal);
-        string result = string.Join(", ", sortedNames);
-        GlobalResourceDescriptionCache[type] = result;
-        return result;
-
-        static bool ContainsGpuResource(Type fieldType) {
-            if (fieldType.IsArray) {
-                return ContainsGpuResource(fieldType.GetElementType());
-            }
-            if (fieldType.IsGenericType) {
-                foreach (Type argument in fieldType.GetGenericArguments()) {
-                    if (ContainsGpuResource(argument)) {
-                        return true;
-                    }
-                }
-                return false;
-            }
-            return typeof(VirtualAsset).IsAssignableFrom(fieldType)
-                   || typeof(Microsoft.Xna.Framework.Graphics.GraphicsResource).IsAssignableFrom(fieldType)
-                   || fieldType == typeof(Atlas);
-        }
-    }
 
     [Initialize]
     private static void InitGlobalEntitiesToRemove() {

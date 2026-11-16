@@ -5,7 +5,7 @@ using System.Reflection;
 using Celeste.Mod.SpeedrunTool.Utils;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
-internal static class GraphicResourcesHandler {
+internal static partial class GraphicResourcesHandler {
 
     // Some vanilla/mod owners cache a VirtualRenderTarget/VirtualTexture in a field. When the old area
     // unloads (or when the owner itself is removed), that asset is disposed and the field keeps
@@ -34,16 +34,10 @@ internal static class GraphicResourcesHandler {
     /// (MirrorSurfaces) are skipped by UnloadLevel and so only ever see the first cause.
     /// </summary>
     internal static void RepairDisposedGraphicsResources(Level level) {
-#if DEBUG
-        Stopwatch stopwatch = Stopwatch.StartNew();
-#endif
+        Debug_RepairStart();
         RepairKnownDisposedAssets(level);
         RepairDisposedTrailBuffers(level);
-#if DEBUG
-        Logger.Info("SpeedrunTool/GraphicResourcesHandler",
-            $"RepairDisposedGraphicsResources: {stopwatch.Elapsed.TotalMilliseconds:F2} ms, " +
-            $"entities={level.Entities.Count}");
-#endif
+        Debug_RepairEnd(level);
     }
 
 
@@ -430,9 +424,6 @@ internal static class GraphicResourcesHandler {
 
         ClearAssets();
 
-#if DEBUG
-        Logger.Info("SpeedrunTool/GraphicResourcesHandler",
-            $"Saved graph assets: {total}, reloaded {reloaded} disposed one(s)");
-#endif
+        Debug_LogReloadedAssets(total, reloaded);
     }
 }

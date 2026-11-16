@@ -6,6 +6,7 @@ using Celeste.Mod.SpeedrunTool.Utils;
 using FMOD.Studio;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 
@@ -125,7 +126,6 @@ public sealed partial class SaveLoadAction {
         SharedActions.Add(saveLoadAction);
         RebuildActionLists();
     }
-
 
     internal static SaveLoadAction InternalSafeAdd(Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState = null,
         Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState = null, Action clearState = null,
@@ -571,11 +571,16 @@ public sealed partial class SaveLoadAction {
 
     [Unload]
     private static void Unload() {
+        Debug_ClearReportedLiveReferences();
+        SharedActions.Clear();
+        RebuildActionLists();
+    }
+
+    [Conditional("DEBUG")]
+    private static void Debug_ClearReportedLiveReferences() {
 #if DEBUG
         reportedLiveReferences.Clear();
 #endif
-        SharedActions.Clear();
-        RebuildActionLists();
     }
 
 

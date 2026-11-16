@@ -242,6 +242,7 @@ public sealed partial class SaveLoadAction {
             sw.Restart();
             var before = DebugTool.MemoryTracker.TakeGcSample();
             saveLoadAction.saveState(dict[saveLoadAction.dictionaryId], level);
+            WarnAboutLiveReferences(saveLoadAction, dict[saveLoadAction.dictionaryId]);
             if (sw.ElapsedMilliseconds > 10 && EachAction_Profilling) {
                 Logger.Debug($"SpeedrunTool/Save",
                     $"{sw.ElapsedMilliseconds,3} ms, " +
@@ -255,6 +256,78 @@ public sealed partial class SaveLoadAction {
         }
 #endif
     }
+
+#if DEBUG
+    // A callback that stores a live object stores a pointer: that object is part of the graph which was
+    // just cloned, so the save holds its clone while the callback keeps this instance. After a load the
+    // instance is detached and every later use of the stored value is a stale reference -- the exact
+    // failure the ThirdPartySupport fixups exist to paper over. DEBUG-only, and deliberately a warning:
+    // the fix belongs to the mod (store DeepClone(value)), not to us guessing on its behalf.
+    private static readonly HashSet<string> reportedLiveReferences = new();
+
+    private static void WarnAboutLiveReferences(SaveLoadAction action, Dictionary<Type, Dictionary<string, object>> values) {
+        foreach (KeyValuePair<Type, Dictionary<string, object>> pair in values) {
+            // A mod is allowed to write values[type] = null; that is an empty entry, not a stale
+            // reference, and dereferencing it here would turn a diagnostic into a crash.
+            if (pair.Value is null) {
+                continue;
+            }
+
+            foreach (KeyValuePair<string, object> member in pair.Value) {
+                if (member.Value is not { } value) {
+                    continue;
+                }
+
+                string advice = StaleReferenceAdvice(value);
+                if (advice is null) {
+                    continue;
+                }
+
+                // Key on the action itself, not on dictionaryId: ids are reassigned by position in
+                // InitSlots, so a slot number can belong to a different action after a mod registers or
+                // unregisters one at runtime, and the warning would be swallowed under the old key.
+                if (!reportedLiveReferences.Add(action.ActionDescription + "/" + pair.Key.FullName + "/" + member.Key)) {
+                    continue;
+                }
+
+                Logger.Warn("SpeedrunTool/SaveLoadAction",
+                    $"{action.ActionDescription} stored [{member.Key}] = a live {value.GetType().Name}. {advice}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Why a stored value goes stale after a load, or null when it is safe. Membership in the shared clone
+    /// state is not the whole answer: the pre-clone processor short-circuits the objects that cannot be
+    /// cloned (the scene, assets, modules, audio instances), so those are never registered there even
+    /// though storing one is exactly the mistake this warning exists to catch.
+    /// </summary>
+    private static string StaleReferenceAdvice(object value) {
+        switch (value) {
+            case Scene:
+                return "The scene is cloned as itself rather than as a copy, so this " + value.GetType().Name
+                    + " stays the object that was current at save time. Resolve the scene at load time instead of storing it.";
+            case VirtualAsset:
+                return "Virtual assets are not cloned. Reload or re-acquire it after the load instead of storing it.";
+            case EverestModule:
+                return "Modules are not cloned. Re-resolve the module instead of storing it.";
+            case EventInstance:
+                return "Audio instances are not cloned. Recreate or restart it after the load instead of storing it.";
+            case Entity:
+            case Component:
+                // Only the live instance is registered in the clone state -- a mod that stored the result of
+                // DeepClone(value) holds an object the map has never seen, which is the correct pattern and
+                // must not warn. An entity outside the graph is likewise not ours to judge.
+                return DeepClonerUtils.HasSharedClone(value)
+                    ? "The save holds a clone of it; store DeepClone(value), or re-resolve it from the level after the load."
+                    : null;
+            default:
+                return DeepClonerUtils.HasSharedClone(value)
+                    ? "The save holds a clone of it; store DeepClone(value) instead of the live object."
+                    : null;
+        }
+    }
+#endif
 
     internal static void OnLoadState(Level level) {
         Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict = AllSavedValues ??= InitValueDictionary();
@@ -498,6 +571,9 @@ public sealed partial class SaveLoadAction {
 
     [Unload]
     private static void Unload() {
+#if DEBUG
+        reportedLiveReferences.Clear();
+#endif
         SharedActions.Clear();
         RebuildActionLists();
     }

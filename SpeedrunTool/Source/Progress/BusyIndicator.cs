@@ -12,14 +12,21 @@ namespace Celeste.Mod.SpeedrunTool.Progress;
 // logic, never pumps input and never captures a full-screen snapshot.
 internal static class BusyIndicator {
     private const double ShowAfterSeconds = 0.25;
-    private const double RefreshInterval = 0.1;
+    // 5 Hz, not 10: every presentation calls GraphicsDevice.Present() from the blocked main thread,
+    // so each extra frame is added latency on the operation being reported.
+    private const double RefreshInterval = 0.2;
     private static readonly Stopwatch Clock = Stopwatch.StartNew();
     private static double lastPresentation;
     private static bool hasDrawn;
     private static bool drawing;
     private static bool failed;
     private static SpriteBatch batch;
-    private static Texture2D background;
+    private static Texture2D frozenFrame;
+    // Snapshot of the frozen frame plus the buffer it is read into. Both are kept between operations:
+    // a full-screen Color[] is 8-15 MB, and letting it become garbage on every save/load puts an LOH
+    // collection right behind the operation, on the first frames the player actually sees.
+    private static Color[] frozenFramePixels;
+    private static bool frozenFrameCaptured;
 
     [Load]
     private static void Load() {
@@ -29,7 +36,7 @@ internal static class BusyIndicator {
     [Unload]
     private static void Unload() {
         On.Monocle.Engine.Draw -= EngineOnDraw;
-        ReleaseBackground();
+        ReleaseFrozenFrameBuffers();
         batch?.Dispose();
         batch = null;
         hasDrawn = false;
@@ -64,7 +71,8 @@ internal static class BusyIndicator {
         progress = new OperationProgress(title, TryPresent, () => {
             if (root) {
                 Diag($"end {title} total={progress.ElapsedSeconds * 1000.0:F0}ms shown={progress.Presented}");
-                ReleaseBackground();
+                // Keep the snapshot buffers for the next operation; only the content is stale.
+                frozenFrameCaptured = false;
             }
         });
         if (root) {
@@ -159,14 +167,23 @@ internal static class BusyIndicator {
             }
             bool hasStageLine = !string.IsNullOrWhiteSpace(stage);
 
-            if (background == null) {
+            if (!frozenFrameCaptured) {
                 // The main thread is blocked in a synchronous operation: no new game
                 // frame is drawn between stages. Without restoring this base frame,
                 // each translucent Present would composite over itself and get darker.
-                Color[] pixels = new Color[width * height];
-                device.GetBackBufferData(pixels);
-                background = new Texture2D(device, width, height);
-                background.SetData(pixels);
+                //
+                // Captured once per operation (the back buffer still holds the last presented frame,
+                // because nothing has drawn since), into buffers that are kept and reused.
+                if (frozenFramePixels is null || frozenFramePixels.Length != width * height) {
+                    frozenFramePixels = new Color[width * height];
+                    frozenFrame?.Dispose();
+                    frozenFrame = null;
+                }
+
+                device.GetBackBufferData(frozenFramePixels);
+                frozenFrame ??= new Texture2D(device, width, height);
+                frozenFrame.SetData(frozenFramePixels);
+                frozenFrameCaptured = true;
             }
 
             device.Viewport = new Viewport(0, 0, width, height);
@@ -174,7 +191,7 @@ internal static class BusyIndicator {
             batch.Begin(SpriteSortMode.Deferred, BlendState.Opaque, SamplerState.LinearClamp,
                 DepthStencilState.None, RasterizerState.CullNone);
             begun = true;
-            batch.Draw(background, new Rectangle(0, 0, width, height), Color.White);
+            batch.Draw(frozenFrame, new Rectangle(0, 0, width, height), Color.White);
             batch.End();
             begun = false;
 
@@ -216,6 +233,13 @@ internal static class BusyIndicator {
                 Color.CornflowerBlue);
             batch.End();
             begun = false;
+
+            // Present from this thread is the only way to show anything while the operation holds the
+            // main thread; the engine presents normally again once it returns. The sync interval
+            // cannot be relaxed here: FNA3D_SwapBuffers() takes no interval, and
+            // PresentationParameters.PresentationInterval only reaches the device through
+            // FNA3D_ResetBackbuffer (ApplyChanges/Reset), which recreates the swapchain. Presenting
+            // less often (RefreshInterval) is the only lever, which is why it is 5 Hz.
             device.Present();
             if (!progress.Presented) {
                 progress.Presented = true;
@@ -249,10 +273,18 @@ internal static class BusyIndicator {
             new Vector2(scale), Color.White, 2f, Color.Black);
     }
 
-    private static void ReleaseBackground() {
-        Texture2D texture = background;
-        background = null;
+    /// <summary>
+    /// Drops the pooled snapshot buffers. The setting calls this when the overlay is turned off: the
+    /// buffers are only worth keeping while the feature is in use, and they are 8-15 MB.
+    /// </summary>
+    internal static void ReleaseFrozenFrame() => ReleaseFrozenFrameBuffers();
+
+    private static void ReleaseFrozenFrameBuffers() {
+        Texture2D texture = frozenFrame;
+        frozenFrame = null;
         texture?.Dispose();
+        frozenFramePixels = null;
+        frozenFrameCaptured = false;
     }
 
     private static string Clean(string title) => Dialog.Clean("SPEEDRUN_TOOL_BUSY_" + title);

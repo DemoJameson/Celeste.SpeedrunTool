@@ -1,5 +1,6 @@
 using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
+using Celeste.Mod.SpeedrunTool.Progress;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework.Input;
@@ -156,7 +157,19 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     /// buffer into a texture, so it costs frames and memory for feedback most runs do not need.
     /// The operation itself is unaffected; this only controls the overlay.
     /// </summary>
-    public bool ShowProgress { get; set; } = false;
+    public bool ShowProgress {
+        get => showProgress;
+        set {
+            showProgress = value;
+            if (!value) {
+                // The overlay pools a full-screen snapshot (8-15 MB). Turning it off drops that
+                // instead of keeping it resident until the mod unloads.
+                BusyIndicator.ReleaseFrozenFrame();
+            }
+        }
+    }
+
+    private bool showProgress;
     public bool AllowStateDuringDeath { get; set; } = false;
     public bool ClearStateOnHotReload { get; set; } = true;
 

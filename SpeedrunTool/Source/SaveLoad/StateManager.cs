@@ -256,8 +256,7 @@ public sealed partial class StateManager {
             State = State.None;
             freezeType = FreezeType.None;
             ClearBeforeSave = false;
-            SavedByTas = false;
-            LoadByTas = false;
+            ResetOperationFlags();
 
             Logger.Log("SpeedrunTool/SaveLoadAction",
                 $"Warmed the first-save path during level load: {sw.ElapsedMilliseconds} ms (temporary clone only)");
@@ -276,8 +275,7 @@ public sealed partial class StateManager {
         // These flags are consumed by the next save/clear; a failed save must not leak them
         // (a stale ClearBeforeSave used to make the following clear-state call index stale ids).
         ClearBeforeSave = false;
-        SavedByTas = false;
-        LoadByTas = false;
+        ResetOperationFlags();
         DeepClonerUtils.ClearSharedDeepCloneState();
         try {
             ClearStateImpl(hasGc: false);
@@ -462,6 +460,16 @@ public sealed partial class StateManager {
         }
     }
 
+    /// <summary>
+    /// The TAS markers describe the state that is currently held. Every path that releases the state
+    /// (clear, failed save, warm-up) has to drop them with it, or the next save/load keeps treating
+    /// an empty slot as a TAS state.
+    /// </summary>
+    private void ResetOperationFlags() {
+        SavedByTas = false;
+        LoadByTas = false;
+    }
+
     internal bool ClearStateImpl(bool hasGc = true) {
         // Clearing while a cross-scene load is entering the saved chapter would leave that half
         // finished transition behind (and ClearStateImpl is about to null savedLevel). Give up on
@@ -491,6 +499,7 @@ public sealed partial class StateManager {
         celesteProcess = null;
         SaveLoadAction.OnClearState(ClearBeforeSave);
         State = State.None;
+        ResetOperationFlags();
         MoreSaveSlotsUI.Snapshot.RemoveSnapshot(SlotName);
         // 2025.10.08 fix: clear 之后读档更加卡顿 (这个问题在老版本好像也有, 之前在这里压根不 Gc)
         // 2025.10.19: 不过似乎不是每个人都喜欢卡顿一下, 姑且先做成可选项, 使得用户可以保留之前的体验

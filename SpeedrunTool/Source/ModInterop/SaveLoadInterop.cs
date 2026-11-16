@@ -239,6 +239,13 @@ public static class SaveLoadInterop {
 
             string key = type.AssemblyQualifiedName + "|" + string.Join("", memberNames.OrderBy(name => name, StringComparer.Ordinal));
             if (registeredStaticTypeActions.TryGetValue(key, out SaveLoadAction existing)) {
+#if DEBUG
+                // The same type and member set registered twice shares one action; the second caller would
+                // otherwise believe it had its own registration and never notice the two are one.
+                Logger.Warn("SpeedrunTool/SaveLoadAction",
+                    $"RegisterStaticTypes({type.FullName}) is already registered with the same members; "
+                    + $"reusing the earlier registration ({existing?.ActionDescription}).");
+#endif
                 return existing;
             }
 
@@ -274,7 +281,8 @@ public static class SaveLoadInterop {
         public static object RegisterSaveLoadAction(Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState,
             Action<Dictionary<Type, Dictionary<string, object>>, Level> loadState, Action clearState,
             Action<Level> beforeSaveState, Action<Level> beforeLoadState, Action preCloneEntities) {
-            return SaveLoadAction.SafeAdd(saveState, loadState, clearState, beforeSaveState, beforeLoadState, preCloneEntities);
+            object action = SaveLoadAction.SafeAdd(saveState, loadState, clearState, beforeSaveState, beforeLoadState, preCloneEntities);
+            return action;
         }
 
         /// <summary>

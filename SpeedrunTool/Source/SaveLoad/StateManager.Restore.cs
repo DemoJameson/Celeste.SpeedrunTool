@@ -88,33 +88,39 @@ public sealed partial class StateManager {
             if (cachedSession is not null) {
                 MergeSession(cachedSession, session, increaseDeath);
             }
-        }
 
-        // 修复：切屏时存档，若干秒后读档游戏会误以为卡死自动重生
+            // 修复：切屏时存档，若干秒后读档游戏会误以为卡死自动重生
+            //
+            // 2025.08.25: 这里我们不能用 level.transition, 因为有可能 TransitionRoutine 已经被 hook 过
+            // 使得这个 coroutine 的类型不一样, 这里写的反射获取 <playerStuck> 就不对了
+            // 不过理论上多写一些代码去解开 Coroutine 的嵌套应该也行...
+            // 这个 bug 被 DJ 在 2023.10.07 修复了, 不过我把多存档合并进来的时候可能不小心丢失了这个提交
+            // 总之我们采用 DJ 的写法
+            //
+            // Inside the same-chapter guard on purpose: the value written is the live session's time,
+            // and only a same-chapter merge makes the restored session carry that time. A
+            // cross-chapter load keeps the saved session's time, so writing the current chapter's
+            // time here would mix the two chapters this guard exists to keep apart.
+            if (savedTransitionRoutine is not null) {
+                Type routineType = savedTransitionRoutine.GetType();
+                FieldInfo playerStuck = routineType
+                    .GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
+                    .FirstOrDefault(info => info.Name.StartsWith("<playerStuck>"));
 
-        // 2025.08.25: 这里我们不能用 level.transition, 因为有可能 TransitionRoutine 已经被 hook 过
-        // 使得这个 coroutine 的类型不一样, 这里写的反射获取 <playerStuck> 就不对了
-        // 不过理论上多写一些代码去解开 Coroutine 的嵌套应该也行...
-        // 这个 bug 被 DJ 在 2023.10.07 修复了, 不过我把多存档合并进来的时候可能不小心丢失了这个提交
-        // 总之我们采用 DJ 的写法
-        if (savedTransitionRoutine is not null) {
-            Type routineType = savedTransitionRoutine.GetType();
-            FieldInfo playerStuck = routineType
-                .GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
-                .FirstOrDefault(info => info.Name.StartsWith("<playerStuck>"));
-
-            // The name and type are compiler-generated: a refactored coroutine renames the field, and
-            // a changed one makes SetValue throw *after* Time/Deaths were written to the template, so a
-            // retried load counts the death twice. Check before writing; the warning fires on every
-            // load, which is fine -- a renamed field is a persistent defect, not a transient one.
-            if (playerStuck is null || playerStuck.FieldType != typeof(TimeSpan)) {
-                Logger.Warn("SpeedrunTool/LoadState", playerStuck is null
-                    ? $"{routineType.FullName} has no <playerStuck> field; its saved transition cannot be adjusted."
-                    : $"{routineType.FullName}.<playerStuck> is a {playerStuck.FieldType.Name}, not a TimeSpan; its saved transition cannot be adjusted.");
-            }
-            else {
-                playerStuck.SetValue(savedTransitionRoutine, TimeSpan.FromTicks(session.Time));
-                playerStuck.SetValue(savedTransitionRoutine.DeepCloneShared(), TimeSpan.FromTicks(session.Time));
+                // The name and type are compiler-generated: a refactored coroutine renames the field,
+                // and a changed one makes SetValue throw *after* Time/Deaths were written to the
+                // template, so a retried load counts the death twice. Check before writing; the
+                // warning fires on every load, which is fine -- a renamed field is a persistent
+                // defect, not a transient one.
+                if (playerStuck is null || playerStuck.FieldType != typeof(TimeSpan)) {
+                    Logger.Warn("SpeedrunTool/LoadState", playerStuck is null
+                        ? $"{routineType.FullName} has no <playerStuck> field; its saved transition cannot be adjusted."
+                        : $"{routineType.FullName}.<playerStuck> is a {playerStuck.FieldType.Name}, not a TimeSpan; its saved transition cannot be adjusted.");
+                }
+                else {
+                    playerStuck.SetValue(savedTransitionRoutine, TimeSpan.FromTicks(session.Time));
+                    playerStuck.SetValue(savedTransitionRoutine.DeepCloneShared(), TimeSpan.FromTicks(session.Time));
+                }
             }
         }
 

@@ -77,9 +77,17 @@ public sealed partial class StateManager {
         }
 
         AreaKey areaKey = session.Area;
-        MergeSession(savedSession, session, increaseDeath);
-        if (cachedSession is not null) {
-            MergeSession(cachedSession, session, increaseDeath);
+
+        // Session time/deaths belong to the chapter the state was saved in. A cross-chapter load
+        // carries the live session of a different chapter, and taking the Max would hand the target
+        // chapter the current chapter's timer and death count -- the "load a state from another
+        // chapter and B's timer shows A's time" bug. Merge it only when both are the same chapter;
+        // the file totals (MergeSaveData) and the current chapter's AreaStats still merge below.
+        if (session.Area == savedSession.Area) {
+            MergeSession(savedSession, session, increaseDeath);
+            if (cachedSession is not null) {
+                MergeSession(cachedSession, session, increaseDeath);
+            }
         }
 
         // 修复：切屏时存档，若干秒后读档游戏会误以为卡死自动重生

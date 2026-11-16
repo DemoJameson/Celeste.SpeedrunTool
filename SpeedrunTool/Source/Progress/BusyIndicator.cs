@@ -51,10 +51,10 @@ internal static class BusyIndicator {
 
     internal static OperationProgress Begin(string title) {
         bool root = OperationProgress.Current == null;
-        if (!MainThreadHelper.IsMainThread || !hasDrawn || drawing || AssetReloadHelper.IsReloading
+        if (!ModSettings.ShowProgress || !MainThreadHelper.IsMainThread || !hasDrawn || drawing || AssetReloadHelper.IsReloading
             || TasUtils.Running || TasUtils.HideGamePlay) {
             if (root) {
-                Diag($"suppress {title}: main={MainThreadHelper.IsMainThread} drawn={hasDrawn} " +
+                Diag($"suppress {title}: enabled={ModSettings.ShowProgress} main={MainThreadHelper.IsMainThread} drawn={hasDrawn} " +
                      $"drawing={drawing} reload={AssetReloadHelper.IsReloading} " +
                      $"tas={TasUtils.Running} hideTas={TasUtils.HideGamePlay}");
             }
@@ -91,8 +91,14 @@ internal static class BusyIndicator {
             }
 
             using OperationProgress progress = Begin("PRECLONE");
+            if (progress is null) {
+                // The overlay is off (the default) or cannot be drawn right now: just wait.
+                task.Wait();
+                return;
+            }
+
             while (!task.Wait(100)) {
-                progress?.Refresh();
+                progress.Refresh();
             }
         }
         catch (Exception exception) {

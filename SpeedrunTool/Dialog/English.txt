@@ -63,6 +63,8 @@ SPEEDRUN_TOOL_CLEAR_ALL_TOOLTIP=           Cleared all states
 SPEEDRUN_TOOL_NOT_SAVED_STATE_TOOLTIP=     Not saved state yet
 SPEEDRUN_TOOL_NO_MESSAGE_AFTER_SAVE_LOAD=  No Pop-up Message after Save Load
 SPEEDRUN_TOOL_NO_MESSAGE_AFTER_SAVE_LOAD_DESCRIPTION=It only applies to "Save State", "Load State" hotkeys.
+SPEEDRUN_TOOL_SHOW_PROGRESS=               Show Progress Bar
+SPEEDRUN_TOOL_SHOW_PROGRESS_DESCRIPTION=Shows a progress bar in the bottom-right corner while saving, loading or clearing.\nOn: see which stage is running, but the operation takes slightly longer. Off: nothing is drawn, faster operations.
 SPEEDRUN_TOOL_CLEAR_STATE_DIALOG=
     [MADELINE left normal]
     Cleared the state~

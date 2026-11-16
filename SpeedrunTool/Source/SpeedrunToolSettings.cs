@@ -94,6 +94,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
         }
         sb.Append($"\n - {nameof(GcAfterClearState)}: {GcAfterClearState}");
         sb.Append($"\n - {nameof(PreCloneMode)}: {PreCloneMode} (effective: {StateManager.PreCloneEnabled})");
+        sb.Append($"\n - {nameof(ShowProgress)}: {ShowProgress}");
         Logger.Info("SpeedrunTool", sb.ToString());
         // log it in LogLevel.Info, so we know more to diagnose when user gives us a log.txt
     }
@@ -149,6 +150,13 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     /// </summary>
     public bool SaveInLuaCutscene { get; set; } = false;
     public bool NoMessageAfterSaveLoad { get; set; } = false;
+    /// <summary>
+    /// Draw the small progress overlay while a save, load or clear runs. Off by default: the overlay
+    /// renders on the main thread that is already blocked, and its first frame copies the whole back
+    /// buffer into a texture, so it costs frames and memory for feedback most runs do not need.
+    /// The operation itself is unaffected; this only controls the overlay.
+    /// </summary>
+    public bool ShowProgress { get; set; } = false;
     public bool AllowStateDuringDeath { get; set; } = false;
     public bool ClearStateOnHotReload { get; set; } = true;
 

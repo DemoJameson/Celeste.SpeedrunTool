@@ -74,6 +74,8 @@ public static class DialogIds {
     public const string NotSavedStateYetDialogBadeline = "SPEEDRUN_TOOL_NOT_SAVED_STATE_YET_DIALOG_BADELINE";
     public const string NoMessageAfterSaveLoad = "SPEEDRUN_TOOL_NO_MESSAGE_AFTER_SAVE_LOAD";
     public const string NoMessageAfterSaveLoadDescription = "SPEEDRUN_TOOL_NO_MESSAGE_AFTER_SAVE_LOAD_DESCRIPTION";
+    public const string ShowProgress = "SPEEDRUN_TOOL_SHOW_PROGRESS";
+    public const string ShowProgressDescription = "SPEEDRUN_TOOL_SHOW_PROGRESS_DESCRIPTION";
     public const string AllowStateDuringDeath = "SPEEDRUN_TOOL_ALLOW_STATE_DURING_DEATH";
     public const string ClearStateOnHotReload = "SPEEDRUN_TOOL_CLEAR_STATE_ON_HOT_RELOAD";
     public const string ClearStateOnHotReloadTip = "SPEEDRUN_TOOL_CLEAR_STATE_ON_HOT_RELOAD_TIP";

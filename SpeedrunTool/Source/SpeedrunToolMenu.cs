@@ -188,6 +188,11 @@ public static class SpeedrunToolMenu {
                 b => ModSettings.ClearStateOnHotReload = b));
             AddDescription(clearOnHotReload, subMenu, menu, Dialog.Clean(DialogIds.ClearStateOnHotReloadTip));
 
+            TextMenu.Item showProgress;
+            subMenu.Add(showProgress = new TextMenu.OnOff(Dialog.Clean(DialogIds.ShowProgress), ModSettings.ShowProgress).Change(b =>
+                ModSettings.ShowProgress = b));
+            AddDescription(showProgress, subMenu, menu, Dialog.Clean(DialogIds.ShowProgressDescription));
+
             TextMenu.Item noMessageAfterSaveLoad;
             subMenu.Add(noMessageAfterSaveLoad = new TextMenu.OnOff(Dialog.Clean(DialogIds.NoMessageAfterSaveLoad), ModSettings.NoMessageAfterSaveLoad).Change(b =>
                 ModSettings.NoMessageAfterSaveLoad = b));

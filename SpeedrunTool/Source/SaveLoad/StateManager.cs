@@ -669,17 +669,15 @@ public sealed partial class StateManager {
             }
             try {
                 entity.Removed(level); // 触发各式各样的副作用
+                // Scene.TagLists / Scene.Tracker / Engine.Pooler 本身都会被克隆出来, 大部分情况下无需处理.
+                // 但小部分情况下 Removed 的副作用依赖这些表的内部状态 (例如实体带 hook, 只有移除到最后一个才解除 hook).
+                // 四步共用一个 try: 一旦某一步抛了, 这个实体已经处于不确定状态, 后面的清理按 best effort 放弃.
+                level.TagLists.EntityRemoved(entity);
+                level.Tracker.EntityRemoved(entity);
+                Engine.Pooler.EntityRemoved(entity);
             }
             catch (Exception exception) {
-                // A broken entity (third-party mod code) must not abort the whole load and leave
-                // the state machine frozen; log it and continue with the remaining entities.
                 Logger.Warn("SpeedrunTool/LoadState", $"Failed to remove {entity.GetType().FullName}: {exception.GetType().Name}: {exception.Message}");
-            }
-            finally {
-                // Scene.TagLists / Scene.Tracker / Engine.Pooler 本身都将被克隆出来, 大部分情况下无需处理. 同理也不用 UpdateLists
-                // 但是小部分情况下, Removed 副作用会依赖于 Tracker 等的内部状态 (例如实体带 hook, 只有移除到最后一个才解除 hook)
-                // 所以即使 Removed 抛异常也仍要清理这三个引用，避免把半移除的实体留在 Tracker 里。
-                TryRemoveEntityReferences(level, entity);
             }
         }
 
@@ -687,30 +685,6 @@ public sealed partial class StateManager {
         List<Component> remainingSounds = level.Tracker.GetComponentsCopy<SoundSource>();
         for (int i = 0; i < remainingSounds.Count; i++) {
             remainingSounds[i].RemoveSelf();
-        }
-    }
-
-    private static void TryRemoveEntityReferences(Level level, Entity entity) {
-        try {
-            level.TagLists.EntityRemoved(entity);
-        }
-        catch (Exception exception) {
-            Logger.Warn("SpeedrunTool/LoadState",
-                $"Failed to remove {entity.GetType().FullName} from TagLists: {exception.GetType().Name}: {exception.Message}");
-        }
-        try {
-            level.Tracker.EntityRemoved(entity);
-        }
-        catch (Exception exception) {
-            Logger.Warn("SpeedrunTool/LoadState",
-                $"Failed to remove {entity.GetType().FullName} from Tracker: {exception.GetType().Name}: {exception.Message}");
-        }
-        try {
-            Engine.Pooler.EntityRemoved(entity);
-        }
-        catch (Exception exception) {
-            Logger.Warn("SpeedrunTool/LoadState",
-                $"Failed to remove {entity.GetType().FullName} from Pooler: {exception.GetType().Name}: {exception.Message}");
         }
     }
 

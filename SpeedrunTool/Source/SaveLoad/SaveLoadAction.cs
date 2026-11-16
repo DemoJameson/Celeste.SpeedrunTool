@@ -33,17 +33,6 @@ public sealed partial class SaveLoadAction {
     // only actions, no values stored. Share among all save slots
     private static List<SaveLoadAction> SharedActions = [];
 
-    // SharedActions split by callback. Rebuilt in InitSlots() after ordering; the hot paths only
-    // walk the lists that can actually do something instead of null-checking every action.
-    private static List<SaveLoadAction> saveActions = [];
-    private static List<SaveLoadAction> loadActions = [];
-    private static List<SaveLoadAction> clearActions = [];
-    private static List<SaveLoadAction> beforeSaveActions = [];
-    private static List<SaveLoadAction> beforeLoadActions = [];
-    private static List<SaveLoadAction> preCloneActions = [];
-    // actions that own a value dictionary for the slot (saveState and/or loadState)
-    private static List<SaveLoadAction> valueActions = [];
-
     // values, belong to each save slot
 
     internal static Dictionary<int, Dictionary<Type, Dictionary<string, object>>> AllSavedValues {
@@ -55,7 +44,7 @@ public sealed partial class SaveLoadAction {
 
     internal static Dictionary<int, Dictionary<Type, Dictionary<string, object>>> InitValueDictionary() {
         Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict = [];
-        foreach (SaveLoadAction saveLoadAction in valueActions) {
+        foreach (SaveLoadAction saveLoadAction in SharedActions) {
             dict[saveLoadAction.dictionaryId] = [];
         }
         return dict;
@@ -124,7 +113,6 @@ public sealed partial class SaveLoadAction {
     [Obsolete("crash on macOS if speedrun tool is not installed, use SafeAdd() instead")]
     public static void Add(SaveLoadAction saveLoadAction) {
         SharedActions.Add(saveLoadAction);
-        RebuildActionLists();
     }
 
     internal static SaveLoadAction InternalSafeAdd(Action<Dictionary<Type, Dictionary<string, object>>, Level> saveState = null,
@@ -142,7 +130,6 @@ public sealed partial class SaveLoadAction {
         AddDebugDescription(saveLoadAction, internalCall: true, skipFrame: skipFrames);
 #endif
         SharedActions.Add(saveLoadAction);
-        RebuildActionLists();
         return saveLoadAction;
     }
 
@@ -165,7 +152,6 @@ public sealed partial class SaveLoadAction {
         AddDebugDescription(saveLoadAction, internalCall: false, skipFrame: 3);
 #endif
         SharedActions.Add(saveLoadAction);
-        RebuildActionLists();
         return saveLoadAction;
     }
 
@@ -195,7 +181,6 @@ public sealed partial class SaveLoadAction {
         bool b = SharedActions.Remove(saveLoadAction);
         if (b) {
             needInitializeDictionaryId = true;
-            RebuildActionLists();
         }
         return b;
     }
@@ -238,7 +223,10 @@ public sealed partial class SaveLoadAction {
         EnsureValueDictionaries(dict);
 #if DEBUG
         System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
-        foreach (SaveLoadAction saveLoadAction in WithProgress("SAVE_CALLBACKS", saveActions)) {
+        foreach (SaveLoadAction saveLoadAction in WithProgress("SAVE_CALLBACKS", SharedActions)) {
+            if (saveLoadAction.saveState is null) {
+                continue;
+            }
             sw.Restart();
             var before = DebugTool.MemoryTracker.TakeGcSample();
             saveLoadAction.saveState(dict[saveLoadAction.dictionaryId], level);
@@ -251,8 +239,8 @@ public sealed partial class SaveLoadAction {
             }
         }
 #else
-        foreach (SaveLoadAction saveLoadAction in WithProgress("SAVE_CALLBACKS", saveActions)) {
-            saveLoadAction.saveState(dict[saveLoadAction.dictionaryId], level);
+        foreach (SaveLoadAction saveLoadAction in WithProgress("SAVE_CALLBACKS", SharedActions)) {
+            saveLoadAction.saveState?.Invoke(dict[saveLoadAction.dictionaryId], level);
         }
 #endif
     }
@@ -337,7 +325,10 @@ public sealed partial class SaveLoadAction {
         }
 #if DEBUG
         System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
-        foreach (SaveLoadAction saveLoadAction in WithProgress("LOAD_CALLBACKS", loadActions)) {
+        foreach (SaveLoadAction saveLoadAction in WithProgress("LOAD_CALLBACKS", SharedActions)) {
+            if (saveLoadAction.loadState is null) {
+                continue;
+            }
             sw.Restart();
             var before = DebugTool.MemoryTracker.TakeGcSample();
             saveLoadAction.loadState(dict[saveLoadAction.dictionaryId], level);
@@ -349,8 +340,8 @@ public sealed partial class SaveLoadAction {
             }
         }
 #else
-        foreach (SaveLoadAction saveLoadAction in WithProgress("LOAD_CALLBACKS", loadActions)) {
-            saveLoadAction.loadState(dict[saveLoadAction.dictionaryId], level);
+        foreach (SaveLoadAction saveLoadAction in WithProgress("LOAD_CALLBACKS", SharedActions)) {
+            saveLoadAction.loadState?.Invoke(dict[saveLoadAction.dictionaryId], level);
         }
 #endif
     }
@@ -362,7 +353,7 @@ public sealed partial class SaveLoadAction {
     /// </summary>
     private static bool EnsureValueDictionaries(Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict) {
         bool complete = true;
-        foreach (SaveLoadAction action in valueActions) {
+        foreach (SaveLoadAction action in SharedActions) {
             if (!dict.ContainsKey(action.dictionaryId)) {
                 dict[action.dictionaryId] = [];
                 complete = false;
@@ -380,10 +371,11 @@ public sealed partial class SaveLoadAction {
         if (dict is null || !SaveSlotsManager.Slot.ValueDictionaryInitialized) {
             return false;
         }
+
         if (SaveSlotsManager.Slot.AllSavedValuesVersion != ActionsVersion) {
             return false;
         }
-        foreach (SaveLoadAction action in valueActions) {
+        foreach (SaveLoadAction action in SharedActions) {
             if (!dict.ContainsKey(action.dictionaryId)) {
                 return false;
             }
@@ -399,7 +391,7 @@ public sealed partial class SaveLoadAction {
             // here would escape through the hotkey handler and take the game down).
             Dictionary<int, Dictionary<Type, Dictionary<string, object>>> dict = AllSavedValues ??= InitValueDictionary();
             EnsureValueDictionaries(dict);
-            foreach (SaveLoadAction saveLoadAction in valueActions) {
+            foreach (SaveLoadAction saveLoadAction in SharedActions) {
                 if (!dict.TryGetValue(saveLoadAction.dictionaryId, out Dictionary<Type, Dictionary<string, object>> values)) {
                     continue;
                 }
@@ -415,8 +407,8 @@ public sealed partial class SaveLoadAction {
             AllSavedValues = null;
             slotInitialized = false;
         }
-        foreach (SaveLoadAction saveLoadAction in WithProgress("CLEAR_CALLBACKS", clearActions)) {
-            saveLoadAction.clearState();
+        foreach (SaveLoadAction saveLoadAction in WithProgress("CLEAR_CALLBACKS", SharedActions)) {
+            saveLoadAction.clearState?.Invoke();
         }
     }
 
@@ -424,20 +416,20 @@ public sealed partial class SaveLoadAction {
         if (StateManager.Instance.IsWarmingUp) {
             return;
         }
-        foreach (SaveLoadAction saveLoadAction in WithProgress("BEFORE_SAVE_CALLBACKS", beforeSaveActions)) {
-            saveLoadAction.beforeSaveState(level);
+        foreach (SaveLoadAction saveLoadAction in WithProgress("BEFORE_SAVE_CALLBACKS", SharedActions)) {
+            saveLoadAction.beforeSaveState?.Invoke(level);
         }
     }
 
     internal static void OnBeforeLoadState(Level level) {
-        foreach (SaveLoadAction saveLoadAction in WithProgress("BEFORE_LOAD_CALLBACKS", beforeLoadActions)) {
-            saveLoadAction.beforeLoadState(level);
+        foreach (SaveLoadAction saveLoadAction in WithProgress("BEFORE_LOAD_CALLBACKS", SharedActions)) {
+            saveLoadAction.beforeLoadState?.Invoke(level);
         }
     }
 
     internal static void OnPreCloneEntities() {
-        foreach (SaveLoadAction saveLoadAction in WithProgress("PRECLONE_CALLBACKS", preCloneActions)) {
-            saveLoadAction.preCloneEntities();
+        foreach (SaveLoadAction saveLoadAction in WithProgress("PRECLONE_CALLBACKS", SharedActions)) {
+            saveLoadAction.preCloneEntities?.Invoke();
         }
     }
 
@@ -573,7 +565,6 @@ public sealed partial class SaveLoadAction {
     private static void Unload() {
         Debug_ClearReportedLiveReferences();
         SharedActions.Clear();
-        RebuildActionLists();
     }
 
     [Conditional("DEBUG")]
@@ -619,44 +610,6 @@ public sealed partial class SaveLoadAction {
         needInitializeDictionaryId = true;
     }
 
-    /// <summary>
-    /// Splits SharedActions into per-callback lists after (re)ordering. Dispatch then walks only
-    /// the lists that have non-null callbacks instead of null-checking every action.
-    /// </summary>
-    private static void RebuildActionLists() {
-        saveActions.Clear();
-        loadActions.Clear();
-        clearActions.Clear();
-        beforeSaveActions.Clear();
-        beforeLoadActions.Clear();
-        preCloneActions.Clear();
-        valueActions.Clear();
-
-        foreach (SaveLoadAction action in SharedActions) {
-            if (action.saveState is not null) {
-                saveActions.Add(action);
-            }
-            if (action.loadState is not null) {
-                loadActions.Add(action);
-            }
-            if (action.clearState is not null) {
-                clearActions.Add(action);
-            }
-            if (action.beforeSaveState is not null) {
-                beforeSaveActions.Add(action);
-            }
-            if (action.beforeLoadState is not null) {
-                beforeLoadActions.Add(action);
-            }
-            if (action.preCloneEntities is not null) {
-                preCloneActions.Add(action);
-            }
-            if (action.saveState is not null || action.loadState is not null) {
-                valueActions.Add(action);
-            }
-        }
-    }
-
     public static void InitSlots() {
         // most mods might add saveload actions before InitActions is executed
         InitActions();
@@ -670,7 +623,6 @@ public sealed partial class SaveLoadAction {
                 i++;
                 action.dictionaryId = i;
             }
-            RebuildActionLists();
             ActionsVersion++;
 #if DEBUG
             if (Log_AllActions) {

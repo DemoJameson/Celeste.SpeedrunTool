@@ -3,6 +3,11 @@
         <TargetFramework>net8.0</TargetFramework>
         <LangVersion>latest</LangVersion>
         <CelestePrefix Condition="'$(CelestePrefix)' == '' And Exists('../../../Celeste.dll')">../../..</CelestePrefix>
+        <!-- Directory the built mod structure (DLL + everest.yaml + Dialog/Graphics) is copied to. -->
+        <ModRoot Condition="'$(ModRoot)' == ''">..</ModRoot>
+        <!-- Optional: when set, the built mod is deployed to this directory (e.g. Celeste\Mods\SpeedrunTool).
+             The workspace Directory.Build.props already points this at the installed SpeedrunTool mod. -->
+        <DeployDir Condition="'$(DeployDir)' == ''"></DeployDir>
     </PropertyGroup>
     
     <PropertyGroup>
@@ -90,10 +95,44 @@
     </ItemGroup>
 
     <Target Name="OutputAsModStructure" AfterTargets="Build">
-        <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder=".." />
-        <Copy SourceFiles="$(OutputPath)$(AssemblyName).pdb" DestinationFolder=".." />
-        <Copy SourceFiles="$(MSBuildProjectDirectory)\everest.yaml" DestinationFolder=".." />
-        <Copy SourceFiles="@(DialogResources)" DestinationFolder="..\Dialog\%(RecursiveDir)" SkipUnchangedFiles="true" />
-        <Copy SourceFiles="@(GraphicResources)" DestinationFolder="..\Graphics\%(RecursiveDir)" SkipUnchangedFiles="true" />
+        <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="$(ModRoot)" />
+        <Copy SourceFiles="$(OutputPath)$(AssemblyName).pdb" DestinationFolder="$(ModRoot)" />
+        <Copy SourceFiles="$(MSBuildProjectDirectory)\everest.yaml" DestinationFolder="$(ModRoot)" />
+        <Copy SourceFiles="@(DialogResources)" DestinationFolder="$(ModRoot)\Dialog\%(RecursiveDir)" SkipUnchangedFiles="true" />
+        <Copy SourceFiles="@(GraphicResources)" DestinationFolder="$(ModRoot)\Graphics\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    </Target>
+
+    <!-- Deploys the built mod into the installed SpeedrunTool mod folder. The workspace
+         Directory.Build.props sets DeployDir for the SpeedrunTool project; opt out for one build
+         with -p:DeployDir= . -->
+    <Target Name="DeployToGame" AfterTargets="OutputAsModStructure" Condition="'$(DeployDir)' != ''">
+        <Copy SourceFiles="$(OutputPath)$(AssemblyName).dll" DestinationFolder="$(DeployDir)" />
+        <Copy SourceFiles="$(MSBuildProjectDirectory)\everest.yaml" DestinationFolder="$(DeployDir)" />
+        <Copy SourceFiles="@(DialogResources)" DestinationFolder="$(DeployDir)\Dialog\%(RecursiveDir)" SkipUnchangedFiles="true" />
+        <Copy SourceFiles="@(GraphicResources)" DestinationFolder="$(DeployDir)\Graphics\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    </Target>
+
+    <!-- Release packaging: dotnet build -c Release -p:PackageMod=true -p:SrtPackageVersion=3.24.7
+         Produces dist/SpeedrunTool-<version>.zip with the mod layout (everest.yaml + DLL at the
+         zip root plus Dialog/ and Graphics/). Packaging is explicit and never part of a normal
+         build; without SrtPackageVersion the asset is dist/SpeedrunTool.zip. -->
+    <Target Name="PackageMod" AfterTargets="Build" DependsOnTargets="OutputAsModStructure"
+            Condition="'$(PackageMod)' == 'true'">
+        <PropertyGroup>
+            <_PackageStage>$(BaseIntermediateOutputPath)package</_PackageStage>
+            <_PackageSuffix Condition="'$(SrtPackageVersion)' != ''">-$(SrtPackageVersion)</_PackageSuffix>
+            <_PackageZip>$(MSBuildProjectDirectory)\..\dist\SpeedrunTool$(_PackageSuffix).zip</_PackageZip>
+        </PropertyGroup>
+        <RemoveDir Directories="$(_PackageStage)" />
+        <MakeDir Directories="$(_PackageStage);$(MSBuildProjectDirectory)\..\dist" />
+        <Copy SourceFiles="$(ModRoot)\$(AssemblyName).dll;$(MSBuildProjectDirectory)\everest.yaml" DestinationFolder="$(_PackageStage)" />
+        <ItemGroup>
+            <_PackageDialog Include="$(MSBuildProjectDirectory)\Dialog\**\*" />
+            <_PackageGraphics Include="$(MSBuildProjectDirectory)\Graphics\**\*" />
+        </ItemGroup>
+        <Copy SourceFiles="@(_PackageDialog)" DestinationFiles="@(_PackageDialog->'$(_PackageStage)\Dialog\%(RecursiveDir)%(Filename)%(Extension)')" />
+        <Copy SourceFiles="@(_PackageGraphics)" DestinationFiles="@(_PackageGraphics->'$(_PackageStage)\Graphics\%(RecursiveDir)%(Filename)%(Extension)')" />
+        <ZipDirectory SourceDirectory="$(_PackageStage)" DestinationFile="$(_PackageZip)" Overwrite="true" />
+        <Message Importance="high" Text="Packaged $(AssemblyName) -> $(_PackageZip)" />
     </Target>
 </Project>

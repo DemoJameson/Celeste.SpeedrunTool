@@ -341,3 +341,5 @@ toZip.cmd
 /JetBrains.FormatRipper.dll
 /JetBrains.HabitatDetector.dll
 /JetBrains.Profiler.Api.dll
+/AGENTS.md
+/dist

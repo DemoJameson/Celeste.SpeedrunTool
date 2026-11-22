@@ -97,6 +97,13 @@ internal class RoomTimerData {
             AutosplitterTime = Time;
         }
     }
+    internal void AddFrame() {
+        if (timerState == TimerState.WaitToStart) {
+            return;
+        }
+
+        Time += TimeSpanFix.SecondsToTicks(Engine.RawDeltaTime);
+    }
 
     public void UpdateTimerState(bool endPoint) {
         if (Engine.Scene is not Level level) {

@@ -177,7 +177,16 @@ public static class RoomTimerManager {
     private static void HeartGemOnRegisterAsCollected(On.Celeste.HeartGem.orig_RegisterAsCollected orig, HeartGem self, Level level, string poemId) {
         orig(self, level, poemId);
 
-        if (ModSettings.TimeHeartCassette) {
+        if (!ModSettings.TimeHeartCassette) {
+            return;
+        }
+
+        if (self.IsCompleteArea(!self.IsFake && (level.Session.Area.Mode != AreaMode.Normal || level.Session.Area.ID == 9))) {
+            // annoying OoO issue. advance our clock so this matches the journal time.
+            NextRoomTimerData.AddFrame();
+            CurrentRoomTimerData.AddFrame();
+        }
+        else {
             UpdateTimerState();
         }
     }

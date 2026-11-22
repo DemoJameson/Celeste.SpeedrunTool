@@ -1,6 +1,6 @@
 - Name: SpeedrunTool
-  Version: 3.29.3
+  Version: 3.29.4
   DLL: SpeedrunTool.dll
   Dependencies:
     - Name: Everest
-      Version: 1.6662
+      Version: 1.6696

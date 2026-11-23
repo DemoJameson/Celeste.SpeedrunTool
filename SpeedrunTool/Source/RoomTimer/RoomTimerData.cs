@@ -97,8 +97,12 @@ internal class RoomTimerData {
             AutosplitterTime = Time;
         }
     }
-    internal void AddFrame() {
-        if (timerState == TimerState.WaitToStart) {
+    // The level stopped keeping time during this update, but UpdateTime() had already added
+    // this frame to Session.Time. Timing() only looks at the flags afterwards, so it drops
+    // that frame; count it here instead, before the caller records the final time in
+    // UpdateTimerState(). Only used when the game really counted the frame.
+    internal void CountEndingFrame() {
+        if (timerState != TimerState.Timing) {
             return;
         }
 

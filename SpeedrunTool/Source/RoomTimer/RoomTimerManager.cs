@@ -36,12 +36,15 @@ public static class RoomTimerManager {
     internal static RoomTimerData Data_Auto => (ModSettings.RoomTimerType is RoomTimerType.NextRoom) ? NextRoomTimerData : CurrentRoomTimerData;
 
     private static string previousRoom;
+    private static bool gameCountedFrame;
+    private static ulong gameCountedFrameId;
 
     [Load]
     private static void Load() {
         IL.Celeste.SpeedrunTimerDisplay.Update += SpeedrunTimerDisplayOnUpdate;
         On.Celeste.SpeedrunTimerDisplay.Render += Render;
-        SaveLoad.GameFreezeManager.OnAfterUpdate_EvenIfGameFreeze += Timing;
+        On.Celeste.Level.UpdateTime += OnLevelUpdateTime;
+        On.Monocle.Scene.AfterUpdate += OnSceneAfterUpdate;
         On.Celeste.SummitCheckpoint.Update += UpdateTimerStateOnTouchFlag;
         On.Celeste.HeartGem.RegisterAsCollected += HeartGemOnRegisterAsCollected;
         On.Celeste.SaveData.RegisterCassette += SaveDataOnRegisterCassette;
@@ -56,7 +59,8 @@ public static class RoomTimerManager {
     private static void Unload() {
         IL.Celeste.SpeedrunTimerDisplay.Update -= SpeedrunTimerDisplayOnUpdate;
         On.Celeste.SpeedrunTimerDisplay.Render -= Render;
-        SaveLoad.GameFreezeManager.OnAfterUpdate_EvenIfGameFreeze -= Timing;
+        On.Celeste.Level.UpdateTime -= OnLevelUpdateTime;
+        On.Monocle.Scene.AfterUpdate -= OnSceneAfterUpdate;
         On.Celeste.SummitCheckpoint.Update -= UpdateTimerStateOnTouchFlag;
         On.Celeste.HeartGem.RegisterAsCollected -= HeartGemOnRegisterAsCollected;
         On.Celeste.SaveData.RegisterCassette -= SaveDataOnRegisterCassette;
@@ -158,12 +162,44 @@ public static class RoomTimerManager {
         string currentRoom = self.Session.Level;
         bool enteringNextRoom = previousRoom != null && previousRoom != currentRoom;
         previousRoom = currentRoom;
+
+        // The level stopped keeping time during this update, but UpdateTime() had already
+        // counted the frame in Session.Time. Timing() only looks at the flags afterwards, so
+        // count it here, before UpdateTimerState() records the final time; otherwise the room
+        // timer ends one frame short of the journal. Every other split (room change,
+        // checkpoint, cassette, non-completing heart) still stamps the pre-frame Time.
+        if (gameCountedFrame && gameCountedFrameId == Engine.FrameCounter
+                             && (self.Completed || self.TimerStopped)) {
+            NextRoomTimerData.CountEndingFrame();
+            CurrentRoomTimerData.CountEndingFrame();
+        }
+
         if (self.Completed || enteringNextRoom || EndPoint.IsReachedRoomIdEndPoint) {
             UpdateTimerState();
         }
 
         NextRoomTimerData.Timing(self);
         CurrentRoomTimerData.Timing(self);
+    }
+
+    private static void OnSceneAfterUpdate(On.Monocle.Scene.orig_AfterUpdate orig, Scene self) {
+        orig(self);
+
+        if (self is Level level) {
+            Timing(level);
+        }
+    }
+
+    private static void OnLevelUpdateTime(On.Celeste.Level.orig_UpdateTime orig, Level level) {
+        long sessionTimeBefore = level.Session.Time;
+        orig(level);
+
+        // UpdateTime is the only place Session.Time moves, so a change means the game counted
+        // this frame for the level - even when the level stops keeping time during the same
+        // update. Pin it to the frame: UpdateTime also runs from Monocle's PlayerDashAssist
+        // branch, which skips Level.Update, and Level.Update has paths that skip UpdateTime.
+        gameCountedFrame = level.Session.Time != sessionTimeBefore;
+        gameCountedFrameId = Engine.FrameCounter;
     }
 
     private static void UpdateTimerStateOnTouchFlag(On.Celeste.SummitCheckpoint.orig_Update orig, SummitCheckpoint self) {
@@ -181,12 +217,11 @@ public static class RoomTimerManager {
             return;
         }
 
-        if (self.IsCompleteArea(!self.IsFake && (level.Session.Area.Mode != AreaMode.Normal || level.Session.Area.ID == 9))) {
-            // annoying OoO issue. advance our clock so this matches the journal time.
-            NextRoomTimerData.AddFrame();
-            CurrentRoomTimerData.AddFrame();
-        }
-        else {
+        // A heart that completes the area stops the level later in this same update
+        // (TimerStopped / RegisterAreaComplete in HeartGem.CollectRoutine), so Timing()
+        // counts that frame through CountEndingFrame(). Recording the time here instead
+        // would stamp the timer Completed one frame early.
+        if (!self.IsCompleteArea(!self.IsFake && (level.Session.Area.Mode != AreaMode.Normal || level.Session.Area.ID == 9))) {
             UpdateTimerState();
         }
     }

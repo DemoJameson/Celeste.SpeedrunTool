@@ -16,9 +16,6 @@ internal static class GameFreezeManager {
 
     private static List<VirtualInput> unfreezeInputs = [];
 
-    // different with Everest's event, which won't work when game freeze
-    internal static event Action<Level> OnAfterUpdate_EvenIfGameFreeze = null;
-
     private static void Input_OnInitialize() {
         // 每次重置游戏键位后, 这些 VirtualInput 都是新的对象, 因此必须重新获取
         unfreezeInputs = [Input.Dash, Input.Jump, Input.Grab, Input.MoveX, Input.MoveY, Input.Dash, Input.Aim, Input.Pause, Input.CrouchDash];
@@ -95,8 +92,6 @@ internal static class GameFreezeManager {
         else {
             orig(level);
         }
-
-        OnAfterUpdate_EvenIfGameFreeze?.Invoke(level);
 
         static void UpdateBackdropWhenWaiting(Level level) {
             level.Wipe?.Update(level);

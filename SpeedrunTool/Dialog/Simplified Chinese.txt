@@ -7,13 +7,13 @@ SPEEDRUN_TOOL_NEVER=从不
 SPEEDRUN_TOOL_AUTO= 自动
 
 # ================================== Mod Options Menu ==================================
-SPEEDRUN_TOOL=                  速通辅助工具
-SPEEDRUN_TOOL_DEBUG=           速通辅助工具（DEBUG）
-SPEEDRUN_TOOL_ENABLED=          开关
-SPEEDRUN_TOOL_ROOM_TIMER=       房间计时器
-SPEEDRUN_TOOL_STATE=            保存状态
-SPEEDRUN_TOOL_DEATH_STATISTICS= 死亡数据
-SPEEDRUN_TOOL_MORE_OPTIONS=     更多选项
+SPEEDRUN_TOOL=                          速通辅助工具
+SPEEDRUN_TOOL_DEBUG=                    速通辅助工具（DEBUG）
+SPEEDRUN_TOOL_ENABLED=                  开关
+SPEEDRUN_TOOL_ROOM_TIMER=               房间计时器
+SPEEDRUN_TOOL_STATE=                    保存状态
+SPEEDRUN_TOOL_DEATH_STATISTICS=         死亡数据
+SPEEDRUN_TOOL_MORE_OPTIONS=             更多选项
 
 # ================================== Room Timer Options ==================================
 SPEEDRUN_TOOL_NEXT_ROOM=                   下个房间
@@ -152,6 +152,8 @@ SPEEDRUN_TOOL_TOGGLE_SAVE_LOAD_UI=           开关存读档用户界面
 # ================================== Death Statistics ==================================
 SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA=      死亡数据数量
 SPEEDRUN_TOOL_CHECK_DEATH_STATISTICS=        查看死亡数据
+SPEEDRUN_TOOL_SHOW_DEATH_MARK=               显示死亡标记
+SPEEDRUN_TOOL_SHOW_DEATH_PLAYBACK=           显示死亡回放
 SPEEDRUN_TOOL_DEATH_STATISTICS_HEADER=       死亡数据（存档 {0})
 SPEEDRUN_TOOL_DEATH_STATISTICS_HEADER_DEBUG= 死亡数据（调试存档)
 SPEEDRUN_TOOL_CLEAR_DEATH_STATISTICS=        清除数据

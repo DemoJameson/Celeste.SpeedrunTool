@@ -109,8 +109,6 @@ public static class DialogIds {
     public const string DecreaseTimedRooms = "SPEEDRUN_TOOL_DECREASE_TIMED_ROOMS";
     public const string SetEndPoint = "SPEEDRUN_TOOL_SET_END_POINT";
     public const string SetAdditionalEndPoint = "SPEEDRUN_TOOL_SET_ADDITIONAL_END_POINT";
-    public const string SetRoomIdEndPoint = "SPEEDRUN_TOOL_SET_ROOM_ID_END_POINT";
-    public const string ClearRoomIdEndPoint = "SPEEDRUN_TOOL_CLEAR_ROOM_ID_END_POINT";
     public const string ResetRoomTimerPbTooltip = "SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB_TOOLTIP";
     public const string ResetRoomTimerPbDialog = "SPEEDRUN_TOOL_RESET_ROOM_TIMER_PB_DIALOG";
     public const string TeleportToPreviousRoom = "SPEEDRUN_TOOL_TELEPORT_TO_PREVIOUS_ROOM";
@@ -145,6 +143,9 @@ public static class DialogIds {
     // Death Statistics
     public const string MaxNumberOfDeathData = "SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA";
     public const string CheckDeathStatistics = "SPEEDRUN_TOOL_CHECK_DEATH_STATISTICS";
+    public const string ShowDeathMark = "SPEEDRUN_TOOL_SHOW_DEATH_MARK";
+    public const string ShowDeathPlayback = "SPEEDRUN_TOOL_SHOW_DEATH_PLAYBACK";
+
     public const string DeathStatisticsHeader = "SPEEDRUN_TOOL_DEATH_STATISTICS_HEADER";
     public const string DeathStatisticsHeaderDebug = "SPEEDRUN_TOOL_DEATH_STATISTICS_HEADER_DEBUG";
     public const string ClearDeathStatistics = "SPEEDRUN_TOOL_CLEAR_DEATH_STATISTICS";

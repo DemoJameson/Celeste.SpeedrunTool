@@ -7,12 +7,13 @@ SPEEDRUN_TOOL_NEVER=Never
 SPEEDRUN_TOOL_AUTO=  Auto
 
 # ================================== Mod Options Menu ==================================
-SPEEDRUN_TOOL=              Speedrun Tool
-SPEEDRUN_TOOL_DEBUG=       Speedrun Tool (DEBUG)
-SPEEDRUN_TOOL_ENABLED=      Enabled
-SPEEDRUN_TOOL_ROOM_TIMER=   Room Timer
-SPEEDRUN_TOOL_STATE=        State
-SPEEDRUN_TOOL_MORE_OPTIONS= More Options
+SPEEDRUN_TOOL=                          Speedrun Tool
+SPEEDRUN_TOOL_DEBUG=                    Speedrun Tool (DEBUG)
+SPEEDRUN_TOOL_ENABLED=                  Enabled
+SPEEDRUN_TOOL_ROOM_TIMER=               Room Timer
+SPEEDRUN_TOOL_STATE=                    State
+SPEEDRUN_TOOL_DEATH_STATISTICS=         Death Statistics
+SPEEDRUN_TOOL_MORE_OPTIONS=             More Options
 
 # ================================== Room Timer Options ==================================
 SPEEDRUN_TOOL_NEXT_ROOM=                   Next Room
@@ -148,8 +149,9 @@ SPEEDRUN_TOOL_SWITCH_TO_PREVIOUS_SLOT=       Switch to Previous Slot
 SPEEDRUN_TOOL_TOGGLE_SAVE_LOAD_UI=           Toggle SaveLoad UI
 
 # ================================== Death Statistics ==================================
-SPEEDRUN_TOOL_DEATH_STATISTICS=              Death Statistics
 SPEEDRUN_TOOL_MAX_NUMBER_OF_DEATH_DATA=      Max Number of Death Data
+SPEEDRUN_TOOL_SHOW_DEATH_MARK=               Show Death Mark
+SPEEDRUN_TOOL_SHOW_DEATH_PLAYBACK=           Show Death Playback
 SPEEDRUN_TOOL_CHECK_DEATH_STATISTICS=        Check Death Data
 SPEEDRUN_TOOL_DEATH_STATISTICS_HEADER=       Death Statistics (Slot {0})
 SPEEDRUN_TOOL_DEATH_STATISTICS_HEADER_DEBUG= Death Statistics (Debug Slot)

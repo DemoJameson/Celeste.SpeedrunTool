@@ -180,6 +180,9 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public bool DeathStatistics { get; set; } = false;
     public int MaxNumberOfDeathData { get; set; } = 2;
 
+    public bool ShowDeathMark { get; set; } = true;
+    public bool ShowDeathPlayback { get; set; } = true;
+
     #endregion
 
     #region MoreOptions

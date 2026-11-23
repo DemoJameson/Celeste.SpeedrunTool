@@ -27,6 +27,9 @@ public static class DeathStatisticsManager {
     private static DeathInfo currentDeathInfo;
     private static DeathInfo playbackDeathInfo;
 
+    private static bool ShowDeathMark => ModSettings.ShowDeathMark;
+    private static bool ShowDeathPlayback => ModSettings.ShowDeathPlayback;
+
     [Load]
     private static void Hook() {
         // 尽量晚的 Hook Player.Die 方法，以便可以稳定的从指定的 StackTrace 中找出死亡原因
@@ -85,9 +88,11 @@ public static class DeathStatisticsManager {
 
     private static void LevelOnLoadLevel(On.Celeste.Level.orig_LoadLevel orig, Level level, Player.IntroTypes playerIntro, bool isFromLoader) {
         if (IsPlayback()) {
-            level.Add(new DeathMark(playbackDeathInfo.DeathPosition));
+            if (ShowDeathMark) {
+                level.Add(new DeathMark(playbackDeathInfo.DeathPosition));
+            }
 
-            if (playbackDeathInfo.PlaybackFilePath.IsNotNullOrEmpty() && File.Exists(playbackDeathInfo.PlaybackFilePath)) {
+            if (ShowDeathPlayback && playbackDeathInfo.PlaybackFilePath.IsNotNullOrEmpty() && File.Exists(playbackDeathInfo.PlaybackFilePath)) {
                 List<Player.ChaserState> chaserStates = PlaybackData.Import(FileProxy.ReadAllBytes(playbackDeathInfo.PlaybackFilePath));
                 PlayerSpriteMode spriteMode = level.Session.Inventory.Backpack ? PlayerSpriteMode.Madeline : PlayerSpriteMode.MadelineNoBackpack;
                 if (SaveData.Instance.Assists.PlayAsBadeline) {

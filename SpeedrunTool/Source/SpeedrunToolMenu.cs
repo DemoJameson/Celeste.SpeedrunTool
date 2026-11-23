@@ -214,6 +214,12 @@ public static class SpeedrunToolMenu {
                 ModSettings.MaxNumberOfDeathData
             ).Change(i => ModSettings.MaxNumberOfDeathData = i));
 
+            subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.ShowDeathMark), ModSettings.ShowDeathMark).Change(b =>
+                ModSettings.ShowDeathMark = b));
+
+            subMenu.Add(new TextMenu.OnOff(Dialog.Clean(DialogIds.ShowDeathPlayback), ModSettings.ShowDeathPlayback).Change(b =>
+                ModSettings.ShowDeathPlayback = b));
+
             subMenu.Add(new TextMenu.Button(Dialog.Clean(DialogIds.CheckDeathStatistics)).Pressed(() => {
                 subMenu.Focused = false;
                 DeathStatisticsUi buttonConfigUi = new() { OnClose = () => subMenu.Focused = true };

@@ -13,7 +13,9 @@ using InputKeys = Microsoft.Xna.Framework.Input.Keys;
 namespace Celeste.Mod.SpeedrunTool.Other;
 
 // taken from CelesteTAS
-// Cannot use MInput, since that will be cloned by SRT and cause some issue
+// Don't hold on to MInput's VirtualInput/VirtualButton objects: SRT clones and replaces them
+// (savestates, TAS loads). Reading the raw MInput.Keyboard / MInput.GamePads snapshots right
+// after MInput.Update is safe, since nothing is cached between frames.
 
 // since SRT v3.25.0
 internal static class Hotkeys_Rebase {
@@ -90,6 +92,7 @@ internal static class Hotkeys_Rebase {
 
     private static KeyboardState kbState;
     private static GamePadState padState;
+    private static bool inputWasAvailable;
     public static float RightThumbSticksX => padState.ThumbSticks.Right.X;
 
     /// Checks if the CelesteNet chat is open
@@ -148,10 +151,13 @@ internal static class Hotkeys_Rebase {
 
 
     private static GamePadState GetGamePadState() {
-        for (int i = 0; i < 4; i++) {
-            var state = GamePad.GetState((PlayerIndex)i);
-            if (state.IsConnected) {
-                return state;
+        if (MInput.GamePads is not { } pads) {
+            return default;
+        }
+
+        foreach (var pad in pads) {
+            if (pad is { Attached: true }) {
+                return pad.CurrentState;
             }
         }
 
@@ -161,12 +167,25 @@ internal static class Hotkeys_Rebase {
 
     internal static void Update() {
         // Update hotkeys anyway, but choose whether their OnPress should be invoked
-        kbState = Keyboard.GetState();
+
+        // Read the device snapshots MInput already refreshed in orig() instead of polling the
+        // keyboard/gamepads again. Only raw state is read here, no VirtualInput objects, so the
+        // savestate cloning of MInput cannot break it.
+        bool inputAvailable = Engine.Instance is { IsActive: true } && MInput.Active;
+        kbState = MInput.Keyboard?.CurrentState ?? default;
         padState = GetGamePadState();
 
         foreach (HotkeyConfig hotkey in HotkeyConfigUi.HotkeyConfigs.Values) {
             hotkey.Hotkey_Impl.Update(true, true);
+            if (!inputWasAvailable) {
+                // Input just came back (window refocus, or ImGuiHelper stopped handing the keyboard
+                // to ImGui, which makes MInput null the states). A key held through that gap would
+                // otherwise go false -> true and look like a fresh press.
+                hotkey.Hotkey_Impl.LastCheck = hotkey.Hotkey_Impl.Check;
+            }
         }
+
+        inputWasAvailable = inputAvailable;
     }
 
     internal static bool CanInvoke(Scene scene) {

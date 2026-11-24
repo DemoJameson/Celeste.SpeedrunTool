@@ -128,6 +128,7 @@ SPEEDRUN_TOOL_ALREADY_LAST_ROOM_DIALOG_BADELINE=
     [BADELINE left yell]
     Already in the last room!
 SPEEDRUN_TOOL_SWITCH_AUTO_LOAD_STATE=        Toggle Auto Load State
+SPEEDRUN_TOOL_TOGGLE_FREEZE_MODE=            Toggle Freeze Mode
 SPEEDRUN_TOOL_SPAWN_TOWER_VIEWER=            Spawn Binoculars/Toggle Camera Lock
 SPEEDRUN_TOOL_TOGGLE_FULLSCREEN=             Toggle Fullscreen
 SPEEDRUN_TOOL_EXPORT_ROOM_TIMES=             Export Room Times

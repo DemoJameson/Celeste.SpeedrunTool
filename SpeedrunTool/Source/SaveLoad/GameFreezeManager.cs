@@ -33,6 +33,18 @@ internal static class GameFreezeManager {
             (_, _) => UpdateLastChecks(),
             () => LastChecks.Clear()
         );
+
+        Hotkey.ToggleFreezeMode.RegisterPressedAction(scene => {
+            if (scene is Level { Paused: false }) {
+                // On <-> IgnoreHoldingKeys; Off falls through to On
+                ModSettings.FreezeAfterLoadStateType = ModSettings.FreezeAfterLoadStateType == FreezeAfterLoadStateType.On
+                    ? FreezeAfterLoadStateType.IgnoreHoldingKeys
+                    : FreezeAfterLoadStateType.On;
+                SpeedrunToolModule.Instance.SaveSettings();
+                PopupMessageUtils.ShowOptionState(DialogIds.FreezeAfterLoadState.DialogClean(),
+                    ModSettings.FreezeAfterLoadStateType.DialogClean());
+            }
+        });
     }
 
     [Unload]

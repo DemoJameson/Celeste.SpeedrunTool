@@ -220,6 +220,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public List<Keys> KeyboardTeleportToPreviousRoom { get; set; } = Hotkey.TeleportToPreviousRoom.GetDefaultKeys();
     public List<Keys> KeyboardTeleportToNextRoom { get; set; } = Hotkey.TeleportToNextRoom.GetDefaultKeys();
     public List<Keys> KeyboardSwitchAutoLoadState { get; set; } = Hotkey.SwitchAutoLoadState.GetDefaultKeys();
+    public List<Keys> KeyboardToggleFreezeMode { get; set; } = Hotkey.ToggleFreezeMode.GetDefaultKeys();
     public List<Keys> KeyboardSpawnTowerViewer { get; set; } = Hotkey.SpawnTowerViewer.GetDefaultKeys();
     public List<Keys> KeyboardToggleFullscreen { get; set; } = Hotkey.ToggleFullscreen.GetDefaultKeys();
     public List<Keys> KeyboardExportRoomTimes { get; set; } = Hotkey.ExportRoomTimes.GetDefaultKeys();
@@ -262,6 +263,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public List<Buttons> ControllerTeleportToPreviousRoom { get; set; } = new List<Buttons>();
     public List<Buttons> ControllerTeleportToNextRoom { get; set; } = new List<Buttons>();
     public List<Buttons> ControllerSwitchAutoLoadState { get; set; } = new List<Buttons>();
+    public List<Buttons> ControllerToggleFreezeMode { get; set; } = new List<Buttons>();
     public List<Buttons> ControllerSpawnTowerViewer { get; set; } = new List<Buttons>();
     public List<Buttons> ControllerToggleFullscreen { get; set; } = new List<Buttons>();
     public List<Buttons> ControllerExportRoomTimes { get; set; } = new List<Buttons>();

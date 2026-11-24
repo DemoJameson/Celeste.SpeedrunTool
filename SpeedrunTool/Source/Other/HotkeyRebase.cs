@@ -59,41 +59,42 @@ internal static class Hotkeys_Rebase {
         return default;
     }
 
-    internal static bool Update(Scene scene) {
+    internal static void Update() {
         // Update hotkeys anyway, but choose whether their OnPress should be invoked
-        bool canPress = true;
-
-        if (TasUtils.Running) {
-            canPress = false;
-        }
-        else if (!MInput.ControllerHasFocus &&
-            scene is Overworld {
-                Current: OuiFileNaming { UseKeyboardInput: true }
-                      or OuiModOptionString { UseKeyboardInput: true }
-            }) {
-            // 避免输入文字时触发快捷键
-            canPress = false;
-        }
-        else if (Engine.Scene?.Tracker is { } tracker && (tracker.GetEntity<KeyboardConfigUI>() != null || tracker.GetEntity<ButtonConfigUI>() != null)) {
-            canPress = false;
-        }
-        else if (Engine.Commands.Open || CelesteNetChatting) {
-            // Prevent triggering hotkeys while writing text
-            canPress = false;
-        }
-        else if (TextInput.Initialized && typeof(TextInput).GetFieldValue<Action<char>>("_OnInput") is { } inputEvent) {
-            // ImGuiHelper is always subscribed, so ignore it
-            canPress = inputEvent.GetInvocationList().All(d => AlwaysSubscribedTextOnInput.Contains(d.Target?.GetType().FullName ?? ""));
-        }
-
         kbState = Keyboard.GetState();
         padState = GetGamePadState();
 
         foreach (HotkeyConfig hotkey in HotkeyConfigUi.HotkeyConfigs.Values) {
             hotkey.Hotkey_Impl.Update(true, true);
         }
+    }
 
-        return canPress;
+    internal static bool CanInvoke(Scene scene) {
+        if (TasUtils.Running) {
+            return false;
+        }
+
+        if (!MInput.ControllerHasFocus &&
+            scene is Overworld {
+                Current: OuiFileNaming { UseKeyboardInput: true }
+                      or OuiModOptionString { UseKeyboardInput: true }
+            }) {
+            // 避免输入文字时触发快捷键
+            return false;
+        }
+        if (Engine.Scene?.Tracker is { } tracker && (tracker.GetEntity<KeyboardConfigUI>() != null || tracker.GetEntity<ButtonConfigUI>() != null)) {
+            return false;
+        }
+        if (Engine.Commands.Open || CelesteNetChatting) {
+            // Prevent triggering hotkeys while writing text
+            return false;
+        }
+        if (TextInput.Initialized && typeof(TextInput).GetFieldValue<Action<char>>("_OnInput") is { } inputEvent) {
+            // ImGuiHelper is always subscribed, so ignore it
+            return !inputEvent.GetInvocationList().All(d => AlwaysSubscribedTextOnInput.Contains(d.Target?.GetType().FullName ?? ""));
+        }
+
+        return true;
     }
     public static Hotkey_Rebase BindingToHotkey(List<InputKeys> keys, List<InputButtons> buttons, bool held = false) {
         return new(keys, buttons, true, held);

@@ -192,22 +192,28 @@ public class HotkeyConfigUi : TextMenu {
             return;
         }
 
-        bool canInvoke = Hotkeys_Rebase.Update(scene);
+        Hotkeys_Rebase.Update();
 
-        if (canInvoke) {
-            if (ModSettings.Hotkeys) {
-                foreach (Hotkey hotkey in Hotkeys) {
-                    if (hotkey.Pressed()) {
-                        hotkey.GetHotkeyConfig().OnPressed?.Invoke(scene);
-                        // Logger.Log("SpeedrunTool", $"{hotkey} get pressed");
-                    }
+        // evaluate canInvoke lazily to avoid a ton of checks
+        bool? canInvoke = null;
+
+        if (ModSettings.Hotkeys) {
+            foreach (Hotkey hotkey in Hotkeys) {
+                if (!hotkey.Pressed()) {
+                    continue;
+                }
+
+                canInvoke ??= Hotkeys_Rebase.CanInvoke(scene);
+                if (canInvoke == true) {
+                    hotkey.GetHotkeyConfig().OnPressed?.Invoke(scene);
+                    // Logger.Log("SpeedrunTool", $"{hotkey} get pressed");
                 }
             }
-            else {
-                Hotkey hotkey = Hotkey.ToggleHotkeys;
-                if (hotkey.Pressed()) {
-                    hotkey.GetHotkeyConfig().OnPressed?.Invoke(scene);
-                }
+        }
+        else if (Hotkey.ToggleHotkeys.Pressed()) {
+            canInvoke ??= Hotkeys_Rebase.CanInvoke(scene);
+            if (canInvoke == true) {
+                Hotkey.ToggleHotkeys.GetHotkeyConfig().OnPressed?.Invoke(scene);
             }
         }
     }

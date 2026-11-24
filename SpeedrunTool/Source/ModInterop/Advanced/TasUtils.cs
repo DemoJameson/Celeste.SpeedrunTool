@@ -9,7 +9,7 @@ namespace Celeste.Mod.SpeedrunTool.ModInterop;
 internal static class TasUtils {
 
     public static bool HideGamePlay => LegacyOrUnstableTasImports.HideGamePlay;
-    public static bool Running => TasImports.Installed ? TasImports.ManagerIsRunning : LegacyOrUnstableTasImports.LegacyRunning;
+    public static bool Running => TasImports.Installed ? CelesteTasImports.IsTasActive.Invoke() : LegacyOrUnstableTasImports.LegacyRunning;
 
     public static int GroupCounter {
         get => CelesteTasImports.GetGroupCounter?.Invoke() ?? 0;
@@ -27,8 +27,6 @@ internal static class TasUtils {
             typeof(CelesteTasImports).ModInterop();
             Installed = CelesteTasImports.IsTasActive is not null;
         }
-
-        public static bool ManagerIsRunning => Installed && CelesteTasImports.IsTasActive();
 
     }
     private static class LegacyOrUnstableTasImports {

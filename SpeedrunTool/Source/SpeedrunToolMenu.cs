@@ -276,7 +276,7 @@ public static class SpeedrunToolMenu {
                 if (Engine.Scene.Tracker.Entities is { } entities) {
                     Type type = typeof(HotkeyConfigUi);
                     if (!entities.ContainsKey(type)) {
-                        entities[type] = new List<Entity>();
+                        entities[type] = [];
                     }
                 }
 

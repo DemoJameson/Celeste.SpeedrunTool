@@ -93,7 +93,9 @@ internal static class HotkeyManager {
             // 避免输入文字时触发快捷键
             return false;
         }
-        if (scene?.Tracker is { } tracker && (tracker.GetEntity<KeyboardConfigUI>() != null || tracker.GetEntity<ButtonConfigUI>() != null)) {
+        if (scene?.Tracker is { } tracker && (tracker.GetEntity<HotkeyConfigUi>() != null
+                                           || tracker.GetEntity<KeyboardConfigUI>() != null
+                                           || tracker.GetEntity<ButtonConfigUI>() != null)) {
             return false;
         }
         if (Engine.Commands.Open || CelesteNetChatting) {

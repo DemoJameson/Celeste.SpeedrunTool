@@ -57,7 +57,8 @@ internal static class CelesteExtensions {
 
     public static bool IsPressed(this VirtualInput virtualInput) {
         return virtualInput switch {
-            VirtualButton virtualButton => virtualButton.Pressed,
+            // VirtualButton.Pressed 会有 buffer 的问题, 所以我们手写
+            VirtualButton virtualButton => virtualButton.Binding.Pressed(virtualButton.GamepadIndex, virtualButton.Threshold),
             VirtualIntegerAxis virtualIntegerAxis => virtualIntegerAxis.turned,
             VirtualJoystick virtualJoystick => virtualJoystick.hTurned || virtualJoystick.vTurned,
             _ => false

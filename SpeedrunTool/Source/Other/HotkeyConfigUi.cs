@@ -10,29 +10,6 @@ namespace Celeste.Mod.SpeedrunTool.Other;
 
 [Tracked]
 public class HotkeyConfigUi : TextMenu {
-    private static FieldInfo celesteNetClientModuleInstance;
-    private static FieldInfo celesteNetClientModuleContext;
-    private static FieldInfo celesteNetClientContextChat;
-    private static PropertyInfo celesteNetChatComponentActive;
-
-    private static bool CelesteNetChatting {
-        get {
-            if (celesteNetClientModuleInstance?.GetValue(null) is not { } instance) {
-                return false;
-            }
-
-            if (celesteNetClientModuleContext?.GetValue(instance) is not { } context) {
-                return false;
-            }
-
-            if (celesteNetClientContextChat?.GetValue(context) is not { } chat) {
-                return false;
-            }
-
-            return celesteNetChatComponentActive?.GetValue(chat) as bool? == true;
-        }
-    }
-
     private static readonly List<Buttons> AllButtons = new() {
         Buttons.A,
         Buttons.B,
@@ -163,14 +140,6 @@ public class HotkeyConfigUi : TextMenu {
 
     [Initialize]
     private static void Initialize() {
-        if (ModUtils.GetAssembly("CelesteNet.Client") is { } assembly) {
-            celesteNetClientModuleInstance = assembly.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientModule")?.GetFieldInfo("Instance");
-            celesteNetClientModuleContext = assembly.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientModule")?.GetFieldInfo("Context");
-            celesteNetClientContextChat = assembly.GetType("Celeste.Mod.CelesteNet.Client.CelesteNetClientContext")?.GetFieldInfo("Chat");
-            celesteNetChatComponentActive =
-                assembly.GetType("Celeste.Mod.CelesteNet.Client.Components.CelesteNetChatComponent")?.GetPropertyInfo("Active");
-        }
-
         foreach (HotkeyConfig hotkeyConfig in HotkeyConfigs.Values) {
             hotkeyConfig.UpdateVirtualButton();
         }

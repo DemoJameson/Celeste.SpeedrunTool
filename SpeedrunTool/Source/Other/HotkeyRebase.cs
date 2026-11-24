@@ -17,7 +17,6 @@ namespace Celeste.Mod.SpeedrunTool.Other;
 // (savestates, TAS loads). Reading the raw MInput.Keyboard / MInput.GamePads snapshots right
 // after MInput.Update is safe, since nothing is cached between frames.
 
-// since SRT v3.25.0
 internal static class Hotkeys_Rebase {
 
     /// A TextInput.OnInput subscriber that does not mean "a text box is open".
@@ -93,7 +92,6 @@ internal static class Hotkeys_Rebase {
     private static KeyboardState kbState;
     private static GamePadState padState;
     private static bool inputWasAvailable;
-    public static float RightThumbSticksX => padState.ThumbSticks.Right.X;
 
     /// Checks if the CelesteNet chat is open
     private static bool CelesteNetChatting => CelesteNetChattingAccessor.Value();
@@ -166,8 +164,6 @@ internal static class Hotkeys_Rebase {
     }
 
     internal static void Update() {
-        // Update hotkeys anyway, but choose whether their OnPress should be invoked
-
         // Read the device snapshots MInput already refreshed in orig() instead of polling the
         // keyboard/gamepads again. Only raw state is read here, no VirtualInput objects, so the
         // savestate cloning of MInput cannot break it.
@@ -176,7 +172,7 @@ internal static class Hotkeys_Rebase {
         padState = GetGamePadState();
 
         foreach (HotkeyConfig hotkey in HotkeyConfigUi.HotkeyConfigs.Values) {
-            hotkey.Hotkey_Impl.Update(true, true);
+            hotkey.Hotkey_Impl.Update();
             if (!inputWasAvailable) {
                 // Input just came back (window refocus, or ImGuiHelper stopped handing the keyboard
                 // to ImGui, which makes MInput null the states). A key held through that gap would
@@ -192,7 +188,7 @@ internal static class Hotkeys_Rebase {
         if (TasUtils.Running) {
             return false;
         }
-
+        
         if (!MInput.ControllerHasFocus &&
             scene is Overworld {
                 Current: OuiFileNaming { UseKeyboardInput: true }
@@ -201,7 +197,7 @@ internal static class Hotkeys_Rebase {
             // 避免输入文字时触发快捷键
             return false;
         }
-        if (Engine.Scene?.Tracker is { } tracker && (tracker.GetEntity<KeyboardConfigUI>() != null || tracker.GetEntity<ButtonConfigUI>() != null)) {
+        if (scene?.Tracker is { } tracker && (tracker.GetEntity<KeyboardConfigUI>() != null || tracker.GetEntity<ButtonConfigUI>() != null)) {
             return false;
         }
         if (Engine.Commands.Open || CelesteNetChatting) {
@@ -219,68 +215,29 @@ internal static class Hotkeys_Rebase {
 
         return true;
     }
-    public static Hotkey_Rebase BindingToHotkey(List<InputKeys> keys, List<InputButtons> buttons, bool held = false) {
-        return new(keys, buttons, true, held);
+
+    public static Hotkey_Rebase BindingToHotkey(List<InputKeys> keys, List<InputButtons> buttons) {
+        return new(keys, buttons, true);
     }
 
     /// Hotkey which is independent of the game Update loop
-    public class Hotkey_Rebase(List<InputKeys> keys, List<InputButtons> buttons, bool keyCombo, bool held) {
+    public class Hotkey_Rebase(List<InputKeys> keys, List<InputButtons> buttons, bool keyCombo) {
         public readonly List<InputKeys> Keys = keys;
         public readonly List<InputButtons> Buttons = buttons;
-
-        internal bool OverrideCheck;
-
-        private DateTime doublePressTimeout;
-        private DateTime repeatTimeout;
 
         public bool Check { get; private set; }
         public bool Pressed => !LastCheck && Check;
         public bool Released => LastCheck && !Check;
 
-        public bool DoublePressed { get; private set; }
-        public bool Repeated { get; private set; }
-
         public bool LastCheck { get; set; }
-
-        internal const double DoublePressTimeoutMS = 200.0;
-        internal const double RepeatTimeoutMS = 500.0;
 
         internal void Update(bool updateKey = true, bool updateButton = true) {
             LastCheck = Check;
 
-            bool keyCheck;
-            bool buttonCheck;
-
-            if (OverrideCheck) {
-                keyCheck = buttonCheck = true;
-                if (!held) {
-                    OverrideCheck = false;
-                }
-            }
-            else {
-                keyCheck = updateKey && IsKeyDown();
-                buttonCheck = updateButton && IsButtonDown();
-            }
+            bool keyCheck = updateKey && IsKeyDown();
+            bool buttonCheck = updateButton && IsButtonDown();
 
             Check = keyCheck || buttonCheck;
-
-            DateTime now = DateTime.Now;
-            if (Pressed) {
-                DoublePressed = now < doublePressTimeout;
-                doublePressTimeout = DoublePressed ? default : now + TimeSpan.FromMilliseconds(DoublePressTimeoutMS);
-
-                Repeated = true;
-                repeatTimeout = now + TimeSpan.FromMilliseconds(RepeatTimeoutMS);
-            }
-            else if (Check) {
-                DoublePressed = false;
-                Repeated = now >= repeatTimeout;
-            }
-            else {
-                DoublePressed = false;
-                Repeated = false;
-                repeatTimeout = default;
-            }
         }
 
         private bool IsKeyDown() {

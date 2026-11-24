@@ -41,10 +41,39 @@ internal static class Hotkeys_Rebase {
     }
 
 #pragma warning disable IDE1006 // 命名样式
-    private static readonly Lazy<FieldInfo?> f_CelesteNetClientModule_Instance = new(() => ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.CelesteNetClientModule")?.GetFieldInfo("Instance"));
-    private static readonly Lazy<FieldInfo?> f_CelesteNetClientModule_Context = new(() => ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.CelesteNetClientModule")?.GetFieldInfo("Context"));
-    private static readonly Lazy<FieldInfo?> f_CelesteNetClientContext_Chat = new(() => ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.CelesteNetClientContext")?.GetFieldInfo("Chat"));
-    private static readonly Lazy<PropertyInfo?> p_CelesteNetChatComponent_Active = new(() => ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.Components.CelesteNetChatComponent")?.GetPropertyInfo("Active"));
+    private static readonly Lazy<Func<bool>> CelesteNetChattingAccessor = new(() => {
+        try {
+            Type? moduleType = ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.CelesteNetClientModule");
+            Type? contextType = ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.CelesteNetClientContext");
+            Type? chatType = ModUtils.GetType("CelesteNet.Client", "Celeste.Mod.CelesteNet.Client.Components.CelesteNetChatComponent");
+            FieldInfo? instanceField = moduleType?.GetFieldInfo("Instance");
+            FieldInfo? contextField = moduleType?.GetFieldInfo("Context");
+            FieldInfo? chatField = contextType?.GetFieldInfo("Chat");
+            MethodInfo? activeGetter = chatType?.GetPropertyInfo("Active")?.GetGetMethod();
+            if (instanceField == null || contextField == null || chatField == null || activeGetter == null) {
+                return static () => false;
+            }
+
+            Expression instance = Expression.Field(null, instanceField);
+            Expression context = Expression.Field(instance, contextField);
+            Expression chat = Expression.Field(context, chatField);
+            Expression body = Expression.AndAlso(
+                Expression.NotEqual(instance, Expression.Constant(null, instance.Type)),
+                Expression.AndAlso(
+                    Expression.NotEqual(context, Expression.Constant(null, context.Type)),
+                    Expression.AndAlso(
+                        Expression.NotEqual(chat, Expression.Constant(null, chat.Type)),
+                        Expression.Call(chat, activeGetter))));
+
+            // Compile the exception guard into the delegate: a failure here can never be cached as
+            // a faulted Lazy and the property getter stays a plain call.
+            return Expression.Lambda<Func<bool>>(
+                Expression.TryCatch(body, Expression.Catch(typeof(Exception), Expression.Constant(false)))).Compile();
+        }
+        catch {
+            return static () => false;
+        }
+    });
 
     private static readonly Lazy<FieldInfo?> f_ImGuiHelperManager = new(() =>
         ModUtils.GetType("ImGuiHelper", "Celeste.Mod.ImGuiHelper.ImGuiHelperModule")?.GetFieldInfo("imGuiManager"));
@@ -64,21 +93,7 @@ internal static class Hotkeys_Rebase {
     public static float RightThumbSticksX => padState.ThumbSticks.Right.X;
 
     /// Checks if the CelesteNet chat is open
-    private static bool CelesteNetChatting {
-        get {
-            if (f_CelesteNetClientModule_Instance.Value?.GetValue(null) is not { } instance) {
-                return false;
-            }
-            if (f_CelesteNetClientModule_Context.Value?.GetValue(instance) is not { } context) {
-                return false;
-            }
-            if (f_CelesteNetClientContext_Chat.Value?.GetValue(context) is not { } chat) {
-                return false;
-            }
-
-            return p_CelesteNetChatComponent_Active.Value?.GetValue(chat) as bool? == true;
-        }
-    }
+    private static bool CelesteNetChatting => CelesteNetChattingAccessor.Value();
 
     private static readonly Lazy<Func<bool>> ImGuiWantsKeyboardAccessor = new(() => {
         try {

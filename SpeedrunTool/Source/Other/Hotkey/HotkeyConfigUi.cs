@@ -1,10 +1,6 @@
-using Celeste.Mod.SpeedrunTool.Message;
-using Celeste.Mod.SpeedrunTool.Utils;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using CelesteSettings = Celeste.Settings;
 
 namespace Celeste.Mod.SpeedrunTool.Other;
 
@@ -40,47 +36,6 @@ public class HotkeyConfigUi : TextMenu {
         Keys.F3,
         Keys.F5,
     };
-
-    // this determines hotkey's order in settings
-
-    public static readonly Dictionary<Hotkey, HotkeyConfig> HotkeyConfigs = new List<HotkeyConfig> {
-        new(Hotkey.ToggleHotkeys),
-        new(Hotkey.SaveState, Keys.F7),
-        new(Hotkey.LoadState, Keys.F8),
-        new(Hotkey.ClearState, Keys.F4),
-        new(Hotkey.ClearAllState),
-        new(Hotkey.OpenDebugMap),
-        new(Hotkey.ToggleSaveLoadUI, Keys.Tab),
-        new(Hotkey.ResetRoomTimerPb, Keys.F9),
-        new(Hotkey.SwitchRoomTimer, Keys.F10),
-        new(Hotkey.IncreaseTimedRooms),
-        new(Hotkey.DecreaseTimedRooms),
-        new(Hotkey.SetEndPoint, Keys.F11),
-        new(Hotkey.SetAdditionalEndPoint),
-        new(Hotkey.CheckDeathStatistics),
-        new(Hotkey.TeleportToPreviousRoom, Keys.PageUp),
-        new(Hotkey.TeleportToNextRoom, Keys.PageDown),
-        new(Hotkey.SwitchAutoLoadState),
-        new(Hotkey.ToggleFreezeMode),
-        new(Hotkey.SpawnTowerViewer),
-        new(Hotkey.ToggleFullscreen),
-        new(Hotkey.ExportRoomTimes),
-        new(Hotkey.SwitchToNextSlot),
-        new(Hotkey.SwitchToPreviousSlot),
-        new(Hotkey.SaveToNextSlot),
-        new(Hotkey.LoadFromLastSlot),
-        new(Hotkey.SaveSlot1),
-        new(Hotkey.SaveSlot2),
-        new(Hotkey.SaveSlot3),
-        new(Hotkey.SaveSlot4),
-        new(Hotkey.SaveSlot5),
-        new(Hotkey.SaveSlot6),
-        new(Hotkey.SaveSlot7),
-        new(Hotkey.SaveSlot8),
-        new(Hotkey.SaveSlot9),
-    }.ToDictionary(info => info.Hotkey, info => info);
-
-    private static readonly Hotkey[] Hotkeys = (Hotkey[])Enum.GetValues(typeof(Hotkey));
 
     private bool closing;
     private float inputDelay;
@@ -120,73 +75,6 @@ public class HotkeyConfigUi : TextMenu {
         Alpha = 0.0f;
     }
 
-    [Load]
-    private static void Load() {
-        On.Monocle.MInput.Update += MInputOnUpdate;
-
-        Hotkey.ToggleFullscreen.RegisterPressedAction(_ => {
-            CelesteSettings.Instance.Fullscreen = !CelesteSettings.Instance.Fullscreen;
-            CelesteSettings.Instance.ApplyScreen();
-            UserIO.SaveHandler(false, true);
-        });
-
-        Hotkey.ToggleHotkeys.RegisterPressedAction(_ => {
-            ModSettings.Hotkeys = !ModSettings.Hotkeys;
-            SpeedrunToolModule.Instance.SaveSettings();
-            string state = (ModSettings.Hotkeys ? DialogIds.On : DialogIds.Off).DialogClean();
-            PopupMessageUtils.ShowOptionState(DialogIds.Hotkeys.DialogClean(), state);
-        });
-    }
-
-    [Initialize]
-    private static void Initialize() {
-        foreach (HotkeyConfig hotkeyConfig in HotkeyConfigs.Values) {
-            hotkeyConfig.UpdateVirtualButton();
-        }
-    }
-
-    [Unload]
-    private static void Unload() {
-        On.Monocle.MInput.Update -= MInputOnUpdate;
-    }
-
-    private static void MInputOnUpdate(On.Monocle.MInput.orig_Update orig) {
-        orig();
-
-        if (Engine.Scene is not { } scene || !ModSettings.Enabled) {
-            return;
-        }
-
-        if (MainThreadHelper.IsMainThread && AssetReloadHelper.IsReloading) {
-            return;
-        }
-
-        Hotkeys_Rebase.Update();
-
-        // evaluate canInvoke lazily to avoid a ton of checks
-        bool? canInvoke = null;
-
-        if (ModSettings.Hotkeys) {
-            foreach (Hotkey hotkey in Hotkeys) {
-                if (!hotkey.Pressed()) {
-                    continue;
-                }
-
-                canInvoke ??= Hotkeys_Rebase.CanInvoke(scene);
-                if (canInvoke == true) {
-                    hotkey.GetHotkeyConfig().OnPressed?.Invoke(scene);
-                    // Logger.Log("SpeedrunTool", $"{hotkey} get pressed");
-                }
-            }
-        }
-        else if (Hotkey.ToggleHotkeys.Pressed()) {
-            canInvoke ??= Hotkeys_Rebase.CanInvoke(scene);
-            if (canInvoke == true) {
-                Hotkey.ToggleHotkeys.GetHotkeyConfig().OnPressed?.Invoke(scene);
-            }
-        }
-    }
-
     private void Reload(int index = -1) {
         Clear();
 
@@ -194,12 +82,12 @@ public class HotkeyConfigUi : TextMenu {
         Add(new SubHeader(Dialog.Clean(DialogIds.PressDeleteToClearHotkeys)));
 
         Add(new SubHeader(Dialog.Clean(DialogIds.Keyboard)));
-        foreach (KeyValuePair<Hotkey, HotkeyConfig> pair in HotkeyConfigs) {
+        foreach (KeyValuePair<Hotkey, HotkeyConfig> pair in HotkeyRegistry.All) {
             AddKeyboardSetting(pair.Key, pair.Value.GetKeys());
         }
 
         Add(new SubHeader(Dialog.Clean(DialogIds.Controller)));
-        foreach (KeyValuePair<Hotkey, HotkeyConfig> pair in HotkeyConfigs) {
+        foreach (KeyValuePair<Hotkey, HotkeyConfig> pair in HotkeyRegistry.All) {
             AddControllerSetting(pair.Key, pair.Value.GetButtons());
         }
 
@@ -227,17 +115,17 @@ public class HotkeyConfigUi : TextMenu {
     }
 
     private void AddControllerSetting(Hotkey hotkeyType, List<Buttons> buttons) {
-        HotkeyConfig hotkeyConfig = HotkeyConfigs[hotkeyType];
+        HotkeyConfig hotkeyConfig = hotkeyType.GetHotkeyConfig();
         Add(new Setting(hotkeyConfig.GetLabel(), buttons).Pressed(() => Remap(hotkeyType)));
     }
 
     private void AddKeyboardSetting(Hotkey hotkeyType, List<Keys> keys) {
-        HotkeyConfig hotkeyConfig = HotkeyConfigs[hotkeyType];
+        HotkeyConfig hotkeyConfig = hotkeyType.GetHotkeyConfig();
         Add(new Setting(hotkeyConfig.GetLabel(), keys).Pressed(() => Remap(hotkeyType, true)));
     }
 
     private static void SetDefaultButtons() {
-        foreach (HotkeyConfig hotkeyConfig in HotkeyConfigs.Values) {
+        foreach (HotkeyConfig hotkeyConfig in HotkeyRegistry.All.Values) {
             hotkeyConfig.SetButtons(new List<Buttons>());
             hotkeyConfig.SetKeys(hotkeyConfig.DefaultKeys.ToList());
             hotkeyConfig.UpdateVirtualButton();
@@ -255,7 +143,7 @@ public class HotkeyConfigUi : TextMenu {
     private void SetRemap(Buttons button) {
         remapping = false;
         inputDelay = 0.25f;
-        HotkeyConfigs[remappingType].With(info => {
+        remappingType.GetHotkeyConfig().With(info => {
             if (info.GetButtons().Contains(button)) {
                 info.GetButtons().Remove(button);
             }
@@ -271,7 +159,7 @@ public class HotkeyConfigUi : TextMenu {
     private void SetRemap(Keys key) {
         remapping = false;
         inputDelay = 0.25f;
-        HotkeyConfigs[remappingType].With(info => {
+        remappingType.GetHotkeyConfig().With(info => {
             if (info.GetKeys().Contains(key)) {
                 info.GetKeys().Remove(key);
             }
@@ -330,13 +218,13 @@ public class HotkeyConfigUi : TextMenu {
                    Selection < Items.Count - 1) {
             int index = Selection - 3;
             bool keyboard = true;
-            if (index > HotkeyConfigs.Count - 1) {
+            if (index > HotkeyRegistry.All.Count - 1) {
                 index--;
-                index %= HotkeyConfigs.Count;
+                index %= HotkeyRegistry.All.Count;
                 keyboard = false;
             }
 
-            HotkeyConfig hotkeyConfig = HotkeyConfigs.Values.ToList()[index];
+            HotkeyConfig hotkeyConfig = HotkeyRegistry.All.Values.ToList()[index];
             if (keyboard) {
                 hotkeyConfig.GetKeys().Clear();
             }
@@ -381,7 +269,7 @@ public class HotkeyConfigUi : TextMenu {
                 new Vector2(0.5f, 1f),
                 Vector2.One * 0.7f,
                 Color.LightGray * Ease.CubeIn(remappingEase));
-            ActiveFont.Draw(HotkeyConfigs[remappingType].GetLabel(),
+            ActiveFont.Draw(remappingType.GetHotkeyConfig().GetLabel(),
                 position + new Vector2(0.0f, 8f), new Vector2(0.5f, 0.0f), Vector2.One * 2f,
                 Color.White * Ease.CubeIn(remappingEase));
         }
@@ -393,112 +281,3 @@ public class HotkeyConfigUi : TextMenu {
     }
 }
 
-public class HotkeyConfig {
-    public readonly Keys[] DefaultKeys;
-    public readonly Hotkey Hotkey;
-    internal Hotkeys_Rebase.Hotkey_Rebase Hotkey_Impl;
-    public Action<Scene> OnPressed;
-
-    public HotkeyConfig(Hotkey hotkey, params Keys[] defaultKeys) {
-        Hotkey = hotkey;
-        DefaultKeys = defaultKeys;
-    }
-
-    public void UpdateVirtualButton() {
-        Hotkey_Impl = Hotkeys_Rebase.BindingToHotkey(GetKeys(), GetButtons());
-    }
-
-    public List<Buttons> GetButtons() {
-        List<Buttons> result = (List<Buttons>)ModSettings.GetPropertyValue($"Controller{Hotkey}");
-        if (result == null) {
-            result = new List<Buttons>();
-            SetButtons(result);
-        }
-
-        return result;
-    }
-
-    public void SetButtons(List<Buttons> buttons) {
-        ModSettings.SetPropertyValue($"Controller{Hotkey}", buttons);
-    }
-
-    public List<Keys> GetKeys() {
-        List<Keys> result = (List<Keys>)ModSettings.GetPropertyValue($"Keyboard{Hotkey}");
-        if (result == null) {
-            result = new List<Keys>();
-            SetKeys(result);
-        }
-
-        return result;
-    }
-
-    public void SetKeys(List<Keys> keys) {
-        ModSettings.SetPropertyValue($"Keyboard{Hotkey}", keys);
-    }
-
-    public string GetLabel() {
-        if (typeof(DialogIds).GetFieldValue(Hotkey.ToString()) is string label) {
-            return label.DialogClean();
-        }
-        else {
-            return $"DialogIds.{Hotkey} not found";
-        }
-    }
-}
-
-public enum Hotkey {
-    ToggleHotkeys,
-    SaveState,
-    LoadState,
-    ClearState,
-    OpenDebugMap,
-    ResetRoomTimerPb,
-    SwitchRoomTimer,
-    IncreaseTimedRooms,
-    DecreaseTimedRooms,
-    SetEndPoint,
-    SetAdditionalEndPoint,
-    CheckDeathStatistics,
-    TeleportToPreviousRoom,
-    TeleportToNextRoom,
-    ToggleFreezeMode,
-    SwitchAutoLoadState,
-    SpawnTowerViewer,
-    ToggleFullscreen,
-    ExportRoomTimes,
-    SaveSlot1,
-    SaveSlot2,
-    SaveSlot3,
-    SaveSlot4,
-    SaveSlot5,
-    SaveSlot6,
-    SaveSlot7,
-    SaveSlot8,
-    SaveSlot9,
-    ClearAllState,
-    SaveToNextSlot,
-    LoadFromLastSlot,
-    SwitchToNextSlot,
-    SwitchToPreviousSlot,
-    ToggleSaveLoadUI
-}
-
-internal static class HotkeysExtensions {
-    public static HotkeyConfig GetHotkeyConfig(this Hotkey hotkey) {
-        return HotkeyConfigUi.HotkeyConfigs[hotkey];
-    }
-
-    public static void RegisterPressedAction(this Hotkey hotkey, Action<Scene> onPressed) {
-        hotkey.GetHotkeyConfig().OnPressed = onPressed;
-    }
-
-    public static List<Keys> GetDefaultKeys(this Hotkey hotkey) {
-        return hotkey.GetHotkeyConfig().DefaultKeys.ToList();
-    }
-
-    // 检查键盘或者手柄全部按键按下
-    public static bool Pressed(this Hotkey hotkey) {
-        HotkeyConfig hotkeyConfig = hotkey.GetHotkeyConfig();
-        return hotkeyConfig.Hotkey_Impl.Pressed;
-    }
-}

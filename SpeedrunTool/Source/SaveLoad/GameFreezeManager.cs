@@ -12,7 +12,7 @@ internal static class GameFreezeManager {
 
     private static State State => StateManager.Instance.State;
 
-    // 存档/读档后的冻结语义(FreezeAfterLoadStateType，同一个设置同时控制存档和读档的冻结)：
+    // 存档/读档后的冻结语义(ModSettings.FreezeAfterLoadStateType，同一个设置同时控制存档和读档的冻结)：
     //
     //   Off                不冻结。
     //
@@ -89,11 +89,11 @@ internal static class GameFreezeManager {
         Hotkey.ToggleFreezeMode.RegisterPressedAction(scene => {
             if (scene is Level { Paused: false }) {
                 // On <-> IgnoreHoldingKeys; Off falls through to On
-                ModSettings.FreezeAfterLoadStateType = ModSettings.FreezeAfterLoadStateType == FreezeAfterLoadStateType.On
-                    ? FreezeAfterLoadStateType.IgnoreHoldingKeys
-                    : FreezeAfterLoadStateType.On;
+                ModSettings.FreezeAfterLoadStateType = ModSettings.FreezeAfterLoadStateType == FreezeAfterSaveLoadStateType.On
+                    ? FreezeAfterSaveLoadStateType.IgnoreHoldingKeys
+                    : FreezeAfterSaveLoadStateType.On;
                 SpeedrunToolModule.Instance.SaveSettings();
-                PopupMessageUtils.ShowOptionState(DialogIds.FreezeAfterLoadState.DialogClean(),
+                PopupMessageUtils.ShowOptionState(DialogIds.FreezeAfterSaveLoadState.DialogClean(),
                     ModSettings.FreezeAfterLoadStateType.DialogClean());
             }
         });
@@ -167,7 +167,7 @@ internal static class GameFreezeManager {
         }
 
         bool heldSinceSnapshot =
-            ModSettings.FreezeAfterLoadStateType == FreezeAfterLoadStateType.IgnoreHoldingKeys &&
+            ModSettings.FreezeAfterLoadStateType == FreezeAfterSaveLoadStateType.IgnoreHoldingKeys &&
             HeldSinceSnapshot.TryGetValue(input, out bool held) && held;
         if (heldSinceSnapshot) {
             return false;

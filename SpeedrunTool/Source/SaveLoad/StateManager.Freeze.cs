@@ -15,7 +15,7 @@ public sealed partial class StateManager {
             // before the wipe and the wipe is long enough that this join is free; it is also the last
             // point that is still inside the operation, so the cost never lands on the next input.
             WaitForPreClone();
-            if (ModSettings.FreezeAfterLoadStateType != FreezeAfterLoadStateType.Off) {
+            if (ModSettings.FreezeAfterLoadStateType != FreezeAfterSaveLoadStateType.Off) {
                 State = State.Waiting;
             }
             else {

@@ -126,7 +126,11 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     public bool AutoClearStateOnSceneSwitch { get; set; } = false;
     /// <summary>Internal marker for the one-time v3.28.0 migration of the legacy scene-switch setting.</summary>
     public bool SceneSwitchDefaultMigrated { get; set; } = false;
-    public FreezeAfterLoadStateType FreezeAfterLoadStateType { get; set; } = FreezeAfterLoadStateType.On;
+    /// <summary>
+    /// 存档/读档后的冻结模式。属性名(即 settings.yaml 里的 key)保持不变以兼容已有设置文件；
+    /// 枚举类型和 dialog key 已改名为 SaveLoad。
+    /// </summary>
+    public FreezeAfterSaveLoadStateType FreezeAfterLoadStateType { get; set; } = FreezeAfterSaveLoadStateType.On;
     public bool GcAfterLoadState { get; set; } = false;
 
     public int Doubled_GcMemoryThreshold = 5;
@@ -298,7 +302,7 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     #endregion HotkeyConfig
 }
 
-public enum FreezeAfterLoadStateType {
+public enum FreezeAfterSaveLoadStateType {
     Off,
     On,
     IgnoreHoldingKeys

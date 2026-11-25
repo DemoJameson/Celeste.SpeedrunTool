@@ -41,7 +41,7 @@ public static class DialogIds {
     public const string Clipboard = "SPEEDRUN_TOOL_CLIPBOARD";
 
     // State
-    public const string FreezeAfterLoadState = "SPEEDRUN_TOOL_FREEZE_AFTER_LOAD_STATE";
+    public const string FreezeAfterSaveLoadState = "SPEEDRUN_TOOL_FREEZE_AFTER_SAVE_LOAD_STATE";
     public const string IgnoreHoldingKeys = "SPEEDRUN_TOOL_IGNORE_HOLDING_KEYS";
     public const string ToggleFreezeMode = "SPEEDRUN_TOOL_TOGGLE_FREEZE_MODE";
     public const string AutoLoadStateAfterDeath = "SPEEDRUN_TOOL_AUTO_LOAD_STATE_AFTER_DEATH";

@@ -466,6 +466,7 @@ public sealed partial class StateManager {
         celesteProcess = null;
         SaveLoadAction.OnClearState(ClearBeforeSave);
         State = State.None;
+        pendingOffUnfreeze = false;
         ResetOperationFlags();
         MoreSaveSlotsUI.Snapshot.RemoveSnapshot(SlotName);
         // 2025.10.08 fix: clear 之后读档更加卡顿 (这个问题在老版本好像也有, 之前在这里压根不 Gc)

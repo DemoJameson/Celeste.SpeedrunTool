@@ -4,6 +4,12 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 /// Freeze / wipe / unfreeze flow used by the normal (non-TAS) save and load.
 /// </summary>
 public sealed partial class StateManager {
+    // 关闭冻结(Off)时，wipe 完成回调不能在同一帧把 State 置回 None：那一帧的 Level.Update 已经被
+    // 跳过，但 Scene.AfterUpdate 里的计时器（房间计时等）会按 State == None 把这一帧算进去，
+    // 结果房间计时比章节时间多一帧。把解冻推迟到下一帧的 Scene.BeforeUpdate，和 On 模式解冻走
+    // 同一个位置，State 就只会在帧边界翻转。
+    private bool pendingOffUnfreeze;
+
     private void FreezeGame(FreezeType freeze) {
         freezeType = freeze;
     }
@@ -19,12 +25,23 @@ public sealed partial class StateManager {
                 State = State.Waiting;
             }
             else {
-                OutOfFreeze(level);
+                pendingOffUnfreeze = true;
             }
         });
     }
 
+    /// <summary>取走并清除"关闭冻结模式下待解冻"标记；由 GameFreezeManager 在 Scene.BeforeUpdate 调用。</summary>
+    internal bool TryConsumePendingOffUnfreeze() {
+        if (!pendingOffUnfreeze) {
+            return false;
+        }
+
+        pendingOffUnfreeze = false;
+        return true;
+    }
+
     internal void OutOfFreeze(Level level) {
+        pendingOffUnfreeze = false;
         if (freezeType == FreezeType.Save || savedLevel == null) {
             if (savedLevel != null) {
                 RestoreLevelTime(level);

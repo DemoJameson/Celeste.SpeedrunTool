@@ -182,6 +182,14 @@ internal static class GameFreezeManager {
         // 热键也都失效（HotkeyManager 同样门控 Enabled），游戏就再也没法解冻。State == Waiting 本身
         // 已经限定作用域，这里始终处理。
         if (self is Level level) {
+            // 关闭冻结(Off)模式的解冻推迟到了这里：wipe 完成的那一帧 Level.Update 已被跳过，
+            // 若在那一帧把 State 置回 None，Scene.AfterUpdate 里的计时器会把这一帧算进去
+            // （房间计时比章节时间多一帧）。放在 BeforeUpdate 里解冻，State 的翻转就发生在
+            // Level.Update 之前，计时器和 Session.Time 对同一批帧计数。
+            if (StateManager.Instance.TryConsumePendingOffUnfreeze()) {
+                StateManager.Instance.OutOfFreeze(level);
+            }
+
             // SupportMInput 在读档的 loadState 阶段把 MInput 的设备状态恢复成"存档瞬间"的样子，
             // 读档当帧的 IsCheck() 读到的是存档时的旧状态：此时刷新快照会把"读档时按着"的信息抹掉。
             // 所以读档后先跳过 SettleFramesAfterLoad 帧（按 BeforeUpdate 调用次数数，不能用会被存档

@@ -434,6 +434,7 @@ public sealed partial class StateManager {
         RollbackPendingReferences(pending);
 
         State = State.None;
+        pendingOffUnfreeze = false;
         freezeType = FreezeType.None;
         Engine.FreezeTimer = 0f;
 

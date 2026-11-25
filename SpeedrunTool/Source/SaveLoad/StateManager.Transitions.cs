@@ -67,6 +67,9 @@ public sealed partial class StateManager {
         // pending load 也依赖这里: 新章节的 Level.Begin 会先刷新 preclone, 然后才执行恢复.
         if (self is Level) {
             State = State.None;
+            // 旧的 wipe 不会再完成（旧 level 的 RendererList 不再更新），清掉可能残留的"待解冻"标记，
+            // 避免新 Level 的首个 BeforeUpdate 拿旧存档去 OutOfFreeze。
+            pendingOffUnfreeze = false;
             PreCloneSavedEntities();
         }
     }

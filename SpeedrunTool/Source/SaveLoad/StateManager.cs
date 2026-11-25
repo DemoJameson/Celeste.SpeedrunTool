@@ -1,16 +1,11 @@
 using Celeste.Mod.SpeedrunTool.ModInterop;
-using Celeste.Mod.SpeedrunTool.Progress;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Profiling;
 using Celeste.Mod.SpeedrunTool.Utils;
 using Force.DeepCloner;
 using Force.DeepCloner.Helpers;
-using Mono.Cecil.Cil;
-using MonoMod.Cil;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Reflection;
 using System.Runtime;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -129,14 +124,14 @@ public sealed partial class StateManager {
                 ClearBeforeSave = false;
             }
             SaveLoadProfiler.Mark("clearOldState");
-            
+
             Debug_SaveStart();
 
             State = State.Saving;
             SavedByTas = tas;
             SaveLoadAction.OnBeforeSaveState(level);
             SaveLoadProfiler.Mark("beforeSave");
-            
+
             level.DeepCloneToShared(savedLevel = (Level)RuntimeHelpers.GetUninitializedObject(typeof(Level)));
             SaveLoadProfiler.Mark("cloneLevel");
             progress?.Report("CLONE_LEVEL", SlotName);
@@ -147,7 +142,7 @@ public sealed partial class StateManager {
             savedTransitionRoutine = transitionRoutine?.TryGetTarget(out IEnumerator enumerator) == true ? enumerator.DeepCloneShared() : null;
             SaveLoadAction.OnSaveState(level);
             SaveLoadProfiler.Mark("saveActions");
-            
+
             DeepClonerUtils.ClearSharedDeepCloneState();
 
             if (shouldDesyncCheck && DesyncRiskAnalyzer.OnAfterSaveState(out string reason3)) {
@@ -158,7 +153,7 @@ public sealed partial class StateManager {
 
             PreCloneSavedEntities();
             SaveLoadProfiler.Mark("precloneStart");
-            
+
             SaveLoadProfiler.End();
 
             if (tas) {
@@ -331,18 +326,18 @@ public sealed partial class StateManager {
 
             SaveLoadAction.OnBeforeLoadState(level);
             SaveLoadProfiler.Mark("beforeLoad");
-            
+
 
             BusyIndicator.Wait(preCloneTask);
             DeepClonerUtils.SetSharedDeepCloneState(GetPreCloneResult());
             SaveLoadProfiler.Mark("waitPreclone");
-            
+
 
             if (mergeTimeAndDeaths) {
                 UpdateTimeAndDeaths(level);
             }
             SaveLoadProfiler.Mark("mergeTime");
-            
+
             levelWasUnloaded = true;
             UnloadLevel(level);
             SaveLoadProfiler.Mark("unload");
@@ -367,11 +362,11 @@ public sealed partial class StateManager {
             RestoreCassetteBlockManager1(level);
             SaveLoadAction.OnLoadState(level);
             SaveLoadProfiler.Mark("loadActions");
-            
+
 
             PreCloneSavedEntities();
             SaveLoadProfiler.Mark("precloneStart");
-            
+
 
             if (tas) {
                 LoadStateComplete(level);

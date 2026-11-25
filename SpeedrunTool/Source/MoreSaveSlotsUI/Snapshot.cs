@@ -3,9 +3,7 @@ using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.Other;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework.Graphics;
-using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Linq;
 
 namespace Celeste.Mod.SpeedrunTool.MoreSaveSlotsUI;

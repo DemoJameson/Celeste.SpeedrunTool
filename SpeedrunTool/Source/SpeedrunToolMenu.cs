@@ -135,9 +135,9 @@ public static class SpeedrunToolMenu {
             subMenu.Add(preCloneMode = new EnumerableSliderCompact<PreCloneMode>(Dialog.Clean(DialogIds.PreCloneMode),
                 CreateEnumerableOptions<PreCloneMode>(),
                 ModSettings.PreCloneMode).Change(b => {
-                ModSettings.PreCloneMode = b;
-                ModSettings.ApplyPreCloneMode();
-            }));
+                    ModSettings.PreCloneMode = b;
+                    ModSettings.ApplyPreCloneMode();
+                }));
             AddDescription(preCloneMode, subMenu, menu, Dialog.Clean(DialogIds.PreCloneModeDescription));
 
             TextMenu.Item gcAfterLoad;

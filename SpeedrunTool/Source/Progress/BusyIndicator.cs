@@ -1,4 +1,3 @@
-using Celeste.Mod.Helpers;
 using Celeste.Mod.SpeedrunTool.ModInterop;
 using Celeste.Mod.SpeedrunTool.SaveLoad;
 using Microsoft.Xna.Framework.Graphics;

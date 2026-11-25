@@ -2,7 +2,6 @@ using Celeste.Mod.SpeedrunTool.RoomTimer;
 using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
 

@@ -1,7 +1,6 @@
 
 using Celeste.Mod.SpeedrunTool.Utils;
 using Microsoft.Xna.Framework.Graphics;
-using Monocle;
 using System.Collections.Generic;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.ThirdPartySupport;

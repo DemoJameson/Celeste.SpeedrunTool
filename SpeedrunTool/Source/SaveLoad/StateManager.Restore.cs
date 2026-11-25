@@ -1,18 +1,6 @@
 using Celeste.Mod.SpeedrunTool.ModInterop;
-using Celeste.Mod.SpeedrunTool.SaveLoad.Profiling;
-using Celeste.Mod.SpeedrunTool.Utils;
-using Force.DeepCloner;
-using Force.DeepCloner.Helpers;
-using Mono.Cecil.Cil;
-using MonoMod.Cil;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using System.Runtime;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using EventInstance = FMOD.Studio.EventInstance;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;

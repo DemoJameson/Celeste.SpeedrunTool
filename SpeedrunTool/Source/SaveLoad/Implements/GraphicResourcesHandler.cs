@@ -1,8 +1,7 @@
+using Celeste.Mod.SpeedrunTool.Utils;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Reflection;
-using Celeste.Mod.SpeedrunTool.Utils;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad;
 internal static partial class GraphicResourcesHandler {

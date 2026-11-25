@@ -2,10 +2,10 @@
 using Celeste.Mod.SpeedrunTool.Message;
 using Celeste.Mod.SpeedrunTool.ModInterop;
 using Celeste.Mod.SpeedrunTool.Utils;
+using Celeste.Mod.UI;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using Celeste.Mod.UI;
 using CelesteSettings = Celeste.Settings;
 
 namespace Celeste.Mod.SpeedrunTool.Other;

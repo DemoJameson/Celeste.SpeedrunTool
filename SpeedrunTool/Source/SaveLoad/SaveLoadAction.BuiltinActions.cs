@@ -1,6 +1,5 @@
 using Celeste.Mod.SpeedrunTool.DeathStatistics;
 using Celeste.Mod.SpeedrunTool.RoomTimer;
-using Celeste.Mod.SpeedrunTool.SaveLoad.ThirdPartySupport;
 using Celeste.Mod.SpeedrunTool.SaveLoad.Utils;
 using Celeste.Mod.SpeedrunTool.Utils;
 using FMOD.Studio;
@@ -441,4 +440,5 @@ public sealed partial class SaveLoadAction {
                 }
             }
         );
-    }}
+    }
+}

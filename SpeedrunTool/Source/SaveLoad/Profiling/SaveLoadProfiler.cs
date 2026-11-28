@@ -1,4 +1,7 @@
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Text;
 
 namespace Celeste.Mod.SpeedrunTool.SaveLoad.Profiling;
 
@@ -9,7 +12,9 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Profiling;
 /// (<c>dotnet build -p:SrtProfiling=true</c>); the shipped Release build contains no call sites
 /// at all (see the stub below), so this is free on low-end machines.
 /// Enabled at runtime by <c>SRT_PROFILE=1</c> in the game's environment or by a file named
-/// <c>srt-profile.flag</c> next to SpeedrunTool.dll.
+/// <c>srt-profile.flag</c> next to SpeedrunTool.dll, in the game's working directory, or in
+/// <c>Mods/SpeedrunTool</c> under it (Everest may load mod assemblies from bytes, so the assembly
+/// location is not always available).
 ///
 /// Output goes to log.txt as one line per operation, e.g.
 /// <code>SRT_PROFILE load beforeLoad=0.31 waitPreclone=0.02 mergeTime=1.10 unload=4.20 ... heapMB=... gc=...</code>
@@ -17,28 +22,60 @@ namespace Celeste.Mod.SpeedrunTool.SaveLoad.Profiling;
 /// </summary>
 internal static class SaveLoadProfiler {
     internal static readonly bool Enabled = IsEnabled();
+    internal static string EnabledBy { get; private set; }
 
     private static bool IsEnabled() {
         if (Environment.GetEnvironmentVariable("SRT_PROFILE") == "1") {
+            EnabledBy = "SRT_PROFILE=1";
             return true;
         }
 
         try {
-            string assemblyDirectory = Path.GetDirectoryName(typeof(SaveLoadProfiler).Assembly.Location);
-            return assemblyDirectory is not null && File.Exists(Path.Combine(assemblyDirectory, "srt-profile.flag"));
+            foreach (string candidate in FlagCandidates()) {
+                if (!string.IsNullOrEmpty(candidate) && File.Exists(candidate)) {
+                    EnabledBy = candidate;
+                    return true;
+                }
+            }
         }
         catch {
-            return false;
+        }
+
+        return false;
+    }
+
+    private static IEnumerable<string> CandidateDirectories() {
+        string workingDirectory = Directory.GetCurrentDirectory();
+        yield return workingDirectory;
+        yield return Path.Combine(workingDirectory, "Mods", "SpeedrunTool");
+
+        string assemblyLocation = typeof(SaveLoadProfiler).Assembly.Location;
+        if (!string.IsNullOrEmpty(assemblyLocation)) {
+            yield return Path.GetDirectoryName(assemblyLocation) ?? "";
+        }
+    }
+
+    private static IEnumerable<string> FlagCandidates() {
+        foreach (string directory in CandidateDirectories()) {
+            if (!string.IsNullOrEmpty(directory)) {
+                yield return Path.Combine(directory, "srt-profile.flag");
+            }
         }
     }
 
     private static readonly Stopwatch Stopwatch = new();
     private static long lastTicks;
     private static readonly StringBuilder Line = new();
+    private static bool loggedEnabled;
 
     internal static void Begin(string tag) {
         if (!Enabled) {
             return;
+        }
+
+        if (!loggedEnabled) {
+            loggedEnabled = true;
+            Logger.Info("SpeedrunTool/Profile", $"SRT_PROFILE enabled via {EnabledBy}");
         }
 
         Stopwatch.Restart();

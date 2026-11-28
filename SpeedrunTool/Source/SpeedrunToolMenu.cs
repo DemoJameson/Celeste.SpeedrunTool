@@ -131,6 +131,13 @@ public static class SpeedrunToolMenu {
                 ModSettings.FreezeAfterLoadStateType).Change(b =>
                 ModSettings.FreezeAfterLoadStateType = b));
 
+            TextMenu.Item screenWipeSpeed;
+            subMenu.Add(screenWipeSpeed = new EnumerableSliderCompact<ScreenWipeSpeedType>(
+                Dialog.Clean(DialogIds.ScreenWipeSpeed),
+                CreateEnumerableOptions<ScreenWipeSpeedType>(),
+                ModSettings.ScreenWipeSpeed).Change(b => ModSettings.ScreenWipeSpeed = b));
+            AddDescription(screenWipeSpeed, subMenu, menu, Dialog.Clean(DialogIds.ScreenWipeSpeedDescription));
+
             TextMenu.Item preCloneMode;
             subMenu.Add(preCloneMode = new EnumerableSliderCompact<PreCloneMode>(Dialog.Clean(DialogIds.PreCloneMode),
                 CreateEnumerableOptions<PreCloneMode>(),

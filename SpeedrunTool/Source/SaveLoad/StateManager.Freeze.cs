@@ -28,6 +28,27 @@ public sealed partial class StateManager {
                 pendingOffUnfreeze = true;
             }
         });
+
+        ApplyScreenWipeSpeed(level);
+    }
+
+    /// <summary>
+    /// 按 <see cref="SpeedrunToolSettings.ScreenWipeSpeed"/> 缩短 SRT 自己触发的黑屏过场。
+    /// Level.DoScreenWipe -> AreaData.DoScreenWipe 会在当前帧同步创建 ScreenWipe，其构造函数里
+    /// 就把 level.Wipe 指向它；所以这里改 Duration 一定早于这个 wipe 的第一次 Update。
+    /// 只影响 SRT 存/读档的 wipe，不影响游戏本身的死亡/切章过场。
+    /// </summary>
+    private static void ApplyScreenWipeSpeed(Level level) {
+        float multiplier = ModSettings.ScreenWipeSpeed switch {
+            ScreenWipeSpeedType.Fast => 0.5f,
+            ScreenWipeSpeedType.Faster => 0.25f,
+            ScreenWipeSpeedType.Instant => 0.01f,
+            _ => 1f
+        };
+
+        if (multiplier < 1f && level.Wipe is { } wipe) {
+            wipe.Duration *= multiplier;
+        }
     }
 
     /// <summary>取走并清除"关闭冻结模式下待解冻"标记；由 GameFreezeManager 在 Scene.BeforeUpdate 调用。</summary>

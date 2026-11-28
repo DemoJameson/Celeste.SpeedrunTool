@@ -131,6 +131,11 @@ public class SpeedrunToolSettings : EverestModuleSettings {
     /// 枚举类型和 dialog key 已改名为 SaveLoad。
     /// </summary>
     public FreezeAfterSaveLoadStateType FreezeAfterLoadStateType { get; set; } = FreezeAfterSaveLoadStateType.On;
+    /// <summary>
+    /// SRT 自己触发的存/读档黑屏过场速度。默认 Fast(0.25s，原版是 0.5s)；调快可以缩短读档观感上的
+    /// 等待，但过场越短，读档帧本身的停顿和随后的 GC 尖峰越容易露出来。只影响 SRT 的 wipe。
+    /// </summary>
+    public ScreenWipeSpeedType ScreenWipeSpeed { get; set; } = ScreenWipeSpeedType.Fast;
     public bool GcAfterLoadState { get; set; } = false;
 
     public int Doubled_GcMemoryThreshold = 5;
@@ -306,6 +311,13 @@ public enum FreezeAfterSaveLoadStateType {
     Off,
     On,
     IgnoreHoldingKeys
+}
+
+public enum ScreenWipeSpeedType {
+    Normal,
+    Fast,
+    Faster,
+    Instant
 }
 
 public enum PreCloneMode {

@@ -32,6 +32,12 @@ SPEEDRUN_TOOL_DISPLAY_ROOM_GOLD=           Gold Timer when Best Room Time
 
 # ================================== State ==================================
 SPEEDRUN_TOOL_FREEZE_AFTER_SAVE_LOAD_STATE=Pause Game after Save/Load
+SPEEDRUN_TOOL_SCREEN_WIPE_SPEED=           Screen Wipe Speed
+SPEEDRUN_TOOL_SCREEN_WIPE_SPEED_DESCRIPTION=Speed of the black screen wipe after save/load. Faster settings look quicker but show the load stutter more.
+SPEEDRUN_TOOL_NORMAL=                      Normal
+SPEEDRUN_TOOL_FAST=                        Fast
+SPEEDRUN_TOOL_FASTER=                      Faster
+SPEEDRUN_TOOL_INSTANT=                     Instant
 SPEEDRUN_TOOL_IGNORE_HOLDING_KEYS=         Ignore Holding Keys
 SPEEDRUN_TOOL_AUTO_LOAD_STATE_AFTER_DEATH= Auto Load State after Death
 SPEEDRUN_TOOL_AUTO_CLEAR_STATE_ON_SCREEN_TRANSITION= Auto Clear State on Screen Transition
